@@ -122,6 +122,20 @@ npm ci --prefix .agents/skills/app-skill-runtime
 
 ## 使用与素材质量
 
+按任务规模选择同一控制器中的编排方式：
+
+| 任务 | 编排 |
+| --- | --- |
+| 查询、纯文案或注释 | 直接完成并检查差异，通常不建立完整工作项 |
+| 一个本地模块修复 | `init --mode light --type MODULE`，直接进入实施前复核；保留F0–F3和真实工程证据 |
+| 普通功能、视觉或跨模块任务 | 默认普通流程，按受影响阶段推进 |
+| 发布检查或候选打包 | `init --type RELEASE`，默认 `prepare`，准备证据齐备后正常收尾 |
+| 实际发布 | 显式 `init --type RELEASE --release-intent publish`，保留精确授权与实际发布结果 |
+
+`plan --spec` 根据实际计划自动生成并关联实施包、单元路径及空证据清单；`record --report` 根据真实命令、退出码和原始输出关联执行结果。两者不执行项目命令，不自动通过F3/F4，也不代替 `unit-check`。模板与参数见[控制器](skills/app-workflow-control/SKILL.md)。
+
+视觉增量可用 `reuse-visual` 从同项目、技术栈和对象的已完成工作项继承未变化的基线及V1/V2确认。布局变化重新确认布局，目标变化重新确认目标；当前V3导入、V4运行和人工验收仍独立完成，原始确认记录保持不变。具体规则见[任务分流与视觉复用](skills/app-creator-workflow/references/workflow.md)。
+
 ```text
 使用 $app-creator-workflow 完成需求，按技术栈索引读取对应专业技能。
 ```

@@ -15,13 +15,14 @@ description: "为游戏或应用准备可追溯候选版本，逐项核对第三
 
 ## 共用操作步骤
 
-1. 按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)冻结候选源版本、依赖锁定、构建参数、内容版本与实际目标矩阵，保证验证绑定同一输入。
-2. 盘点从代码与依赖、平台/渠道构建参数、环境覆盖和远程配置到最终产物的第三方参数生效链，逐项比较目标环境的批准配置并标明证据和不确定项；秘密只通过授权的安全配置通道核对。详细检查见[第三方与正式环境核对规范](references/release-readiness.md)。
-3. 汇总已有性能数据、已知瓶颈和资源情况，再提醒用户选择是否需要额外性能检查、性能优化、打包或更新图集；按[候选性能与图集决策](references/release-readiness.md)继续。
-4. 完成提醒后记录每项已选择、明确不做或待决定：已有明确答复时据此冻结最终输入；未答复时保留当前输入，仍按现有授权构建候选并执行必需验证，只暂停依赖未决选择的额外检查或改动。按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)保存实际命令、工具版本、候选位置、输出校验值、警告和构建日志，不把本地开发服务当成发行包。
-5. 验证干净安装、首次启动、核心流程、断网/异常恢复与目标尺寸/包体限制；仅在明确要求兼容/迁移时验证对应升级路径，平台差异分别记录结果。
-6. 为当前候选记录可恢复的备份和恢复步骤；仅当用户明确要求升级兼容或迁移时，才制定受支持版本范围、迁移、回滚及兼容窗口。不可逆或需外部写入时标记阻断并等待相应授权。
-7. 生成发布说明、已知问题、验证矩阵、候选位置和回滚步骤；按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)区分本地候选准备与外部提交、签名、商店发布。
+1. 先明确交付是检查/候选准备还是实际上线：RELEASE 默认 releaseIntent=prepare，以真实 release-preparation 材料及必需工程证据完成准备；实际发布显式使用 publish，并保留 F4、精确批准和实际 release-result。[公共收尾规则](../app-creator-workflow/references/workflow.md#发布准备与实际上线)规定两类结果，准备完成不能标成已发布。
+2. 按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)冻结候选源版本、依赖锁定、构建参数、内容版本与实际目标矩阵，保证验证绑定同一输入。
+3. 盘点从代码与依赖、平台/渠道构建参数、环境覆盖和远程配置到最终产物的第三方参数生效链，逐项比较目标环境的批准配置并标明证据和不确定项；秘密只通过授权的安全配置通道核对。详细检查见[第三方与正式环境核对规范](references/release-readiness.md)。
+4. 汇总已有性能数据、已知瓶颈和资源情况，再提醒用户选择是否需要额外性能检查、性能优化、打包或更新图集；按[候选性能与图集决策](references/release-readiness.md)继续。
+5. 完成提醒后记录每项已选择、明确不做或待决定：已有明确答复时据此冻结最终输入；未答复时保留当前输入，仍按现有授权构建候选并执行必需验证，只暂停依赖未决选择的额外检查或改动。按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)保存实际命令、工具版本、候选位置、输出校验值、警告和构建日志，不把本地开发服务当成发行包。
+6. 验证干净安装、首次启动、核心流程、断网/异常恢复与目标尺寸/包体限制；仅在明确要求兼容/迁移时验证对应升级路径，平台差异分别记录结果。
+7. 为当前候选记录可恢复的备份和恢复步骤；仅当用户明确要求升级兼容或迁移时，才制定受支持版本范围、迁移、回滚及兼容窗口。不可逆或需外部写入时标记阻断并等待相应授权。
+8. 生成发布说明、已知问题、验证矩阵、候选位置和回滚步骤；按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)区分本地候选准备与外部提交、签名、商店发布。
 
 ## 关键边界
 

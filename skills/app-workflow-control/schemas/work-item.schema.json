@@ -5,38 +5,512 @@
   "description": "五技术栈共用状态合同；V0-V4 视觉字段按 Work Item 单独绑定。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "workItemId", "projectId", "stack", "workItemType", "stageId", "globalState", "objective", "allowedPaths", "forbiddenPaths", "gateStatus", "revision", "visualBaselineRequired", "evidenceRoot"],
+  "required": [
+    "schemaVersion",
+    "workItemId",
+    "projectId",
+    "stack",
+    "workItemType",
+    "stageId",
+    "globalState",
+    "objective",
+    "allowedPaths",
+    "forbiddenPaths",
+    "gateStatus",
+    "revision",
+    "visualBaselineRequired",
+    "evidenceRoot"
+  ],
   "properties": {
-    "schemaVersion": {"const": "1.0"},
-    "workItemId": {"type": "string", "minLength": 1},
-    "projectId": {"type": "string", "minLength": 1},
-    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
-    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
-    "stageId": {"enum": ["requirements-scope", "global-baseline", "foundation-engineering", "scene-production", "global-integration-validation", "release"]},
-    "globalState": {"enum": ["INTAKE", "BASELINE", "PROPOSAL", "REVIEW", "IMPLEMENTING", "VALIDATING", "PASSED", "INTEGRATING", "RELEASE_APPROVAL_REQUIRED", "RELEASING", "COMPLETE", "BLOCKED", "RETURN"]},
-    "objective": {"type": "string", "minLength": 1},
-    "allowedPaths": {"$ref": "#/$defs/paths"},
-    "forbiddenPaths": {"$ref": "#/$defs/paths"},
-    "gateStatus": {"type": "object", "additionalProperties": false, "required": ["F0", "F1", "F2", "F3", "F4"], "properties": {"F0": {"$ref": "#/$defs/gate"}, "F1": {"$ref": "#/$defs/gate"}, "F2": {"$ref": "#/$defs/gate"}, "F3": {"$ref": "#/$defs/gate"}, "F4": {"$ref": "#/$defs/gate"}}},
-    "revision": {"type": "integer", "minimum": 0},
-    "evidenceRoot": {"type": "string", "minLength": 1},
-    "visualBaselineRequired": {"type": "boolean"},
-    "implementationPackageRef": {"$ref": "#/$defs/refOrNull"},
-    "evidenceRef": {"$ref": "#/$defs/refOrNull"},
-    "globalVisualBaselineRef": {"$ref": "#/$defs/refOrNull"},
-    "assetReviewRef": {"$ref": "#/$defs/refOrNull"},
-    "grillingRef": {"$ref": "#/$defs/refOrNull"},
-    "visual": {"$ref": "#/$defs/visual"},
-    "action": {"type": "object", "required": ["actionId", "effects"], "properties": {"actionId": {"type": "string", "minLength": 1}, "target": {"type": "string"}, "effects": {"type": "array", "items": {"enum": ["local-write", "local-delete", "external-write", "device", "sign", "upload", "publish", "payment", "destructive"]}}, "approval": {"type": "object", "required": ["workItemId", "stack", "stageId", "actionId", "effects", "target", "userMessageRef"], "properties": {"workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]}, "stageId": {"type": "string"}, "actionId": {"type": "string", "minLength": 1}, "effects": {"type": "array", "items": {"type": "string"}}, "target": {"type": "string", "minLength": 1}, "userMessageRef": {"type": "string", "minLength": 1}}}}, "additionalProperties": false},
-    "returnRecord": {"type": "object", "additionalProperties": true},
-    "blockedRecord": {"type": ["object", "null"], "additionalProperties": false, "required": ["reason", "returnState", "resolvedAt"], "properties": {"reason": {"type": "string", "minLength": 1}, "returnState": {"type": "string"}, "resolvedAt": {"type": ["string", "null"]}, "resolution": {"type": "string"}}},
-    "invalidatedRefs": {"type": "array", "items": {"type": "object", "required": ["path", "state"], "properties": {"path": {"type": "string"}, "state": {"type": "string"}}, "additionalProperties": false}},
-    "transitionHistory": {"type": "array", "items": {"type": "object", "additionalProperties": true}}
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "workItemId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "stack": {
+      "enum": [
+        "unity",
+        "cocos",
+        "phaser",
+        "threejs",
+        "flutter"
+      ]
+    },
+    "workItemType": {
+      "enum": [
+        "PROJECT",
+        "FOUNDATION",
+        "MODULE",
+        "SCENE",
+        "PAGE",
+        "DISPLAY_LAYER",
+        "INTEGRATION",
+        "RELEASE"
+      ]
+    },
+    "stageId": {
+      "enum": [
+        "requirements-scope",
+        "global-baseline",
+        "foundation-engineering",
+        "scene-production",
+        "global-integration-validation",
+        "release"
+      ]
+    },
+    "globalState": {
+      "enum": [
+        "INTAKE",
+        "BASELINE",
+        "PROPOSAL",
+        "REVIEW",
+        "IMPLEMENTING",
+        "VALIDATING",
+        "PASSED",
+        "INTEGRATING",
+        "RELEASE_APPROVAL_REQUIRED",
+        "RELEASING",
+        "COMPLETE",
+        "BLOCKED",
+        "RETURN"
+      ]
+    },
+    "objective": {
+      "type": "string",
+      "minLength": 1
+    },
+    "allowedPaths": {
+      "$ref": "#/$defs/paths"
+    },
+    "forbiddenPaths": {
+      "$ref": "#/$defs/paths"
+    },
+    "gateStatus": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "F0",
+        "F1",
+        "F2",
+        "F3",
+        "F4"
+      ],
+      "properties": {
+        "F0": {
+          "$ref": "#/$defs/gate"
+        },
+        "F1": {
+          "$ref": "#/$defs/gate"
+        },
+        "F2": {
+          "$ref": "#/$defs/gate"
+        },
+        "F3": {
+          "$ref": "#/$defs/gate"
+        },
+        "F4": {
+          "$ref": "#/$defs/gate"
+        }
+      }
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "evidenceRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualBaselineRequired": {
+      "type": "boolean"
+    },
+    "implementationPackageRef": {
+      "$ref": "#/$defs/refOrNull"
+    },
+    "evidenceRef": {
+      "$ref": "#/$defs/refOrNull"
+    },
+    "globalVisualBaselineRef": {
+      "$ref": "#/$defs/refOrNull"
+    },
+    "assetReviewRef": {
+      "$ref": "#/$defs/refOrNull"
+    },
+    "grillingRef": {
+      "$ref": "#/$defs/refOrNull"
+    },
+    "visual": {
+      "$ref": "#/$defs/visual"
+    },
+    "action": {
+      "type": "object",
+      "required": [
+        "actionId",
+        "effects"
+      ],
+      "properties": {
+        "actionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "target": {
+          "type": "string"
+        },
+        "effects": {
+          "type": "array",
+          "items": {
+            "enum": [
+              "local-write",
+              "local-delete",
+              "external-write",
+              "device",
+              "sign",
+              "upload",
+              "publish",
+              "payment",
+              "destructive"
+            ]
+          }
+        },
+        "approval": {
+          "type": "object",
+          "required": [
+            "workItemId",
+            "stack",
+            "stageId",
+            "actionId",
+            "effects",
+            "target",
+            "userMessageRef"
+          ],
+          "properties": {
+            "workItemId": {
+              "type": "string"
+            },
+            "stack": {
+              "enum": [
+                "unity",
+                "cocos",
+                "phaser",
+                "threejs",
+                "flutter"
+              ]
+            },
+            "stageId": {
+              "type": "string"
+            },
+            "actionId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "effects": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "target": {
+              "type": "string",
+              "minLength": 1
+            },
+            "userMessageRef": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "returnRecord": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "blockedRecord": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "reason",
+        "returnState",
+        "resolvedAt"
+      ],
+      "properties": {
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "returnState": {
+          "type": "string"
+        },
+        "resolvedAt": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resolution": {
+          "type": "string"
+        }
+      }
+    },
+    "invalidatedRefs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "path",
+          "state"
+        ],
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "transitionHistory": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "workflowMode": {
+      "enum": [
+        "standard",
+        "light"
+      ],
+      "default": "standard",
+      "description": "轻量模式减少编排步骤，保留实际工程门与证据。"
+    },
+    "releaseIntent": {
+      "enum": [
+        "prepare",
+        "publish"
+      ],
+      "description": "准备候选与实际发布使用不同完成结果，只有RELEASE可设置。"
+    },
+    "planningRef": {
+      "$ref": "#/$defs/refOrNull"
+    }
   },
   "$defs": {
-    "paths": {"type": "array", "items": {"type": "string", "minLength": 1}},
-    "gate": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
-    "refOrNull": {"oneOf": [{"type": "null"}, {"type": "object", "required": ["path"], "properties": {"path": {"type": "string", "minLength": 1}}, "additionalProperties": false}]},
-    "visual": {"type": "object", "required": ["objectId", "stage", "reviews"], "properties": {"objectId": {"type": "string", "minLength": 1}, "candidateId": {"type": "string", "minLength": 1}, "stage": {"enum": ["V0", "V1", "V2", "V3", "V4"]}, "hostId": {"type": "string", "minLength": 1}, "layerType": {"enum": ["modal", "popup", "drawer", "toast"]}, "reviews": {"type": "object", "properties": {"V1": {"$ref": "#/$defs/refOrNull"}, "V2Decomposition": {"$ref": "#/$defs/refOrNull"}, "V2Layout": {"$ref": "#/$defs/refOrNull"}, "V3": {"$ref": "#/$defs/refOrNull"}, "V4": {"$ref": "#/$defs/refOrNull"}}, "additionalProperties": false}}, "additionalProperties": false}
-  }
+    "paths": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "gate": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_RUN"
+      ]
+    },
+    "refOrNull": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "required": [
+            "path"
+          ],
+          "properties": {
+            "path": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "visual": {
+      "type": "object",
+      "required": [
+        "objectId",
+        "stage",
+        "reviews"
+      ],
+      "properties": {
+        "objectId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stage": {
+          "enum": [
+            "V0",
+            "V1",
+            "V2",
+            "V3",
+            "V4"
+          ]
+        },
+        "hostId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "layerType": {
+          "enum": [
+            "modal",
+            "popup",
+            "drawer",
+            "toast"
+          ]
+        },
+        "reviews": {
+          "type": "object",
+          "properties": {
+            "V1": {
+              "$ref": "#/$defs/refOrNull"
+            },
+            "V2Decomposition": {
+              "$ref": "#/$defs/refOrNull"
+            },
+            "V2Layout": {
+              "$ref": "#/$defs/refOrNull"
+            },
+            "V3": {
+              "$ref": "#/$defs/refOrNull"
+            },
+            "V4": {
+              "$ref": "#/$defs/refOrNull"
+            }
+          },
+          "additionalProperties": false
+        },
+        "reuse": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "sourceWorkItemRef",
+            "impact",
+            "reason",
+            "inheritedReviews"
+          ],
+          "properties": {
+            "sourceWorkItemRef": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "path"
+              ],
+              "properties": {
+                "path": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "impact": {
+              "enum": [
+                "implementation",
+                "layout",
+                "assets",
+                "target"
+              ]
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "inheritedReviews": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "V1",
+                  "V2Decomposition",
+                  "V2Layout"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "RELEASE"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "required": [
+          "releaseIntent"
+        ],
+        "properties": {
+          "stageId": {
+            "const": "release"
+          }
+        }
+      },
+      "else": {
+        "not": {
+          "required": [
+            "releaseIntent"
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "workflowMode": {
+            "const": "light"
+          }
+        },
+        "required": [
+          "workflowMode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workItemType": {
+            "enum": [
+              "FOUNDATION",
+              "MODULE"
+            ]
+          },
+          "visualBaselineRequired": {
+            "const": false
+          }
+        },
+        "not": {
+          "required": [
+            "visual"
+          ]
+        }
+      }
+    }
+  ]
 }

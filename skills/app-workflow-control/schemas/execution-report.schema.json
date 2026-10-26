@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/execution-report.schema.json",
+  "title": "实施结果事实输入",
+  "description": "记录实现者实际变更、实际命令退出码和真实证据文件；不接受 Work Item 身份或 PASS 状态注入。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["files", "commandOutputs", "evidence"],
+  "properties": {
+    "files": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "commandOutputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "exitCode", "outputFile"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "exitCode": {"type": "integer"},
+          "outputFile": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category", "path"],
+        "properties": {
+          "category": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

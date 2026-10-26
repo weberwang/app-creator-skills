@@ -39,6 +39,11 @@ const SHARED_RUNTIME_MODULES = new Set([
   'skills/app-workflow-control/scripts/runtime/artifacts.mjs',
   'skills/app-workflow-control/scripts/runtime/execution-batches.mjs',
   'skills/app-workflow-control/scripts/runtime/work-lock.mjs',
+  'skills/app-workflow-control/scripts/runtime/task-policy.mjs',
+  'skills/app-workflow-control/scripts/runtime/release-policy.mjs',
+  'skills/app-workflow-control/scripts/runtime/records.mjs',
+  'skills/app-workflow-control/scripts/runtime/visual-reuse.mjs',
+  'skills/app-workflow-control/scripts/runtime/visual-reuse-binding.mjs',
   'skills/app-asset-workflow/scripts/png-raster.mjs',
   'skills/app-asset-workflow/scripts/remove-background-local.mjs',
 ]);

@@ -1,6 +1,7 @@
 import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, STAGES, TRANSITIONS, workCategory } from './constants.mjs';
 import { readFileSync } from 'node:fs';
 import { repoPath, stackProfileLocation, WorkflowError } from './io.mjs';
+import { assertWorkflowPolicy } from './task-policy.mjs';
 
 /** 明确允许的 Work Item 字段，错误字段名应尽早中断。 */
 const WORK_FIELDS = new Set([
@@ -9,6 +10,7 @@ const WORK_FIELDS = new Set([
   'implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef',
   'grillingRef', 'visual', 'visualBaselineRequired', 'evidenceRoot', 'action',
   'returnRecord', 'blockedRecord', 'invalidatedRefs', 'transitionHistory', 'category',
+  'workflowMode', 'releaseIntent', 'planningRef',
 ]);
 
 /** 确认值为非空字符串，错误中保留可定位字段名。 */
@@ -65,6 +67,15 @@ function validateVisual(work) {
   requireText(work.visual.objectId, 'visual.objectId');
   requireOneOf(work.visual.stage, VISUAL_STAGES, 'visual.stage');
   if (work.visual.candidateId !== undefined) requireText(work.visual.candidateId, 'visual.candidateId');
+  if (work.visual.reuse !== undefined) {
+    const reuse = work.visual.reuse;
+    if (!reuse || typeof reuse !== 'object' || Array.isArray(reuse)) throw new WorkflowError('visual.reuse 必须是复用来源记录');
+    for (const name of Object.keys(reuse)) if (!['sourceWorkItemRef', 'impact', 'reason', 'inheritedReviews'].includes(name)) throw new WorkflowError(`visual.reuse 包含未知字段：${name}`);
+    requireText(reuse.sourceWorkItemRef?.path, 'visual.reuse.sourceWorkItemRef.path');
+    requireOneOf(reuse.impact, ['implementation', 'layout', 'assets', 'target'], 'visual.reuse.impact');
+    requireText(reuse.reason, 'visual.reuse.reason');
+    if (!Array.isArray(reuse.inheritedReviews) || new Set(reuse.inheritedReviews).size !== reuse.inheritedReviews.length || reuse.inheritedReviews.some((name) => !['V1', 'V2Decomposition', 'V2Layout'].includes(name))) throw new WorkflowError('visual.reuse.inheritedReviews 只能包含唯一的目标、拆解及布局确认');
+  }
   if (work.stageId !== 'scene-production') throw new WorkflowError('SCENE/PAGE/DISPLAY_LAYER 必须处于 scene-production');
   if (work.workItemType === 'DISPLAY_LAYER') {
     requireText(work.visual.hostId, 'visual.hostId');
@@ -84,12 +95,18 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   requireOneOf(work.workItemType, WORK_ITEM_TYPES, 'Work Item.workItemType');
   requireOneOf(work.stageId, STAGES, 'Work Item.stageId');
   requireOneOf(work.globalState, Object.keys(TRANSITIONS), 'Work Item.globalState');
+  assertWorkflowPolicy(work);
+  if (work.workItemType === 'RELEASE') {
+    requireOneOf(work.releaseIntent, ['prepare', 'publish'], 'Work Item.releaseIntent');
+    if (work.stageId !== 'release') throw new WorkflowError('RELEASE 必须处于 release 阶段');
+    if (work.releaseIntent === 'prepare' && work.action?.effects?.includes('publish')) throw new WorkflowError('发布准备工作项不能声明 publish 动作');
+  } else if (work.releaseIntent !== undefined) throw new WorkflowError('只有 RELEASE 可以声明 releaseIntent');
   if (!Number.isSafeInteger(work.revision) || work.revision < 0) throw new WorkflowError('Work Item.revision 必须为不小于 0 的整数');
   validatePathList(work.allowedPaths, 'Work Item.allowedPaths');
   validatePathList(work.forbiddenPaths, 'Work Item.forbiddenPaths');
   if (!work.gateStatus || typeof work.gateStatus !== 'object') throw new WorkflowError('Work Item.gateStatus 必须记录 F0–F4');
   for (const gate of GATES) requireOneOf(work.gateStatus[gate], ['PASS', 'FAIL', 'NOT_RUN'], `gateStatus.${gate}`);
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef']) {
     const ref = work[name];
     if (ref !== undefined && ref !== null) {
       if (typeof ref !== 'object' || Array.isArray(ref)) throw new WorkflowError(`Work Item.${name} 必须为含 path 的对象或 null`);
@@ -101,6 +118,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   if (repo) {
     if (typeof work.evidenceRoot !== 'string') throw new WorkflowError('Work Item.evidenceRoot 必须绑定当前证据目录');
     repoPath(repo, work.evidenceRoot, 'Work Item.evidenceRoot');
+    if (work.visual?.reuse) repoPath(repo, work.visual.reuse.sourceWorkItemRef.path, '视觉复用来源');
   }
   if (work.action && typeof work.action !== 'object') throw new WorkflowError('Work Item.action 必须为对象');
   if (work.action && (!Array.isArray(work.action.effects) || work.action.effects.some((item) => typeof item !== 'string'))) {
@@ -125,7 +143,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   if (work.invalidatedRefs !== undefined && (!Array.isArray(work.invalidatedRefs) || work.invalidatedRefs.some((item) => typeof item?.path !== 'string'))) {
     throw new WorkflowError('Work Item.invalidatedRefs 必须由路径引用组成');
   }
-  for (const field of ['implementationPackageRef', 'evidenceRef', 'assetReviewRef', 'globalVisualBaselineRef']) {
+  for (const field of ['implementationPackageRef', 'evidenceRef', 'assetReviewRef', 'globalVisualBaselineRef', 'planningRef']) {
     if (work[field]?.path && work.invalidatedRefs?.some((item) => item.path === work[field].path)) {
       throw new WorkflowError(`${field} 重新绑定了 RETURN 已作废引用`);
     }

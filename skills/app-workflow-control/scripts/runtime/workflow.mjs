@@ -6,6 +6,8 @@ import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from 
 import { loadProfile, requireOneOf, requireText, validateWork } from './validation.mjs';
 import { createExecutionPlanSnapshot, expectedActiveBatch } from './execution-batches.mjs';
 import { withWorkLock } from './work-lock.mjs';
+import { assertWorkflowPolicy, workflowMode } from './task-policy.mjs';
+import { assertReleaseTransition } from './release-policy.mjs';
 
 /** 产出供 CLI /工具稳定解析的统一结果结构。 */
 export function response({ status, work = null, changed = false, blocking = [], next = [], metadata = {} }) {
@@ -19,6 +21,8 @@ export function response({ status, work = null, changed = false, blocking = [], 
       workflowView: work ? {
         phaseId: work.stageId, phaseLabel: STAGE_LABELS[work.stageId],
         visualStage: work.visual?.stage ?? null, workItemType: work.workItemType,
+        workflowMode: workflowMode(work), releaseIntent: work.releaseIntent ?? null,
+        completionKind: work.globalState === 'COMPLETE' ? (work.workItemType === 'RELEASE' ? `release-${work.releaseIntent === 'prepare' ? 'prepared' : 'published'}` : 'task-complete') : null,
       } : null,
       ...metadata,
     },
@@ -44,6 +48,7 @@ async function initializeWorkLocked({ repo, args }) {
   const id = args.id;
   const stack = args.stack;
   const type = args.type ?? 'FOUNDATION';
+  const mode = args.mode ?? 'standard';
   const objective = args.objective;
   requireText(id, '--id');
   requireText(objective, '--objective');
@@ -64,14 +69,17 @@ async function initializeWorkLocked({ repo, args }) {
     projectId: args['project-id'] ?? 'default-project',
     stack,
     workItemType: type,
-    stageId: type === 'INTEGRATION' ? 'global-integration-validation' : type === 'RELEASE' ? 'release' : visualType ? 'scene-production' : 'foundation-engineering',
-    globalState: 'INTAKE',
+    stageId: type === 'PROJECT' ? 'requirements-scope' : type === 'INTEGRATION' ? 'global-integration-validation' : type === 'RELEASE' ? 'release' : visualType ? 'scene-production' : 'foundation-engineering',
+    globalState: mode === 'light' ? 'REVIEW' : 'INTAKE',
+    workflowMode: mode,
+    ...(type === 'RELEASE' ? { releaseIntent: args['release-intent'] ?? 'prepare' } : {}),
     objective,
     allowedPaths: [...profile.runtimeRoots],
     forbiddenPaths: ['node_modules/**', '**/.git/**', '**/Library/**', '**/Temp/**'],
     gateStatus: Object.fromEntries(GATES.map((gate) => [gate, 'NOT_RUN'])),
     revision: 0,
     implementationPackageRef: null,
+    planningRef: null,
     evidenceRef: null,
     globalVisualBaselineRef: null,
     assetReviewRef: null,
@@ -85,6 +93,7 @@ async function initializeWorkLocked({ repo, args }) {
       reviews: {},
     } } : {}),
   };
+  if (type !== 'RELEASE' && args['release-intent'] !== undefined) throw new WorkflowError('只有 RELEASE 可以使用 --release-intent');
   validateWork(work, { repo });
   await atomicWriteJson(repo, workPath, work);
   return response({ status: 'PASS', work, changed: true, metadata: { workItemPath: workPath, stackProfile: profile.displayName } });
@@ -103,6 +112,10 @@ export function inspectWork(repo, work, { strict = false } = {}) {
   if (work.globalState === 'INTAKE' && work.gateStatus.F0 !== 'PASS') next.push('完成范围与操作边界调查并提交 F0 事实');
   if (work.globalState === 'BASELINE' && work.gateStatus.F1 !== 'PASS') next.push('完成项目基线与验收边界并通过 F1');
   if (work.globalState === 'PROPOSAL' && work.gateStatus.F2 !== 'PASS') next.push('明确工作范围及技术实施方案并通过 F2');
+  if (workflowMode(work) === 'light' && work.globalState === 'REVIEW') {
+    try { assertGates(work, ['F0', 'F1', 'F2']); }
+    catch (error) { blocking.push(error.message); next.push('先记录本次范围、验收与实施方案的实际自评，再开始轻量实施'); }
+  }
   if (['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
     next.push('冻结与当前工作项绑定的 Implementation Package');
   }
@@ -252,6 +265,8 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   if (!TRANSITIONS[work.globalState]?.includes(to)) throw new WorkflowError(`拒绝不合法状态迁移：${work.globalState} -> ${to}`, 'INVALID_TRANSITION');
   const from = work.globalState;
   const recoveryState = from === 'BLOCKED' ? work.blockedRecord?.returnState : null;
+  assertWorkflowPolicy(work);
+  assertReleaseTransition(work, { from, to, recoveryState });
   // RETURN/BLOCKED 是恢复控制记录，应允许登记上游失效或未决问题。
   if (to === 'RETURN') return enterReturn({ repo, workItem, work, from, args });
   if (to === 'BLOCKED') return enterBlocked({ repo, workItem, work, from, args });
@@ -278,7 +293,8 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   }
   if (to === 'COMPLETE') {
     if (work.workItemType === 'RELEASE') {
-      if (from !== 'RELEASING') throw new WorkflowError('RELEASE 工作项只能从 RELEASING 进入 COMPLETE');
+      // 两类发布交付由同一策略校验；实际发布仍必须经过批准态与真实发布结果。
+      assertReleaseTransition(work, { from, to, recoveryState });
     } else if (from !== 'PASSED' && from !== 'INTEGRATING') {
       throw new WorkflowError('仅 PASSED/INTEGRATING 能进入 COMPLETE');
     }
@@ -357,7 +373,7 @@ async function enterReturn({ repo, workItem, work, from, args }) {
   requireText(affected, '--affected-scope');
   const returnState = inferReturnState(affected, work.stageId);
   const invalidatedRefs = [...(work.invalidatedRefs ?? [])];
-  for (const name of ['implementationPackageRef', 'evidenceRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'planningRef']) {
     if (work[name]?.path) invalidatedRefs.push({ path: work[name].path, state: from });
   }
   if (work.globalState === 'IMPLEMENTING' && work.evidenceRoot) {
@@ -376,6 +392,7 @@ async function enterReturn({ repo, workItem, work, from, args }) {
   work.invalidatedRefs = invalidated;
   work.implementationPackageRef = null;
   work.evidenceRef = null;
+  work.planningRef = null;
   // 每次 RETURN 使用新证据目录，旧执行状态和结果只作为可追溯历史。
   work.evidenceRoot = `${oldEvidenceRoot}-return-${work.revision + 1}`;
   work.globalState = 'RETURN';
@@ -430,6 +447,15 @@ function invalidateReturnVisual(work, scope, invalidatedRefs) {
     work.globalVisualBaselineRef = null;
   }
   work.visual.stage = earliestStage;
+  if (work.visual.reuse) {
+    if (!work.globalVisualBaselineRef) delete work.visual.reuse;
+    else {
+      // RETURN 只保留仍有效的继承引用，不把旧复用声明当成新阶段确认。
+      work.visual.reuse.inheritedReviews = work.visual.reuse.inheritedReviews.filter((name) => work.visual.reviews[name]?.path);
+      if (!work.visual.reuse.inheritedReviews.includes('V1')) work.visual.reuse.impact = 'target';
+      else if (!work.visual.reuse.inheritedReviews.includes('V2Layout')) work.visual.reuse.impact = 'layout';
+    }
+  }
 }
 
 /** 仅从实质受影响阶段推导最早恢复入口，不接受用户指定 target state。 */
@@ -492,14 +518,16 @@ async function advanceVisualLocked({ repo, workItem, to }) {
     assertVisualReview(repo, work, 'V3');
   }
   const previousState = work.globalState;
-  const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, revision: work.revision };
+  const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, planningRef: work.planningRef ?? null, revision: work.revision };
   const archivePath = `${work.evidenceRoot}/archive-${work.visual.stage}-${work.revision + 1}.json`;
   if (work.implementationPackageRef || work.evidenceRef) await atomicWriteJson(repo, archivePath, archive);
   if (work.implementationPackageRef?.path) (work.invalidatedRefs ??= []).push({ path: work.implementationPackageRef.path, state: work.visual.stage });
   if (work.evidenceRef?.path) (work.invalidatedRefs ??= []).push({ path: work.evidenceRef.path, state: work.visual.stage });
+  if (work.planningRef?.path) (work.invalidatedRefs ??= []).push({ path: work.planningRef.path, state: work.visual.stage });
   work.visual.stage = to;
   work.implementationPackageRef = null;
   work.evidenceRef = null;
+  work.planningRef = null;
   work.assetReviewRef = to === 'V4' ? work.assetReviewRef : null;
   // 设计阶段不需要伪造编译；新正式资源/运行阶段需各自冻结新的实施包和结果。
   if (['V3', 'V4'].includes(to)) {

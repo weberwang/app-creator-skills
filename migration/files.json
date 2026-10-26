@@ -9291,7 +9291,7 @@
         "rebase-relative-imports"
       ],
       "sourceSha256": "ba2ad6f492f99c7f8330e40c2a9efa8e5ef5ee24f25299697329a6340c2e8334",
-      "destinationSha256": "a9fba3d8d6135d576ee4e76cdd29a734afd1f04cf0e72e138b0985195aac57f7"
+      "destinationSha256": "188f75b7c81feb0f33deeaff30863deeeac705bbf2f8d6d174fe2307bafd12cc"
     },
     {
       "stack": "cocos",
@@ -13415,7 +13415,7 @@
         "rebase-relative-imports"
       ],
       "sourceSha256": "a1c13cb4176fca064e0a1bc54a0effa08ccc256a985800f8cd3a7d81bbe90ff8",
-      "destinationSha256": "a9fba3d8d6135d576ee4e76cdd29a734afd1f04cf0e72e138b0985195aac57f7"
+      "destinationSha256": "188f75b7c81feb0f33deeaff30863deeeac705bbf2f8d6d174fe2307bafd12cc"
     },
     {
       "stack": "phaser",
@@ -17949,7 +17949,7 @@
         "rebase-relative-imports"
       ],
       "sourceSha256": "e3c2d48d5673ee3a5884171f6409abad7d08b359f5f5f598ffd0bdfa67b9f2e2",
-      "destinationSha256": "a9fba3d8d6135d576ee4e76cdd29a734afd1f04cf0e72e138b0985195aac57f7"
+      "destinationSha256": "188f75b7c81feb0f33deeaff30863deeeac705bbf2f8d6d174fe2307bafd12cc"
     },
     {
       "stack": "threejs",

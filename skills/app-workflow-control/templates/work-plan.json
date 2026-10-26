@@ -1,0 +1,16 @@
+{
+  "executionUnits": [
+    {
+      "unitId": "unit-feature",
+      "owner": "main-agent",
+      "paths": ["src/feature/example.ts"],
+      "acceptanceCommands": ["<填写适用于当前技术栈的真实验收命令>"]
+    }
+  ],
+  "gateAssessments": {
+    "F0": {
+      "status": "NOT_RUN",
+      "reason": "尚未提交 F0 自评事实"
+    }
+  }
+}

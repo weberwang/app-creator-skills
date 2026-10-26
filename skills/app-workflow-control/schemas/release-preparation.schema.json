@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/release-preparation.schema.json",
+  "title": "发布准备结果",
+  "description": "记录绑定当前 RELEASE 工作项的真实发布准备交付与独立检查证据；不表示已发布。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "workItemId", "stack", "stageId", "deliverablePath", "evidencePath"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+    "workItemId": {"type": "string", "minLength": 1},
+    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
+    "stageId": {"const": "release"},
+    "deliverablePath": {"type": "string", "minLength": 1},
+    "evidencePath": {"type": "string", "minLength": 1}
+  }
+}

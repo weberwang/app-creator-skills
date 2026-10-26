@@ -25,6 +25,9 @@
 
 ```text
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter> --id <ID> --type <类型> --objective <目标>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <工作项相对路径> --spec <实际计划JSON相对路径>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <工作项相对路径> --unit <单元ID> --report <真实执行报告JSON相对路径>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项相对路径> --source-work-item <已完成来源相对路径> --impact <implementation|layout|assets|target> --reason <未变化与受影响范围的事实说明>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs status --repo <项目路径> --work-item <项目相对 JSON 路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs check --repo <项目路径> --work-item <项目相对 JSON 路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs run --repo <项目路径> --work-item <项目相对 JSON 路径>
@@ -35,6 +38,10 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 ```
 
 `status` 与 `check` 只读；`run` 不执行专业工作、测试或发布。`transition --to RETURN` 还必须带 `--reason` 与 `--affected-scope`，恢复时使用控制器要求的 `--return-resolution`；不要手写 Work Item 状态绕过门禁。项目内文件引用使用 `/` 分隔的相对路径。
+
+`init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 从成功命令与非空原始输出生成单元结果并合并真实证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
+
+视觉增量在新工作项 V0、尚未冻结计划前用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V1/V2 确认；其原始用户消息和文件不改写。V3导入、V4实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
 
 全局工程门 F0–F4 分别记录范围、目标与有效决定、领域质量、真实工程结果和受保护动作的精确授权事实。A0–A6 在产品流程中描述动作风险等级，不会因为等级本身产生新的 CLI 命令或审批阶段。普通任务范围内的本地工作依据当前用户请求和 Work Item 执行；`action.approval` 只绑定真实用户明确批准的具体副作用动作及对象。控制器只记录/校验状态，不执行真机、外部写入、签名、上传、付费、破坏性操作或发布。
 

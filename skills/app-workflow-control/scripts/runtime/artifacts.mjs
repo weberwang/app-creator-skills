@@ -3,6 +3,8 @@ import { statSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, requireOneOf, requireText } from './validation.mjs';
 import { buildExecutionBatches } from './execution-batches.mjs';
+import { assertWorkflowPolicy } from './task-policy.mjs';
+import { assertVisualReuse } from './visual-reuse-binding.mjs';
 
 const WORK_SOURCE_PATHS = new WeakMap();
 const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits']);
@@ -58,6 +60,7 @@ export function loadPackage(repo, work) {
   assertUniqueResultPaths(repo, pack.executionUnits);
   assertResultPathsAvoidReservedFiles(repo, work, pack.executionUnits);
   buildExecutionBatches(pack.executionUnits, { repo });
+  assertWorkflowPolicy(work, pack);
   return pack;
 }
 
@@ -113,7 +116,7 @@ function collectWorkReferencePaths(work) {
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
@@ -342,6 +345,7 @@ export function assertTransitionInputs(repo, work, to) {
   requireOneOf(to, Object.keys(TRANSITIONS).concat(['RETURN']), '目标全局状态');
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
+  assertVisualReuse(repo, work);
   if (to !== 'RELEASE_APPROVAL_REQUIRED' && work.action?.effects?.some((effect) => PROTECTED_ACTIONS.has(effect)) && !hasPreciseApproval(work)) {
     throw new WorkflowError('外部写入、设备、签名、上传、发布、付费或破坏性动作需要当前对象的明确用户批准引用', 'APPROVAL_REQUIRED');
   }
@@ -385,6 +389,7 @@ export function assertVisualReview(repo, work, stage) {
 
 /** 根据当前门禁判定产品质量和证据是否允许完成。 */
 export function assertReadyToPass(repo, work) {
+  assertVisualReuse(repo, work);
   if (work.visual && ['V0', 'V1', 'V2'].includes(work.visual.stage)) {
     assertGates(work, ['F0', 'F1']);
     if (work.visual.stage === 'V1') assertVisualReview(repo, work, 'V1');
@@ -407,7 +412,52 @@ export function assertReadyToPass(repo, work) {
 export function assertFinalCompletion(repo, work) {
   if (work.visual && work.visual.stage !== 'V4') throw new WorkflowError('最终关闭前，可见 PAGE/SCENE/DISPLAY_LAYER 必须到达 V4');
   assertReadyToPass(repo, work);
-  if (work.workItemType === 'RELEASE') assertReleaseResult(repo, work);
+  if (work.workItemType === 'RELEASE') {
+    if (work.releaseIntent === 'prepare') assertReleasePreparation(repo, work);
+    else if (work.releaseIntent === 'publish') assertReleaseResult(repo, work);
+    else throw new WorkflowError('RELEASE 工作项必须明确 releaseIntent=prepare|publish');
+  }
+}
+
+/** 准备模式以独立材料证明发布就绪，不把准备记录等同于实际发布。 */
+function assertReleasePreparation(repo, work) {
+  const { manifest, pack } = validateEvidence(repo, work, { requireEngineering: true });
+  const matches = manifest.items.filter((entry) => entry.category === 'release-preparation' && entry.status === 'PASS');
+  if (matches.length !== 1) throw new WorkflowError('Evidence Manifest 必须唯一包含 PASS 的 release-preparation 结果', 'RELEASE_PREPARATION_REQUIRED');
+
+  const resultPath = requireNonEmptyFile(repo, matches[0].path, 'Release Preparation');
+  const result = readJson(repo, resultPath, 'Release Preparation');
+  for (const [field, expected] of Object.entries({
+    schemaVersion: VERSION, status: 'PASS', workItemId: work.workItemId,
+    stack: work.stack, stageId: 'release',
+  })) {
+    if (result[field] !== expected) throw new WorkflowError(`Release Preparation.${field} 未绑定当前准备工作项`);
+  }
+
+  requireText(result.deliverablePath, 'Release Preparation.deliverablePath');
+  requireText(result.evidencePath, 'Release Preparation.evidencePath');
+  const deliverable = requireNonEmptyFile(repo, result.deliverablePath, '发布准备交付材料');
+  const evidence = requireNonEmptyFile(repo, result.evidencePath, '发布准备检查证据');
+  const evidenceRoot = repoPath(repo, work.evidenceRoot, 'Work Item.evidenceRoot').relative;
+  const manifestPath = repoPath(repo, work.evidenceRef.path, 'Evidence Manifest').relative;
+  const key = (path) => process.platform === 'win32' ? path.toLowerCase() : path;
+  const reservedMaterials = new Set([key(resultPath), key(manifestPath)]);
+  const workSource = WORK_SOURCE_PATHS.get(work);
+  if (workSource) reservedMaterials.add(key(repoPath(repo, workSource, 'Work Item 源文件').relative));
+  reservedMaterials.add(key(repoPath(repo, `${evidenceRoot}/execution-state.json`, '执行状态文件').relative));
+  for (const path of collectWorkReferencePaths(work)) {
+    reservedMaterials.add(key(repoPath(repo, path, 'Work Item 保留引用').relative));
+  }
+  for (const unit of pack.executionUnits) {
+    reservedMaterials.add(key(repoPath(repo, unit.resultPath, `executionUnits.${unit.unitId}.resultPath`).relative));
+  }
+
+  if (!pathMatch(deliverable, `${evidenceRoot}/**`) || !pathMatch(evidence, `${evidenceRoot}/**`)) {
+    throw new WorkflowError('发布准备交付材料和检查证据都必须位于当前 evidenceRoot');
+  }
+  if (key(deliverable) === key(evidence) || reservedMaterials.has(key(deliverable)) || reservedMaterials.has(key(evidence))) {
+    throw new WorkflowError('发布准备材料不能使用 Work Item、控制记录、manifest、机器执行状态或单元结果文件');
+  }
 }
 
 /** 发布完成必须有绑定当前动作、目标、批准消息和实际结果材料的证据。 */

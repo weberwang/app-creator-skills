@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "status": "NOT_RUN",
+  "workItemId": "replace-with-work-id",
+  "stack": "flutter",
+  "stageId": "release",
+  "deliverablePath": ".workflow-control/evidence/replace-with-work-id/release-readiness.md",
+  "evidencePath": ".workflow-control/evidence/replace-with-work-id/release-checks.txt"
+}

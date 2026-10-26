@@ -95,6 +95,7 @@ export const CAPABILITY_CONTENT = Object.freeze({
     purpose: '为内部评审或正式发布准备可重现、可识别、可恢复的候选交付物；核实所有实际启用的第三方参数及目标环境，并让用户决定是否扩展性能检查、优化或图集打包。',
     inputs: ['已冻结的源代码与版本标识；目标平台、渠道和环境；验证结果及缺陷状态；当前候选的配置与恢复要求。只有任务明确要求升级兼容或数据迁移时，再纳入版本范围、迁移计划与旧数据约束。'],
     steps: [
+      '先明确交付是检查/候选准备还是实际上线：RELEASE 默认 releaseIntent=prepare，以真实 release-preparation 材料及必需工程证据完成准备；实际发布显式使用 publish，并保留 F4、精确批准和实际 release-result。[公共收尾规则](../app-creator-workflow/references/workflow.md#发布准备与实际上线)规定两类结果，准备完成不能标成已发布。',
       '按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)冻结候选源版本、依赖锁定、构建参数、内容版本与实际目标矩阵，保证验证绑定同一输入。',
       '盘点从代码与依赖、平台/渠道构建参数、环境覆盖和远程配置到最终产物的第三方参数生效链，逐项比较目标环境的批准配置并标明证据和不确定项；秘密只通过授权的安全配置通道核对。详细检查见[第三方与正式环境核对规范](references/release-readiness.md)。',
       '汇总已有性能数据、已知瓶颈和资源情况，再提醒用户选择是否需要额外性能检查、性能优化、打包或更新图集；按[候选性能与图集决策](references/release-readiness.md)继续。',

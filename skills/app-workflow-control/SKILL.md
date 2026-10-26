@@ -20,6 +20,7 @@ description: 维护五技术栈共用的游戏和应用 Work Item、六阶段状
 按 [schemas/work-item.schema.json](schemas/work-item.schema.json) 定义单个 JSON 工作项。生成新工作项用 CLI `init`，已有工作项引用指向项目里的机器记录：
 
 - `implementationPackageRef` → 固定顺序实施包。单元默认串行；连续且至少两项的 `parallelGroup` 可形成并行批次，组内声明的目录/文件所有权必须互斥。`dependsOn` 只引用更早批次的单元，不会改变 `sequence` 顺序。
+- `planningRef` → 本次实际计划及 F0/F1/F2 显式自评的来源文件。`plan` 生成关联实施包及空 Evidence Manifest，不自动通过任何门。
 - `evidenceRef` → 当前实施包、工作项、技术栈及视觉阶段相同的 Evidence Manifest。每项必须是 profile 所需类别、真实非空文件，且位于当前 `evidenceRoot`。
 - `globalVisualBaselineRef` → 首次视觉基线。首次建立时为同条件三候选、唯一人工选择和五项质量判断；基线绑定同一 `projectId/stack`，可供后续工作项复用。仅选中候选须五项全 PASS；其他候选也逐项记录状态。
 - `visual.reviews` → 当前 `objectId` 与 `candidateId` 的用户阶段确认。V2 的拆解和布局使用独立记录，不能拿一条决定关闭两项。
@@ -30,14 +31,19 @@ description: 维护五技术栈共用的游戏和应用 Work Item、六阶段状
 
 机器输出不证明命令曾运行。每项执行结果必须列出确实修改且存在的单元文件、与计划命令逐一对应的退出码和非空命令输出文件；`unit-check` 只校验结果，不执行命令。`status` 和 `check` 也只读。`check` 与 `run` 遇到阻断时返回非零状态。
 
+`run` 的 STOPPED 表示控制器没有执行实际工作，不代表新增人工审批。已获当前任务授权的代理应继续明确的实施和显式迁移；只有真实缺少事实、实质取舍或受保护动作授权时，才向用户询问。
+
 `status` 的 `metadata.activeBatch` 显示可提交结果的当前批次。并行批次的单元可以任意顺序提交，但需等待整批真实结果都通过后才会开放下一批。控制器为同一个 Work Item 的写操作加排他锁；遇到 `BUSY` 时重新读取状态后重试。字段和校验边界见[实施批次与结果状态](references/implementation-execution.md)。
 
-`RELEASING` 只记录已由用户精确批准的发布动作进入外部执行边界，控制器和 `run` 不执行发布。RELEASE 工作项完成时，Evidence Manifest 必须包含 `release-result` 项；其记录要绑定当前工作项、栈、阶段、动作、目标与批准消息，并引用 evidenceRoot 内实际发布凭据。使用 [templates/release-result.json](templates/release-result.json) 建立记录。
+`RELEASE` 默认 `releaseIntent=prepare`，检查或候选准备通过后，用 [release-preparation](templates/release-preparation.json) 绑定当前工作项及真实准备材料，可从 PASSED/INTEGRATING 正常完成。只有 `releaseIntent=publish` 才经过 F4、精确批准和 RELEASING；完成时必须有 [release-result](templates/release-result.json) 及实际发布凭据。两类完成结果分别标为 `release-prepared` 和 `release-published`，控制器与 `run` 均不执行发布。
 
 ## CLI
 
 ```text
 node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
+node skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <项目相对JSON路径> --spec <实际计划JSON路径>
+node skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <项目相对JSON路径> --unit <单元ID> --report <真实执行报告JSON路径>
+node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>
 node skills/app-workflow-control/scripts/workflow-control.mjs status --repo <项目路径> --work-item <项目相对 JSON 路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs check --repo <项目路径> --work-item <项目相对 JSON 路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs run --repo <项目路径> --work-item <项目相对 JSON 路径>
@@ -47,5 +53,11 @@ node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo 
 ```
 
 `init` 只生成 Work Item，不覆盖已有记录。新 PAGE/SCENE/DISPLAY_LAYER 默认要求全局视觉基线；纯工程任务无视觉工作时默认不要求基线。确认不需要全局视觉基线的局部任务可以经证据审查后，在 Work Item 记录 `visualBaselineRequired: false`。
+
+单个无视觉生产的本地 FOUNDATION/MODULE 修复可用 `init --mode light`，从 REVIEW 起步；仍须 F0–F3、单个独立实施单元和当前栈必需证据。普通任务默认 `standard`，视觉、发布、集成或受保护动作使用普通流程。纯查询、文案或注释通常无需建立工作项。
+
+实际计划和执行报告使用 [work-plan](templates/work-plan.json)、[execution-report](templates/execution-report.json)。记录工具从当前工作项推导身份和路径，`plan` 收窄范围，`record` 合并真实证据；不执行命令、不伪造输出、不自动设置 F3/F4。成功记录后仍需 `unit-check` 及后续实际验证门。
+
+视觉增量先用 `reuse-visual` 校验来源并引用未变化的基线和 V1/V2 确认；同项目、技术栈、对象、候选及显示层宿主必须匹配，源工作项须 COMPLETE/V4。布局变化重新确认布局，目标变化重新确认目标；当前 V3/V4 和工程证据仍独立产生。完整规则见[统一流程](../app-creator-workflow/references/workflow.md#视觉确认的增量复用)。
 
 使用 [templates/](templates) 中同名合同记录真实实施包、结果、人工阶段确认、全局基线、素材评审和拷问。不要在已通过的证据里放模板占位符。

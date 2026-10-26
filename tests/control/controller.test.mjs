@@ -13,9 +13,9 @@ const cliPath = resolve('skills/app-workflow-control/scripts/workflow-control.mj
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
 /** 构建隔离项目并通过正式 init 接口建立类型有效的 Work Item。 */
-async function createFixture({ id = 'sample', stack = 'flutter', type = 'FOUNDATION', objective = '建立一项可验证交付' } = {}) {
+async function createFixture({ id = 'sample', stack = 'flutter', type = 'FOUNDATION', releaseIntent, objective = '建立一项可验证交付' } = {}) {
   const repo = await mkdtemp(resolve(tmpdir(), 'app-workflow-'));
-  const result = await initializeWork({ repo, args: { id, stack, type, objective } });
+  const result = await initializeWork({ repo, args: { id, stack, type, objective, ...(releaseIntent ? { 'release-intent': releaseIntent } : {}) } });
   return { repo, workPath: result.metadata.workItemPath, result };
 }
 
@@ -509,7 +509,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V4 的控制器闭
 });
 
 test('RELEASE 在 F4 未运行时可进入批准等待态，但未批准不得进入 RELEASING', async (t) => {
-  const fixture = await createFixture({ id: 'release-no-approval', type: 'RELEASE' });
+  const fixture = await createFixture({ id: 'release-no-approval', type: 'RELEASE', releaseIntent: 'publish' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readyForRelease(fixture);
   assert.equal(work.globalState, 'RELEASE_APPROVAL_REQUIRED');
@@ -524,7 +524,7 @@ test('RELEASE 在 F4 未运行时可进入批准等待态，但未批准不得�
 });
 
 test('审批后改变发布目标会拒绝进入 RELEASING', async (t) => {
-  const fixture = await createFixture({ id: 'release-target-change', type: 'RELEASE' });
+  const fixture = await createFixture({ id: 'release-target-change', type: 'RELEASE', releaseIntent: 'publish' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readyForRelease(fixture);
   approveRelease(work);
@@ -536,8 +536,21 @@ test('审批后改变发布目标会拒绝进入 RELEASING', async (t) => {
   );
 });
 
+test('publish 即使有精确批准，F4 未通过也不能进入 RELEASING', async (t) => {
+  const fixture = await createFixture({ id: 'release-no-f4', type: 'RELEASE', releaseIntent: 'publish' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const work = await readyForRelease(fixture);
+  approveRelease(work);
+  work.gateStatus.F4 = 'NOT_RUN';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await assert.rejects(
+    transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }),
+    { code: 'GATE_BLOCKED' },
+  );
+});
+
 test('合成发布材料验证 RELEASING 绑定和 COMPLETE 结果门，不代表实际发布', async (t) => {
-  const fixture = await createFixture({ id: 'release-approved', type: 'RELEASE' });
+  const fixture = await createFixture({ id: 'release-approved', type: 'RELEASE', releaseIntent: 'publish' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   let work = await readyForRelease(fixture);
   approveRelease(work);
@@ -568,7 +581,7 @@ test('合成发布材料验证 RELEASING 绑定和 COMPLETE 结果门，不代�
 });
 
 test('RELEASING 可以转 BLOCKED 并再次加载工作项', async (t) => {
-  const fixture = await createFixture({ id: 'blocked-releasing', type: 'RELEASE' });
+  const fixture = await createFixture({ id: 'blocked-releasing', type: 'RELEASE', releaseIntent: 'publish' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readWork(fixture.repo, fixture.workPath);
   work.globalState = 'RELEASING';

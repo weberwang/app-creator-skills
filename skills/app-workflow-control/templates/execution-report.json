@@ -1,0 +1,11 @@
+{
+  "files": ["src/feature/example.ts"],
+  "commandOutputs": [
+    {
+      "command": "<必须与冻结计划中的命令完全一致>",
+      "exitCode": -1,
+      "outputFile": ".workflow-control/evidence/replace-with-work-id/command-output.txt"
+    }
+  ],
+  "evidence": []
+}

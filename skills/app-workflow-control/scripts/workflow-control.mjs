@@ -6,13 +6,18 @@ import { GATES, STACKS, TRANSITIONS, VISUAL_STAGES } from './runtime/constants.m
 import { repoPath, WorkflowError } from './runtime/io.mjs';
 import { loadProfile, requireOneOf, requireText } from './runtime/validation.mjs';
 import { advanceVisual, completeUnit, initializeWork, inspect, loadWork, response, transitionWork } from './runtime/workflow.mjs';
+import { prepareWorkRecords, recordWorkResult } from './runtime/records.mjs';
+import { reuseVisualReviews } from './runtime/visual-reuse.mjs';
+import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
+  plan: ['repo', 'work-item', 'spec'], record: ['repo', 'work-item', 'unit', 'report'],
+  'reuse-visual': ['repo', 'work-item', 'source-work-item', 'impact', 'reason'],
   lint: ['repo'],
 });
 
@@ -30,6 +35,19 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'run') return output(await runSafe({ repo, workItem: args['work-item'] }), true);
   requireText(args['work-item'], '--work-item');
   repoPath(repo, args['work-item'], 'Work Item 路径');
+  if (command === 'plan') {
+    requireText(args.spec, '--spec');
+    return output(await prepareWorkRecords({ repo, workItem: args['work-item'], planPath: args.spec }), true);
+  }
+  if (command === 'record') {
+    requireText(args.unit, '--unit');
+    requireText(args.report, '--report');
+    return output(await recordWorkResult({ repo, workItem: args['work-item'], unitId: args.unit, reportPath: args.report }), true);
+  }
+  if (command === 'reuse-visual') {
+    for (const name of ['source-work-item', 'impact', 'reason']) requireText(args[name], `--${name}`);
+    return output(await reuseVisualReviews({ repo, workItem: args['work-item'], sourceWorkItem: args['source-work-item'], impact: args.impact, reason: args.reason }), true);
+  }
   if (command === 'status' || command === 'check') return output(inspect({ repo, workItem: args['work-item'], check: command === 'check' }), command === 'check');
   if (command === 'transition') {
     requireText(args.to, '--to');
@@ -52,7 +70,7 @@ async function runSafe({ repo, workItem }) {
   requireText(workItem, '--work-item');
   let work = loadWork(repo, workItem);
   if (['IMPLEMENTING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING'].includes(work.globalState)) {
-    return response({ status: 'STOPPED', work, next: ['等待当前生产单元或精确授权发布交由人工作业'], metadata: { reason: 'AUTOMATIC_EXECUTION_DISABLED' } });
+    return response({ status: 'STOPPED', work, next: ['由已获授权的执行者完成当前单元；涉及发布时核对精确批准，控制器不执行实际动作'], metadata: { reason: 'AUTOMATIC_EXECUTION_DISABLED' } });
   }
   let changed = false;
   for (const [state, gate, target] of [['INTAKE', 'F0', 'BASELINE'], ['BASELINE', 'F1', 'PROPOSAL'], ['PROPOSAL', 'F2', 'REVIEW']]) {
@@ -65,6 +83,10 @@ async function runSafe({ repo, workItem }) {
     work = loadWork(repo, workItem);
   }
   if (work.globalState === 'REVIEW') {
+    if (workflowMode(work) === 'light') {
+      const checked = inspect({ repo, workItem, check: true });
+      if (checked.status === 'BLOCKED') return { ...checked, changed };
+    }
     return response({ status: 'STOPPED', work, changed, next: ['冻结 Implementation Package，再显式 transition 到 IMPLEMENTING'], metadata: { reason: 'EXPLICIT_IMPLEMENTATION_REQUIRED' } });
   }
   const result = inspect({ repo, workItem, check: false });
@@ -79,13 +101,14 @@ async function lintPackage(repo) {
     'work-item.schema.json', 'implementation-package.schema.json', 'execution-result.schema.json',
     'evidence-manifest.schema.json', 'human-review.schema.json', 'grilling-record.schema.json',
     'asset-review.schema.json', 'global-visual-baseline.schema.json', 'release-result.schema.json',
+    'release-preparation.schema.json', 'work-plan.schema.json', 'execution-report.schema.json',
   ];
   for (const file of schemaFiles) {
     const path = resolve(skillRoot, 'schemas', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }
     catch (error) { throw new WorkflowError(`schema ${file} 无效或缺失：${error.message}`, 'PACKAGE_INVALID'); }
   }
-  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'human-review.json', 'execution-result.json', 'release-result.json'];
+  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json'];
   for (const file of templateFiles) {
     const path = resolve(skillRoot, 'templates', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }
