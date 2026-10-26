@@ -70,7 +70,7 @@ npx app-creator-skills unity,cocos
 npx app-creator-skills
 ```
 
-第三种用法在交互终端中提供中文技术栈选择；非交互环境必须指定技术栈。只有显式选择 `all` 才安装五栈。可选 `--dir D:\Projects\MyApp` 指定另一项目，`--dry-run` 预览，`--replace` 在备份后更新不同内容。已有相同内容和下载缓存直接复用，后续可以追加其他栈。
+第三种用法在交互终端中提供中文技术栈选择；非交互环境必须指定技术栈。只有显式选择 `all` 才安装五栈。可选 `--dir ../my-app` 指定另一项目，`--dry-run` 预览，`--replace` 在备份后更新不同内容。已有相同内容和下载缓存直接复用，后续可以追加其他栈。
 
 **默认远程仓库为私有仓库 `weberwang/app-creator-skills`，npx 包尚未发布。** 默认来源配置在 [installer.config.json](packages/cli/installer.config.json)，可选填写 `ref` 固定版本；轻量包发布后，上述命令才可从 npm 使用。访问私有仓库需通过 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限，具体方法见下方私库说明。临时来源可用 `--repo owner/repo` 覆盖，无需每次填写默认仓库。
 
@@ -78,43 +78,43 @@ npx app-creator-skills
 
 以下独立安装器和本地入口保留显式选项：`--stack flutter`、`--stack unity,cocos` 或 `--stack all`，不指定时提示选择，不默认全装。
 
-远程安装无需克隆整个仓库。将下面的仓库坐标和版本替换成已提供本安装器的可信 GitHub 仓库；固定提交 SHA 可以复现相同版本：
+远程安装无需克隆整个仓库。在目标项目根目录执行以下示例，将仓库坐标和版本替换成已提供本安装器的可信公开 GitHub 仓库；固定提交 SHA 可以复现相同版本：
 
 ```powershell
 $skillsRepo = 'OWNER/app-creator-skills'
 $skillsRef = 'main' # 替换为实际分支、标签或提交 SHA
-$installerPath = Join-Path $env:TEMP 'app-creator-install.mjs'
+$installerPath = './app-creator-install.mjs'
 Invoke-WebRequest -Uri "https://raw.githubusercontent.com/$skillsRepo/$skillsRef/install.mjs" -OutFile $installerPath
-node $installerPath D:\Projects\MyApp --repo $skillsRepo --ref $skillsRef --stack flutter --dry-run
-node $installerPath D:\Projects\MyApp --repo $skillsRepo --ref $skillsRef --stack flutter
+node $installerPath . --repo $skillsRepo --ref $skillsRef --stack flutter --dry-run
+node $installerPath . --repo $skillsRepo --ref $skillsRef --stack flutter
 
 # 后续只补装 Unity；相同公共内容直接复用
-node $installerPath D:\Projects\MyApp --repo $skillsRepo --ref $skillsRef --stack unity
+node $installerPath . --repo $skillsRepo --ref $skillsRef --stack unity
 ```
 
 启动器只获取最小安装引擎，随后将分支/标签解析到一个不可变提交，读取目录元数据与安装清单，仅下载所选栈和公共依赖；不下载整仓压缩包、其他栈的专业目录或源迁移档案。公共资源包作为完整依赖分发。已有目标文件或缓存与远端 Git blob 摘要一致时直接复用；再次安装相同版本不重复下载技能载荷，也不重写相同目录。
 
 私有仓库可通过 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限，令牌不放进命令参数或报告。上面的 `Invoke-WebRequest` 示例用于公开仓库，不会自动读取这两个变量；启动器位于私库时，先通过已登录的 GitHub 页面或已认证渠道下载可信 `install.mjs`，再指定私库执行，不能把令牌拼进下载 URL。远程安装需要网络；Node.js 22.20 不会自动采用代理环境变量，需要环境代理时，使用支持该能力的 Node.js 版本并按[官方代理说明](https://nodejs.org/learn/http/enterprise-network-configuration)启用。远端清单截断、下载损坏或权限不足时停止，不退回全仓下载。
 
-已有本地仓库时仍可离线选装：
+已有本地仓库时仍可离线选装。在本技能仓库根目录执行以下命令，示例目标项目为同级目录 `../my-app`：
 
 ```powershell
-node E:\Git\app-creator-skills\scripts\install-project-skills.mjs D:\Projects\MyApp --stack flutter --dry-run
-node E:\Git\app-creator-skills\scripts\install-project-skills.mjs D:\Projects\MyApp --stack flutter
+node scripts/install-project-skills.mjs ../my-app --stack flutter --dry-run
+node scripts/install-project-skills.mjs ../my-app --stack flutter
 
 # 使用同一入口，从指定远端按栈获取
-node E:\Git\app-creator-skills\scripts\install-project-skills.mjs D:\Projects\MyApp --repo OWNER/app-creator-skills --stack flutter
+node scripts/install-project-skills.mjs ../my-app --repo OWNER/app-creator-skills --stack flutter
 ```
 
 分发到目标 `.agents/skills/`，包含公共技能、所选栈的专业入口、领域资源、公共能力库和共享依赖声明。所需公共实现一并安装，运行不依赖五个源仓库，不修改项目源码或全局技能。后续可追加其他栈，已有栈和无关技能保留。
 
-运行需要 Sharp、YAML 或 JSON Schema 的专业 Node 工具前，安装一次共享依赖：
+运行需要 Sharp、YAML 或 JSON Schema 的专业 Node 工具前，在目标项目根目录安装一次共享依赖：
 
 ```powershell
-npm ci --prefix D:\Projects\MyApp\.agents\skills\app-skill-runtime
+npm ci --prefix .agents/skills/app-skill-runtime
 ```
 
-本地模式只复制文件；显式指定 `--repo` 时才联网下载。安装器不执行远端技能脚本、不自动安装 npm 依赖。脚本经共享桥接加载依赖，不引用开发机 E 盘。FFmpeg、Unity/Creator、FVM/Flutter、Spine、Blender MCP 等能力按专业技能检查；脚本存在不代表外部程序已经运行。更新共享运行时会保留现有 `node_modules`；依赖清单变动后按上述命令重新安装依赖。
+本地模式只复制文件；显式指定 `--repo` 时才联网下载。安装器不执行远端技能脚本、不自动安装 npm 依赖。脚本通过随安装分发的共享桥接加载依赖。FFmpeg、Unity/Creator、FVM/Flutter、Spine、Blender MCP 等能力按专业技能检查；脚本存在不代表外部程序已经运行。更新共享运行时会保留现有 `node_modules`；依赖清单变动后按上述命令重新安装依赖。
 
 同名目录内容完全相同时跳过，追加栈无需重复替换公共目录；内容不同或含本地新增文件时默认停止。检查后用 `--replace` 更新，旧目录保存在 `.agents/skills-backups/<事务ID>/original/`。更新公共组件可能影响已安装的其他栈，应按影响范围验证。安装使用排他锁，失败恢复原目录；若异常留下 `.agents/app-creator-install.lock`，确认进程已结束再人工清理，不自动猜测失效。
 
@@ -140,9 +140,11 @@ npm test
 npm run test:flutter-layout
 npm run check
 npm run check:migration
-npm run check:migration -- --source-root E:/Git
+npm run check:migration -- --source-root ..
 npm pack --dry-run
 ```
+
+上述维护命令在本技能仓库根目录执行。`--source-root ..` 适用于五个源仓库与本仓库位于同一父目录的布局；其他布局请传入源仓库父目录相对于当前目录的路径。
 
 迁移校验逐文件检查缺失、改写和完整性；指定 source-root 后重读五源 Git NUL 清单及字节，防止清单自身漏项。共用能力还核对公共真源、真实导入、薄适配、完整规则段落及技术栈来源。断依赖、漏专业能力、漏模板、只登记共享却仍复制实现或用概述代替规则均应失败。
 
