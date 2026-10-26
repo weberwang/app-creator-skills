@@ -1,0 +1,243 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/scene-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "sceneId",
+    "sceneVersion",
+    "reportPurpose",
+    "sourceRevision",
+    "projectStateVersion",
+    "buildVersion",
+    "generatedAtUtc",
+    "sceneManifest",
+    "greybox",
+    "gameVisual",
+    "implementation",
+    "uiVisual",
+    "editorComparison",
+    "tests",
+    "performance",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "projectId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sceneId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sceneVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reportPurpose": {
+      "enum": [
+        "VERTICAL_SLICE",
+        "SCENE_COMPLETION"
+      ]
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectStateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "buildVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "sceneManifest": {
+      "$ref": "./common.schema.json#/$defs/evidence"
+    },
+    "greybox": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "gameVisual": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "implementation": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "uiVisual": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "editorComparison": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "tests": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "performance": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "status": {
+      "enum": [
+        "NOT_RUN",
+        "PASS",
+        "FAIL",
+        "BLOCKED"
+      ]
+    },
+    "failureReason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PASS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "greybox": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "gameVisual": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "implementation": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "uiVisual": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "editorComparison": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "tests": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "performance": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "reportPurpose": {
+            "const": "VERTICAL_SLICE"
+          },
+          "status": {
+            "const": "PASS"
+          }
+        },
+        "required": [
+          "reportPurpose",
+          "status"
+        ]
+      },
+      "then": {
+        "required": [],
+        "properties": {
+          "tests": {
+            "properties": {
+              "id": {
+                "const": "vertical-slice.playable"
+              },
+              "status": {
+                "const": "PASS"
+              },
+              "evidence": {
+                "minItems": 1,
+                "maxItems": 1,
+                "items": {
+                  "allOf": [
+                    {
+                      "$ref": "./common.schema.json#/$defs/evidence"
+                    },
+                    {
+                      "properties": {
+                        "type": {
+                          "const": "platform-build-artifact"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    }
+                  ]
+                }
+              }
+            },
+            "required": [
+              "id",
+              "status",
+              "evidence"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "FAIL",
+              "BLOCKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "failureReason"
+        ]
+      }
+    }
+  ]
+}

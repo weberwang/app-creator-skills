@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "阶段决策拷问记录",
+  "description": "只追问证据无法消除的产品决定；OPEN 记录阻断受影响工作。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workItemId", "status"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "workItemId": {"type": "string"}, "status": {"enum": ["OPEN", "CLOSED", "NOT_REQUIRED"]},
+    "userMessageRef": {"type": "string"},
+    "decisions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["question", "impact", "options", "recommendation", "answer", "userMessageRef"], "properties": {"question": {"type": "string", "minLength": 1}, "impact": {"type": "string", "minLength": 1}, "options": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}}, "recommendation": {"type": "string", "minLength": 1}, "answer": {"type": "string", "minLength": 1}, "userMessageRef": {"type": "string", "minLength": 1}}}}
+  },
+  "allOf": [
+    {"if": {"properties": {"status": {"const": "OPEN"}}}, "then": {"required": ["decisions"], "properties": {"decisions": {"minItems": 1}}}},
+    {"if": {"properties": {"status": {"const": "CLOSED"}}}, "then": {"required": ["userMessageRef", "decisions"], "properties": {"decisions": {"minItems": 1}}}},
+    {"if": {"properties": {"status": {"const": "NOT_REQUIRED"}}}, "then": {"properties": {"decisions": {"maxItems": 0}}}}
+  ]
+}

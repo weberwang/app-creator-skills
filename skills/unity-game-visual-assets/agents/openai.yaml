@@ -1,0 +1,4 @@
+interface:
+  display_name: "Unity 视觉与资源"
+  short_description: "确认视觉与结构，逐图生成、拼装并清理低保真"
+  default_prompt: "使用 $app-asset-workflow 依次确认全局视觉、低保真结构、高保真效果图和编号资产地图，再逐项生成、结构化拼装并清除运行时低保真占位内容。"

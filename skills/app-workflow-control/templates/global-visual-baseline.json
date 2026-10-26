@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "baselineId": "replace-with-baseline-id",
+  "projectId": "replace-with-project-id",
+  "stack": "unity",
+  "candidates": [
+    {"candidateId": "candidate-a", "path": "art/candidates/a.png", "qualityChecks": [
+      {"dimension": "themeFit", "status": "PASS", "evidenceRef": "art/reviews/a-theme.md"},
+      {"dimension": "audienceFit", "status": "PASS", "evidenceRef": "art/reviews/a-audience.md"},
+      {"dimension": "taskReadability", "status": "PASS", "evidenceRef": "art/reviews/a-readability.md"},
+      {"dimension": "viewingComfort", "status": "PASS", "evidenceRef": "art/reviews/a-comfort.md"},
+      {"dimension": "artCompletion", "status": "PASS", "evidenceRef": "art/reviews/a-completion.md"}
+    ]},
+    {"candidateId": "candidate-b", "path": "art/candidates/b.png", "qualityChecks": [
+      {"dimension": "themeFit", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "audienceFit", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "taskReadability", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "viewingComfort", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "artCompletion", "status": "NOT_RUN", "evidenceRef": ""}
+    ]},
+    {"candidateId": "candidate-c", "path": "art/candidates/c.png", "qualityChecks": [
+      {"dimension": "themeFit", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "audienceFit", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "taskReadability", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "viewingComfort", "status": "NOT_RUN", "evidenceRef": ""}, {"dimension": "artCompletion", "status": "NOT_RUN", "evidenceRef": ""}
+    ]}
+  ],
+  "selectedCandidateId": "candidate-a",
+  "selectionReviewRef": {"path": "art/reviews/baseline-human-review.json"}
+}

@@ -1,0 +1,53 @@
+{
+  "capability": "app-game-balance",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-balance",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-balance",
+        "mode": "unity-game-balance",
+        "when": "仅当项目技术栈为 Unity，且任务属于“游戏数值与经济”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-balance",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-balance",
+        "mode": "cocos-game-balance",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏数值与经济”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-balance",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-balance",
+        "mode": "phaser4-game-balance",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏数值与经济”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-balance",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-balance",
+        "mode": "threejs-game-balance",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏数值与经济”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "balance",
+      "path": "../app-domain-toolkit/references/balance.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ]
+    }
+  ]
+}

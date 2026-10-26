@@ -1,0 +1,15 @@
+{
+  "capability": "app-3d-texturing",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-3d-texturing",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-3d-texturing",
+        "mode": "unity-game-3d-texturing",
+        "when": "仅当项目技术栈为 Unity，且任务属于“三维材质与贴图生产”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

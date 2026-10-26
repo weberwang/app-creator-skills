@@ -1,0 +1,61 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+activeDecomposition:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+activeProjectProfile:
+  type: project-profile
+  path: Artifacts/Planning/project-profile.yaml
+  subjectId: starfall-arena
+  subjectVersion: profile-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+gates:
+  - id: G0
+    status: WAITING_APPROVAL
+    requiredChecks:
+      - grilling.approved
+      - scope.approved
+      - decomposition.approved
+      - visual-bible.approved
+      - platforms.approved
+    checkResults: []
+    evidence: []
+  - id: G1
+    status: NOT_RUN
+    requiredChecks:
+      - s00.verified
+      - vertical-slice.playable
+      - build.platform-development
+    checkResults: []
+    evidence: []
+  - id: G2
+    status: NOT_RUN
+    requiredChecks:
+      - scope.complete
+      - modules.acceptance-complete
+      - platforms.adaptation-complete
+      - assets.production-ready
+      - regression.pass
+      - defects.p0-p1-resolved
+    checkResults: []
+    evidence: []
+  - id: G3
+    status: NOT_RUN
+    requiredChecks:
+      - candidate.verified
+      - licenses.verified
+      - privacy.verified
+      - rollback.ready
+      - devices.acceptance-verified
+      - performance.pass
+      - scenes.2d-adaptation-verified
+      - user.release-approved
+    checkResults: []
+    evidence: []

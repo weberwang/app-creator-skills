@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "status": "PASS",
+  "workItemId": "replace-with-work-id",
+  "stack": "flutter",
+  "stageId": "release",
+  "actionId": "replace-with-approved-action-id",
+  "target": "replace-with-approved-release-target",
+  "userMessageRef": "replace-with-approval-message-reference",
+  "releaseIdentifier": "replace-with-real-release-id-or-version",
+  "evidencePath": ".workflow-control/evidence/replace-with-work-id/release-proof.txt"
+}

@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: invariants, value: []}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "三维几何建模"
+  short_description: "把三维对象需求转成可控几何、清楚层级、目标面数、可用坐标和可复验导出资源。"
+  default_prompt: "使用 $app-3d-modeling，按已确认的技术栈完成当前三维几何建模任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

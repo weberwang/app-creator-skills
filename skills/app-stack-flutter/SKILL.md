@@ -1,0 +1,17 @@
+---
+name: app-stack-flutter
+description: 规划或实现 Flutter 应用页面、Widget 状态、导航、自适应布局、键盘/系统安全区、无障碍、页面视觉目标和 Flutter 测试时使用。
+---
+
+# Flutter 技术栈
+
+完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。
+
+
+先读公共 [`app-creator-workflow`](../app-creator-workflow/SKILL.md) 与 [`app-workflow-control`](../app-workflow-control/SKILL.md)，然后依任务读取[工程与架构](references/engineering.md)、[PAGE 工作项与布局](references/pages-and-layout.md)、[页面素材与视觉质量](references/assets-and-visual-quality.md)或[验证](references/verification.md)。
+
+Flutter 独立 APP 页面采用 `PAGE` 工作类型。通用 V0–V4 仍由公共控制面提供身份和证据容器；此 profile 将页面阶段映射为页面语义→sketch 合同→高保真目标和资产→fidelity 与运行验收。它不会把页面硬套进 Scene 生命周期或 Camera 坐标。页面没有实际视觉变化时，不强迫进入完整视觉评审链。
+
+使用 FVM 运行项目已固定的 Flutter/Dart；源技术栈不预设具体版本。复用现有状态管理和导航；新依赖按实际需要的能力档选择，不从 `pub get`、公开 Widget 或模拟截图推测兼容或运行结果。
+
+来源：`skills/app-stack-flutter/references/native-contracts.md#mode-flutter-project-init`、`skills/app-stack-flutter/references/native-contracts.md#mode-flutter-tech-design`、`flutter-app-orchestrator/SKILL.md`、`adaptive-layout-implementation/references/layout-spec.md`、`skills/app-stack-flutter/references/native-contracts.md#mode-flutter-ux-ui-quality`、`flutter-hifi-mockup/references/mockup-review-rubric.md`。

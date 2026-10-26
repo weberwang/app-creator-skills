@@ -1,0 +1,20 @@
+---
+name: flutter-artifact-cleanup
+description: Flutter 项目整理与产物清理原生适配，保护 pubspec 资源声明、生成资产、动态键和运行时清单依赖。
+---
+
+# Flutter 整理清理原生适配
+
+> 本规范为 app-creator-skills 仓库新增，Flutter 源仓库没有该整理清理技能；由唯一公共入口 [`app-artifact-cleanup`](../app-artifact-cleanup/SKILL.md) 按需调用。
+
+先遵循[公共执行协议](../app-creator-workflow/references/professional-execution.md)，再应用[项目整理与产物清理规范](../app-artifact-cleanup/references/project-cleanup.md)。公共规则负责分类、引用盘点和清单；此适配规定 Flutter 资源声明、生成文件和打包边界。
+
+## Flutter 资源与构建产物
+
+- 对照当前 Flutter/Dart SDK、项目采用的代码生成器和所有目标 flavor/channel，检查 `pubspec.yaml` 中 assets、fonts、依赖以及构建脚本/插件自动登记的资源。核对路径大小写、目录级声明和打包生成的资源清单及实际包含情况。
+- 追踪 `Image.asset`、`AssetBundle`、`rootBundle`、本地化与生成资源接口的静态引用，也检查通过服务端/配置返回键、`Map`、反射式选择或拼接路径形成的动态资源键。代码中没有字面路径不能证明资源未使用。
+- 对图片/atlas检查实际调用点、生成映射 JSON/Dart 文件、导入工具的源图和输出清单。移动或删除必须同时核对映射键和加载 API；不可仅因原图不直接被 `Image.asset` 引用就移除生成输入。
+- `build/`、`.dart_tool/` 等目录只在确认可通过目标 SDK、锁定依赖和生成步骤重建后作为候选；保留 `pubspec.lock`、手写/正式 `lib` 与 `assets`、生成器真实输入、平台 Runner 配置、用户数据和发布产物。
+- 检查 `flutter gen-l10n`、build_runner或项目脚本声明的生成输出与输入关系。生成文件是否纳入版本控制按当前仓库约定，不能仅因文件头写着 generated 就删除或重写。
+
+完成后运行受影响的资源生成/代码生成、静态检查或项目 Flutter 测试，并对目标 flavor 执行资源包含性构建检查。只有确认路径、动态键与输出映射一致，才报告资源清理通过；未执行目标构建时清楚标记。

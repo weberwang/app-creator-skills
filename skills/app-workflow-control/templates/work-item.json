@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "replace-with-work-id",
+  "projectId": "replace-with-project-id",
+  "stack": "flutter",
+  "workItemType": "FOUNDATION",
+  "stageId": "foundation-engineering",
+  "globalState": "INTAKE",
+  "objective": "describe one verifiable deliverable",
+  "allowedPaths": ["lib", "test", "docs"],
+  "forbiddenPaths": ["build", ".dart_tool", "node_modules"],
+  "gateStatus": {"F0": "NOT_RUN", "F1": "NOT_RUN", "F2": "NOT_RUN", "F3": "NOT_RUN", "F4": "NOT_RUN"},
+  "revision": 0,
+  "implementationPackageRef": null,
+  "evidenceRef": null,
+  "globalVisualBaselineRef": null,
+  "assetReviewRef": null,
+  "grillingRef": null,
+  "visualBaselineRequired": false,
+  "evidenceRoot": ".workflow-control/evidence/replace-with-work-id"
+}

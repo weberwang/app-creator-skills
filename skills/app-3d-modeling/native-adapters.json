@@ -1,0 +1,43 @@
+{
+  "capability": "app-3d-modeling",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-3d-modeling",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-3d-modeling",
+        "mode": "unity-game-3d-modeling",
+        "when": "仅当项目技术栈为 Unity，且任务属于“三维几何建模”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-3d-modeling",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-3d-modeling",
+        "mode": "cocos-game-3d-modeling",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“三维几何建模”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-3d-modeling",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-3d-modeling",
+        "mode": "threejs-game-3d-modeling",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“三维几何建模”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "modeling-production",
+      "path": "../app-domain-toolkit/references/modeling-production.md",
+      "stacks": [
+        "cocos",
+        "threejs",
+        "unity"
+      ]
+    }
+  ]
+}

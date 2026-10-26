@@ -1,0 +1,15 @@
+{
+  "capability": "app-runtime-plugins",
+  "adapters": {
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-plugins",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-plugins",
+        "mode": "Three.js 运行时插件与扩展",
+        "when": "需要选择或接入Three addons、物理/碰撞查询/导航、模型decoder或后处理扩展，并核实其版本、生命周期和运行预算时。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

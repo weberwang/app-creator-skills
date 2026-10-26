@@ -1,0 +1,5 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: critical_alignments, value: []}
+  - {op: set, path: parity_cases, value: []}

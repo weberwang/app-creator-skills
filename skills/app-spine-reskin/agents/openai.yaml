@@ -1,0 +1,6 @@
+interface:
+  display_name: "Spine 生成式换皮"
+  short_description: "在保留既有Spine骨架和动画合同的前提下替换外观，并校验部件、图集、遮挡与动作一致性。"
+  default_prompt: "使用 $app-spine-reskin，按已确认的技术栈完成当前Spine 生成式换皮任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

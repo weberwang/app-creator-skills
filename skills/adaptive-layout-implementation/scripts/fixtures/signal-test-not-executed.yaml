@@ -1,0 +1,16 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+expected_attention: [Positioned]
+mutations:
+  - op: append
+    path: invariants
+    value: {id: signal-contract, relation: 叠层保持语义边界, test_ids: [signal_only_test]}
+  - op: append
+    path: implementation_signals
+    value:
+      signal: Positioned
+      reason: 真实叠层测试
+      boundary: semantic overlay bounds
+      viewport_scope: compact viewport
+      fallback: 回退文档流
+      test_ids: [signal_only_test]

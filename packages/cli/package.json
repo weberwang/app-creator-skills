@@ -1,0 +1,21 @@
+{
+  "name": "app-creator-skills",
+  "version": "1.0.0",
+  "description": "按技术栈增量安装游戏与应用技能的轻量命令行入口",
+  "type": "module",
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "bin": {
+    "app-creator-skills": "cli.mjs"
+  },
+  "files": [
+    "cli.mjs",
+    "installer.config.json",
+    "generated/bootstrap.mjs"
+  ],
+  "scripts": {
+    "prepack": "node ../../scripts/build-npx-package.mjs --quiet",
+    "prepublishOnly": "node ../../scripts/build-npx-package.mjs --check-config"
+  }
+}

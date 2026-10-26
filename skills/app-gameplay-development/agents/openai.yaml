@@ -1,0 +1,6 @@
+interface:
+  display_name: "游戏玩法实现"
+  short_description: "按已确认的玩法规则实现游戏状态、输入响应、实体行为、反馈触发和可复现的验证。"
+  default_prompt: "使用 $app-gameplay-development，按已确认的技术栈完成当前游戏玩法实现任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

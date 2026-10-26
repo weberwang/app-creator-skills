@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/visual-review.schema.json",
+  "title": "Unity 视觉领域审查",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reviewId", "subject", "authorId", "reviewers", "checks", "verdict", "recordedAtUtc"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "reviewId": {"type": "string", "minLength": 1},
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "subjectId", "subjectVersion", "sourceRevision"],
+      "properties": {
+        "type": {"enum": ["GLOBAL_DIRECTION", "SCENE_TARGET", "ASSET_MAP", "RUNTIME_CAPTURE"]},
+        "subjectId": {"type": "string", "minLength": 1},
+        "subjectVersion": {"type": "string", "minLength": 1},
+        "sourceRevision": {"type": "string", "minLength": 1}
+      }
+    },
+    "authorId": {"type": "string", "minLength": 1},
+    "reviewers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["reviewerId", "role", "independent", "status", "findings"],
+        "properties": {
+          "reviewerId": {"type": "string", "minLength": 1},
+          "role": {"enum": ["VISUAL", "UNITY_IMPLEMENTATION", "UX", "ACCESSIBILITY", "PERFORMANCE"]},
+          "independent": {"const": true},
+          "status": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+          "findings": {"type": "array", "items": {"type": "string", "minLength": 1}}
+        }
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["visualConsistency", "unityFeasibility", "readability", "runtimeEvidence"],
+      "properties": {
+        "visualConsistency": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
+        "unityFeasibility": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
+        "readability": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]},
+        "runtimeEvidence": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_APPLICABLE"]}
+      }
+    },
+    "userDecision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "status"],
+      "properties": {
+        "required": {"type": "boolean"},
+        "status": {"enum": ["NOT_REQUIRED", "PENDING", "ACCEPTED", "REJECTED"]},
+        "decisionId": {"type": "string", "minLength": 1}
+      }
+    },
+    "verdict": {"enum": ["PASS", "FAIL", "BLOCKED"]},
+    "recordedAtUtc": {"type": "string", "format": "date-time"}
+  }
+}

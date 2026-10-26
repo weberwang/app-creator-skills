@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: duplicate, path: parity_cases, source_index: 0}

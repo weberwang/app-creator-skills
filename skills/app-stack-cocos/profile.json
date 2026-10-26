@@ -1,0 +1,233 @@
+{
+  "id": "cocos",
+  "displayName": "Cocos Creator",
+  "detectAny": [
+    "assets",
+    "settings/v2/packages",
+    "profiles"
+  ],
+  "frameworkPolicy": [
+    "以项目安装的 Cocos Creator 3.x 小版本为准；先读 Creator 版本和 package.json 中启用的插件。",
+    "场景、UI 和原生插件边界不跨 Creator 小版本假定兼容。",
+    "仅按项目实际选择的 Creator 平台构建。"
+  ],
+  "nativeRules": [
+    "Creator 资产正式目录为 assets/，工程设置和预览配置分别位于 settings/ 与 profiles/；Creator 生成的 library、temp、local、build 目录不是可手工维护的源资产。",
+    "Creator 导入的源文件与其 .meta 同步登记；实际 UUID 和 SpriteFrame 等子资源身份由 AssetDB 读回，不手写或猜测。",
+    "Scene、Node、Component、Prefab、AssetDB、导入与引擎对象属性使用项目已连接的 Creator MCP 实际能力，先实时发现工具 Schema。",
+    "同一 Creator 工程仅允许一个编辑器写入者。资源整批刷新后等待并读回资源 UUID、子资源和脚本编译状态，再执行绑定。",
+    "Prefab、Scene 和 .meta 不以文件生成取代编辑器序列化；编辑器读回节点树、组件属性和引用才证明保存。",
+    "只把经 resources.load/loadDir 动态按路径加载的资源放入 assets/resources；Asset Bundle 用其自身计划目录与加载键。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "compile",
+      "tests"
+    ],
+    "visual": [
+      "runtime-layout",
+      "runtime-interaction",
+      "asset-import"
+    ],
+    "assetImport": [
+      "asset-import"
+    ]
+  },
+  "runtimeRoots": [
+    "assets",
+    "settings",
+    "profiles",
+    "extensions",
+    "native",
+    "tests",
+    "assets-source",
+    "docs",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "tsconfig.json"
+  ],
+  "projectStructure": {
+    "sceneScripts": "assets/scripts/scenes/<scene-id>",
+    "displayLayers": "assets/scripts/display-layers/<layer-id>",
+    "shared": "assets/scripts/shared（确有稳定复用时）",
+    "runtimeAssets": "assets/<feature-or-asset-type>",
+    "sourceArt": "assets-source",
+    "tests": "tests"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit",
+    "cocos-domain-contracts",
+    "cocos-frame-animation",
+    "cocos-game-3d-modeling",
+    "cocos-game-ad-integration",
+    "cocos-game-architecture",
+    "cocos-game-artifact-cleanup",
+    "cocos-game-asset-integration",
+    "cocos-game-audio",
+    "cocos-game-balance",
+    "cocos-game-image-optimization",
+    "cocos-game-juice",
+    "cocos-game-orchestrator",
+    "cocos-game-production",
+    "cocos-game-qa-performance",
+    "cocos-game-release",
+    "cocos-game-ui-layout",
+    "cocos-gameplay-development",
+    "cocos-spine-generative-reskin"
+  ],
+  "sharedCapabilities": [
+    "visual-atomic-contract",
+    "visual-imagegen-format",
+    "visual-human-review-contract",
+    "global-visual-consistency-contract",
+    "orientation-validation-scope",
+    "visual-file-gate",
+    "browser-game-domain-path-matcher",
+    "workflow-dpr-contract",
+    "display-layer-planning-contract",
+    "visual-validation-policy",
+    "effect-image-font",
+    "web-transparent-raster",
+    "web-background-removal",
+    "web-image-inbetween-plan",
+    "browser-game-project-control-templates",
+    "artifact-cleanup",
+    "image-optimization",
+    "juice",
+    "frame-animation",
+    "release",
+    "audio",
+    "balance",
+    "asset-production",
+    "ui-layout",
+    "quality-verification",
+    "gameplay-implementation",
+    "game-production",
+    "spine-reskin-production",
+    "frame-animation-execution",
+    "feedback-lifecycle",
+    "artifact-cleanup-execution",
+    "audio-implementation",
+    "modeling-production"
+  ],
+  "capabilitySkills": [
+    "app-product-planning",
+    "app-architecture",
+    "app-gameplay-development",
+    "app-audio",
+    "app-game-balance",
+    "app-feedback",
+    "app-release",
+    "app-quality-review",
+    "app-animation",
+    "app-3d-modeling",
+    "app-spine-reskin",
+    "app-ui-layout",
+    "app-artifact-cleanup",
+    "app-image-optimization",
+    "app-ad-integration",
+    "app-asset-workflow"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "cocos-frame-animation",
+      "capability": "app-animation",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-frame-animation"
+    },
+    {
+      "sourceSkill": "cocos-game-3d-modeling",
+      "capability": "app-3d-modeling",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-3d-modeling"
+    },
+    {
+      "sourceSkill": "cocos-game-ad-integration",
+      "capability": "app-ad-integration",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-ad-integration"
+    },
+    {
+      "sourceSkill": "cocos-game-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-architecture"
+    },
+    {
+      "sourceSkill": "cocos-game-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-artifact-cleanup"
+    },
+    {
+      "sourceSkill": "cocos-game-asset-integration",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-asset-integration"
+    },
+    {
+      "sourceSkill": "cocos-game-audio",
+      "capability": "app-audio",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-audio"
+    },
+    {
+      "sourceSkill": "cocos-game-balance",
+      "capability": "app-game-balance",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-balance"
+    },
+    {
+      "sourceSkill": "cocos-game-image-optimization",
+      "capability": "app-image-optimization",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-image-optimization"
+    },
+    {
+      "sourceSkill": "cocos-game-juice",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-juice"
+    },
+    {
+      "sourceSkill": "cocos-game-production",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-production"
+    },
+    {
+      "sourceSkill": "cocos-game-qa-performance",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-qa-performance"
+    },
+    {
+      "sourceSkill": "cocos-game-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-release"
+    },
+    {
+      "sourceSkill": "cocos-game-ui-layout",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-game-ui-layout"
+    },
+    {
+      "sourceSkill": "cocos-gameplay-development",
+      "capability": "app-gameplay-development",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-gameplay-development"
+    },
+    {
+      "sourceSkill": "cocos-spine-generative-reskin",
+      "capability": "app-spine-reskin",
+      "path": "skills/app-stack-cocos/references/native-contracts.md",
+      "section": "mode-cocos-spine-generative-reskin"
+    }
+  ],
+  "authoredAdapters": [],
+  "nativeManual": "skills/app-stack-cocos/references/native-contracts.md"
+}

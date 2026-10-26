@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "objectId": "replace-with-object-id",
+  "candidateId": "replace-with-candidate-id",
+  "stage": "V1",
+  "purpose": "target",
+  "decision": "REJECTED",
+  "userMessageRef": "replace-with-real-message-reference",
+  "targetRef": "art/candidates/candidate.png",
+  "qualityChecks": [
+    {"dimension": "themeFit", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "audienceFit", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "taskReadability", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "viewingComfort", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "artCompletion", "status": "NOT_RUN", "evidenceRef": ""}
+  ]
+}

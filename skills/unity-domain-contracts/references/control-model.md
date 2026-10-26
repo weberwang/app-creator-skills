@@ -1,0 +1,62 @@
+# 控制模型
+
+## A0-A6 动作等级
+
+| 等级 | Unity 语义 | 典型动作 |
+| --- | --- | --- |
+| `A0` | 只读调查 | 读取 Unity 版本、包、Scene、Prefab、Importer、GUID、脚本和日志 |
+| `A1` | 项目规格和候选 | 形成 Work Item、模块契约、场景规格、质量和验收候选 |
+| `A2` | 隔离原型 | 在临时或明确隔离目录制作原型，不接入正式入口或共享设置 |
+| `A3` | 生产实现 | 正式脚本、资源、Scene、Prefab、ScriptableObject、EditMode/PlayMode 和本地构建 |
+| `A4` | 本地集成与迁移 | 正式入口、跨模块组合、迁移、删除旧实现和共享设置变更 |
+| `A5` | 外部状态与设备 | 外部服务/商店配置、上传、真实设备和会改变项目外部状态的操作 |
+| `A6` | 发布高风险 | 发布、付费、正式渠道、破坏性回滚和不可逆线上操作 |
+
+A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍必须满足。A4 只有在无外部、无破坏性副作用时可以按安全本地集成推进；A4-A6 一旦带副作用，必须有与对象、影响、路径和基线精确绑定的批准。
+
+## Work Item 类型与显示层边界
+
+`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V0-V4）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
+
+`hostSceneId` 只表示显示层打开时的宿主上下文和公开接线目标，不是场景身份，也不把宿主场景完成状态并入显示层。场景与显示层必须各自规划、各自实施、各自验收；同一 Implementation Package 不得同时出现 `SCENE` 和 `DISPLAY_LAYER` 单元。
+
+## Unity 原生响应式合同
+
+可见 `SCENE`/`DISPLAY_LAYER` 实施前携带 `responsiveContract` 明确目标与边界。合同只描述 Unity 原生事实：版本、UI 系统、Unity logical units、backbuffer、Panel、RenderTexture、CanvasScaler、PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 坐标转换、同进程 resize、方向重排、文本/本地化、资源分辨率、性能预算、代表性视口和所需运行证据。验收以实际实现是否满足用户要求为准，中途调整无需回改合同。
+
+布局验证以运行证据的 `supportedOrientations` 记录实际支持方向，并核对用户要求：单横屏无需验证竖屏，单竖屏无需验证横屏；单方向保留同方向尺寸变化后的重排验证，双方向或 `auto` 才要求方向切换证据。
+
+Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内合同来源；控制器检查路径、文件存在及 JSON 格式，不比较合同内容、版本或 SHA。实际完成情况及调整记录在交付和验收证据中。
+
+屏幕 UI（UGUI/UI Toolkit）从 V2 起还绑定 `uiLayoutPlanRef.path`，读取[机器布局包](../../unity-development-workflow/references/ui-layout-plan.md)并重算目标几何。V4 的 `uiLayoutMeasurementRef.path` 只引用当前 evidenceRoot 内的正式[布局组件报告](../../unity-development-workflow/references/ui-layout-runtime.md)，与当前候选、场景、状态和计划节点对应。直接迁移也重新读取文件，不能靠缓存 blockers、静态 PASS 或人工确认替代实际组件证据。目标内的技术修复只重验受影响事实，不自动退阶段。
+
+程序化文本为 `programmatic=true` 时，`locales` 必须精确为 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`；非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=1`，非 1 的正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
+
+## F0-F4 唯一语义
+
+| 门 | 语义 | 核心问题 |
+| --- | --- | --- |
+| `F0` | 范围流程 | 用户目标、阶段、A 等级、允许路径和停止门是否明确 |
+| `F1` | 规格一致性 | 实际交付是否满足用户要求、批准范围和完成条件；合同实现细节差异不单独阻断 |
+| `F2` | Unity 领域质量 | Scene、Prefab、资源、动画、音频、玩法、视觉和架构质量是否达标 |
+| `F3` | 工程验证 | 编译、域重载、Console、EditMode、PlayMode、资源绑定和构建证据是否闭合 |
+| `F4` | 高影响精确批准 | A4-A6 的当前对象、影响、目标、路径和副作用是否已逐项批准 |
+
+## 实施包边界
+
+实施包由有序 `executionUnits` 组成，单元类型只能是 `SHARED`、`MODULE`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。每个单元必须声明模块、所有者、路径和状态。
+
+- Unity 资产写入必须同时覆盖资产与 `.meta` 配对，并记录 GUID/Importer 所有权。
+- Scene、Prefab、ScriptableObject 等序列化资源必须声明对应资源所有权；不能只声明旁边的脚本。
+- `ProjectSettings/`、`Packages/` 和 Build Settings 路径必须声明工程设置所有权。
+- `SHARED`、`INTEGRATION`、`RELEASE` 单元始终串行；同一个 Unity 项目的正式 Editor 写入只允许一个 `editorWriter`。
+- 文件必须同时落在 Work Item 的 `allowedPaths` 内且不命中 `forbiddenPaths`；不接受隐式扩大范围。
+- 每个单元必须声明非空 `acceptanceCommands`。进入 `IMPLEMENTING` 时，在本次 `evidenceRoot` 创建 `execution-state.json`，由此记录单元的激活和顺序。
+- 单元完成结果必须绑定 Work Item、Implementation Package、单元业务身份、计划顺序与验收命令；身份包括 `moduleId`、`scopeId`、`sceneId`、`displayLayerId` 和 `hostSceneId`。实际 `files` 和每项命令的 `outputFile` 都必须位于 `evidenceRoot`。业务资源、布局合同等引用按各自 schema 处理，不属于此受限证据路径。
+- `unit-check --result <json>` 只校验当前 `IMPLEMENTING` 单元已有的结果、绑定、`PASS`、证据路径和顺序，不执行验收命令。进入 `VALIDATING` 时再次校验 `execution-state.units` 中全部单元的有效结果与顺序。Implementation Package 的 `unit.status` 是冻结计划快照，不改写，也不能代替执行结果。
+
+## 明确停止
+
+实施包可用 `resourceHandoff` 声明资源总表快照与序列帧合同。声明后进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 或提交 PASS 证据时，必须有当前 evidenceRoot 内的 `resourceHandoffInspectionRef`，且实际报告 taskId/outputPath 与工作项及引用相符。控制面与文件 CLI 复用相同资源/帧校验函数，直接交付重新读取磁盘材料；缺失或失败修复并重验，不新建资源状态机或自动回退 V2。
+
+控制面遇到未决用户选择、未冻结实施包、缺少验证证据、`RETURN`、不同所有者的正式 Editor 写入或带副作用 A4-A6 时停止。它不会通过猜测用户意图、把 NOT_RUN 改成 PASS、自动回退状态或调用 Unity/设备/服务来“完成”任务。

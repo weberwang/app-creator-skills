@@ -1,0 +1,423 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/runtime-visual-evidence.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "sceneId",
+    "buildVersion",
+    "sourceRevision",
+    "projectStateVersion",
+    "platformId",
+    "developmentCompletionEvidence",
+    "captureSource",
+    "screenshot",
+    "responsiveContractRef",
+    "contractVersions",
+    "status",
+    "reviews",
+    "userApprovals"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "projectId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sceneId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "buildVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectStateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "platformId": {
+      "enum": [
+        "WINDOWS",
+        "ANDROID",
+        "IOS",
+        "IPADOS"
+      ]
+    },
+    "developmentCompletionEvidence": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "required": [
+            "projectId",
+            "subjectId",
+            "subjectVersion",
+            "sourceRevision",
+            "projectStateVersion"
+          ],
+          "properties": {
+            "type": {
+              "const": "quality-gates"
+            },
+            "subjectId": {
+              "const": "g2.development-complete"
+            }
+          }
+        }
+      ]
+    },
+    "candidateSnapshot": {
+      "$ref": "./common.schema.json#/$defs/candidateSnapshot"
+    },
+    "grillingEvidence": {
+      "$ref": "./common.schema.json#/$defs/grillingEvidence"
+    },
+    "captureSource": {
+      "enum": [
+        "WINDOWS_STANDALONE",
+        "ANDROID_PLAYER",
+        "IOS_PLAYER",
+        "IPADOS_PLAYER"
+      ]
+    },
+    "screenshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "width",
+        "height",
+        "capturedAtUtc"
+      ],
+      "properties": {
+        "path": {
+          "allOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/projectRelativePath"
+            },
+            {
+              "pattern": "^Artifacts/Visual/Runtime/.+\\.png$"
+            }
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "capturedAtUtc": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "(?:[Zz]|[+]00:00)$"
+        }
+      }
+    },
+    "responsiveContractRef": {
+      "$ref": "./common.schema.json#/$defs/responsiveContractRef"
+    },
+    "contractVersions": {
+      "$ref": "./common.schema.json#/$defs/contractVersions"
+    },
+    "runtimeMeasurement": {
+      "$ref": "./common.schema.json#/$defs/runtimeMeasurement"
+    },
+    "v4Status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_RUN"
+      ]
+    },
+    "status": {
+      "enum": [
+        "CAPTURED",
+        "REVIEWING",
+        "APPROVED",
+        "REJECTED",
+        "BLOCKED"
+      ]
+    },
+    "reviews": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "./common.schema.json#/$defs/approval"
+          },
+          {
+            "properties": {
+              "approvalType": {
+                "const": "RUNTIME_VISUAL"
+              },
+              "authority": {
+                "const": "INDEPENDENT_REVIEWER"
+              }
+            },
+            "required": [
+              "approvalType",
+              "authority"
+            ]
+          }
+        ]
+      }
+    },
+    "userApprovals": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "allOf": [
+          {
+            "$ref": "./common.schema.json#/$defs/approval"
+          },
+          {
+            "properties": {
+              "approvalType": {
+                "const": "RUNTIME_VISUAL"
+              },
+              "authority": {
+                "const": "USER"
+              }
+            },
+            "required": [
+              "approvalType",
+              "authority"
+            ]
+          }
+        ]
+      }
+    },
+    "blockedReason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "v4Status": {
+            "const": "PASS"
+          }
+        },
+        "required": [
+          "v4Status"
+        ]
+      },
+      "then": {
+        "required": [
+          "runtimeMeasurement"
+        ],
+        "properties": {
+          "runtimeMeasurement": {
+            "properties": {
+              "runtimeMeasured": {
+                "const": true
+              },
+              "verificationStatus": {
+                "const": "PASS"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platformId": {
+            "const": "WINDOWS"
+          }
+        },
+        "required": [
+          "platformId"
+        ]
+      },
+      "then": {
+        "properties": {
+          "captureSource": {
+            "const": "WINDOWS_STANDALONE"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platformId": {
+            "const": "ANDROID"
+          }
+        },
+        "required": [
+          "platformId"
+        ]
+      },
+      "then": {
+        "properties": {
+          "captureSource": {
+            "const": "ANDROID_PLAYER"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platformId": {
+            "const": "IOS"
+          }
+        },
+        "required": [
+          "platformId"
+        ]
+      },
+      "then": {
+        "properties": {
+          "captureSource": {
+            "const": "IOS_PLAYER"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "platformId": {
+            "const": "IPADOS"
+          }
+        },
+        "required": [
+          "platformId"
+        ]
+      },
+      "then": {
+        "properties": {
+          "captureSource": {
+            "const": "IPADOS_PLAYER"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "APPROVED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "candidateSnapshot",
+          "grillingEvidence",
+          "runtimeMeasurement",
+          "v4Status"
+        ],
+        "properties": {
+          "v4Status": {
+            "const": "PASS"
+          },
+          "runtimeMeasurement": {
+            "properties": {
+              "runtimeMeasured": {
+                "const": true
+              },
+              "verificationStatus": {
+                "const": "PASS"
+              }
+            }
+          },
+          "reviews": {
+            "minItems": 3,
+            "allOf": [
+              {
+                "contains": {
+                  "properties": {
+                    "reviewDiscipline": {
+                      "const": "VISUAL_CONSISTENCY"
+                    }
+                  },
+                  "required": [
+                    "reviewDiscipline"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "reviewDiscipline": {
+                      "const": "UNITY_FEASIBILITY"
+                    }
+                  },
+                  "required": [
+                    "reviewDiscipline"
+                  ]
+                }
+              },
+              {
+                "contains": {
+                  "properties": {
+                    "reviewDiscipline": {
+                      "const": "UX_READABILITY"
+                    }
+                  },
+                  "required": [
+                    "reviewDiscipline"
+                  ]
+                }
+              }
+            ]
+          },
+          "userApprovals": {
+            "minItems": 1,
+            "contains": {
+              "properties": {
+                "approvalType": {
+                  "const": "RUNTIME_VISUAL"
+                },
+                "authority": {
+                  "const": "USER"
+                }
+              },
+              "required": [
+                "approvalType",
+                "authority"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "blockedReason"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "capability": "app-ad-integration",
+  "adapters": {
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-ad-integration",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-ad-integration",
+        "mode": "cocos-game-ad-integration",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏广告接入”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-ad-integration",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-ad-integration",
+        "mode": "phaser4-game-ad-integration",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏广告接入”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-ad-integration",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-ad-integration",
+        "mode": "threejs-game-ad-integration",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏广告接入”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "advertising-integration",
+      "path": "../app-domain-toolkit/references/advertising-integration.md",
+      "stacks": [
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

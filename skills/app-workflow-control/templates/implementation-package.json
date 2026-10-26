@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "replace-with-work-id",
+  "stack": "flutter",
+  "workItemType": "FOUNDATION",
+  "executionUnits": [
+    {
+      "unitId": "unit-foundation",
+      "sequence": 1,
+      "type": "MODULE",
+      "owner": "main-agent",
+      "paths": ["lib/core/example.dart"],
+      "resultPath": ".workflow-control/evidence/replace-with-work-id/unit-foundation.json",
+      "acceptanceCommands": ["fvm flutter analyze", "fvm flutter test"]
+    },
+    {
+      "unitId": "unit-ui",
+      "sequence": 2,
+      "type": "MODULE",
+      "owner": "ui-owner",
+      "paths": ["lib/ui/example.dart"],
+      "parallelGroup": "feature-work",
+      "dependsOn": ["unit-foundation"],
+      "resultPath": ".workflow-control/evidence/replace-with-work-id/unit-ui.json",
+      "acceptanceCommands": ["fvm flutter analyze", "fvm flutter test"]
+    },
+    {
+      "unitId": "unit-assets",
+      "sequence": 3,
+      "type": "MODULE",
+      "owner": "asset-owner",
+      "paths": ["assets/images/manifest.json"],
+      "parallelGroup": "feature-work",
+      "dependsOn": ["unit-foundation"],
+      "resultPath": ".workflow-control/evidence/replace-with-work-id/unit-assets.json",
+      "acceptanceCommands": ["fvm flutter analyze", "fvm flutter test"]
+    },
+    {
+      "unitId": "unit-integration",
+      "sequence": 4,
+      "type": "INTEGRATION",
+      "owner": "main-agent",
+      "paths": ["lib/integration/example.dart"],
+      "dependsOn": ["unit-ui", "unit-assets"],
+      "resultPath": ".workflow-control/evidence/replace-with-work-id/unit-integration.json",
+      "acceptanceCommands": ["fvm flutter analyze", "fvm flutter test"]
+    }
+  ]
+}

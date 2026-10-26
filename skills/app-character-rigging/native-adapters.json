@@ -1,0 +1,22 @@
+{
+  "capability": "app-character-rigging",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-2d-rigging",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-2d-rigging",
+        "mode": "Unity 2D 骨架绑定",
+        "when": "目标是 2D 骨骼层级、网格、权重、插槽、遮挡或变体绑定时。"
+      },
+      {
+        "sourceSkill": "unity-game-3d-rigging",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-3d-rigging",
+        "mode": "Unity 3D 角色绑定",
+        "when": "目标是 3D 骨架、蒙皮、关节映射、动画重定向或导出回读时。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

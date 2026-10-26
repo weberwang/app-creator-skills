@@ -1,0 +1,62 @@
+{
+  "capability": "app-ui-layout",
+  "adapters": {
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-ui-layout",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-ui-layout",
+        "mode": "cocos-game-ui-layout",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“界面布局与自适应”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-ui-layout",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-ui-layout",
+        "mode": "phaser4-game-ui-layout",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“界面布局与自适应”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-ui-layout",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-ui-layout",
+        "mode": "threejs-game-ui-layout",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“界面布局与自适应”时使用此原生专项能力。"
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "adaptive-layout-implementation",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-adaptive-layout-implementation",
+        "mode": "adaptive-layout-implementation",
+        "when": "仅当项目技术栈为 Flutter，且任务属于“界面布局与自适应”时使用此原生专项能力。"
+      }
+    ],
+    "unity": [
+      {
+        "sourceSkill": "unity-game-visual-assets",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-visual-assets",
+        "mode": "Unity UI 结构与布局接入",
+        "when": "需要 Unity Canvas、Prefab、UXML、UI Toolkit/uGUI 的结构、锚点、安全区、布局和正式界面接入时读取，并按原生规范调用 unity:ui 路由。",
+        "reused": true
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "ui-layout",
+      "path": "../app-domain-toolkit/references/ui-layout.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

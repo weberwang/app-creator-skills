@@ -1,0 +1,40 @@
+schemaVersion: "2.0"
+id: imagegen.scene-arena-intro.game-v1
+projectId: starfall-arena
+sceneId: scene.arena-intro
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+visualType: GAME_VISUAL
+generationMode: SCENE_CONCEPT
+subjectVersion: scene-v1
+visualBibleVersion: visual-v1
+visualBibleEvidence:
+  type: visual-bible
+  path: Artifacts/Visual/Global/visual-v1.yaml
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+styleAuthority: APPROVED_VISUAL_BIBLE
+prefabStructureEvidence:
+  type: prefab-structure
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+referencePolicy:
+  screenshotAllowedUses:
+    - CONTENT
+    - COMPOSITION
+    - INFORMATION_HIERARCHY
+  screenshotStyleTransfer: FORBIDDEN
+  screenshotPixelReuse: FORBIDDEN
+  independentItemGenerationRequired: true
+prompt: 依据已批准全局视觉基线重新设计竞技场开场游戏效果图，仅把截图用于内容、构图和信息层级
+negativePrompt: 不复制截图风格、色彩、材质、光照、字体、图标或成品像素，不使用不可实现的复杂透视和不可读界面文字
+references: []
+output:
+  directory: ArtSource/Generated/scene.arena-intro/game-v1
+  format: PNG
+  width: 1920
+  height: 1080
+  candidateCount: 3
+candidates: []
+status: PLANNED

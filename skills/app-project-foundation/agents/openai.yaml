@@ -1,0 +1,6 @@
+interface:
+  display_name: "项目初始化与基础运行时"
+  short_description: "为Three.js或Flutter新建最小运行基线，或在既有工程中定向排查并迭代运行时问题。"
+  default_prompt: "使用 $app-project-foundation，按已确认的技术栈完成当前项目初始化与基础运行时任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

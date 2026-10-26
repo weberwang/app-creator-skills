@@ -1,0 +1,6 @@
+interface:
+  display_name: "界面代码草图"
+  short_description: "在真实生产骨架上制作低保真Flutter代码草图，校验页面层级、内容密度和交互路径。"
+  default_prompt: "使用 $app-ui-code-sketch，按已确认的技术栈完成当前界面代码草图任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

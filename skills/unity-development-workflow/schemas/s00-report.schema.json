@@ -1,0 +1,254 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/s00-report.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "projectId",
+    "foundationVersion",
+    "sourceRevision",
+    "projectStateVersion",
+    "generatedAtUtc",
+    "decompositionPlan",
+    "moduleManifest",
+    "scope",
+    "sharedCapabilities",
+    "changedPaths",
+    "qualityReports",
+    "console",
+    "emptyPlatformBuild",
+    "reviews",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "projectId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "foundationVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectStateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "decompositionPlan": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "required": [
+            "subjectId",
+            "subjectVersion",
+            "sourceRevision",
+            "projectStateVersion"
+          ],
+          "properties": {
+            "type": {
+              "const": "decomposition-plan"
+            }
+          }
+        }
+      ]
+    },
+    "moduleManifest": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "module-manifest"
+            }
+          }
+        }
+      ]
+    },
+    "scope": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sharedCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "usedByScenes"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "usedByScenes": {
+            "type": "array",
+            "minItems": 2,
+            "uniqueItems": true,
+            "items": {
+              "$ref": "./common.schema.json#/$defs/taskId"
+            }
+          }
+        }
+      }
+    },
+    "changedPaths": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "./common.schema.json#/$defs/projectRelativePath"
+      }
+    },
+    "qualityReports": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "./common.schema.json#/$defs/evidence"
+      }
+    },
+    "console": {
+      "$ref": "./common.schema.json#/$defs/checkResult"
+    },
+    "emptyPlatformBuild": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "platformId",
+        "buildVersion",
+        "artifact"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "BLOCKED",
+            "NOT_RUN"
+          ]
+        },
+        "platformId": {
+          "enum": [
+            "WINDOWS",
+            "ANDROID",
+            "IOS",
+            "IPADOS"
+          ]
+        },
+        "buildVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "artifact": {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        "failureReason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "./common.schema.json#/$defs/approval"
+      }
+    },
+    "status": {
+      "enum": [
+        "NOT_RUN",
+        "PASS",
+        "FAIL",
+        "BLOCKED"
+      ]
+    },
+    "blockedReason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "PASS"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "properties": {
+          "console": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "emptyPlatformBuild": {
+            "properties": {
+              "status": {
+                "const": "PASS"
+              }
+            }
+          },
+          "reviews": {
+            "minItems": 1,
+            "contains": {
+              "properties": {
+                "authority": {
+                  "const": "INDEPENDENT_REVIEWER"
+                }
+              },
+              "required": [
+                "authority"
+              ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "blockedReason"
+        ]
+      }
+    }
+  ]
+}

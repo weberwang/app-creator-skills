@@ -1,0 +1,3 @@
+source: ../../assets/layout-spec-template.yaml
+expected: pass
+expected_attention: []

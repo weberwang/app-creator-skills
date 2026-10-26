@@ -1,0 +1,71 @@
+{
+  "capability": "app-feedback",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-juice",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-juice",
+        "mode": "unity-game-juice",
+        "when": "仅当项目技术栈为 Unity，且任务属于“游戏与应用汁水设计”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-juice",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-juice",
+        "mode": "cocos-game-juice",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏与应用汁水设计”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-juice",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-juice",
+        "mode": "phaser4-game-juice",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏与应用汁水设计”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-juice",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-juice",
+        "mode": "threejs-game-juice",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏与应用汁水设计”时使用此原生专项能力。"
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "flutter-feedback",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-feedback",
+        "mode": "Flutter 应用交互反馈",
+        "when": "为 Flutter 应用设计或实现按钮、表单、导航、手势、异步操作、状态过渡或触觉反馈时使用；先采用公共设计，再按 Widget 与路由生命周期实现。",
+        "authored": true
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "juice",
+      "path": "../app-domain-toolkit/references/juice.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    },
+    {
+      "id": "feedback-lifecycle",
+      "path": "../app-domain-toolkit/references/feedback-lifecycle.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: remove, path: regions.0.size.preferred.height}
+  - {op: set, path: regions.1.size.min.width, value: 10}
+  - {op: set, path: regions.1.size.preferred.width, value: 5}
+  - {op: set, path: regions.1.size.max.width, value: 8}

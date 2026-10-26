@@ -1,0 +1,6 @@
+interface:
+  display_name: "项目整理与产物清理"
+  short_description: "整理项目目录与命名，追踪文件消费者并安全清理过期产物、缓存或重复候选。"
+  default_prompt: "使用 $app-artifact-cleanup，按已确认的技术栈完成当前项目整理与产物清理任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

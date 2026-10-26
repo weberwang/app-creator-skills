@@ -1,0 +1,57 @@
+# 美术质量与动态体验验收合同
+
+本合同用于 V1 确定美术目标，贯穿 V2 拆解、V3 资源生产、导入与素材验收，并在 V4 对实际 Scene/Prefab/UI 组合及场景或显示层体验逐项验收。V3 可交付组合预览；正式组合实现和校准属于 V4。它补充 Visual Bible，不创建独立阶段、状态机或确认机制。
+
+## V1 brief
+
+按 Work Item 写明主题、目标玩家/受众、核心循环、体验目标和主要观看情境，并说明视觉层级、关键玩法信息、刺激预算与已有规范。Visual Bible 的 `artBrief` 遵守 [`game-art-brief.schema.json`](../schemas/game-art-brief.schema.json)；美术 brief 字段由 `unity-game-production` 维护。将事件的反馈意图交给 [`unity-game-juice`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-juice)，不以“更炫”替代玩家需要理解的信息。内部 brief 只供理解；按[游戏内文案](./game-copy.md)交接玩家可见表达，不把 brief 原句绘入效果图或运行界面。
+
+`intensityBudget` 必须为 `normal`、`operation`、`peak` 三个层级分别填写 `brightnessContrast`（亮度与对比边界）、`screenCoverage`（占屏范围）、`duration`（持续时长或结束条件）、`triggerFrequency`（触发频率与去重策略）、`maxConcurrent`（允许并发的非负整数上限）、`recovery`（结束、打断或暂停后的恢复方式）和 `blendPolicy`（并发混合、合并、抑制或优先级）。同一预算对象的 `measurementMethod` 说明测量方法、观察条件和记录方式。各值由项目和实际情境确定，不预设通用医学或刺激阈值。
+
+全局视觉基线首次建立时，按[视觉工作流](./visual-workflow.md)生成恰好三张同条件候选，每张保留五项人工质量结果；唯一选中的候选五项全部通过后冻结。已有有效三候选选择证据可跨工作项复用，不重复选图；逐场景目标图不能替代全局选择证据。
+
+## 五项逐项通过
+
+制作和审查过程中可将每项标记为 `PASS`、`FAIL` 或 `NOT_RUN` 并记录证据；只有五项均通过时，最终验收材料才可提交。材料中的 `qualityResults` 使用 `themeFit`、`audienceFit`、`gameplayReadability`、`viewingComfort`、`artCompletion` 五个键，每项含 `status` 和 `reason`；最终接受格式要求五项 `status` 都为 `PASS`。`FAIL` 或 `NOT_RUN` 结果不得写成最终接受材料或推定为通过。
+
+| 维度 | 检查问题 |
+| --- | --- |
+| 主题贴合 | 色彩、形状、材质、光照、镜头和动效是否服务已确认的主题？ |
+| 受众适配 | 表现尺度、节奏与内容是否符合目标玩家和实际观看情境？ |
+| 玩法可读 | 玩家能否在所需时间内分辨主体、状态、危险、目标和交互结果？是否混入内部规格说明或重复标签，数值归属和必要条件/后果是否清楚？ |
+| 观看舒适 | 闪烁、亮度变化、镜头运动、运动密度和叠加效果是否符合已确认的刺激预算？ |
+| 美术完成度 | 正式资源、组合、细节、边缘、材质、字体及状态是否保留已确认 V1 的显著视觉特征，而非仅保持同风格？ |
+
+这些维度不预设通用数值阈值。项目或 Work Item 已声明具体约束时按其检查；没有量化标准时以实际目标和人工确认记录判定，不自行创造通过门槛。
+
+## 追溯与检查边界
+
+审查既从拆解清单核对资源与节点，也从原始 V1 的显著文字造型、底板、填充、边框、图标、光影、装饰和空间结构反查：每项是否完整对应稳定编号、生产归属、实际提示词/实现依据、资源与消费节点，并覆盖适用状态。原子资源可包含多个不可可靠分离的特征，但不能因未单列图片就免查；发现缺口先由代理修复，不把遗漏转嫁给用户逐项发现。
+
+在既有分析、生产记录和验收差异中区分以下原因，记录受影响编号、依据、修复归属及复核结果，不新增账本或审批：
+
+| 差异类型 | 判定与处理 |
+| --- | --- |
+| 拆解漏项 | V1 可见特征没有生产归属、消费节点或状态覆盖，补齐受影响拆解。 |
+| 规格与目标矛盾 | 拆解规格或提示词改色、删装饰、误写透明区域等，与 V1 相反，先修正规格和交接。 |
+| 生成结果偏离规格 | 规格正确但源素材主体、轮廓、颜色、完整性、有效内容边界或透明区域不符，返修资源。 |
+| Unity 装配或适配偏差 | 合格资源在节点绑定、层叠、材质、字体、布局或视口适配中偏离，修复对应装配。 |
+
+参考设计图、拆解图与独立源素材属于设计/生产资料，代理应检查目标覆盖、提示词一致性和资源合格性；这与 Unity 运行截图的人工显示验收分开记录。未经用户明确要求，代理不自动分析 Unity 运行截图或据此判定视觉通过；可采集、并列展示 V1 与当前组合，并提供检查要点，把未获人工判断的显示效果明确保留为待检查。工程 PASS 只证明相应工程事实；资源检查和阶段确认也不能替代后续对同一 V1 的持续核对，不得据此宣告视觉还原完成。
+
+## V4 动态证据
+
+按体验适用性逐项检查以下情境：
+
+| 情境 | 重点观察 |
+| --- | --- |
+| `normal-play` | 主要操作、状态转换和反馈是否清楚，正常节奏下是否易读？ |
+| `repeated-feedback` | 高频或连续触发时是否出现疲劳、残留、堆积或输入阻塞？ |
+| `event-peak` | 单次高强度关键事件是否压过必要信息，结束后是否恢复？ |
+| `overlap-peak` | 多事件同时发生时，反馈优先级、叠加和遮挡是否仍可辨认？ |
+
+最终验收材料包含四个情境各一项，字段为 `id`、`required`、`reason`、`status`。`normal-play` 总是必需；其他情境按当前玩法适用性确定。`required: false` 时以 `NOT_APPLICABLE` 标记并说明理由，不附运行数据；`required: true` 时必须提供真实录制的 `recordingPath`、`durationSeconds`、`startSeconds`、`endSeconds`、`eventCount`、`peakConcurrency`、`viewport` 和 `observations`，且 `status` 必须为 `PASS` 才能进入最终接受材料。实现/验收过程发现的失败或缺失证据仍按 `FAIL` 或 `NOT_RUN` 如实记录在工作证据中，不伪造 `PASS`。
+
+最终材料按 [`art-experience-acceptance.schema.json`](../schemas/art-experience-acceptance.schema.json) 保存为项目内 JSON；V4 PASS Evidence Manifest 顶层的 `artExperienceAcceptanceRef` 是指向该文件的项目相对路径，并绑定 `candidateId`、`candidateVersion`。材料还必须包含 `workItemId`、`sceneId`、`artBriefRef`，以及 `confirmedBy`、`confirmedAt`、`userMessageRef`、`userText`。`artBriefRef` 指向符合 `game-art-brief.schema.json` 的 JSON。该材料复用现有 V4 用户确认，不增加独立审批门。截图只交由用户检查显示效果；除非用户明确要求自动视觉验证，代理不分析截图或据此判定视觉通过。机器侧事件、Importer 或参数检查只能证明相应工程事实，不能替代美术视觉验收。
+
+需要重新检查时只覆盖候选、场景或行为变化实际影响的条目。目标内的内部实现调整不要求回改目标合同，在验收材料说明真实交付和结果；不能借此把偏离 V1 的资源或组合改称新目标。目标实质变化沿用已有确认规则。

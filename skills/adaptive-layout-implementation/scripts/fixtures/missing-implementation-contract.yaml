@@ -1,0 +1,6 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: remove, path: implementation.breakpoint_resolver}
+  - {op: remove, path: implementation.root_layout}
+  - {op: set, path: implementation.constraint_primitives, value: []}

@@ -1,0 +1,6 @@
+interface:
+  display_name: "游戏广告接入"
+  short_description: "规划广告展示位置、频次、同意与失败回退，并在真实受支持平台验证SDK与用户流程。"
+  default_prompt: "使用 $app-ad-integration，按已确认的技术栈完成当前游戏广告接入任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

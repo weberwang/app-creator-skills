@@ -1,0 +1,68 @@
+{
+  "capability": "app-asset-workflow",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-visual-assets",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-visual-assets",
+        "mode": "unity-game-visual-assets",
+        "when": "仅当项目技术栈为 Unity，且任务属于“视觉素材生产”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-asset-integration",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-asset-integration",
+        "mode": "cocos-game-asset-integration",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“视觉素材生产”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-asset-integration",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-asset-integration",
+        "mode": "phaser4-game-asset-integration",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“视觉素材生产”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-asset-integration",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-asset-integration",
+        "mode": "threejs-game-asset-integration",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“视觉素材生产”时使用此原生专项能力。"
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "flutter-asset-atlas",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-asset-atlas",
+        "mode": "Flutter 图片与图集资产",
+        "when": "需要依据已冻结的目标图拆解并生产 Flutter bitmap 资产，或检查图集、尺寸、格式和加载策略时。"
+      },
+      {
+        "sourceSkill": "flutter-hifi-mockup",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-hifi-mockup",
+        "mode": "Flutter 高保真目标图与界面模型",
+        "when": "需要为 Flutter 页面生成目标图、探索并冻结视觉方向，或按已冻结目标图实现/对照页面时。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "asset-production",
+      "path": "../app-domain-toolkit/references/asset-production.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

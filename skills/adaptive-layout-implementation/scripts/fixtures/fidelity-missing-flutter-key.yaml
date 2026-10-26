@@ -1,0 +1,5 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: remove, path: critical_alignments.0.flutter_key}
+  - {op: remove, path: critical_alignments.0.reference_flutter_key}

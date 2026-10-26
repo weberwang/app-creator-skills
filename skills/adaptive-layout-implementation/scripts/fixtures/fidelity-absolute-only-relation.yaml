@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: critical_alignments.0.relations.horizontal.flutter, value: "x=195"}

@@ -1,0 +1,13 @@
+source: ../../assets/layout-spec-template.yaml
+expected: pass
+expected_attention: [Positioned]
+mutations:
+  - op: append
+    path: implementation_signals
+    value:
+      signal: Positioned
+      reason: 徽标覆盖头像边界
+      boundary: avatar bounds
+      viewport_scope: compact and medium constraints
+      fallback: 移入标题尾部并保持语义
+      test_ids: [content_header_relation]

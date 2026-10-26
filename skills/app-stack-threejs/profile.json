@@ -1,0 +1,259 @@
+{
+  "id": "threejs",
+  "displayName": "Three.js",
+  "detectAny": [
+    "src/game/main.ts",
+    "vite.config.ts",
+    "package.json"
+  ],
+  "frameworkPolicy": [
+    "默认 three.js + TypeScript + Vite + WebGL2 WebGLRenderer；只有目标浏览器与部署验证过才改用 WebGPURenderer。",
+    "沿用锁文件版本和项目模块/Renderer 路线；Capacitor 仅由用户明确选用时增加。",
+    "3D 世界空间与 DOM 或固定屏幕 HUD 由不同实现和测量合同管理。"
+  ],
+  "nativeRules": [
+    "遵守 three.js Scene/Object3D/Camera/BufferGeometry/Renderer 语义；世界位置是三维坐标，不能用 UI 像素点或二维场景布局证据替代。",
+    "Scene controller 显式管理 enter/update/exit/dispose 生命周期；退出时只释放自己拥有的资源，跨消费者纹理、geometry、material 通过资产所有权安全释放。",
+    "WebGLRenderer 不自动管理 Geometry、Material、Texture、ImageBitmap 生命周期；只释放独占资源，校验切场景后 `renderer.info`、显存估算和事件订阅回落。",
+    "模型使用 glTF/GLB + GLTFLoader。仅对当前模型需要的 decoder/transcoder（Draco/meshopt/KTX2）注册并部署实际解码器文件及路径。",
+    "PBR 颜色贴图按 sRGB，normal/roughness/metalness 等数据贴图按线性数据处理。保留已加载材质真实来源和纹理颜色空间。",
+    "SkinnedMesh/AnimationMixer 逐实例归属，按 SkeletonUtils.clone 和 clone 生命周期处理骨骼；透明排序、instanceId、碰撞和玩法命中边界独立核对。",
+    "3D 模型源和贴图/Blender 烘焙按项目资产路线交接；模型导入需记录真实坐标、尺度、Pivot、UV、材质槽、动画、LOD、碰撞和 GPU 预算。",
+    "Vite build 只验证静态产物；真实 WebGL 浏览器运行、WebGL context、renderer.info/资源释放和设备验证需分别说明实际证据。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "typecheck",
+      "tests",
+      "build"
+    ],
+    "visual": [
+      "world-render",
+      "viewport",
+      "input",
+      "resource-lifecycle"
+    ],
+    "assetImport": [
+      "asset-import"
+    ]
+  },
+  "runtimeRoots": [
+    "src",
+    "public/assets",
+    "index.html",
+    "tests",
+    "assets-source",
+    "docs",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    "tsconfig.json",
+    "vite.config.ts",
+    "vite",
+    "capacitor.config.ts",
+    "android",
+    "ios"
+  ],
+  "projectStructure": {
+    "gameEntry": "src/game/main.ts",
+    "worldScene": "src/game/scenes/<scene-id>",
+    "sceneController": "<Scene>Controller with enter/update/exit/dispose",
+    "hud": "src/game/scenes/<id>/ui or application UI root",
+    "assets": "public/assets/<owner>",
+    "tests": "tests",
+    "release": "dist"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit",
+    "threejs-domain-contracts",
+    "threejs-frame-animation",
+    "threejs-game-3d-modeling",
+    "threejs-game-ad-integration",
+    "threejs-game-architecture",
+    "threejs-game-artifact-cleanup",
+    "threejs-game-asset-integration",
+    "threejs-game-audio",
+    "threejs-game-balance",
+    "threejs-game-image-optimization",
+    "threejs-game-juice",
+    "threejs-game-model-pipeline",
+    "threejs-game-orchestrator",
+    "threejs-game-plugins",
+    "threejs-game-production",
+    "threejs-game-qa-performance",
+    "threejs-game-release",
+    "threejs-game-runtime",
+    "threejs-game-ui-layout",
+    "threejs-gameplay-development"
+  ],
+  "sharedCapabilities": [
+    "visual-atomic-contract",
+    "visual-imagegen-format",
+    "visual-human-review-contract",
+    "global-visual-consistency-contract",
+    "orientation-validation-scope",
+    "visual-file-gate",
+    "browser-game-domain-path-matcher",
+    "workflow-dpr-contract",
+    "display-layer-planning-contract",
+    "visual-validation-policy",
+    "effect-image-font",
+    "web-transparent-raster",
+    "web-background-removal",
+    "web-image-inbetween-plan",
+    "browser-game-project-control-templates",
+    "artifact-cleanup",
+    "image-optimization",
+    "juice",
+    "frame-animation",
+    "release",
+    "audio",
+    "balance",
+    "asset-production",
+    "ui-layout",
+    "quality-verification",
+    "gameplay-implementation",
+    "game-production",
+    "architecture-handoff",
+    "frame-animation-execution",
+    "feedback-lifecycle",
+    "advertising-integration",
+    "artifact-cleanup-execution",
+    "audio-implementation",
+    "modeling-production"
+  ],
+  "capabilitySkills": [
+    "app-product-planning",
+    "app-architecture",
+    "app-gameplay-development",
+    "app-audio",
+    "app-game-balance",
+    "app-feedback",
+    "app-release",
+    "app-quality-review",
+    "app-animation",
+    "app-3d-modeling",
+    "app-ui-layout",
+    "app-artifact-cleanup",
+    "app-image-optimization",
+    "app-ad-integration",
+    "app-3d-asset-pipeline",
+    "app-runtime-plugins",
+    "app-project-foundation",
+    "app-asset-workflow"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "threejs-frame-animation",
+      "capability": "app-animation",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-frame-animation"
+    },
+    {
+      "sourceSkill": "threejs-game-3d-modeling",
+      "capability": "app-3d-modeling",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-3d-modeling"
+    },
+    {
+      "sourceSkill": "threejs-game-ad-integration",
+      "capability": "app-ad-integration",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-ad-integration"
+    },
+    {
+      "sourceSkill": "threejs-game-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-architecture"
+    },
+    {
+      "sourceSkill": "threejs-game-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-artifact-cleanup"
+    },
+    {
+      "sourceSkill": "threejs-game-asset-integration",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-asset-integration"
+    },
+    {
+      "sourceSkill": "threejs-game-audio",
+      "capability": "app-audio",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-audio"
+    },
+    {
+      "sourceSkill": "threejs-game-balance",
+      "capability": "app-game-balance",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-balance"
+    },
+    {
+      "sourceSkill": "threejs-game-image-optimization",
+      "capability": "app-image-optimization",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-image-optimization"
+    },
+    {
+      "sourceSkill": "threejs-game-juice",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-juice"
+    },
+    {
+      "sourceSkill": "threejs-game-model-pipeline",
+      "capability": "app-3d-asset-pipeline",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-model-pipeline"
+    },
+    {
+      "sourceSkill": "threejs-game-plugins",
+      "capability": "app-runtime-plugins",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-plugins"
+    },
+    {
+      "sourceSkill": "threejs-game-production",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-production"
+    },
+    {
+      "sourceSkill": "threejs-game-qa-performance",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-qa-performance"
+    },
+    {
+      "sourceSkill": "threejs-game-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-release"
+    },
+    {
+      "sourceSkill": "threejs-game-runtime",
+      "capability": "app-project-foundation",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-runtime"
+    },
+    {
+      "sourceSkill": "threejs-game-ui-layout",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-game-ui-layout"
+    },
+    {
+      "sourceSkill": "threejs-gameplay-development",
+      "capability": "app-gameplay-development",
+      "path": "skills/app-stack-threejs/references/native-contracts.md",
+      "section": "mode-threejs-gameplay-development"
+    }
+  ],
+  "authoredAdapters": [],
+  "nativeManual": "skills/app-stack-threejs/references/native-contracts.md"
+}

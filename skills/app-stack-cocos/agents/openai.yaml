@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cocos Creator 技术栈"
+  short_description: "按 Creator 项目版本处理编辑器、资源、场景和界面。"
+  default_prompt: "使用 $app-stack-cocos 检查当前 Creator 工程并按原生方式实现。"

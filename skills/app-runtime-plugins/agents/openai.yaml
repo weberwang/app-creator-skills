@@ -1,0 +1,6 @@
+interface:
+  display_name: "运行时插件与扩展"
+  short_description: "为Three.js项目核对运行时插件、物理查询、导航、模型解码和后处理扩展的版本、生命周期与预算。"
+  default_prompt: "使用 $app-runtime-plugins，按已确认的技术栈完成当前运行时插件与扩展任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

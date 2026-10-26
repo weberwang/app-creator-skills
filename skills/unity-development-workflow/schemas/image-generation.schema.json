@@ -1,0 +1,448 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/image-generation.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "projectId",
+    "sceneId",
+    "sourceRevision",
+    "projectStateVersion",
+    "visualType",
+    "generationMode",
+    "subjectVersion",
+    "visualBibleVersion",
+    "styleAuthority",
+    "referencePolicy",
+    "prompt",
+    "references",
+    "output",
+    "candidates",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "2.0"
+    },
+    "id": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "projectId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sceneId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectStateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualType": {
+      "enum": [
+        "GAME_VISUAL",
+        "UI_VISUAL",
+        "ASSET_SOURCE"
+      ]
+    },
+    "generationMode": {
+      "enum": [
+        "GLOBAL_DIRECTION",
+        "SCENE_CONCEPT",
+        "RUNTIME_ASSET_ITEM"
+      ]
+    },
+    "subjectVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualBibleVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualBibleEvidence": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "visual-bible"
+            }
+          },
+          "required": [
+            "type",
+            "subjectId",
+            "subjectVersion"
+          ]
+        }
+      ]
+    },
+    "styleAuthority": {
+      "enum": [
+        "GLOBAL_DESIGN_BRIEF",
+        "APPROVED_VISUAL_BIBLE"
+      ]
+    },
+    "prefabStructureEvidence": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "prefab-structure"
+            }
+          },
+          "required": [
+            "type",
+            "subjectId",
+            "subjectVersion"
+          ]
+        }
+      ]
+    },
+    "splitPlanEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "path",
+        "subjectId",
+        "subjectVersion",
+        "itemId",
+        "itemVersion",
+        "resourceId"
+      ],
+      "properties": {
+        "type": {
+          "const": "split-plan"
+        },
+        "path": {
+          "$ref": "./common.schema.json#/$defs/projectRelativePath"
+        },
+        "subjectId": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        },
+        "subjectVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "itemId": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        },
+        "itemVersion": {
+          "type": "string",
+          "minLength": 1
+        },
+        "resourceId": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        }
+      }
+    },
+    "splitPlanApproval": {
+      "$ref": "./common.schema.json#/$defs/splitPlanApproval"
+    },
+    "referencePolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "screenshotAllowedUses",
+        "screenshotStyleTransfer",
+        "screenshotPixelReuse",
+        "independentItemGenerationRequired"
+      ],
+      "properties": {
+        "screenshotAllowedUses": {
+          "type": "array",
+          "minItems": 3,
+          "maxItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "CONTENT",
+              "COMPOSITION",
+              "INFORMATION_HIERARCHY"
+            ]
+          }
+        },
+        "screenshotStyleTransfer": {
+          "const": "FORBIDDEN"
+        },
+        "screenshotPixelReuse": {
+          "const": "FORBIDDEN"
+        },
+        "independentItemGenerationRequired": {
+          "const": true
+        }
+      }
+    },
+    "prompt": {
+      "type": "string",
+      "minLength": 1
+    },
+    "negativePrompt": {
+      "type": "string"
+    },
+    "references": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "referenceType",
+          "path",
+          "allowedUses",
+          "styleTransfer"
+        ],
+        "properties": {
+          "referenceType": {
+            "enum": [
+              "SCREENSHOT",
+              "BRAND_ASSET",
+              "CONTENT_REFERENCE",
+              "ART_REFERENCE"
+            ]
+          },
+          "path": {
+            "$ref": "./common.schema.json#/$defs/projectRelativePath"
+          },
+          "allowedUses": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "enum": [
+                "CONTENT",
+                "COMPOSITION",
+                "INFORMATION_HIERARCHY"
+              ]
+            }
+          },
+          "styleTransfer": {
+            "const": "FORBIDDEN"
+          }
+        }
+      }
+    },
+    "output": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "directory",
+        "format",
+        "width",
+        "height",
+        "candidateCount"
+      ],
+      "properties": {
+        "directory": {
+          "$ref": "./common.schema.json#/$defs/projectRelativePath"
+        },
+        "format": {
+          "enum": [
+            "PNG",
+            "JPEG",
+            "WEBP"
+          ]
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "height": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "candidateCount": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 16
+        }
+      }
+    },
+    "provider": {
+      "type": "string",
+      "minLength": 1
+    },
+    "model": {
+      "type": "string",
+      "minLength": 1
+    },
+    "generatedAtUtc": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "candidates": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "visualVersion",
+          "width",
+          "height"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "path": {
+            "$ref": "./common.schema.json#/$defs/projectRelativePath"
+          },
+          "visualVersion": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "height": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    },
+    "status": {
+      "enum": [
+        "PLANNED",
+        "RUNNING",
+        "GENERATED",
+        "FAILED",
+        "BLOCKED"
+      ]
+    },
+    "failureReason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "generationMode": {
+            "const": "GLOBAL_DIRECTION"
+          }
+        },
+        "required": [
+          "generationMode"
+        ]
+      },
+      "then": {
+        "properties": {
+          "styleAuthority": {
+            "const": "GLOBAL_DESIGN_BRIEF"
+          }
+        }
+      },
+      "else": {
+        "required": [
+          "visualBibleEvidence"
+        ],
+        "properties": {
+          "styleAuthority": {
+            "const": "APPROVED_VISUAL_BIBLE"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generationMode": {
+            "const": "SCENE_CONCEPT"
+          }
+        },
+        "required": [
+          "generationMode"
+        ]
+      },
+      "then": {
+        "required": [
+          "prefabStructureEvidence"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "generationMode": {
+            "const": "RUNTIME_ASSET_ITEM"
+          }
+        },
+        "required": [
+          "generationMode"
+        ]
+      },
+      "then": {
+        "required": [
+          "splitPlanEvidence",
+          "splitPlanApproval"
+        ],
+        "properties": {
+          "visualType": {
+            "const": "ASSET_SOURCE"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "GENERATED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "provider",
+          "model",
+          "generatedAtUtc"
+        ],
+        "properties": {
+          "candidates": {
+            "minItems": 1
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "enum": [
+              "FAILED",
+              "BLOCKED"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "failureReason"
+        ]
+      }
+    }
+  ]
+}

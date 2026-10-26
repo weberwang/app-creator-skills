@@ -1,0 +1,185 @@
+{
+  "id": "flutter",
+  "displayName": "Flutter",
+  "detectAny": [
+    "pubspec.yaml",
+    "lib/main.dart",
+    ".fvmrc"
+  ],
+  "frameworkPolicy": [
+    "通过 FVM 运行本项目已安装的 Flutter/Dart 版本；查看 .fvmrc、fvm_config.json 与锁文件，不固定未明确指定的版本。",
+    "沿用项目已选的路由、状态管理、依赖注入和生成器；Riverpod/GoRouter 等只在相应产品需求需要时采用。",
+    "Flutter 页面具语义、状态和导航边界；使用 Widget/RenderObject 的逻辑像素与自身系统安全区，不使用 Unity 场景/Anchor 或 Web DPR 语义。",
+    "APP 每一页面作为 PAGE 身份，但状态、模块、路由依赖及当前用户目标须独立建模；不得因每页都能识别就强行画高保真图或逐个重新确认。"
+  ],
+  "nativeRules": [
+    "Flutter UI 以 Widget 约束与父级布局为主，避免用固定屏幕坐标模拟普通流式页面；绝对定位仅用于有明确层叠/响应式合同的需求。",
+    "产品页面声明数据、加载/空/错误/成功状态、状态所有权、导航入栈/出栈、深链/恢复行为及可取消异步任务。",
+    "核验 SafeArea/system padding、键盘插入和 focus、textScaler 本地化长文案、滚动 owner 和不可截断的关键动作文案。",
+    "布局规格同时声明宽度/高度断点、同宽不同高、方向变化、默认与放大文字、安全区和关键交互 Widget test，比较元素间语义关系而非只匹配截图绝对坐标。",
+    "页面设计先定义语义目标和精简 sketch，再冻结目标高保真页面。Page screenshot 目标属于用户人工确认，图像源不直接替代可访问、真实可滚动或可响应式的 Widget 树。",
+    "依赖按所需能力组合；简单局部状态优先 Flutter 内置机制，不为少数模型、一个 API 或一个错误分支添加整套依赖。",
+    "运行 `fvm flutter analyze`、`fvm flutter test` 和最小受影响验证；只有构建平台或打包问题时再运行对应版本 Flutter build。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "analyze",
+      "tests"
+    ],
+    "visual": [
+      "layout",
+      "navigation",
+      "accessibility"
+    ],
+    "assetImport": [
+      "asset-registration"
+    ]
+  },
+  "runtimeRoots": [
+    "lib",
+    "test",
+    "integration_test",
+    "assets",
+    "assets-source",
+    "docs",
+    "pubspec.yaml",
+    "pubspec.lock",
+    ".fvmrc",
+    "fvm_config.json",
+    "analysis_options.yaml",
+    "android",
+    "ios",
+    "web",
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "projectStructure": {
+    "source": "lib/",
+    "screens": "lib/features/<feature>/presentation",
+    "shared": "lib/core/（确有稳定跨 feature 契约时）",
+    "tests": "test/",
+    "assets": "assets/",
+    "designAssets": "assets-source/（制作源，不打入运行包）"
+  },
+  "resourceDirectories": [
+    "adaptive-layout-implementation",
+    "app-domain-toolkit",
+    "flutter-app-orchestrator",
+    "flutter-asset-atlas",
+    "flutter-code-sketch",
+    "flutter-domain-contracts",
+    "flutter-hifi-mockup",
+    "flutter-implementation-plan",
+    "flutter-product-spec",
+    "flutter-project-init",
+    "flutter-quality-review",
+    "flutter-release-readiness",
+    "flutter-subagent-delivery",
+    "flutter-tech-design",
+    "flutter-ux-ui-quality"
+  ],
+  "sharedCapabilities": [],
+  "capabilitySkills": [
+    "app-product-planning",
+    "app-architecture",
+    "app-feedback",
+    "app-release",
+    "app-quality-review",
+    "app-ui-layout",
+    "app-artifact-cleanup",
+    "app-project-foundation",
+    "app-ui-code-sketch",
+    "app-asset-workflow",
+    "app-creator-workflow"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "adaptive-layout-implementation",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-adaptive-layout-implementation"
+    },
+    {
+      "sourceSkill": "flutter-asset-atlas",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-asset-atlas"
+    },
+    {
+      "sourceSkill": "flutter-code-sketch",
+      "capability": "app-ui-code-sketch",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-code-sketch"
+    },
+    {
+      "sourceSkill": "flutter-hifi-mockup",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-hifi-mockup"
+    },
+    {
+      "sourceSkill": "flutter-implementation-plan",
+      "capability": "app-creator-workflow",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-implementation-plan"
+    },
+    {
+      "sourceSkill": "flutter-product-spec",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-product-spec"
+    },
+    {
+      "sourceSkill": "flutter-project-init",
+      "capability": "app-project-foundation",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-project-init"
+    },
+    {
+      "sourceSkill": "flutter-quality-review",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-quality-review"
+    },
+    {
+      "sourceSkill": "flutter-release-readiness",
+      "capability": "app-release",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-release-readiness"
+    },
+    {
+      "sourceSkill": "flutter-subagent-delivery",
+      "capability": "app-creator-workflow",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-subagent-delivery"
+    },
+    {
+      "sourceSkill": "flutter-tech-design",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-tech-design"
+    },
+    {
+      "sourceSkill": "flutter-ux-ui-quality",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-ux-ui-quality"
+    }
+  ],
+  "authoredAdapters": [
+    {
+      "sourceSkill": "flutter-feedback",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-feedback"
+    },
+    {
+      "sourceSkill": "flutter-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-flutter/references/native-contracts.md",
+      "section": "mode-flutter-artifact-cleanup"
+    }
+  ],
+  "nativeManual": "skills/app-stack-flutter/references/native-contracts.md"
+}

@@ -1,0 +1,72 @@
+{
+  "capability": "app-artifact-cleanup",
+  "adapters": {
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-artifact-cleanup",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-artifact-cleanup",
+        "mode": "cocos-game-artifact-cleanup",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“项目整理与产物清理”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-artifact-cleanup",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-artifact-cleanup",
+        "mode": "phaser4-game-artifact-cleanup",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“项目整理与产物清理”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-artifact-cleanup",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-artifact-cleanup",
+        "mode": "threejs-game-artifact-cleanup",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“项目整理与产物清理”时使用此原生专项能力。"
+      }
+    ],
+    "unity": [
+      {
+        "sourceSkill": "unity-artifact-cleanup",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-artifact-cleanup",
+        "mode": "Unity 项目整理与清理",
+        "when": "整理 Unity 项目目录、移动或重命名资源、判定并清理中间产物时使用；遵循公共流程及 Unity 资源身份、导入器和序列化引用规则。",
+        "authored": true
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "flutter-artifact-cleanup",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-artifact-cleanup",
+        "mode": "Flutter 项目整理与清理",
+        "when": "整理 Flutter 项目目录、移动或重命名资源、判定并清理中间产物时使用；遵循公共流程及 Dart 导入、pubspec、生成代码和资源清单规则。",
+        "authored": true
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "artifact-cleanup",
+      "path": "../app-domain-toolkit/references/artifact-cleanup.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    },
+    {
+      "id": "artifact-cleanup-execution",
+      "path": "../app-domain-toolkit/references/artifact-cleanup-execution.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "capability": "app-animation",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-2d-animation-ta",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-2d-animation-ta",
+        "mode": "Unity 2D 骨骼动画技术美术",
+        "when": "需要制作或维护 2D 骨骼动画的制作管线、导入导出约定、资产校验或回归夹具时。"
+      },
+      {
+        "sourceSkill": "unity-game-3d-animation",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-3d-animation",
+        "mode": "Unity 3D 骨骼动画",
+        "when": "目标角色使用 3D 骨架与动画片段，需要制作、接入或检查 3D 动作状态时。"
+      },
+      {
+        "sourceSkill": "unity-game-2d-rigging",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-2d-rigging",
+        "mode": "2D 角色动作生产",
+        "when": "需要制作或修订 Unity 2D 角色的 AnimationClip、AnimatorController、动作变体及真实角色播放时读取；骨架绑定本身仍由角色绑定能力维护。",
+        "reused": true
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-frame-animation",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-frame-animation",
+        "mode": "cocos-frame-animation",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“动画制作与接入”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-frame-animation",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-frame-animation",
+        "mode": "phaser4-frame-animation",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“动画制作与接入”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-frame-animation",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-frame-animation",
+        "mode": "threejs-frame-animation",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“动画制作与接入”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "frame-animation",
+      "path": "../app-domain-toolkit/references/frame-animation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    },
+    {
+      "id": "frame-animation-execution",
+      "path": "../app-domain-toolkit/references/frame-animation-execution.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

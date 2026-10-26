@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "统一工作实施包",
+  "description": "引用栈专用验证标准，不将 Unity 资产规则强制套用于其他栈。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workItemId", "stack", "workItemType", "executionUnits"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "workItemId": {"type": "string", "minLength": 1},
+    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
+    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
+    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+    "executionUnits": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["unitId", "sequence", "type", "owner", "paths", "resultPath", "acceptanceCommands"], "properties": {"unitId": {"type": "string", "minLength": 1}, "sequence": {"type": "integer", "minimum": 1}, "type": {"enum": ["SHARED", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]}, "owner": {"type": "string", "minLength": 1}, "paths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "resultPath": {"type": "string", "minLength": 1}, "acceptanceCommands": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}, "parallelGroup": {"type": "string", "minLength": 1}, "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}}}}
+  }
+}

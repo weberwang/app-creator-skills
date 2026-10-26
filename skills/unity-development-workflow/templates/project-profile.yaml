@@ -1,0 +1,96 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+version: profile-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/project-profile.profile-v1.yaml
+  projectId: starfall-arena
+  subjectId: starfall-arena
+  subjectVersion: profile-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/project-profile.profile-v1.yaml
+  projectId: starfall-arena
+  subjectId: grilling.project-profile.profile-v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+workflow:
+  channel: STANDARD
+  gate: G0
+  qualityTargetsStatus: PROPOSED
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+  decomposition:
+    id: decomposition.starfall-arena.v1
+    version: decomposition-v1
+    status: AWAITING_USER
+unity:
+  version: "6"
+  renderPipeline: URP
+delivery:
+  platformSelectionStatus: AWAITING_USER
+  primaryDevelopmentPlatform: WINDOWS
+  targets:
+    - platformId: WINDOWS
+      adaptationFamily: WINDOWS
+      buildTarget: WINDOWS_STANDALONE
+      distributionChannel: 本地交付
+      deviceClasses: [DESKTOP]
+      orientations: [LANDSCAPE]
+      inputModes: [KEYBOARD_MOUSE, GAMEPAD]
+      safeAreaRequired: false
+      adaptiveLayoutRequired: true
+      windowModes: [WINDOWED, FULLSCREEN_WINDOW]
+      referenceResolutions:
+        - {width: 1280, height: 720, orientation: LANDSCAPE}
+        - {width: 1920, height: 1080, orientation: LANDSCAPE}
+      quality:
+        minimumFps: 60
+        maximumCpuFrameTimeMs: 16.67
+        maximumGpuFrameTimeMs: 16.67
+        maximumMemoryMb: 2048
+        maximumGcAllocKbPerFrame: 1
+        maximumDrawCalls: 1200
+        maximumTextureMemoryMb: 1024
+        maximumBuildSizeMb: 4096
+        maximumLoadTimeSeconds: 8
+    - platformId: ANDROID
+      adaptationFamily: MOBILE
+      buildTarget: ANDROID
+      distributionChannel: Google Play
+      deviceClasses: [PHONE, TABLET]
+      orientations: [PORTRAIT, LANDSCAPE]
+      inputModes: [TOUCH]
+      safeAreaRequired: true
+      adaptiveLayoutRequired: true
+      autorotation: true
+      referenceResolutions:
+        - {width: 1080, height: 2400, orientation: PORTRAIT}
+        - {width: 2560, height: 1600, orientation: LANDSCAPE}
+      quality:
+        minimumFps: 30
+        maximumCpuFrameTimeMs: 33.34
+        maximumGpuFrameTimeMs: 33.34
+        maximumMemoryMb: 1536
+        maximumGcAllocKbPerFrame: 1
+        maximumDrawCalls: 800
+        maximumTextureMemoryMb: 768
+        maximumBuildSizeMb: 2048
+        maximumLoadTimeSeconds: 10
+capabilities:
+  login: false
+  cloudSave: false
+  purchases: false
+  ads: false
+  analytics: false
+  crashReporting: false
+  online: false
+paths:
+  generatedSourceRoot: Assets/Generated
+  runtimeArtRoot: Assets/Art/Runtime
+  artifactRoot: Artifacts/Builds

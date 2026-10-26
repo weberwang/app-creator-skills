@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: remove, path: overlays.0.anchor}

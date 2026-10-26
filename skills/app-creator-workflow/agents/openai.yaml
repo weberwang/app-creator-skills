@@ -1,0 +1,4 @@
+interface:
+  display_name: "游戏与应用统一工作流"
+  short_description: "以统一流程协调五种技术栈，串联需求拷问、素材制作、工程验证和交付"
+  default_prompt: "使用 $app-creator-workflow，识别当前技术栈并按统一工作流完成任务。"

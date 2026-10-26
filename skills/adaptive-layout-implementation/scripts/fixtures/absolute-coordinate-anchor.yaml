@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: regions.0.anchors.horizontal.start.reference, value: "left: 16"}

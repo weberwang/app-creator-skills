@@ -1,0 +1,8 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: evidence_matrix.cases.0.orientation, value: diagonal}
+  - {op: set, path: evidence_matrix.cases.0.locale, value: unknown}
+  - {op: set, path: evidence_matrix.cases.0.safe_area, value: maybe}
+  - {op: set, path: evidence_matrix.cases.0.action_state, value: pending}
+  - {op: set, path: evidence_matrix.cases.0.test_ids, value: [null, content_header_relation]}

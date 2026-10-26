@@ -1,0 +1,11 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "replace-with-work-id",
+  "stack": "flutter",
+  "implementationPackageRef": ".workflow-control/implementation-packages/replace-with-work-id.json",
+  "visualStage": null,
+  "items": [
+    {"category": "analyze", "status": "NOT_RUN", "path": ".workflow-control/evidence/replace-with-work-id/analyze.txt"},
+    {"category": "tests", "status": "NOT_RUN", "path": ".workflow-control/evidence/replace-with-work-id/tests.txt"}
+  ]
+}

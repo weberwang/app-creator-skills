@@ -1,0 +1,62 @@
+{
+  "name": "app-creator-skills",
+  "version": "1.0.0",
+  "private": true,
+  "description": "以 Unity 为基准的游戏与应用公共工作流及五栈独立规范",
+  "type": "module",
+  "engines": {
+    "node": ">=22.20.0"
+  },
+  "bin": {
+    "app-creator-skills": "scripts/install-project-skills.mjs",
+    "app-workflow": "./skills/app-workflow-control/scripts/workflow-control.mjs",
+    "cocos-normalize-image": "./skills/cocos-domain-contracts/scripts/visual-image-normalization.mjs",
+    "cocos-remove-background": "./skills/cocos-game-asset-integration/scripts/remove-background-local.mjs",
+    "cocos-frame-animation": "./skills/cocos-frame-animation/scripts/video-to-atlas.mjs",
+    "cocos-frame-plan": "./skills/cocos-frame-animation/scripts/image-inbetween-plan.mjs",
+    "cocos-image-frame-animation": "./skills/cocos-frame-animation/scripts/images-to-atlas.mjs",
+    "phaser-normalize-image": "./skills/phaser-domain-contracts/scripts/visual-image-normalization.mjs",
+    "phaser-remove-background": "./skills/phaser4-game-asset-integration/scripts/remove-background-local.mjs",
+    "phaser-frame-animation": "./skills/phaser4-frame-animation/scripts/video-to-atlas.mjs",
+    "phaser-frame-plan": "./skills/phaser4-frame-animation/scripts/image-inbetween-plan.mjs",
+    "phaser-image-frame-animation": "./skills/phaser4-frame-animation/scripts/images-to-atlas.mjs",
+    "threejs-normalize-image": "./skills/threejs-domain-contracts/scripts/visual-image-normalization.mjs",
+    "threejs-remove-background": "./skills/threejs-game-asset-integration/scripts/remove-background-local.mjs",
+    "threejs-frame-animation": "./skills/threejs-frame-animation/scripts/video-to-atlas.mjs",
+    "threejs-frame-plan": "./skills/threejs-frame-animation/scripts/image-inbetween-plan.mjs",
+    "threejs-image-frame-animation": "./skills/threejs-frame-animation/scripts/images-to-atlas.mjs",
+    "threejs-create-game": "./skills/threejs-game-runtime/scripts/create-game.mjs",
+    "verify-game-build": "./skills/threejs-domain-contracts/tools/scripts/verify-game-build.mjs",
+    "workflow-snapshot": "./skills/flutter-domain-contracts/tools/scripts/workflow-snapshot.js",
+    "validate-workflow": "./skills/flutter-domain-contracts/tools/scripts/validate-workflow.js"
+  },
+  "scripts": {
+    "test": "node --test --test-concurrency=4",
+    "check": "node scripts/validate-repository.mjs",
+    "install:skills": "node scripts/install-project-skills.mjs",
+    "build:npx": "node scripts/build-npx-package.mjs",
+    "pack:npx": "npm pack ./packages/cli",
+    "remove:background": "node skills/app-asset-workflow/scripts/remove-background-local.mjs",
+    "check:migration": "node scripts/verify-migration.mjs",
+    "audit:bodies": "node scripts/audit-skill-bodies.mjs",
+    "index:skills": "node scripts/generate-specialist-index.mjs",
+    "test:migration": "node --test tests/migration.test.mjs tests/professional-delivery.test.mjs",
+    "test:flutter-layout": "node skills/adaptive-layout-implementation/scripts/run-fixtures.js"
+  },
+  "files": [
+    "install.mjs",
+    "packages/cli",
+    "scripts",
+    "skills",
+    "tests",
+    "README.md",
+    "docs",
+    "migration"
+  ],
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "sharp": "0.35.3",
+    "yaml": "2.9.0"
+  }
+}

@@ -1,0 +1,6 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: critical_alignments.0.geometry.flutter.x, value: 137}
+  - {op: set, path: critical_alignments.0.geometry.flutter.center_x, value: 197}
+  - {op: set, path: critical_alignments.0.delta.horizontal, value: 2}

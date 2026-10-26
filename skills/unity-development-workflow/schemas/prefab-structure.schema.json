@@ -1,0 +1,378 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/prefab-structure.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "projectId",
+    "sceneId",
+    "version",
+    "sourceRevision",
+    "projectStateVersion",
+    "visualBibleVersion",
+    "visualBibleEvidence",
+    "prefabs",
+    "sceneInstances",
+    "lowFidelityPreview",
+    "status"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "id": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "projectId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "sceneId": {
+      "$ref": "./common.schema.json#/$defs/taskId"
+    },
+    "stateId": {
+      "type": "string",
+      "minLength": 1,
+      "description": "当前结构状态；省略表示多状态，按来源拆解项的 stateVariants 筛选。"
+    },
+    "displayLayerId": {
+      "$ref": "./common.schema.json#/$defs/taskId",
+      "description": "独立显示层标识，跨布局、拆解和装配工件保持一致。"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceRevision": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projectStateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateSnapshot": {
+      "$ref": "./common.schema.json#/$defs/candidateSnapshot"
+    },
+    "grillingEvidence": {
+      "$ref": "./common.schema.json#/$defs/grillingEvidence"
+    },
+    "visualBibleVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "visualBibleEvidence": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "visual-bible"
+            }
+          },
+          "required": [
+            "type",
+            "subjectId",
+            "subjectVersion"
+          ]
+        }
+      ]
+    },
+    "prefabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "purpose",
+          "nodes"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "path": {
+            "$ref": "./common.schema.json#/$defs/projectRelativePath"
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 1
+          },
+          "nodes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/$defs/node"
+            }
+          }
+        }
+      }
+    },
+    "sceneInstances": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "prefabId",
+          "scenePath",
+          "parentId",
+          "decompositionElementId",
+          "semanticGrouping",
+          "layoutBinding",
+          "position",
+          "rotation",
+          "scale"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "prefabId": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "scenePath": {
+            "$ref": "./common.schema.json#/$defs/projectRelativePath"
+          },
+          "parentId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "decompositionElementId": {
+            "$ref": "./common.schema.json#/$defs/taskId"
+          },
+          "semanticGrouping": {
+            "$ref": "./common.schema.json#/$defs/semanticGrouping"
+          },
+          "layoutBinding": {
+            "$ref": "./common.schema.json#/$defs/layoutBinding"
+          },
+          "position": {
+            "$ref": "#/$defs/vector3"
+          },
+          "rotation": {
+            "$ref": "#/$defs/vector3"
+          },
+          "scale": {
+            "$ref": "#/$defs/vector3"
+          }
+        }
+      }
+    },
+    "lowFidelityPreview": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/evidence"
+        },
+        {
+          "properties": {
+            "type": {
+              "const": "low-fidelity-prefab-preview"
+            }
+          },
+          "required": [
+            "type",
+            "subjectId",
+            "subjectVersion"
+          ]
+        }
+      ]
+    },
+    "userApproval": {
+      "$ref": "./common.schema.json#/$defs/approval"
+    },
+    "status": {
+      "enum": [
+        "DRAFT",
+        "REVIEWING",
+        "APPROVED",
+        "CHANGES_REQUIRED",
+        "BLOCKED"
+      ]
+    },
+    "blockedReason": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "APPROVED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "candidateSnapshot",
+          "grillingEvidence",
+          "userApproval"
+        ],
+        "properties": {
+          "userApproval": {
+            "properties": {
+              "approvalType": {
+                "const": "PREFAB_STRUCTURE"
+              },
+              "authority": {
+                "const": "USER"
+              }
+            },
+            "required": [
+              "approvalType",
+              "authority"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "status": {
+            "const": "BLOCKED"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "then": {
+        "required": [
+          "blockedReason"
+        ]
+      }
+    }
+  ],
+  "$defs": {
+    "vector3": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "y",
+        "z"
+      ],
+      "properties": {
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "z": {
+          "type": "number"
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "name",
+        "nodeType",
+        "interactive",
+        "parentId",
+        "decompositionElementId",
+        "semanticGrouping",
+        "layoutBinding",
+        "position",
+        "rotation",
+        "scale",
+        "components"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        },
+        "parentId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decompositionElementId": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nodeType": {
+          "enum": [
+            "CONTAINER",
+            "VISUAL",
+            "UI",
+            "INTERACTION",
+            "CAMERA",
+            "LIGHT"
+          ]
+        },
+        "interactive": {
+          "type": "boolean"
+        },
+        "plannedResourceId": {
+          "$ref": "./common.schema.json#/$defs/taskId"
+        },
+        "position": {
+          "$ref": "#/$defs/vector3"
+        },
+        "rotation": {
+          "$ref": "#/$defs/vector3"
+        },
+        "scale": {
+          "$ref": "#/$defs/vector3"
+        },
+        "semanticGrouping": {
+          "$ref": "./common.schema.json#/$defs/semanticGrouping"
+        },
+        "layoutBinding": {
+          "$ref": "./common.schema.json#/$defs/layoutBinding"
+        },
+        "components": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "nodeType": {
+                "const": "UI"
+              }
+            },
+            "required": [
+              "nodeType"
+            ]
+          },
+          "then": {
+            "properties": {
+              "layoutBinding": {
+                "required": [
+                  "uiLayout"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

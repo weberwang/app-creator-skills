@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: overlays.0.hit_target.min_width, value: 0}

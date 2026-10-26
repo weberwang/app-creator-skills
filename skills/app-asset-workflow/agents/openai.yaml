@@ -1,0 +1,4 @@
+interface:
+  display_name: "素材生产与去 AI 味"
+  short_description: "用视觉签名、系列制作规范、技术检查与人工审阅控制游戏和应用素材质量"
+  default_prompt: "使用 $app-asset-workflow，为当前对象建立统一视觉签名并完成素材生产与交接。"

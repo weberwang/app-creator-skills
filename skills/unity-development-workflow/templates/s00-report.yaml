@@ -1,0 +1,53 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+foundationVersion: foundation-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+generatedAtUtc: "2026-07-27T12:00:00Z"
+decompositionPlan:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+moduleManifest:
+  type: module-manifest
+  path: Artifacts/Planning/module-manifest.yaml
+scope:
+  - 启动、场景加载、输入、配置、存档、UI Toolkit、日志与测试骨架
+sharedCapabilities:
+  - id: foundation.scene-loading
+    usedByScenes:
+      - scene.arena-intro
+      - scene.arena-battle
+changedPaths:
+  - Assets/Scripts/Foundation
+qualityReports:
+  - type: quality-report
+    path: Artifacts/Quality/s00-baseline.yaml
+    subjectId: qa.s00-baseline
+    subjectVersion: foundation-v1
+    sourceRevision: working-tree-snapshot-20260727
+    buildVersion: 0.1.0-dev.0
+console:
+  id: console.clean
+  status: NOT_RUN
+  evidence: []
+emptyPlatformBuild:
+  status: NOT_RUN
+  platformId: WINDOWS
+  buildVersion: 0.1.0-dev.0
+  artifact:
+    type: platform-build-artifact
+    artifactType: WINDOWS_EXECUTABLE
+    platform: WINDOWS
+    path: Artifacts/Builds/Windows/0.1.0-dev.0/starfall-arena.exe
+    projectId: starfall-arena
+    subjectId: foundation.core
+    subjectVersion: 0.1.0-dev.0
+    sourceRevision: working-tree-snapshot-20260727
+    projectStateVersion: project-state-v1
+    buildVersion: 0.1.0-dev.0
+reviews: []
+status: NOT_RUN

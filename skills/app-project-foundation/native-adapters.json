@@ -1,0 +1,24 @@
+{
+  "capability": "app-project-foundation",
+  "adapters": {
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-runtime",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-runtime",
+        "mode": "Three.js 新建基础与既有运行时迭代排错",
+        "when": "新项目需要建立最小运行基线，或既有Three.js项目需要迭代/排查固定步长、输入、资源释放、后台恢复等运行时问题时；既有项目问题不触发重建脚手架。"
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "flutter-project-init",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-project-init",
+        "mode": "flutter-project-init",
+        "when": "仅当项目技术栈为 Flutter，且任务属于“项目初始化与基础运行时”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

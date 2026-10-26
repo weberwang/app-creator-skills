@@ -1,0 +1,6 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - op: set
+    path: text_behavior.critical_actions_allow_truncation
+    value: true

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "与对象及阶段绑定的用户视觉确认",
+  "description": "该文件只记录聊天中真实发生的确认，不可由代理代写为用户批准。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "objectId", "stage", "purpose", "decision", "userMessageRef"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "objectId": {"type": "string"}, "candidateId": {"type": "string"},
+    "stage": {"enum": ["BASELINE", "V1", "V2", "V3", "V4"]},
+    "purpose": {"enum": ["visual-baseline", "target", "decomposition", "layout", "imported-assets", "runtime-acceptance"]},
+    "decision": {"enum": ["APPROVED", "REJECTED"]}, "userMessageRef": {"type": "string", "minLength": 1},
+    "targetRef": {"type": "string"},
+    "qualityChecks": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "object", "additionalProperties": false, "required": ["dimension", "status", "evidenceRef"], "properties": {"dimension": {"enum": ["themeFit", "audienceFit", "taskReadability", "viewingComfort", "artCompletion"]}, "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "evidenceRef": {"type": "string"}}}}
+  }
+}

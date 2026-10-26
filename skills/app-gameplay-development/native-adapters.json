@@ -1,0 +1,52 @@
+{
+  "capability": "app-gameplay-development",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-gameplay-development",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-gameplay-development",
+        "mode": "unity-gameplay-development",
+        "when": "仅当项目技术栈为 Unity，且任务属于“游戏玩法实现”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-gameplay-development",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-gameplay-development",
+        "mode": "cocos-gameplay-development",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏玩法实现”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-gameplay-development",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-gameplay-development",
+        "mode": "phaser4-gameplay-development",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏玩法实现”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-gameplay-development",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-gameplay-development",
+        "mode": "threejs-gameplay-development",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏玩法实现”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "gameplay-implementation",
+      "path": "../app-domain-toolkit/references/gameplay-implementation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,208 @@
+{
+  "id": "unity",
+  "displayName": "Unity",
+  "detectAny": [
+    "ProjectSettings/ProjectVersion.txt",
+    "Assets",
+    "Packages/manifest.json"
+  ],
+  "frameworkPolicy": [
+    "Unity 6 + URP 为新项目默认；继承项目必须实测 Unity Editor 与 URP 包版本，不静默迁移。",
+    "运行时 UI 默认 uGUI + TextMeshPro；新编辑器界面默认 UI Toolkit；沿用项目已选路线。",
+    "第三方依赖优先通过 UPM 管理。"
+  ],
+  "nativeRules": [
+    "Assets 内导入资源与其 .meta 是同一所有权单元；通过 AssetDatabase 移动、导入、保存并读回真实 GUID 和引用。",
+    "不得手写或猜测 Unity Scene、Prefab、ScriptableObject 的序列化结构和 GUID。",
+    "每个项目同一时段只有一个 Unity Editor 写入者；ProjectSettings、Packages、Build Settings、跨场景入口及共享程序集变更串行实施。",
+    "Runtime 程序集不引用 UnityEditor、Editor 或测试程序集；按实际独立编译边界创建 asmdef。",
+    "资源加载按实际引用关系声明：优先序列化引用；Resources 与 Addressables 仅在项目明确采用时使用并验证真实配置。",
+    "SDK 由唯一初始化入口编排；各 SDK 独立初始化、错误恢复，不等待无关 SDK 阻断首帧。",
+    "3D 几何、PBR 材质/贴图、绑定与动画生产须按生产合同交给已验证的 Blender MCP 流程；Unity 负责导入、Prefab 接入和运行验证，不声称本工具包提供 Blender 命令。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "compile",
+      "tests"
+    ],
+    "visual": [
+      "runtime-layout",
+      "runtime-interaction",
+      "asset-import"
+    ],
+    "assetImport": [
+      "asset-import"
+    ]
+  },
+  "runtimeRoots": [
+    "Assets",
+    "Assets/Tests",
+    "Packages",
+    "Packages/manifest.json",
+    "Packages/packages-lock.json",
+    "ProjectSettings",
+    "ProjectSettings/ProjectVersion.txt",
+    "tests",
+    "ArtSource",
+    "docs"
+  ],
+  "projectStructure": {
+    "scripts": "Assets/Scripts/<职责与模块>",
+    "scenes": "Assets/Scenes",
+    "ui": "Assets/UI",
+    "runtimeArt": "Assets/Art/Runtime",
+    "sourceArt": "ArtSource",
+    "tests": "Assets/Tests"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit",
+    "unity-development-workflow",
+    "unity-domain-contracts",
+    "unity-game-2d-animation-ta",
+    "unity-game-2d-rigging",
+    "unity-game-3d-animation",
+    "unity-game-3d-modeling",
+    "unity-game-3d-rigging",
+    "unity-game-3d-texturing",
+    "unity-game-architecture",
+    "unity-game-audio",
+    "unity-game-balance",
+    "unity-game-juice",
+    "unity-game-production",
+    "unity-game-qa-performance",
+    "unity-game-release",
+    "unity-game-spine-reskin",
+    "unity-game-visual-assets",
+    "unity-gameplay-development"
+  ],
+  "sharedCapabilities": [
+    "audio",
+    "balance",
+    "modeling-production"
+  ],
+  "capabilitySkills": [
+    "app-product-planning",
+    "app-architecture",
+    "app-gameplay-development",
+    "app-audio",
+    "app-game-balance",
+    "app-feedback",
+    "app-release",
+    "app-quality-review",
+    "app-animation",
+    "app-character-rigging",
+    "app-3d-modeling",
+    "app-3d-texturing",
+    "app-spine-reskin",
+    "app-ui-layout",
+    "app-artifact-cleanup",
+    "app-asset-workflow"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "unity-game-2d-animation-ta",
+      "capability": "app-animation",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-2d-animation-ta"
+    },
+    {
+      "sourceSkill": "unity-game-2d-rigging",
+      "capability": "app-character-rigging",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-2d-rigging"
+    },
+    {
+      "sourceSkill": "unity-game-3d-animation",
+      "capability": "app-animation",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-3d-animation"
+    },
+    {
+      "sourceSkill": "unity-game-3d-modeling",
+      "capability": "app-3d-modeling",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-3d-modeling"
+    },
+    {
+      "sourceSkill": "unity-game-3d-rigging",
+      "capability": "app-character-rigging",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-3d-rigging"
+    },
+    {
+      "sourceSkill": "unity-game-3d-texturing",
+      "capability": "app-3d-texturing",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-3d-texturing"
+    },
+    {
+      "sourceSkill": "unity-game-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-architecture"
+    },
+    {
+      "sourceSkill": "unity-game-audio",
+      "capability": "app-audio",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-audio"
+    },
+    {
+      "sourceSkill": "unity-game-balance",
+      "capability": "app-game-balance",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-balance"
+    },
+    {
+      "sourceSkill": "unity-game-juice",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-juice"
+    },
+    {
+      "sourceSkill": "unity-game-production",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-production"
+    },
+    {
+      "sourceSkill": "unity-game-qa-performance",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-qa-performance"
+    },
+    {
+      "sourceSkill": "unity-game-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-release"
+    },
+    {
+      "sourceSkill": "unity-game-spine-reskin",
+      "capability": "app-spine-reskin",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-spine-reskin"
+    },
+    {
+      "sourceSkill": "unity-game-visual-assets",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-game-visual-assets"
+    },
+    {
+      "sourceSkill": "unity-gameplay-development",
+      "capability": "app-gameplay-development",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-gameplay-development"
+    }
+  ],
+  "authoredAdapters": [
+    {
+      "sourceSkill": "unity-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-unity/references/native-contracts.md",
+      "section": "mode-unity-artifact-cleanup"
+    }
+  ],
+  "nativeManual": "skills/app-stack-unity/references/native-contracts.md"
+}

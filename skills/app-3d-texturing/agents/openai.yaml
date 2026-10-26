@@ -1,0 +1,6 @@
+interface:
+  display_name: "三维材质与贴图生产"
+  short_description: "规划三维材质分区、UV和贴图通道，控制分辨率、色彩一致性及目标渲染管线兼容。"
+  default_prompt: "使用 $app-3d-texturing，按已确认的技术栈完成当前三维材质与贴图生产任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,4 @@
+interface:
+  display_name: "决策拷问"
+  short_description: "先核实事实，再逐项追问产品、体验、技术与视觉的实质取舍并记录决定"
+  default_prompt: "使用 $grilling，审视当前方案，只追问证据无法消除且需要我决定的问题。"

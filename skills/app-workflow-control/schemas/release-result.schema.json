@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/release-result.schema.json",
+  "title": "已完成发布的结果记录",
+  "description": "只记录由授权流程实际完成的发布；控制器不执行发布操作。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "workItemId", "stack", "stageId", "actionId", "target", "userMessageRef", "releaseIdentifier", "evidencePath"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "status": {"const": "PASS"},
+    "workItemId": {"type": "string", "minLength": 1},
+    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
+    "stageId": {"type": "string", "minLength": 1},
+    "actionId": {"type": "string", "minLength": 1},
+    "target": {"type": "string", "minLength": 1},
+    "userMessageRef": {"type": "string", "minLength": 1},
+    "releaseIdentifier": {"type": "string", "minLength": 1},
+    "evidencePath": {"type": "string", "minLength": 1}
+  }
+}

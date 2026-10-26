@@ -1,0 +1,62 @@
+{
+  "capability": "app-audio",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-audio",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-audio",
+        "mode": "unity-game-audio",
+        "when": "仅当项目技术栈为 Unity，且任务属于“游戏音频”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-audio",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-audio",
+        "mode": "cocos-game-audio",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏音频”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-audio",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-audio",
+        "mode": "phaser4-game-audio",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏音频”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-audio",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-audio",
+        "mode": "threejs-game-audio",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏音频”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "audio",
+      "path": "../app-domain-toolkit/references/audio.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ]
+    },
+    {
+      "id": "audio-implementation",
+      "path": "../app-domain-toolkit/references/audio-implementation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

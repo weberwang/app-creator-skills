@@ -1,0 +1,29 @@
+schemaVersion: "1.0"
+reviewId: visual-review.scene-main.v1
+subject:
+  type: SCENE_TARGET
+  subjectId: scene.main
+  subjectVersion: v1
+  sourceRevision: working-tree-snapshot
+authorId: visual-author
+reviewers:
+  - reviewerId: independent-visual-reviewer
+    role: VISUAL
+    independent: true
+    status: PASS
+    findings: []
+  - reviewerId: independent-unity-reviewer
+    role: UNITY_IMPLEMENTATION
+    independent: true
+    status: PASS
+    findings: []
+checks:
+  visualConsistency: PASS
+  unityFeasibility: PASS
+  readability: PASS
+  runtimeEvidence: NOT_APPLICABLE
+userDecision:
+  required: false
+  status: NOT_REQUIRED
+verdict: PASS
+recordedAtUtc: 2026-09-10T00:00:00Z

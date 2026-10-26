@@ -1,0 +1,180 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/ui-layout-plan.schema.json",
+  "title": "Unity UI 布局派生计划",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "sceneId",
+    "stateId",
+    "uiSystem",
+    "coordinateSpace",
+    "roots",
+    "nodes"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "sceneId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenePath": {
+      "allOf": [
+        {
+          "$ref": "./common.schema.json#/$defs/projectRelativePath"
+        },
+        {
+          "pattern": "^Assets/.+\\.unity$"
+        }
+      ],
+      "description": "可选的项目相对 Unity Scene 路径。"
+    },
+    "stateId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "displayLayerId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "uiSystem": {
+      "enum": [
+        "UGUI",
+        "UI_TOOLKIT"
+      ]
+    },
+    "coordinateSpace": {
+      "enum": [
+        "SCREEN_SPACE_PIXELS",
+        "UI_TOOLKIT_LOGICAL_POINTS"
+      ]
+    },
+    "roots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "viewport",
+        "safe-area"
+      ],
+      "properties": {
+        "viewport": {
+          "$ref": "./common.schema.json#/$defs/rect"
+        },
+        "safe-area": {
+          "$ref": "./common.schema.json#/$defs/rect"
+        }
+      }
+    },
+    "splitPlanRef": {
+      "$ref": "#/$defs/projectArtifactRef"
+    },
+    "prefabStructureRef": {
+      "$ref": "#/$defs/projectArtifactRef"
+    },
+    "prefabAssemblyRef": {
+      "$ref": "#/$defs/projectArtifactRef"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    }
+  },
+  "$defs": {
+    "projectArtifactRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path"
+      ],
+      "properties": {
+        "path": {
+          "allOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/projectRelativePath"
+            },
+            {
+              "pattern": "\\S"
+            }
+          ]
+        }
+      },
+      "description": "目标 Unity 工程内已保存工件的项目相对路径；引用本身不表示该工件已获确认。"
+    },
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "decompositionElementId",
+        "parentElementId",
+        "semanticGrouping",
+        "renderKind",
+        "bounds",
+        "layoutBinding"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "对应拆解项 targetPrefabNodeIds 的实际 Prefab/Scene 节点 ID。"
+        },
+        "decompositionElementId": {
+          "$ref": "./common.schema.json#/$defs/taskId",
+          "description": "对应 splitPlan.items[].id 的稳定拆解身份。"
+        },
+        "parentElementId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "semanticGrouping": {
+          "$ref": "./common.schema.json#/$defs/semanticGrouping"
+        },
+        "renderKind": {
+          "enum": [
+            "SPRITE",
+            "STRUCTURE",
+            "TEXT",
+            "BACKGROUND"
+          ]
+        },
+        "expectedActive": {
+          "type": "boolean",
+          "description": "当前状态下的层级活动预期，省略时为true；隐藏对象仍须采集组件快照。"
+        },
+        "nineSlice": {
+          "$ref": "./common.schema.json#/$defs/nineSlice"
+        },
+        "bounds": {
+          "$ref": "./common.schema.json#/$defs/rect"
+        },
+        "layoutBinding": {
+          "allOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/layoutBinding"
+            },
+            {
+              "required": [
+                "axisAlignment",
+                "uiLayout"
+              ]
+            }
+          ]
+        },
+        "targetBounds": {
+          "allOf": [
+            {
+              "$ref": "./common.schema.json#/$defs/rect"
+            }
+          ],
+          "description": "由布局派生器生成；校验时会从原始 bounds 重新计算并逐项比对。"
+        }
+      }
+    }
+  }
+}

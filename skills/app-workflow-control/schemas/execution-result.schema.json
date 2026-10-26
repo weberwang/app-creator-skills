@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "实施单元结果",
+  "description": "由实现者记录已实际执行的命令和证据；控制器校验事实文件，不执行命令。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "status", "workItemId", "stack", "implementationPackageRef", "unitId", "sequence", "exitCode", "files", "commandOutputs"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "status": {"enum": ["PASS", "FAIL"]},
+    "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
+    "implementationPackageRef": {"type": "string"}, "unitId": {"type": "string"}, "sequence": {"type": "integer", "minimum": 1}, "exitCode": {"type": "integer"},
+    "files": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "commandOutputs": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["command", "exitCode", "outputFile"], "properties": {"command": {"type": "string"}, "exitCode": {"type": "integer"}, "outputFile": {"type": "string"}}}}
+  }
+}

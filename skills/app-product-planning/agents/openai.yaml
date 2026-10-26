@@ -1,0 +1,6 @@
+interface:
+  display_name: "产品与游戏需求"
+  short_description: "为新游戏或应用制定产品范围，或为既有 GDD 与功能编写有边界的增量策划和验收条件。"
+  default_prompt: "使用 $app-product-planning，按已确认的技术栈完成当前产品与游戏需求任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

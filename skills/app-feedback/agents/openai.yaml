@@ -1,0 +1,6 @@
+interface:
+  display_name: "游戏与应用汁水设计"
+  short_description: "统一设计游戏与应用的交互汁水和动态反馈，让输入、状态与结果清楚可信，并兼顾异步、无障碍与减少动态效果。"
+  default_prompt: "使用 $app-feedback，按已确认的技术栈完成当前游戏与应用汁水设计任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

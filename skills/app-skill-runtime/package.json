@@ -1,0 +1,13 @@
+{
+  "name": "app-creator-skill-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "description": "所有专业技能共用的 Node 工具依赖，不是流程控制器",
+  "engines": { "node": ">=22.20.0" },
+  "dependencies": {
+    "ajv": "8.20.0",
+    "ajv-formats": "3.0.1",
+    "sharp": "0.35.3",
+    "yaml": "2.9.0"
+  }
+}

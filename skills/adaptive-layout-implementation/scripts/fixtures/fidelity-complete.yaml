@@ -1,0 +1,3 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: pass
+expected_attention: []

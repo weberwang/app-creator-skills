@@ -1,0 +1,5 @@
+source: ../../assets/layout-spec-template.yaml
+expected: fail
+mutations:
+  - op: remove
+    path: text_behavior.line_break

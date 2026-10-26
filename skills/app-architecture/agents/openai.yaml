@@ -1,0 +1,6 @@
+interface:
+  display_name: "技术架构与模块设计"
+  short_description: "把已确认的产品需求转成模块边界、数据流、依赖关系、技术决策和可并行实施的交接包。"
+  default_prompt: "使用 $app-architecture，按已确认的技术栈完成当前技术架构与模块设计任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

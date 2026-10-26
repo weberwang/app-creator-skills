@@ -1,0 +1,130 @@
+schemaVersion: "1.0"
+taskId: qa.devices.final
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+buildVersion: 0.1.0-dev.1
+developmentCompletionEvidence:
+  type: quality-gates
+  path: Artifacts/Quality/quality-gates.g2.yaml
+  projectId: starfall-arena
+  subjectId: g2.development-complete
+  subjectVersion: project-state-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+deviceAcceptance:
+  acceptedPlatformIds: [WINDOWS, ANDROID]
+  acceptedModuleIds: [Foundation.Core, Gameplay.Player]
+  acceptedSceneIds: [scene.arena-intro, scene.arena-battle]
+  buildArtifacts:
+    - &windows-artifact
+      artifactType: WINDOWS_EXECUTABLE
+      platform: WINDOWS
+      path: Artifacts/Builds/Windows/StarfallArena.exe
+    - &android-artifact
+      artifactType: ANDROID_APP_BUNDLE
+      platform: ANDROID
+      path: Artifacts/Builds/Android/StarfallArena.aab
+  deviceProfiles:
+    - id: minimum-windows
+      platformId: WINDOWS
+      formFactor: DESKTOP
+      tier: MINIMUM
+      operatingSystem: Windows 10 22H2
+      cpu: Intel Core i5-8400
+      gpu: NVIDIA GeForce GTX 1060
+      memoryMb: 8192
+    - id: reference-android-tablet
+      platformId: ANDROID
+      formFactor: TABLET
+      tier: REFERENCE
+      operatingSystem: Android 15
+      cpu: Snapdragon 8 Gen 3
+      gpu: Adreno 750
+      memoryMb: 12288
+  matrix:
+    - id: windows-intro
+      deviceProfileId: minimum-windows
+      sceneId: scene.arena-intro
+      width: 1280
+      height: 720
+      windowMode: WINDOWED
+      inputMode: KEYBOARD_MOUSE
+      checks: &device-checks
+        installation: PASS
+        launch: PASS
+        coreLoop: PASS
+        input: PASS
+        lifecycle: PASS
+        screenAdaptation: PASS
+        visual: PASS
+        audio: PASS
+        performance: PASS
+        stability: PASS
+      status: PASS
+      evidence:
+        - type: device-acceptance-run
+          path: Artifacts/Quality/Devices/windows-intro.json
+    - id: windows-battle
+      deviceProfileId: minimum-windows
+      sceneId: scene.arena-battle
+      width: 1280
+      height: 720
+      windowMode: WINDOWED
+      inputMode: KEYBOARD_MOUSE
+      checks: *device-checks
+      status: PASS
+      evidence:
+        - type: device-acceptance-run
+          path: Artifacts/Quality/Devices/windows-battle.json
+    - id: android-intro
+      deviceProfileId: reference-android-tablet
+      sceneId: scene.arena-intro
+      width: 2560
+      height: 1600
+      windowMode: FULLSCREEN
+      inputMode: TOUCH
+      checks: *device-checks
+      status: PASS
+      evidence:
+        - type: device-acceptance-run
+          path: Artifacts/Quality/Devices/android-intro.json
+    - id: android-battle
+      deviceProfileId: reference-android-tablet
+      sceneId: scene.arena-battle
+      width: 2560
+      height: 1600
+      windowMode: FULLSCREEN
+      inputMode: TOUCH
+      checks: *device-checks
+      status: PASS
+      evidence:
+        - type: device-acceptance-run
+          path: Artifacts/Quality/Devices/android-battle.json
+generatedAtUtc: "2026-08-02T12:00:00Z"
+checks:
+  - id: devices.acceptance-verified
+    category: test
+    status: PASS
+    message: G2 通过后，用户批准平台的候选包已覆盖全设备档位与全场景矩阵
+    evidence:
+      - type: platform-build-artifact
+        <<: *windows-artifact
+        projectId: starfall-arena
+        subjectId: devices.final
+        subjectVersion: 0.1.0-dev.1
+        sourceRevision: working-tree-snapshot-20260727
+        projectStateVersion: project-state-v1
+        buildVersion: 0.1.0-dev.1
+      - type: platform-build-artifact
+        <<: *android-artifact
+        projectId: starfall-arena
+        subjectId: devices.final
+        subjectVersion: 0.1.0-dev.1
+        sourceRevision: working-tree-snapshot-20260727
+        projectStateVersion: project-state-v1
+        buildVersion: 0.1.0-dev.1
+status: PASS
+evidence:
+  - type: device-acceptance-summary
+    path: Artifacts/Quality/Devices/final-summary.json

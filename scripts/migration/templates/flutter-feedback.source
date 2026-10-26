@@ -1,0 +1,63 @@
+---
+name: flutter-feedback
+description: Flutter 游戏与应用交互反馈的原生适配规范，覆盖动画、异步结果、生命周期、无障碍、减少动态效果和响应性。
+---
+
+# Flutter 原生适配：交互反馈
+
+> 本文件是 app-creator-skills 仓库新增的 Flutter 原生适配，不是五个源仓库保留的原生 Skill，也不新增独立 `SKILL.md` 入口。它由统一的 [`app-feedback`](../app-feedback/SKILL.md) 能力入口按需调用。
+
+先遵守[公共执行协议](../app-creator-workflow/references/professional-execution.md)，再将[游戏与应用共用的交互反馈规范](../app-feedback/references/interaction-feedback.md)应用到 Flutter 项目。本文件只规定 Flutter 的实现映射；产品语义、事件矩阵、通道预算与异步真实性原则以共用规范为准。
+
+## Flutter 中的实现边界
+
+- **让业务状态驱动反馈。** Widget 的视觉状态来自当前业务/界面状态；`build` 保持可重复调用且不承担副作用。已成立的用户操作或既定路由意图可以包含转场表现并正常收尾；动画完成本身不能冒充保存成功、奖励到账等业务结果，也不能触发没有用户或既定路由意图的新导航。
+- **即时响应与最终结果分别呈现。** 控件按下、输入已接收、局部忙碌状态可以立即反馈；网络或持久化结果另行呈现。乐观更新明确失败回滚或恢复入口，不能把本地临时值写成已确认。
+- **把动画范围限制在负责组件。** 使用项目已经采用的动画和渲染方式表达需要的变化；把频繁动画状态限制在相关子树，避免每帧通知页面根节点并重建无关内容。列表项目和动态内容保持稳定身份，避免重排时反馈串到另一条目。
+- **按已有架构接入声音和触觉。** 复用项目已有的服务、包和平台约定；只有存在明确语义且目标设备/偏好允许时才触发。声音和触觉不可用或被关闭时，业务状态仍可理解。不为了反馈任务新增依赖或假设某个设备必然支持触觉。
+
+不要在没有项目依据时预设动画 API 版本、固定持续时间、必需声音/触觉，或将游戏粒子、屏幕震动等装饰形式设为普通应用控件的默认反馈。
+
+## Widget、State 与 Route 生命周期
+
+- `AnimationController` 等动画资源由清楚的 `State` 或组件所有者持有并在其生命周期结束时清理；若 `TickerProviderStateMixin` 的 `State` 创建控制器，应先释放控制器再调用 `super.dispose()`。退出动画等待要考虑取消语义：普通 `TickerFuture` 在 ticker 被取消后可能一直不完成，只有确实需要等待时才按项目 API 使用 `orCancel` 并处理取消结果。
+- 在 `dispose`、路由离开或组件替换后，清理失效视图的订阅、瞬态反馈和展示回调；不要因此无条件取消保存、上传等业务操作。业务操作是否可取消由既有操作所有者和取消契约决定；未取消的权威结果仍交给该所有者处理，旧视图只需停止展示其过期回调。
+- `mounted` 只用于避免访问已失效的 State；它不会取消网络/业务请求，也不能阻止同一个仍挂载的页面被旧请求结果覆盖。异步操作仍须单独检查当前操作身份。路由的 `popped` 结果也可能早于退出转场真正结束，业务状态不应依赖转场完成来提交。
+- 对用户快速重复提交、切换选择、连续搜索或列表手势，定义当前哪次操作有效。较新操作替换较旧操作时，旧结果不得恢复过期文本、进度、错误或动画。
+- 处理应用进入后台、视图遮挡与返回：暂停或停止不应继续的瞬态动效，重新前台后由当前状态恢复；持久业务状态不依赖动画重播才能呈现。
+- 对生命周期敏感的异步回调应检查组件是否仍有效，并同时核对操作身份。仅检查组件尚未销毁，仍可能让同一页面上已过期请求更新新状态。
+
+## 辅助技术、焦点与减少动态效果
+
+- 让控件语义、名称、可用性及重要结果与画面一致。错误、保存/发送结果、真实进度或动态加载阶段通过适当的语义/文本呈现；纯装饰变化不应反复触发朗读。
+- 验证键盘焦点、表单错误定位、无障碍焦点与导航变化。重要反馈不能只表现为颜色、闪烁、音频或震动，也不应无故把焦点从当前任务移走。
+- 读取项目 SDK 和目标平台实际暴露的减少动态效果偏好，并以静态状态或低幅度变化代替非必要动画；功能状态、提示文本和可操作性仍然保留。Flutter 的 `disableAnimations`、`accessibleNavigation` 与 iOS 的 `AccessibilityFeatures.reduceMotion` 表达不同偏好，不能把其中一个臆造成跨平台统一标志；按项目 SDK 现有 API 和产品需要确认适用信号。
+- 触觉、声音、动效分别响应项目和平台已有设置。若项目未提供相应能力，保留核心视觉、文字与语义反馈，不新造一套全局偏好或通道调度器。
+- `HapticFeedback` 是向平台请求默认触觉效果；它不保证每台设备都会产生可感知输出。`Semantics`/live region 可用于重要动态结果，但播报时序和合并行为可能随平台与辅助技术不同，核心操作仍须可读且可恢复。
+
+## 布局、性能与组件更新
+
+- 让反馈落在操作发生的位置：按钮忙碌状态、表单字段错误、列表条目变化、导航结果或局部进度。避免单一全屏遮罩掩盖仍可交互的上下文，除非产品语义确实要求阻断操作。
+- 高频状态更新只通知实际依赖它的局部 UI。按项目现有状态管理方式拆分监听范围，避免动画帧或列表项更新触发整页 `setState`、重复计算昂贵布局，或使无关列表项重建。
+- 动效中的尺寸/布局变化注意滚动位置、键盘、安全区和内容增长；错误提示出现后焦点和可见内容应仍可达。项目原有布局规范和无障碍适配优先。
+- 依据目标设备与项目约定检查掉帧、过度重绘、列表滚动稳定性和资源清理。不要以增加动画层数或全局监听器掩盖状态归属不清。
+
+## Flutter 回归检查
+
+按改动风险选择适合的检查范围，并沿用项目已有测试和验证入口：
+
+- 覆盖即时按下/输入响应与最终成功、拒绝、失败状态是否分明。
+- 快速触发、重复操作、反向操作、重试、取消和新旧请求乱序完成时，当前显示结果是否仍对应有效操作。
+- 页面离开或组件销毁后，计时器、订阅、动画及异步结果是否停止影响旧视图；重新进入时，持久状态是否从当前数据恢复。
+- 减少动态效果、键盘操作、语义提示、错误定位、静音和无触觉情况下，状态和后续动作是否仍可理解。
+- 用目标尺寸与具有代表性的列表/页面负载检查布局、帧稳定性和局部重建范围。
+
+组件或自动化检查可以验证状态和语义合同，但不能替代视觉/手感验收。需要视觉检查时，由用户人工查看所提供的实际呈现并确认；不自动分析截图或把未查看的截图称为通过。报告实际运行的验证和仍待人工检查的体验结论。
+
+## Flutter API 参考
+
+以下官方 API 文档用于核对当前 Flutter/Dart API 语义，不锁定项目 SDK 版本。实现时按仓库实际 SDK、平台和依赖确认可用字段及行为：
+
+- [AnimationController](https://api.flutter.dev/flutter/animation/AnimationController-class.html)、[State.mounted](https://api.flutter.dev/flutter/widgets/State/mounted.html) 与[转场完成结果](https://api.flutter.dev/flutter/widgets/TransitionRoute/completed.html)：资源生命周期、有效 State 和退出转场的边界。
+- [MediaQueryData.disableAnimations](https://api.flutter.dev/flutter/widgets/MediaQueryData/disableAnimations.html)、[MediaQueryData.accessibleNavigation](https://api.flutter.dev/flutter/widgets/MediaQueryData/accessibleNavigation.html) 与[Dart UI 的 reduceMotion](https://api.flutter.dev/flutter/dart-ui/AccessibilityFeatures/reduceMotion.html)：不同辅助/动态偏好信号的语义。
+- [HapticFeedback](https://api.flutter.dev/flutter/services/HapticFeedback-class.html) 与[SemanticsProperties](https://api.flutter.dev/flutter/semantics/SemanticsProperties-class.html)：平台触觉请求和无障碍语义接口。

@@ -1,0 +1,154 @@
+phase: fidelity
+
+page:
+  id: example-page
+  min_width: 320
+  max_width: 1440
+  min_height: 320
+  max_height: 1200
+  orientations: [portrait, landscape]
+  notes: 页面语义合同已审阅，高保真阶段只在合同允许范围内重构视觉实现。
+
+regions:
+  - id: header
+    role: navigation
+    anchors:
+      horizontal:
+        start: {relation: aligned, reference: safe_area.start, token: page_margin}
+        end: {relation: aligned, reference: safe_area.end, token: page_margin}
+      vertical:
+        top: {relation: inset, reference: safe_area.top, token: zero}
+    size:
+      min: {width: 0, height: 48}
+      preferred: {width: content, height: 56}
+      max: {width: content, height: 96}
+  - id: content
+    role: primary-content
+    anchors:
+      horizontal:
+        center: {relation: centered, reference: viewport.center}
+        start: {relation: inset, reference: content_column.start, token: page_margin}
+      vertical:
+        top: {relation: after, reference: header.bottom, token: section_gap}
+        bottom: {relation: before, reference: dock_avoidance.bottom, token: zero}
+    size:
+      min: {width: 0, height: 0}
+      preferred: {width: content_max, height: content}
+      max: {width: content_max, height: content}
+
+breakpoints:
+  - id: compact-to-medium
+    axis: width
+    value: 600
+    reason: 两列所需最小内容宽度首次可满足
+    change: 单列切换为两列
+    preserves: [route, selection, content-order]
+    fallback: 回退单列并纵向滚动
+
+content:
+  max_width: 1120
+  columns: {min: 1, preferred: 2, max: 3, min_item_width: 280}
+  gutter: {min: 12, preferred: 24, max: 32}
+  margins: {min: 16, preferred: 24, max: 32}
+  insufficient_width_fallback: 回退列数，不压缩关键内容。
+
+system_avoidance:
+  safe_area: {source: MediaQuery.padding, consumer: page-shell, double_apply: forbidden}
+  system_bars: {edge_to_edge: true, status_bar: explicit, navigation_bar: explicit}
+  keyboard: {source: MediaQuery.viewInsets, mode: resize-and-scroll-focus, dock_fallback: inline}
+  fold: {source: MediaQuery.displayFeatures, hinge_policy: avoid-interactive-content}
+  split: {source: current-layout-constraints, recompute_on_resize: true}
+
+scroll:
+  vertical: {owner: page-scroll, semantics: primary-document, narrow_height_fallback: keep-one-owner-and-scroll}
+  horizontal: {owner: none, semantics: no-horizontal-scroll, narrow_height_fallback: wrap-or-reflow}
+
+text_behavior:
+  localization: [default, longest_copy]
+  rtl: logical-start-end
+  text_scale: {default: 1.0, large: 1.5}
+  line_break:
+    width_constraint: bounded-by-parent
+    body: {strategy: natural-soft-wrap}
+    heading: {strategy: phrase-aware, orphan_control: prevent}
+    critical_copy: {strategy: phrase-aware, orphan_control: prevent}
+    control_label: {breaking: forbidden, fallback: expand-parent-or-reflow}
+    atomic_text: {breaking: forbidden}
+    dynamic_container: {fixed_height: forbidden, truncation: forbidden}
+    anti_hacks: {manual_line_breaks: forbidden, fitted_box: forbidden, font_shrink: forbidden}
+    fallback_order: [widen-container, reflow-parent, grow-height, semantic-wrap]
+    test_ids: [text_wrap_semantics]
+  growth: container-grows-with-content
+  critical_actions_allow_truncation: false
+
+overlays:
+  - id: primary-action
+    behavior: docked
+    anchor: {reference: safe_area.bottom, relation: inset, token: page_margin}
+    occlusion: content reserves docked height plus bottom inset
+    hit_target: {min_width: 48, min_height: 48}
+    keyboard_fallback: move-inline-or-scroll-focus
+    narrow_height_fallback: move-inline
+
+implementation:
+  breakpoint_resolver: shared-page-breakpoint-resolver
+  root_layout: Scaffold -> SafeArea -> constrained-shell -> single-scroll-owner
+  constraint_primitives: [LayoutBuilder, MediaQuery, ConstrainedBox, Center, Flexible, Wrap, Sliver]
+
+invariants:
+  - id: content-stays-anchored
+    relation: 内容区域始终位于 header 之后并受 content_max 约束
+    test_ids: [content_header_relation, content_max_width]
+  - id: primary-action-reachable
+    relation: 关键动作在所有矩阵场景可见、可达且不被系统区域遮挡
+    test_ids: [primary_action_reachable]
+  - id: text-wrap-is-semantic
+    relation: 文本在父级有限宽度内按语言规则换行，不含为视觉塑形插入的手工换行，且不可拆分词元保持完整
+    test_ids: [text_wrap_semantics]
+
+implementation_signals: []
+
+evidence_matrix:
+  cases:
+    - {id: compact-minus, width: 599, height: 844, orientation: portrait, text_scale: 1.0, locale: default, safe_area: zero, action_state: default, breakpoint_edge: {id: compact-to-medium, offset: -1}, test_ids: [content_header_relation, content_max_width, primary_action_reachable, brand_frame_center]}
+    - {id: compact-at, width: 600, height: 844, orientation: portrait, text_scale: 1.0, locale: longest_copy, safe_area: nonzero, action_state: disabled, breakpoint_edge: {id: compact-to-medium, offset: 0}, test_ids: [content_header_relation, primary_action_reachable, brand_frame_center]}
+    - {id: compact-plus, width: 601, height: 500, orientation: landscape, text_scale: 1.5, locale: longest_copy, safe_area: nonzero, action_state: submitting, breakpoint_edge: {id: compact-to-medium, offset: 1}, test_ids: [content_header_relation, primary_action_reachable, text_wrap_semantics, brand_frame_center]}
+    - {id: compact-minus-tall, width: 599, height: 700, orientation: landscape, text_scale: 1.0, locale: default, safe_area: zero, action_state: default, test_ids: [content_header_relation, primary_action_reachable, brand_frame_center]}
+
+critical_alignments:
+  - id: brand-frame-center
+    element: brand
+    flutter_key: brandKey
+    reference: page frame semantic bounds
+    reference_flutter_key: pageFrameKey
+    relations:
+      horizontal: {type: center, target: brand.centerX == frame.centerX, flutter: brand.centerX == frame.centerX}
+      vertical: {type: top, target: brand.top == frame.top + brandTopInset, flutter: brand.top == frame.top + brandTopInset}
+    geometry:
+      target: {x: 135, y: 52, width: 120, height: 40, center_x: 195, center_y: 72, reference_center_x: 195, reference_center_y: 422}
+      flutter: {x: 135, y: 52, width: 120, height: 40, center_x: 195, center_y: 72, reference_center_x: 195, reference_center_y: 422}
+    delta: {horizontal: 0, vertical: 0}
+    tolerance_logical_px: 1
+    optical:
+      offset_x: 0
+      offset_y: 0
+      evidence: docs/design/pages/example-page/evidence/brand-visible-bounds.md
+      node_or_container_center: "(195, 72)，由边界测量计算"
+      visible_optical_center: "(195, 72)，由目标图与实现截图可见轮廓复核"
+      unresolved: false
+    evidence:
+      target_screenshot: docs/design/pages/example-page/evidence/target-390x844.png
+      flutter_screenshot: docs/design/pages/example-page/evidence/flutter-390x844.png
+      actual_measurement_output: docs/design/pages/example-page/evidence/widget-measurements.json
+    test_ids: [brand_frame_center]
+    parity_case_ids: [brand-default-portrait]
+
+parity_cases:
+  - id: brand-default-portrait
+    viewport: {width: 390, height: 844}
+    state: default
+    orientation: portrait
+    target_sha256: 78a2f34c79e87060db588701e8f5b1a7d64311efcc4f77f78f405e40967f7af1
+    candidate_code_sha: 092eef92be671fb71d0f9ca2c0e7be00c18e8f0f
+    target_screenshot: docs/design/pages/example-page/evidence/target-390x844.png
+    flutter_screenshot: docs/design/pages/example-page/evidence/flutter-390x844.png

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "项目验证证据总表",
+  "description": "技术证据类别来自栈 profile；静态合同检查不伪造引擎运行结论。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "workItemId", "stack", "implementationPackageRef", "items"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "workItemId": {"type": "string"},
+    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]}, "implementationPackageRef": {"type": "string"},
+    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+    "items": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["category", "status", "path"], "properties": {"category": {"type": "string", "minLength": 1}, "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "path": {"type": "string", "minLength": 1}}}}
+  }
+}

@@ -1,0 +1,108 @@
+# Unity Workflow Toolkit
+
+该 UPM 包为 Unity 6 项目提供工作流基础设施，通过 [@Unity](plugin://unity@openai-curated-remote) 与官方 `com.unity.pipeline` 提供 Editor CLI 命令。当前包含：
+
+- Core：安全的项目相对路径解析、JSON Job 读取与 UTF-8 原子报告写入。
+- ImagePipeline：已批准 PNG/JPG 的技术校验、无覆盖导入及 TextureImporter 配置。
+- ProjectValidation：Unity 6、URP、主开发平台 BuildTarget、构建场景、资源引用、asmdef 循环与 Console 基线检查。
+- RiggingValidation：只读核对角色 Prefab、SpriteSkin 骨骼映射、导入网格／权重、Clip／事件及部件变体，输出资产工程报告。
+- ResourceInspection：只读核对实际资源身份、Resources key/现有 Addressables 配置、序列帧 Clip 曲线与 Prefab 消费者。
+- Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
+- FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
+- VisualQA：固定摄像机参考 PNG、实际 UI 布局测量与 Game View 帧末异步采集；仅记录工程事实，截图由用户人工验收。
+- BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
+- PipelineCommands：将业务服务作为 Unity Pipeline CLI 自定义命令暴露。
+- EditMode 测试：通过 `tests/UnityHost` 最小宿主运行全部模块测试。
+
+## 安装
+
+按 `unity:unity-package-management` 通过 UPM Client API 安装本包的本地地址。本包声明官方 Registry 的 `com.unity.pipeline` `0.6.0-exp.1`、`com.unity.inputsystem` `1.20.0`、`com.unity.nuget.newtonsoft-json` `3.0.2`、`com.unity.ugui` `2.0.0`、`com.unity.localization` `1.5.9` 与 `com.unity.2d.animation` `10.2.2` 依赖；Editor 可能解析至其内置的更高版本，验证报告须记录实际 Editor 与包版本。也可在工作项已授权时运行 `unity pipeline install --project-path <项目路径>` 安装 Pipeline。Editor-only 的 PipelineCommands 程序集通过 `Unity.Pipeline` 引用和版本约束编译。
+
+## 自定义 Pipeline 命令
+
+- `uwt_validate_project`：消费 `project-profile` Job，返回项目质量报告。
+- `uwt_validate_2d_rigging`：消费 `rigging-validation` Job，只读检查角色骨骼资产，并将工程报告写入指定的 `Artifacts/` JSON。
+- `uwt_import_image`：消费已批准的 `image-task` Job，执行安全导入与 Importer 复核。
+- `uwt_capture_visual`：消费 `visual-capture` Job，生成固定机位证据。
+- `uwt_measure_layout`：消费 `layout-measurement` Job，读取同一场景、坐标空间的实际节点、父框与参照框；可同批采集组件配置、分轴写入者与 Image 原生尺寸。
+- `uwt_inspect_resource_handoff`：消费 `resource-handoff-inspection` Job，从 AssetDatabase、Clip 与 Prefab 读取正式资源和序列帧交接事实，不修改资源或加载配置。
+- `uwt_capture_game_view`：消费 `game-view-capture` Job，登记帧末请求并以同一 Job 回查终态；首次 `PENDING` 不表示采集完成。
+- `uwt_delivery_preflight`：消费 `delivery-preflight` Job，只执行技术构建预检。
+
+每个命令参数为项目内 `job_path`。命令返回包含 `Success`、`Message`、`Data` 的统一结果信封；业务失败会明确返回 `Success: false` 并携带结构化结果，不包含本机绝对路径。
+
+按 `unity:unity-cli` 当前规则确认 Editor 并发现命令。Toolkit 专用调用示例：
+
+```powershell
+unity command uwt_validate_project --project-path D:\Projects\my-game --job_path Artifacts/Jobs/project-profile.json
+```
+
+## 2D 骨骼资产工程检查
+
+参考工作流 `templates/rigging-validation.yaml` 填写当前 Prefab、动作、事件和变体真实身份，再按 `schemas/rigging-validation.schema.json` 保存为 JSON 输入；`compile-json` 只读取 JSON，不直接解析 YAML。`variants[].spriteName` 用于精确定位图片中的 Sprite 子资源，`rendererPath` 相对于角色根节点，空字符串表示根；不以文件名猜测映射。
+
+```powershell
+node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs compile-json --project-root D:\Projects\my-game --kind rigging-validation --source docs\hero-rigging.json --output Artifacts\Jobs\hero-rigging.json
+unity command uwt_validate_2d_rigging --project-path D:\Projects\my-game --caller plugin --skill unity-game-2d-animation-ta --job_path Artifacts/Jobs/hero-rigging.json --format json
+```
+
+先按 Unity 插件发现实际命令与参数。检查器只读取 `Assets/` 中的角色资产，不修复 Prefab、Importer 或 Clip；报告仅允许进入 `Artifacts/`，并拒绝覆盖输入 Job 或源契约。必需数据缺失、非法权重／引用、要求的 Clip／事件或变体不符都会阻止工程通过；无法取得必需工程数据时如实记录未验证或阻断，不伪造通过。
+
+这份报告只覆盖资产工程事实；动作运行行为由独立角色回归验证，像素接缝、表演质量与显示效果由用户人工验收。合法工程报告的 `PASS` 不代表完整角色验收通过。用技术测试纹理构造的角色夹具也不替代游戏正式角色的场景测试。
+
+正式交付按工作流的[骨骼交付门禁](../../../../../unity-domain-contracts/references/rigging-delivery-gate.md)绑定当前候选。报告通过现有 `evidence` 记录实际 Prefab/GUID 和 Assets 依赖；Job 的 `taskId` 对应 Work Item ID，`sourceRevision` 对应当前角色候选。独立 QA 还须提交目标项目正式角色的 Editor PlayMode 结果；报告失败、缺失、陈旧或身份不符会阻断交接并按岗位退修，公共夹具通过不能放行正式角色。
+
+当前检查协议要求角色层级中只有一个 Animator。变体按同一 SpriteSkin 直接替换检查；未声明补偿协议的 Pivot 局部位置差异会记录为 `BLOCKED`，需要技术美术核对局部坐标与补偿方案后再交接，不能据此认定不同视角必须使用相同画布。
+
+独立 QA 可复用已打开的隔离宿主，通过发现到的 `run_tests` 命令运行 `Project.UnityWorkflow.Tests.Rigging` 测试并查询 `test_status`；没有可复用宿主时使用下方 `unity test`。测试会创建独占的临时角色资产、保存重导入、执行 Animator 与骨骼变形，并通过 Editor 内的 PlayMode 验证适用的循环、事件、打断／恢复、部件切换、暂停、对象池复用和多实例隔离；不启动 Standalone 或真机，不自动分析截图。命令行／API 的参数以目标版本实际目录为准。
+
+## 图片导入边界
+
+资源导入交接时在唯一总表声明实际 `loading`，不要把一般 address 当作动态加载成功。按工作流[资源加载与序列帧交接](../../../../references/resource-loading-and-frame-handoff.md)调用 `uwt_inspect_resource_handoff`，再运行 `resource-loading-check` / `frame-animation-check`；没有 Addressables 配置时明确未配置，不安装包。序列帧按 Sprite GUID+localId 对齐实际曲线与消费入口，图集 CanBindTo 不代表平台打包或视觉通过。
+
+源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有该对象的用户批准记录。按实际图片质量、资源身份与授权验收，不校验 SHA，实现调整无需回改合同。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
+
+正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
+
+成功报告包含资产 GUID 和从 Unity 重新读取的 TextureImporter 设置。每次成功导入还会在 `Artifacts/AssetRegistry/records/<record-id>.json` 写入一份禁止覆盖的资源登记事实，包含资源 ID、来源版本、实际源路径、批准证据、正式路径、GUID、许可证待确认状态和 Unity 验证状态。并发任务只新增独立记录，不直接修改 `docs/asset-register.yaml`；当前 V3 资源交接由实施包指定的资源登记单写者审查并合并，不必等到项目最终全局集成。Toolkit 不自动合并总表或汇总消费者，消费关系由各场景/显示层拆解与装配合同维护；导入 `PASS` 不代表许可或人工视觉确认已完成。
+
+Sprite 任务显式提供 `unityImport.border`，顺序为 `[left, bottom, right, top]`，普通 Sprite 为四零。非零边框同时声明 `nineSlice: { mode: "stretch", reason, sourceSize, border }`；边框一致性、正尺寸中心、实际源图大小及导入后真实 Sprite 均须核对。九宫格仅使用 Single Sprite，小图生产尺寸与目标显示框分别声明；被平台缩放、裁切或改写的结果不能登记通过。
+
+## 原生 UI 校准与取证
+
+布局测量的 uGUI 坐标是屏幕像素，UI Toolkit 坐标是同一 UIDocument 的逻辑点；均明确左上原点，不混用不同文档或测量空间。每项可声明 `targetRect` 与 `tolerance.maxAbsDelta`。已声明的容差超差为失败，没有容差的节点仅为 `MEASURED`；报告不修改布局或判断图像轮廓、字体墨迹及显示质量。编辑校准仍使用 Inspector、Rect 工具、UI Builder 与 Unity Undo。
+
+V4 机器布局证据设置 `includeComponentSnapshots: true`、`stateId` 和项目内 `evidenceRoot`，每个目标绑定稳定 `referenceId` 与实际参照路径；输出严格位于该证据根内且禁止覆盖。几何单独测量继续使用 `Artifacts/Visual/`。非活动节点保留配置与空写入者，不伪造几何。外部脚本/动画通过 Runtime `LayoutWriterRegistration` 绑定真实 Behaviour 与控制属性；该登记不执行布局，也不能证明不存在未登记写入。完整字段、原尺寸与控制面交接见[布局运行合同](../../../../references/ui-layout-runtime.md)。
+
+Game View 采集只消费已有的非 Batch Editor PlayMode，要求可用 Game View 与活动场景一致，不切换播放模式或分辨率。工具在帧末采集最终画面，覆盖实际进入该帧的 Overlay、摄像机 UI 和 runtime Panel；不能证明未激活或独立 RenderTexture UI 可见。PNG 与配套 JSON 都落盘后才返回采集 `PASS`，输出不可覆盖；退出、域重载或超时取消请求。原有 `uwt_capture_visual` 仅覆盖摄像机及摄像机空间，不能作为 Overlay UI 的完整证据。采集成功、几何通过与人工显示效果验收分别记录。
+
+## 交付边界
+
+`uwt_delivery_preflight` 只适用于 Windows；其 `PASS` 仅表示技术构建前置检查通过，不包含许可、隐私、签名、上传、发行或用户 G3 放行。正式 Windows 构建仍由 Unity 官方构建链执行，Android、iOS 和 iPadOS 不得复用该结论。
+
+## 测试
+
+安装 [@Unity](plugin://unity@openai-curated-remote) 对应的 Unity CLI 后，从仓库根目录执行：
+
+```powershell
+unity test .\tests\UnityHost --mode EditMode --report-format junit --output .\Artifacts\TestResults\toolkit.xml --timeout 600
+```
+
+若环境未安装 Unity，只能完成文件结构、JSON 与 C# 静态检查，不能把 EditMode 测试标记为通过。
+
+## 屏幕 UI 安全区
+
+- uGUI：在全屏 Canvas 下建立直接子节点 `SafeAreaRoot`，挂载 `SafeAreaRectTransform`。HUD、页面和弹窗的关键内容放入该节点；背景、全屏遮罩与装饰保留在节点外。
+- UI Toolkit：在全屏 `UIDocument` 的根元素下建立名为 `SafeAreaRoot` 的直接子元素，并在同一 GameObject 挂载 `SafeAreaVisualElement`。如使用其他名称，在组件中设置 `Safe Area Element Name`。
+- 组件根据 `Screen.safeArea`、屏幕尺寸和 Panel 实际尺寸更新。仅用于主显示器的全屏屏幕 UI；World Space Canvas、RenderTexture 和局部 Panel 应按各自坐标空间单独设计。
+- 不要在嵌套的安全区容器上重复挂载组件。EditMode 的 `SafeAreaLayoutTests` 验证归一化计算；场景 V4 仍需实际检查设备安全区与命中区域。
+
+## TMP 多语言字形图集
+
+项目先导入有许可的 `.ttf/.otf` 完整源字体并建立 `en`、`zh-CN`、`ja`、`ru`、`es` String Tables。创建 `TmpFontAtlasPlan`，通常设置三组字体：`en/ru/es`、`zh-CN`、`ja`。需要随语言切换的 TMP 文本挂上 `LocalizedTmpFontBinder`；Prefab 绑定器放入计划的 `Targets`，已打开场景中的绑定器由生成器自动发现。选中计划资产执行 `Tools > Unity Workflow > Build TMP Font Atlases`；脚本从表格和可选额外字符文件生成静态图集并配置目标组件。计划中的 Dynamic 回退字体是可选项，只承接无法预知的动态文字；已知文案缺字会令生成失败。详情见工作流 `references/tmp-font-atlas-workflow.md`。
+
+## 2D 场景适配
+
+竖屏以 `1080×1920` 为设计基准，按目标 aspect 反算正交半高以固定参考宽度，并把 PanelSettings 的 Match Width or Height 设为 `0`；横屏以 `1920×1080` 为设计基准，固定 `Camera.orthographicSize = referenceHeight / pixelsPerUnit / 2`，并把 match 设为 `1`。目标比例产生额外可见区域时，组件只启用对应的 TOP/BOTTOM 或 LEFT/RIGHT 两张 SpriteRenderer。
+
+边带对象必须是无父级的独立对象，且层级中只能含 Transform 与 SpriteRenderer；任何 Collider、Collider2D、脚本或其他组件都会令严格校验失败。Renderer 与材质 Alpha 必须至少为 0.99，材质需受当前平台支持，边带位于摄像机 Culling Mask 内，并使用严格低于玩法内容的 Sorting Layer/Order。纹理需开启 Read/Write，Editor 校验会扫描 Sprite 实际区域并要求至少 99% 像素达到可见 Alpha，防止透明图片绕过检查。边带资源只负责视觉延展，不得放置按钮、提示或玩法信息。场景还必须使用 `scene-2d-adaptation` 契约验证参考、边带、裁切三类分辨率。

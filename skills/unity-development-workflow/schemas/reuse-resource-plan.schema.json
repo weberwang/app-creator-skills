@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-workflow/schemas/reuse-resource-plan.schema.json",
+  "title": "Unity 已登记资源复用计划",
+  "$defs": {
+    "projectRelativePath": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?![A-Za-z]:/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9.-]{0,95}$"
+    },
+    "reuseResourcePlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "existingAssetId", "reuseReason", "reuseMode", "effectImagePixelReuse",
+        "sourcePath", "unityGuid", "assetRegisterEvidence",
+        "licenseEvidence", "visualBibleStyleReview", "importerEvidence", "unityValidationEvidence"
+      ],
+      "properties": {
+        "existingAssetId": {"$ref": "#/$defs/taskId"},
+        "reuseReason": {"type": "string", "minLength": 1},
+        "reuseMode": {"enum": ["REGISTERED_ASSET", "APPROVED_LIBRARY_ASSET", "EXISTING_RUNTIME_ASSET"]},
+        "effectImagePixelReuse": {"const": "FORBIDDEN"},
+        "sourcePath": {"$ref": "#/$defs/projectRelativePath"},
+        "unityGuid": {"type": "string", "pattern": "^[a-fA-F0-9]{32}$"},
+        "assetRegisterEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "recordId"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "recordId": {"$ref": "#/$defs/taskId"}
+          }
+        },
+        "licenseEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "rightsStatus"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "rightsStatus": {"const": "APPROVED"}
+          }
+        },
+        "visualBibleStyleReview": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "subjectId", "subjectVersion", "decision"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "subjectId": {"$ref": "#/$defs/taskId"},
+            "subjectVersion": {"type": "string", "minLength": 1},
+            "decision": {"const": "COMPATIBLE"}
+          }
+        },
+        "importerEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"}
+          }
+        },
+        "unityValidationEvidence": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "status"],
+          "properties": {
+            "path": {"$ref": "#/$defs/projectRelativePath"},
+            "status": {"const": "PASS"}
+          }
+        }
+      }
+    }
+  }
+}

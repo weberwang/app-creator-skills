@@ -1,0 +1,5 @@
+source: ../../assets/layout-spec-template.yaml
+expected: pass
+expected_attention: []
+mutations:
+  - {op: set, path: regions.0.anchors.horizontal.start.reference, value: viewport}

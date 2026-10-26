@@ -1,0 +1,15 @@
+{
+  "capability": "app-3d-asset-pipeline",
+  "adapters": {
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-model-pipeline",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-model-pipeline",
+        "mode": "threejs-game-model-pipeline",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“三维资源与运行管线”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

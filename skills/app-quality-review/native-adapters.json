@@ -1,0 +1,68 @@
+{
+  "capability": "app-quality-review",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-qa-performance",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-qa-performance",
+        "mode": "unity-game-qa-performance",
+        "when": "仅当项目技术栈为 Unity，且任务属于“质量审核与性能验证”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-game-qa-performance",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-game-qa-performance",
+        "mode": "cocos-game-qa-performance",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“质量审核与性能验证”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-game-qa-performance",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-game-qa-performance",
+        "mode": "phaser4-game-qa-performance",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“质量审核与性能验证”时使用此原生专项能力。"
+      }
+    ],
+    "threejs": [
+      {
+        "sourceSkill": "threejs-game-qa-performance",
+        "path": "../app-stack-threejs/references/native-contracts.md",
+        "section": "mode-threejs-game-qa-performance",
+        "mode": "threejs-game-qa-performance",
+        "when": "仅当项目技术栈为 Three.js，且任务属于“质量审核与性能验证”时使用此原生专项能力。"
+      }
+    ],
+    "flutter": [
+      {
+        "sourceSkill": "flutter-quality-review",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-quality-review",
+        "mode": "Flutter 工程质量审查",
+        "when": "需要对 Flutter 变更快照进行风险分诊、定向验证和问题闭环时。"
+      },
+      {
+        "sourceSkill": "flutter-ux-ui-quality",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-ux-ui-quality",
+        "mode": "Flutter 界面与体验质量",
+        "when": "需要审核 Flutter 界面的视觉方向、易用性、无障碍或独立人工体验检查时。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "quality-verification",
+      "path": "../app-domain-toolkit/references/quality-verification.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ]
+    }
+  ]
+}

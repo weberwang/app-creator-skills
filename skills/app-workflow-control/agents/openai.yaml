@@ -1,0 +1,7 @@
+interface:
+  display_name: "统一工作流控制"
+  short_description: "校验工作阶段、技术栈执行边界与验收证据"
+  default_prompt: "使用 $app-workflow-control 检查当前 Work Item 的阶段与验收阻断。"
+
+policy:
+  allow_implicit_invocation: true

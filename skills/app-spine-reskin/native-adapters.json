@@ -1,0 +1,42 @@
+{
+  "capability": "app-spine-reskin",
+  "adapters": {
+    "unity": [
+      {
+        "sourceSkill": "unity-game-spine-reskin",
+        "path": "../app-stack-unity/references/native-contracts.md",
+        "section": "mode-unity-game-spine-reskin",
+        "mode": "unity-game-spine-reskin",
+        "when": "仅当项目技术栈为 Unity，且任务属于“Spine 生成式换皮”时使用此原生专项能力。"
+      }
+    ],
+    "cocos": [
+      {
+        "sourceSkill": "cocos-spine-generative-reskin",
+        "path": "../app-stack-cocos/references/native-contracts.md",
+        "section": "mode-cocos-spine-generative-reskin",
+        "mode": "cocos-spine-generative-reskin",
+        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“Spine 生成式换皮”时使用此原生专项能力。"
+      }
+    ],
+    "phaser": [
+      {
+        "sourceSkill": "phaser4-spine-generative-reskin",
+        "path": "../app-stack-phaser/references/native-contracts.md",
+        "section": "mode-phaser4-spine-generative-reskin",
+        "mode": "phaser4-spine-generative-reskin",
+        "when": "仅当项目技术栈为 Phaser，且任务属于“Spine 生成式换皮”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": [
+    {
+      "id": "spine-reskin-production",
+      "path": "../app-domain-toolkit/references/spine-reskin-production.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ]
+    }
+  ]
+}

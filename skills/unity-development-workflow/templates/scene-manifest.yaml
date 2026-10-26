@@ -1,0 +1,95 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+id: scene.arena-intro
+version: scene-v1
+dimension: 2D
+purpose: 展示玩家进入竞技场并完成首次移动教学
+lifecycle: GAMEPLAY
+decompositionPlan:
+  type: decomposition-plan
+  path: Artifacts/Planning/decomposition.starfall-arena.v1.yaml
+  subjectId: decomposition.starfall-arena.v1
+  subjectVersion: decomposition-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+adaptation2D:
+  type: scene-2d-adaptation
+  path: Artifacts/Scenes/scene.arena-intro/adaptation-2d.yaml
+  subjectId: scene.arena-intro
+  subjectVersion: scene-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+entryConditions:
+  - 玩家档案已加载
+exitConditions:
+  - 玩家到达竞技场中心
+dependencies: []
+moduleDependencies:
+  - Foundation.Core
+  - Gameplay.Player
+sharedCapabilities:
+  - foundation.scene-loading
+ownedAssets:
+  - Assets/Scenes/ArenaIntro.unity
+gameplayVisualTasks:
+  - visual.arena-environment
+uiVisualTasks:
+  - visual.movement-prompt
+responsiveContractRef:
+  contractId: scene-arena-intro-responsive
+  version: responsive-v1
+  path: Artifacts/Contracts/Scenes/scene.arena-intro/responsive-v1.yaml
+  scope: SCENE
+contractVersions:
+  responsive: responsive-v1
+  layout: layout-v1
+  visualBaseline: visual-v1
+  schema: "2.0"
+prefabStructure:
+  type: prefab-structure
+  path: Artifacts/Visual/Structure/scene.arena-intro.v1.yaml
+  subjectId: prefab-structure.scene-arena-intro.v1
+  subjectVersion: prefab-structure-v1
+highFidelityVisualReview:
+  type: visual-review
+  path: Artifacts/Visual/Reviews/scene.arena-intro/game-v1.yaml
+  subjectId: imagegen.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+assetMap:
+  type: split-plan
+  path: Artifacts/Visual/Split/scene.arena-intro.game-v1.yaml
+  subjectId: split.scene-arena-intro.game-v1
+  subjectVersion: game-v1
+prefabAssembly:
+  type: prefab-assembly
+  path: Artifacts/Visual/Assembly/scene.arena-intro.v1.yaml
+  subjectId: prefab-assembly.scene-arena-intro.v1
+  subjectVersion: prefab-assembly-v1
+qualityGate:
+  minimumFps: 60
+  maximumLoadTimeSeconds: 5
+status: DRAFT
+approvals: []
+qualityReportPaths: []
+editorCapturePaths: []
+qualityReports: []
+editorCaptures: []
+visualReviews:
+  game:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/game-final.yaml
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+  ui:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/ui-final.yaml
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+  runtime:
+    type: visual-review
+    path: Artifacts/Visual/Reviews/scene.arena-intro/runtime-final.yaml
+    subjectId: scene.arena-intro
+    subjectVersion: scene-v1
+evidence: []

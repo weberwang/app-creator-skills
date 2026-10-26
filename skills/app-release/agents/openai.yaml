@@ -1,0 +1,6 @@
+interface:
+  display_name: "候选交付与发布准备"
+  short_description: "为游戏或应用准备可追溯候选版本，逐项核对第三方配置及正式环境，并整理性能与图集选择。"
+  default_prompt: "使用 $app-release，按已确认的技术栈完成当前候选交付与发布准备任务并交付可验证结果。"
+policy:
+  allow_implicit_invocation: true

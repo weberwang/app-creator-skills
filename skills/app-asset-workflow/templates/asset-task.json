@@ -1,0 +1,21 @@
+{
+  "purpose": "单素材生产规格，最终验收使用控制器 asset-review 模板",
+  "assetId": "",
+  "objectId": "",
+  "featureIds": [],
+  "role": "",
+  "states": [],
+  "route": "native-or-bitmap-or-vector-or-3d",
+  "consumer": "",
+  "sourcePath": "",
+  "runtimePath": "",
+  "generationSize": { "width": 0, "height": 0 },
+  "displaySize": { "width": 0, "height": 0 },
+  "background": "transparent-or-retained",
+  "edgePolicy": "",
+  "pivotSliceOrFrames": "",
+  "licenseAndSource": "",
+  "prompt": "",
+  "technicalChecks": [],
+  "knownDefects": []
+}

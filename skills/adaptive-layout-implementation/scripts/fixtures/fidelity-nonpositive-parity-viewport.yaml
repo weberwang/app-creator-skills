@@ -1,0 +1,4 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: parity_cases.0.viewport.width, value: 0}

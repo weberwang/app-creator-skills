@@ -1,0 +1,15 @@
+{
+  "capability": "app-ui-code-sketch",
+  "adapters": {
+    "flutter": [
+      {
+        "sourceSkill": "flutter-code-sketch",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-code-sketch",
+        "mode": "flutter-code-sketch",
+        "when": "仅当项目技术栈为 Flutter，且任务属于“界面代码草图”时使用此原生专项能力。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

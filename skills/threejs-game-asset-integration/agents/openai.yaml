@@ -1,0 +1,4 @@
+interface:
+  display_name: "three.js 美术设计与接入"
+  short_description: "按拆解、正式资源生产与场景运行验收流程集成可玩视觉资源"
+  default_prompt: "在 $app-workflow-control 批准范围内，使用 $app-asset-workflow 生产、验证并集成视觉资源。"

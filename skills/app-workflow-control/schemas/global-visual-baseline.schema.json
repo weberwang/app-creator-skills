@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "可跨同项目同技术栈工作项复用的视觉基线",
+  "description": "保留三张同条件候选；仅用户选择的一张必须五项均通过。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "baselineId", "projectId", "stack", "candidates", "selectedCandidateId", "selectionReviewRef"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "baselineId": {"type": "string"}, "projectId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter"]},
+    "selectedCandidateId": {"type": "string"},
+    "candidates": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "additionalProperties": false, "required": ["candidateId", "path", "qualityChecks"], "properties": {"candidateId": {"type": "string"}, "path": {"type": "string"}, "qualityChecks": {"$ref": "human-review.schema.json#/properties/qualityChecks"}}}},
+    "selectionReviewRef": {"$ref": "work-item.schema.json#/$defs/refOrNull"}
+  }
+}

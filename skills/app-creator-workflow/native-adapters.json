@@ -1,0 +1,22 @@
+{
+  "capability": "app-creator-workflow",
+  "adapters": {
+    "flutter": [
+      {
+        "sourceSkill": "flutter-implementation-plan",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-implementation-plan",
+        "mode": "Flutter 里程碑与实施计划",
+        "when": "需求已经确认，需要按依赖拆分 Flutter 里程碑和可验收实施项时。"
+      },
+      {
+        "sourceSkill": "flutter-subagent-delivery",
+        "path": "../app-stack-flutter/references/native-contracts.md",
+        "section": "mode-flutter-subagent-delivery",
+        "mode": "Flutter 并行子任务交接",
+        "when": "已获得并行写入或 worktree 的明确授权，需要编排互斥范围并按快照独立审查时。"
+      }
+    ]
+  },
+  "sharedWorkflows": []
+}

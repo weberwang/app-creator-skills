@@ -1,0 +1,234 @@
+{
+  "id": "phaser",
+  "displayName": "Phaser 4",
+  "detectAny": [
+    "src/game/main.ts",
+    "phaser.config.ts",
+    "vite.config.ts",
+    "package.json"
+  ],
+  "frameworkPolicy": [
+    "默认 Phaser 4 + TypeScript + Vite；从锁文件和 package.json 验证实际版本，不为沿用项目静默升级 Phaser。",
+    "Capacitor 仅在用户选定原生移动宿主时启用；目标小游戏适配仅在目标平台已选时加入。",
+    "使用 Vite 应用入口、模块和静态资源规则，不引入另一个打包器。"
+  ],
+  "nativeRules": [
+    "src/ 归代码及按需由 bundler 导入的资源，public/assets/ 放原样发布并按约定路径请求的正式资源；记录 Vite base 与部署子路径。",
+    "单一 Phaser.Game 生命周期拥有 Canvas、Renderer、Scene 注册和全局插件；Scene 实例按 enter/create/update/shutdown/destroy 生命周期释放本场景资源。",
+    "世界视口、Camera/world coordinates、gameSize、宿主 CSS logical size、backing store 与 devicePixelRatio 各自记录；不能把浏览器 DPR 当静态 UI 缩放或按截图推测输入坐标。",
+    "Canvas 的 Pointer/Keyboard 与 DOM 输入必须声明监听元素、相对坐标变换、camera/world 变换、拖拽和输入排斥策略。",
+    "DOM UI 与 Phaser Canvas 叠层分工、焦点、Pointer 传播、可用视口与 resize 行为显式确定；游戏显示层仍按独立对象维护。",
+    "生产构建通过 Vite 实际命令，核验静态资源 URL、动态 import/图集、SourceMap 和平台 webDir 配置；不能把 build 面板或开发服务器打开当成生产构建。",
+    "SDK 初始化由一个平台入口调度，各 SDK 具备独立的异步状态、失败和恢复处理。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "typecheck",
+      "tests",
+      "build"
+    ],
+    "visual": [
+      "viewport",
+      "input",
+      "asset-loading"
+    ],
+    "assetImport": [
+      "asset-loading"
+    ]
+  },
+  "runtimeRoots": [
+    "src",
+    "public/assets",
+    "index.html",
+    "tests",
+    "assets-source",
+    "docs",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "bun.lock",
+    "tsconfig.json",
+    "vite.config.ts",
+    "vite",
+    "capacitor.config.ts",
+    "android",
+    "ios"
+  ],
+  "projectStructure": {
+    "entry": "src/main.ts + src/game/main.ts",
+    "scenes": "src/game/scenes/<scene-id>",
+    "displayLayers": "src/game/display-layers/<id>",
+    "assets": "public/assets/<owner>",
+    "sourceArt": "assets-source",
+    "tests": "tests",
+    "release": "dist"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit",
+    "phaser-domain-contracts",
+    "phaser4-frame-animation",
+    "phaser4-game-ad-integration",
+    "phaser4-game-architecture",
+    "phaser4-game-artifact-cleanup",
+    "phaser4-game-asset-integration",
+    "phaser4-game-audio",
+    "phaser4-game-balance",
+    "phaser4-game-image-optimization",
+    "phaser4-game-juice",
+    "phaser4-game-orchestrator",
+    "phaser4-game-production",
+    "phaser4-game-qa-performance",
+    "phaser4-game-release",
+    "phaser4-game-ui-layout",
+    "phaser4-gameplay-development",
+    "phaser4-spine-generative-reskin"
+  ],
+  "sharedCapabilities": [
+    "visual-atomic-contract",
+    "visual-imagegen-format",
+    "visual-human-review-contract",
+    "global-visual-consistency-contract",
+    "orientation-validation-scope",
+    "visual-file-gate",
+    "browser-game-domain-path-matcher",
+    "workflow-dpr-contract",
+    "display-layer-planning-contract",
+    "visual-validation-policy",
+    "effect-image-font",
+    "web-transparent-raster",
+    "web-background-removal",
+    "web-image-inbetween-plan",
+    "browser-game-project-control-templates",
+    "artifact-cleanup",
+    "image-optimization",
+    "juice",
+    "frame-animation",
+    "release",
+    "audio",
+    "balance",
+    "asset-production",
+    "ui-layout",
+    "quality-verification",
+    "gameplay-implementation",
+    "game-production",
+    "architecture-handoff",
+    "spine-reskin-production",
+    "frame-animation-execution",
+    "feedback-lifecycle",
+    "advertising-integration",
+    "artifact-cleanup-execution",
+    "audio-implementation"
+  ],
+  "capabilitySkills": [
+    "app-product-planning",
+    "app-architecture",
+    "app-gameplay-development",
+    "app-audio",
+    "app-game-balance",
+    "app-feedback",
+    "app-release",
+    "app-quality-review",
+    "app-animation",
+    "app-spine-reskin",
+    "app-ui-layout",
+    "app-artifact-cleanup",
+    "app-image-optimization",
+    "app-ad-integration",
+    "app-asset-workflow"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "phaser4-frame-animation",
+      "capability": "app-animation",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-frame-animation"
+    },
+    {
+      "sourceSkill": "phaser4-game-ad-integration",
+      "capability": "app-ad-integration",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-ad-integration"
+    },
+    {
+      "sourceSkill": "phaser4-game-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-architecture"
+    },
+    {
+      "sourceSkill": "phaser4-game-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-artifact-cleanup"
+    },
+    {
+      "sourceSkill": "phaser4-game-asset-integration",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-asset-integration"
+    },
+    {
+      "sourceSkill": "phaser4-game-audio",
+      "capability": "app-audio",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-audio"
+    },
+    {
+      "sourceSkill": "phaser4-game-balance",
+      "capability": "app-game-balance",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-balance"
+    },
+    {
+      "sourceSkill": "phaser4-game-image-optimization",
+      "capability": "app-image-optimization",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-image-optimization"
+    },
+    {
+      "sourceSkill": "phaser4-game-juice",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-juice"
+    },
+    {
+      "sourceSkill": "phaser4-game-production",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-production"
+    },
+    {
+      "sourceSkill": "phaser4-game-qa-performance",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-qa-performance"
+    },
+    {
+      "sourceSkill": "phaser4-game-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-release"
+    },
+    {
+      "sourceSkill": "phaser4-game-ui-layout",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-game-ui-layout"
+    },
+    {
+      "sourceSkill": "phaser4-gameplay-development",
+      "capability": "app-gameplay-development",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-gameplay-development"
+    },
+    {
+      "sourceSkill": "phaser4-spine-generative-reskin",
+      "capability": "app-spine-reskin",
+      "path": "skills/app-stack-phaser/references/native-contracts.md",
+      "section": "mode-phaser4-spine-generative-reskin"
+    }
+  ],
+  "authoredAdapters": [],
+  "nativeManual": "skills/app-stack-phaser/references/native-contracts.md"
+}

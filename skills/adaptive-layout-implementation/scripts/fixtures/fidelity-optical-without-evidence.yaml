@@ -1,0 +1,5 @@
+source: ../../assets/layout-spec-fidelity-template.yaml
+expected: fail
+mutations:
+  - {op: set, path: critical_alignments.0.optical.offset_x, value: 0.5}
+  - {op: remove, path: critical_alignments.0.optical.evidence}

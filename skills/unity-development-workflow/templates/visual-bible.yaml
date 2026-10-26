@@ -1,0 +1,167 @@
+schemaVersion: "1.0"
+projectId: starfall-arena
+version: visual-v1
+sourceRevision: working-tree-snapshot-20260727
+projectStateVersion: project-state-v1
+candidateSnapshot:
+  type: grilling-subject-snapshot
+  path: Artifacts/Candidates/visual-bible.visual-v1.yaml
+  projectId: starfall-arena
+  subjectId: starfall-arena
+  subjectVersion: visual-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+grillingEvidence:
+  type: grilling-record
+  path: Artifacts/Grilling/visual-bible.visual-v1.yaml
+  projectId: starfall-arena
+  subjectId: grilling.visual-bible.visual-v1
+  subjectVersion: grilling-v1
+  sourceRevision: working-tree-snapshot-20260727
+  projectStateVersion: project-state-v1
+status: REVIEWING
+designPillars:
+  - 克制而清晰
+  - 竞技焦点优先
+artDirection: 克制的近未来竞技场，清晰功能分区与高对比交互焦点
+worldLanguage: 大体块低频结构承载空间，关键目标用高对比发光细节引导
+assetLanguage: 轮廓简洁、材质层级明确，装饰密度服从玩法识别和性能预算
+palette:
+  primary: "#16324F"
+  secondary: "#6B7C93"
+  accent: "#F4B942"
+  background: "#0B1320"
+lighting: 冷色环境光配合暖色任务引导灯，避免大面积纯白高光
+materials:
+  - 哑光深色金属
+  - 半透明蓝色全息玻璃
+camera: 第三人称中距离跟随，水平视野保持主要目标可读
+uiLanguage: 紧凑无衬线文字、方角面板和琥珀色关键反馈
+typography: 窄体无衬线用于标题，中性无衬线用于正文，最小字号服从全部批准平台的可读性测试
+iconography: 两级线宽的几何图标，以轮廓和负形区分类别，不依赖颜色单独传义
+motionLanguage: 短促线性入场配合轻微缩放，重要状态使用单次节奏脉冲，禁止持续干扰动画
+readabilityRules:
+  - 交互目标必须同时具备轮廓、明度和动势中的至少两种区分
+  - 正文与背景对比度必须通过项目可访问性门禁
+avoid:
+  - 高饱和霓虹色铺满画面
+  - 影响轮廓识别的密集表面噪声
+referencePolicy:
+  styleAuthority: APPROVED_VISUAL_BIBLE
+  screenshotAllowedUses:
+    - CONTENT
+    - COMPOSITION
+    - INFORMATION_HIERARCHY
+  screenshotStyleTransfer: FORBIDDEN
+  screenshotPixelReuse: FORBIDDEN
+assetRegeneration:
+  mode: REGENERATE_FROM_VISUAL_BIBLE
+  independentItemGenerationRequired: true
+  assetMapOnlyAfterReview: true
+  psdWorkflow: FORBIDDEN_DURING_DEVELOPMENT
+  layeredSourceStrategy: SEPARATE_FILES_AND_MASKS
+directionCandidates:
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-a.png
+    subjectId: global-direction.a
+    subjectVersion: direction-a-v1
+    sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-b.png
+    subjectId: global-direction.b
+    subjectVersion: direction-b-v1
+    sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+  - type: global-direction
+    path: Artifacts/Visual/Global/direction-c.png
+    subjectId: global-direction.c
+    subjectVersion: direction-c-v1
+    sourceRevision: working-tree-snapshot-20260727
+    qualityResults:
+      themeFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      audienceFit:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      gameplayReadability:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      viewingComfort:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+      artCompletion:
+        status: NOT_RUN
+        reason: 待用户检查当前候选
+reviews: []
+artBrief:
+  schemaVersion: "1.0"
+  projectId: starfall-arena
+  theme: 依据当前 GDD 定义主题
+  audience:
+    facts: []
+    assumptions:
+      - 目标玩家偏好待验证
+  coreLoop: 观察、选择、操作与结果确认
+  experienceGoals:
+    - 关键结果清晰
+  viewingContext: 目标设备与典型单局情境待项目明确
+  visualHierarchy:
+    - 玩法关键对象优先于背景装饰
+  intensityBudget:
+    normal:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    operation:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    peak:
+      brightnessContrast: 按项目主题限制亮度和对比
+      screenCoverage: 限定实际反馈区域
+      duration: 记录持续时间和结束条件
+      triggerFrequency: 按有效事件触发并去重
+      maxConcurrent: 1
+      recovery: 事件结束回归常态
+      blendPolicy: 同类合并，低优先级降级
+    measurementMethod: 在目标视口和真实节奏下记录时长、次数、并发与占屏，观看效果由用户人工检查

@@ -1,0 +1,286 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://codex.local/unity-game-workflow-control/schemas/evidence-manifest.schema.json",
+  "title": "Unity Evidence Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "evidenceId", "workItemId", "packageId", "workItemType", "visualStage", "contractVersions", "baselineHash", "recordedAt", "verdict", "gateResults"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "evidenceId": {"type": "string", "minLength": 1},
+    "workItemId": {"type": "string", "minLength": 1},
+    "packageId": {"type": "string", "minLength": 1},
+    "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
+    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+    "contractVersions": {"$ref": "#/$defs/contractVersions"},
+    "baselineHash": {"type": "string", "minLength": 1},
+    "recordedAt": {"type": "string", "minLength": 1},
+    "verdict": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+    "gateResults": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["F0", "F1", "F2", "F3", "F4"],
+      "properties": {
+        "F0": {"$ref": "#/$defs/gateResult"},
+        "F1": {"$ref": "#/$defs/gateResult"},
+        "F2": {"$ref": "#/$defs/gateResult"},
+        "F3": {"$ref": "#/$defs/gateResult"},
+        "F4": {"$ref": "#/$defs/gateResult"}
+      }
+    },
+    "unityEvidence": {"$ref": "#/$defs/unityEvidence"},
+    "responsiveEvidence": {"$ref": "#/$defs/responsiveEvidence"},
+    "uiLayoutMeasurementRef": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string", "minLength": 1}},
+      "description": "引用当前evidenceRoot内由Toolkit实际采集的布局与组件同批报告。"
+    },
+    "resourceHandoffInspectionRef": {
+      "type": "object", "additionalProperties": false, "required": ["path"],
+      "properties": {"path": {"type": "string", "minLength": 1}},
+      "description": "引用当前evidenceRoot内由Toolkit实际读取资源加载、Clip与消费者的报告。"
+    },
+    "productionContractAudit": {"$ref": "#/$defs/productionContractAudit"},
+    "artifacts": {"type": "array", "items": {"$ref": "#/$defs/artifact"}},
+    "approval": {"$ref": "#/$defs/approval"},
+    "metadata": {"type": "object", "additionalProperties": {"type": ["string", "number", "boolean", "null"]}},
+    "riggingDelivery": {"$ref": "#/$defs/riggingDelivery"},
+    "candidateId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "candidateVersion": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artExperienceAcceptanceRef": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "allOf": [
+  {
+    "if": {
+      "properties": {
+        "workItemType": {
+          "enum": [
+            "SCENE",
+            "DISPLAY_LAYER"
+          ]
+        },
+        "visualStage": {
+          "const": "V4"
+        },
+        "verdict": {
+          "const": "PASS"
+        }
+      },
+      "required": [
+        "workItemType",
+        "visualStage",
+        "verdict"
+      ]
+    },
+    "then": {
+      "required": [
+        "responsiveEvidence",
+        "productionContractAudit",
+        "candidateId",
+        "candidateVersion",
+        "artExperienceAcceptanceRef"
+      ]
+    }
+  },
+  {
+    "if": {"properties": {"verdict": {"const": "PASS"}}, "required": ["riggingDelivery", "verdict"]},
+    "then": {
+      "required": ["unityEvidence"],
+      "properties": {
+        "unityEvidence": {
+          "required": ["playMode"],
+          "properties": {
+            "playMode": {
+              "oneOf": [
+                {"const": true},
+                {"const": "PASS"},
+                {"type": "object", "required": ["status"], "properties": {"status": {"const": "PASS"}}}
+              ]
+            }
+          }
+        }
+      }
+    }
+  }
+],
+  "$defs": {
+    "riggingDelivery": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["characters"],
+      "properties": {
+        "characters": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/riggingDeliveryEvidenceCharacter"}}
+      }
+    },
+    "riggingDeliveryEvidenceCharacter": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["characterId", "prefabPath", "prefabGuid", "sourceRevision", "assetReportPath", "reviewedBy", "reviewedAt", "regression"],
+      "properties": {
+        "characterId": {"type": "string", "minLength": 1},
+        "prefabPath": {"type": "string", "pattern": "^Assets/(?!__UwtRiggingTests_)(?!.*\\/__UwtRiggingTests_)(?!/)(?!\\.\\.?(?:/|$))(?!.*(?:\\\\|//|(?:^|/)\\.\\.?(?:/|$))).+\\.prefab$"},
+        "prefabGuid": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+        "sourceRevision": {"type": "string", "minLength": 1},
+        "assetReportPath": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:\\\\|//|(?:^|/)\\.\\.?(?:/|$))).+\\.json$"},
+        "reviewedBy": {"type": "string", "minLength": 1},
+        "reviewedAt": {"type": "string", "format": "date-time", "pattern": "(?:Z|[+-][0-9]{2}:[0-9]{2})$"},
+        "regression": {"$ref": "#/$defs/riggingRegression"},
+        "findings": {"type": "array", "items": {"$ref": "#/$defs/riggingFinding"}}
+      }
+    },
+    "riggingRegression": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "executedIn", "status", "editorVersion", "animationPackageVersion", "completedAt", "rawReportPath", "cases"],
+      "properties": {
+        "scope": {"const": "project-character"},
+        "executedIn": {"const": "EditorPlayMode"},
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]},
+        "editorVersion": {"type": "string", "minLength": 1},
+        "animationPackageVersion": {"type": "string", "minLength": 1},
+        "completedAt": {"type": "string", "format": "date-time", "pattern": "(?:Z|[+-][0-9]{2}:[0-9]{2})$"},
+        "rawReportPath": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:\\\\|//|(?:^|/)\\.\\.?(?:/|$))).+\\.json$"},
+        "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/riggingRegressionCase"}}
+      }
+    },
+    "riggingRegressionCase": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "testName", "status"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "testName": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL", "BLOCKED", "NOT_RUN"]}
+      }
+    },
+    "riggingFinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "reason", "affectedPaths"],
+      "properties": {
+        "role": {"enum": ["technicalArt", "rigging", "visualAssets", "gameplay", "qa"]},
+        "reason": {"type": "string", "minLength": 1},
+        "affectedPaths": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"type": "string", "pattern": "^(?!/)(?![A-Za-z]:)(?!.*(?:\\\\|//|(?:^|/)\\.\\.?(?:/|$))).+"}
+        }
+      }
+    },
+    "contractVersions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["responsiveContract"],
+      "properties": {"responsiveContract": {"type": "string", "minLength": 1}}
+    },
+    "measuredArtifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "measured", "path"],
+      "properties": {
+        "source": {"type": "string", "minLength": 1},
+        "measured": {"const": true},
+        "path": {"type": "string", "minLength": 1},
+        "size": {"type": "object", "additionalProperties": false, "required": ["width", "height"], "properties": {"width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}},
+        "orientation": {"enum": ["portrait", "landscape", "square"]}
+      }
+    },
+    "responsiveEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["gameView", "screen", "backbuffer", "camera", "safeArea", "inputHit", "resizeOrientationTrajectory", "screenshot", "supportedOrientations"],
+      "properties": {
+        "gameView": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "GameView"}}}]},
+        "screen": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Screen"}}}]},
+        "backbuffer": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "backbuffer"}}}]},
+        "canvasScaler": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "CanvasScaler"}}}]},
+        "panelSettings": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "PanelSettings"}}}]},
+        "camera": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Camera"}}}]},
+        "safeArea": {"type": "object", "additionalProperties": false, "required": ["source", "measured", "rect"], "properties": {"source": {"const": "Screen.safeArea"}, "measured": {"const": true}, "rect": {"type": "object", "minProperties": 1}}},
+        "inputHit": {"type": "object", "additionalProperties": false, "required": ["system", "eventSystem", "hit", "coordinates"], "properties": {"system": {"const": "InputSystem"}, "eventSystem": {"const": "EventSystem"}, "hit": {"const": true}, "coordinates": {"type": "object", "minProperties": 1}}},
+        "resizeOrientationTrajectory": {"type": "object", "additionalProperties": false, "required": ["sameProcess", "events"], "properties": {"sameProcess": {"const": true}, "events": {"type": "array", "minItems": 2, "items": {"type": "object", "additionalProperties": false, "required": ["type"], "properties": {"type": {"enum": ["resize", "orientation"]}, "path": {"type": "string", "minLength": 1}}}}}},
+        "screenshot": {"allOf": [{"$ref": "#/$defs/measuredArtifact"}, {"properties": {"source": {"const": "Screenshot"}}}]},
+        "supportedOrientations": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["landscape", "portrait", "auto"]}}
+      },
+      "anyOf": [{"required": ["canvasScaler"]}, {"required": ["panelSettings"]}]
+    },
+    "productionContractAudit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "contractVersion", "staticDeclarationOnly", "buildOnly", "singleScreenshotOnly"],
+      "properties": {
+        "status": {"const": "PASS"},
+        "contractVersion": {"type": "string", "minLength": 1},
+        "staticDeclarationOnly": {"const": false},
+        "buildOnly": {"const": false},
+        "singleScreenshotOnly": {"const": false}
+      }
+    },
+    "gateResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
+        "summary": {"type": "string"},
+        "evidenceRefs": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "unityEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "editorStable": {"$ref": "#/$defs/evidenceStatus"},
+        "compile": {"$ref": "#/$defs/evidenceStatus"},
+        "domainReload": {"$ref": "#/$defs/evidenceStatus"},
+        "console": {"$ref": "#/$defs/evidenceStatus"},
+        "editMode": {"$ref": "#/$defs/evidenceStatus"},
+        "playMode": {"$ref": "#/$defs/evidenceStatus"},
+        "scenePrefabImporterGuid": {"$ref": "#/$defs/evidenceStatus"},
+        "build": {"$ref": "#/$defs/evidenceStatus"},
+        "device": {"$ref": "#/$defs/evidenceStatus"},
+        "release": {"$ref": "#/$defs/evidenceStatus"}
+      }
+    },
+    "evidenceStatus": {"oneOf": [{"type": "boolean"}, {"enum": ["PASS", "FAIL", "NOT_RUN"]}, {"type": "object", "additionalProperties": false, "required": ["status"], "properties": {"status": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "refs": {"type": "array", "items": {"type": "string", "minLength": 1}}}}]},
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "status"],
+      "properties": {
+        "kind": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]}
+      }
+    },
+    "approval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["approvalId", "workItemId", "baselineHash", "stageId", "actionType", "actionLevel", "gate", "object", "impact", "target", "approvedAt", "approvedBy"],
+      "properties": {
+        "approvalId": {"type": "string", "minLength": 1},
+        "workItemId": {"type": "string", "minLength": 1},
+        "baselineHash": {"type": "string", "minLength": 1},
+        "stageId": {"type": "string", "minLength": 1},
+        "actionLevel": {"enum": ["A4", "A5", "A6"]},
+        "gate": {"const": "F4"},
+        "object": {"type": "string", "minLength": 1},
+        "actionType": {"type": "string", "pattern": "^unity-[a-z0-9-]+$"},
+        "impact": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "target": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "approvedAt": {"type": "string", "minLength": 1},
+        "approvedBy": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

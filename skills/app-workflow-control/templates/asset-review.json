@@ -1,0 +1,30 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "replace-with-work-id",
+  "stack": "flutter",
+  "visualStage": "V3",
+  "candidateId": "replace-with-selected-candidate-id",
+  "technicalStatus": "NOT_RUN",
+  "humanStatus": "NOT_RUN",
+  "userMessageRef": "replace-with-real-stage-review-message-reference",
+  "qualityChecks": [
+    {"dimension": "themeFit", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "audienceFit", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "taskReadability", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "viewingComfort", "status": "NOT_RUN", "evidenceRef": ""},
+    {"dimension": "artCompletion", "status": "NOT_RUN", "evidenceRef": ""}
+  ],
+  "assets": [
+    {"assetId": "native-button", "assetType": "native-component", "output": "lib/features/home/widgets/primary_button.dart", "componentEvidenceRef": ".workflow-control/evidence/replace-with-work-id/native-components.txt"},
+    {"assetId": "generated-icon", "assetType": "image", "output": "assets/icons/primary-action.png", "sourceKind": "ai-generated", "generationRecord": "docs/artifacts/primary-action-generation.json", "antiAiChecks": [
+      {"id": "structure-fidelity", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/structure-fidelity.md"},
+      {"id": "intentional-detail", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/intentional-detail.md"},
+      {"id": "material-lighting", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/material-lighting.md"},
+      {"id": "series-consistency", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/series-consistency.md"},
+      {"id": "ui-specificity", "status": "NOT_APPLICABLE", "reason": "仅用于非 UI 插画"},
+      {"id": "product-character", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/product-character.md"},
+      {"id": "edge-quality", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/edge-quality.md"},
+      {"id": "integration-cohesion", "status": "PASS", "evidenceRef": ".workflow-control/evidence/replace-with-work-id/integration-cohesion.md"}
+    ]}
+  ]
+}

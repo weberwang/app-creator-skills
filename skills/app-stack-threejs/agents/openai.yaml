@@ -1,0 +1,4 @@
+interface:
+  display_name: "Three.js 技术栈"
+  short_description: "设计 Three.js 世界场景、3D 资源、渲染和生命周期。"
+  default_prompt: "使用 $app-stack-threejs 检查当前 3D Web 工程的实现与验收边界。"
