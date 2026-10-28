@@ -14,6 +14,8 @@
 
 ## 世界空间 vs HUD
 
+V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用可识别的简单几何或现有模型、名称与状态标记区分玩家、交互目标和环境，并通过实际 HUD/DOM 呈现操作反馈。复用现有世界交互和路由接口；体验界面不依赖调试标签才能理解，碰撞代理和坐标等调试信息可按需显示。临时对象与模拟数据只证明实际验证的范围，不等待 V2 正式风格。
+
 按[世界树与 HUD 显示结构](../../threejs-game-ui-layout/references/display-object-layering.md#世界树与-hud-显示结构)分别交付 Object3D 世界树和实际 HUD/DOM 树，说明挂载、组合、输入及资源释放责任，不能以代码目录或单一场景图代替全部显示结构。
 
 真实游戏世界用 `Scene`、`Object3D`、Camera、单位、轴向、层级和世界碰撞描述。记录视野角/正交视口、near/far、相机阻尼、viewport 尺寸、render size、Canvas CSS size、设备像素比、移动端最大 DPR 策略、阴影、景深和透明排序。

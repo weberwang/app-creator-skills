@@ -2,6 +2,8 @@
 
 ## 游戏显示空间
 
+V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用已有 Scene/Container、简明图形与文本标识玩家、目标、可操作对象、状态和反馈，复用实际输入与功能接口。体验界面保持可读，碰撞框和对象 ID 等调试信息按需切换或隐藏；模拟数据与临时目的地只证明真实执行的功能范围，不等待 V2 正式风格。
+
 按[Scene 与容器显示结构](../../phaser4-game-ui-layout/references/display-object-layering.md#scene-与容器显示结构)同时规范实际 Display List/Container、Camera 与 DOM 分支，明确导航、内容、HUD、独立瞬态层和功能组件的组织；代码目录不能代替显示树。
 
 分别记录 Phaser `gameSize`、Renderer size、Camera viewport/world view、CSS 宿主尺寸和 Canvas backing size。DOM 的 CSS 盒、WebGL framebuffer 和 Phaser 世界坐标不是同一单位。根据真实 resize 行为更新 scale manager、场景相机、布局根和缓存的输入边界。DPR 是设备和窗口运行事实，不是页面静态坐标合同。
