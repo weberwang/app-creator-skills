@@ -6,7 +6,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { COMMON_SKILLS, installSkills, planInstallation, SOURCE_ROOT } from '../scripts/install-project-skills.mjs';
+import { COMMON_SKILLS, installSkills, planInstallation, SOURCE_ROOT } from '../packages/installer/install-project-skills.mjs';
 
 /** 建立并在测试结束后回收隔离项目。 */
 function project(t) {
@@ -66,8 +66,8 @@ test('同字节执行位差异会冲突并由替换更新', (t) => {
   const sourceEntries = planInstallation({ projectRoot: root, stacks: ['flutter'] }).entries;
   const sourceRoot = project(t);
   mkdirSync(join(sourceRoot, 'skills'), { recursive: true });
-  mkdirSync(join(sourceRoot, 'migration'), { recursive: true });
-  copyFileSync(join(SOURCE_ROOT, 'migration', 'catalog.json'), join(sourceRoot, 'migration', 'catalog.json'));
+  mkdirSync(join(sourceRoot, 'packages', 'installer'), { recursive: true });
+  copyFileSync(join(SOURCE_ROOT, 'packages', 'installer', 'catalog.json'), join(sourceRoot, 'packages', 'installer', 'catalog.json'));
   for (const entry of sourceEntries) {
     cpSync(entry.source, join(sourceRoot, 'skills', entry.name), { recursive: true, errorOnExist: true, force: false });
   }

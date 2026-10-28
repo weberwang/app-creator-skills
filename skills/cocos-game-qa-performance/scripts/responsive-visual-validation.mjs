@@ -6,7 +6,7 @@ import process from "node:process";
 import { pathToFileURL } from "node:url";
 import { validateContract as validateUiLayoutContract } from "../../cocos-game-ui-layout/scripts/validate_ui_layout_contract.mjs";
 import { getUiLayoutSourceDocument, loadUiLayoutSourceDocuments, resolveSceneV2LayoutSource } from "../../cocos-game-ui-layout/scripts/ui-layout-contract-sources.mjs";
-import { calculateFullBleedCoverTransform } from "../../cocos-game-asset-integration/scripts/full-bleed-background-adapter.mjs";
+import { checkNativeBackgroundSize } from "../../app-domain-toolkit/scripts/visual/native-background-contract.mjs";
 import { DEFAULT_DPR, isDeviceDprInput, isWorkflowDpr, parseDeviceDpr, workflowDprError } from "../../cocos-domain-contracts/scripts/workflow-dpr-contract.mjs";
 import { DEFAULT_VISUAL_VALIDATION_MODE, isExactVisualValidation, resolveVisualValidationMode, validateVisualValidationPolicy } from "../../cocos-domain-contracts/scripts/visual-validation-policy.mjs";
 import { resolveOrientationCoverage, measuredOrientation, matchesRepresentativeViewport, validateOrientationPolicyConsistency, hasSamePageOrientationChange } from "../../cocos-domain-contracts/scripts/orientation-validation-scope.mjs";
@@ -67,6 +67,7 @@ export function readHookData(snapshot) {
       logicalSize: null,
       backgroundRect: null,
       backgroundSourceSize: null,
+      backgroundSourceLogicalSize: null,
       backgroundFitMode: null,
       safeArea: null,
       keyUiRects: null,
@@ -104,6 +105,7 @@ export function readHookData(snapshot) {
     backgroundSourceSize: backgroundSource && finiteNumber(backgroundSource.width) !== null && finiteNumber(backgroundSource.height) !== null
       ? { width: Number(backgroundSource.width), height: Number(backgroundSource.height) }
       : null,
+    backgroundSourceLogicalSize: background.sourceLogicalSize ?? null,
     backgroundFitMode: background.fitMode ?? snapshot.backgroundFitMode ?? null,
     safeArea,
     keyUiRects: snapshot.keyUiRects ?? snapshot.uiRects ?? null,
@@ -249,7 +251,7 @@ export function normalizeContract(raw = {}, options = {}) {
       ? Boolean(settings.allowWhitespace)
       : undefined;
   const tolerance = finiteNumber(viewport.whitespaceTolerancePx ?? settings.whitespaceTolerancePx);
-  const target = finiteNumber(viewport.backgroundCoverageTarget ?? settings.backgroundCoverageTarget);
+  const target = backgroundFit.mode === "cover-v1" ? 1 : finiteNumber(viewport.backgroundCoverageTarget ?? settings.backgroundCoverageTarget);
   const strategyValue = viewport.strategy ?? settings.strategy;
   const modeValue = viewport.mode ?? settings.mode;
   const normalized = {
@@ -408,41 +410,17 @@ export function evaluateViewport({ viewportRect, canvasRect, backingSize = null,
     else if (backgroundCoverage + 1e-9 < normalized.viewport.backgroundCoverageTarget) failures.push("背景覆盖率低于契约目标");
   }
   if (normalized.viewport.backgroundFit.mode !== undefined) {
-    if (normalized.viewport.backgroundFit.mode !== "cover-v1") {
-      decisionGaps.push("满幅背景适配模式必须为 cover-v1");
-    } else if (!viewport || !hook.backgroundRect || !hook.backgroundSourceSize) {
-      unverified.push("缺少 cover-v1 所需的背景资源尺寸或矩形 Hook");
-    } else if (hook.backgroundSourceSize.width <= 0 || hook.backgroundSourceSize.height <= 0) {
-      failures.push("运行时背景资源尺寸必须为正有限数");
-    } else if (hook.backgroundFitMode !== "cover-v1") {
-      failures.push("运行时背景未报告 cover-v1 适配模式");
-    } else {
+    if (normalized.viewport.backgroundFit.mode !== "cover-v1") decisionGaps.push("满幅背景适配模式必须为 cover-v1");
+    else if (!hook.backgroundFitMode) unverified.push("缺少背景适配模式 Hook");
+    else if (hook.backgroundFitMode !== "cover-v1") failures.push("运行时背景未报告 cover-v1 适配模式");
+    else {
       if (normalized.viewport.backgroundFit.sourceFocus === undefined) decisionGaps.push("未冻结满幅背景源图焦点");
       if (normalized.viewport.backgroundFit.targetPoint === undefined) decisionGaps.push("未冻结满幅背景目标落点");
-      try {
-        const expected = calculateFullBleedCoverTransform({
-          sourceWidth: hook.backgroundSourceSize.width,
-          sourceHeight: hook.backgroundSourceSize.height,
-          viewportWidth: viewport.width,
-          viewportHeight: viewport.height,
-          sourceFocus: normalized.viewport.backgroundFit.sourceFocus,
-          targetPoint: normalized.viewport.backgroundFit.targetPoint
-        });
-        const actual = {
-          x: hook.backgroundRect.x - viewport.x,
-          y: hook.backgroundRect.y - viewport.y,
-          displayWidth: hook.backgroundRect.width,
-          displayHeight: hook.backgroundRect.height
-        };
-        // DOMRect 会产生亚像素量化，0.5 CSS 像素足以吸收取整误差而不会掩盖错误缩放轴。
-        const tolerancePx = 0.5;
-        const matches = Object.keys(actual).every((key) => Math.abs(actual[key] - expected[key]) <= tolerancePx);
-        backgroundFit = { mode: "cover-v1", sourceSize: hook.backgroundSourceSize, expected, actual, matches };
-        // 覆盖率无法识别非等比拉伸或错误裁切，因此必须逐项核对实际几何。
-        if (!matches) failures.push("背景几何不符合 cover-v1 等比缩放或焦点裁切");
-      } catch (error) {
-        decisionGaps.push(`满幅背景适配参数非法：${error.message}`);
-      }
+      // 按真实画布及源尺寸复算 cover 几何，不将设备 DPR 当成图片缩放。
+      const result = checkNativeBackgroundSize({ sourceLogicalSize: hook.backgroundSourceLogicalSize, logicalSize: hook.logicalSize, canvasRect: canvas, backgroundRect: hook.backgroundRect, sourceFocus: normalized.viewport.backgroundFit.sourceFocus, targetPoint: normalized.viewport.backgroundFit.targetPoint });
+      backgroundFit = { mode: "cover-v1", matches: result.status === "pass", ...result };
+      if (result.status === "unverified") unverified.push(result.reason);
+      else if (result.status === "fail") failures.push(result.reason);
     }
   }
   if (normalized.safeArea.required && !hook.safeArea) unverified.push("缺少安全区 Hook");

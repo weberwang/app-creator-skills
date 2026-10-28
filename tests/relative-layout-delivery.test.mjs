@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import test from 'node:test';
-import { installSkills, SOURCE_ROOT } from '../scripts/install-project-skills.mjs';
+import { installSkills, SOURCE_ROOT } from '../packages/installer/install-project-skills.mjs';
 import YAML from '../skills/app-skill-runtime/yaml.mjs';
 
 const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'flutter'];

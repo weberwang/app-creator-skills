@@ -20,7 +20,7 @@
 - 2D 世界对象使用 Scene 节点树和目标 Camera。屏幕 UI 与世界 Camera 的逻辑坐标、渲染顺序和输入转换分开记录；不要将物理 backing 像素直接写成 Node.position。
 - Node 的同父级显示顺序由节点树 sibling 顺序管理；在同一父节点内确需改序时，Creator API 为 `Node.setSiblingIndex(index)`。跨 Camera/层级顺序应使用项目已配置的 Camera/排序方案并以实际画面验证，不凭局部 `z_index` 推断。
 - 可复用结构以 Prefab 表达。资源绑定使用 AssetDB 已导入并核验的 UUID/子资源身份；不要在序列化文件中自行拼 UUID。
-- 背景图片的可见 bounds 与 Node 锚点分开计算。先按合同得到 cover/contain 和裁切结果，再通过 helper 转换到 Node 局部位置；不通过编辑器拖动补偿布局，也不在 resize 时累计旧偏移。
+- 背景图片的可见 bounds 与 Node 锚点分开计算。先按合同得到等比 cover-v1 和裁切结果，再通过 helper 转换到 Node 局部位置；不通过编辑器拖动补偿布局，也不在 resize 时累计旧偏移。
 
 ## 图片原尺寸与九宫格尺寸
 
@@ -34,11 +34,11 @@
 
 `axis_alignment` 的水平 `left/center/right` 与垂直 `top/center/bottom` 组合是九点停靠合同；`self_anchor`、`reference_anchor` 和 `offset` 进一步确定对齐。中心轴如何区分严格居中、显式偏移与组合整体居中，按[居中策略与组合定位](./center-alignment.md)计算。它与 `nine_slice` 纹理切片合同无关，不修改 Sprite 类型或 RAW 尺寸。Node `UITransform.anchorPoint` 是 Creator 的节点矩形锚点，默认中心点不代表九点停靠结果。
 
-Widget 的 `target` 只支持当前节点的父级或祖先节点，不能直接引用兄弟节点；遵循 [Cocos Creator 3.8 Widget 说明](https://docs.cocos.com/creator/3.8/manual/en/ui-system/components/editor/widget.html)。需要相对兄弟定位时，项目共享布局入口读取兄弟 bounds，以该兄弟作为 `reference_id` 计算九点停靠和偏移，再换算到节点真实父级的局部坐标；不为 Widget 限制而增加包装层，也不改变已确认的兄弟参照语义。Widget 仅在布局合同选定 `position_driver: WIDGET` 时接入；其目标、唯一写入权、拉伸授权、中心 Y 符号及生成配置按 [Widget 定位策略](./widget-layout.md)派生。普通 RAW Sprite/底板只允许 Widget 定位且 `size_driver` 必须保留 `SPRITE_RAW`；如果节点或 target 路径含非单位缩放/旋转，则位置改由 `SHARED` 换算。
+Widget 的 `target` 只支持当前节点的父级或祖先节点，不能直接引用兄弟节点；遵循 [Cocos Creator 3.8 Widget 说明](https://docs.cocos.com/creator/3.8/manual/en/ui-system/components/editor/widget.html)。需要相对兄弟定位时，项目共享布局入口读取兄弟 bounds，以该兄弟作为 `reference_id` 计算九点停靠和偏移，再换算到节点真实父级的局部坐标；不为 Widget 限制而增加包装层，也不改变已确认的兄弟参照语义。Widget 仅在布局合同选定 `position_driver: WIDGET` 时接入；其目标、唯一写入权、拉伸授权、中心 Y 符号及生成配置按 [Widget 定位策略](./widget-layout.md)派生。普通 RAW Sprite/底板只允许 Widget 定位且 `size_driver` 必须保留 `SPRITE_RAW`；如果定位参照路径含非单位缩放/旋转，则位置改由 `SHARED` 换算；非背景图片自身和祖先在逻辑空间不得缩放。
 
 `viewport` 与 `safe-area` 在布局合同中是合成几何根，直接参照时必须使用 `SHARED`；合成的 `root_nodes` 不代表存在同名场景 Node，不能作为 Widget target。每批 `viewport` 使用完整逻辑视口，`safe-area` 使用实际安全区小矩形；生成、中心计算、审阅和运行校验使用同一份安全区快照。合成根记录必须是保留 ID `viewport`/`safe-area`、`is_root_container: true` 且显式 `parent_layout_node_id: null`；业务节点不能标记 `is_root_container: true` 或占用保留 ID，快照中的 `false` 不构成根声明。已有实际 Canvas 父/祖先节点可直接作 Widget target。位置与尺寸可分别由 Widget 和共享布局或当前节点 Creator 原生 Layout 负责，后者先计算最终尺寸，再调用 `updateAlignment()`；自定义项目布局器由 `SHARED` 驱动并保留 `PARENT` 职责；父级原生 Layout 控制子节点位置时，Widget 不得再写该位置。实际组件核对见 [Widget 运行快照](./widget-runtime-evidence.md)。
 
-创建、资源绑定、状态换图、Scene 恢复和 resize 共用这项区分：普通图片保持 RAW，九宫格重放冻结目标尺寸。普通图片与目标显示尺寸不符时先核对绑定资源与 V4 生产规格，不改用 CUSTOM 或以静态 Node 缩放掩盖错误资源；已由视觉合同批准的变换与反馈缩放动画仍可运行，按现有几何/动画证据检查，且不改写普通 Sprite 原始 `contentSize`。已声明的背景 cover/contain 与设计空间到设备的整体缩放继续通过共享变换实现，不改写普通 Sprite 的原始内容尺寸。统一幂等布局入口还须覆盖父尺寸、动态文本、状态、成员、安全区、键盘及资源绑定完成事件；Widget 固定使用 `ON_WINDOW_RESIZE` 并在入口更新参数后显式调用 `updateAlignment()`，不用 `ALWAYS` 与其它位置写入者争抢。
+创建、资源绑定、状态换图、Scene 恢复和 resize 共用这项区分：普通图片保持 RAW，九宫格重放冻结目标尺寸。普通图片与目标显示尺寸不符时先核对绑定资源与 V4 生产规格，不改用 CUSTOM 或以静态 Node 缩放掩盖错误资源；非背景图片自身及祖先在逻辑空间不得缩放或剪切，反馈动画也须遵守；设计空间到设备的 Canvas 映射独立处理。独立背景图片可按 cover 等比缩放并定位裁切，不将此例外传给其他图片或组件子项。统一幂等布局入口还须覆盖父尺寸、动态文本、状态、成员、安全区、键盘及资源绑定完成事件；Widget 固定使用 `ON_WINDOW_RESIZE` 并在入口更新参数后显式调用 `updateAlignment()`，不用 `ALWAYS` 与其它位置写入者争抢。
 
 依据 [Cocos Creator 3.8 Sprite 组件参考](https://docs.cocos.com/creator/3.8/manual/en/ui-system/components/editor/sprite.html)：Raw 使用未裁切原图尺寸，Custom 使用自定义尺寸，Sliced 是独立的渲染类型。RAW 是本工作流要求，不能依赖编辑器或已有 Prefab 的当前默认值。
 

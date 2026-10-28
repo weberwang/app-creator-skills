@@ -239,7 +239,7 @@ function validateDesignResolutionPolicy(policy, stage, scope, errors, orientatio
   if (policy.canvasFit !== 'fill-viewport') errors.push(contractError(stage, scope, 'designResolutionPolicy.canvasFit 必须为 fill-viewport，禁止画布黑边'));
   if (policy.crossAxis !== 'extend-or-crop') errors.push(contractError(stage, scope, 'designResolutionPolicy.crossAxis 必须为 extend-or-crop'));
   const background = policy.backgroundFit;
-  if (!isObject(background) || background.mode !== 'cover-v1') errors.push(contractError(stage, scope, 'designResolutionPolicy.backgroundFit.mode 必须为 cover-v1，背景需等比覆盖可见视口'));
+  if (!isObject(background) || background.mode !== 'cover-v1') errors.push(contractError(stage, scope, 'designResolutionPolicy.backgroundFit.mode 必须为 cover-v1，背景须等比覆盖可见视口'));
   for (const fieldName of ['sourceFocalPoint', 'targetPoint']) {
     const point = background?.[fieldName];
     if (!isObject(point) || ![point.x, point.y].every((value) => Number.isFinite(value) && value >= 0 && value <= 1)) {

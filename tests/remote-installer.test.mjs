@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { createGitHubSource, gitBlobSha, normalizeRepository } from '../install.mjs';
-import { installRemoteSkills, runRemoteInstaller } from '../scripts/remote-install/install.mjs';
+import { installRemoteSkills, runRemoteInstaller } from '../packages/installer/remote-install/install.mjs';
 
 const REPOSITORY = 'example/app-creator-skills';
 const BRANCH = 'feature/stack-install';
@@ -30,7 +30,7 @@ function makeRepository({ extraFiles = [], overrides = {} } = {}) {
       flutter: { capabilitySkills: ['app-feedback'], nativeAdapters: ['flutter-feedback'], resourceDirectories: ['app-domain-toolkit', 'flutter-native'] },
     },
   };
-  addText('migration/catalog.json', JSON.stringify(catalog));
+  addText('packages/installer/catalog.json', JSON.stringify(catalog));
   for (const name of ['app-creator-workflow', 'app-workflow-control', 'grilling', 'app-asset-workflow', 'app-feedback', 'app-stack-unity', 'app-stack-flutter']) {
     addText(`skills/${name}/SKILL.md`, `# ${name}\n`);
   }
@@ -148,7 +148,7 @@ test('dry-run 只读迁移清单，不下载载荷或写入目标目录', async 
   const result = await installFixture(project, join(root, 'cache'), repo, { fetchImpl: transport.fetchImpl, dryRun: true });
   assert.equal(result.remote.dryRun, true);
   assert.equal(result.remote.payloadDownloaded, 0);
-  assert.deepEqual(rawPaths(transport.requests), ['migration/catalog.json']);
+  assert.deepEqual(rawPaths(transport.requests), ['packages/installer/catalog.json']);
   assert.equal(existsSync(join(project, '.agents')), false);
 });
 
@@ -168,7 +168,7 @@ test('冷内容缓存可从现有安装逐文件复用且不请求技能载荷',
   assert.equal(result.changed, false);
   assert.ok(result.remote.metrics.reusedLocal > 0);
   assert.ok(!rawPaths(coldTransport.requests).some((path) => path.startsWith('skills/')));
-  assert.deepEqual(rawPaths(coldTransport.requests), ['migration/catalog.json']);
+  assert.deepEqual(rawPaths(coldTransport.requests), ['packages/installer/catalog.json']);
 });
 
 test('私有仓库令牌只发往 GitHub API，二进制 blob 按原字节校验', async (t) => {
@@ -265,7 +265,7 @@ test('所选栈内 Windows 大小写目录碰撞在任何载荷下载前被拒�
   ] });
   const transport = fakeGitHub(repo);
   await assert.rejects(installFixture(project, join(root, 'cache'), repo, { fetchImpl: transport.fetchImpl }), /大小写冲突路径/);
-  assert.deepEqual(rawPaths(transport.requests), ['migration/catalog.json']);
+  assert.deepEqual(rawPaths(transport.requests), ['packages/installer/catalog.json']);
   assert.equal(existsSync(join(project, '.agents')), false);
 });
 
@@ -277,7 +277,7 @@ test('缓存默认冷启动逐层创建，并拒绝缓存根祖先或哈希桶�
   const repo = makeRepository();
   const defaultTransport = fakeGitHub(repo);
   const defaultSource = await createGitHubSource({ repo: REPOSITORY, ref: BRANCH, fetchImpl: defaultTransport.fetchImpl, env: { LOCALAPPDATA: defaultCacheHome } });
-  const catalog = defaultSource.findBlob('migration/catalog.json');
+  const catalog = defaultSource.findBlob('packages/installer/catalog.json');
   await defaultSource.getBlob(catalog);
   const defaultBlob = join(defaultCacheHome, 'app-creator-skills', 'github-blobs', catalog.sha.slice(0, 2), catalog.sha);
   assert.ok(existsSync(defaultBlob));
@@ -292,14 +292,14 @@ test('缓存默认冷启动逐层创建，并拒绝缓存根祖先或哈希桶�
   const link = join(root, 'cache-link');
   symlinkSync(outside, link, process.platform === 'win32' ? 'junction' : 'dir');
   const linkedSource = await createGitHubSource({ repo: REPOSITORY, ref: BRANCH, cacheRoot: join(link, 'cache'), fetchImpl: fakeGitHub(repo).fetchImpl, env: {} });
-  await assert.rejects(linkedSource.getBlob(linkedSource.findBlob('migration/catalog.json')), /缓存路径不能包含链接/);
+  await assert.rejects(linkedSource.getBlob(linkedSource.findBlob('packages/installer/catalog.json')), /缓存路径不能包含链接/);
 
   const bucketCache = join(root, 'bucket-cache');
   mkdirSync(bucketCache);
-  const bucket = join(bucketCache, gitBlobSha(repo.files.get('migration/catalog.json')).slice(0, 2));
+  const bucket = join(bucketCache, gitBlobSha(repo.files.get('packages/installer/catalog.json')).slice(0, 2));
   symlinkSync(outside, bucket, process.platform === 'win32' ? 'junction' : 'dir');
   const bucketSource = await createGitHubSource({ repo: REPOSITORY, ref: BRANCH, cacheRoot: bucketCache, fetchImpl: fakeGitHub(repo).fetchImpl, env: {} });
-  await assert.rejects(bucketSource.getBlob(bucketSource.findBlob('migration/catalog.json')), /缓存路径不能包含链接/);
+  await assert.rejects(bucketSource.getBlob(bucketSource.findBlob('packages/installer/catalog.json')), /缓存路径不能包含链接/);
 });
 
 test('本地内容冷复用后仍由事务拒绝覆盖用户修改，replace 会生成备份', async (t) => {

@@ -48,6 +48,8 @@ function restrictToOrientation(document, orientation) {
     document.representativeViewports.push({ id: "portrait-dpr-cap", kind: "standard-portrait", width: 430, height: 932, orientation: "portrait", rawDpr: 3, effectiveDpr: 2 });
   } else {
     document.representativeViewports.push(
+      { id: "landscape-wide", kind: "desktop-wide", width: 1440, height: 900, orientation: "landscape", rawDpr: 3, effectiveDpr: 2 },
+      { id: "landscape-dpr-two", kind: "landscape", width: 844, height: 390, orientation: "landscape", rawDpr: 2, effectiveDpr: 2 },
       { id: "landscape-dpr-one", kind: "landscape", width: 900, height: 600, orientation: "landscape", rawDpr: 1, effectiveDpr: 1 },
       { id: "landscape-dpr-mid", kind: "landscape", width: 960, height: 640, orientation: "landscape", rawDpr: 1.5, effectiveDpr: 1.5 },
     );
@@ -177,10 +179,10 @@ test("响应式合同使用动态封顶策略并保留运行时上限", () => {
 });
 test("固定横竖屏设计分辨率、主轴适配与背景 cover 不可缺失", () => {
   const portrait = copy(); portrait.designResolutionPolicy.portrait.width = 720; assertFailed(portrait, "portrait 必须为 1080×1920");
-  const landscape = copy(); landscape.designResolutionPolicy.landscape.fitAxis = "width"; assertFailed(landscape, "landscape 必须为 1920×1080");
+  const landscape = restrictToOrientation(copy(), "landscape"); landscape.designResolutionPolicy.landscape.fitAxis = "width"; assertFailed(landscape, "landscape 必须为 1920×1080");
   const engineMode = copy(); engineMode.scaleMode = "RESIZE"; assertFailed(engineMode, "scaleMode 必须为 custom");
   const bars = copy(); bars.scaleMode = "FIT"; assertFailed(bars, "scaleMode 必须为 custom");
-  const cover = copy(); cover.designResolutionPolicy.backgroundFit.mode = "contain"; assertFailed(cover, "背景需等比覆盖可见视口");
+  const cover = copy(); cover.designResolutionPolicy.backgroundFit.mode = "contain"; assertFailed(cover, "背景须等比覆盖可见视口");
   const focus = copy(); focus.designResolutionPolicy.backgroundFit.sourceFocalPoint.x = 2; assertFailed(focus, "sourceFocalPoint 必须包含 [0,1]");
   const crossAxis = copy(); crossAxis.designResolutionPolicy.crossAxis = "fixed"; assertFailed(crossAxis, "crossAxis 必须为 extend-or-crop");
 });
@@ -194,15 +196,12 @@ test("单方向合同只要求支持方向设计基准、视口类别和重排�
     assert.equal(validateContract(exact).status, "passed", `${orientation} exact: ${JSON.stringify(validateContract(exact))}`);
   }
 });
-test("双方向仍要求双方设计基准、代表视口、方向切换事件和 exact 方向轴", () => {
-  const missingDesign = copy(); delete missingDesign.designResolutionPolicy.landscape; assertFailed(missingDesign, "designResolutionPolicy.landscape 必须为");
-  const missingViewport = copy(); missingViewport.representativeViewports = missingViewport.representativeViewports.filter((item) => item.kind !== "landscape"); assertFailed(missingViewport, "缺少代表性视口：landscape");
-  const missingEvent = copy(); missingEvent.resizePolicy.events = missingEvent.resizePolicy.events.filter((event) => event !== "orientation-change"); assertFailed(missingEvent, "resizePolicy.events 缺少必需项：orientation-change");
-  const missingAxis = fidelityContract(); missingAxis.evidence_matrix.required_axes = missingAxis.evidence_matrix.required_axes.filter((axis) => axis !== "orientation"); assertFailed(missingAxis, "required_axes 缺少必需轴：orientation");
+test("游戏拒绝声明双方向", () => {
+  const invalid = copy(); invalid.orientationPolicy.allowed = ["portrait", "landscape"]; assertFailed(invalid, "orientationPolicy.allowed");
 });
 test("方向声明非法、视口标签与几何不一致或 exact parity 超出支持方向时失败", () => {
   for (const allowed of [[], ["portrait", "portrait"], ["diagonal"], "portrait-only"]) {
-    const invalid = copy(); invalid.orientationPolicy.allowed = allowed; assertFailed(invalid, "orientationPolicy.allowed 必须是非空且不重复的 portrait/landscape 数组");
+    const invalid = copy(); invalid.orientationPolicy.allowed = allowed; assertFailed(invalid, "orientationPolicy.allowed 必须是只包含一个 portrait 或 landscape 的数组");
   }
   const mismatch = copy(); mismatch.representativeViewports[0].orientation = "landscape"; assertFailed(mismatch, "与 width/height 实测方向不一致");
   const wrongKind = copy(); wrongKind.representativeViewports[0].width = 400; assertFailed(wrongKind, "代表视口方向或尺寸不一致");
@@ -236,7 +235,7 @@ test("Camera、zoom、origin 和输入坐标合同必须完整", () => {
   const input = copy(); input.inputCoordinatePolicy.mapping = "physical pixels"; assertFailed(input, "inputCoordinatePolicy.mapping 必须完整声明");
 });
 test("默认代表性矩阵覆盖视口、DPR 封顶和 DISPLAY_LAYER 运行证据", () => {
-  const missingViewport = copy(); missingViewport.representativeViewports = missingViewport.representativeViewports.slice(0, 3); assertFailed(missingViewport, "缺少代表性视口：desktop-wide");
+  const missingViewport = copy(); missingViewport.representativeViewports = missingViewport.representativeViewports.filter(item => item.kind !== "narrow-portrait"); assertFailed(missingViewport, "缺少代表性视口：narrow-portrait");
   const invalidRaw = copy(); invalidRaw.representativeViewports[0].rawDpr = "1"; assertFailed(invalidRaw, "rawDpr 必须是正有限数字");
   const invalidCap = copy(); invalidCap.representativeViewports[3].effectiveDpr = 1.5; assertFailed(invalidCap, "必须封顶为 2");
   const missingEvidence = copy(); missingEvidence.requiredRuntimeEvidence.requiredFields = missingEvidence.requiredRuntimeEvidence.requiredFields.filter((field) => field !== "inputHitResults"); assertFailed(missingEvidence, "requiredRuntimeEvidence.requiredFields 缺少必需项：inputHitResults");

@@ -93,8 +93,8 @@ window.__COCOS_VISUAL_VALIDATION__ = {
     return {
       logicalCanvas: { width: 390, height: 844 },
       background: {
-        rect: { x: -579, y: 0, width: 1548, height: 844 },
-        sourceSize: { width: 1920, height: 1047 },
+        rect: { x: 0, y: 0, width: 390, height: 844 },
+        sourceLogicalSize: { width: 390, height: 844 },
         fitMode: "cover-v1"
       },
       safeArea: { top: 47, right: 0, bottom: 34, left: 0,

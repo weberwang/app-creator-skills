@@ -19,7 +19,7 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 2. 按当前阶段读取对应 reference，使用 `status`/`check` 诊断；缺少事实时先完成只读调查。
 3. 实施前冻结 Implementation Package。每个单元必须有类型、所有者、路径、顺序和 Unity 序列化资源所有权；`SCENE` 与 `DISPLAY_LAYER` 不得混包，身份字段必须精确绑定。
 4. 可见 `SCENE`/`DISPLAY_LAYER` 实施前明确 Unity 原生 `responsiveContract`；可见实施包用合同文件 `path/version` 记录来源，不强制与当前实现逐字段一致，不使用 CSS、DOM 或运行时 DPR 语义。
-5. 实施后记录实际完成情况和 Evidence Manifest，证据必须属于相同的 Work Item、基线和实施包；V5 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize 和截图。`responsiveEvidence.supportedOrientations` 记录实际支持方向，验收核对其满足用户要求；横屏无需验证竖屏，竖屏无需验证横屏，实际双方向或自动方向另须 orientation 切换轨迹。
+5. 实施后记录实际完成情况和 Evidence Manifest，证据必须属于相同的 Work Item、基线和实施包；V5 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize 和截图。`responsiveEvidence.supportedOrientations` 记录实际支持方向，验收核对其满足用户要求；横屏无需验证竖屏，竖屏无需验证横屏，实际游戏不得声明双方向或自动方向，保留所选方向内连续 resize 轨迹。
 6. 失败只选择 `repair`、`revalidate` 或显式 `RETURN`；控制面不会自动回退、扩大范围或伪造设备/发布证据。
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
 8. `SCENE` 与 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求确认也不写入 `stageReviews`；V2–V5 按[阶段人工确认](./stage-confirmation.md)闭环。V3 先确认拆解图，再单独确认布局图；V2、V4、V5 使用 `confirmation`，V3 分别使用 `decompositionConfirmation` 和 `layoutConfirmation`。

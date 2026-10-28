@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const INSTALLER = join(ROOT, 'scripts/install-project-skills.mjs');
+const INSTALLER = join(ROOT, 'packages/installer/install-project-skills.mjs');
 const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'flutter'];
 
 /** 仅在独占临时项目中运行一次性 CLI，不启动开发服务或接触真实用户项目。 */

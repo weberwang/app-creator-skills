@@ -6,6 +6,7 @@
 - Target path:
 - New or existing:
 - Flutter / FVM SDK version:
+- 屏幕方向：竖屏 / 横屏 / 双方向（初始化时选择并记录）
 
 ## Technical Design Inputs
 

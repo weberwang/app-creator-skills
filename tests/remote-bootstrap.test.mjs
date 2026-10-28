@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
-import { CORE_SKILLS } from '../scripts/capability-map.mjs';
+import { CORE_SKILLS } from '../packages/installer/capability-map.mjs';
 import { runRemoteBootstrap } from '../install.mjs';
 
 const REPOSITORY_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
@@ -14,14 +14,11 @@ const REVISION = 'a'.repeat(40);
 const TREE_SHA = 'b'.repeat(40);
 const BOOTSTRAP_PATHS = Object.freeze([
   'install.mjs',
-  'scripts/remote-install/install.mjs',
-  'scripts/installation-content.mjs',
-  'scripts/install-project-skills.mjs',
-  'scripts/skill-catalog.mjs',
-  'scripts/capability-map.mjs',
-  'scripts/migration/specialist-reference-specs.mjs',
-  'scripts/migration/orchestration-reference-specs.mjs',
-  'scripts/migration/domain-reference-specs.mjs',
+  'packages/installer/remote-install/install.mjs',
+  'packages/installer/installation-content.mjs',
+  'packages/installer/install-project-skills.mjs',
+  'packages/installer/skill-catalog.mjs',
+  'packages/installer/capability-map.mjs',
   'skills/app-skill-runtime/direct-entry.mjs',
   'skills/app-skill-runtime/native-contracts.mjs',
 ]);
@@ -70,7 +67,7 @@ function addRealDirectory(sourcePath, gitPath, state) {
 function createRepositoryFixture() {
   const state = { tree: [], directories: new Set(), blobs: new Map() };
   addBlob('install.mjs', readFileSync(join(REPOSITORY_ROOT, 'install.mjs')), state);
-  for (const directory of ['scripts', 'skills', 'migration', 'docs', 'tests']) {
+  for (const directory of ['packages/installer', 'skills', 'docs', 'tests']) {
     addRealDirectory(join(REPOSITORY_ROOT, directory), directory, state);
   }
   for (const path of ['README.md', 'package.json', 'package-lock.json', '.gitignore']) {
@@ -119,7 +116,7 @@ function createFakeFetch(fixture) {
 
 /** 根据真实迁移目录计算某栈必须安装的公共与专业目录。 */
 function expectedRootsFor(stacks) {
-  const catalog = JSON.parse(readFileSync(join(REPOSITORY_ROOT, 'migration', 'catalog.json'), 'utf8'));
+  const catalog = JSON.parse(readFileSync(join(REPOSITORY_ROOT, 'packages', 'installer', 'catalog.json'), 'utf8'));
   const roots = new Set(CORE_SKILLS);
   for (const stack of stacks) {
     const profile = catalog.stacks[stack];
@@ -137,14 +134,14 @@ function expectedRootsFor(stacks) {
 function assertRawRequestsStayWithinSelection(rawPaths, selectedRoots) {
   const selected = new Set(selectedRoots);
   for (const path of rawPaths) {
-    if (BOOTSTRAP_PATHS.includes(path) || path === 'migration/catalog.json') continue;
+    if (BOOTSTRAP_PATHS.includes(path) || path === 'packages/installer/catalog.json') continue;
     assert.ok(path.startsWith('skills/'), `不应下载技能以外内容：${path}`);
     const root = path.split('/')[1];
     assert.ok(selected.has(root), `不应下载未选技术栈或无关技能：${path}`);
   }
   assert.ok(rawPaths.every((path) => !path.startsWith('docs/') && !path.startsWith('tests/')));
-  assert.ok(rawPaths.every((path) => !path.startsWith('migration/') || path === 'migration/catalog.json'));
-  assert.ok(rawPaths.every((path) => !path.startsWith('scripts/') || BOOTSTRAP_PATHS.includes(path)));
+
+  assert.ok(rawPaths.every((path) => !path.startsWith('packages/installer/') || path === 'packages/installer/catalog.json' || BOOTSTRAP_PATHS.includes(path)));
 }
 
 /** 以独占临时项目和缓存运行 bootstrap，并在用例结束时清理。 */
@@ -174,7 +171,7 @@ test('独立 bootstrap 只安装所选闭包，复用缓存并允许追加第二
     assert.equal(first.changed, true);
     assert.ok(first.remote.payloadDownloaded > 0);
     for (const path of BOOTSTRAP_PATHS) assert.ok(firstRawPaths.includes(path), `首次启动应下载引擎文件：${path}`);
-    assert.ok(firstRawPaths.includes('migration/catalog.json'));
+    assert.ok(firstRawPaths.includes('packages/installer/catalog.json'));
     assertRawRequestsStayWithinSelection(firstRawPaths, flutterRoots);
     assert.ok(firstRawPaths.some((path) => path.startsWith('skills/app-stack-flutter/')));
     assert.ok(!firstRawPaths.some((path) => path.startsWith('skills/app-stack-unity/')));
@@ -232,7 +229,7 @@ test('dry-run 仅下载引擎和目录元数据，不取技能载荷或写入项
     assert.equal(result.remote.metrics.metadataDownloaded, 1);
     assert.ok(!existsSync(join(project, '.agents')));
     assert.ok(BOOTSTRAP_PATHS.every((path) => rawPaths.includes(path)));
-    assert.ok(rawPaths.includes('migration/catalog.json'));
+    assert.ok(rawPaths.includes('packages/installer/catalog.json'));
     assert.ok(rawPaths.every((path) => !path.startsWith('skills/') || BOOTSTRAP_PATHS.includes(path)));
     assertRawRequestsStayWithinSelection(rawPaths, expectedRootsFor(['unity']));
   });

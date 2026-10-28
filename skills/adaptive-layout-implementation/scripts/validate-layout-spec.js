@@ -374,7 +374,7 @@ function validateCommon(spec, errors) {
     errors.require(page.min_height <= page.max_height, "page height range is invalid");
   }
   const pageOrientations = new Set(sequence(page.orientations));
-  errors.require(isSubset(new Set(["portrait", "landscape"]), pageOrientations), "page.orientations must include portrait and landscape");
+  errors.require(pageOrientations.size > 0 && pageOrientations.size === sequence(page.orientations).length && isSubset(pageOrientations, ORIENTATIONS), "page.orientations must contain unique portrait and/or landscape");
   validateRegions(spec, errors);
   validateRelativeLayoutBindings(spec, errors);
 
@@ -499,6 +499,7 @@ function validateCommon(spec, errors) {
       errors.require(text(evidenceCase[field]), `${path}.${field} is required`);
     }
     errors.require(ORIENTATIONS.has(evidenceCase.orientation), `${path}.orientation is invalid`);
+    errors.require(pageOrientations.has(evidenceCase.orientation), `${path}.orientation must be declared in page.orientations`);
     errors.require(LOCALES.has(evidenceCase.locale), `${path}.locale is invalid`);
     errors.require(SAFE_AREAS.has(evidenceCase.safe_area), `${path}.safe_area is invalid`);
     errors.require(ACTION_STATES.has(evidenceCase.action_state), `${path}.action_state is invalid`);
@@ -509,6 +510,8 @@ function validateCommon(spec, errors) {
       matrixValues.get(field).add(evidenceCase[field]);
     }
     if (number(evidenceCase.width) && number(evidenceCase.height)) {
+      // 方向必须来自实际几何，不能用标签冒充另一方向的覆盖。
+      errors.require(evidenceCase.width > 0 && evidenceCase.height > 0 && evidenceCase.orientation === (evidenceCase.width < evidenceCase.height ? "portrait" : "landscape"), `${path}.orientation must match positive width and height`);
       const heights = heightsByWidth.get(evidenceCase.width) ?? new Set();
       heights.add(evidenceCase.height);
       heightsByWidth.set(evidenceCase.width, heights);
@@ -539,7 +542,7 @@ function validateCommon(spec, errors) {
   errors.require(isSubset(invariantTests, executed), "every invariant test_id must execute in evidence_matrix");
   errors.require(isSubset(declaredLineBreakTests, invariantTests), "every text line-break test_id must be declared by invariants");
   errors.require(isSubset(declaredLineBreakTests, lineBreakStressTests), "every text line-break test_id must execute with longest_copy and large text scale");
-  errors.require(isSubset(new Set(["portrait", "landscape"]), matrixValues.get("orientation")), "evidence_matrix must cover portrait and landscape");
+  errors.require(isSubset(pageOrientations, matrixValues.get("orientation")), "evidence_matrix must cover declared orientations");
   errors.require(isSubset(new Set(["default", "longest_copy"]), matrixValues.get("locale")), "evidence_matrix must cover default and longest_copy");
   errors.require(isSubset(new Set(["zero", "nonzero"]), matrixValues.get("safe_area")), "evidence_matrix must cover zero and nonzero safe areas");
   errors.require(isSubset(new Set(["default", "disabled", "submitting"]), matrixValues.get("action_state")), "evidence_matrix must cover all critical action states");
@@ -667,9 +670,11 @@ function validateParity(spec, errors) {
     errors.require(typeof item.target_sha256 === "string" && SHA256.test(item.target_sha256), `${path}.target_sha256 must be a 64-character lowercase SHA-256`);
     errors.require(typeof item.candidate_code_sha === "string" && CODE_SHA.test(item.candidate_code_sha), `${path}.candidate_code_sha must be a 40-64 character lowercase commit/content SHA`);
     errors.require(item.orientation === "portrait" || item.orientation === "landscape", `${path}.orientation must be portrait or landscape`);
+    errors.require(sequence(mapping(spec.page).orientations).includes(item.orientation), `${path}.orientation must be declared in page.orientations`);
     const viewport = mapping(item.viewport);
     errors.require(number(viewport.width) && viewport.width > 0, `${path}.viewport.width must be positive`);
     errors.require(number(viewport.height) && viewport.height > 0, `${path}.viewport.height must be positive`);
+    if (number(viewport.width) && number(viewport.height)) errors.require(item.orientation === (viewport.width < viewport.height ? "portrait" : "landscape"), `${path}.orientation must match viewport`);
     if (text(item.id)) {
       errors.require(!identifiers.has(item.id), `duplicate parity case id: ${item.id}`);
       identifiers.add(item.id);

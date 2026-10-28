@@ -4,7 +4,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, 
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { buildNpxPackage, validateNpxConfig } from '../scripts/build-npx-package.mjs';
+import { buildNpxPackage, validateNpxConfig } from '../packages/installer/build-npx-package.mjs';
 
 /** 创建独占源码夹具，包构建不会触及当前项目或真实发布目录。 */
 function fixture(t) {

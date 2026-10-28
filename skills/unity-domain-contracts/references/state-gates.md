@@ -58,7 +58,7 @@ BASELINE/PROPOSAL 等恢复入口同样沿用推导结果和解决说明，后�
 - `PASSED` 没有证据时仍是未闭环状态；`status`/`run` 必须返回阻断，不能自动进入 `COMPLETE`。
 - A4-A6 的副作用必须通过 F4 精确批准；批准不继承到下一个对象、阶段、基线或发布批次。
 - 可见 Work Item 实施前明确 Unity 原生 `responsiveContract`；可见包通过 `responsiveContractRef.path/version` 记录来源，且 `SCENE` 与 `DISPLAY_LAYER` 不能混包。验收以实际完成情况满足用户要求为准，实现调整无需回改合同，不比对合同内容、版本或 SHA。
-- V5 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程连续 resize 轨迹和截图共同证明；按 `supportedOrientations` 验证实际支持方向，双方向或自动方向另须 orientation 切换轨迹。静态声明、构建成功或单图均不得替代。
+- V5 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程连续 resize 轨迹和截图共同证明；按 `supportedOrientations` 验证实际支持方向，游戏不得声明双方向或自动方向，保留所选方向内连续 resize 轨迹。静态声明、构建成功或单图均不得替代。
 
 ## 三级处置
 

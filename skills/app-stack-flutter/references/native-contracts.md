@@ -435,7 +435,7 @@ Do not install Riverpod, hooks, Freezed, fpdart, JSON generators, or ScreenUtil 
 <a id="mode-flutter-project-init--process"></a>
 #### Process
 
-1. Read product, UI, technical design, verification-platform scope, and existing project configuration.
+1. Read product, UI, technical design, verification-platform scope, and existing project configuration. 初始化时确认并记录屏幕方向：竖屏、横屏或双方向；用户尚未选择时询问，不擅自扩大范围。后续布局、目标图和验证均消费这一选择。
 2. Confirm the FVM SDK and run `fvm flutter create` only when project creation is required.
 3. Preserve accepted existing structure and dependencies; do not rewrite unrelated configuration.
 4. Install only dependencies from approved capability profiles and any separately approved package additions.
@@ -538,7 +538,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 3. 无 bitmap/exported visual 时，在 manifest 记录 `N/A: no bitmap or exported visual assets` 并结束。
 4. 为每个固定视觉记录 100% match evidence。无法证明完全匹配时必须生产专用资产，不能用近似系统图标或组件替代。
 5. 填写 [asset manifest](../../flutter-asset-atlas/references/asset-manifest-template.md)，再用 `node scripts/render-bitmap-confirmation.js` 从 exact frozen target 生成编号图。Controller 只展示图片并等待用户明确确认。
-6. 确认后由独立 production work node 只处理获批编号：依次选择 reuse、adapt、variant、new generation、atlas、或经明确批准的 target extraction。默认基于 `390 x 844` 逻辑参考仅提供精确 `2x` raster；全屏图才是 `780 x 1688 px`。
+6. 确认后由独立 production work node 只处理获批编号：依次选择 reuse、adapt、variant、new generation、atlas、或经明确批准的 target extraction。默认基于已选方向的目标逻辑视口提供精确 `2x` raster；全屏图尺寸等于该视口宽高乘资源密度。
 7. 需要透明合成时优先原生透明输出；否则记录 mask/removal 方法，清理 alpha、matte、color spill，保留 shadow/glow/translucency，并在 checkerboard、亮/暗和实际背景检查。
 8. 在同一 manifest 记录 source/license、prompt hash、background、logical/output size、Flutter path、loading/error fallback 与 fidelity verdict。
 9. 对照冻结目标、编号图和 manifest 做覆盖与视觉复核；任何映射或边界变化必须重新编号确认。
@@ -568,7 +568,7 @@ V1 实际验证功能和页面语义后进入 V2 目标设计；白盒或 Code S
 #### 流程
 
 1. 冻结前在对话中临时准备 brief、prompt 和候选；不要把未选方案、prompt 或评审草稿写进仓库。
-2. 方向清楚时生成一个候选；只有用户要求探索或存在实质取舍时生成两到三个。每张页面图必须精确 `780 x 1688 px`。
+2. 方向清楚时生成一个候选；只有用户要求探索或存在实质取舍时生成两到三个。初始化选择竖屏、横屏或双方向，按所选目标逻辑视口和资源密度（默认 2x）确定像素宽高；例如 390×844 对应 780×1688，844×390 对应 1688×780。双方向各自生成并冻结目标，不旋转或拉伸旧图冒充。
 3. 高风险/核心/探索页提供任务层级、状态、无障碍和系统区域的检查要点；由用户检查效果图，未经明确授权不得自动分析截图。
 4. Controller 获得用户明确选择后，把选中图持久化到 `.codex-workflow/visuals/pages/<page-name>/`，计算 SHA-256；随后才在 page design decision 写 candidate ID、hash、确认时间、约束与允许偏差。冻结前 brief/prompt/candidates 保持 transient。
 5. 将冻结目标与已验证语义及适用布局合同回对。范围、状态、导航、滚动 owner、断点、无障碍或 ownership 变化时更新受影响功能并重验；仅草图路线更新草图审阅。

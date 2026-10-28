@@ -187,7 +187,7 @@ test("拒绝多位置写入者和非单位 Widget/RAW 坐标路径", () => {
   assert.ok(errors.some((message) => message.includes("reference_to_layout")));
 });
 
-test("允许共享布局换算 RAW 图片的非单位坐标路径", () => {
+test("共享布局不能通过逻辑矩阵放大 RAW 图片", () => {
   const item = node("raw-shared", {
     position: "SHARED", widget: null,
     bounds: { x: 10, y: 10, width: 40, height: 40 },
@@ -197,7 +197,7 @@ test("允许共享布局换算 RAW 图片的非单位坐标路径", () => {
   row.component_snapshot.ui_transform = { width: 20, height: 20 };
   row.component_snapshot.node_to_layout = { a: 2, b: 0, c: 0, d: 2 };
   row.component_snapshot.reference_to_layout = { a: 1, b: 0, c: 0, d: 0.5 };
-  assert.deepEqual(errorsFor([item], [row]), []);
+  assert.ok(errorsFor([item], [row]).some((message) => message.includes("逻辑变换不得缩放")));
 });
 
 test("严格居中使用实际 Widget 快照几何而非原生 flag 声明", () => {
@@ -235,7 +235,7 @@ test("图文组严格居中按真实联合边界校验", () => {
   assert.ok(errors.some((message) => message.includes("虚拟组 horizontal 必须严格居中")), errors.join("\n"));
 });
 
-test("RAW 图片缩放后仍按实际逻辑边界校验严格中心", () => {
+test("RAW 图片不能通过非等比缩放获得居中目标", () => {
   const item = node("scaled-raw-center", {
     parent: "viewport", position: "SHARED", widget: null,
     bounds: { x: 80, y: 40, width: 40, height: 20 },
@@ -246,7 +246,32 @@ test("RAW 图片缩放后仍按实际逻辑边界校验严格中心", () => {
   const row = snapshots([item])[0];
   row.component_snapshot.ui_transform = { width: 20, height: 20 };
   row.component_snapshot.node_to_layout = { a: 2, b: 0, c: 0, d: 1 };
+  assert.ok(errorsFor([item], [row]).some((message) => message.includes("逻辑变换不得缩放")));
+});
+
+test("图片允许旋转但拒绝缩小、剪切与九宫格整体放大", () => {
+  const item = node("raw-rotation", { position: "SHARED", widget: null });
+  const row = snapshots([item])[0];
+  row.component_snapshot.node_to_layout = { a: 0, b: 1, c: -1, d: 0 };
   assert.deepEqual(errorsFor([item], [row]), []);
+  for (const matrix of [{ a: 0.5, b: 0, c: 0, d: 0.5 }, { a: 1, b: 0, c: 0.5, d: 1 }]) {
+    row.component_snapshot.node_to_layout = matrix;
+    assert.ok(errorsFor([item], [row]).some((message) => message.includes("逻辑变换不得缩放")));
+  }
+  const sliced = node("nine-slice", { position: "SHARED", size: "SHARED", widget: null, geometry: { type: "SLICED", size_mode: "CUSTOM", content_size: { width: 20, height: 20 } } });
+  const slicedRow = snapshots([sliced])[0];
+  assert.deepEqual(errorsFor([sliced], [slicedRow]), []);
+  slicedRow.component_snapshot.node_to_layout = { a: 2, b: 0, c: 0, d: 2 };
+  assert.ok(errorsFor([sliced], [slicedRow]).some((message) => message.includes("逻辑变换不得缩放")));
+});
+
+test("只有独立背景节点可按 cover 缩放", () => {
+  const background = node("background", { position: "SHARED", widget: null, region_layer: "background" });
+  const row = snapshots([background])[0];
+  row.component_snapshot.node_to_layout = { a: 2, b: 0, c: 0, d: 2 };
+  assert.deepEqual(errorsFor([background], [row]), []);
+  background.element_type = "container";
+  assert.ok(errorsFor([background], [row]).some((error) => error.includes("逻辑变换不得缩放")));
 });
 
 test("业务参照使用其运行时边界，同一稳定根边界必须一致", () => {

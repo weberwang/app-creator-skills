@@ -17,14 +17,11 @@ const MAX_SELECTED_FILES = 20_000;
 const REQUEST_TIMEOUT_MS = 30_000;
 const BOOTSTRAP_FILES = Object.freeze([
   'install.mjs',
-  'scripts/remote-install/install.mjs',
-  'scripts/installation-content.mjs',
-  'scripts/install-project-skills.mjs',
-  'scripts/skill-catalog.mjs',
-  'scripts/capability-map.mjs',
-  'scripts/migration/specialist-reference-specs.mjs',
-  'scripts/migration/orchestration-reference-specs.mjs',
-  'scripts/migration/domain-reference-specs.mjs',
+  'packages/installer/remote-install/install.mjs',
+  'packages/installer/installation-content.mjs',
+  'packages/installer/install-project-skills.mjs',
+  'packages/installer/skill-catalog.mjs',
+  'packages/installer/capability-map.mjs',
   'skills/app-skill-runtime/direct-entry.mjs',
   'skills/app-skill-runtime/native-contracts.mjs',
 ]);
@@ -287,7 +284,7 @@ export async function runRemoteBootstrap(argv = process.argv.slice(2), runtime =
       const target = join(temporaryRoot, ...file.path.split('/'));
       safeWriteBootstrapFile(temporaryRoot, target, bytes);
     }
-    const remoteEntry = join(temporaryRoot, 'scripts', 'remote-install', 'install.mjs');
+    const remoteEntry = join(temporaryRoot, 'packages', 'installer', 'remote-install', 'install.mjs');
     const remoteModule = await import(pathToFileURL(remoteEntry).href);
     return await remoteModule.installRemoteSkills({
       ...options, repo: source.repo, ref: source.ref, cacheRoot: source.cacheRoot,

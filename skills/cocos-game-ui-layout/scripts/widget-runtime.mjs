@@ -1,6 +1,7 @@
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
 const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 import { validateCenterAlignmentNodes } from "./center-alignment.mjs";
+import { isBackgroundDisplayNode, isLayoutContainer } from "./display-node-role.mjs";
 
 const POSITION_DRIVERS = new Set(["WIDGET", "SHARED", "LAYOUT", "STATIC", "ANIMATION"]);
 const SIZE_DRIVERS = new Set(["SPRITE_RAW", "FIXED", "WIDGET", "LAYOUT", "SHARED", "CONTENT"]);
@@ -311,6 +312,11 @@ function validateSnapshot(node, snapshot, label, parentSnapshot, errors) {
   }
   const nodeMatrixValid = validateMatrix(snapshot.node_to_layout, `${label}.component_snapshot.node_to_layout`, errors);
   const referenceMatrixValid = validateMatrix(snapshot.reference_to_layout, `${label}.component_snapshot.reference_to_layout`, errors);
+  if (nodeMatrixValid && node.sprite_geometry != null && !(isBackgroundDisplayNode(node) && !isLayoutContainer(node))) {
+    // 背景仅由独立背景节点执行 cover，其他图片的轴长不能因逻辑变换改变。
+    const { a, b, c, d } = snapshot.node_to_layout;
+    if (!sameNumber(Math.hypot(a, b), 1) || !sameNumber(Math.hypot(c, d), 1) || !sameNumber(a * c + b * d, 0)) errors.push(`${label} 图片节点及祖先的逻辑变换不得缩放或剪切；九宫格仅可改变切片显示框`);
+  }
   if (plan.position_driver === "WIDGET") {
     if (nodeMatrixValid && !isIdentityMatrix(snapshot.node_to_layout)) errors.push(`${label} Widget 定位要求 node_to_layout 为单位矩阵`);
     if (referenceMatrixValid && !isIdentityMatrix(snapshot.reference_to_layout)) errors.push(`${label} Widget 定位要求 reference_to_layout 为单位矩阵`);

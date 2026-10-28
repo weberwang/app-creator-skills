@@ -7,7 +7,7 @@ Fill this transiently in conversation before generating page images or dispatchi
 - Frozen image path:
 - Source candidate ID:
 - SHA-256:
-- Decoded dimensions: `780 x 1688 px`
+- Decoded dimensions: `目标逻辑视口 × 资源密度（默认 2x）`
 - User confirmation time:
 
 ## Module and Page
@@ -39,7 +39,7 @@ Fill this transiently in conversation before generating page images or dispatchi
 - Primary device:
 - Secondary device:
 - Orientation:
-- Exact output size: `780 x 1688 px`
+- Exact output size: `目标逻辑视口 × 资源密度（默认 2x）`
 - Safe area or platform constraints:
 
 ## Required States

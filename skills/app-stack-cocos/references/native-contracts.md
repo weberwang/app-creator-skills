@@ -1,5 +1,7 @@
 # cocos 原生技术合同
 
+本手册中的 DPR 动态封顶 2 与图片生产基线 1 仅适用于对应 Web 管线；原生平台不强制填写浏览器 DPR。普通屏幕 UI 图片保持源逻辑尺寸，合法九宫格可按切片改变显示框；屏幕装饰背景按独立 cover-v1 合同等比覆盖；设备密度、容器或相机映射不授权额外缩放。图片生产归一化与运行展示分别管理，详见[各栈尺寸与密度](../../app-ui-layout/references/relative-layout.md#技术栈的尺寸与密度)。
+
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
 各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
@@ -635,7 +637,7 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 <a id="mode-cocos-game-ui-layout--全局视口与高分屏合同"></a>
 #### 全局视口与高分屏合同
 
-项目公共布局策略文件（`schema_version=1.0.0`）统一保存可见 Scene、HUD、弹窗和 `DISPLAY_LAYER` 共用的 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、Camera、输入、安全区、resize、方向、文字/资源分辨率、性能预算、代表性视口与运行证据要求。effect-image 的 schema 2.0.0 UI 合同只引用该文件，不复制共享配置；普通 UI schema 1.2.0 按[普通 UI 模板](../../cocos-game-ui-layout/assets/ordinary-ui-layout-contract-template.yaml)维护其已有合同结构。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性背景等比 cover，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR（向上取整）得到，物理像素不得直接用于布局或命中。
+项目公共布局策略文件（`schema_version=1.0.0`）统一保存可见 Scene、HUD、弹窗和 `DISPLAY_LAYER` 共用的 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、Camera、输入、安全区、resize、方向、文字/资源分辨率、性能预算、代表性视口与运行证据要求。effect-image 的 schema 2.0.0 UI 合同只引用该文件，不复制共享配置；普通 UI schema 1.2.0 按[普通 UI 模板](../../cocos-game-ui-layout/assets/ordinary-ui-layout-contract-template.yaml)维护其已有合同结构。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性屏幕装饰背景按独立 cover-v1 合同等比覆盖，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR（向上取整）得到，物理像素不得直接用于布局或命中。
 
 运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。Creator `scaleMode` 按冻结设计分辨率选择 `FIXED_WIDTH`、`FIXED_HEIGHT` 或有实测证据的 `custom`；实施包必须证明实际设计视口、Camera 映射、Canvas/backing 尺寸、输入变换和 DPR 的关系，不能只靠声明模式或构建面板状态认定高分屏适配通过。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V5 必须独立记录其运行轨迹。
 
@@ -644,7 +646,7 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-图片还原默认使用 `Sprite.SizeMode.RAW`，保留已验收 SpriteFrame 的完整未裁切原尺寸；运行时 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，不将布局 bounds 写入普通图片的内容尺寸。RAW 保护不禁止 Node `scale`、缩放动画或非单位 SHARED 坐标变换，视觉 bounds 仍按几何合同独立验收；普通底板兼任父容器时也保留自身 RAW 图片尺寸计划。只有已冻结采用九宫格的图片使用 `Sprite.Type.SLICED` 与 `Sprite.SizeMode.CUSTOM` 并设置目标宽高。九点停靠由水平/垂直对齐、锚点和偏移表达，只描述位置意图，不是九宫格拉伸，也不触发切片或 CUSTOM。布局容器、文字与命中区域的尺寸独立管理，具体写入与重排边界见[Cocos 适配器](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)。
+图片还原默认使用 `Sprite.SizeMode.RAW`，保留已验收 SpriteFrame 的完整未裁切原尺寸；运行时 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，不将布局 bounds 写入普通图片的内容尺寸。RAW 保护同时要求图片到统一逻辑布局空间的有效变换保持两轴长度为 1 且正交；剔除 Canvas 与物理像素映射后，禁止自身或中间祖先的缩放及剪切，旋转可保留，视觉 bounds 仍按几何合同独立验收；普通底板兼任父容器时也保留自身 RAW 图片尺寸计划。只有已冻结采用九宫格的图片使用 `Sprite.Type.SLICED` 与 `Sprite.SizeMode.CUSTOM` 并设置目标宽高。九点停靠由水平/垂直对齐、锚点和偏移表达，只描述位置意图，不是九宫格拉伸，也不触发切片或 CUSTOM。布局容器、文字与命中区域的尺寸独立管理，具体写入与重排边界见[Cocos 适配器](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
@@ -933,7 +935,7 @@ V3 拆解先遵守[功能语义分组约束](../../cocos-game-ui-layout/referenc
 
 布局生成的标准交付除 PNG 外必须包含同一候选目录的唯一 `layout-nodes.json`、`layout-decision.json` 和 `generation-result.json`；需要交互对照时通过 `--interactive-review` 额外生成同批自包含 `review.html`。正式 `scene_reconstruction_contract.layout_decomposition.layout_source.nodes_file`、annotation 和 confirmation 的 `layout_nodes_file` 必须指向同一节点文件；`layout_binding`、annotation 与 confirmation 只保存身份/证据，不能复制节点树。布局审阅页只用于可读的人工作业，不能替代拆解确认、独立布局确认或 PNG/F2 机器门；其模板、真实文件与业务绑定、候选状态和离线边界见 [`离线布局审阅产物`](../../cocos-game-ui-layout/references/layout-review-artifacts.md)。
 
-V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边与可伸展区域评估九宫格，记录适用/不适用原因及源图尺寸、四边切片值；采用九宫格时，选择随已有拆解确认冻结并贯穿 V4 小图生产与 V5 正式场景实现。具体合同读取[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)，V4 生产按冻结切片参数执行。普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，使用正式 SpriteFrame 的完整未裁切原尺寸；即使底板兼任容器根并有子项，也保留 RAW 原尺寸计划。运行时 RAW 只要求 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，不禁止 Node 缩放/动画或 SHARED 坐标变换；视觉 bounds 另行验收。只有冻结九宫格图片派生 `SLICED + CUSTOM` 与目标宽高。九点停靠（水平/垂直对齐、锚点和偏移）表示位置意图，与九宫格纹理切片独立，不触发 CUSTOM。普通图片不得使用 `STRETCH`/`FLEX` 尺寸策略，父级 Creator Layout、Widget 或其他尺寸驱动器不得改写其 `UITransform.contentSize`；其 `size_driver` 固定为 `SPRITE_RAW`。`widget_stretch_axes` 使尺寸由 `WIDGET` 控制，其他显式 `size_driver` 必须与 `size_policy` 匹配。父级 Creator Layout 排布活动子节点位置时，子节点必须由原生 Layout 控制位置；自定义项目布局器用 `SHARED` 驱动并保留 `PARENT` 职责；当前节点原生 Layout 以 `CONTAINER` 计算自身尺寸时，可在先计算尺寸后使用 Widget 定位。纯结构容器、文字与命中区域的尺寸独立管理。具体边界见[图片原尺寸与九宫格尺寸](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)、[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)及[Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)。
+V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边与可伸展区域评估九宫格，记录适用/不适用原因及源图尺寸、四边切片值；采用九宫格时，选择随已有拆解确认冻结并贯穿 V4 小图生产与 V5 正式场景实现。具体合同读取[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)，V4 生产按冻结切片参数执行。普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，使用正式 SpriteFrame 的完整未裁切原尺寸；即使底板兼任容器根并有子项，也保留 RAW 原尺寸计划。运行时 RAW 要求 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，并核对图片到统一逻辑布局空间的有效矩阵两轴长度为 1 且正交；Canvas 与 DPR 映射独立换算，Node 或中间祖先不能额外缩放图片，SHARED 换算不能作为缩放豁免；视觉 bounds 另行验收。只有冻结九宫格图片派生 `SLICED + CUSTOM` 与目标宽高。九点停靠（水平/垂直对齐、锚点和偏移）表示位置意图，与九宫格纹理切片独立，不触发 CUSTOM。普通图片不得使用 `STRETCH`/`FLEX` 尺寸策略，父级 Creator Layout、Widget 或其他尺寸驱动器不得改写其 `UITransform.contentSize`；其 `size_driver` 固定为 `SPRITE_RAW`。`widget_stretch_axes` 使尺寸由 `WIDGET` 控制，其他显式 `size_driver` 必须与 `size_policy` 匹配。父级 Creator Layout 排布活动子节点位置时，子节点必须由原生 Layout 控制位置；自定义项目布局器用 `SHARED` 驱动并保留 `PARENT` 职责；当前节点原生 Layout 以 `CONTAINER` 计算自身尺寸时，可在先计算尺寸后使用 Widget 定位。纯结构容器、文字与命中区域的尺寸独立管理。具体边界见[图片原尺寸与九宫格尺寸](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)、[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)及[Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)。
 
 <a id="mode-cocos-game-asset-integration--条件参考"></a>
 #### 条件参考

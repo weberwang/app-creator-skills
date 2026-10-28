@@ -26,7 +26,7 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 可见 `SCENE`/`DISPLAY_LAYER` 实施前携带 `responsiveContract` 明确目标与边界。合同只描述 Unity 原生事实：版本、UI 系统、Unity logical units、backbuffer、Panel、RenderTexture、CanvasScaler、PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 坐标转换、同进程 resize、方向重排、文本/本地化、资源分辨率、性能预算、代表性视口和所需运行证据。验收以实际实现是否满足用户要求为准，中途调整无需回改合同。
 
-布局验证以运行证据的 `supportedOrientations` 记录实际支持方向，并核对用户要求：单横屏无需验证竖屏，单竖屏无需验证横屏；单方向保留同方向尺寸变化后的重排验证，双方向或 `auto` 才要求方向切换证据。
+布局验证以运行证据的 `supportedOrientations` 记录实际支持方向，并核对用户要求：单横屏无需验证竖屏，单竖屏无需验证横屏；单方向保留同方向尺寸变化后的重排验证，游戏不得使用双方向或 `auto`，只记录所选方向的连续 resize。
 
 Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内合同来源；控制器检查路径、文件存在及 JSON 格式，不比较合同内容、版本或 SHA。实际完成情况及调整记录在交付和验收证据中。
 

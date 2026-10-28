@@ -5,3 +5,4 @@ Artifacts/
 __pycache__/
 *.pyc
 packages/cli/generated/
+/docs/

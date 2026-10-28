@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter Asset Atlas"
-  short_description: "Plan and verify Flutter visual assets."
-  default_prompt: "Use $flutter-asset-atlas to box and number every proposed bitmap on a confirmation copy of the frozen page, show only that image for approval, then produce confirmed assets and one concise internal manifest."

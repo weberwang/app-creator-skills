@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter Quality Review"
-  short_description: "Review only the triggered Flutter quality risks."
-  default_prompt: "Use $flutter-quality-review for snapshot-bound F1 triage, triggered read-only F2 lanes, and Controller-led F3 convergence."

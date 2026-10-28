@@ -207,7 +207,7 @@ evidence_matrix:
     - id: compact-to-medium-plus
       width: 601
       height: 844
-      orientation: landscape
+      orientation: portrait
       text_scale: 1.5
       locale: longest_copy
       safe_area: nonzero
@@ -228,7 +228,7 @@ evidence_matrix:
     - id: medium-to-expanded-at
       width: 840
       height: 800
-      orientation: portrait
+      orientation: landscape
       text_scale: 1.0
       locale: longest_copy
       safe_area: nonzero
@@ -239,7 +239,7 @@ evidence_matrix:
     - id: medium-to-expanded-plus
       width: 841
       height: 900
-      orientation: landscape
+      orientation: portrait
       text_scale: 1.5
       locale: default
       safe_area: nonzero

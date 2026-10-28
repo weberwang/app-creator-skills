@@ -137,8 +137,8 @@ test("模拟Phaser Float32小数变换的采样中心差落在量化预算内", 
   const runtimeErrors = [];
   assert.equal(validateLayoutRuntimeSnapshots(setup.nodes, geometry, runtimeErrors, "layout_geometry", {
     scene_id: "main", state_id: "default", viewport: setup.runtime_context.viewport,
-  }), true);
-  assert.deepEqual(runtimeErrors, [], "Float32父世界矩阵应能参与完整层级复算");
+  }), false);
+  assert.match(runtimeErrors.join("\n"), /有效变换必须保持单位尺寸/);
   const projected = projectRuntimeSnapshotsForCenterAlignment(setup.nodes, geometry);
   const panelBounds = projected.find((node) => node.layout_node_id === "panel").target_bounds;
   const iconBounds = projected.find((node) => node.layout_node_id === "icon").target_bounds;
@@ -524,8 +524,8 @@ test("运行快照接受镜像Image正displayWidth及Container和Text负displayW
   setup.panel.height = 0;
   setup.panel.originX = 2.5;
   setup.panel.originY = -1;
-  setup.icon.scaleX = -0.85;
-  setup.icon.scaleY = 1.15;
+  setup.icon.scaleX = -1;
+  setup.icon.scaleY = 1;
   setup.icon.rotation = 0.137;
   setup.icon.originX = 1.25;
   setup.icon.originY = -0.25;
@@ -568,4 +568,25 @@ test("运行快照接受镜像Image正displayWidth及Container和Text负displayW
   assert.equal(signedResult.valid, true, signedResult.errors.join("\n"));
   assert.ok(signedGeometry.component_snapshots.find((snapshot) => snapshot.layout_node_id === "panel").dimensions.display_width < 0);
   assert.ok(signedGeometry.component_snapshots.find((snapshot) => snapshot.layout_node_id === "icon").dimensions.display_width < 0);
+});
+
+test("普通图片拒绝自身和祖先缩放，屏幕背景按独立合同处理", () => {
+  const setup = makeRuntimeTestSetup();
+  setup.panel.scaleX = 2;
+  let result = validateSetupGeometry(setup, collectSetupGeometry(setup));
+  assert.match(result.errors.join("\n"), /有效变换必须保持单位尺寸/);
+  setup.panel.scaleX = 1;
+  setup.icon.scaleY = 0.8;
+  result = validateSetupGeometry(setup, collectSetupGeometry(setup));
+  assert.match(result.errors.join("\n"), /有效变换必须保持单位尺寸/);
+  const icon = setup.nodes.find((node) => node.layout_node_id === "icon");
+  icon.region_layer = "background";
+  result = validateSetupGeometry(setup, collectSetupGeometry(setup));
+  assert.doesNotMatch(result.errors.join("\n"), /有效变换必须保持单位尺寸/);
+  delete icon.region_layer;
+  icon.render_kind = "sprite";
+  setup.icon.frame = null;
+  setup.icon.texture = null;
+  result = validateSetupGeometry(setup, collectSetupGeometry(setup));
+  assert.match(result.errors.join("\n"), /声明图片但缺少实际帧信息/);
 });

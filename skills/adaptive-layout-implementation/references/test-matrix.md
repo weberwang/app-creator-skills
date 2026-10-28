@@ -1,6 +1,6 @@
 # Test Matrix
 
-`evidence_matrix` 驱动结构测试，不承担视觉 parity。至少覆盖每个断点 b-1/b/b+1、同宽不同高、横竖屏、默认与大字号、默认与最长文案、零与非零安全区、关键动作默认/禁用/提交状态。
+`evidence_matrix` 驱动结构测试，不承担视觉 parity。至少覆盖每个断点 b-1/b/b+1、同宽不同高、项目声明的方向、默认与大字号、默认与最长文案、零与非零安全区、关键动作默认/禁用/提交状态。
 
 文本断行 test id 必须由 invariant 声明，并至少在 `longest_copy + large text scale` 的组合场景执行。测试读取 `TextPainter.computeLineMetrics` 或 `RenderParagraph` 的实际断行结果，分别核对正文、标题/关键文案、控件标签、原子文本与动态容器，并证明未用展示字符串改写、固定高度、`FittedBox` 或缩字号规避问题，fallback 顺序符合合同。
 

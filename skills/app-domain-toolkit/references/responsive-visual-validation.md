@@ -31,8 +31,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-示例声明双方向，因此 `landscape` 视口和 resize 轨迹属于有效样本；单方向项目应按
-`orientationPolicy.allowed` 删除另一方向的视口，并在支持方向内保留窄/宽尺寸、DPR 与连续 resize 覆盖。
+游戏初始化仅选择一个方向，测量按 `orientationPolicy.allowed` 只覆盖所选方向内的窄/宽尺寸、DPR 与连续 resize，不将另一方向列为必测项。
 
 ## 每视口证据字段
 
@@ -49,7 +48,7 @@
 | `logicalSize` | Hook 提供的逻辑画布宽高；没有 Hook 时为 `null` |
 | `edgeGaps` | `left/top/right/bottom`，负值表示溢出 |
 | `backgroundCoverage` | Hook 的背景矩形与 viewport 交集面积比例；缺失为 `null` |
-| `backgroundFit` | 满幅背景的实际资源尺寸、`cover-v1` 模式及其与合同缩放、位置和裁切的比较结果 |
+| `backgroundFit` | 普通满幅背景的源逻辑尺寸、`cover-v1` 模式及其与实际显示尺寸、位置和裁切的比较结果 |
 | `safeArea` | Hook 的四边 inset 和可用矩形；缺失为 `null` |
 | `keyUiRects` | Hook 提供的关键 UI 矩形映射 |
 | `scaling` | CSS 缩放、运行时实际物理 DPR（动态封顶 2）和逻辑到 CSS 的比例 |
@@ -76,11 +75,8 @@ Hook 必须只读、可重复调用且返回 CSS 像素矩形；不得通过 Hoo
 
 > 适用技术栈：cocos、phaser、threejs。
 
-合同要求满幅背景时，`viewport.backgroundFit.mode` 必须为 `cover-v1`。QA 使用 Hook 的
-`background.sourceSize` 与 `background.rect` 重算两个轴的有效比例，并与
-`max(viewportWidth/sourceWidth, viewportHeight/sourceHeight)` 比较；两个轴比例不一致、
-缩放值不符、位置与冻结焦点的偏差超过 0.5 CSS 像素或裁切后出现空隙都失败。横竖屏资源可以不同，但不能把
-方向判断当作缩放轴判断。
+屏幕装饰背景的 `viewport.backgroundFit.mode` 必须为 `cover-v1`，允许等比放大或缩小。QA 使用 Hook 的真实源尺寸、目标 CSS 矩形及冻结焦点/落点，按 `max(目标宽/源宽,目标高/源高)` 复算显示尺寸和裁切位置，再与 `background.rect` 比较；非等比拉伸、四边露空、缩放或位置偏差超过 0.5 CSS 像素都失败。缺少真实源尺寸或映射时标记 `unverified`。
+游戏只使用所选方向，背景可为该方向准备构图变体；源尺寸记录不被改写，实际渲染 DPR 不作为图片内容缩放系数。九宫格背景需要真实切片与运行呈现事实，不能用普通背景 PASS 代替，世界空间背景不套此屏幕合同。
 
 ## 假通过禁令与证据要求
 
@@ -184,7 +180,7 @@ FIT 不等于响应式通过和 resize 轨迹；严格满视口断言仅作为 `
 每个正式 Scene 和独立 `DISPLAY_LAYER` 的默认 `usability` 都必须按 `orientationPolicy.allowed`
 覆盖代表视口：允许竖屏时覆盖窄/标准竖屏，允许横屏时覆盖横屏/桌面宽屏；单方向项目只在该方向覆盖窄宽尺寸。
 矩阵仍须覆盖 DPR 1、DPR 1.25 或 1.5、DPR 2、原始 DPR 大于 2 的封顶、同页连续 resize、DPR 降至 1、
-DPR 不变时再次 resize。项目支持双方向时，连续 resize 还须覆盖方向切换。独立 `DISPLAY_LAYER` 另需 `open → interact → resize → close → restore`
+DPR 不变时再次 resize。游戏不支持双方向，连续 resize 只覆盖初始化所选方向。独立 `DISPLAY_LAYER` 另需 `open → interact → resize → close → restore`
 轨迹和宿主同屏状态；宿主已通过不能替代该层证据。缺少真实测量统一为 `unverified`。
 
 > 适用技术栈：phaser、threejs。

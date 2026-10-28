@@ -118,7 +118,7 @@ function validateDesignResolutionPolicy(policy, orientations, errors) {
   if (policy.canvasFit !== "fill-viewport") errors.push("designResolutionPolicy.canvasFit 必须为 fill-viewport，禁止画布黑边");
   if (policy.crossAxis !== "extend-or-crop") errors.push("designResolutionPolicy.crossAxis 必须为 extend-or-crop");
   const background = policy.backgroundFit;
-  if (!isObject(background) || background.mode !== "cover-v1") errors.push("designResolutionPolicy.backgroundFit.mode 必须为 cover-v1，背景需等比覆盖可见视口");
+  if (!isObject(background) || background.mode !== "cover-v1") errors.push("designResolutionPolicy.backgroundFit.mode 必须为 cover-v1，背景须等比覆盖可见视口");
   for (const field of ["sourceFocalPoint", "targetPoint"]) {
     const point = background?.[field];
     if (!isObject(point) || ![point.x, point.y].every((value) => isNumber(value) && value >= 0 && value <= 1)) {

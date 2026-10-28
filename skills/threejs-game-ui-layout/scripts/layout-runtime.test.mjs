@@ -53,7 +53,7 @@ function geometryFor(sourceNodes, options = {}) {
       const display = item.layout_execution.image_mode === "NINE_SLICE"
         ? { width: bounds.width * 1.5, height: bounds.height * 1.25 }
         : { width: 40, height: 20 };
-      image = { source_size: structuredClone(source), display_size: display };
+      image = { source_size: structuredClone(source), source_size_kind: "resource-pixels", source_logical_size: { ...display }, effective_scale: 1, display_size: display };
     }
     return {
       layout_node_id: id,
@@ -267,8 +267,18 @@ test("普通图片验证真实源内容比例而不把 local_size 或变换后 A
   const snapshot = snapshotOf(result.geometry, "picture");
   snapshot.layout_bounds = { x: 0, y: 0, width: 80, height: 60 };
   snapshot.local_size = { width: 30, height: 30 };
+  snapshot.image.source_logical_size = { width: 60, height: 30 };
   snapshot.image.display_size = { width: 60, height: 30 };
   assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  snapshot.image.source_size_kind = "browser-intrinsic";
+  assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("必须为 resource-pixels")));
+  snapshot.image.source_size_kind = "resource-pixels";
+  snapshot.image.display_size = { width: 120, height: 60 };
+  assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("必须保持源帧逻辑尺寸")));
+  delete snapshot.image.source_logical_size;
+  assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("必须是实际源帧逻辑尺寸")));
+  snapshot.image.source_logical_size = { width: 60, height: 30 };
+  snapshot.image.display_size = { width: 60, height: 30 };
   snapshot.image.display_size.height = 25;
   const errors = validateLayoutRuntimeSnapshots(result.nodes, result.geometry);
   assert(errors.some((message) => message.includes("必须保持 source_size 宽高比")));
@@ -282,7 +292,21 @@ test("冻结九宫格可非比例显示，但源像素必须绑定冻结 source_
   });
   const result = geometryFor([panel]);
   assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  snapshotOf(result.geometry, "panel").image.effective_scale = 2;
+  assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("九宫格本体及祖先未整体缩放")));
+  snapshotOf(result.geometry, "panel").image.effective_scale = 1;
   snapshotOf(result.geometry, "panel").image.source_size.width = 97;
   const errors = validateLayoutRuntimeSnapshots(result.nodes, result.geometry);
   assert(errors.some((message) => message.includes("必须等于冻结九宫格 source_size")));
+});
+
+test("明确屏幕装饰背景允许等比 cover，普通图片不能借比例一致放大", () => {
+  const background = node("backdrop", { role: "background", render_kind: "sprite", owner_type: "fixed-production-visual" });
+  const result = geometryFor([background]);
+  const image = snapshotOf(result.geometry, "backdrop").image;
+  image.source_logical_size = { width: 20, height: 10 };
+  image.display_size = { width: 40, height: 20 };
+  assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  result.nodes[0].role = "button";
+  assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("必须保持源帧逻辑尺寸")));
 });

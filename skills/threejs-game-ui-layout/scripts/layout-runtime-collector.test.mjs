@@ -43,6 +43,8 @@ function binding(id, parentId, referenceId, bounds, extras = {}) {
 function imageDomBinding({
   elementTransform = "none",
   parentTransform = "none",
+  elementZoom = "1",
+  parentZoom = "1",
   width = 100,
   height = 50,
   naturalWidth = 100,
@@ -62,8 +64,8 @@ function imageDomBinding({
     offsetHeight: height,
     getBoundingClientRect: () => ({ x: 0, y: 0, width: 100, height: 100 }),
   };
-  styleByElement.set(element, { display: "block", visibility: "visible", objectFit: "contain", transform: elementTransform });
-  styleByElement.set(parent, { display: "block", visibility: "visible", transform: parentTransform });
+  styleByElement.set(element, { display: "block", visibility: "visible", objectFit: "contain", transform: elementTransform, zoom: elementZoom });
+  styleByElement.set(parent, { display: "block", visibility: "visible", transform: parentTransform, zoom: parentZoom });
   return createDomLayoutBinding(element, {
     layout_node_id: "image",
     cssToLayout: (rect) => rect,
@@ -141,6 +143,8 @@ test("DOM adapter 读取实际 AABB、未变换局部尺寸、图像内容和动
   assert.deepEqual(snapshot.layout_bounds, { x: 20, y: 10, width: 40, height: 15 });
   assert.deepEqual(snapshot.local_size, { width: 10, height: 5 });
   assert.deepEqual(snapshot.image.source_size, { width: 120, height: 60 });
+  assert.deepEqual(snapshot.image.source_logical_size, { width: 60, height: 30 });
+  assert.equal(snapshot.image.source_size_kind, "browser-intrinsic");
   assert.deepEqual(snapshot.image.display_size, { width: 10, height: 5 });
   assert.deepEqual(snapshot.position_writers, ["SHARED"]);
 
@@ -161,6 +165,12 @@ test("默认 IMG 适配器拒绝元素或祖先的非等比变换", () => {
   assert.throws(() => ancestorScale.readSnapshot(), /累计 CSS transform 非等比或含剪切.*readImage/);
 });
 
+test("默认 IMG 适配器拒绝未计入变换矩阵的元素与祖先 CSS zoom", () => {
+  assert.throws(() => imageDomBinding({ elementZoom: "2" }).readSnapshot(), /CSS zoom.*readImage/);
+  assert.throws(() => imageDomBinding({ parentZoom: "150%" }).readSnapshot(), /CSS zoom.*readImage/);
+  assert.doesNotThrow(() => imageDomBinding({ parentZoom: "100%" }).readSnapshot());
+});
+
 test("默认 IMG 适配器允许旋转与累计等比缩放并记录变换后的内容尺寸", () => {
   const binding = imageDomBinding({
     elementTransform: "matrix(0, 1, -1, 0, 0, 0)",
@@ -172,6 +182,7 @@ test("默认 IMG 适配器允许旋转与累计等比缩放并记录变换后的
   });
   const snapshot = binding.readSnapshot();
   assert.deepEqual(snapshot.image.source_size, { width: 100, height: 50 });
+  assert.equal(snapshot.image.effective_scale, 2);
   assert.deepEqual(snapshot.image.display_size, { width: 100, height: 50 });
   assert.deepEqual(snapshot.local_size, { width: 50, height: 50 });
 });

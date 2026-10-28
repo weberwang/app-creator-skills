@@ -28,20 +28,20 @@
 
 ## 安装到项目
 
-需要 **Node.js >= 22.20**。推荐在目标项目根目录使用 npx 远程安装，无需克隆技能仓库：
+需要 **Node.js >= 22.20** 和 **Git**。推荐在目标项目根目录直接通过 npx 从 GitHub 安装，无需等待 npm 包发布或手动克隆仓库：
 
 ```powershell
 # 交互选择技术栈
-npx app-creator-skills
+npx github:weberwang/app-creator-skills
 
 # 或直接指定技术栈
-npx app-creator-skills flutter
-npx app-creator-skills unity,cocos
+npx github:weberwang/app-creator-skills flutter
+npx github:weberwang/app-creator-skills unity,cocos
 ```
 
-安装到当前项目的 `.agents/skills/`，按所选栈下载公共工作流和专业资源。只有显式选择 `all` 才安装全部五栈；非交互环境须指定技术栈。
+安装到当前项目的 `.agents/skills/`，仅写入所选栈与公共依赖。只有显式选择 `all` 才安装全部五栈；非交互环境须指定技术栈。
 
-私有来源需要通过环境变量 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限。npx 命令需 npm 上已有可用版本；包不可用时，可从已有本地技能仓库执行下方备选命令。
+私有 GitHub 仓库需要先配置 Git 的访问凭证。npx 会取得仓库包及其 Node 依赖，再从包内技能安装，不再通过 GitHub API 重复下载。需要固定版本时使用 `npx 'github:weberwang/app-creator-skills#提交SHA' flutter`，安装内容与该提交一致。npm 包发布后也可使用 `npx app-creator-skills flutter`。
 
 需要运行专业 Node 工具时，在目标项目安装一次共享依赖：
 
@@ -49,12 +49,12 @@ npx app-creator-skills unity,cocos
 npm ci --prefix .agents/skills/app-skill-runtime
 ```
 
-常用选项：`--dir ../my-app` 指定目标项目，`--dry-run` 预览，`--ref <提交SHA>` 固定版本，`--repo <owner/repo>` 指定来源。重复安装复用相同内容；有差异时先检查，再用 `--replace` 更新，旧目录自动备份到 `.agents/skills-backups/`。
+常用选项：`--dir ../my-app` 指定目标项目，`--dry-run` 预览，`--replace` 更新不同内容并备份旧目录到 `.agents/skills-backups/`。重复安装复用相同内容。显式提供 `--repo <owner/repo>` 或 `--ref <提交SHA>` 时改从 GitHub API 获取指定来源，私库 API 访问需通过 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限。
 
 **本地安装备选**：在技能仓库根目录执行：
 
 ```powershell
-node scripts/install-project-skills.mjs ../my-app --stack flutter
+node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 ```
 
 ## 开始第一个项目
@@ -74,7 +74,7 @@ node scripts/install-project-skills.mjs ../my-app --stack flutter
 先验证玩法与跨场景状态传递，再设计正式场景和资源。
 ```
 
-初始化时会确认目标、平台、技术栈、核心功能和语言。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。
+初始化时会确认目标、平台、技术栈、核心功能和语言。 Flutter 可选择横屏、竖屏或双方向；游戏只选择横屏或竖屏之一。背景允许等比缩放覆盖视口，关键 UI 按安全区与实际宽高重排。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。
 
 也可以从已有项目中的具体任务开始：
 
@@ -138,11 +138,9 @@ node scripts/install-project-skills.mjs ../my-app --stack flutter
 ```powershell
 npm ci
 npm test
-npm run check
 npm run test:flutter-layout
-npm run check:migration
 ```
 
-需要核对原始来源时，使用 `npm run check:migration -- --source-root <源仓库父目录>`。发布轻量安装包前使用 `npm run build:npx` 和 `npm run pack:npx`；根包保持私有，用于完整源码维护。
+发布轻量安装包前使用 `npm run build:npx` 和 `npm run pack:npx`；根包保持私有，用于完整源码维护。
 
-进一步阅读：[公共专业约定](skills/app-creator-workflow/references/professional-conventions.md)、[公共能力说明](docs/shared-capabilities.md)、[来源与去向](docs/provenance.md)、[迁移清单](docs/skill-migration.md)、[验证记录](docs/verification.md)。
+进一步阅读：[公共专业约定](skills/app-creator-workflow/references/professional-conventions.md)、[完整工作流](skills/app-creator-workflow/references/workflow.md)。

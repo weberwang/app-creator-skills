@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter Project Init"
-  short_description: "Initialize Flutter apps with on-demand dependencies."
-  default_prompt: "Use $flutter-project-init to initialize a Flutter project with FVM and only the core, data/API, complex-domain, or UI-token dependency profiles justified by the technical design."

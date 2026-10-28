@@ -35,14 +35,13 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-4. 使用统一的 `cover-v1` 适配器。它不按横屏或竖屏预选缩放轴，而是每次根据资源与
-   覆盖目标的实际比例计算 `scale=max(targetWidth/sourceWidth,
-   targetHeight/sourceHeight)`，对两个轴使用同一个 scale。适配器以左上角为输出原点，
+4. 屏幕装饰背景使用 `cover-v1` 等比适配，按 `scale=max(targetWidth/sourceWidth,targetHeight/sourceHeight)` 计算统一比例。
    根据冻结的归一化源图焦点和目标落点计算偏移，再将偏移限制在
-   `[targetSize-displaySize, 0]`，确保焦点偏移不会暴露空隙。实现应复用
+   `[targetSize-displaySize, 0]`，避免露边；不允许非等比拉伸。背景是普通 UI 图片原尺寸规则的独立例外。
+   图片生产归一化与此运行显示规则独立。实现应复用
    “`full-bleed-background-adapter.mjs`”（见本栈配套资料），并在
    每次 resize、项目支持的方向变化或方向资源切换后重新计算；背景保持在最低装饰层且不接收输入。
-   禁止用 `width>=height` 选择按宽或按高缩放。
+   原生逻辑空间到 CSS／屏幕的换算另行记录；DPR 不作为背景内容的 cover 缩放系数，不得通过缩放背景祖先带动普通 UI。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -59,8 +58,8 @@
 
 项目合同至少冻结以下适配事实：`mode=cover-v1`、覆盖目标、源图归一化焦点、目标归一化
 落点，以及可选的项目支持方向资源身份。方向资源只解决构图与像素容量问题；选择资源后仍须执行
-同一个 `cover-v1` 算法。V5 Hook 必须报告实际资源尺寸、背景矩形和适配模式，使 QA 能同时
-验证满幅、等比缩放、缩放值和焦点裁切，不能只报告 `backgroundCoversCanvas=true`。
+同一个等比覆盖算法。V5 Hook 必须报告真实源尺寸、实际背景矩形、适配模式和逻辑画布到 CSS 的映射，使 QA 能同时
+验证满幅、等比缩放和焦点裁切，不能只报告 `backgroundCoversCanvas=true`。九宫格背景需要额外真实切片与运行呈现事实，不能借此普通背景合同直接放行；世界空间背景不套用此屏幕合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

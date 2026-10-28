@@ -8,6 +8,12 @@ modal、popup、drawer、toast 等瞬态层使用独立 `DISPLAY_LAYER`，每个
 
 ## PAGE 阶段
 
+普通 UI 图片的原尺寸要求保留独立屏幕装饰背景的等比覆盖例外；背景按明确的焦点、裁切及覆盖策略验证，不能将普通图标或交互图片归为背景来豁免。
+
+Flutter 区分逻辑像素、设备像素比和图片资源 scale／密度变体；图片源逻辑尺寸按真实选中资源及其密度确定。不要把共享 Web 的 DPR 封顶 2 或图片生产基线 1 当作 Flutter 设备配置，也不能仅以解码像素数推断 Widget 的逻辑宽高。约束、适配方式和祖先变换均须保留普通图片的源逻辑尺寸。
+
+还原图片遵循[图片尺寸规则](../../app-ui-layout/references/relative-layout.md#图片尺寸)：以最终源帧及声明的资源密度确定逻辑宽高，普通图片原尺寸显示，不通过约束、适配模式或祖先变换缩放。只有明确配置合法九宫格的皮肤允许改变显示框，文字、图标及固定角边独立保持尺寸。布局可重排和调整容器；生成素材交付前的约定尺寸归一化仍可执行。实际运行需核对图片显示尺寸和变换，不能把设备 DPR 当作放大图片的理由。
+
 - **V0 内部分流**：识别页面身份、现有路由、是否存在页面结构变化、所属模块和已选平台。明确复用页或没有视觉工作时直接走工程验证，不创建空白高保真候选。
 - **V1 功能与语义验证**：明确用户任务、页面状态、导航进出和 accessibility；直接实现并测试页面行为，或按风险使用轻量 sketch、原型 Widget。草图按需使用且不作为最终视觉目标，未执行的行为不得记为通过。
 - **V2 视觉目标**：根据已验证的行为与状态确定高保真目标，由用户确认并冻结；已有页面按影响范围复用有效目标。
@@ -21,7 +27,7 @@ modal、popup、drawer、toast 等瞬态层使用独立 `DISPLAY_LAYER`，每个
 
 - 每个页面声明页面最大内容宽度、状态、滚动 owner、视觉与语义锚点、TextField/hit area、Modal/popover 叠层和目标屏幕 Reader。局部布局使用 Flutter 的约束传播、自适应和 `LayoutBuilder`。
 - 依照实际画面处理安全区与系统组件；方向、软键盘和文本缩放纳入测试矩阵。文本优先自然换行并保护关键信息，不可依靠固定高度卡片隐藏内容。
-- 断点需要在 `b-1`、`b`、`b+1`、同宽不同高、宽屏和横竖屏验证；系统 inset、字体放大和文案长度实际组合可能影响折行与滚动。
+- 断点需要在 `b-1`、`b`、`b+1`、同宽不同高、宽屏和项目声明的方向验证；系统 inset、字体放大和文案长度实际组合可能影响折行与滚动。
 - 关键对齐用元素对、文本/控件语义边缘和尺寸目标定义，而非无关视口坐标。只有产品明确要求时才对具体框图建立截图 parity；absolute positioning 只服务真实 overlays/stack 和已定义关系。
 
 来源：`flutter-app-orchestrator/SKILL.md`、`adaptive-layout-implementation/references/layout-spec.md`、`adaptive-layout-implementation/references/implementation-workflow.md`、`adaptive-layout-implementation/references/test-matrix.md`。

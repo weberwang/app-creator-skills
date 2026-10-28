@@ -80,7 +80,7 @@ schema 2.0.0 UI 合同模板只提供场景合同与公共策略的引用示例�
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-contract.md#目标与尺寸)。
 
-普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，其 RAW 尺寸以 V4 已验收正式 SpriteFrame 的完整未裁切原尺寸为准，不取父框、定位参照或生成器原始文件尺寸。即使底板节点兼任功能容器且拥有图标/文字子项，仍按其图片身份保留 RAW 计划；运行时 `UITransform.contentSize` 必须等于帧原尺寸，但不因此限制合规的 Node 变换或反馈缩放动画。普通图片不能使用 `STRETCH`/`FLEX`，父布局、Widget 和 Layout 不得写入其 `UITransform.contentSize`；实际显示 bounds 按几何与动画合同另验。只有冻结九宫格的图片使用 `SLICED + CUSTOM` 和目标显示宽高。纯结构容器、文字与命中区域没有 Sprite 尺寸计划，见[Cocos 适配器](./cocos-adapter.md#图片原尺寸与九宫格尺寸)及[Widget 尺寸权限](./widget-layout.md#尺寸权限)。
+普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，其 RAW 尺寸以 V4 已验收正式 SpriteFrame 的完整未裁切原尺寸为准，不取父框、定位参照或生成器原始文件尺寸。即使底板节点兼任功能容器且拥有图标/文字子项，仍按其图片身份保留 RAW 计划；运行时 `UITransform.contentSize` 必须等于帧原尺寸，非背景图片自身及祖先在逻辑空间不得缩放或剪切，反馈动画也须遵守。普通图片不能使用 `STRETCH`/`FLEX`，父布局、Widget 和 Layout 不得写入其 `UITransform.contentSize`；实际显示 bounds 按几何与动画合同另验。只有冻结九宫格的图片使用 `SLICED + CUSTOM` 和目标显示宽高。纯结构容器、文字与命中区域没有 Sprite 尺寸计划，见[Cocos 适配器](./cocos-adapter.md#图片原尺寸与九宫格尺寸)及[Widget 尺寸权限](./widget-layout.md#尺寸权限)。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-contract.md#目标与尺寸)。
 

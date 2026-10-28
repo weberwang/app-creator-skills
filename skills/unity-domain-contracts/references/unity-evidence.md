@@ -26,7 +26,7 @@ V1–V5 阶段切换或 `RETURN` 时，旧执行状态须归档；下一阶段�
 
 ## 可见 V5 响应式证据
 
-可见 Work Item 的 V4 PASS 证明当前资源生产与导入验收；V5 PASS 还须满足 `visualStage=V5` 和全部响应式运行事实的真实测量，才能证明正式组合与运行交付。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，双方向或自动方向必须另含 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
+可见 Work Item 的 V4 PASS 证明当前资源生产与导入验收；V5 PASS 还须满足 `visualStage=V5` 和全部响应式运行事实的真实测量，才能证明正式组合与运行交付。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，游戏不得声明双方向或自动方向，不要求 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
 
 静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=1` 只表示生产基线，不是运行时 DPR。
 

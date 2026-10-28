@@ -33,7 +33,7 @@
 
 `size_driver` 可取 `SPRITE_RAW`、`FIXED`、`WIDGET`、`LAYOUT`、`SHARED`、`CONTENT`，并按以下规则约束：
 
-- `SIMPLE + RAW` Sprite（包括兼任容器根的底板）始终由 `SPRITE_RAW` 控制尺寸。实际 `UITransform.contentSize` 必须等于正式 SpriteFrame 的完整未裁切 `original_size`，且不得被 Widget 或 Layout 改写；这不禁止 Node `scale`、缩放动画或其他已由几何合同覆盖的变换。`target_bounds` 的视觉几何另按既有测量合同验收，不能据其宽高反向改写 RAW 内容尺寸。
+- `SIMPLE + RAW` Sprite（包括兼任容器根的底板）始终由 `SPRITE_RAW` 控制尺寸。实际 `UITransform.contentSize` 必须等于正式 SpriteFrame 的完整未裁切 `original_size`，且不得被 Widget 或 Layout 改写；非背景图片自身与祖先在逻辑布局空间的有效变换不得缩放或剪切，动画也须遵守此规则；独立背景节点可按 cover 等比缩放。`target_bounds` 的视觉几何另按既有测量合同验收，不能据其宽高反向改写 RAW 内容尺寸。
 - 声明 `widget_stretch_axes` 时，尺寸只能由 `WIDGET` 控制。只有冻结的 `SLICED + CUSTOM` 九宫格 Sprite，或 `size_policy: STRETCH` 的非 Sprite 结构容器可以获得该授权。
 - 其他显式 `size_driver: FIXED` 只能配 `size_policy: FIXED`；`CONTENT` 只能配 `CONTENT`；`LAYOUT` 和 `SHARED` 只能配 `STRETCH` 或 `FLEX`。其中 `LAYOUT` 专指 Creator 原生 Layout 组件实际计算尺寸，自定义项目布局器使用 `SHARED`，但仍可保留 `layout_owner: PARENT`。`SPRITE_RAW` 只对 RAW Sprite 有效，`WIDGET` 只对有拉伸轴的节点有效。未满足这些条件时阻断，不静默改写尺寸意图。
 - 当当前节点的 Creator 原生 `Layout` 以 `CONTAINER` 模式计算自己的尺寸时，可使用 `layout_owner: SELF`、`position_driver: WIDGET`、`size_policy: FLEX`、`size_driver: LAYOUT`。执行顺序是先由当前节点 Layout 更新自身尺寸，再由 Widget 相对父级/祖先定位。
@@ -95,7 +95,7 @@
 - `layout` 与 `parent_layout` 分别读取节点自身和真实父节点上的 Layout；存在组件时记录 `enabled`、`type`、`resize_mode`、`align_horizontal`、`align_vertical`。`GRID` 必须记录 `start_axis`，可附正数 `cell_size`。无组件时为 `null`。这些 `align_*` 值用于描述实际组件状态，不存在另一个冻结的 Layout 参数合同要求它们逐项等于计划。
 - `ui_transform.width/height`；存在 Sprite 时记录实际 `type`、`size_mode` 与正式帧 `original_size`，无 Sprite 时 `sprite: null`。
 - `layout_bounds` 与 `reference_bounds` 是实际 UITransform 完整矩形经既有坐标合同换算到冻结布局逻辑坐标空间后的几何；它们用于校验严格中心、中心参照和组合 union。业务节点的 `reference_bounds` 必须等于其实际参照节点快照的 `layout_bounds`；引用逻辑根时，使用同一批次唯一的根矩形。
-- `node_to_layout` 与 `reference_to_layout` 是从节点和 Widget 参照路径映射到冻结布局逻辑坐标空间的线性部分；先按现有 `designTransform`、Camera 和逻辑视口合同换算，不得直接把含屏幕适配缩放或 DPR 的 `worldMatrix` 当成逻辑矩阵。只有 `position_driver: WIDGET` 的节点及其 Widget target 参照路径必须为单位变换，使布局逻辑像素与 Widget 局部像素一致；若 V5 观测到非单位变换则拒绝该 WIDGET 计划，回到 V3 改用 `SHARED`，不能添加容器绕过。`SHARED` 可负责把非单位变换的节点位置换算到 Creator 坐标。RAW 只约束实际 `contentSize` 等于 SpriteFrame `original_size`，不要求单位矩阵，也不禁止 Node 缩放动画。不能把全局 bounds 差值直接写入 Widget 局部值。
+- `node_to_layout` 与 `reference_to_layout` 是从节点和 Widget 参照路径映射到冻结布局逻辑坐标空间的线性部分；先按现有 `designTransform`、Camera 和逻辑视口合同换算，不得直接把含屏幕适配缩放或 DPR 的 `worldMatrix` 当成逻辑矩阵。`position_driver: WIDGET` 的节点及其 Widget target 参照路径必须为单位变换；`SHARED` 可换算位置。非背景图片节点（包括九宫格）到逻辑空间的线性矩阵必须保持单位轴长与正交，允许旋转但不得缩放或剪切；九宫格仅通过切片改变目标框，独立背景节点允许 cover 等比缩放。不能把全局 bounds 差值直接写入 Widget 局部值。
 
 实际 Widget 对齐开关和值还须与已确认执行计划逐项匹配。若某严格居中轴由 Widget 控制，该轴必须启用对应的 `horizontal_center`/`vertical_center`，活动值为 `0`；但正确的开关和值本身不证明实际居中。V5 使用实际 `layout_bounds`、`reference_bounds` 校验严格中心、中心参照偏移及组 union，所有位置驱动器均适用。原生 Layout 也按其实际几何效果验证，不要求 align flag 单独证明对齐。允许中心参照偏移时，实际中心关系按坐标转换后的已确认 `offset` 匹配，且理由沿用[严格居中与中心参照合同](./center-alignment.md)。
 

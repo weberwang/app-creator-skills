@@ -64,6 +64,11 @@ function multiplyTransform2D(left, right) {
 
 /** 拒绝默认读取器无法证明为等比二维变换的 perspective/individual transform。 */
 function rejectUnsupportedTransformProperties(style, label) {
+  // CSS zoom 不出现在 transform 矩阵，忽略它会把缩放后的图片误判为原尺寸。
+  const zoom = String(style?.zoom ?? "").trim();
+  if (zoom && zoom !== "normal" && zoom !== "1" && zoom !== "100%") {
+    throw new TypeError(`${label} 使用 CSS zoom，默认 IMG 读取器无法核对实际尺寸，请提供项目实际 readImage(element)`);
+  }
   const perspective = style?.perspective;
   if (perspective !== undefined && perspective !== null
     && String(perspective).trim() !== "" && String(perspective).trim() !== "none") {
@@ -278,6 +283,10 @@ export function createDomLayoutBinding(element, options = {}) {
     const transformScale = readUniformTransformScale();
     return {
       source_size: { width: sourceWidth, height: sourceHeight },
+      source_size_kind: "browser-intrinsic",
+      // naturalWidth/naturalHeight 已由浏览器按图片密度解释为 CSS 内在尺寸。
+      source_logical_size: toLayoutSize({ width: sourceWidth, height: sourceHeight }, "DOM image.source_logical_size"),
+      effective_scale: transformScale,
       display_size: { width: displayWidth * transformScale, height: displayHeight * transformScale },
     };
   }
@@ -323,6 +332,9 @@ export function createDomLayoutBinding(element, options = {}) {
         }
         image = {
           source_size: cloneValue(rawImage.source_size),
+          ...(rawImage.source_size_kind === undefined ? {} : { source_size_kind: rawImage.source_size_kind }),
+          ...(rawImage.effective_scale === undefined ? {} : { effective_scale: rawImage.effective_scale }),
+          ...(rawImage.source_logical_size === undefined ? {} : { source_logical_size: cloneValue(rawImage.source_logical_size) }),
           display_size: toLayoutSize(rawImage.display_size, "DOM image.display_size"),
         };
       }

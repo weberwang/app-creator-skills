@@ -26,7 +26,9 @@ DOM 可以用 `createDomLayoutBinding(element, options)` 建立读取适配器�
 
 HUD 由项目侧实现同样形状的 `readSnapshot()`，从实际 `Object3D`、Camera 和 HUD 布局映射中读取节点屏幕矩形、局部尺寸、父级、参照与当前 writer；不得将透视世界坐标直接当 HUD 的逻辑像素。引用矩形应由采集器从同批节点或根快照解析。
 
-`image.source_size` 是实际纹理/图片内容尺寸；`image.display_size` 是包含元素及祖先等比变换缩放的图片内容尺寸（cover 裁切前），`local_size` 是节点自身未变换布局尺寸，`layout_bounds` 是屏幕布局矩形，可能已经包含 transform 造成的 AABB 变化。普通图检查内容比例；只有冻结九宫格允许内容非比例扩展，并继续校验源像素尺寸。背景 frame 的 viewport 尺寸不能当作素材源尺寸；背景 cover、UV 与裁切沿用[满幅背景合同](../../threejs-game-asset-integration/references/full-bleed-background.md)。
+`image.source_size` 是采集器读取的图片内在尺寸；默认 DOM IMG 的 `naturalWidth/naturalHeight` 可能已由浏览器密度校正，标为 `source_size_kind: browser-intrinsic`，不能冒充原始文件像素。需核对冻结原始像素或九宫格源帧时，项目必须通过 `readImage` 读取真实源文件或资源元数据，并标记 `source_size_kind: resource-pixels`。`image.source_logical_size` 是按实际资源密度和坐标映射取得的源帧逻辑尺寸，默认 DOM IMG 使用浏览器密度校正的 `naturalWidth/naturalHeight` 经 `cssToLayout` 换算，自定义 `readImage` 和 HUD 必须提供实际值，缺失不能通过。默认 IMG 读取器不支持非单位 CSS `zoom`；出现时由项目提供可证明实际变换的 `readImage`。`image.display_size` 是包含元素及祖先等比变换缩放的图片内容尺寸（cover 裁切前），`local_size` 是节点自身未变换布局尺寸，`layout_bounds` 是屏幕布局矩形，可能已经包含 transform 造成的 AABB 变化。普通图须保持源帧逻辑尺寸；屏幕背景允许等比 `cover-v1`，只有冻结九宫格允许内容按切片扩展，并继续校验源帧尺寸。背景 frame 的 viewport 尺寸不能当作素材源尺寸；背景 cover、UV 与裁切沿用[满幅背景合同](../../threejs-game-asset-integration/references/full-bleed-background.md)。
+
+九宫格运行数据还须提供 `image.effective_scale`，证明本体及祖先未整体缩放；只有切片显示框可变化。默认 IMG 读取器从实际 CSS 变换读取该值，自定义 `readImage` 与 HUD 须从实际运行变换采集，缺失不得视为单位变换。静态字段检查不能证明回调真实采集，正式运行仍须核实数据来源。
 
 静态 JSON fixture、目标图和自动生成的合成节点只能用于单元测试，不能冒充正式运行证据。正式 V5 结果必须来自实际候选场景的同步读取，并绑定本次 scene/state/candidate 与 viewport revision。
 

@@ -200,7 +200,7 @@ evidence_matrix:
     - {id: compact-minus, width: 599, height: 844, orientation: portrait, text_scale: 1.0, locale: default, safe_area: zero, action_state: default, breakpoint_edge: {id: compact-to-medium, offset: -1}, test_ids: [content_header_relation, content_max_width, primary_action_reachable, brand_frame_center]}
     - {id: compact-at, width: 600, height: 844, orientation: portrait, text_scale: 1.0, locale: longest_copy, safe_area: nonzero, action_state: disabled, breakpoint_edge: {id: compact-to-medium, offset: 0}, test_ids: [content_header_relation, primary_action_reachable, brand_frame_center]}
     - {id: compact-plus, width: 601, height: 500, orientation: landscape, text_scale: 1.5, locale: longest_copy, safe_area: nonzero, action_state: submitting, breakpoint_edge: {id: compact-to-medium, offset: 1}, test_ids: [content_header_relation, primary_action_reachable, text_wrap_semantics, brand_frame_center]}
-    - {id: compact-minus-tall, width: 599, height: 700, orientation: landscape, text_scale: 1.0, locale: default, safe_area: zero, action_state: default, test_ids: [content_header_relation, primary_action_reachable, brand_frame_center]}
+    - {id: compact-minus-tall, width: 599, height: 700, orientation: portrait, text_scale: 1.0, locale: default, safe_area: zero, action_state: default, test_ids: [content_header_relation, primary_action_reachable, brand_frame_center]}
 
 critical_alignments:
   - id: brand-frame-center

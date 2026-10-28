@@ -31,7 +31,7 @@
 
 `ui_layout.widget_stretch_axes` 是可选、非空、无重复的数组，元素只能是 `horizontal`、`vertical`，且仅在 `position_driver: WIDGET` 时可用。它是唯一允许 Widget 双边对齐的授权：生成后对应轴必须是 `alignment: stretch`，并用起止边距计算目标尺寸。没有列入的轴不能推导成拉伸。Widget 有拉伸轴时，该轴尺寸驱动器为 `WIDGET`；没有拉伸轴时，Widget 只控制位置，尺寸驱动器按独立尺寸合同决定。
 
-- `SIMPLE + RAW` 图片和作为父容器的 RAW 底板禁止声明 `widget_stretch_axes`；尺寸驱动器固定为 `SPRITE_RAW`，来自绑定的正式 SpriteFrame，实际 `UITransform.contentSize` 等于该帧完整未裁切原尺寸。即使 `size_policy` 写了 `CONTENT`，图片 RAW 内容尺寸仍由 Sprite 控制。该限制不禁止节点缩放或缩放动画；其视觉 bounds 按既有几何合同另验。V3 默认计划假设 WIDGET 路径单位；已知路径需缩放/旋转时选择 `SHARED`，V5 仅核对实际 WIDGET 变换，不符合即拒绝该计划。无论位置由谁驱动，RAW 内容尺寸仍保持 SpriteFrame 原尺寸。
+- `SIMPLE + RAW` 图片和作为父容器的 RAW 底板禁止声明 `widget_stretch_axes`；尺寸驱动器固定为 `SPRITE_RAW`，来自绑定的正式 SpriteFrame，实际 `UITransform.contentSize` 等于该帧完整未裁切原尺寸。即使 `size_policy` 写了 `CONTENT`，图片 RAW 内容尺寸仍由 Sprite 控制。普通非背景图片还须保持到逻辑布局空间的两轴单位长度和正交，不能用节点或祖先缩放绕过 RAW；旋转可保留，视觉 bounds 另行验收。屏幕装饰背景按独立 cover 合同验证。V3 默认计划假设 WIDGET 路径单位；已知路径需缩放/旋转时选择 `SHARED`，V5 仅核对实际 WIDGET 变换，不符合即拒绝该计划。无论位置由谁驱动，RAW 内容尺寸仍保持 SpriteFrame 原尺寸。
 - Sprite 只有 V3/V4 已冻结 `SLICED + CUSTOM` 九宫格时才允许按轴拉伸。对应资产身份、切片边、尺寸意图必须已确认；只有使用 Widget 控制目标尺寸时输出 `size_driver: WIDGET`。
 - 非 Sprite 节点只有 `element_type: container` 且声明 `size_policy: STRETCH` 时才允许 Widget 拉伸。文字等非容器内容不得声明 `widget_stretch_axes`；内容固有尺寸使用 `CONTENT`，由共享或明确父级布局计算的文字/内容尺寸使用 `SHARED`/`LAYOUT`。
 - 尺寸驱动器允许 `SPRITE_RAW`、`FIXED`、`WIDGET`、`LAYOUT`、`SHARED`、`CONTENT`：RAW 图片始终用 `SPRITE_RAW`；真正冻结的目标尺寸用 `FIXED`；已授权 Widget 双边拉伸用 `WIDGET`；`CONTENT` 表示内容自身决定尺寸；其他 `STRETCH`/`FLEX` 尺寸仅由 Creator 原生 Layout 计算时用 `LAYOUT`，自定义项目布局器用 `SHARED`（即使布局责任归属为 `PARENT`）。不能把 STRETCH/FLEX 静默归为 `FIXED`。

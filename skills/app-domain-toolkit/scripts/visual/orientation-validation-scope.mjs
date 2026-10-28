@@ -8,10 +8,10 @@ const VIEWPORT_KINDS_BY_ORIENTATION = Object.freeze({
 export function resolveOrientationCoverage(policy) {
   const allowed = policy?.allowed;
   const errors = [];
-  if (!Array.isArray(allowed) || allowed.length === 0
+  if (!Array.isArray(allowed) || allowed.length !== 1
     || allowed.some((item) => typeof item !== 'string' || !Object.hasOwn(VIEWPORT_KINDS_BY_ORIENTATION, item))
     || new Set(allowed).size !== allowed.length) {
-    errors.push('orientationPolicy.allowed 必须是非空且不重复的 portrait/landscape 数组');
+    errors.push('orientationPolicy.allowed 必须是只包含一个 portrait 或 landscape 的数组');
   }
   const orientations = errors.length ? [] : [...allowed];
   return {

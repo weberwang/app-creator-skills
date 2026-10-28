@@ -6,7 +6,7 @@ import { join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
 import { checkProjectLocales } from '../skills/app-domain-toolkit/scripts/localization/check-project-locales.mjs';
-import { installSkills } from '../scripts/install-project-skills.mjs';
+import { installSkills } from '../packages/installer/install-project-skills.mjs';
 
 /** 构造 Web 布局合同中的语言声明。 */
 function web(languages) { return { dynamic_content: { localization: { default_language: languages[0], required_languages: languages } } }; }

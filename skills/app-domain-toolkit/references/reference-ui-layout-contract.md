@@ -10,11 +10,11 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`runtimeDprPolicy` 必须从设备动态读取，非法、零、负数、非有限或字符串值回退为 1，有效值严格位于 `(0, 2]`，原始值大于 2 时有效值封顶为 2。DPR 不是启动常量：resize 和显示密度变化都要重新读取；若 `orientationPolicy.allowed` 同时包含 `portrait` 与 `landscape`，方向切换也要重新读取并清理监听器。`maxRuntimeDpr` 固定为数字 `2`。资源生产基线另由 `assetResolutionPolicy.productionDpr=1` 声明，和运行时 DPR 分离；1 表示图片生产倍率，不限制运行时 DPR；运行时仍动态封顶为 2。运行时代表性矩阵仍必须覆盖 DPR `1.25/1.5`。
+`runtimeDprPolicy` 必须从设备动态读取，非法、零、负数、非有限或字符串值回退为 1，有效值严格位于 `(0, 2]`，原始值大于 2 时有效值封顶为 2。DPR 不是启动常量：resize 和显示密度变化都要重新读取；游戏方向固定为初始化选择的一个方向，仍须清理尺寸与密度监听器。`maxRuntimeDpr` 固定为数字 `2`。资源生产基线另由 `assetResolutionPolicy.productionDpr=1` 声明，和运行时 DPR 分离；1 表示图片生产倍率，不限制运行时 DPR；运行时仍动态封顶为 2。运行时代表性矩阵仍必须覆盖 DPR `1.25/1.5`。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`orientationPolicy.allowed` 必须是非空且无重复的 `portrait`/`landscape` 数组，不从缺省值推断双方向支持。`designResolutionPolicy` 只要求声明 `allowed` 中方向的分支：竖屏基准为 1080×1920、按宽度适配；横屏基准为 1920×1080、按高度适配。实际 CSS 视口为 `W×H` 时，竖屏比例 `s=W/1080`、可见逻辑区域为 `1080×(H/s)`；横屏比例 `s=H/1080`、可见逻辑区域为 `(W/s)×1080`。设计区域在可见区域中居中，另一轴可以展开或裁切；安全区、UI 锚点和输入命中必须使用实际可见区域。横竖屏以运行时视口宽高判断，宽高相等时按横屏处理。
+游戏的 `orientationPolicy.allowed` 必须恰好包含一个 `portrait` 或 `landscape`，初始化时由用户选择，不从缺省值推断双方向支持。`designResolutionPolicy` 只要求声明 `allowed` 中方向的分支：竖屏基准为 1080×1920、按宽度适配；横屏基准为 1920×1080、按高度适配。实际 CSS 视口为 `W×H` 时，竖屏比例 `s=W/1080`、可见逻辑区域为 `1080×(H/s)`；横屏比例 `s=H/1080`、可见逻辑区域为 `(W/s)×1080`。设计区域在可见区域中居中，另一轴可以展开或裁切；安全区、UI 锚点和输入命中必须使用实际可见区域。横竖屏以运行时视口宽高判断，宽高相等时按横屏处理。
 
 > 适用技术栈：cocos、phaser。
 
@@ -22,7 +22,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`resizePolicy` 必须在同一页面完成，不得用刷新页面掩盖重排；resize、safe area 和 DPR 变化后至少重新计算逻辑视口、Canvas backing、safe area、Camera viewport、输入映射和文字排版。仅当 `orientationPolicy.allowed` 同时包含两种方向时，事件数组才必须包含 `orientation-change`，并验证方向切换后的同页重排；所有项目都必须覆盖连续 resize 与 DPR 变化。监听器必须可清理且重复计算幂等。允许在超预算时显式减少滤镜、RenderTexture 或透明全屏层，但不得静默降低 DPR、资源质量或文字清晰度。
+`resizePolicy` 必须在同一页面完成，不得用刷新页面掩盖重排；resize、safe area 和 DPR 变化后至少重新计算逻辑视口、Canvas backing、safe area、Camera viewport、输入映射和文字排版。游戏不声明双方向，不要求 `orientation-change`；所有项目都必须覆盖所选方向内的连续 resize 与 DPR 变化。监听器必须可清理且重复计算幂等。允许在超预算时显式减少滤镜、RenderTexture 或透明全屏层，但不得静默降低 DPR、资源质量或文字清晰度。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -118,14 +118,14 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs。
 
-尺寸策略可以是 `fixed`、`content`、`proportional`、`stretch`、`contain`、`cover` 或 `nine_slice`，但必须同时给出最小、首选和最大值；三档宽高须为正数或非空表达式，数值最小值不能大于最大值。固定尺寸和悬浮元素需按实际约束审查；独立定位只允许弹窗、浮窗和 Toast 本体，内部 UI 必须保持相对关系。缺少实际父级、合法参照、策略或证据，以及普通 UI 使用独立定位时均拒绝；规则与字段见[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。
+容器尺寸策略可以是 `fixed`、`content`、`proportional`、`stretch`、`contain`、`cover` 或 `nine_slice`，但必须同时给出最小、首选和最大值；三档宽高须为正数或非空表达式，数值最小值不能大于最大值。图片本体默认按最终源帧逻辑尺寸还原，只有合法九宫格允许改变显示框；容器策略不能授权普通图片缩放，文字与图标也不能随九宫格皮肤拉伸。固定尺寸和悬浮元素需按实际约束审查；独立定位只允许弹窗、浮窗和 Toast 本体，内部 UI 必须保持相对关系。缺少实际父级、合法参照、策略或证据，以及普通 UI 使用独立定位时均拒绝；规则与字段见[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-装饰性满幅背景的 `cover` 必须在 `designResolutionPolicy.backgroundFit` 中冻结 `mode=cover-v1`、
+屏幕装饰性满幅背景必须在 `designResolutionPolicy.backgroundFit` 中冻结 `mode=cover-v1`、
 `sourceFocalPoint` 和 `targetPoint`，并将同一组事实传给 QA 的 `viewport.backgroundFit`。算法与运行时证据遵循
 “`装饰性满幅背景`”（见本栈配套资料）。
-这里的背景 cover 与根级 `scaleMode` 的 Canvas 缩放是两层独立职责。
+背景等比覆盖与根级 `scaleMode` 的 Canvas 映射是独立职责。屏幕装饰背景按独立 cover 合同适配；其余普通 UI 图片仍保持源逻辑尺寸，只有合法九宫格可按切片改变显示框。禁止以背景分类或容器缩放绕过前景图片规则。
 
 ## 断点与结构
 
@@ -181,7 +181,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：phaser、threejs。
 
-`invariants` 的每一项都包含稳定 ID、非空描述/表达式、非空且全部有效的适用区域、非负容差和 `evidence.automation`/`evidence.visual` 字符串项。关系表达优先描述相对中心、边界距离、间距、遮挡和断点结构，而非一个孤立屏幕坐标。`evidence_matrix` 必须绑定同一候选、合同版本、动态封顶 2 的 DPR 策略和已执行的视口条件；默认 `usability` 覆盖基准及代表性窄/宽、项目支持方向和关键状态，验证关系不变量与可用性。只有 `exact` 或项目明确要求时才覆盖断点邻值、宽高、字号、本地化、安全区、动作态、DPR、动态值、Scene 生命周期和覆盖层/键盘/滚动的完整组合；`orientation` 轴只在项目同时支持两种方向时强制，并只覆盖 `orientationPolicy.allowed` 声明的方向。精确矩阵启用 Golden 精确视觉。
+`invariants` 的每一项都包含稳定 ID、非空描述/表达式、非空且全部有效的适用区域、非负容差和 `evidence.automation`/`evidence.visual` 字符串项。关系表达优先描述相对中心、边界距离、间距、遮挡和断点结构，而非一个孤立屏幕坐标。`evidence_matrix` 必须绑定同一候选、合同版本、动态封顶 2 的 DPR 策略和已执行的视口条件；默认 `usability` 覆盖基准及代表性窄/宽、项目支持方向和关键状态，验证关系不变量与可用性。只有 `exact` 或项目明确要求时才覆盖断点邻值、宽高、字号、本地化、安全区、动作态、DPR、动态值、Scene 生命周期和覆盖层/键盘/滚动的完整组合；游戏只验证初始化选择的单方向，不要求跨方向切换轴。精确矩阵启用 Golden 精确视觉。
 
 > 适用技术栈：phaser、threejs。
 

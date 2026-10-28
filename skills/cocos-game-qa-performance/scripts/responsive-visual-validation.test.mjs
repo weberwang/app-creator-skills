@@ -31,7 +31,7 @@ const hook = {
   logicalCanvas: { width: 360, height: 800 },
   background: {
     rect: { x: 0, y: 0, width: 360, height: 800 },
-    sourceSize: { width: 360, height: 800 },
+    sourceLogicalSize: { width: 360, height: 800 },
     fitMode: "cover-v1"
   },
   safeArea: { top: 0, right: 0, bottom: 0, left: 0, rect: { x: 0, y: 0, width: 360, height: 800 } },
@@ -172,15 +172,14 @@ test("resize 轨迹记录同页面前后变化", () => {
     ...contract(),
     viewports: { baseline: { width: 390, height: 844, dpr: 2 }, narrow: { width: 360, height: 800, dpr: 2 } }
   }, identity);
-  // 同页 resize 已通过，但合同声明双方向，竖屏记录不能证明横屏与旋转。
+  // 单方向只需验证同方向视口变化，不要求旋转轨迹。
   assert.equal(report.resizeStatus, "pass");
-  assert.equal(report.status, "unverified");
-  assert(report.matrix.orientationMissing.includes("landscape"));
+  assert.equal(report.status, "pass");
 });
 
 test("required resize 不接受无布局变化、刷新或跨 context 记录", () => { const base = [{ name: "a", status: "pass", contextId: 1, viewportRect: { width: 390, height: 844 }, canvasRect: { width: 390, height: 844 }, keyUiRects: { score: { x: 1 } } }, { name: "b", status: "pass", contextId: 1, viewportRect: { width: 360, height: 800 }, canvasRect: { width: 390, height: 844 }, keyUiRects: { score: { x: 1 } } }]; assert.equal(buildResizeRecords(base, { resize: { required: true } }).status, "fail"); const changedContext = structuredClone(base); changedContext[1].contextId = 2; changedContext[1].canvasRect.width = 360; assert.equal(buildResizeRecords(changedContext, { resize: { required: true } }).status, "fail"); const refreshed = structuredClone(base); refreshed[1].pageReloaded = true; refreshed[1].canvasRect.width = 360; assert.equal(buildResizeRecords(refreshed, { resize: { required: true } }).status, "fail"); });
 
-test("resize 轨迹接受同页背景 cover 几何重算", () => {
+test("resize 轨迹接受同页背景定位与裁切重算", () => {
   const measurements = [
     { name: "portrait", contextId: 1, viewportRect: { width: 360, height: 800 }, canvasRect: { width: 360, height: 800 }, keyUiRects: { score: { x: 8 } }, backgroundFit: { matches: true, actual: { x: -531.1, y: 0, displayWidth: 1422.2, displayHeight: 800 } } },
     { name: "landscape", contextId: 1, samePageWithPrevious: true, viewportRect: { width: 800, height: 360 }, canvasRect: { width: 360, height: 800 }, keyUiRects: { score: { x: 8 } }, backgroundFit: { matches: true, actual: { x: 0, y: -45, displayWidth: 800, displayHeight: 450 } } }
@@ -208,16 +207,16 @@ test("覆盖率只按 viewport 交集计算", () => {
 
 test("cover-v1 拒绝虽铺满但发生非等比拉伸的背景", () => {
   const stretchedHook = structuredClone(hook);
-  stretchedHook.background.sourceSize = { width: 1920, height: 1080 };
+  stretchedHook.background.sourceLogicalSize = { width: 1920, height: 1080 };
   const result = evaluateViewport({ viewportRect: { x: 0, y: 0, width: 360, height: 800 }, canvasRect: { x: 0, y: 0, width: 360, height: 800 }, hookSnapshot: stretchedHook, contract: contract(), devicePixelRatio: 1, screenshot });
   assert.equal(result.backgroundCoverage, 1);
   assert.equal(result.status, "fail");
-  assert(result.failures.some((item) => item.includes("cover-v1")));
+  assert(result.failures.some((item) => item.includes("源帧逻辑尺寸")));
 });
 
-test("cover-v1 接受等比覆盖与中心裁切", () => {
+test("cover-v1 接受源逻辑尺寸和中心裁切", () => {
   const coveredHook = structuredClone(hook);
-  coveredHook.background.sourceSize = { width: 1920, height: 1080 };
+  coveredHook.background.sourceLogicalSize = { width: 1422.2222222222222, height: 800 };
   coveredHook.background.rect = { x: -531.1111111111111, y: 0, width: 1422.2222222222222, height: 800 };
   const result = evaluateViewport({ viewportRect: { x: 0, y: 0, width: 360, height: 800 }, canvasRect: { x: 0, y: 0, width: 360, height: 800 }, hookSnapshot: coveredHook, contract: contract(), devicePixelRatio: 1, screenshot });
   assert.equal(result.status, "pass");
@@ -233,7 +232,7 @@ test("cover-v1 要求合同显式冻结焦点与目标落点", () => {
 
 test("cover-v1 将 Hook 的非法资源尺寸归类为执行失败", () => {
   const invalidHook = structuredClone(hook);
-  invalidHook.background.sourceSize.width = 0;
+  invalidHook.background.sourceLogicalSize.width = 0;
   const result = evaluateViewport({ viewportRect: { x: 0, y: 0, width: 360, height: 800 }, canvasRect: { x: 0, y: 0, width: 360, height: 800 }, hookSnapshot: invalidHook, contract: contract(), devicePixelRatio: 1, screenshot });
   assert.equal(result.status, "fail");
   assert(result.failures.some((item) => item.includes("资源尺寸")));
@@ -313,19 +312,12 @@ test("新响应式合同直接核对真实 backing、Camera 与输入证据", ()
 });
 
 test("usability 代表矩阵覆盖视口、DPR、连续 resize 与弹窗轨迹", () => {
-  const phases = ["open", "interact", "resize", "close", "restore"].map((phase) => ({ phase }));
-  const measurements = [
-    { contextId: "page-a", viewportRect: { width: 360, height: 800 }, rawDevicePixelRatio: 3, effectiveDevicePixelRatio: 2, displayLayerTrajectory: phases },
-    { contextId: "page-a", samePageWithPrevious: true, pageReloaded: false, viewportRect: { width: 390, height: 844 }, rawDevicePixelRatio: 1, effectiveDevicePixelRatio: 1 },
-    { contextId: "page-a", samePageWithPrevious: true, pageReloaded: false, viewportRect: { width: 844, height: 390 }, rawDevicePixelRatio: 1, effectiveDevicePixelRatio: 1 },
-    { contextId: "page-b", viewportRect: { width: 900, height: 400 }, rawDevicePixelRatio: 1.5, effectiveDevicePixelRatio: 1.5 },
-    { contextId: "page-c", viewportRect: { width: 1440, height: 900 }, rawDevicePixelRatio: 2, effectiveDevicePixelRatio: 2 }
-  ];
-  const orientationPolicy = { allowed: ["portrait", "landscape"] };
+  const measurements = singleOrientationMeasurements("portrait");
+  const orientationPolicy = { allowed: ["portrait"] };
   assert.deepEqual(validateRepresentativeMatrix(measurements, { requireDisplayLayer: true, orientationPolicy }), { status: "pass", missing: [] });
   const incomplete = validateRepresentativeMatrix(measurements.slice(0, 1), { requireDisplayLayer: true, orientationPolicy });
   assert.equal(incomplete.status, "unverified");
-  assert(incomplete.missing.includes("桌面宽屏"));
+  assert(incomplete.missing.includes("标准竖屏"));
 });
 
 /** QA 同方向实测矩阵保留 DPR 与单页重排覆盖，不引入旋转样本。 */
@@ -346,7 +338,7 @@ test("QA 单方向矩阵无需跨方向，声明双方向仍缺方向证据", ()
     assert.deepEqual(validateRepresentativeMatrix(measurements, { orientationPolicy: { allowed: [orientation] } }), { status: "pass", missing: [] });
     const both = validateRepresentativeMatrix(measurements, { orientationPolicy: { allowed: ["portrait", "landscape"] } });
     assert.equal(both.status, "unverified");
-    assert(both.missing.includes("方向切换"));
+    assert(both.missing.some((item) => item.includes("orientationPolicy.allowed")));
     const missingDpr = validateRepresentativeMatrix(measurements.slice(0, 3), { orientationPolicy: { allowed: [orientation] } });
     assert(missingDpr.missing.includes("DPR 1.25 或 1.5"));
   }
@@ -366,16 +358,10 @@ test("QA 从根合同读取方向，exact 的完整矩阵也只验证项目支�
   }
 });
 
-test("exact 双方向合同缺另一方向或同页旋转时不能通过", () => {
+test("exact 双方向合同不能通过", () => {
   const measurement = { name: "portrait", contextId: "page-a", pageReloaded: false, viewportRect: { width: 390, height: 844 }, scaling: { physical: { dpr: 1 } } };
-  const scoped = contract({ viewports: [{ name: "portrait", width: 390, height: 844 }] });
-  const missing = evaluateMatrixCoverage([measurement], scoped);
-  assert.equal(missing.status, "unverified");
-  assert(missing.orientationMissing.includes("landscape"));
-  const landscape = { ...measurement, name: "landscape", samePageWithPrevious: true, viewportRect: { width: 844, height: 390 } };
-  scoped.viewports.push({ name: "landscape", width: 844, height: 390 });
-  assert.equal(evaluateMatrixCoverage([measurement, { ...landscape, contextId: "other-page" }], scoped).status, "unverified");
-  assert.equal(evaluateMatrixCoverage([measurement, landscape], scoped).status, "pass");
+  const scoped = contract({ orientationPolicy: { allowed: ["portrait", "landscape"] }, viewports: [{ name: "portrait", width: 390, height: 844 }] });
+  assert.notEqual(evaluateMatrixCoverage([measurement], scoped).status, "pass");
 });
 
 test("QA 拒绝根级与嵌套方向范围冲突", () => {
@@ -464,3 +450,27 @@ test("报告身份必须与原始 UI 合同交叉绑定", () => { for (const [fi
 test("调用方伪造 identityContract 不能自证可信身份", () => { const forged = { resize: { required: false }, viewports: [], identityContract: { schemaVersion: "1.1.0", contractVersion: identity.layout_contract_version, scenes: [identity.scene_id], states: [identity.state_id], codeCandidate: identity.candidate_sha256, visualBaselineVersion: identity.visual_baseline_version } }; const report = summarizeReport([], forged, identity); assert.equal(report.responsivePass, false); assert(report.identityErrors.some((item) => item.includes("原始 UI 合同"))); });
 
 test("残缺原始合同即使根身份匹配也不能自证", () => { const incomplete = { schema_version: "1.1.0", contract_version: identity.layout_contract_version, scope: { scenes: [identity.scene_id], states: [identity.state_id], bindings: { code_candidate: identity.candidate_sha256, visual_baseline: identity.visual_baseline_version } }, resize: { required: false }, viewports: [] }; const report = summarizeReport([], incomplete, identity); assert.equal(report.responsivePass, false); assert(report.identityErrors.some((item) => item.includes("完整布局合同校验"))); });
+
+/** 验证生产 QA 路径按真实源尺寸计算 cover，并拒绝缺证与错误位置。 */
+test("cover QA 验证放大缩小、焦点偏移和缺失测量", () => {
+  const viewportRect = { x: 0, y: 0, width: 360, height: 800 };
+  const evaluate = (background, fit = { mode: "cover-v1", sourceFocalPoint: { x: 0.5, y: 0.5 }, targetPoint: { x: 0.5, y: 0.5 } }) => {
+    const sample = structuredClone(hook);
+    sample.background = { ...sample.background, ...background };
+    return evaluateViewport({ viewportRect, canvasRect: viewportRect, hookSnapshot: sample, contract: contract({ viewport: { backgroundFit: fit } }), devicePixelRatio: 1, screenshot });
+  };
+  for (const sourceLogicalSize of [{ width: 180, height: 400 }, { width: 720, height: 1600 }]) {
+    const result = evaluate({ sourceLogicalSize, rect: { x: 0, y: 0, width: 360, height: 800 } });
+    assert.equal(result.status, "pass");
+    assert.equal(result.backgroundFit.matches, true);
+  }
+  const focal = { mode: "cover-v1", sourceFocalPoint: { x: 0.25, y: 0.5 }, targetPoint: { x: 0.5, y: 0.5 } };
+  const sourceLogicalSize = { width: 800, height: 800 };
+  assert.equal(evaluate({ sourceLogicalSize, rect: { x: -20, y: 0, width: 800, height: 800 } }, focal).status, "pass");
+  assert.equal(evaluate({ sourceLogicalSize, rect: { x: -30, y: 0, width: 800, height: 800 } }, focal).status, "fail");
+  assert.equal(evaluate({ sourceLogicalSize, rect: { x: 0, y: 0, width: 800, height: 799 } }, focal).status, "fail");
+  assert.equal(evaluate({ sourceLogicalSize: undefined }).status, "unverified");
+  const missingFocus = evaluate({ sourceLogicalSize }, { mode: "cover-v1", targetPoint: { x: 0.5, y: 0.5 } });
+  assert.equal(missingFocus.backgroundFit.status, "unverified");
+  assert.equal(missingFocus.status, "decision_gap");
+});

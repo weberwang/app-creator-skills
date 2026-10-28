@@ -1,10 +1,11 @@
 /**
- * 工作流统一 DPR 合同。
+ * Cocos、Phaser、Three.js 的 Web 管线共享 DPR 合同。
  *
  * 运行时 DPR 从设备值动态解析，允许 (0, RUNTIME_MAX_DPR] 的有效数值；
  * 图片生产使用独立的 IMAGE_PRODUCTION_DPR 基线，避免把运行时封顶误当成
  * 资源尺寸要求。把两套数值集中在本模块，避免布局、QA、场景还原和视觉清单
- * 各自实现不同的封顶或生产校验逻辑。
+ * 各自实现不同的封顶或生产校验逻辑。该策略不替代 Unity、Flutter 或
+ * Cocos 原生平台各自的资源密度、原生 UI 尺寸和屏幕映射机制。
  */
 export const RUNTIME_MAX_DPR = 2;
 /** 图片按逻辑显示尺寸 1:1 生产，运行时高分屏密度不再额外放大资源。 */

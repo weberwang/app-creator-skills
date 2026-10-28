@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { installSkills, STACKS } from '../scripts/install-project-skills.mjs';
+import { installSkills, STACKS } from '../packages/installer/install-project-skills.mjs';
 
 /** 创建本测试独占的项目根目录并登记清理。 */
 function fixture(t) {

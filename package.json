@@ -8,7 +8,7 @@
     "node": ">=22.20.0"
   },
   "bin": {
-    "app-creator-skills": "scripts/install-project-skills.mjs",
+    "app-creator-skills": "packages/installer/github-npx-install.mjs",
     "app-workflow": "./skills/app-workflow-control/scripts/workflow-control.mjs",
     "cocos-normalize-image": "./skills/cocos-domain-contracts/scripts/visual-image-normalization.mjs",
     "cocos-remove-background": "./skills/cocos-game-asset-integration/scripts/remove-background-local.mjs",
@@ -32,27 +32,20 @@
   },
   "scripts": {
     "test": "node --test --test-concurrency=4",
-    "check": "node scripts/validate-repository.mjs",
-    "install:skills": "node scripts/install-project-skills.mjs",
-    "build:npx": "node scripts/build-npx-package.mjs",
+    "install:skills": "node packages/installer/install-project-skills.mjs",
+    "build:npx": "node packages/installer/build-npx-package.mjs",
     "pack:npx": "npm pack ./packages/cli",
     "remove:background": "node skills/app-asset-workflow/scripts/remove-background-local.mjs",
-    "check:migration": "node scripts/verify-migration.mjs",
-    "audit:bodies": "node scripts/audit-skill-bodies.mjs",
-    "audit:references": "node scripts/audit-reference-bodies.mjs",
-    "index:skills": "node scripts/generate-specialist-index.mjs",
-    "test:migration": "node --test tests/migration.test.mjs tests/professional-delivery.test.mjs",
     "test:flutter-layout": "node skills/adaptive-layout-implementation/scripts/run-fixtures.js"
   },
   "files": [
     "install.mjs",
     "packages/cli",
-    "scripts",
     "skills",
     "tests",
     "README.md",
     "docs",
-    "migration"
+    "packages/installer"
   ],
   "dependencies": {
     "ajv": "8.20.0",

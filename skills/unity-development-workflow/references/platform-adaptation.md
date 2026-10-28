@@ -25,7 +25,7 @@ G0 确定目标平台、S00/G1 选择主开发平台、G2 完成各平台适配�
 
 ## Unity 原生响应式合同
 
-布局验证按每个平台已批准的方向限定：横屏无需验证竖屏，竖屏无需验证横屏；单方向覆盖同方向的尺寸、比例、安全区与连续 resize，双方向分别覆盖两种方向并验证切换。下述横竖屏检查均按此范围执行。
+布局验证按每个平台已批准的方向限定：横屏无需验证竖屏，竖屏无需验证横屏；单方向覆盖同方向的尺寸、比例、安全区与连续 resize，游戏只选一个方向，不启用跨方向自动旋转。下述横竖屏检查均按此范围执行。
 
 每个场景和独立 `DISPLAY_LAYER` 用 `responsiveContractRef` 与 `contractVersions` 记录来源。运行时读取真实 Unity 事实：Screen/GameView、backbuffer 或 RenderTexture 尺寸，Camera `pixelRect`/`orthographicSize`/projection，CanvasScaler 或 PanelSettings，`Screen.safeArea`，实际方向与连续 resize，EventSystem/InputSystem 命中，截图和状态轨迹。按用户要求和实际完成情况验收，实施调整无需回改合同，不校验 SHA；缺少必要实测时，V5/PASS 必须失败或保持 `NOT_RUN`。
 
@@ -35,7 +35,7 @@ UI/2D 位图生产默认 `sourceScale=1`，不把固定 Web DPR 带入运行时�
 
 - 可分别批准 PHONE、TABLET 或两者；每种批准形态至少有一个设备档位。
 - 使用 Android BuildTarget，按发行渠道生成 APK 或 AAB，并验证安装、升级、卸载、系统返回键、权限和机型图形 API 差异。
-- 横竖屏同时进入范围时必须启用并实测自动旋转；只选单一方向时不得从另一方向测试推断通过。
+- 初始化必须在横屏和竖屏中选择一个，平台方向设置与合同一致，不启用跨方向自动旋转；不能从另一方向测试推断通过。
 
 ### iPhone / iOS
 

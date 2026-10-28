@@ -55,7 +55,7 @@ function makeContract() {
     inputCoordinatePolicy: { from: 'css-client', to: 'logical-game', usesCamera: true },
     safeAreaPolicy: { source: 'environment-insets', coordinateSpace: 'css-logical-px' },
     resizePolicy: { samePage: true, recompute: ['css', 'backing', 'camera', 'input', 'safe-area'] },
-    orientationPolicy: { allowed: ['portrait', 'landscape'], recomputeOnChange: true },
+    orientationPolicy: { allowed: ['portrait'], recomputeOnChange: true },
     textResolutionPolicy: { coordinateSpace: 'css-logical-px', noPhysicalPixelHardcode: true },
     assetResolutionPolicy: { productionDpr: IMAGE_PRODUCTION_DPR, runtimeDprIndependent: true },
     performanceBudget: {
@@ -68,7 +68,7 @@ function makeContract() {
       representativeDeviceResults: [{ device: 'representative', fps: 60 }],
       degradationPolicy: 'explicit-quality-tier-after-budget-failure',
     },
-    representativeViewports: REPRESENTATIVE_VIEWPORT_KINDS.map((kind, index) => ({
+    representativeViewports: REPRESENTATIVE_VIEWPORT_KINDS.filter((kind) => kind.includes('portrait')).map((kind, index) => ({
       id: kind,
       kind,
       orientation: kind === 'landscape' || kind === 'desktop-wide' ? 'landscape' : 'portrait',
@@ -168,12 +168,13 @@ test('单方向合同与 V5 证据无需另一方向设计、视口或切换轨�
   }
 });
 
-test('双方向声明继续要求另一方向和同页方向切换，非法方向不能缩小矩阵', () => {
+test('双方向与非法方向声明不能通过', () => {
   const contract = makeContract();
   const records = makeSingleOrientationMeasurements('portrait');
-  assert.match(validateResponsiveEvidenceManifest({ responsiveEvidence: records }, contract).join('\n'), /landscape/);
-  assert.match(validateResponsiveEvidenceManifest({ responsiveEvidence: records }, contract).join('\n'), /orientation-change/);
-  const conflict = { ...makeSingleOrientationContract('portrait'), responsiveViewportContract: contract };
+  contract.orientationPolicy.allowed = ['portrait', 'landscape'];
+  assert.match(validateResponsiveContract(contract).join('\n'), /orientationPolicy.allowed/);
+  assert.match(validateResponsiveEvidenceManifest({ responsiveEvidence: records }, contract).join('\n'), /orientationPolicy.allowed/);
+  const conflict = { ...makeSingleOrientationContract('portrait'), responsiveViewportContract: makeSingleOrientationContract('landscape') };
   assert.match(validateResponsiveEvidenceManifest({ responsiveEvidence: records }, conflict).join('\n'), /根级与嵌套 orientationPolicy.allowed 必须一致/);
   for (const allowed of [[], ['unknown'], ['portrait', 'portrait']]) {
     const invalid = makeSingleOrientationContract('portrait');
@@ -188,7 +189,7 @@ test('响应式合同覆盖 18 个字段、运行时 DPR 和 1:1 图片生产分
   assert.equal(RESPONSIVE_CONTRACT_FIELDS.length, 18);
   assert.deepEqual(validateResponsiveContract(contract, { stage: 'V2' }), []);
   assert.deepEqual(validateResponsiveContract({ ...contract, responsiveViewportContract: contract }, { stage: 'V2' }), []);
-  const orientationConflict = { ...contract, orientationPolicy: { allowed: ['portrait'] }, responsiveViewportContract: contract };
+  const orientationConflict = { ...contract, orientationPolicy: { allowed: ['landscape'] }, responsiveViewportContract: contract };
   assert.match(validateResponsiveContract(orientationConflict).join('\n'), /根级与嵌套 orientationPolicy.allowed 必须一致/);
   const conflicting = { ...contract, designResolutionPolicy: structuredClone(contract.designResolutionPolicy), responsiveViewportContract: contract };
   conflicting.designResolutionPolicy.backgroundFit.targetPoint.x = 0.25;
@@ -210,7 +211,7 @@ test('固定横竖屏设计基准、填满画布和背景 cover 必须符合合�
   portrait.designResolutionPolicy.portrait.fitAxis = 'height';
   assert.match(validateResponsiveContract(portrait).join('\n'), /portrait 必须为 1080×1920 且按 width 适配/);
 
-  const landscape = makeContract();
+  const landscape = makeSingleOrientationContract('landscape');
   landscape.designResolutionPolicy.landscape.width = 1280;
   assert.match(validateResponsiveContract(landscape).join('\n'), /landscape 必须为 1920×1080 且按 height 适配/);
 
@@ -277,13 +278,7 @@ test('V5 证据验证 CSS/backing、动态 DPR 和实测矩阵', () => {
   assert.match(validateResponsiveEvidenceRecord(bars, contract).join('\n'), /Canvas 必须填满真实 CSS 视口/);
   const cssBars = makeEvidence({ cssDisplaySize: { width: 300, height: 800 } });
   assert.match(validateResponsiveEvidenceRecord(cssBars, contract).join('\n'), /CSS 显示尺寸必须填满真实视口/);
-  const matrix = [
-    makeMeasuredEvidence(360, 800, 1.5, { contextId: 'page-a' }),
-    makeMeasuredEvidence(390, 844, 1, { contextId: 'page-a', samePageWithPrevious: true }),
-    makeMeasuredEvidence(844, 390, 1, { contextId: 'page-a', samePageWithPrevious: true }),
-    makeMeasuredEvidence(1366, 768, 2, { contextId: 'page-b' }),
-    makeMeasuredEvidence(1280, 720, 3, { contextId: 'page-b', samePageWithPrevious: true }),
-  ];
+  const matrix = makeSingleOrientationMeasurements('portrait');
   assert.deepEqual(validateResponsiveEvidenceManifest({ responsiveEvidence: matrix }, contract, { requiredUnits: [{ unitType: 'SCENE', sceneId: 'play' }] }), []);
 
   const borrowedMatrix = [...matrix, makeMeasuredEvidence(390, 844, 1, { sceneId: 'secondary', contextId: 'secondary-page' })];

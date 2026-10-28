@@ -15,7 +15,7 @@
     "generated/bootstrap.mjs"
   ],
   "scripts": {
-    "prepack": "node ../../scripts/build-npx-package.mjs --quiet",
-    "prepublishOnly": "node ../../scripts/build-npx-package.mjs --check-config"
+    "prepack": "node ../installer/build-npx-package.mjs --quiet",
+    "prepublishOnly": "node ../installer/build-npx-package.mjs --check-config"
   }
 }

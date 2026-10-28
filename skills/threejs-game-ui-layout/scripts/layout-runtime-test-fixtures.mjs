@@ -33,6 +33,9 @@ export function layoutRuntimeFixture(nodes, {
           local_size: localSize,
           image: plan.image_mode === "NONE" ? null : {
             source_size: structuredClone(node.image_source_size ?? node.nine_slice?.source_size ?? localSize),
+            source_size_kind: "resource-pixels",
+            effective_scale: 1,
+            source_logical_size: { ...localSize },
             display_size: { ...localSize },
           },
         },

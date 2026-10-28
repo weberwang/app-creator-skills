@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter Release Readiness"
-  short_description: "Check Flutter app store release readiness."
-  default_prompt: "Use $flutter-release-readiness as the Release lane for an immutable candidate, including API/service rollout and recovery conditions plus the final platform matrix."

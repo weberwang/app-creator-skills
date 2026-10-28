@@ -1,8 +1,0 @@
-{
-  "schema_version": "2.0.0",
-  "contract_id": "main-menu-effect-image-layout",
-  "contract_version": "1.0.0",
-  "project_policy_file": "config/project-ui-layout-policy.json",
-  "scene_contract_file": "evidence/v2/scene-reconstruction-contract.json",
-  "localization_contract_file": "config/ui-localization-contract.json"
-}

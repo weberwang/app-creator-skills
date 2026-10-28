@@ -568,6 +568,18 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
     }
     if (![localMatrix, worldMatrix, layoutMatrix].every(Boolean)) continue;
     validateSnapshotScaleMatrix(localMatrix, dimensions, errors, itemLabel);
+    // 背景 cover 另由背景合同验证；普通图片和九宫格不允许自身或祖先整体缩放。
+    const skinRoles = new Set(["button", "button-skin", "panel", "panel-frame", "background-frame", "card-frame", "input-skin", "tooltip-skin", "selection-skin", "nine-slice"]);
+    const role = String(node.role ?? "").trim().toLowerCase().replaceAll("_", "-");
+    const route = String(node.visual_route_element_type ?? "").trim().toLowerCase().replaceAll("_", "-");
+    const background = snapshot.is_container !== true && (node.region_layer === "background" || node.layer === "background" || ((role === "background" || route === "background") && !skinRoles.has(role) && !skinRoles.has(route)));
+    if (node.render_kind === "sprite" && snapshot.frame == null) errors.push(`${itemLabel} 声明图片但缺少实际帧信息`);
+    if (snapshot.frame != null && !background) {
+      const x = Math.hypot(layoutMatrix.a, layoutMatrix.b);
+      const y = Math.hypot(layoutMatrix.c, layoutMatrix.d);
+      const dot = layoutMatrix.a * layoutMatrix.c + layoutMatrix.b * layoutMatrix.d;
+      if (Math.abs(x - 1) > FLOAT32_RELATIVE_BUDGET || Math.abs(y - 1) > FLOAT32_RELATIVE_BUDGET || Math.abs(dot) > FLOAT32_RELATIVE_BUDGET) errors.push(`${itemLabel} 图片到布局空间的有效变换必须保持单位尺寸且无剪切`);
+    }
 
     const parentBounds = ROOT_IDS.has(expectedParentId)
       ? roots?.[expectedParentId]

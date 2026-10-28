@@ -7,8 +7,8 @@ import { join, relative, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import test from 'node:test';
-import { installSkills, SOURCE_ROOT, STACKS } from '../scripts/install-project-skills.mjs';
-import { readSkillCatalog } from '../scripts/skill-catalog.mjs';
+import { installSkills, SOURCE_ROOT, STACKS } from '../packages/installer/install-project-skills.mjs';
+import { readSkillCatalog } from '../packages/installer/skill-catalog.mjs';
 import { initializeWork, transitionWork } from '../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 
 const INITIALIZERS = Object.freeze({

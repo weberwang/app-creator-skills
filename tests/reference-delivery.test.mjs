@@ -1,21 +1,13 @@
-/** 验证共享参考的迁移账本、原生资料和单栈安装交付。 */
+/** 验证共享参考、原生资料和单栈安装交付。 */
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
-import { installSkills } from '../scripts/install-project-skills.mjs';
+import { installSkills } from '../packages/installer/install-project-skills.mjs';
 import { loadNativeMode } from '../skills/app-skill-runtime/read-native-mode.mjs';
 
-const ROOT = resolve(import.meta.dirname, '..');
 const FRAME_NAMES = ['action-timing', 'animation-direction', 'character-animation', 'effect-animation', 'image-inbetween', 'intent-driven-design', 'object-animation', 'region-planning', 'ui-frame-animation', 'workflow-integration'];
-const FRAME_IDS = FRAME_NAMES.map((name) => `frame-reference-${name}`);
-const CAPABILITIES = {
-  'app-animation': FRAME_IDS,
-  'app-ui-layout': ['ui-game-copy', 'responsive-visual-validation'],
-  'app-quality-review': ['responsive-visual-validation'],
-  'app-asset-workflow': ['ui-game-copy'],
-};
 const STACKS = {
   cocos: { frameSkill: 'cocos-frame-animation', ui: 'cocos-game-ui-layout', qa: 'cocos-game-qa-performance', renderer: 'Creator `Label`/`RichText`', frameEvidence: '示例摘要仅用于展示可选追踪字段', hook: '__COCOS_VISUAL_VALIDATION__' },
   phaser: { frameSkill: 'phaser4-frame-animation', ui: 'phaser4-game-ui-layout', qa: 'phaser4-game-qa-performance', renderer: '`Phaser.Text`', frameEvidence: '以上摘要须替换为实际 64 位小写十六进制', hook: '__PHASER_VISUAL_VALIDATION__' },
@@ -48,33 +40,6 @@ function checkPublicLinks(skillsRoot, nativePath) {
   }
   return text;
 }
-
-test('所有参考来源进入迁移账本并由相应公共技能按需引用', () => {
-  const catalog = JSON.parse(read(ROOT, 'migration/catalog.json'));
-  const expected = [...FRAME_IDS, 'ui-game-copy', 'responsive-visual-validation'];
-  const selected = catalog.sharedCapabilities.filter((item) => expected.includes(item.id));
-  assert.equal(selected.length, expected.length);
-  assert.equal(new Set(selected.map((item) => item.id)).size, expected.length);
-  assert.equal(selected.reduce((count, item) => count + item.sources.length, 0), 36);
-  for (const item of selected) {
-    assert.equal(item.kind, 'workflow');
-    assert.ok(read(ROOT, item.implementation).length > 100, `${item.id} 不应退化为简略概述`);
-    assert.ok(item.sources.every((source) => source.sections.length > 0 && existsSync(join(ROOT, source.adapterDestination))));
-    assert.equal(new Set(item.sources.map((source) => `${source.stack}:${source.sourcePath}`)).size, item.sources.length);
-  }
-  for (const [capability, ids] of Object.entries(CAPABILITIES)) {
-    const manifest = JSON.parse(read(ROOT, `skills/${capability}/native-adapters.json`));
-    for (const id of ids) {
-      const declared = manifest.sharedWorkflows.filter((entry) => entry.id === id);
-      const item = selected.find((entry) => entry.id === id);
-      assert.equal(declared.length, 1, `${capability}/${id} 未唯一声明`);
-      assert.equal(declared[0].onDemand, true);
-      assert.deepEqual(declared[0].stacks, item.stacks);
-      assert.equal(resolve(ROOT, 'skills', capability, declared[0].path), resolve(ROOT, item.implementation));
-    }
-  }
-  assert.ok(selected.find((item) => item.id === 'ui-game-copy').stacks.includes('unity'));
-});
 
 for (const [stack, details] of Object.entries(STACKS)) {
   test(`${stack} 单栈安装保留公共章节、原生差异和按需读取边界`, (t) => {
@@ -110,8 +75,8 @@ for (const [stack, details] of Object.entries(STACKS)) {
     const sharedResponsive = read(skillsRoot, 'app-domain-toolkit/references/responsive-visual-validation.md');
     assert.match(sharedResponsive, /仅示意部分测量字段，缺少必需根字段，不是完整合同/);
     assert.doesNotMatch(responsive, /仅示意部分测量字段，缺少必需根字段，不是完整合同/);
-    assert.match(sharedResponsive, /示例声明双方向/);
-    assert.doesNotMatch(responsive, /示例声明双方向/);
+    assert.match(sharedResponsive, /游戏初始化仅选择一个方向/);
+    assert.doesNotMatch(responsive, /游戏初始化仅选择一个方向/);
     const templates = [...responsive.matchAll(/\[[^\]]+\]\(([^)]+ui-layout-contract-template\.yaml)\)/g)];
     assert.equal(templates.length, stack === 'cocos' ? 2 : 1);
     for (const [, href] of templates) {

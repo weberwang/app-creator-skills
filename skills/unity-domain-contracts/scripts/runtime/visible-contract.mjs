@@ -169,7 +169,11 @@ export function validateUnityResponsiveContract(contract, options = {}) {
   }
   const orientation = contract.orientation;
   if (knownObject(orientation, new Set(['supported', 'runtimeReflow']), `${scope}.orientation`, errors)) {
-    if (!Array.isArray(orientation.supported) || orientation.supported.length === 0 || orientation.supported.some((item) => !['portrait', 'landscape', 'auto'].includes(item))) errors.push(contractError(scope, 'orientation.supported 必须声明合法方向'));
+    // 游戏在初始化时固定一个方向；窗口尺寸变化仍须触发同方向重排。
+    if (!Array.isArray(orientation.supported) || orientation.supported.length !== 1 || !['portrait', 'landscape'].includes(orientation.supported[0])) errors.push(contractError(scope, 'orientation.supported 必须且只能选择一个 portrait/landscape 方向'));
+    const declared = orientation.supported?.[0];
+    const reference = contract.logicalSpace?.referenceResolution;
+    if (contract.uiSystem !== 'World Space Canvas' && validSize(reference) && declared !== (reference.width < reference.height ? 'portrait' : 'landscape')) errors.push(contractError(scope, 'logicalSpace.referenceResolution 必须匹配游戏选择的方向'));
     if (orientation.runtimeReflow !== true) errors.push(contractError(scope, 'orientation 必须声明运行时重排'));
   }
 
@@ -217,7 +221,7 @@ export function validateUnityResponsiveContract(contract, options = {}) {
       if (!nonEmptyString(viewport.id) || ids.has(viewport.id)) errors.push(contractError(scope, `representativeViewports[${index}].id 必须唯一`));
       ids.add(viewport.id);
       if (!Number.isInteger(viewport.width) || viewport.width <= 0 || !Number.isInteger(viewport.height) || viewport.height <= 0) errors.push(contractError(scope, `representativeViewports[${index}] 必须记录正整数尺寸`));
-      if (!['portrait', 'landscape', 'square'].includes(viewport.orientation)) errors.push(contractError(scope, `representativeViewports[${index}].orientation 无效`));
+      if (viewport.orientation !== contract.orientation?.supported?.[0] || !validSize(viewport) || viewport.orientation !== (viewport.width < viewport.height ? 'portrait' : 'landscape')) errors.push(contractError(scope, `representativeViewports[${index}].orientation 必须与实测宽高及游戏选择方向一致`));
     }
   }
   const requiredEvidence = contract.requiredRuntimeEvidence;
@@ -375,16 +379,16 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   const trajectory = evidence.resizeOrientationTrajectory;
   const supported = evidence.supportedOrientations;
   const validSupportedOrientations = Array.isArray(supported)
-    && supported.length > 0
-    && supported.every((item) => ['landscape', 'portrait', 'auto'].includes(item))
-    && new Set(supported).size === supported.length;
+    && supported.length === 1
+    && ['landscape', 'portrait'].includes(supported[0]);
   if (!validSupportedOrientations) {
-    errors.push(contractError(scope, 'supportedOrientations 必须是无重复的非空方向数组'));
+    errors.push(contractError(scope, 'supportedOrientations 必须且只能选择一个 portrait/landscape 方向'));
   }
-  // 以本次运行证据声明的实际支持方向决定是否需要方向切换轨迹。
-  const actualOrientations = validSupportedOrientations ? supported : [];
-  const requiresOrientationChange = actualOrientations.includes('auto') || (actualOrientations.includes('portrait') && actualOrientations.includes('landscape'));
-  if (!knownObject(trajectory, new Set(['sameProcess', 'events']), `${scope}.resizeOrientationTrajectory`, errors) || trajectory.sameProcess !== true || !Array.isArray(trajectory.events) || trajectory.events.length < 2 || !trajectory.events.some((item) => item?.type === 'resize') || (requiresOrientationChange && !trajectory.events.some((item) => item?.type === 'orientation'))) errors.push(contractError(scope, requiresOrientationChange ? 'resizeOrientationTrajectory 必须记录同进程 resize 和 orientation' : 'resizeOrientationTrajectory 必须记录同进程连续 resize'));
+  // 运行证据不能自行换方向绕过初始化选择；合同缺失由工作项合同门处理。
+  const declaredOrientation = work?.responsiveContract?.orientation?.supported?.[0];
+  if (validSupportedOrientations && declaredOrientation !== undefined && supported[0] !== declaredOrientation) errors.push(contractError(scope, 'supportedOrientations 必须与工作项初始化选择的方向一致'));
+  // 单方向不要求旋转；仍保留连续窗口变化的真实运行证据要求。
+  if (!knownObject(trajectory, new Set(['sameProcess', 'events']), `${scope}.resizeOrientationTrajectory`, errors) || trajectory.sameProcess !== true || !Array.isArray(trajectory.events) || trajectory.events.length < 2 || !trajectory.events.some((item) => item?.type === 'resize')) errors.push(contractError(scope, 'resizeOrientationTrajectory 必须记录同进程连续 resize'));
   measuredArtifact(evidence.screenshot, 'Screenshot', scope, 'screenshot', errors, options.repo);
   return [...new Set(errors)];
 }

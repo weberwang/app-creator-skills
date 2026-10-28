@@ -37,9 +37,7 @@ function clamp(value, minimum, maximum) {
 /**
  * 计算装饰性满幅背景的等比 cover 变换。
  *
- * 结果中的 x/y 是源图使用 ThreeJS `setOrigin(0)` 时的左上角位置，crop 使用
- * 与 viewport 相同的显示坐标单位；调用方可以直接执行 setPosition(x, y)
- * 与 setScale(scale)，而焦点偏移超出可裁切范围时会被 clamp，避免露出空隙。
+ * 源图和视口以相同逻辑单位输入；x/y 使用左上原点，scale 为覆盖所需的等比缩放。
  *
  * @param {object} options
  * @param {number} options.sourceWidth 源图宽度
@@ -60,12 +58,11 @@ export function calculateFullBleedCoverTransform(options = {}) {
   const sourceFocus = normalizePoint(options.sourceFocus, "sourceFocus");
   const targetPoint = normalizePoint(options.targetPoint, "targetPoint");
 
+  // 使用同一比例覆盖目标视口，避免出现拉伸或留边。
   const scale = Math.max(viewportWidth / sourceWidth, viewportHeight / sourceHeight);
   const displayWidth = sourceWidth * scale;
   const displayHeight = sourceHeight * scale;
-  if (!Number.isFinite(scale) || !Number.isFinite(displayWidth) || !Number.isFinite(displayHeight)) {
-    throw new RangeError("计算出的缩放或显示尺寸必须是有限数");
-  }
+  if (!Number.isFinite(scale) || !Number.isFinite(displayWidth) || !Number.isFinite(displayHeight)) throw new RangeError("计算出的缩放或显示尺寸必须是有限数");
 
   const desiredX = targetPoint.x * viewportWidth - sourceFocus.x * displayWidth;
   const desiredY = targetPoint.y * viewportHeight - sourceFocus.y * displayHeight;

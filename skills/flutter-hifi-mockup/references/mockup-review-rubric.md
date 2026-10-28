@@ -15,7 +15,7 @@ The user checks image appearance. Automated image inspection requires explicit u
 - Review-only interactive prototype: N/A / path or URL
 - UX/UI confirmed: Yes / No
 - V1 function and semantic verification completed: Yes / No; Code Sketch review if used: Pass / N/A
-- Decoded dimensions verified as `780 x 1688 px`: Yes / No
+- Decoded dimensions verified as `目标逻辑视口 × 资源密度（默认 2x）`: Yes / No
 - Reason:
 
 ## Review Checks
@@ -35,7 +35,7 @@ The user checks image appearance. Automated image inspection requires explicit u
 - Decorations, material, texture, shadow, custom illustration, and motion serve hierarchy, feedback, storytelling, or the documented product character, and stay within the page's expression budget. Do not penalize expressive treatment merely for being non-standard or insufficiently restrained.
 - It respects platform constraints, safe areas, touch targets, and text scaling.
 - It does not imply features outside MVP scope.
-- The generated file decodes to exactly `780 x 1688 px`.
+- The generated file decodes to exactly `目标逻辑视口 × 资源密度（默认 2x）`.
 - Required illustrations, photos, logos, textures, screenshots, and generated bitmaps are identified in the page asset manifest.
 
 ## Findings

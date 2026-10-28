@@ -60,12 +60,11 @@ export function calculateFullBleedCoverTransform(options = {}) {
   const sourceFocus = normalizePoint(options.sourceFocus, "sourceFocus");
   const targetPoint = normalizePoint(options.targetPoint, "targetPoint");
 
+  // 使用同一比例覆盖目标视口，避免出现拉伸或留边。
   const scale = Math.max(viewportWidth / sourceWidth, viewportHeight / sourceHeight);
   const displayWidth = sourceWidth * scale;
   const displayHeight = sourceHeight * scale;
-  if (!Number.isFinite(scale) || !Number.isFinite(displayWidth) || !Number.isFinite(displayHeight)) {
-    throw new RangeError("计算出的缩放或显示尺寸必须是有限数");
-  }
+  if (!Number.isFinite(scale) || !Number.isFinite(displayWidth) || !Number.isFinite(displayHeight)) throw new RangeError("计算出的缩放或显示尺寸必须是有限数");
 
   const desiredX = targetPoint.x * viewportWidth - sourceFocus.x * displayWidth;
   const desiredY = targetPoint.y * viewportHeight - sourceFocus.y * displayHeight;

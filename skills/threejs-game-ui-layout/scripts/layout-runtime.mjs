@@ -2,6 +2,7 @@ import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-po
 const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 import { validateLayoutExecutionNodes } from "./layout-execution.mjs";
 import { normalizeCenterAlignment } from "./center-alignment.mjs";
+import { isBackgroundDisplayNode } from "./display-node-role.mjs";
 
 const RUNTIME_SCHEMA = "threejs-layout-runtime/1";
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
@@ -108,6 +109,13 @@ function validateImageSnapshot(node, snapshot, plan, errors, label) {
   }
   if (!isSize(image.source_size)) errors.push(`${label}.image.source_size 必须是实际正尺寸`);
   if (!isSize(image.display_size)) errors.push(`${label}.image.display_size 必须是实际正尺寸`);
+  // 浏览器 naturalWidth 可能经密度校正，不能伪装成原始纹理像素。
+  if ((plan.image_mode === "NINE_SLICE" || node.image_source_size !== undefined) && image.source_size_kind !== "resource-pixels") errors.push(`${label}.image.source_size_kind 必须为 resource-pixels 并来自实际资源元数据`);
+  if (plan.image_mode === "PRESERVE_ASPECT" && !isBackgroundDisplayNode(node)) {
+    // 源纹理像素须先由实际资源密度换算，不能直接与布局逻辑坐标比较。
+    if (!isSize(image.source_logical_size)) errors.push(`${label}.image.source_logical_size 必须是实际源帧逻辑尺寸`);
+    else if (isSize(image.display_size) && (Math.abs(image.source_logical_size.width - image.display_size.width) > BOUNDS_EPSILON || Math.abs(image.source_logical_size.height - image.display_size.height) > BOUNDS_EPSILON)) errors.push(`${label}.image.display_size 必须保持源帧逻辑尺寸`);
+  }
   if (isSize(image.source_size) && isSize(image.display_size) && plan.image_mode === "PRESERVE_ASPECT") {
     // 以半个逻辑像素作为量化余量，避免把设备像素舍入误判为图像拉伸。
     const expectedWidth = image.display_size.height * image.source_size.width / image.source_size.height;
@@ -116,6 +124,8 @@ function validateImageSnapshot(node, snapshot, plan, errors, label) {
     }
   }
   if (plan.image_mode === "NINE_SLICE") {
+    // 改变切片目标框不允许整体放大已冻结的四角和边框。
+    if (!Number.isFinite(image.effective_scale) || Math.abs(image.effective_scale - 1) > BOUNDS_EPSILON) errors.push(`${label}.image.effective_scale 必须证明九宫格本体及祖先未整体缩放`);
     const frozenSource = node.nine_slice?.source_size;
     if (!sameSize(image.source_size, frozenSource)) {
       errors.push(`${label}.image.source_size 必须等于冻结九宫格 source_size`);

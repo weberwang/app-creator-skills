@@ -19,7 +19,7 @@
 
 位置默认由 `layout_owner=PARENT` 选择 `PARENT_LAYOUT`，其余选择 `REFLOW`；`STATIC`/`ANIMATION` 只能显式声明，不按对象名称或是否播放动画猜测。尺寸优先由已冻结 `nine_slice.mode=stretch` 选择 `NINE_SLICE`，其余按 `CONTENT`、`STRETCH/FLEX`、`FIXED` 分别选择 `CONTENT`、`REFLOW`、`FIXED`。显式声明必须与职责和尺寸策略相容。
 
-Phaser Container 与底板显示对象分别维护。普通图片继续允许已确认的 `contain`、`cover`、`fill`、原始尺寸和缩放；源帧尺寸与实际显示几何分开记录，不移植 Cocos 的 RAW、Widget、UITransform 或同 Node Sprite 容器规则。
+Phaser Container 与底板显示对象分别维护。普通图片保持源帧逻辑尺寸，禁止额外内容缩放、`contain`、`cover` 或 `fill`；屏幕装饰背景例外，允许等比 `cover-v1` 缩放，九宫格按冻结切片扩展；源帧尺寸与实际显示几何分开记录，不移植 Cocos 的 RAW、Widget、UITransform 或同 Node Sprite 容器规则。
 
 ## 正式 Scene 采集
 

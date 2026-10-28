@@ -6,7 +6,7 @@
 
 `phase: sketch` 必须包含 page、regions、anchors、breakpoints、content、system avoidance、scroll、text behavior、overlays、implementation、invariants、implementation signals 和 evidence matrix。`text_behavior.line_break` 必须结构化声明父级有限宽度、正文自然软换行、标题/关键文案短语与孤行控制、控件标签和原子文本整体性、动态容器禁止固定高度和截断、反规避规则、完整 fallback 顺序及对应 Widget test id；旧 `wrap` 字段无效。不得出现 `critical_alignments` 或 `parity_cases`，也不得填写尚未产生的目标图、实现截图或测量证据。
 
-`evidence_matrix` 只描述结构场景与实际执行的 test id：每个断点覆盖 b-1/b/b+1，并覆盖同宽不同高、横竖屏、默认/大字号、默认/最长文案、零/非零安全区和关键动作状态。
+`page.orientations` 按初始化选择填写 `portrait`、`landscape` 或二者，不能留空、重复或添加其他方向。`evidence_matrix` 只描述结构场景与实际执行的 test id：每个断点覆盖 b-1/b/b+1，并覆盖同宽不同高、项目声明的方向、默认/大字号、默认/最长文案、零/非零安全区和关键动作状态；方向标签须与宽高一致。
 
 ## Fidelity
 

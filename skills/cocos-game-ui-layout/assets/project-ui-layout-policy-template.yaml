@@ -138,8 +138,7 @@
   },
   "orientationPolicy": {
     "allowed": [
-      "portrait",
-      "landscape"
+      "portrait"
     ],
     "source": "runtime-viewport",
     "reflow": "contract-breakpoints",
@@ -203,20 +202,20 @@
       "effectiveDpr": 1.5
     },
     {
-      "id": "landscape",
-      "kind": "landscape",
-      "width": 844,
-      "height": 390,
-      "orientation": "landscape",
+      "id": "standard-portrait-dpr-2",
+      "kind": "standard-portrait",
+      "width": 390,
+      "height": 844,
+      "orientation": "portrait",
       "rawDpr": 2,
       "effectiveDpr": 2
     },
     {
-      "id": "desktop-wide",
-      "kind": "desktop-wide",
-      "width": 1366,
-      "height": 1024,
-      "orientation": "landscape",
+      "id": "standard-portrait-dpr-2-dpr-3",
+      "kind": "standard-portrait",
+      "width": 390,
+      "height": 844,
+      "orientation": "portrait",
       "rawDpr": 3,
       "effectiveDpr": 2
     }
@@ -298,17 +297,16 @@
       "orientation": "portrait"
     },
     "max": {
-      "width": 1366,
-      "height": 1024,
-      "orientation": "landscape"
+      "width": 844,
+      "height": 1366,
+      "orientation": "portrait"
     },
     "orientations": [
-      "portrait",
-      "landscape"
+      "portrait"
     ],
     "aspect_ratio": {
       "min": 0.4,
-      "max": 2.0
+      "max": 2
     }
   },
   "coordinate_spaces": [

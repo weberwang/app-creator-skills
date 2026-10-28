@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { installSkills, STACKS } from '../scripts/install-project-skills.mjs';
+import { installSkills, STACKS } from '../packages/installer/install-project-skills.mjs';
 
 /** 检查仓库自有控制器代码及实际领域入口均随单栈安装，不伪称来自外部源。 */
 for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成和单目标领域校验的全部代码与规范`, (t) => {

@@ -1,0 +1,640 @@
+{
+  "schemaVersion": "1.0",
+  "stacks": {
+    "unity": {
+      "capabilitySkills": [
+        "app-product-planning",
+        "app-architecture",
+        "app-gameplay-development",
+        "app-audio",
+        "app-game-balance",
+        "app-feedback",
+        "app-release",
+        "app-quality-review",
+        "app-animation",
+        "app-character-rigging",
+        "app-3d-modeling",
+        "app-3d-texturing",
+        "app-spine-reskin",
+        "app-ui-layout",
+        "app-artifact-cleanup",
+        "app-asset-workflow"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "unity-game-2d-animation-ta",
+          "capability": "app-animation",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-2d-animation-ta"
+        },
+        {
+          "sourceSkill": "unity-game-2d-rigging",
+          "capability": "app-character-rigging",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-2d-rigging"
+        },
+        {
+          "sourceSkill": "unity-game-3d-animation",
+          "capability": "app-animation",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-3d-animation"
+        },
+        {
+          "sourceSkill": "unity-game-3d-modeling",
+          "capability": "app-3d-modeling",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-3d-modeling"
+        },
+        {
+          "sourceSkill": "unity-game-3d-rigging",
+          "capability": "app-character-rigging",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-3d-rigging"
+        },
+        {
+          "sourceSkill": "unity-game-3d-texturing",
+          "capability": "app-3d-texturing",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-3d-texturing"
+        },
+        {
+          "sourceSkill": "unity-game-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-architecture"
+        },
+        {
+          "sourceSkill": "unity-game-audio",
+          "capability": "app-audio",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-audio"
+        },
+        {
+          "sourceSkill": "unity-game-balance",
+          "capability": "app-game-balance",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-balance"
+        },
+        {
+          "sourceSkill": "unity-game-juice",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-juice"
+        },
+        {
+          "sourceSkill": "unity-game-production",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-production"
+        },
+        {
+          "sourceSkill": "unity-game-qa-performance",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-qa-performance"
+        },
+        {
+          "sourceSkill": "unity-game-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-release"
+        },
+        {
+          "sourceSkill": "unity-game-spine-reskin",
+          "capability": "app-spine-reskin",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-spine-reskin"
+        },
+        {
+          "sourceSkill": "unity-game-visual-assets",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-game-visual-assets"
+        },
+        {
+          "sourceSkill": "unity-gameplay-development",
+          "capability": "app-gameplay-development",
+          "path": "skills/app-stack-unity/references/native-contracts.md",
+          "section": "mode-unity-gameplay-development"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit",
+        "unity-development-workflow",
+        "unity-domain-contracts",
+        "unity-game-2d-rigging",
+        "unity-game-3d-animation",
+        "unity-game-3d-modeling",
+        "unity-game-3d-rigging",
+        "unity-game-3d-texturing"
+      ]
+    },
+    "cocos": {
+      "capabilitySkills": [
+        "app-product-planning",
+        "app-architecture",
+        "app-gameplay-development",
+        "app-audio",
+        "app-game-balance",
+        "app-feedback",
+        "app-release",
+        "app-quality-review",
+        "app-animation",
+        "app-3d-modeling",
+        "app-spine-reskin",
+        "app-ui-layout",
+        "app-artifact-cleanup",
+        "app-image-optimization",
+        "app-ad-integration",
+        "app-asset-workflow"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "cocos-frame-animation",
+          "capability": "app-animation",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-frame-animation"
+        },
+        {
+          "sourceSkill": "cocos-game-3d-modeling",
+          "capability": "app-3d-modeling",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-3d-modeling"
+        },
+        {
+          "sourceSkill": "cocos-game-ad-integration",
+          "capability": "app-ad-integration",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-ad-integration"
+        },
+        {
+          "sourceSkill": "cocos-game-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-architecture"
+        },
+        {
+          "sourceSkill": "cocos-game-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-artifact-cleanup"
+        },
+        {
+          "sourceSkill": "cocos-game-asset-integration",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-asset-integration"
+        },
+        {
+          "sourceSkill": "cocos-game-audio",
+          "capability": "app-audio",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-audio"
+        },
+        {
+          "sourceSkill": "cocos-game-balance",
+          "capability": "app-game-balance",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-balance"
+        },
+        {
+          "sourceSkill": "cocos-game-image-optimization",
+          "capability": "app-image-optimization",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-image-optimization"
+        },
+        {
+          "sourceSkill": "cocos-game-juice",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-juice"
+        },
+        {
+          "sourceSkill": "cocos-game-production",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-production"
+        },
+        {
+          "sourceSkill": "cocos-game-qa-performance",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-qa-performance"
+        },
+        {
+          "sourceSkill": "cocos-game-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-release"
+        },
+        {
+          "sourceSkill": "cocos-game-ui-layout",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-game-ui-layout"
+        },
+        {
+          "sourceSkill": "cocos-gameplay-development",
+          "capability": "app-gameplay-development",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-gameplay-development"
+        },
+        {
+          "sourceSkill": "cocos-spine-generative-reskin",
+          "capability": "app-spine-reskin",
+          "path": "skills/app-stack-cocos/references/native-contracts.md",
+          "section": "mode-cocos-spine-generative-reskin"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit",
+        "cocos-domain-contracts",
+        "cocos-game-3d-modeling",
+        "cocos-game-ad-integration",
+        "cocos-game-architecture",
+        "cocos-game-asset-integration",
+        "cocos-game-juice",
+        "cocos-game-orchestrator",
+        "cocos-game-qa-performance",
+        "cocos-game-ui-layout",
+        "cocos-spine-generative-reskin"
+      ]
+    },
+    "phaser": {
+      "capabilitySkills": [
+        "app-product-planning",
+        "app-architecture",
+        "app-gameplay-development",
+        "app-audio",
+        "app-game-balance",
+        "app-feedback",
+        "app-release",
+        "app-quality-review",
+        "app-animation",
+        "app-spine-reskin",
+        "app-ui-layout",
+        "app-artifact-cleanup",
+        "app-image-optimization",
+        "app-ad-integration",
+        "app-asset-workflow"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "phaser4-frame-animation",
+          "capability": "app-animation",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-frame-animation"
+        },
+        {
+          "sourceSkill": "phaser4-game-ad-integration",
+          "capability": "app-ad-integration",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-ad-integration"
+        },
+        {
+          "sourceSkill": "phaser4-game-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-architecture"
+        },
+        {
+          "sourceSkill": "phaser4-game-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-artifact-cleanup"
+        },
+        {
+          "sourceSkill": "phaser4-game-asset-integration",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-asset-integration"
+        },
+        {
+          "sourceSkill": "phaser4-game-audio",
+          "capability": "app-audio",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-audio"
+        },
+        {
+          "sourceSkill": "phaser4-game-balance",
+          "capability": "app-game-balance",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-balance"
+        },
+        {
+          "sourceSkill": "phaser4-game-image-optimization",
+          "capability": "app-image-optimization",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-image-optimization"
+        },
+        {
+          "sourceSkill": "phaser4-game-juice",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-juice"
+        },
+        {
+          "sourceSkill": "phaser4-game-production",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-production"
+        },
+        {
+          "sourceSkill": "phaser4-game-qa-performance",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-qa-performance"
+        },
+        {
+          "sourceSkill": "phaser4-game-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-release"
+        },
+        {
+          "sourceSkill": "phaser4-game-ui-layout",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-game-ui-layout"
+        },
+        {
+          "sourceSkill": "phaser4-gameplay-development",
+          "capability": "app-gameplay-development",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-gameplay-development"
+        },
+        {
+          "sourceSkill": "phaser4-spine-generative-reskin",
+          "capability": "app-spine-reskin",
+          "path": "skills/app-stack-phaser/references/native-contracts.md",
+          "section": "mode-phaser4-spine-generative-reskin"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit",
+        "phaser-domain-contracts",
+        "phaser4-game-ad-integration",
+        "phaser4-game-architecture",
+        "phaser4-game-asset-integration",
+        "phaser4-game-juice",
+        "phaser4-game-orchestrator",
+        "phaser4-game-qa-performance",
+        "phaser4-game-ui-layout",
+        "phaser4-spine-generative-reskin"
+      ]
+    },
+    "threejs": {
+      "capabilitySkills": [
+        "app-product-planning",
+        "app-architecture",
+        "app-gameplay-development",
+        "app-audio",
+        "app-game-balance",
+        "app-feedback",
+        "app-release",
+        "app-quality-review",
+        "app-animation",
+        "app-3d-modeling",
+        "app-ui-layout",
+        "app-artifact-cleanup",
+        "app-image-optimization",
+        "app-ad-integration",
+        "app-3d-asset-pipeline",
+        "app-runtime-plugins",
+        "app-project-foundation",
+        "app-asset-workflow"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "threejs-frame-animation",
+          "capability": "app-animation",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-frame-animation"
+        },
+        {
+          "sourceSkill": "threejs-game-3d-modeling",
+          "capability": "app-3d-modeling",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-3d-modeling"
+        },
+        {
+          "sourceSkill": "threejs-game-ad-integration",
+          "capability": "app-ad-integration",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-ad-integration"
+        },
+        {
+          "sourceSkill": "threejs-game-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-architecture"
+        },
+        {
+          "sourceSkill": "threejs-game-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-artifact-cleanup"
+        },
+        {
+          "sourceSkill": "threejs-game-asset-integration",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-asset-integration"
+        },
+        {
+          "sourceSkill": "threejs-game-audio",
+          "capability": "app-audio",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-audio"
+        },
+        {
+          "sourceSkill": "threejs-game-balance",
+          "capability": "app-game-balance",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-balance"
+        },
+        {
+          "sourceSkill": "threejs-game-image-optimization",
+          "capability": "app-image-optimization",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-image-optimization"
+        },
+        {
+          "sourceSkill": "threejs-game-juice",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-juice"
+        },
+        {
+          "sourceSkill": "threejs-game-model-pipeline",
+          "capability": "app-3d-asset-pipeline",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-model-pipeline"
+        },
+        {
+          "sourceSkill": "threejs-game-plugins",
+          "capability": "app-runtime-plugins",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-plugins"
+        },
+        {
+          "sourceSkill": "threejs-game-production",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-production"
+        },
+        {
+          "sourceSkill": "threejs-game-qa-performance",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-qa-performance"
+        },
+        {
+          "sourceSkill": "threejs-game-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-release"
+        },
+        {
+          "sourceSkill": "threejs-game-runtime",
+          "capability": "app-project-foundation",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-runtime"
+        },
+        {
+          "sourceSkill": "threejs-game-ui-layout",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-game-ui-layout"
+        },
+        {
+          "sourceSkill": "threejs-gameplay-development",
+          "capability": "app-gameplay-development",
+          "path": "skills/app-stack-threejs/references/native-contracts.md",
+          "section": "mode-threejs-gameplay-development"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit",
+        "threejs-domain-contracts",
+        "threejs-game-3d-modeling",
+        "threejs-game-ad-integration",
+        "threejs-game-architecture",
+        "threejs-game-asset-integration",
+        "threejs-game-juice",
+        "threejs-game-model-pipeline",
+        "threejs-game-orchestrator",
+        "threejs-game-plugins",
+        "threejs-game-qa-performance",
+        "threejs-game-runtime",
+        "threejs-game-ui-layout"
+      ]
+    },
+    "flutter": {
+      "capabilitySkills": [
+        "app-product-planning",
+        "app-architecture",
+        "app-feedback",
+        "app-release",
+        "app-quality-review",
+        "app-ui-layout",
+        "app-artifact-cleanup",
+        "app-project-foundation",
+        "app-ui-code-sketch",
+        "app-asset-workflow",
+        "app-creator-workflow"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "adaptive-layout-implementation",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-adaptive-layout-implementation"
+        },
+        {
+          "sourceSkill": "flutter-asset-atlas",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-asset-atlas"
+        },
+        {
+          "sourceSkill": "flutter-code-sketch",
+          "capability": "app-ui-code-sketch",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-code-sketch"
+        },
+        {
+          "sourceSkill": "flutter-hifi-mockup",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-hifi-mockup"
+        },
+        {
+          "sourceSkill": "flutter-implementation-plan",
+          "capability": "app-creator-workflow",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-implementation-plan"
+        },
+        {
+          "sourceSkill": "flutter-product-spec",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-product-spec"
+        },
+        {
+          "sourceSkill": "flutter-project-init",
+          "capability": "app-project-foundation",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-project-init"
+        },
+        {
+          "sourceSkill": "flutter-quality-review",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-quality-review"
+        },
+        {
+          "sourceSkill": "flutter-release-readiness",
+          "capability": "app-release",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-release-readiness"
+        },
+        {
+          "sourceSkill": "flutter-subagent-delivery",
+          "capability": "app-creator-workflow",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-subagent-delivery"
+        },
+        {
+          "sourceSkill": "flutter-tech-design",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-tech-design"
+        },
+        {
+          "sourceSkill": "flutter-ux-ui-quality",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-flutter/references/native-contracts.md",
+          "section": "mode-flutter-ux-ui-quality"
+        }
+      ],
+      "resourceDirectories": [
+        "adaptive-layout-implementation",
+        "app-domain-toolkit",
+        "flutter-app-orchestrator",
+        "flutter-asset-atlas",
+        "flutter-code-sketch",
+        "flutter-domain-contracts",
+        "flutter-hifi-mockup",
+        "flutter-implementation-plan",
+        "flutter-product-spec",
+        "flutter-project-init",
+        "flutter-quality-review",
+        "flutter-release-readiness",
+        "flutter-subagent-delivery",
+        "flutter-tech-design",
+        "flutter-ux-ui-quality"
+      ]
+    }
+  }
+}

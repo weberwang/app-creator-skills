@@ -46,11 +46,11 @@ effect-image 的 parity case 不能退化为 `structured-layout-and-independent-
 
 > 适用技术栈：cocos、phaser、threejs。
 
-默认 `usability` 的最小轴由项目选择代表性覆盖：基准与窄/宽视口、项目支持双方向时的方向变化、关键字号/文案、零/非零安全区、关键动作状态和宿主生命周期；单方向项目在同一方向验证窄宽尺寸与连续 resize。每项都检查边界、遮挡、可读性、可操作性和关系不变量。
+默认 `usability` 的最小轴由项目选择代表性覆盖：基准与窄/宽视口、关键字号/文案、零/非零安全区、关键动作状态和宿主生命周期；单方向项目在同一方向验证窄宽尺寸与连续 resize。每项都检查边界、遮挡、可读性、可操作性和关系不变量。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`exact` 或项目明确的全覆盖需求才必须声明并执行完整轴：`breakpoint-neighbors`、`width`、`height`、`text-scale`、`localization`、`safe-area`、`action-state`、`dpr`、`dynamic-values`、`scene-lifecycle`、`overlay-keyboard-scroll`，包括每个断点三点、完整宽高/字号/文案/安全区/状态和组合。项目同时支持竖屏与横屏时，另必须包含 `orientation` 轴，并覆盖 `orientationPolicy.allowed` 中的方向；单方向项目无需声明该轴，也不能扩展到不支持方向。
+`exact` 或项目明确的全覆盖需求才必须声明并执行完整轴：`breakpoint-neighbors`、`width`、`height`、`text-scale`、`localization`、`safe-area`、`action-state`、`dpr`、`dynamic-values`、`scene-lifecycle`、`overlay-keyboard-scroll`，包括每个断点三点、完整宽高/字号/文案/安全区/状态和组合。游戏只支持初始化选择的一个方向，不要求 `orientation` 切换轴，也不能扩展到未选择方向。
 
 ## 证据类型
 

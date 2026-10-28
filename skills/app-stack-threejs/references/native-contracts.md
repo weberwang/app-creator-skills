@@ -1,5 +1,7 @@
 # threejs 原生技术合同
 
+本手册中的 DPR 动态封顶 2 与图片生产基线 1 仅适用于对应 Web 管线；原生平台不强制填写浏览器 DPR。普通屏幕 UI 图片保持源逻辑尺寸，合法九宫格可按切片改变显示框；屏幕装饰背景按独立 cover-v1 合同等比覆盖；设备密度、容器或相机映射不授权额外缩放。图片生产归一化与运行展示分别管理，详见[各栈尺寸与密度](../../app-ui-layout/references/relative-layout.md#技术栈的尺寸与密度)。
+
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
 各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
@@ -555,7 +557,7 @@ V3 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 <a id="mode-threejs-game-ui-layout--全局视口与高分屏合同"></a>
 #### 全局视口与高分屏合同
 
-屏幕 HUD、DOM Overlay、适用的屏幕自适应平面内容、弹窗和 `DISPLAY_LAYER` 必须在布局合同中填写 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、`cameraViewportPolicy`、`cameraZoomPolicy`、`cameraOriginPolicy`、`inputCoordinatePolicy`、`safeAreaPolicy`、`resizePolicy`、`orientationPolicy`、`textResolutionPolicy`、`assetResolutionPolicy`、`performanceBudget`、`representativeViewports` 和 `requiredRuntimeEvidence`。这些字段描述项目的视口和坐标策略，不是 three.js 内置布局 API；Three.js 项目用 `WebGLRenderer.setSize()`、CSS 视口和相机投影实现实际映射。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性背景等比 cover，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR 向下取整，物理像素不得直接用于布局或命中。真正的三维世界和透视关卡使用[三维世界视口合同](../../threejs-domain-contracts/references/world-viewport-contract.schema.json)，不套用二维布局合同，也不要求二维固定设计视口。
+屏幕 HUD、DOM Overlay、适用的屏幕自适应平面内容、弹窗和 `DISPLAY_LAYER` 必须在布局合同中填写 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、`cameraViewportPolicy`、`cameraZoomPolicy`、`cameraOriginPolicy`、`inputCoordinatePolicy`、`safeAreaPolicy`、`resizePolicy`、`orientationPolicy`、`textResolutionPolicy`、`assetResolutionPolicy`、`performanceBudget`、`representativeViewports` 和 `requiredRuntimeEvidence`。这些字段描述项目的视口和坐标策略，不是 three.js 内置布局 API；Three.js 项目用 `WebGLRenderer.setSize()`、CSS 视口和相机投影实现实际映射。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性屏幕装饰背景按独立 cover-v1 合同等比覆盖，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR 向下取整，物理像素不得直接用于布局或命中。真正的三维世界和透视关卡使用[三维世界视口合同](../../threejs-domain-contracts/references/world-viewport-contract.schema.json)，不套用二维布局合同，也不要求二维固定设计视口。
 
 运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。`scaleMode` 是项目自定义视口策略字段，使用 `custom` 表示由项目代码计算视口、更新 `WebGLRenderer` 和相机投影；`gameSizeSpace` 仅指合同中的逻辑布局空间，不代表 three.js 提供 `GameSize`。`cameraOriginPolicy` 记录坐标系原点约定，不对应相机上的 `origin` 属性。实施包必须证明逻辑视口、Camera 投影、输入映射和 CSS/物理尺寸之间的真实关系；声明字段或构建成功不能单独作为高分屏证据。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V5 必须独立记录其运行轨迹。
 
