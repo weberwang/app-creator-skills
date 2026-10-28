@@ -203,3 +203,74 @@ test('更新中途失败会恢复所有旧技能并释放安装锁', (t) => {
   for (const name of names) assert.equal(readFileSync(join(root, '.agents', 'skills', name, 'local.txt'), 'utf8'), `原目录-${name}`);
   assert.equal(existsSync(join(root, '.agents', 'app-creator-install.lock')), false);
 });
+
+/** 不保留备份时，暂存或切换失败仍须恢复旧内容并删除本次事务。 */
+test('无备份事务在复制或切换失败时保留旧目录并清理事务', (t) => {
+  for (const failure of ['copy', 'rename']) {
+    const root = project(t);
+    installSkills({ projectRoot: root, stacks: ['unity'], replace: true, retainBackup: false });
+    const agents = join(root, '.agents');
+    const names = [...COMMON_SKILLS, 'app-stack-unity'];
+    for (const name of names) writeFileSync(join(agents, 'skills', name, 'local.txt'), `原目录-${name}`);
+    const originalCopy = fs.cpSync;
+    const originalRename = fs.renameSync;
+    let renamed = 0;
+    // 只在当前隔离项目的暂存路径注入失败，覆盖写入前和部分切换后的回滚。
+    fs.cpSync = (from, to, options) => {
+      if (failure === 'copy' && String(to).replaceAll('\\', '/').includes('/staged/')) throw new Error('模拟复制失败');
+      return originalCopy(from, to, options);
+    };
+    fs.renameSync = (from, to) => {
+      if (failure === 'rename' && String(from).replaceAll('\\', '/').includes('/staged/') && ++renamed === 2) throw new Error('模拟切换失败');
+      return originalRename(from, to);
+    };
+    syncBuiltinESMExports();
+    try {
+      assert.throws(() => installSkills({ projectRoot: root, stacks: ['unity'], replace: true, retainBackup: false }), /模拟复制失败|模拟切换失败/);
+    } finally {
+      fs.cpSync = originalCopy;
+      fs.renameSync = originalRename;
+      syncBuiltinESMExports();
+    }
+    for (const name of names) assert.equal(readFileSync(join(agents, 'skills', name, 'local.txt'), 'utf8'), `原目录-${name}`);
+    assert.deepEqual(readdirSync(agents), ['skills']);
+  }
+});
+
+/** 回滚本身失败时必须保留含旧目录的事务，不能把失败当成已完成恢复。 */
+test('无备份事务回滚失败时保留尚未恢复的旧文件', (t) => {
+  const root = project(t);
+  installSkills({ projectRoot: root, stacks: ['unity'], replace: true, retainBackup: false });
+  const agents = join(root, '.agents');
+  const names = [...COMMON_SKILLS, 'app-stack-unity'];
+  for (const name of names) writeFileSync(join(agents, 'skills', name, 'local.txt'), `原目录-${name}`);
+  const nativeRename = fs.renameSync;
+  let stagedRenames = 0;
+  // 在第二次接入和第一次恢复旧目录时分别模拟失败，验证保全证据。
+  let failedRestore = false;
+  fs.renameSync = (from, to) => {
+    const source = String(from).replaceAll('\\', '/');
+    if (source.includes('/staged/') && ++stagedRenames === 2) throw new Error('模拟切换失败');
+    if (source.includes('/original/') && !failedRestore) {
+      failedRestore = true;
+      throw new Error('模拟恢复失败');
+    }
+    return nativeRename(from, to);
+  };
+  syncBuiltinESMExports();
+  try {
+    assert.throws(() => installSkills({ projectRoot: root, stacks: ['unity'], replace: true, retainBackup: false }), /旧技能未能全部恢复/);
+  } finally {
+    fs.renameSync = nativeRename;
+    syncBuiltinESMExports();
+  }
+  assert.equal(failedRestore, true);
+  const transactions = readdirSync(agents).filter((name) => name.startsWith('skills-install-'));
+  assert.equal(transactions.length, 1);
+  const original = join(agents, transactions[0], 'original');
+  const remaining = readdirSync(original);
+  assert.ok(remaining.length > 0);
+  for (const name of remaining) assert.equal(readFileSync(join(original, name, 'local.txt'), 'utf8'), `原目录-${name}`);
+  assert.equal(existsSync(join(agents, 'app-creator-install.lock')), false);
+  assert.equal(existsSync(join(agents, 'skills-backups')), false);
+});

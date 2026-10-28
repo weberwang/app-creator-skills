@@ -13,6 +13,7 @@ const HELP_TEXT = [
   '技术栈：unity、cocos、phaser、threejs、flutter；all 表示全部（须单独指定）',
   '选项：--stack/-s <技术栈列表>、--dir/-d <项目目录>、--repo <owner/repo>、--ref <分支或提交>、--dry-run、--replace、--help/-h',
   '未指定项目目录时使用当前目录；远程仓库由安装包配置，也可通过 --repo 临时指定。',
+  '默认覆盖所选安装目录中的不同内容，成功后不保留旧目录备份；相同内容跳过。',
 ].join('\n');
 
 /** 读取包内的远程安装配置，配置由维护者补充，不在 CLI 中猜测仓库地址。 */

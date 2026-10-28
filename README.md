@@ -49,13 +49,15 @@ npx github:weberwang/app-creator-skills unity,cocos
 npm ci --prefix .agents/skills/app-skill-runtime
 ```
 
-常用选项：`--dir ../my-app` 指定目标项目，`--dry-run` 预览，`--replace` 更新不同内容并备份旧目录到 `.agents/skills-backups/`。重复安装复用相同内容。显式提供 `--repo <owner/repo>` 或 `--ref <提交SHA>` 时改从 GitHub API 获取指定来源，私库 API 访问需通过 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限。
+常用选项：`--dir ../my-app` 指定目标项目，`--dry-run` 预览。远程及 npx 安装默认覆盖所选安装目录中的不同内容，无需 `--replace`，成功后不保留旧目录备份；相同内容跳过，无关技能不受影响。安装中途失败时恢复旧目录。显式提供 `--repo <owner/repo>` 或 `--ref <提交SHA>` 时改从 GitHub API 获取指定来源，私库 API 访问需通过 `GITHUB_TOKEN` 或 `GH_TOKEN` 提供 Contents 只读权限。
 
 **本地安装备选**：在技能仓库根目录执行：
 
 ```powershell
 node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 ```
+
+本地安装遇到不同内容时使用 `--replace` 更新，并保留旧目录到 `.agents/skills-backups/`。
 
 ## 开始第一个项目
 

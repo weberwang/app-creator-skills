@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtempSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -24,6 +24,32 @@ test('GitHub 包内载荷按调用目录预览并安装指定技术栈', async (
   assert.equal(result.changed, true);
   assert.equal(existsSync(join(f.cwd, '.agents', 'skills', 'app-stack-flutter', 'SKILL.md')), true);
   assert.equal(existsSync(join(f.cwd, '.agents', 'skills', 'app-stack-unity')), false);
+});
+
+/** GitHub 包默认安装命令更新所选内容，不留下旧目录备份。 */
+test('GitHub 包默认覆盖旧文件且不保留备份', async (t) => {
+  const f = fixture(t);
+  const first = await runGitHubNpxInstaller(['flutter'], f);
+  assert.equal(first.backup, null);
+  assert.deepEqual(readdirSync(join(f.cwd, '.agents')), ['skills']);
+  const skills = join(f.cwd, '.agents', 'skills');
+  const oldFile = join(skills, 'grilling', 'local.txt');
+  writeFileSync(oldFile, '旧文件');
+  const unrelated = join(skills, 'my-skill');
+  mkdirSync(unrelated);
+  writeFileSync(join(unrelated, 'SKILL.md'), '无关技能');
+  const result = await runGitHubNpxInstaller(['flutter'], f);
+  assert.equal(result.changed, true);
+  assert.equal(result.backup, null);
+  assert.equal(result.entries.find((entry) => entry.name === 'grilling').action, 'replace');
+  assert.equal(existsSync(oldFile), false);
+  assert.equal(readFileSync(join(unrelated, 'SKILL.md'), 'utf8'), '无关技能');
+  assert.deepEqual(readdirSync(join(f.cwd, '.agents')), ['skills']);
+  const repeated = await runGitHubNpxInstaller(['flutter'], f);
+  assert.equal(repeated.changed, false);
+  assert.equal(repeated.backup, null);
+  assert.ok(repeated.entries.every((entry) => entry.action === 'skip'));
+  assert.deepEqual(readdirSync(join(f.cwd, '.agents')), ['skills']);
 });
 
 test('交互选择及显式远程选项交由统一入口处理', async (t) => {

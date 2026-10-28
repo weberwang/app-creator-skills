@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-/** 按技术栈安装公共技能和独立规范；冲突更新保留可恢复备份。 */
-import { closeSync, cpSync, existsSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, renameSync, unlinkSync, writeFileSync } from 'node:fs';
+/** 按技术栈安装公共技能和独立规范，并根据调用方选择是否保留更新备份。 */
+import { closeSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -72,7 +72,7 @@ export function planInstallation({ projectRoot, stacks, replace = false, sourceR
   return { project, destination, entries, replace };
 }
 
-/** 安装前完整暂存，替换失败时恢复旧目录；成功更新也保留原目录供恢复。 */
+/** 安装前完整暂存，替换失败时恢复旧目录；按调用方选择是否保留成功更新的旧目录。 */
 export function installSkills(options) {
   const plan = planInstallation(options);
   if (options.dryRun) return { ...plan, changed: false, backup: null };
@@ -89,43 +89,64 @@ export function installSkills(options) {
   try {
     writeFileSync(handle, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }));
     // 获锁后重新预检，不能消费等待锁之前得到的过时 existed 快照。
-    return applyInstallation(planInstallation(options));
+    return applyInstallation(planInstallation(options), { retainBackup: options.retainBackup !== false });
   } finally {
     closeSync(handle);
     unlinkSync(lock);
   }
 }
 
-/** 在独占锁内应用计划，全部旧目录都进入同一事务的备份区。 */
-function applyInstallation(plan) {
+/** 仅清理本次在项目 .agents 下独占创建的临时事务，避免递归删除其他目录。 */
+function removeTemporaryTransaction(transaction, agentsRoot) {
+  const target = resolve(transaction);
+  const root = resolve(agentsRoot);
+  if (dirname(target) !== root || !basename(target).startsWith('skills-install-')) throw new Error(`临时事务路径越界：${target}`);
+  assertNoLinks(target);
+  if (!lstatSync(target).isDirectory()) throw new Error(`临时事务目录不是普通目录：${target}`);
+  rmSync(target, { recursive: true });
+}
+
+/** 在独占锁内应用计划；仅需临时回滚时，成功后删除本次事务。 */
+function applyInstallation(plan, { retainBackup }) {
   const changes = plan.entries.filter((entry) => entry.action !== 'skip');
   if (!changes.length) return { ...plan, changed: false, backup: null };
+  const agentsRoot = join(plan.project, '.agents');
   const transactionId = `${Date.now()}-${randomUUID()}`;
-  const transaction = join(plan.project, '.agents', 'skills-backups', transactionId);
+  const transaction = retainBackup
+    ? join(agentsRoot, 'skills-backups', transactionId)
+    : mkdtempSync(join(agentsRoot, 'skills-install-'));
   assertNoLinks(transaction);
   const staged = join(transaction, 'staged');
   const original = join(transaction, 'original');
-  mkdirSync(staged, { recursive: true });
-  // 先复制全部输入，避免复制中途失败后只安装半套技能。
-  for (const entry of changes) {
-    const stagedEntry = join(staged, entry.name);
-    cpSync(entry.source, stagedEntry, { recursive: true, errorOnExist: true, force: false });
-    const runtimeDependencies = join(entry.target, 'node_modules');
-    let runtimeDependenciesMetadata;
-    if (entry.name === 'app-skill-runtime' && entry.action === 'replace') {
-      try { runtimeDependenciesMetadata = lstatSync(runtimeDependencies); }
-      catch (error) { if (error.code !== 'ENOENT') throw error; }
-    }
-    if (runtimeDependenciesMetadata) {
-      if (runtimeDependenciesMetadata.isSymbolicLink() || !runtimeDependenciesMetadata.isDirectory()) {
-        throw new Error('已安装的运行时 node_modules 不是普通目录，拒绝替换以避免丢失依赖');
+  try {
+    mkdirSync(staged, { recursive: true });
+    // 先复制全部输入，避免复制中途失败后只安装半套技能。
+    for (const entry of changes) {
+      const stagedEntry = join(staged, entry.name);
+      cpSync(entry.source, stagedEntry, { recursive: true, errorOnExist: true, force: false });
+      const runtimeDependencies = join(entry.target, 'node_modules');
+      let runtimeDependenciesMetadata;
+      if (entry.name === 'app-skill-runtime' && entry.action === 'replace') {
+        try { runtimeDependenciesMetadata = lstatSync(runtimeDependencies); }
+        catch (error) { if (error.code !== 'ENOENT') throw error; }
       }
-      // node_modules 是已安装运行依赖，更新共享源码时需并入暂存目录并随同一事务切换。
-      cpSync(runtimeDependencies, join(stagedEntry, 'node_modules'), { recursive: true, errorOnExist: true, force: false, dereference: false });
+      if (runtimeDependenciesMetadata) {
+        if (runtimeDependenciesMetadata.isSymbolicLink() || !runtimeDependenciesMetadata.isDirectory()) {
+          throw new Error('已安装的运行时 node_modules 不是普通目录，拒绝替换以避免丢失依赖');
+        }
+        // node_modules 是已安装运行依赖，更新共享源码时需并入暂存目录并随同一事务切换。
+        cpSync(runtimeDependencies, join(stagedEntry, 'node_modules'), { recursive: true, errorOnExist: true, force: false, dereference: false });
+      }
     }
+    mkdirSync(plan.destination, { recursive: true });
+    mkdirSync(original, { recursive: true });
+  } catch (error) {
+    if (!retainBackup) {
+      try { removeTemporaryTransaction(transaction, agentsRoot); }
+      catch (cleanupError) { throw new Error(`安装暂存失败：${error.message}；临时事务未清理 ${transaction}：${cleanupError.message}`); }
+    }
+    throw error;
   }
-  mkdirSync(plan.destination, { recursive: true });
-  mkdirSync(original, { recursive: true });
   const applied = [];
   try {
     for (const entry of changes) {
@@ -135,15 +156,32 @@ function applyInstallation(plan) {
     }
   } catch (error) {
     const failed = join(transaction, 'failed');
-    mkdirSync(failed, { recursive: true });
+    try { mkdirSync(failed, { recursive: true }); }
+    catch (rollbackError) { throw new Error(`安装失败，无法准备回滚；事务资料保留于 ${transaction}：${error.message}；恢复错误：${rollbackError.message}`); }
+    const rollbackErrors = [];
     for (const entry of applied.reverse()) {
-      if (existsSync(entry.target)) renameSync(entry.target, join(failed, entry.name));
-      const previous = join(original, entry.name);
-      if (existsSync(previous)) renameSync(previous, entry.target);
+      try {
+        if (existsSync(entry.target)) renameSync(entry.target, join(failed, entry.name));
+        const previous = join(original, entry.name);
+        if (existsSync(previous)) renameSync(previous, entry.target);
+      } catch (rollbackError) {
+        rollbackErrors.push(`${entry.name}: ${rollbackError.message}`);
+      }
+    }
+    // 回滚未完成时保留事务，供用户恢复尚未返回目标位置的原目录。
+    if (rollbackErrors.length) throw new Error(`安装失败，旧技能未能全部恢复；事务资料保留于 ${transaction}：${error.message}；恢复错误：${rollbackErrors.join('；')}`);
+    if (!retainBackup) {
+      try { removeTemporaryTransaction(transaction, agentsRoot); }
+      catch (cleanupError) { throw new Error(`安装失败，已恢复旧技能：${error.message}；临时事务未清理 ${transaction}：${cleanupError.message}`); }
+      throw new Error(`安装失败，已恢复旧技能：${error.message}`);
     }
     throw new Error(`安装失败，已恢复旧技能；事务资料保留于 ${transaction}：${error.message}`);
   }
-  return { ...plan, changed: true, backup: changes.some((entry) => entry.action === 'replace') ? original : null };
+  if (!retainBackup) {
+    try { removeTemporaryTransaction(transaction, agentsRoot); }
+    catch (error) { throw new Error(`安装已完成，但临时事务未清理 ${transaction}：${error.message}`); }
+  }
+  return { ...plan, changed: true, backup: retainBackup && changes.some((entry) => entry.action === 'replace') ? original : null };
 }
 
 /** 严格解析安装选项；没有技术选择时不擅自安装全部技术栈。 */

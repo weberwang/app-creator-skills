@@ -13,7 +13,8 @@ export async function runGitHubNpxInstaller(argv = process.argv.slice(2), runtim
       projectRoot: args[0],
       stacks: args[args.indexOf('--stack') + 1].split(','),
       dryRun: args.includes('--dry-run'),
-      replace: args.includes('--replace'),
+      replace: true,
+      retainBackup: false,
     });
     // 统一摘要使用远程结果的预览标记，不触发网络访问。
     return { ...result, remote: { dryRun: args.includes('--dry-run') } };

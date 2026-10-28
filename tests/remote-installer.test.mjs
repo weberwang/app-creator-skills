@@ -1,6 +1,6 @@
 /** 验证远程按栈取数、固定提交、内容缓存和目标安装事务。 */
 import assert from 'node:assert/strict';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -102,7 +102,7 @@ function rawPaths(requests) {
 function installFixture(projectRoot, cacheRoot, repository, options = {}) {
   return installRemoteSkills({
     projectRoot, stacks: options.stacks ?? ['unity'], repo: REPOSITORY, ref: options.ref,
-    replace: options.replace ?? false, dryRun: options.dryRun ?? false, cacheRoot,
+    dryRun: options.dryRun ?? false, cacheRoot,
     fetchImpl: options.fetchImpl, env: options.env ?? {},
   });
 }
@@ -302,21 +302,43 @@ test('缓存默认冷启动逐层创建，并拒绝缓存根祖先或哈希桶�
   await assert.rejects(bucketSource.getBlob(bucketSource.findBlob('packages/installer/catalog.json')), /缓存路径不能包含链接/);
 });
 
-test('本地内容冷复用后仍由事务拒绝覆盖用户修改，replace 会生成备份', async (t) => {
+/** 远程默认直接更新所选目录，保留无关技能且不产生持久备份或暂存目录。 */
+test('远程默认覆盖旧文件并清理事务，重复安装跳过', async (t) => {
   const root = testDirectory(t);
   const project = join(root, 'project');
   mkdirSync(project);
   const repo = makeRepository();
   const cache = join(root, 'cache');
-  await installFixture(project, cache, repo, { fetchImpl: fakeGitHub(repo).fetchImpl });
+  const first = await installFixture(project, cache, repo, { fetchImpl: fakeGitHub(repo).fetchImpl });
+  assert.equal(first.backup, null);
+  assert.deepEqual(readdirSync(join(project, '.agents')), ['skills']);
+  const existingBackup = join(project, '.agents', 'skills-backups', 'existing');
+  mkdirSync(existingBackup, { recursive: true });
+  writeFileSync(join(existingBackup, 'keep.txt'), '历史资料');
   const target = join(project, '.agents', 'skills', 'grilling', 'SKILL.md');
   writeFileSync(target, '用户修改\n');
+  const obsolete = join(project, '.agents', 'skills', 'grilling', 'obsolete.txt');
+  writeFileSync(obsolete, '旧文件');
+  const unrelated = join(project, '.agents', 'skills', 'my-skill');
+  mkdirSync(unrelated);
+  writeFileSync(join(unrelated, 'SKILL.md'), '无关技能');
   const transport = fakeGitHub(repo);
-  await assert.rejects(installFixture(project, cache, repo, { fetchImpl: transport.fetchImpl }), /技能已存在/);
-  assert.equal(readFileSync(target, 'utf8'), '用户修改\n');
-  const replaced = await installFixture(project, cache, repo, { fetchImpl: transport.fetchImpl, replace: true });
-  assert.ok(replaced.backup);
-  assert.equal(readFileSync(join(replaced.backup, 'grilling', 'SKILL.md'), 'utf8'), '用户修改\n');
+  const replaced = await installFixture(project, cache, repo, { fetchImpl: transport.fetchImpl });
+  assert.equal(replaced.changed, true);
+  assert.equal(replaced.backup, null);
+  assert.equal(replaced.entries.find((entry) => entry.name === 'grilling').action, 'replace');
+  assert.equal(readFileSync(target, 'utf8'), '# grilling\n');
+  assert.equal(existsSync(obsolete), false);
+  assert.equal(readFileSync(join(unrelated, 'SKILL.md'), 'utf8'), '无关技能');
+  assert.deepEqual(readdirSync(join(project, '.agents')).sort(), ['skills', 'skills-backups']);
+  assert.deepEqual(readdirSync(join(project, '.agents', 'skills-backups')), ['existing']);
+  assert.equal(readFileSync(join(existingBackup, 'keep.txt'), 'utf8'), '历史资料');
+  const repeated = await installFixture(project, cache, repo, { fetchImpl: fakeGitHub(repo).fetchImpl });
+  assert.equal(repeated.changed, false);
+  assert.equal(repeated.backup, null);
+  assert.ok(repeated.entries.every((entry) => entry.action === 'skip'));
+  assert.deepEqual(readdirSync(join(project, '.agents')).sort(), ['skills', 'skills-backups']);
+  assert.deepEqual(readdirSync(join(project, '.agents', 'skills-backups')), ['existing']);
 });
 
 test('CLI 必须明确仓库和技术栈，仓库地址仅接受 GitHub 形式', async () => {

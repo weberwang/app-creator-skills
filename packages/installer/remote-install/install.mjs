@@ -225,7 +225,7 @@ function assertNoLinks(path) {
 }
 
 /** 构造只下载所选闭包的来源树，并将事务交给与本地安装共用的安装器。 */
-export async function installRemoteSkills({ projectRoot = process.cwd(), stacks, repo, ref, replace = false, dryRun = false, cacheRoot, fetchImpl = globalThis.fetch, env = process.env, sourceSnapshot = null, bootstrapFiles = [] }) {
+export async function installRemoteSkills({ projectRoot = process.cwd(), stacks, repo, ref, dryRun = false, cacheRoot, fetchImpl = globalThis.fetch, env = process.env, sourceSnapshot = null, bootstrapFiles = [] }) {
   if (!Array.isArray(stacks) || !stacks.length || stacks.some((stack) => !STACKS.includes(stack))) throw new Error('必须明确选择有效技术栈；不会默认安装全部栈');
   const selectedStacks = [...new Set(stacks)];
   const repository = normalizeRepository(repo);
@@ -271,7 +271,7 @@ export async function installRemoteSkills({ projectRoot = process.cwd(), stacks,
     });
     for (const { entry, content } of contents) writeSourceFile(sourceRoot, entry.path, content, entry.mode);
     writeSourceFile(sourceRoot, 'packages/installer/catalog.json', catalogBytes, catalogBlob.mode);
-    const result = installSkills({ projectRoot: project, stacks: selectedStacks, replace, dryRun: false, sourceRoot });
+    const result = installSkills({ projectRoot: project, stacks: selectedStacks, replace: true, retainBackup: false, dryRun: false, sourceRoot });
     return {
       ...result,
       remote: {

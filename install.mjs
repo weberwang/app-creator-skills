@@ -266,7 +266,7 @@ export async function createGitHubSource({ repo, ref, cacheRoot, fetchImpl = glo
 /** 校验用户选择并引导最小安装引擎，代码和技能始终来自同一个提交。 */
 export async function runRemoteBootstrap(argv = process.argv.slice(2), runtime = {}) {
   if (argv.includes('--help')) {
-    return { help: '用法：node install.mjs <已有项目目录> --repo owner/repo --stack unity|cocos|phaser|threejs|flutter[,...]|all [--ref ref] [--dry-run] [--replace]' };
+    return { help: '用法：node install.mjs <已有项目目录> --repo owner/repo --stack unity|cocos|phaser|threejs|flutter[,...]|all [--ref ref] [--dry-run]\n默认覆盖所选安装目录中的不同内容，成功后不保留旧目录备份；相同内容跳过。' };
   }
   const options = parseBootstrapArgs(argv);
   const source = await createGitHubSource({ repo: options.repo, ref: options.ref, ...runtime });
