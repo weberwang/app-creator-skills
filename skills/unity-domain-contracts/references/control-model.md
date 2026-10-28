@@ -1,5 +1,7 @@
 # 控制模型
 
+领域工作项及含视觉阶段的证据记录须声明 `visualStageModel: function-first-v1`，V1 完成功能验证，视觉确认从 V2 开始，白盒可选。
+
 ## A0-A6 动作等级
 
 | 等级 | Unity 语义 | 典型动作 |
@@ -16,7 +18,7 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 ## Work Item 类型与显示层边界
 
-`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V0-V4）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
+`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V0-V5）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
 
 `hostSceneId` 只表示显示层打开时的宿主上下文和公开接线目标，不是场景身份，也不把宿主场景完成状态并入显示层。场景与显示层必须各自规划、各自实施、各自验收；同一 Implementation Package 不得同时出现 `SCENE` 和 `DISPLAY_LAYER` 单元。
 
@@ -28,9 +30,9 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内合同来源；控制器检查路径、文件存在及 JSON 格式，不比较合同内容、版本或 SHA。实际完成情况及调整记录在交付和验收证据中。
 
-屏幕 UI（UGUI/UI Toolkit）从 V2 起还绑定 `uiLayoutPlanRef.path`，读取[机器布局包](../../unity-development-workflow/references/ui-layout-plan.md)并重算目标几何。V4 的 `uiLayoutMeasurementRef.path` 只引用当前 evidenceRoot 内的正式[布局组件报告](../../unity-development-workflow/references/ui-layout-runtime.md)，与当前候选、场景、状态和计划节点对应。直接迁移也重新读取文件，不能靠缓存 blockers、静态 PASS 或人工确认替代实际组件证据。目标内的技术修复只重验受影响事实，不自动退阶段。
+屏幕 UI（UGUI/UI Toolkit）从 V3 起还绑定 `uiLayoutPlanRef.path`，读取[机器布局包](../../unity-development-workflow/references/ui-layout-plan.md)并重算目标几何。V5 的 `uiLayoutMeasurementRef.path` 只引用当前 evidenceRoot 内的正式[布局组件报告](../../unity-development-workflow/references/ui-layout-runtime.md)，与当前候选、场景、状态和计划节点对应。直接迁移也重新读取文件，不能靠缓存 blockers、静态 PASS 或人工确认替代实际组件证据。目标内的技术修复只重验受影响事实，不自动退阶段。
 
-程序化文本为 `programmatic=true` 时，`locales` 必须精确为 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`；非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=1`，非 1 的正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
+程序化文本为 `programmatic=true` 时，`locales` 记录项目已确认的语言清单；新项目默认中文并可选其他语言，既有项目沿用已确认清单；逐语言声明 `singleLine`、`wrap` 和 `truncation=forbidden`，非程序化文本不得伪造这些字段。图片源密度默认使用 Unity `sourceScale=1`，非 1 的正数必须带 `override.reason` 与 `approvalRef`/`evidenceRef`；它不是运行时 DPR，运行时缩放只能使用平台、Canvas、Panel 和 Camera 实测结果。UGUI/World Space Canvas 不制造 PanelSettings 资产，UI Toolkit 不制造 CanvasScaler 资产；不用的路线显式标记 `not-applicable` 并给出原因。
 
 ## F0-F4 唯一语义
 
@@ -57,6 +59,6 @@ Implementation Package 的 `responsiveContractRef.path/version` 记录仓库内�
 
 ## 明确停止
 
-实施包可用 `resourceHandoff` 声明资源总表快照与序列帧合同。声明后进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 或提交 PASS 证据时，必须有当前 evidenceRoot 内的 `resourceHandoffInspectionRef`，且实际报告 taskId/outputPath 与工作项及引用相符。控制面与文件 CLI 复用相同资源/帧校验函数，直接交付重新读取磁盘材料；缺失或失败修复并重验，不新建资源状态机或自动回退 V2。
+实施包可用 `resourceHandoff` 声明资源总表快照与序列帧合同。声明后进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 或提交 PASS 证据时，必须有当前 evidenceRoot 内的 `resourceHandoffInspectionRef`，且实际报告 taskId/outputPath 与工作项及引用相符。控制面与文件 CLI 复用相同资源/帧校验函数，直接交付重新读取磁盘材料；缺失或失败修复并重验，不新建资源状态机或自动回退 V3。
 
 控制面遇到未决用户选择、未冻结实施包、缺少验证证据、`RETURN`、不同所有者的正式 Editor 写入或带副作用 A4-A6 时停止。它不会通过猜测用户意图、把 NOT_RUN 改成 PASS、自动回退状态或调用 Unity/设备/服务来“完成”任务。

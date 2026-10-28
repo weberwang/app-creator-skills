@@ -168,8 +168,8 @@ test('安装器分发全部专业目录，并运行 Flutter、帧规划和 Three
   const flutterOutput = runNode(flutterFixtures, [], { NODE_PATH: '' });
   assert.match(flutterOutput, /\[PASS\]/, 'Flutter 布局夹具工具必须产生逐项通过输出');
 
-  for (const [stack, skillName] of [['cocos', 'cocos-frame-animation'], ['phaser', 'phaser4-frame-animation']]) {
-    const planner = join(installedSkills, skillName, 'scripts', 'image-inbetween-plan.mjs');
+  for (const stack of ['cocos', 'phaser', 'threejs']) {
+    const planner = join(installedSkills, `${stack}-domain-contracts`, 'resources', 'frame-animation', 'scripts', 'image-inbetween-plan.mjs');
     const outputPlan = join(project, `${stack}-frame-plan.json`);
     const output = runNode(planner, ['--duration-ms', '1000', '--fps', '12', '--keyframes', '3,6,9', '--loop', '--output-plan', outputPlan]);
     assert.match(output, /已写入计划/);

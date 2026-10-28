@@ -2,6 +2,8 @@
 
 Code Sketch Reviewer 必须独立于 Code Sketch Agent，只读审阅同一个不可变候选。
 
+本规则只适用于已选择 Code Sketch 的工作项；直接实现并验证功能时不要求草图或草图审阅。截图显示效果由用户检查，未经明确授权不得自动分析截图。
+
 ## 输入完整性
 
 - snapshot-id 或完整 diff；已有且获授权的提交才记录代码 SHA。

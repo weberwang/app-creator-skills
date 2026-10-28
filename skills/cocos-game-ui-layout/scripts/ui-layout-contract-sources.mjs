@@ -4,7 +4,7 @@ import { resolveSceneV2LayoutSource } from "../../cocos-domain-contracts/scripts
 
 export { resolveSceneV2LayoutSource };
 
-const REFERENCE_FIELDS = ["project_policy_file", "scene_contract_file"];
+const REFERENCE_FIELDS = ["project_policy_file", "scene_contract_file", "localization_contract_file"];
 
 /** 判断是否为普通对象。 */
 function isObject(value) {
@@ -49,7 +49,7 @@ export function getUiLayoutSourceDocument(sources, reference, field) {
   catch { return undefined; }
 }
 
-/** 从项目内 JSON 文件读取公共策略与场景合同，并校验词法和真实路径边界。 */
+/** 从项目内 JSON 文件读取公共策略、场景及本地化合同，并校验词法和真实路径边界。 */
 export async function loadUiLayoutSourceDocuments(document, projectRoot) {
   if (typeof projectRoot !== "string" || projectRoot.trim().length === 0) throw new Error("读取 UI 布局合同源必须提供 projectRoot");
   const root = resolve(projectRoot);

@@ -313,7 +313,7 @@ test("CLI 将包内有效 Skill 安装到执行目录", async (t) => {
   // 脱离仓库和目标项目的 npm 依赖，验证复制后的原生图片运行库可独立加载。
   const runtimeUrl = pathToFileURL(join(projectRoot, ".agents", "skills", "skills/cocos-domain-contracts", "scripts", "runtime", "image-runtime.mjs")).href;
   const toolUrls = [
-    "skills/cocos-frame-animation/scripts/frame-atlas-core.mjs",
+    "skills/cocos-domain-contracts/resources/frame-animation/scripts/frame-atlas-core.mjs",
     "skills/cocos-spine-generative-reskin/scripts/spine_reskin_progress.mjs",
     "skills/cocos-domain-contracts/scripts/visual-image-normalization.mjs",
   ].map((path) => pathToFileURL(join(projectRoot, ".agents", "skills", path)).href);

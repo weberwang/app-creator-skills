@@ -132,7 +132,7 @@
     "runtimeMeasurement": {
       "$ref": "./common.schema.json#/$defs/runtimeMeasurement"
     },
-    "v4Status": {
+    "v5Status": {
       "enum": [
         "PASS",
         "FAIL",
@@ -207,12 +207,12 @@
     {
       "if": {
         "properties": {
-          "v4Status": {
+          "v5Status": {
             "const": "PASS"
           }
         },
         "required": [
-          "v4Status"
+          "v5Status"
         ]
       },
       "then": {
@@ -325,10 +325,10 @@
           "candidateSnapshot",
           "grillingEvidence",
           "runtimeMeasurement",
-          "v4Status"
+          "v5Status"
         ],
         "properties": {
-          "v4Status": {
+          "v5Status": {
             "const": "PASS"
           },
           "runtimeMeasurement": {

@@ -2,6 +2,8 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
+各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+
 ## 能力索引
 
 - **产品与游戏需求**
@@ -135,7 +137,7 @@
 4. 装饰性屏幕空间背景只用于非交互背景。关卡、地形、碰撞、玩法环境和相机轨迹使用独立世界数据与坐标合同，不套用 HUD 的固定设计分辨率。按[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)声明真实 `Object3D` 根、Camera、渲染顺序、深度测试、输入、生命周期和资源所有权；对象枢轴通过几何局部坐标或父级 `Group` 表达，跨层合成由 Camera/DOM/渲染通道合同明确。
 5. 涉及屏幕 HUD 时使用 [`threejs-game-ui-layout`](#mode-threejs-game-ui-layout) 定义布局入口，并记录 CSS client rect、有效 DPR（最高 2）、Canvas backing、Camera、输入映射、安全区、resize、代表性视口、性能预算和证据字段。Canvas 尺寸按 CSS 宽高配置，物理像素不作为 UI 坐标；改尺寸后同步更新相机投影矩阵。传统按钮/文字优先由 DOM Overlay 布局，需在 3D Canvas 内绘制的 HUD 使用 OrthographicCamera。固定 1080×1920 设计基准只可用于 HUD；透视世界按项目单位、关卡几何、相机和视锥另立 world contract。DPR 变化时 CSS/backing 与输入映射一起更新，监听器按显示模块生命周期清理。弹窗/DISPLAY_LAYER 继承宿主 CSS 视口与输入合同；独立 Camera 或 Canvas 另行声明合成和命中映射。布局重算保持幂等；合同验证属于 F3，特殊视口与遮挡规则触发布局专项 F2。
 6. 分离核心规则、表现、平台和第三方服务。[公共架构模块契约](../../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)foundation-only 阶段的 `SHARED` 只提供最小启动、公开契约与 Boot/Preload 生命周期，`MODULE` 只提供场景无关数据/状态/输入/资源基础设施、渲染循环和测试支撑；具体场景业务、HUD/布局和正式可见资产仍在对应场景阶段完成。每个场景在自身阶段完成玩法、正式视觉、自有常驻 HUD、清理和联合证据；瞬态弹窗由独立 DISPLAY_LAYER 工作项负责，不作为宿主场景验收前置。玩法独占规则、状态、物理语义和交互代码；美术可维护纯表现资源配置、场景数据和视觉集成调整，但不得改变玩法规则、碰撞语义或状态所有权。为浏览器输入、页面暂停/恢复、可见性、视口与目标硬件定义验证策略。
-7. 对组件/资源集和场景路径，在 V1 定义每场景纹理、图集、帧数、动画采样、纹理内存、过绘、Draw Call 和最大纹理预算；在 V3 将预算写入机器清单，V4 验证正式资源与场景组合。原子资源必须引用已有适用且有效的玩法视觉契约与预算基线，否则升级路径；不得在验收时临时放宽。
+7. 对组件/资源集和场景路径，在 V2 定义每场景纹理、图集、帧数、动画采样、纹理内存、过绘、Draw Call 和最大纹理预算；在 V4 将预算写入机器清单，V5 验证正式资源与场景组合。原子资源必须引用已有适用且有效的玩法视觉契约与预算基线，否则升级路径；不得在验收时临时放宽。
 8. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/architecture-handoff.md#完整流程)。
 10. 共享基础完成后验证代表性浏览器/Vite 启动、WebGL2 Renderer、Boot/首场景、资源和已选插件；关键玩法流完成后验证项目声明的目标浏览器/硬件；仅最终集成/G3/release 执行项目实际采用渠道的平台矩阵。不得由局部证据宣称全平台通过，不得自动发起真机验收。
 11. F0 完成后提交范围与流程事实；F1 提交规格映射；F2 提交独立架构结论；F3 提交候选 SHA、实际命令证据和未覆盖项。
@@ -158,7 +160,7 @@
 <a id="mode-threejs-gameplay-development--threejs-玩法开发"></a>
 ### three.js 玩法开发
 
-全局阶段、V0–V4、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景仍使用同一 Work Item 的 V1→V2→V3→V4 链，V2 拆解和布局分别确认。
+全局阶段、V0–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V0–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
 
 <a id="mode-threejs-gameplay-development--全局控制接入"></a>
 #### 全局控制接入
@@ -170,6 +172,8 @@ Work Item 范围、实际实施结果、证据与阶段迁移统一按[当前公
 <a id="mode-threejs-gameplay-development--所有权"></a>
 #### 所有权
 
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#玩法与美术职责)。
+
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 
 <a id="mode-threejs-gameplay-development--实现"></a>
@@ -178,7 +182,7 @@ Work Item 范围、实际实施结果、证据与阶段迁移统一按[当前公
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 3. 对当前场景明确可观察玩家行为、状态迁移、时序、反馈、成功/失败和异常恢复。截图无法证明的行为标为待定义，不自行推断。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
-6. 只使用绑定当前 `scene_id` 或合规 `shared` 且 V3 `accepted` 的资源进入正式功能实现。用 `Object3D`/`Group` 层级、模型、网格和相机结构化装配，按[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)区分模型局部枢轴、碰撞代理与 `Sprite.center`；记录坐标单位、变换和必要例外，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属。UI 从 [`threejs-game-ui-layout`](#mode-threejs-game-ui-layout) 布局契约计算，区分坐标空间、资源原点、布局停靠点与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证相对关系，不把绝对屏幕坐标当作通用验收标准。
+6. 只使用绑定当前 `scene_id` 或合规 `shared` 且 V4 `accepted` 的资源进入正式功能实现。用 `Object3D`/`Group` 层级、模型、网格和相机结构化装配，按[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)区分模型局部枢轴、碰撞代理与 `Sprite.center`；记录坐标单位、变换和必要例外，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属。UI 从 [`threejs-game-ui-layout`](#mode-threejs-game-ui-layout) 布局契约计算，区分坐标空间、资源原点、布局停靠点与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证相对关系，不把绝对屏幕坐标当作通用验收标准。
 7. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 
 <a id="mode-threejs-gameplay-development--证据"></a>
@@ -389,7 +393,7 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 
 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 是本技能唯一的全局状态、风险门、任务范围和证据控制面。本技能可在当前 Work Item 授权任务范围内提出动画方案、审阅现有任务工件，并仅对已分配的动画/区域和文件实施修改；真实视觉结果仍由用户人工验收，主代理负责审查方案、范围与验收证据。本技能不扩大跨 Work Item 范围，不替代控制面的批准或状态管理。所有方案、变更、人工验收结果、测试证据和阻断项都回到唯一控制面登记与复核，再按控制面安排完成 ThreeJS 接入、运行验证和状态迁移。
 
-在当前 Work Item 范围内先内部推导并维护动作时间轴设计记录。方案完成后，按[设计理念说明](../../threejs-frame-animation/references/intent-driven-design.md#方案完成后阐述设计理念)向用户说明目标感受、关键动作依据、节奏和资源取舍，并等待用户明确确认当前方案；确认后才编写正式提示词和制作真实素材。方案确认与视频、图片关键帧及完整序列的真实素材验收分别进行。只有玩法事件、时长或行为权限确实缺失且无法推导时，才询问受影响动作。
+在当前 Work Item 范围内先内部推导并维护动作时间轴设计记录。方案完成后，按[设计理念说明](../../threejs-domain-contracts/resources/frame-animation/references/intent-driven-design.md#方案完成后阐述设计理念)向用户说明目标感受、关键动作依据、节奏和资源取舍，并等待用户明确确认当前方案；确认后才编写正式提示词和制作真实素材。方案确认与视频、图片关键帧及完整序列的真实素材验收分别进行。只有玩法事件、时长或行为权限确实缺失且无法推导时，才询问受影响动作。
 
 <a id="mode-threejs-frame-animation--适用范围与运行时"></a>
 #### 适用范围与运行时
@@ -415,22 +419,22 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 <a id="mode-threejs-frame-animation--共用流程"></a>
 #### 共用流程
 
-1. 读取视觉基线、用途类型参考、[完整动作与时间轴](../../threejs-frame-animation/references/action-timing.md)，建立当前动画的内部设计工件。明确来源路线、行为边界、初态/终态、游戏时长、阶段区间、关键姿态、事件、播放方式、锚点/允许位移、完整运动范围、目标显示尺寸、FPS、资源预算和背景处理。角色动作还须明确前后动作衔接、是否循环及进入/退出条件，见[衔接与循环设计](../../threejs-frame-animation/references/character-animation.md#衔接与循环设计)。按需要读取[区域规划](../../threejs-frame-animation/references/region-planning.md)，合批时各区域仍有独立类型、有效时长和时间映射。
-2. 按[动作分析规则](../../threejs-frame-animation/references/action-timing.md#动作分析与时间轴)和[玩法与意图设计方法](../../threejs-frame-animation/references/intent-driven-design.md)，从玩法目的、观看体验与已有时间约束内部推导行为边界、阶段、运动依据、衔接/循环、节奏和性能取舍，并记录具体时间轴、事件时点、关键姿态意图、尺寸推理和逐阶段检查点。视频同时推导 768p/2K 区域排布、条数、整组消耗与推荐方案。方案完成后先向用户阐述设计理念并等待当前方案明确确认；只对确实缺失且无法推导的玩法事件、时长或行为权限提问，并只暂停受影响动作。不制作灰盒或可播放几何示意。
-3. 确认当前方案后，按“共用视觉与资源约束＋类型规则＋当前动画参数”编写正式提示词，并在已有操作授权范围内制作真实候选或预览。视频按[分辨率与合批比较](../../threejs-frame-animation/references/region-planning.md#视频条数与消耗比较)选择 768p 或 2K：先最少条数覆盖全部动作，再在该条数下选整组消耗最少者，同等条件优先 768p；图片按[图片分辨率约定](../../threejs-frame-animation/references/region-planning.md#图片分辨率约定)处理。确认前不生成真实候选或调用图片生成；真实素材交付时附简短检查点。用户确认实际素材时可同时接受该素材所表达的时序，不另行确认文字复述。已有生成授权不能替代当前方案确认，方案确认也不扩大外部操作授权。
-4. 视频路线接收真实视频并核对画布、区域和音轨，按需要选择有效区间、阶段重定时并保存派生来源，交付用户人工验收实际最终抽帧输入。原视频已适配时直接验收原视频；只有实际视频内容、区域和时间映射已经人工验收才抽帧。SHA 可作为追踪记录，不参与文件验收或替代用户对实际视频的确认。未通过先修正并重提；修正说明或文字方案不代替新视频验收。图片路线核实实际输出尺寸，固定统一画布并确认首尾；同一连续行为的必要关键帧按时间顺序逐张制作，与真实基线及相邻已确认帧比较，人工确认当前帧后才推进下一关键帧。关键帧齐备并确认后，再按内部推导的时点递归补齐目标帧位。实际依赖与[一致性及衔接门](../../threejs-frame-animation/references/image-inbetween.md#关键帧的一致性与衔接门)集中维护；父图有缺陷先修正，不继续传播。
-5. 视频按固定区域抽帧，图片按真实来源清单打包；两者共用背景处理、等比缩放、固定 cell/锚点、独立图集、报告和 HTML 预览。依据当前类型反馈局部修帧，保留已有修图成果及来源身份，更新图集、报告、预览及可选 SHA 追踪值。缺陷修复不默认替换整组来源。
-6. 用真实完整帧序列按内部设计工件中的逐阶段检查点人工检查表现意图、节奏、连续性、事件及单次/循环/终态和外部动作衔接，记录具体偏差与用户结论。同一已确认目标下的局部纠错直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质改变时，先重新说明并确认。已有方案范围内不重新索取生成授权。保存分类规则、玩法与意图推导、方案确认版本、真实候选审阅、时间映射与最终人工验收证据，按[工作流接入合同](../../threejs-frame-animation/references/workflow-integration.md)提交资源，再回到控制面完成 ThreeJS 接入和运行验证。
+1. 读取视觉基线、用途类型参考、[完整动作与时间轴](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md)，建立当前动画的内部设计工件。明确来源路线、行为边界、初态/终态、游戏时长、阶段区间、关键姿态、事件、播放方式、锚点/允许位移、完整运动范围、目标显示尺寸、FPS、资源预算和背景处理。角色动作还须明确前后动作衔接、是否循环及进入/退出条件，见[衔接与循环设计](../../threejs-domain-contracts/resources/frame-animation/references/character-animation.md#衔接与循环设计)。按需要读取[区域规划](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md)，合批时各区域仍有独立类型、有效时长和时间映射。
+2. 按[动作分析规则](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md#动作分析与时间轴)和[玩法与意图设计方法](../../threejs-domain-contracts/resources/frame-animation/references/intent-driven-design.md)，从玩法目的、观看体验与已有时间约束内部推导行为边界、阶段、运动依据、衔接/循环、节奏和性能取舍，并记录具体时间轴、事件时点、关键姿态意图、尺寸推理和逐阶段检查点。视频同时推导 768p/2K 区域排布、条数、整组消耗与推荐方案。方案完成后先向用户阐述设计理念并等待当前方案明确确认；只对确实缺失且无法推导的玩法事件、时长或行为权限提问，并只暂停受影响动作。不制作灰盒或可播放几何示意。
+3. 确认当前方案后，按“共用视觉与资源约束＋类型规则＋当前动画参数”编写正式提示词，并在已有操作授权范围内制作真实候选或预览。视频按[分辨率与合批比较](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md#视频条数与消耗比较)选择 768p 或 2K：先最少条数覆盖全部动作，再在该条数下选整组消耗最少者，同等条件优先 768p；图片按[图片分辨率约定](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md#图片分辨率约定)处理。确认前不生成真实候选或调用图片生成；真实素材交付时附简短检查点。用户确认实际素材时可同时接受该素材所表达的时序，不另行确认文字复述。已有生成授权不能替代当前方案确认，方案确认也不扩大外部操作授权。
+4. 视频路线接收真实视频并核对画布、区域和音轨，按需要选择有效区间、阶段重定时并保存派生来源，交付用户人工验收实际最终抽帧输入。原视频已适配时直接验收原视频；只有实际视频内容、区域和时间映射已经人工验收才抽帧。SHA 可作为追踪记录，不参与文件验收或替代用户对实际视频的确认。未通过先修正并重提；修正说明或文字方案不代替新视频验收。图片路线核实实际输出尺寸，固定统一画布并确认首尾；同一连续行为的必要关键帧按时间顺序逐张制作，与真实基线及相邻已确认帧比较，人工确认当前帧后才推进下一关键帧。关键帧齐备并确认后，再按内部推导的时点递归补齐目标帧位。实际依赖与[一致性及衔接门](../../threejs-domain-contracts/resources/frame-animation/references/image-inbetween.md#关键帧的一致性与衔接门)集中维护；父图有缺陷先修正，不继续传播。
+5. 视频按固定区域抽帧，图片按真实来源清单打包；两者共用背景处理、等比缩放、固定 cell/锚点、独立图集和报告；需要动画播放时通过 `--output-preview` 指定 HTML 预览路径。依据当前类型反馈局部修帧，保留已有修图成果及来源身份，更新图集、报告及实际生成的预览及可选 SHA 追踪值。缺陷修复不默认替换整组来源。
+6. 用真实完整帧序列按内部设计工件中的逐阶段检查点人工检查表现意图、节奏、连续性、事件及单次/循环/终态和外部动作衔接，记录具体偏差与用户结论。同一已确认目标下的局部纠错直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质改变时，先重新说明并确认。已有方案范围内不重新索取生成授权。保存分类规则、玩法与意图推导、方案确认版本、真实候选审阅、时间映射与最终人工验收证据，按[工作流接入合同](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md)提交资源，再回到控制面完成 ThreeJS 接入和运行验证。
 
 <a id="mode-threejs-frame-animation--动作设计与真实素材确认"></a>
 #### 动作设计与真实素材确认
 
-动作分析与时间轴写入内部设计工件；方案完成后先说明设计理念并等待用户明确确认，确认后才进入正式提示词与素材制作。方案确认之后，视频路线由用户审阅真实视频候选及完整序列；用户对实际视频的确认可同时接受其中表现的时序。图片路线以真实首尾、关键帧和递归父图逐张确认，再验收完整真实序列。真实序列预览提供播放/暂停、重播和逐帧查看，检查标记只放预览界面。正式美术使用真实基线及已确认素材，设计图表和历史占位示意不得作为生图视觉参考。同一已确认目标下的局部修正直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质变化时，先重新说明并确认。详细要求见[动作设计与素材确认](../../threejs-frame-animation/references/workflow-integration.md#动作设计与素材确认)、[真实素材审阅与验收](../../threejs-frame-animation/references/workflow-integration.md#真实素材审阅与验收)及[设计与美术的边界](../../threejs-frame-animation/references/workflow-integration.md#设计与美术的边界)。
+动作分析与时间轴写入内部设计工件；方案完成后先说明设计理念并等待用户明确确认，确认后才进入正式提示词与素材制作。方案确认之后，视频路线由用户审阅真实视频候选及完整序列；用户对实际视频的确认可同时接受其中表现的时序。图片路线以真实首尾、关键帧和递归父图逐张确认，再验收完整真实序列。真实序列预览提供播放/暂停、重播和逐帧查看，检查标记只放预览界面。正式美术使用真实基线及已确认素材，设计图表和历史占位示意不得作为生图视觉参考。同一已确认目标下的局部修正直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质变化时，先重新说明并确认。详细要求见[动作设计与素材确认](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md#动作设计与素材确认)、[真实素材审阅与验收](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md#真实素材审阅与验收)及[设计与美术的边界](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md#设计与美术的边界)。
 
 <a id="mode-threejs-frame-animation--共用质量与关键约束"></a>
 #### 共用质量与关键约束
 
-- 以可读性、节奏、主次关系、连续性和事件同步验收；具体判断及优化方法见[共用质量与优化](../../threejs-frame-animation/references/action-timing.md#共用质量与优化)。重量感、夸张程度、停顿和跟随运动按类型、对象性质与视觉基线配置，不统一套用战斗节奏。
+- 以可读性、节奏、主次关系、连续性和事件同步验收；具体判断及优化方法见[共用质量与优化](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md#共用质量与优化)。重量感、夸张程度、停顿和跟随运动按类型、对象性质与视觉基线配置，不统一套用战斗节奏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/frame-animation-execution.md#完整流程)。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/frame-animation.md#共用质量与关键约束)。
 - 默认保持要求呈现的内容及完整运动范围入框，保留安全边距。裁剪例外须有当前任务的明确授权，逐项记录对象、范围与理由；不能为合批或强调力度自行裁边。
@@ -475,27 +479,27 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 | 当前阶段 | 按需读取 |
 | --- | --- |
 | 用途判断与类型制作 | 上方对应的一份分类参考；涉及独立特效或 UI 位图时再读取其规则 |
-| 从玩法与表现意图推导时长、节奏及检查点 | [intent-driven-design.md](../../threejs-frame-animation/references/intent-driven-design.md)，在动作分析时读取并写入既有设计工件，先说明方案并等用户确认，制作与验收复用 |
+| 从玩法与表现意图推导时长、节奏及检查点 | [intent-driven-design.md](../../threejs-domain-contracts/resources/frame-animation/references/intent-driven-design.md)，在动作分析时读取并写入既有设计工件，先说明方案并等用户确认，制作与验收复用 |
 | 需要分配普通/角色/特效/UI 动画设计职责及混合任务所有权 | 上方[执行代理](#mode-threejs-frame-animation--执行代理)的职业映射与交接要求 |
 | 需要反馈语义、类型适用或事件覆盖规则 | [ThreeJS 2D 汁水感设计指南](../../threejs-game-juice/references/design-guide.md)；本 Skill 仍按既有时间轴设计、真实素材审阅和完整序列人工验收生产帧动画 |
-| 游戏时间、独立区域时长、性能取舍与修正 | [action-timing.md](../../threejs-frame-animation/references/action-timing.md) |
-| 效果图尺寸推理、合批与空间裁剪 | [region-planning.md](../../threejs-frame-animation/references/region-planning.md) |
-| 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../threejs-frame-animation/references/image-inbetween.md) |
-| 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../threejs-frame-animation/references/workflow-integration.md) |
+| 游戏时间、独立区域时长、性能取舍与修正 | [action-timing.md](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md) |
+| 效果图尺寸推理、合批与空间裁剪 | [region-planning.md](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md) |
+| 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../threejs-domain-contracts/resources/frame-animation/references/image-inbetween.md) |
+| 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md) |
 
-全局阶段仍由[唯一控制面](../../app-workflow-control/SKILL.md)管理：V2 内部推导并记录动作时间轴、向用户说明设计理念并取得当前方案确认；V3 按已确认方案制作并审阅真实视频或关键帧、验收完整序列；V4 依据报告的 `TextureLoader`、水平 UV、`SpriteMaterial`、`Sprite.center` 与逐帧更新合同接入 three.js 并验证运行态。二维精灵的资源与运行时合同不适用于三维骨骼动画，后者仍走 `AnimationMixer`。
+全局阶段仍由[唯一控制面](../../app-workflow-control/SKILL.md)管理：V3 内部推导并记录动作时间轴、向用户说明设计理念并取得当前方案确认；V4 按已确认方案制作并审阅真实视频或关键帧、验收完整序列；V5 依据报告的 `TextureLoader`、水平 UV、`SpriteMaterial`、`Sprite.center` 与逐帧更新合同接入 three.js 并验证运行态。二维精灵的资源与运行时合同不适用于三维骨骼动画，后者仍走 `AnimationMixer`。
 
 <a id="mode-threejs-frame-animation--本栈配套资料"></a>
 #### 本栈配套资料
 
-- [游戏时间先于来源](../../threejs-frame-animation/references/action-timing.md#游戏时间先于来源)
-- [视频节奏整理](../../threejs-frame-animation/references/action-timing.md#视频节奏整理)
-- [按区域抽帧](../../threejs-frame-animation/references/region-planning.md#按区域抽帧)
-- [图片递归补帧](../../threejs-frame-animation/references/image-inbetween.md)
-- [普通动画](../../threejs-frame-animation/references/object-animation.md)
-- [角色动作动画](../../threejs-frame-animation/references/character-animation.md)
-- [特效动画](../../threejs-frame-animation/references/effect-animation.md)
-- [UI 帧动画](../../threejs-frame-animation/references/ui-frame-animation.md)
+- [游戏时间先于来源](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md#游戏时间先于来源)
+- [视频节奏整理](../../threejs-domain-contracts/resources/frame-animation/references/action-timing.md#视频节奏整理)
+- [按区域抽帧](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md#按区域抽帧)
+- [图片递归补帧](../../threejs-domain-contracts/resources/frame-animation/references/image-inbetween.md)
+- [普通动画](../../threejs-domain-contracts/resources/frame-animation/references/object-animation.md)
+- [角色动作动画](../../threejs-domain-contracts/resources/frame-animation/references/character-animation.md)
+- [特效动画](../../threejs-domain-contracts/resources/frame-animation/references/effect-animation.md)
+- [UI 帧动画](../../threejs-domain-contracts/resources/frame-animation/references/ui-frame-animation.md)
 <!-- native-source:threejs-frame-animation:end -->
 
 
@@ -509,7 +513,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 
 把已确定的视觉与玩法规格制作成可编辑、可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。开始正式建模前阅读[Blender MCP 建模流程](../../threejs-game-3d-modeling/references/mcp-modeling-workflow.md)；涉及下游使用或修改时阅读[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)。
 
-范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V0–V4 阶段。V1 冻结模型几何规格，V2 制作路线并在有用时做 blockout，V3 按 V0 分类交付正式模型或烘焙源并核验，只有运行模型在 V4 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
+范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V0–V5 阶段；V1 验证功能，V2 冻结模型几何规格，V3 制作路线并在有用时做 blockout，V4 按 V0 分类交付正式模型或烘焙源并核验，只有运行模型在 V5 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
 
 <a id="mode-threejs-game-3d-modeling--职责与路由"></a>
 #### 职责与路由
@@ -531,13 +535,13 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 <a id="mode-threejs-game-ui-layout--threejs-游戏-ui-布局"></a>
 ### three.js 游戏 UI 布局
 
-正式 `Object3D`、UI 与独立显示层统一遵守[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)：three.js 没有通用二维 `origin` 属性；`Sprite.center` 可显式使用中心 `(0.5, 0.5)`，模型枢轴由几何局部坐标或父级 `Group` 表达，例外逐对象记录原因与换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V4 正式 Scene 中验证运行遮挡。
+正式 `Object3D`、UI 与独立显示层统一遵守[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)：three.js 没有通用二维 `origin` 属性；`Sprite.center` 可显式使用中心 `(0.5, 0.5)`，模型枢轴由几何局部坐标或父级 `Group` 表达，例外逐对象记录原因与换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-效果图 V2 拆解与布局遵守[功能语义分组约束](../../threejs-game-ui-layout/references/functional-semantic-grouping.md)和[ThreeJS UI 节点组织](../../threejs-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认位置依赖与信息分组，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。真实父级表达功能、状态、交互和布局管理归属，位置依赖通过可选 `ui_layout.position_reference_id` 单独记录，共同表达同一信息且彼此无位置依赖的元素列为同组同级项。父容器职责、布局所有者、尺寸、溢出、安全区和输入归属仍在技术合同中维护；禁止按文字类型或几何最小包含关系自动归父级。
+效果图 V3 拆解与布局遵守[功能语义分组约束](../../threejs-game-ui-layout/references/functional-semantic-grouping.md)和[ThreeJS UI 节点组织](../../threejs-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认位置依赖与信息分组，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。真实父级表达功能、状态、交互和布局管理归属，位置依赖通过可选 `ui_layout.position_reference_id` 单独记录，共同表达同一信息且彼此无位置依赖的元素列为同组同级项。父容器职责、布局所有者、尺寸、溢出、安全区和输入归属仍在技术合同中维护；禁止按文字类型或几何最小包含关系自动归父级。
 
-V2 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[执行计划](../../threejs-game-ui-layout/references/layout-execution.md)。V4 通过[实际运行快照](../../threejs-game-ui-layout/references/layout-runtime-evidence.md)核对全部业务布局节点的真实父级、参照、写入者、中心和图片尺寸；`usability` 的关键节点测量与 `exact` 的完整测量仍沿用既有范围。图片源像素与 CSS/HUD 显示尺寸分开，透视世界继续使用 world contract。
+V3 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[执行计划](../../threejs-game-ui-layout/references/layout-execution.md)。V5 通过[实际运行快照](../../threejs-game-ui-layout/references/layout-runtime-evidence.md)核对全部业务布局节点的真实父级、参照、写入者、中心和图片尺寸；`usability` 的关键节点测量与 `exact` 的完整测量仍沿用既有范围。图片源像素与 CSS/HUD 显示尺寸分开，透视世界继续使用 world contract。
 
 <a id="mode-threejs-game-ui-layout--全局控制接入"></a>
 #### 全局控制接入
@@ -553,7 +557,7 @@ V2 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 
 屏幕 HUD、DOM Overlay、适用的屏幕自适应平面内容、弹窗和 `DISPLAY_LAYER` 必须在布局合同中填写 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、`cameraViewportPolicy`、`cameraZoomPolicy`、`cameraOriginPolicy`、`inputCoordinatePolicy`、`safeAreaPolicy`、`resizePolicy`、`orientationPolicy`、`textResolutionPolicy`、`assetResolutionPolicy`、`performanceBudget`、`representativeViewports` 和 `requiredRuntimeEvidence`。这些字段描述项目的视口和坐标策略，不是 three.js 内置布局 API；Three.js 项目用 `WebGLRenderer.setSize()`、CSS 视口和相机投影实现实际映射。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性背景等比 cover，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR 向下取整，物理像素不得直接用于布局或命中。真正的三维世界和透视关卡使用[三维世界视口合同](../../threejs-domain-contracts/references/world-viewport-contract.schema.json)，不套用二维布局合同，也不要求二维固定设计视口。
 
-运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。`scaleMode` 是项目自定义视口策略字段，使用 `custom` 表示由项目代码计算视口、更新 `WebGLRenderer` 和相机投影；`gameSizeSpace` 仅指合同中的逻辑布局空间，不代表 three.js 提供 `GameSize`。`cameraOriginPolicy` 记录坐标系原点约定，不对应相机上的 `origin` 属性。实施包必须证明逻辑视口、Camera 投影、输入映射和 CSS/物理尺寸之间的真实关系；声明字段或构建成功不能单独作为高分屏证据。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V4 必须独立记录其运行轨迹。
+运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。`scaleMode` 是项目自定义视口策略字段，使用 `custom` 表示由项目代码计算视口、更新 `WebGLRenderer` 和相机投影；`gameSizeSpace` 仅指合同中的逻辑布局空间，不代表 three.js 提供 `GameSize`。`cameraOriginPolicy` 记录坐标系原点约定，不对应相机上的 `origin` 属性。实施包必须证明逻辑视口、Camera 投影、输入映射和 CSS/物理尺寸之间的真实关系；声明字段或构建成功不能单独作为高分屏证据。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V5 必须独立记录其运行轨迹。
 
 <a id="mode-threejs-game-ui-layout--视觉语言默认原则"></a>
 #### 视觉语言默认原则
@@ -563,15 +567,15 @@ V2 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 <a id="mode-threejs-game-ui-layout--核心流程"></a>
 #### 核心流程
 
-正式场景的布局校准与关键几何验收读取[布局校准与参考还原](../../threejs-game-ui-layout/references/layout-calibration.md)。V4 直接消费冻结 V2 布局与 V3 正式资源，在实际 ThreeJS Scene 中调整并复验受影响范围；布局矩形与素材可见边界分别检查，不能用可用性通过代替参考还原。
+正式场景的布局校准与关键几何验收读取[布局校准与参考还原](../../threejs-game-ui-layout/references/layout-calibration.md)。V5 直接消费冻结 V3 布局与 V4 正式资源，在实际 ThreeJS Scene 中调整并复验受影响范围；布局矩形与素材可见边界分别检查，不能用可用性通过代替参考还原。
 
 1. 读取项目的 GDD/TDD、当前候选、总控审核漏斗和适用视觉阶段；确定稳定 UI ID、坐标空间、参照物、状态与平台输入。
-2. 复制 schema 1.3.0 [合同模板](../../threejs-game-ui-layout/assets/ui-layout-contract-template.yaml)。普通布局使用 `not-applicable` 并保持 `layout_nodes: []`；冻结视觉目标先用 `frozen-target/specified`。同时冻结上述根级视口/DPR/Camera/Input/性能字段，禁止使用旧 `targets.scale` 字段绕过新门禁。V2 先确认真实功能父级、独立定位参照与共同信息分组，代理内部维护完整技术 JSON 和 `decomposition_elements`，直接展示编号拆解图供人工确认；屏幕 UI 的 `ui_layout` 职责字段也保留在技术合同中。拆解图确认后由智能视觉判断生成逐元素 `left/center/right × top/center/bottom` 决策，再由同一入口同步生成布局 PNG、`layout-nodes.json`、`layout-decision.json`、离线 `review.html` 和 `generation-result.json`，用户直接检查最终布局图/审阅页并独立确认。无需先后确认文字提案或技术记录。随后登记由已确认元素和视觉决策共同推导的非空 `layout_nodes` 与关键对齐合同。
-3. V3 正式资源验收后直接进入 V4：按[正式场景视觉还原与校准](../../threejs-game-asset-integration/references/visual-alignment-authoring.md)在正式 Scene 中消费 V2 节点与布局合同、V3 验收资源，接入实际交互、动态数据和 required state。坐标、尺寸和响应式调整写入正式布局配置；冻结的 V2 节点结构仍按上游合同管理。具体 ThreeJS 视口、Camera、输入与幂等重排规则见[ThreeJS 适配参考](../../threejs-game-ui-layout/references/threejs-adapter.md)。
+2. 复制 schema 1.3.0 [合同模板](../../threejs-game-ui-layout/assets/ui-layout-contract-template.yaml)。普通布局使用 `not-applicable` 并保持 `layout_nodes: []`；冻结视觉目标先用 `frozen-target/specified`。同时冻结上述根级视口/DPR/Camera/Input/性能字段，禁止使用旧 `targets.scale` 字段绕过新门禁。V3 先确认真实功能父级、独立定位参照与共同信息分组，代理内部维护完整技术 JSON 和 `decomposition_elements`，直接展示编号拆解图供人工确认；屏幕 UI 的 `ui_layout` 职责字段也保留在技术合同中。拆解图确认后由智能视觉判断生成逐元素 `left/center/right × top/center/bottom` 决策，再由同一入口同步生成布局 PNG、`layout-nodes.json`、`layout-decision.json` 和 `generation-result.json`，需要交互对照时通过 `--interactive-review` 生成同批离线 `review.html`，用户直接检查最终布局图（需要交互对照时可使用同批审阅页）并独立确认。无需先后确认文字提案或技术记录。随后登记由已确认元素和视觉决策共同推导的非空 `layout_nodes` 与关键对齐合同。
+3. V4 正式资源验收后直接进入 V5：按[正式场景视觉还原与校准](../../threejs-game-asset-integration/references/visual-alignment-authoring.md)在正式 Scene 中消费 V3 节点与布局合同、V4 验收资源，接入实际交互、动态数据和 required state。坐标、尺寸和响应式调整写入正式布局配置；冻结的 V3 节点结构仍按上游合同管理。具体 ThreeJS 视口、Camera、输入与幂等重排规则见[ThreeJS 适配参考](../../threejs-game-ui-layout/references/threejs-adapter.md)。
 4. specified 阶段运行结构检查 `node scripts/validate_ui_layout_contract.mjs <contract>`；verified 正式验收必须运行 `node scripts/validate_ui_layout_contract.mjs <contract> --check-files --project-root .`，读取冻结原图并检查目标/运行/parity 证据文件。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-正式场景依据项目现有 ThreeJS Scene 结构和布局合同实现。V2 锚点、父子 bounds、资源 origin 与 ThreeJS 父级局部坐标分别处理，祖先偏移只累计一次。V4 直接加载已验收资源并在真实 ThreeJS Scene 中组合；背景覆盖按实际可见视口计算，图片按冻结 fit/裁切规则呈现，不能缩进安全区、留边或平移露出空隙。图片 fit 和 ThreeJS 文字字段按适配参考执行；资源/字体未就绪、布局或渲染异常必须令运行验收失败。Scene 创建、唤醒和 resize 使用同一幂等布局入口；发布画面不含编辑辅助内容。运行证据来自正式场景的实际消费与画面。
+正式场景依据项目现有 ThreeJS Scene 结构和布局合同实现。V3 锚点、父子 bounds、资源 origin 与 ThreeJS 父级局部坐标分别处理，祖先偏移只累计一次。V5 直接加载已验收资源并在真实 ThreeJS Scene 中组合；背景覆盖按实际可见视口计算，图片按冻结 fit/裁切规则呈现，不能缩进安全区、留边或平移露出空隙。图片 fit 和 ThreeJS 文字字段按适配参考执行；资源/字体未就绪、布局或渲染异常必须令运行验收失败。Scene 创建、唤醒和 resize 使用同一幂等布局入口；发布画面不含编辑辅助内容。运行证据来自正式场景的实际消费与画面。
 
 正式 HUD、DOM Overlay 和适用平面 UI 的设计画布尺寸、主轴与另一轴的展开或裁切规则由项目布局合同定义；合同采用固定设计视口时，可使用 `assets/fixed-design-viewport.mjs`。真正三维世界的模型、角色和道具位置由[三维世界视口合同](../../threejs-domain-contracts/references/world-viewport-contract.schema.json)定义，不要求二维固定设计视口。设备 CSS 像素只决定显示尺寸。背景必须覆盖完整可见区域，位置由对应合同与实际视口共同决定，不能用编辑器中的拖动或临时偏移改变冻结目标。
 
@@ -609,6 +613,11 @@ V2 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 - [拆解时确定九宫格](../../threejs-game-asset-integration/references/nine-slice-ui.md)
 - [游戏内文案](../../threejs-game-ui-layout/references/game-copy.md)
 - [场景与弹窗尺寸参照](../../threejs-game-ui-layout/references/layout-hierarchy.md#场景与弹窗尺寸参照)
+
+<a id="mode-threejs-game-ui-layout--ui-相对布局约束"></a>
+#### UI 相对布局约束
+
+UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
 <!-- native-source:threejs-game-ui-layout:end -->
 
 
@@ -636,7 +645,7 @@ V2 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 | --- | --- |
 | `.workflow-control/work-items/`、审批账本、状态迁移/返工记录 | 保留；终态也不自动删除，历史记录支撑追踪和审计 |
 | 实施包、`evidence/<workItemId>/execution-state.json`、Result、验证清单、路径与业务归属绑定文件 | 保留有效引用和审计链；失效不等于可删 |
-| V2 拆解与布局确认、V3 正式资源/生产记录、V4 实现与运行证据 | 保留完整依赖闭包，包括原图、JSON、审阅页、运行证据及宿主上下文 |
+| V3 拆解与布局确认、V4 正式资源/生产记录、V5 实现与运行证据 | 保留完整依赖闭包，包括原图、JSON、审阅页、运行证据及宿主上下文 |
 | 明确属于本任务的临时日志、临时导出、失败候选、重复预览、可再生成构建或缓存 | 证明无引用、无运行占用且可再生成后，纳入清理清单 |
 | 源码、正式资源、源素材/视频、用户交付物、锁文件、测试夹具、发布产物 | 默认保留；不是一般中间产物 |
 
@@ -804,25 +813,25 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 
 贴图、烘焙、绑定/动画或接入任务先读取[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
 
-该路线复用 V1 参考、V2 拆解、V3 正式资源生产与验收，不创建独立聊天或第二套阶段。人工确认当前模型与贴图候选后才可作为已验收资源进入接入环节；自动静态检查不替代人工审查。截图、渲染及真机验收按用户当前明确授权执行。
+该路线复用 V2 参考、V3 拆解、V4 正式资源生产与验收，不创建独立聊天或第二套阶段。人工确认当前模型与贴图候选后才可作为已验收资源进入接入环节；自动静态检查不替代人工审查。截图、渲染及真机验收按用户当前明确授权执行。
 
 <a id="mode-threejs-game-model-pipeline--模型接入与优化"></a>
 #### 模型接入与优化
 
-1. V1 确定世界尺度、轴向、pivot、包围盒、动画命名、PBR 风格、灯光和三维预算；效果图只是目标视角的参考。交互世界必须交付模型/关卡数据、碰撞代理及可观察状态，不能整屏贴图伪装关卡。
-2. V2 拆解角色、环境、交互件、特效与 HUD。三维对象记录 parent、TRS、单位、相机、材质、碰撞和可见性；二维布局 JSON 只约束 HUD 和固定视角标注，不能证明三维空间正确。
-3. V3 资源清单逐项记录 GLB 路径与可选追踪摘要、来源/许可、triangles、draw calls、material/texture、纹理维度/显存估算、骨骼/clip、LOD、碰撞代理和解码依赖。纹理磁盘体积不能替代 GPU 内存预算，生成图片也不能作为已生成模型的证据。
+1. V2 确定世界尺度、轴向、pivot、包围盒、动画命名、PBR 风格、灯光和三维预算；效果图只是目标视角的参考。交互世界必须交付模型/关卡数据、碰撞代理及可观察状态，不能整屏贴图伪装关卡。
+2. V3 拆解角色、环境、交互件、特效与 HUD。三维对象记录 parent、TRS、单位、相机、材质、碰撞和可见性；二维布局 JSON 只约束 HUD 和固定视角标注，不能证明三维空间正确。
+3. V4 资源清单逐项记录 GLB 路径与可选追踪摘要、来源/许可、triangles、draw calls、material/texture、纹理维度/显存估算、骨骼/clip、LOD、碰撞代理和解码依赖。纹理磁盘体积不能替代 GPU 内存预算，生成图片也不能作为已生成模型的证据。
 4. 使用 GLTFLoader 加载，按实际资产扩展注册 KTX2/meshopt/Draco；部署 decoder/transcoder 并验证 CSP、路径与失败提示。颜色纹理按颜色空间处理，法线/粗糙度等数据纹理不作为 sRGB；不盲目覆盖加载器已设置的材质。
 5. 每实例拥有 AnimationMixer 与角色状态；SkinnedMesh 克隆使用 SkeletonUtils.clone，clip/mixer 时间用于表现，伤害/奖励由玩法状态驱动。切换停止 action 并 uncacheRoot，释放独占 geometry/material/texture；ImageBitmap 和共享纹理由资产所有权管理。
 6. 先测密度，再采用 InstancedMesh、合并静态几何、LOD、视锥裁剪、纹理压缩和阴影限制。实例选取绑定 instanceId；动画 bounds、透明排序和碰撞数据与降级档位一起验证。更换 LOD 不能改变玩法命中语义。
 
-V4 为人工视觉验收提供相同相机、光照、时间与游戏状态的检查要点，并检查移动、碰撞、动画、切场景/重进和失败恢复；未实际执行的项目标记未验证。需要截图或检查图时提供给用户人工检查，只有用户明确要求自动视觉验证时才自动分析截图，真机运行验收须另有明确授权。记录实际取得的 renderer.info、加载时间与退出后的资源基线。资产处理工具按项目选择；不得自动上传素材或申请外部付费生成。
+V5 为人工视觉验收提供相同相机、光照、时间与游戏状态的检查要点，并检查移动、碰撞、动画、切场景/重进和失败恢复；未实际执行的项目标记未验证。需要截图或检查图时提供给用户人工检查，只有用户明确要求自动视觉验证时才自动分析截图，真机运行验收须另有明确授权。记录实际取得的 renderer.info、加载时间与退出后的资源基线。资产处理工具按项目选择；不得自动上传素材或申请外部付费生成。
 
 参考：[glTF 官方加载器](https://threejs.org/docs/pages/GLTFLoader.html)、[资源释放](https://threejs.org/manual/pages/cleanup.html)、[插件接入](#mode-threejs-game-plugins)。
 
 静态 GLB 资产验收命令见 [`validate-model.mjs`](../../threejs-game-model-pipeline/scripts/validate-model.mjs)，清单范例见 [`model-manifest.example.json`](../../threejs-game-model-pipeline/references/model-manifest.example.json)：`node <模型管线技能目录>/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>`。将实际命令写入实施单元的 `acceptanceCommands`；`asset.sceneId` 是需唯一匹配的 glTF 内部 `scene.name`，游戏场景归属另由资源条目的 `scene_id` 记录。
 
-三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V0–V4 对齐见[建模工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
+三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V0–V5 对齐见[建模工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
 
 摘要仅作为可选追踪信息，不要求提供或比对，不因缺失、错误或变化阻断验收；仍须检查模型实际内容、路径归属、资源预算和人工审查结果。
 <!-- native-source:threejs-game-model-pipeline:end -->
@@ -904,19 +913,19 @@ three.js 提供渲染与场景图；玩法循环、输入状态、物理世界�
 <a id="mode-threejs-game-asset-integration--场景还原合同effect-image-强制"></a>
 ##### 场景还原合同（effect-image 强制）
 
-V2 拆解先遵守[功能语义分组约束](../../threejs-game-ui-layout/references/functional-semantic-grouping.md)：确认区域、功能组件、部件和独立元素的位置依赖、信息分组与理由；位置依赖方划为被依赖元素所对应布局容器的子元素，共同表达同一信息且彼此无位置依赖的元素列为同组同级项。布局不得按文字类型或几何包含重新分组，归属不明留在拆解确认，不自动生成可放行布局。
+V3 拆解先遵守[功能语义分组约束](../../threejs-game-ui-layout/references/functional-semantic-grouping.md)：确认区域、功能组件、部件和独立元素的位置依赖、信息分组与理由；位置依赖方划为被依赖元素所对应布局容器的子元素，共同表达同一信息且彼此无位置依赖的元素列为同组同级项。布局不得按文字类型或几何包含重新分组，归属不明留在拆解确认，不自动生成可放行布局。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
-4. schema 1.5 `visual-assets.json` 先声明 `effect_image_reconstruction`：普通资产为 `not-applicable`，不要求还原工件；效果图还原为 `effect-image`。后者冻结目标后、进入 V3 前以 `v2-ready` 完成合同回对和 coverage，V2/V3 可暂无 fidelity case；只有 V4 验证完成才为 `v4-complete` 并要求全部 case 通过。效果图 coverage 逐区登记 `annotation_number` 与 `implementation_plan`，先完成 ownership/实现分类，再做带实际证据文件、冻结目标文件、分析 ID 和完成时间的 `state_analysis`，严格在 component inventory 之前完成，最后按唯一原子部件填写 `component_inventory`、placements 与 `expected_assets`；编号不是资产数量单位。视觉来源与装配方式必须分开：`visual_route_analysis` 只能在独立 coverage region 上选择 `image-asset` 或 `threejs-native`，`assembly_analysis` 再独立声明原子 Scene 装配、禁止整屏捕获并允许独立图片资产；不得从“不能整屏贴图”推导 `runtime-program`。如果同一视觉事实同时包含程序逻辑与独立视觉资产，必须回到 V1/PROPOSAL 重新划分 coverage/annotation：图片外观进入独立 image-asset region，程序行为进入独立 threejs-native/runtime region，分别进入各自生产与运行逻辑合同。禁止使用单一 `composite` region 或 `composite_parts` 在一个区域内闭环生产、验收。全部区域均为 `threejs-native` 时必须提供绑定目标文件、完整 region 集合和独立 JSON 工件 的 `all_native_justification`，文件门会读取实际文件并逐区核对资格事实。状态分析必须覆盖普通、selected/active、disabled、pressed/hover、victory/defeat/paused，实际适用写 `required`，不适用写 `not-applicable+reason`。② 顶部 6 个按钮必须 6 个 component；⑧ 的 3 个相同底部表面可登记 1 个 component+3 个 placements，⑨ 的动作图标按实际复用关系登记；③、④、⑦ 只有在明确单部件且其余状态不适用时才保持单图。默认 individual 模式禁止横向组图；`image_generation_required=true` 的生成式位图使用 `individual + atlas_allowed=false`，其 `expected_assets.width/height` 由验证器按逻辑像素 `ceil(max placement width/height × intended_scale_range.max)` 自动计算，必须精确为最小尺寸；`scene_asset_usage.max_dpr` 必须严格为数字 `1`，`padding_policy` 必须为 `none`，尺寸合同本身不需要 human_review。这里的 1 表示图片按最大约定逻辑显示尺寸 1:1 生产；运行时实际 DPR 按设备动态读取并封顶为 2。历史 1.5/2 倍生产证据须重生成或标记 `stale`。其他生产方法只有在显式合同下才能使用完整 `atlas_slice` 图集。每个 placement 必须声明 `interaction_required`，真实 `interaction_hotspots` 只能按 placement 一一绑定且不计入视觉资产。确认图仍同时呈现 `generate-now`、`reuse-existing` 和 `runtime-program`，但 PNG 仅绘制用户摘要与“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签；placement ID、坐标尺寸、组件/状态/资产技术字段不进入可见行。运行 `--proposal` 时，这些技术字段完整写入拆解分析技术 JSON，并与 PNG 元数据、实际区域定义及现有 confirmation 业务字段绑定。系统按提示词、参考输入、材质、透明需求和可用能力决定是否使用图像生成；`independent-production` 与 `generate-now` 不作任何生成器推断。V2 再按 [资产生产路线](../../threejs-game-asset-integration/references/asset-production-routes.md) 选择路线。
+4. schema 1.5 `visual-assets.json` 先声明 `effect_image_reconstruction`：普通资产为 `not-applicable`，不要求还原工件；效果图还原为 `effect-image`。后者冻结目标后、进入 V4 前以 `v3-ready` 完成合同回对和 coverage，V3/V4 可暂无 fidelity case；只有 V5 验证完成才为 `v5-complete` 并要求全部 case 通过。效果图 coverage 逐区登记 `annotation_number` 与 `implementation_plan`，先完成 ownership/实现分类，再做带实际证据文件、冻结目标文件、分析 ID 和完成时间的 `state_analysis`，严格在 component inventory 之前完成，最后按唯一原子部件填写 `component_inventory`、placements 与 `expected_assets`；编号不是资产数量单位。视觉来源与装配方式必须分开：`visual_route_analysis` 只能在独立 coverage region 上选择 `image-asset` 或 `threejs-native`，`assembly_analysis` 再独立声明原子 Scene 装配、禁止整屏捕获并允许独立图片资产；不得从“不能整屏贴图”推导 `runtime-program`。如果同一视觉事实同时包含程序逻辑与独立视觉资产，必须回到 V2/PROPOSAL 重新划分 coverage/annotation：图片外观进入独立 image-asset region，程序行为进入独立 threejs-native/runtime region，分别进入各自生产与运行逻辑合同。禁止使用单一 `composite` region 或 `composite_parts` 在一个区域内闭环生产、验收。全部区域均为 `threejs-native` 时必须提供绑定目标文件、完整 region 集合和独立 JSON 工件 的 `all_native_justification`，文件门会读取实际文件并逐区核对资格事实。状态分析必须覆盖普通、selected/active、disabled、pressed/hover、victory/defeat/paused，实际适用写 `required`，不适用写 `not-applicable+reason`。② 顶部 6 个按钮必须 6 个 component；⑧ 的 3 个相同底部表面可登记 1 个 component+3 个 placements，⑨ 的动作图标按实际复用关系登记；③、④、⑦ 只有在明确单部件且其余状态不适用时才保持单图。默认 individual 模式禁止横向组图；`image_generation_required=true` 的生成式位图使用 `individual + atlas_allowed=false`，其 `expected_assets.width/height` 由验证器按逻辑像素 `ceil(max placement width/height × intended_scale_range.max)` 自动计算，必须精确为最小尺寸；`scene_asset_usage.max_dpr` 必须严格为数字 `1`，`padding_policy` 必须为 `none`，尺寸合同本身不需要 human_review。这里的 1 表示图片按最大约定逻辑显示尺寸 1:1 生产；运行时实际 DPR 按设备动态读取并封顶为 2。历史 1.5/2 倍生产证据须重生成或标记 `stale`。其他生产方法只有在显式合同下才能使用完整 `atlas_slice` 图集。每个 placement 必须声明 `interaction_required`，真实 `interaction_hotspots` 只能按 placement 一一绑定且不计入视觉资产。确认图仍同时呈现 `generate-now`、`reuse-existing` 和 `runtime-program`，但 PNG 仅绘制用户摘要与“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签；placement ID、坐标尺寸、组件/状态/资产技术字段不进入可见行。运行 `--proposal` 时，这些技术字段完整写入拆解分析技术 JSON，并与 PNG 元数据、实际区域定义及现有 confirmation 业务字段绑定。系统按提示词、参考输入、材质、透明需求和可用能力决定是否使用图像生成；`independent-production` 与 `generate-now` 不作任何生成器推断。V3 再按 [资产生产路线](../../threejs-game-asset-integration/references/asset-production-routes.md) 选择路线。
    路线按可观察视觉事实和 ThreeJS 实际渲染能力判断，不按“按钮”“面板”等语义，也不以静态/动态作为唯一条件。文本、纯色矩形、基础几何、规则边框、可确定性表达的简单规则渐变、遮罩和进度填充，在 ThreeJS 原生能力可精确表达冻结外观时可选 `threejs-native`；特色插画、复杂纹饰、不规则轮廓、复杂材质及明显具有美术特征的装饰使用独立图片路线。原生路线冻结 `native_suitability.render_contract` 的 renderer、尺寸、颜色、线宽、圆角、渐变、透明度、适用状态和不支持特征；无法支持的视觉特征必须阻断，不能近似替代后通过。
    图片、图片局部和文字先按[完整拆解与视觉显著性](../../threejs-game-asset-integration/references/asset-production-routes.md#完整拆解与视觉显著性)登记可独立部件，保持功能、交互与状态联动；明显美术外观优先位图，低显著性操作文字考虑系统文本，简单填充考虑原生绘制。再核对[完整程序还原资格](../../threejs-game-asset-integration/references/asset-production-routes.md#程序还原资格与位图回退)：程序必须完整实现方案要求保留的外观；主体与效果无法可靠分离时保留完整原子视觉部件。动态/本地化文字按[文字路线判定](../../threejs-game-ui-layout/references/layout-contract.md#文字路线判定)保留可变能力，不在实现时静默简化已确认的美术效果。
    色彩填充同样按[色彩填充路线判定](../../threejs-game-asset-integration/references/asset-production-routes.md#色彩填充路线判定)拆分：明显材质和光影保留独立位图，有风格的重复表面优先复用贴图，低显著性基础填充考虑原生绘制；动态比例和状态仍保持可变，不能把填充与边框、辉光或纹饰混作纯色区域。
    外观来源与行为装配分别记录和绑定；例如按钮可由原生框体、独立图标图片和 DOM/CSS2D 文字组成，并通过明确组件/节点引用接入交互，不合并为 `composite` 区域。`image_generation_required=true` 一经冻结不得自动换成原生路线，只能遵循明确接受的 Change Request 变更。
-5. V2 可运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V2`；V3 正式验收运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3 --check-files --project-root .`，V4 正式验收运行同命令但使用 `--stage V4`。独立弹窗工作项必须额外传入 `--work-item-type DISPLAY_LAYER`，场景工作项默认按 `SCENE` 校验；该参数只改变显示层作用域，不把弹窗纳入宿主场景验收。V3 逐项验证真实资源文件、来源/许可信息（如适用）、预算、冻结基线、coverage 和 `production_contract_audit`；V4 验证正式 Scene 消费、运行组合、F2 两类机器证据、F3 runtime replay 与适用 fidelity cases。
+5. V3 可运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3`；V4 正式验收运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V4 --check-files --project-root .`，V5 正式验收运行同命令但使用 `--stage V5`。独立弹窗工作项必须额外传入 `--work-item-type DISPLAY_LAYER`，场景工作项默认按 `SCENE` 校验；该参数只改变显示层作用域，不把弹窗纳入宿主场景验收。V4 逐项验证真实资源文件、来源/许可信息（如适用）、预算、冻结基线、coverage 和 `production_contract_audit`；V5 验证正式 Scene 消费、运行组合、F2 两类机器证据、F3 runtime replay 与适用 fidelity cases。
 6. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 
-透明路线由 `expected_assets.transparency_requirements` 冻结策略与 `edge_profile`。只有 `hard-edge` 且主体与纯色背景明显区分时才可走 `background-removal`；复杂边缘禁止阈值去背。`direct-alpha` 必须匹配已验证的工具、版本和边缘类型，并用 PNG 解码证明真实透明像素；generation record 顶层 `generator/generator_version` 是实际身份，`capability.tool/tool_version` 必须与之相同。`mask-composition` 必须绑定独立遮罩或人工创作的实际输入和工具参数。能力不足时报告缺口，不提高容差、硬抠轮廓、删除光效或伪造结果。生成记录按实际路线登记生成器身份、参数、输入/输出 SHA 和后处理；归一化保持比例、Alpha 和主体边界，并禁止把棋盘格预览烘焙进素材。每个候选都生成浅底与深底预览，V4 完成主体缺损、残留背景、色边和半透明区域的视觉检查。已有真实透明图按资源复用合同接入，不伪造生成或去背记录。`image_generation_required=true` 的冻结合同不能由透明路线判断或提示词生成器自动替换。
-7. V2 前的灰盒或视觉样片必须与正式运行链隔离，不得注册正式入口或实现正式业务逻辑；V2 确认后生产 V3 正式资源；V4 在正式 ThreeJS Scene 中实现功能并消费已验收资源，禁止一次性截图 Scene、整屏铺图、隐藏覆盖层和绝对叠层凑像素。V4 在正式功能实现之后与玩法协作完成结构化集成、动态验收和低保真清理；上游事实或当前受影响候选身份变化时才使对应 fidelity case 失效重采，其他单元证据继续有效。
+透明路线由 `expected_assets.transparency_requirements` 冻结策略与 `edge_profile`。只有 `hard-edge` 且主体与纯色背景明显区分时才可走 `background-removal`；复杂边缘禁止阈值去背。`direct-alpha` 必须匹配已验证的工具、版本和边缘类型，并用 PNG 解码证明真实透明像素；generation record 顶层 `generator/generator_version` 是实际身份，`capability.tool/tool_version` 必须与之相同。`mask-composition` 必须绑定独立遮罩或人工创作的实际输入和工具参数。能力不足时报告缺口，不提高容差、硬抠轮廓、删除光效或伪造结果。生成记录按实际路线登记生成器身份、参数、输入/输出 SHA 和后处理；归一化保持比例、Alpha 和主体边界，并禁止把棋盘格预览烘焙进素材。每个候选都生成浅底与深底预览，V5 完成主体缺损、残留背景、色边和半透明区域的视觉检查。已有真实透明图按资源复用合同接入，不伪造生成或去背记录。`image_generation_required=true` 的冻结合同不能由透明路线判断或提示词生成器自动替换。
+7. V1 可按已授权范围实现并验证正式功能，白盒按需使用；视觉样片不能伪装成正式可交互场景。V3 确认后生产 V4 正式资源；V5 在正式 ThreeJS Scene 中实现功能并消费已验收资源，禁止一次性截图 Scene、整屏铺图、隐藏覆盖层和绝对叠层凑像素。V5 在正式功能实现之后与玩法协作完成结构化集成、动态验收和低保真清理；上游事实或当前受影响候选身份变化时才使对应 fidelity case 失效重采，其他单元证据继续有效。
 
 正式效果图标注命令必须带 `--proposal <file>.json`；省略该参数直接失败，不生成只有用户图示的成功产物。
 

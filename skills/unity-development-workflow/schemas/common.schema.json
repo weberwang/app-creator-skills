@@ -455,9 +455,56 @@
                   "exclusiveMinimum": 0
                 }
               }
+            },
+            "positioning": {
+              "enum": [
+                "relative",
+                "absolute"
+              ],
+              "default": "relative",
+              "description": "默认依节点父级或位置参照布局；absolute 仅允许独立浮层本体。"
+            },
+            "floatingRootKind": {
+              "enum": [
+                "popup",
+                "floating",
+                "toast"
+              ],
+              "description": "仅独立显示层的实际本体根节点声明，内部子节点不得继承。"
+            },
+            "independentPosition": {
+              "$ref": "#/$defs/vector2",
+              "description": "绝对浮层本体当前目标位置；原始 bounds 仍是后代相对关系的基准。"
             }
           },
-          "description": "UI 节点必须声明分组依据、布局所有者、尺寸、溢出、安全区与交互策略。"
+          "description": "UI 节点必须声明分组依据、布局所有者、尺寸、溢出、安全区与交互策略。",
+          "allOf": [
+            {
+              "if": {
+                "properties": {
+                  "positioning": {
+                    "const": "absolute"
+                  }
+                },
+                "required": [
+                  "positioning"
+                ]
+              },
+              "then": {
+                "required": [
+                  "floatingRootKind",
+                  "independentPosition"
+                ]
+              },
+              "else": {
+                "not": {
+                  "required": [
+                    "independentPosition"
+                  ]
+                }
+              }
+            }
+          ]
         },
         "anchor": {
           "type": "object",

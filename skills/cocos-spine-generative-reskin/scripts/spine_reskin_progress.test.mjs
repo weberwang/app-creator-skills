@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import sharp from "../../app-skill-runtime/sharp.mjs";
-import { atlasText, parseAtlas } from "./spine_atlas.mjs";
+import { atlasText, parseAtlas } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { candidateFingerprint } from "./spine_batch.mjs";
-import { discoverSpineAsset, prepareSpineAsset } from "./spine_assets.mjs";
+import { discoverSpineAsset, prepareSpineAsset } from "../../app-domain-toolkit/scripts/spine/spine_assets.mjs";
 import { auditSkeleton } from "./spine_skeleton.mjs";
 import { ALPHA_CONTRACT_THRESHOLDS, isProcessAlive, main, shouldReclaimLock } from "./spine_reskin_progress.mjs";
 

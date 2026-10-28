@@ -1,0 +1,118 @@
+# 通用帧动画工作流接入合同
+
+执行者按[执行代理](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--执行代理)中的用途类型与职业映射分配设计师；混合任务按可独立设计的动画或区域明确职业、文件所有权和事件/锚点/依赖交接，同一 Work Item、同一职责范围内的连续制作与修正复用对应代理。主代理交接方案确认、真实素材人工验收、实际来源、生成授权和限定任务包；实际图片生成/编辑另交图片生成代理，动画执行代理负责约束与集成。
+
+帧动画先按 [SKILL.md 的分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择普通、角色、特效或 UI 帧动画规则，再按[来源路线](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--来源路线)处理素材：未指定时默认视频抽帧，固定画布图片递归补帧须有用户明确选择或切换确认。负责动画或区域的专业设计师先完成内部方案并向用户说明目标感受、动作依据、节奏和资源取舍，等待用户明确确认后才写正式提示词、制作真实素材。视频仍须人工验收当前实际抽帧输入后才能抽帧，图片逐张确认首尾、必要关键帧和递归父图后再推进。方案确认和真实素材验收是两个独立步骤。帧动画不制作灰盒或可播放占位示意。全局视觉阶段为 V0、V1、V2、V3、V4；V2 推导、记录并确认动作方案，V3 按已确认方案制作并验收真实素材，不改写全局 `visualStage`。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#通用帧动画工作流接入合同)。
+
+| 步骤 | 产物 | 停止条件 |
+| --- | --- | --- |
+| 动画与批次规划 | 负责职业与动画/区域所有权、用途类型及对应规则、独立单元时间轴、区域有效时长、事件、播放方式、FPS、尺寸和性能预算；视频的 768p/2K 排布、条数与整组消耗比较 | 完整行为不因阶段或拳数拆生成任务；保留既有输入机制，合批不牺牲完整范围与可读像素；区域时长、运行预算和生成成本分别核算 |
+| 动作分析与参数推导（内部） | 动作依据、设计取舍、完整阶段表与事件说明、当前版本和内部设计工件 | 只有无法推导的玩法事件、时长或行为权限才询问，并只暂停受影响动作；完成方案说明后等待用户明确确认 |
+| 提示词与真实候选 | 当前确认方案、共用约束、当前类型规则和动画参数，每批/帧保存；视频采用推荐的 768p/2K 合批与消耗方案，图片按自身分辨率约定，声音按任务合同 | 用户确认当前方案后才写正式提示词并制作真实候选/预览；外部操作仍受既有授权约束 |
+| 视频整理 | 原视频、实际尺寸/音轨、校准区域、有效区间与阶段重定时派生来源 | 不可解码、区域未定或时间偏差未处理时修正；源视频时长不代替游戏时长 |
+| 视频人工验收 | 实际抽帧输入视频的实际路径、区域与时间映射、检查要点和用户验收依据 | 未验收、验收失败或视频/映射变化时不抽帧；修正说明不代替当前视频验收 |
+| 图片来源 | 固定画布首尾、逐张确认的必要关键帧、递归计划、真实双父图与完整帧位 | 同一连续行为按前序已确认姿态承接；当前帧经一致性及衔接审阅后才推进后继，父图缺陷先修；原图、修图和生成记录齐备，SHA 仅可选追踪，复杂运动不只依赖首尾 |
+| 图集 | 视频抽帧或图片清单打包，每区域独立固定 cell、报告与 HTML | 固定区域裁剪后处理背景和等比缩放；参数变化要重建，保留已修图成果；图片循环闭合参考不入图集 |
+| 审阅与接入 | 浏览器播放审阅、ThreeJS 合同 | 动作和外观问题均修对应图片并更新图集与证据；最终动画按游戏要求验收；运行态在全局 V4 验证 |
+
+## 动作设计与素材确认
+
+按[SKILL.md 执行代理](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--执行代理)分配专业设计职责，并结合[动作分析规则](./action-timing.md#动作分析与时间轴)和[玩法与意图推导](./intent-driven-design.md)记录行为、运动、衔接/循环与节奏。混合任务按可独立动画或区域明确文件所有权，交接事件时点、坐标/锚点、遮挡关系和上下游依赖；仅在依赖已交接且所有权不重叠时并行。方案完成后，先按[设计理念说明](./intent-driven-design.md#方案完成后阐述设计理念)向用户说明目标感受、关键动作依据、节奏和资源取舍，并等待明确确认；确认后才写正式提示词和制作真实候选。设计工件区分首次反馈、实际生效、既有控制/切换窗口与动画结束；制作和接入沿用同一依据，不能用美术节奏改写玩法权限。只有确实缺失且无法从现有规则推导的玩法事件、时长或行为权限才询问用户，并只暂停受影响动作；其它明确动作可继续设计。
+
+视频方案按[合批消耗比较](./region-planning.md#视频条数与消耗比较)内部比较能覆盖全部动作的候选排布、768p/2K 实际宽高、区域有效时长、条数、生成时长与整组消耗依据。先选最少可行条数，再选该条数下整组消耗最少者，同等条件优先 768p；推荐理由及资源预算纳入待确认方案，确认后再制作。已有预算与外部生成授权边界仍有效，方案不扩大授权。图片按[图片分辨率约定](./region-planning.md#图片分辨率约定)处理，不套用视频合批优先级。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#动作设计与素材确认)。
+
+设计工件保存当前 Work Item、设计方案与确认版本、负责职业、候选版本、来源路线、阶段/事件参数、实际文件及用户对真实素材的反馈，不放入正式 `asset.runtime_outputs`，不扩展报告或 accepted schema。首次交付先提交简短中文设计理念说明并等待确认；确认后才提供真实视频候选/预览或真实图片首帧及关键帧，并附对应检查点。用户确认实际素材时可同时接受该素材所表现的时序，不另行确认文字复述；这不替代前置的方案确认。不新增几何动画、骨架演示或占位播放页作为确认材料。
+
+用户对方案的确认绑定当前设计版本和适用动画；用户对真实素材的确认另绑定当前候选、来源和实际表现时序。目标感受、核心动作方案、来源路线或玩法语义实质变化时先更新说明并重新确认；同一已确认目标下调整阶段、关键姿态、播放细节或局部纠错时更新内部工件并直接返修，展示前后对照，不重新索取已有生成授权。实际视频输入改变仍须重新人工验收；图片帧变化后重新检查当前帧，并检查后代是否继承缺陷，只对实际受影响帧返修并重新确认，保留仍可用的后代及其真实旧父图来源。纯技术记录变更不新增方案确认。真实素材审阅与最终序列验收分别记录，不用内部设计记录替代。
+
+## 真实素材审阅与验收
+
+视频先核对真实内容、显示尺寸、朝向、音轨和区域，再按[视频节奏整理](./action-timing.md#视频节奏整理)完成必要的有效区间选择与阶段重定时。将最终实际抽帧输入连同简短检查点交付用户人工验收；原视频已经适配时直接使用原视频，发生整理时验收派生视频。逐区域提供当前实际输入路径、有效区间与游戏时间映射，按内部时间轴检查关键姿态、动作节奏、完整运动范围、尺度与锚点稳定、阶段/外部动作衔接、事件同步及循环/终态。用户确认实际视频也接受其表现时序，无需另交文字方案复述；尚未验收或判定失败时先修正并重新交付，不能先抽帧再用图集代替视频验收。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#真实素材审阅与验收)。
+
+### 设计与美术的边界
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#设计与美术的边界)。
+
+资源布局依据真实美术及完整运动范围推理。出现空间冲突时保留真实美术基线，先复核画布、统一缩放、留白与语义锚点；同一已确认目标下需要改变空间参数时更新内部设计并返修受影响的真实候选供用户审阅，改变核心动作方案时先重新确认。不得让正式美术贴合占位图或以文件边界通过证明比例与动作正确。
+
+## 视频提示词
+
+动作分析与时间轴参数记录、设计理念说明及用户对当前方案的明确确认完成后，才编写正式提示词；提示词沿用内部工件中的参数与关键事件。按[意图到制作的交接](./intent-driven-design.md#带入现有阶段与交接)把表现意图写成姿态、运动间距、速度变化、保持和连接要求，并沿用检查点审阅真实素材，不能只堆叠形容词。多区域提示词逐组写明独立的有效时间区间、阶段节奏、事件和结束方式，区分批次视频长度与各自动画时长；不能用统一时长或统一节奏的笼统要求覆盖独立时间轴。详细依据见[游戏时间先于来源](./action-timing.md#游戏时间先于来源)。
+
+提示词组合为三层，保留当前候选的实际参数，不把类型规则写成笼统的“流畅”“有张力”：
+
+| 层 | 内容 |
+| --- | --- |
+| 共用视觉与资源约束 | 当前基线/参考身份、用途、视角、比例、固定资源镜头、区域布局、锚点、完整入框与获授权裁剪例外、背景和输出尺寸 |
+| 当前类型规则 | 只从选中的分类参考提取本动画适用的具体判断，例如对象运动规律、身体承重与发力、特效峰值/消散或 UI 状态可读性；说明允许夸张、停顿和跟随运动的依据与范围 |
+| 当前动画参数 | 行为边界、初态/终态、游戏时长、各阶段区间与关键姿态/视觉状态、事件及既有输入衔接、播放方式、允许位移、FPS、源到游戏时间映射、生成画幅/音频和实际交付路径 |
+
+视频分辨率在 **768p/2K** 中按[合批消耗比较](./region-planning.md#视频条数与消耗比较)选择，沿用内部动作分析所得的实际宽高、最少可行视频条数与整组消耗方案，并纳入同一动作方案确认，不单独增加技术参数确认步骤。音频及角色素材中的特效、声音、镜头反馈按任务合同选择，不默认烘入。多区域逐项描述类型、`x/y/width/height`、局部锚点、独立有效时长和完整时间轴，各区域独立呈现，不能串动作；完整运动范围默认入框，不绘制标签或边框。只有明确授权后才逐项描述裁剪例外。尺寸推理与实际视频校准见[区域规划](./region-planning.md)。
+
+独立精灵区域不混入无关 UI、文字或场景；场景层与 UI 帧动画遵循自身资源合同。允许的位移、形变和姿态夸张须有设计依据，禁止未计划漂移或比例变化。各区域关键状态与事件须在目标尺寸和 FPS 下可读。颜色去背景只用于已确认纯色硬边，实际抽帧须显式传入 `--edge-profile hard-edge --color-separation-verified`，裁剪区域整圈为背景；复杂或半透明边缘使用真实 Alpha、遮罩或图片修复。提示词交付后等待真实视频，收到文件后记录实际动作、时机与裁剪缺陷；提示词不能替代内容检查。
+
+## accepted 资源文件门
+
+两条来源均登记 `asset.route: frame-animation`。视频合同和下方抽帧修正规则只在视频路线读取；图片的来源清单、生成/父图/修图证据及 `threejs-image-atlas-workflow/1` 示例见[图片打包与接入](./image-inbetween.md#打包与接入)。文件门按 schema 分派，图片不用 `video_prompt/source_video/source_timestamp`。通用资产清单的来源、许可与人工证据仍需填写。
+
+文件门只证明产物身份和结构一致，不证明分类、表现或节奏正确。提交 accepted 前须在 Work Item 设计证据中保留用途类型与优化依据、内部完整动画计划及用户确认的方案版本、实际抽帧输入视频或关键帧的人工验收依据、每个区域的有效源区间/有效时长/游戏时间映射、性能预算及现有估算/实测/未验证状态和最终完整序列验收结果。按类型检查可读性、节奏、主次、连续性和事件同步，核对时长误差不超过一个目标帧间隔、关键事件不缺失、阶段间无未计划重置、运动/保持和播放边界符合计划；不新增 schema 字段来替代设计证据。
+
+图片来源阶段先执行[一致性及衔接门](./image-inbetween.md#关键帧的一致性与衔接门)，不能把全部关键帧独立生成后才第一次检查相邻关系。即使记录了摘要，也不能证明实际对象比例、接触或轨迹正确；首尾、每张关键帧及递归父图须经用户逐张确认后，才能放行依赖它的生成，最终完整序列验收仍单独进行。发现问题暂停受影响依赖，保留可用成果并直接返修同目标候选、交付前后对照；结构检查通过、补帧数量增加或旧首尾确认不能替代当前帧的视觉确认。检查点、确认与返修状态记录在设计工件，不扩展来源、报告或 accepted 合同。
+
+视频发生剪辑或重定时时，`source_video` 绑定实际用于抽帧的派生视频，报告保留实际输入路径；原始视频身份、剪辑命令/配置与时间映射另存设计证据，不新增未经工具支持的 manifest 字段。SHA 可记录用于追踪，但无论缺失、错误或陈旧都不阻断文件验收。结构校验器不会自动执行上述人工节奏检查。
+
+视频路线每个动画的 `asset.frame_animation` 绑定提示词、真实视频、自己的报告和 spritesheet 路径；需要动画播放时通过 `--output-preview` 生成并绑定预览；SHA 字段及预览 meta 仅供可选追踪。共享输入时，提示词和视频绑定可以相同，区域与独立图集不能混用。文件门实际读取各工件并核对路径、区域位置与宽高、真实显示画布边界、FPS、帧数、输出 cell、去背景配置、PNG 图集尺寸和 Three.js 帧范围。图集必须位于 `asset.runtime_outputs`，`spritesheet.runtime_binding.file` 必须等于图集路径，报告的 `artifacts.sheet.file` 也必须与之相同。public 绑定从 `public/assets/<owner>/...` 和 `deployment_base` 推导 `runtime_url`，并要求报告加载 URL 精确一致；module-import 绑定要求报告包含对应的静态 `?url` 导入并以 `loadAsync(atlasUrl)` 加载。未绑定的工具报告仍可表示打包成功（`status: PASS`），但 `runtime_binding`、`runtime_url`、`threejs` 为空，不能用于 accepted 工作流。路径映射和 snippet 合同不启动 HTTP 服务，也不证明生产部署或浏览器实际加载；提供播放预览时必须是可读 HTML。
+
+视频合同使用 `threejs-video-atlas-workflow/1`；SHA 字段如有仅供追踪，省略也有效。示例：
+
+```json
+{
+  "schema": "threejs-video-atlas-workflow/1",
+  "status": "accepted",
+  "work_item_id": "work-item-animation-batch",
+  "candidate_version": "candidate-animation-batch-v1",
+  "settings": {
+    "fps": 12, "width": 160, "height": 144, "remove_background": true,
+    "region": { "x": 16, "y": 16, "width": 320, "height": 288 },
+    "anchor": { "x": 160, "y": 264 }
+  },
+  "video_prompt": { "file": "evidence/animation-batch.prompt.txt" },
+  "source_video": { "file": "art/animation-batch.mp4" },
+  "quality_report": { "file": "evidence/mechanism-open.video-atlas.json" },  "spritesheet": {
+    "file": "public/assets/mechanism-open/mechanism-open.png",
+    "runtime_binding": { "kind": "public", "file": "public/assets/mechanism-open/mechanism-open.png", "deployment_base": "/game/" },
+    "runtime_url": "/game/assets/mechanism-open/mechanism-open.png"
+  }
+}
+```
+
+若图集属于模块源码，绑定可写为 `{"kind":"module-import","file":"src/assets/mechanism-open.png","importer":"src/animation/mechanism-open.ts","specifier":"../assets/mechanism-open.png?url"}`；此时 `runtime_url` 为 `null`，Three.js 示例通过 `import atlasUrl from "../assets/mechanism-open.png?url";` 和 `loadAsync(atlasUrl)` 加载。工具从 `project-root` 内的输出路径解析绑定，不根据 basename 或文件系统绝对路径猜运行 URL。CLI 的 `--runtime-url` 仅作推导结果核对；没有 `runtime-kind` 绑定时不能用它生成运行时示例。public 文件必须放在 `public/assets/<owner>/...`，其中 `<owner>` 是第一层资源目录；示例的文件路径、绑定路径与 `runtime_outputs` 项必须保持完全一致。
+
+`settings.width/height` 是最终 cell 尺寸，`settings.region.width/height` 是源视频裁剪尺寸，两者可以不同。区域模式下，清单的 `settings.region`、报告的 `input.region` 与 `settings.region` 必须逐字段一致；显示画布宽高必须有效且完整容纳区域。整画布模式不填区域字段。工件、视频输入、帧来源、图集和预览中的 SHA 都可选，仅作追踪；缺失、错误或陈旧不阻断验收。文件门仍验证路径和可读内容、图集尺寸与 Three.js 帧合同，并由用户人工确认视频和最终序列。
+
+显式 `settings.anchor` 是区域内部的局部语义根坐标，与报告 `input.anchor/settings.anchor` 绑定一致；省略时由工具使用底部中心建议点（源宽/2、源高-1）。每份报告都必须包含 `cell.source_anchor`、实际缩放内容矩形 `cell.content_rect` 和 `cell.target_anchor`，整画布模式也适用。文件门核对显式或默认源点、缩放留白变换和 three.js `Sprite.center`，避免把根点绑定到留白边缘；输入锚点以左上像素坐标记录，写入 `Sprite.center` 时转换为 `(x / cell.width, 1 - y / cell.height)`。删除布局字段不能绕过校验。源点可以位于特效中心、物件安装点等，不限定角色脚底。
+
+报告的 `threejs` 合同描述真实可用的加载和播放方式：`texture_loader` 使用 `new THREE.TextureLoader().loadAsync(url)` 并声明 sRGB；`atlas_uv` 将 `repeat.x` 设为 `1 / frameCount`，每帧把 `texture.offset.x` 设为 `frameIndex / frameCount`；`sprite` 使用 `THREE.SpriteMaterial` 与 `THREE.Sprite`；`animation` 覆盖从 0 到末帧，并记录循环回首帧或单次停在末帧。报告内的 factory 示例由游戏更新循环调用 `animation.update(deltaSeconds)`。该合同面向二维 billboard/HUD 图层；三维骨骼模型仍使用项目的 `AnimationMixer` 资源路线。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#accepted-资源文件门)。
+
+## 抽帧后的动作与图片修正
+
+- 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#抽帧后的动作与图片修正)。
+
+- 修改实际图片后重组最终图集，更新实际图集、报告及实际生成的预览；SHA 可更新为追踪值，也可缺省，文件门不生成或比对摘要。重新审阅逐帧显示、动作连续性、关键时刻和首尾衔接。
+- 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#抽帧后的动作与图片修正)。
+
+## 本栈配套资料
+
+- [视频节奏整理](./action-timing.md#视频节奏整理)
+- [一致性及衔接门](./image-inbetween.md#关键帧的一致性与衔接门)
+- [衔接与循环设计](./character-animation.md#衔接与循环设计)
+- [共用时间轴](./action-timing.md)
+- [区域规划](./region-planning.md)

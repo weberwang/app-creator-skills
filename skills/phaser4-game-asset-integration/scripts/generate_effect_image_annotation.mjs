@@ -110,7 +110,7 @@ async function selectRegions(manifest, sceneId, stateId, projectRoot) {
       if (reuseErrors.length) throw new Error(reuseErrors[0]);
     }
     if (region.owner_type === "fixed-production-visual") {
-      const componentErrors = validateVisualComponentContract(region, { stage: "V3", annotation_number: region.annotation_number, region_id: region.id }, { canvas });
+      const componentErrors = validateVisualComponentContract(region, { stage: "V4", annotation_number: region.annotation_number, region_id: region.id }, { canvas });
       if (componentErrors.length) throw new Error(componentErrors[0]);
     }
   }

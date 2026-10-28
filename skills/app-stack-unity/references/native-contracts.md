@@ -2,6 +2,8 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
+各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+
 ## 能力索引
 
 - **产品与游戏需求**
@@ -58,8 +60,8 @@
 <a id="mode-unity-game-production--执行与交接"></a>
 #### 执行与交接
 
-1. 定义一句话体验、目标玩家、核心循环、失败/重试、最小范围和排除项；对视觉 Work Item 补充主题、目标受众、体验目标与主要观看情境，供[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)使用。涉及玩家可见文字时，按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)分离内部规格与显示表达，并在 V1 效果图生成前列出许可文字、动态数值示例和候选共享内容。
-2. 把范围拆成六阶段任务和 V0-V4 场景/弹窗增量，每项写玩家行为、可观察结果、依赖、资源需求、所有权与测试点。V1 与玩法/视觉角色确定关键事件和反馈意图；V2 指定动画制作路线、资产生产者、检查点和事件消费者，细节见[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)。V3 只负责正式资源生产、导入和素材验收，可提供组合预览；V3 可生产资源级 Prefab，正式宿主 Scene/场景装配 Prefab/UI 实现与校准在 V4 完成。场景只包含自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 分别建立独立 DISPLAY_LAYER Work Item，`hostSceneId` 只记录运行上下文。只把用户选择的平台写入交付范围。
+1. 定义一句话体验、目标玩家、核心循环、失败/重试、最小范围和排除项；对视觉 Work Item 补充主题、目标受众、体验目标与主要观看情境，供[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)使用。涉及玩家可见文字时，按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)分离内部规格与显示表达，并在 V2 效果图生成前列出许可文字、动态数值示例和候选共享内容。
+2. 把范围拆成六阶段任务和 V0-V5 场景/弹窗增量，每项写玩家行为、可观察结果、依赖、资源需求、所有权与测试点。V2 与玩法/视觉角色确定关键事件和反馈意图；V3 指定动画制作路线、资产生产者、检查点和事件消费者，细节见[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)。V4 只负责正式资源生产、导入和素材验收，可提供组合预览；V4 可生产资源级 Prefab，正式宿主 Scene/场景装配 Prefab/UI 实现与校准在 V5 完成。场景只包含自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 分别建立独立 DISPLAY_LAYER Work Item，`hostSceneId` 只记录运行上下文。只把用户选择的平台写入交付范围。
 3. 只为真实产品/视觉取舍和带副作用操作安排决定点；普通本地实现不创建多余批准门。
 4. 变更先区分 `repair`、`revalidate` 与 `return`，只失效真实受影响范围；不替其他角色重写其文档。
 5. 向控制面提交阶段状态、证据索引和阻断项，不直接迁移全局状态。
@@ -70,7 +72,7 @@
 
 正式 2D 骨骼资产交付按[控制面门禁](../../unity-domain-contracts/references/rigging-delivery-gate.md)冻结当前角色身份、候选修订、实际必需回归和五岗位负责人。工程与角色回归双证据不齐或失败时阻断交玩法；总控将 `repairs` 分配给原实施单元所有者，独立 QA 复验后再放行。普通返修不自动 RETURN、不扩大范围；跨界或上游事实失效再按原机制裁决。
 
-3D 资源按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)分配 Blender MCP 建模、贴图、绑定和动画生产者；角色按[共同交接](../../unity-development-workflow/references/3d-character-handoff.md)与 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)规划模型/骨架/动作来源、材质/LOD、Avatar、根运动和事件接口。V3 可交付资源级角色 Prefab 与资产验证，V4 验收实际场景和玩法轨迹；不用 2D 专用 `riggingDelivery` 或检查器代替 3D 证据，普通本地制作不追加工具选择审批。
+3D 资源按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)分配 Blender MCP 建模、贴图、绑定和动画生产者；角色按[共同交接](../../unity-development-workflow/references/3d-character-handoff.md)与 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)规划模型/骨架/动作来源、材质/LOD、Avatar、根运动和事件接口。V4 可交付资源级角色 Prefab 与资产验证，V5 验收实际场景和玩法轨迹；不用 2D 专用 `riggingDelivery` 或检查器代替 3D 证据，普通本地制作不追加工具选择审批。
 <!-- native-source:unity-game-production:end -->
 
 
@@ -136,13 +138,13 @@ Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先�
 
 正式消费 2D 骨骼资产前，核对[交付门禁](../../unity-domain-contracts/references/rigging-delivery-gate.md)与现有工作流检查均已通过，且当前角色、Prefab/GUID 和候选修订一致。失败、缺失或陈旧报告不作为已交付资产接入；按门禁诊断退相应岗位，玩法只修自己的触发、规则和生命周期问题，不临时改共享资产绕过失败。
 
-3D 角色按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)和 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)消费已独立验证的蒙皮角色、材质/LOD、Avatar/Clips、挂点与 Animator 接口；绑定和动作需求分别交 [`$app-character-rigging`](#mode-unity-game-3d-rigging)、[`$app-animation`](#mode-unity-game-3d-animation)。角色内部 Animator 由实施包指定的动画/集成单写者维护；玩法负责触发、状态、事件消费和唯一位移权威，V4 实测循环/过渡/打断、根运动和生命周期。3D 不套用 2D 专用门禁，骨架/权重、动作或材质缺陷退原岗位，不从场景私改共享源绕过。
+3D 角色按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)和 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)消费已独立验证的蒙皮角色、材质/LOD、Avatar/Clips、挂点与 Animator 接口；绑定和动作需求分别交 [`$app-character-rigging`](#mode-unity-game-3d-rigging)、[`$app-animation`](#mode-unity-game-3d-animation)。角色内部 Animator 由实施包指定的动画/集成单写者维护；玩法负责触发、状态、事件消费和唯一位移权威，V5 实测循环/过渡/打断、根运动和生命周期。3D 不套用 2D 专用门禁，骨架/权重、动作或材质缺陷退原岗位，不从场景私改共享源绕过。
 
 1. 先冻结玩家行为、边界情况和测试点；A3 前冻结实施包，再按总控的阶段任务闭环编码。
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$app-3d-modeling` 与 `$app-3d-texturing`；原生 2D 骨骼与动画交给 [`$app-character-rigging`](#mode-unity-game-2d-rigging)。消费已独立验收的角色 Prefab、视角/方向规则、Animator 参数、动作事件和挂点合同，负责触发与战斗逻辑；不在场景中私改骨架、网格、权重或共享 Clip，接口不足时退回资产角色修复。玩法拥有权威状态、命中/伤害判定、事件语义、数值和动作触发；把已确定的事件及参数交给 [`$app-feedback`](#mode-unity-game-juice) 设计反馈映射。表现层消费事件，不能成为玩法判定来源；顿帧、击退等改变规则或玩家控制的行为由玩法/数值角色确定。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。
-4. 纯规则可与资源制作并行；正式场景只接入已登记、审查、授权和 Unity 验证通过的资源。场景只实现自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 DISPLAY_LAYER Work Item 和包，`hostSceneId` 仅用于公开接口与上下文接线，弹窗未完成不阻断宿主场景 V4。
-5. 2D/UI 场景必须消费响应式合同与平台目标：按现有项目选择 uGUI CanvasScaler、UI Toolkit PanelSettings 或 Camera 路线，并从唯一入口幂等重排；交互内容保持在安全区，左右或上下边带只接入已登记的纯视觉背景。移动端另处理刘海/挖孔、系统栏、旋转、软键盘和触控手势，Windows 另处理窗口缩放、焦点与键鼠/手柄切换。程序化文本同时实现 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言遵守单行/换行合同并禁止截断；玩家可见表达、真实数据绑定、代表值和本地化边界检查按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)执行，不把内部 GDD 或设计描述绑定为界面文案。
+4. 纯规则可与资源制作并行；正式场景只接入已登记、审查、授权和 Unity 验证通过的资源。场景只实现自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 DISPLAY_LAYER Work Item 和包，`hostSceneId` 仅用于公开接口与上下文接线，弹窗未完成不阻断宿主场景 V5。
+5. 2D/UI 场景必须消费响应式合同与平台目标：按现有项目选择 uGUI CanvasScaler、UI Toolkit PanelSettings 或 Camera 路线，并从唯一入口幂等重排；交互内容保持在安全区，左右或上下边带只接入已登记的纯视觉背景。移动端另处理刘海/挖孔、系统栏、旋转、软键盘和触控手势，Windows 另处理窗口缩放、焦点与键鼠/手柄切换。程序化文本默认实现 `zh-CN`，英语 `en` 等其他语言按项目选择实现，逐语言遵守单行/换行合同并禁止截断；玩家可见表达、真实数据绑定、代表值和本地化边界检查按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)执行，不把内部 GDD 或设计描述绑定为界面文案。
 6. 3D 场景只消费按共同交接由建模、贴图、绑定、动画及指定集成单写者交付、通过独立 QA 的版本化资源级 Prefab；按稳定资源 ID/GUID/地址接线，不在场景或运行时脚本中复制、覆盖或临时修改 Mesh、UV、Material、Texture、LOD、骨骼和材质槽。碰撞、交互挂点或 Animator 接口不满足玩法时，提交可复现需求并退回资产所有者修复。
 7. 研发阶段仅在 Editor/EditMode/PlayMode 与 Game View 模拟中验证重开、暂停恢复、参考分辨率、输入映射、资源失败、离线和适用的存档异常；未经明确授权不安装或启动 Standalone/Player、真机或等价设备。
 8. 提交变更路径、测试、构建日志、Editor 固定机位截图、正式资源、限制和阻断项；开发者不能完成自己的独立 F2 审查。设备证据只在独立发布 Work Item 获明确授权后产生。
@@ -212,24 +214,23 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-juice--unity-游戏动态反馈"></a>
 ### Unity 游戏动态反馈
 
-沿用现有 Work Item、Implementation Package 与 V0–V4 阶段，不创建反馈专用状态机或 Work Item 类型。V0 内部分流无常规确认；V1–V4 按控制面提交真实交付，V2 拆解图和布局图分别确认。动画制作前先确认动作方案，真实显示仍由用户验收。
+沿用现有 Work Item、Implementation Package 与 V0–V5 阶段，不创建反馈专用状态机或 Work Item 类型。V0 内部分流无常规确认；V1 验证功能，V2–V5 按控制面提交真实交付，V3 拆解图和布局图分别确认。动画制作前先确认动作方案，真实显示仍由用户验收。
 
 玩法角色拥有权威状态、命中/伤害判定、事件语义、数值和动作触发。本角色把已确认的玩法事件映射为表现通道及生命周期策略；表现反馈不能作为玩法判定依据。顿帧、击退等会改变规则或玩家控制的行为由玩法与数值角色确定，本角色只实现其已批准的表现部分。
 
 <a id="mode-unity-game-juice--工作流程"></a>
 #### 工作流程
 
-1. **V1 明确反馈意图**：对核心事件记录玩家应理解的信息、触发时机和预期感受，并确定视觉、音频、镜头、时间与交互反馈是否适用。此处与美术 brief、主题和可读性目标一致。
-2. **V2 冻结事件映射**：为每个事件记录来源、参数、表现通道、强度、时长、触发条件、时间来源、优先级、重复/叠加策略、中断处理、完成行为及负责对象。具体格式见[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)。
-3. **V3 验收反馈资源**：验证已登记的动画、VFX、音频和镜头参数的资源交付与导入，可提供临时组合预览；正式场景接入与校准留在 V4。
-4. **V4 接入并验收动态体验**：在真实 Scene/Prefab/UI 组合中检查触发次序、层级、遮挡和时间行为，按[美术质量契约](../../unity-development-workflow/references/art-quality-contract.md)检查正常游玩、重复反馈、事件峰值和同屏叠加情境。真实运行片段和人工检查绑定当前工作项、候选与场景；技术验证不代替用户显示确认。
+1. **V2 明确反馈意图**：对核心事件记录玩家应理解的信息、触发时机和预期感受，并确定视觉、音频、镜头、时间与交互反馈是否适用。此处与美术 brief、主题和可读性目标一致。
+2. **V3 冻结事件映射**：为每个事件记录来源、参数、表现通道、强度、时长、触发条件、时间来源、优先级、重复/叠加策略、中断处理、完成行为及负责对象。具体格式见[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)。
+3. **V4 验收反馈资源**：验证已登记的动画、VFX、音频和镜头参数的资源交付与导入，可提供临时组合预览；正式场景接入与校准留在 V5。
+4. **V5 接入并验收动态体验**：在真实 Scene/Prefab/UI 组合中检查触发次序、层级、遮挡和时间行为，按[美术质量契约](../../unity-development-workflow/references/art-quality-contract.md)检查正常游玩、重复反馈、事件峰值和同屏叠加情境。真实运行片段和人工检查绑定当前工作项、候选与场景；技术验证不代替用户显示确认。
 
 <a id="mode-unity-game-juice--必须明确的运行行为"></a>
 #### 必须明确的运行行为
 
-- **重复**：同一事件再次触发时，声明重播、重置、合并、限频或忽略等策略，并说明选择理由。
-- **叠加**：声明并行、合并、限量或优先级规则，避免多个反馈争用同一属性或遮蔽玩法信息。
-- **中断与收尾**：声明被更高优先级事件打断、对象禁用、关闭显示层或离开场景时如何结束；结束后恢复被临时修改的视觉属性。
+- 重复和叠加遵循[公共反馈竞争规则](../../app-feedback/references/interaction-feedback.md#3-处理重复并发和打断)；Unity 可选重播或重置，按项目限制并发数量，避免多个反馈争用同一属性。
+- 被更高优先级事件打断、对象禁用、关闭显示层或离开场景时，遵循[公共反馈生命周期](../../app-feedback/references/interaction-feedback.md#5-尊重生命周期与可访问性)；结束后恢复被临时修改的视觉属性。
 - **时间与暂停**：按反馈通道声明使用缩放时间或非缩放时间，以及暂停、顿帧和 UI 交互时的行为。不得让一个短暂反馈意外改变全局 `Time.timeScale`；修改全局时间的玩法规则由玩法角色持有。
 - **对象生命周期**：对象池复用前清除旧动画、计时器、协程、事件订阅和临时状态；释放后不得继续播放或影响新实例。选择适合项目实现的清理方式并在实际对象池轨迹验证。
 
@@ -299,7 +300,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 6. 对 `$app-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、BlendShape 目标几何、Collider、Prefab 引用和架构预算；角色骨架/权重与动作按下述专用流程验收，模型生产代理的自检不能替代 QA。
 7. 对 `$app-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
 8. 研发期 3D 验收使用 Unity Editor 覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形与目标场景光照；批准平台实机转台、设备性能和稳定性只在 G2 `PASS` 后的 G3 执行。
-9. 程序化文本对 `en`、`zh-CN`、`ja`、`ru`、`es` 分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)使用实际必要翻译中占用空间最长的文本与合理边界输入检查换行、容器适配和截断；验证可见内容与真实数据/显示条件一致，并保留必要条件和后果。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
+9. 程序化文本对项目所选语言（默认 `zh-CN`，英语 `en` 可选）分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)使用实际必要翻译中占用空间最长的文本与合理边界输入检查换行、容器适配和截断；验证可见内容与真实数据/显示条件一致，并保留必要条件和后果。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
 10. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。
@@ -307,7 +308,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-qa-performance--美术质量与动态反馈验收"></a>
 #### 美术质量与动态反馈验收
 
-按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)独立检查主题贴合、受众适配、玩法可读、观看舒适、美术完成度，五项必须逐项 `PASS`。V4 对 `normal-play`、`repeated-feedback`、`event-peak`、`overlap-peak` 逐项记录必需或不适用及理由；适用项缺少真实运行证据时为 `NOT_RUN`，不推定通过。
+按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)独立检查主题贴合、受众适配、玩法可读、观看舒适、美术完成度，五项必须逐项 `PASS`。V5 对 `normal-play`、`repeated-feedback`、`event-peak`、`overlap-peak` 逐项记录必需或不适用及理由；适用项缺少真实运行证据时为 `NOT_RUN`，不推定通过。
 
 验收材料绑定当前 Work Item、候选与场景/显示层，由控制面 `artExperienceAcceptanceRef` 引用。实际运行片段或截图交由用户人工检查显示效果并确认；QA 不自动分析截图或据此声称视觉通过。动态反馈的重复、叠加、中断、暂停和对象池生命周期按 [`unity-game-juice`](#mode-unity-game-juice) 的事件映射和当前 Unity 实测轨迹检查。
 
@@ -390,7 +391,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-animation--制作入口"></a>
 #### 制作入口
 
-读取[生产级动画工作流](../../unity-game-3d-animation/references/animation-workflow.md)，沿用既有 Work Item/V0–V4 和 `animation-intent-contract`。为每个动作独立定义 FPS、帧/秒范围、循环接点、步幅/步频、root motion（in-place 或 displacement）、玩法单一权威、中断/对象池/多实例行为和表现事件，再按已确认方案制作真实动作。输出要包含源文件与配方、逐 Clip 烘焙/导出、回读证据和 Unity 导入验证；动作画面由用户人工检查。
+读取[生产级动画工作流](../../unity-game-3d-animation/references/animation-workflow.md)，沿用既有 Work Item/V0–V5 和 `animation-intent-contract`。为每个动作独立定义 FPS、帧/秒范围、循环接点、步幅/步频、root motion（in-place 或 displacement）、玩法单一权威、中断/对象池/多实例行为和表现事件，再按已确认方案制作真实动作。输出要包含源文件与配方、逐 Clip 烘焙/导出、回读证据和 Unity 导入验证；动作画面由用户人工检查。
 <!-- native-source:unity-game-3d-animation:end -->
 
 
@@ -429,7 +430,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 - 两次用户确认分别绑定角色、基线、产物版本和用户回复：拆件方案确认后才能在其生产边界内制作部件；代表动画确认后才能批量扩展动作。若修改要求改变已确认的拆件方案或代表动画，修正、重验、重新展示并确认新版本。
 - 已确认拆件范围内因动作暴露缺陷而补充变体，按合同直接制作、接入和展示复验，不另加文字审批；新增视角方向或超出已确认生产边界时，先更新并重新展示受影响拆件内容、获得确认后再生产。若补件改变已确认代表动画，先展示更新版并获得确认，再扩展依赖动作。
 - 正式生产前先在隔离技术样例或已验收可复用部件上验证最小资产链路，不依赖尚未通过拆件确认的正式部件。该技术验证不代替实际角色预览与用户视觉检查。
-- SCENE / DISPLAY_LAYER 按现有控制面使用 V0–V4 与 `stageReviews`；内容一致时拆件确认可并入 V2。代表动画确认必须早于其余动作制作。记录专项确认和阶段确认各自覆盖的对象，不创建新的状态或确认 schema；其他 Work Item 遵循原有门禁。
+- SCENE / DISPLAY_LAYER 按现有控制面使用 V0–V5 与阶段确认；内容一致时拆件确认可并入 V3。代表动画确认必须早于其余动作制作。记录专项确认和阶段确认各自覆盖的对象，不创建新的状态或确认 schema；其他 Work Item 遵循原有门禁。
 - 先检查并复用可用 Editor；不得自动启动真机或 Standalone/Player。只有发现必需能力后才安装包，不升级 Unity 或无关依赖，不手改 `Packages/manifest.json`、`.meta` 或 Unity 序列化 YAML。
 - 不承诺 Unity 自动权重界面存在可调用 API。权重算法可先在隔离的最小样例中实现和验证；未经样例验证不得用于正式生产。不得伪造 C# 模板；缺必需能力或输入时记为 `BLOCKED`，未执行检查记为 `NOT_RUN`，实际失败记为 `FAIL` 并修复，不得报告 PASS。
 - 性能预算沿用项目已批准门槛；门槛缺失时记录测量值并交回总控制定，不自行宣布通过。无真机证据时不得声称设备性能已验证。
@@ -466,7 +467,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 
 执行[绑定工作流](../../unity-game-3d-rigging/references/rigging-workflow.md)：先确认模型与骨架合同，再规划静置姿势和骨层级，分别建立控制骨与运行时变形骨，完成并修正蒙皮、驱动校正及按需的道具/面部挂点，验证压力姿势和各 LOD，最后在派生副本导出并回读。需要角色动作时交接给 `$app-animation`，不可将绑定验证误报为动画完成。
 
-绑定交付至少含可重开的 `.blend` 及依赖、源/模型/UV/槽位/BlendShape 版本、骨架层级和命名/轴向说明、权重与压力姿势检查、控制和变形骨映射、各 LOD 对应、FBX 对象/骨骼选择与导出参数、许可、Unity 导入技术结果及待用户人工检查的显示证据。资源级 Prefab 属 V3，正式场景接入属 V4；技术检查和专业审查不代替用户视觉确认。
+绑定交付至少含可重开的 `.blend` 及依赖、源/模型/UV/槽位/BlendShape 版本、骨架层级和命名/轴向说明、权重与压力姿势检查、控制和变形骨映射、各 LOD 对应、FBX 对象/骨骼选择与导出参数、许可、Unity 导入技术结果及待用户人工检查的显示证据。资源级 Prefab 属 V4，正式场景接入属 V5；技术检查和专业审查不代替用户视觉确认。
 <!-- native-source:unity-game-3d-rigging:end -->
 
 
@@ -506,7 +507,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#完成模型结构)。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#核对表面与性能预算)。
 5. 保存版本化 `.blend` 与可复现模型配方，记录工具版本、关键操作、参数、实际源文件位置及派生关系。在独立导出副本上处理修改器、三角化和轴向，回读导出结果。
-6. 串行接入 Unity，检查实际导入器（适用时为 ModelImporter）、比例、轴向、Pivot、法线、材质槽、LODGroup、Collider、Prefab 引用和 Console；正式场景接入仍在 V4。
+6. 串行接入 Unity，检查实际导入器（适用时为 ModelImporter）、比例、轴向、Pivot、法线、材质槽、LODGroup、Collider、Prefab 引用和 Console；正式场景接入仍在 V5。
 7. 按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交付 UV、槽位、适用的高低模/Cage、法线/三角化策略和各 LOD 用图信息；贴图返修涉及网格、UV 或槽位时由建模角色修复并按依赖范围复验。输出转台、线框、UV、碰撞、LOD 与目标场景截图及人工检查要点；技术自检后交给纹理角色或独立 QA，不自批。用户确认显示效果前保持视觉待验收。
 
 <a id="mode-unity-game-3d-modeling--生产质量底线"></a>
@@ -568,7 +569,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 4. 按目标通道集合制作 BaseColor、Tangent-space Normal、Metallic、Roughness、AO，以及按需的 Emission、Height、Opacity；Metallic 等数据与 Curvature、Thickness、ID 辅助图按实际验证的 Blender 方法提取，不能假定为内建烘焙类型。恒定通道可使用明确的 Shader 标量，不生成无用途的图像。
 5. 处理投射遗漏、接缝、拉伸、细节尺度与透明边缘，保留独立主通道，在 Blender MCP 内由 Roughness 计算 Smoothness 并按目标 URP Shader 打包。保存节点、绘制图和所有依赖，不用预览截图或只存于内存的图像交付。
 6. 回读实际导出文件，验证尺寸、通道、位深、颜色/数据语义、实际输出位置和打包数值；在 Unity 中配置 sRGB、NormalMap、MipMap、Streaming、压缩、平台覆盖与 Material 属性，回读实际映射与资源级 Prefab 引用。
-7. 输出中性光、掠射光、目标场景、近远景和 LOD 切换证据及人工检查要点；分别记录技术结果、F2/F3 与用户显示确认，自检后交由视觉角色和 `$app-quality-review` 独立审查。正式场景接入在 V4，未经用户明确要求不启动 Standalone/Player 或真机。
+7. 输出中性光、掠射光、目标场景、近远景和 LOD 切换证据及人工检查要点；分别记录技术结果、F2/F3 与用户显示确认，自检后交由视觉角色和 `$app-quality-review` 独立审查。正式场景接入在 V5，未经用户明确要求不启动 Standalone/Player 或真机。
 
 <a id="mode-unity-game-3d-texturing--生产质量底线"></a>
 #### 生产质量底线
@@ -625,33 +626,38 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 3. 没有可写、可由正确 Spine Editor 打开的源工程时立即 `BLOCKED`。禁止直接篡改导出 JSON、Binary 或 Atlas 来伪造 Skin，也禁止以 Unity 运行时拼接替代正式源工程 Skin。
 4. 核对现有 Skin、Slot、Attachment、网格、约束、动画、碰撞/挂点和 Unity 引用清单，记录实际资源位置与状态，不要求或校验 SHA。开始前确认目标输出目录和单写者，禁止覆盖唯一有效源或当前稳定导出；验收以实际完成情况满足用户要求为准，中途调整无需回改合同。
 
-<a id="mode-unity-game-spine-reskin--嵌入-v0-v4-执行"></a>
-#### 嵌入 V0-V4 执行
+<a id="mode-unity-game-spine-reskin--嵌入-v0-v5-执行"></a>
+#### 嵌入 V0-V5 执行
 
-V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录独立 Spine/视觉审查，F3 记录 Unity 编译、导入、PlayMode 与资源证据；只有真实视觉取舍使用 `USER_DECISION`。
+V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录独立 Spine/视觉审查，F3 记录 Unity 编译、导入、PlayMode 与资源证据；只有真实视觉取舍使用 `USER_DECISION`。
 
 <a id="mode-unity-game-spine-reskin--v0-引用-visual-bible"></a>
 ##### V0 引用 Visual Bible
 
 引用仍有效且覆盖该角色的 Visual Bible。若缺失、失效或范围不足，返回 `$app-creator-workflow` 建立或选择全局视觉基线；已有有效规范时不强制重新生成候选。
 
-<a id="mode-unity-game-spine-reskin--v1-换皮草图与结构映射"></a>
-##### V1 换皮草图与结构映射
+<a id="mode-unity-game-spine-reskin--v1-功能验证"></a>
+##### V1 功能验证
+
+先使用现有角色和临时资源验证切换、动画与交互功能；白盒按需使用，不是进入 V2 的前提。
+
+<a id="mode-unity-game-spine-reskin--v2-换皮草图与结构映射"></a>
+##### V2 换皮草图与结构映射
 
 1. 产出实际可查看的完整换皮草图/灰盒，以及站立、移动、攻击等足以暴露连接和遮挡问题的关键姿势。
 2. 画出每个部件的完整边界、被遮挡补全、连接区、前后遮挡、Clipping 边界和极端弯曲余量；不得只提交正面静态半身图。
 3. 提交逐项 `skinId → slotName → attachmentName` 映射，标明 Attachment 类型、现有 Mesh/Linked Mesh、原点/Pivot、画布、用途、朝向、状态和预期 Atlas Region。
-4. 完成独立视觉/Spine 审查；存在实质取舍时请求用户确认当前草图、关键姿势和映射版本。生产边界未冻结时不得进入 V2。
+4. 完成独立视觉/Spine 审查；存在实质取舍时请求用户确认当前草图、关键姿势和映射版本。生产边界未冻结时不得进入 V3。
 
-<a id="mode-unity-game-spine-reskin--v2-高保真与生产边界"></a>
-##### V2 高保真与生产边界
+<a id="mode-unity-game-spine-reskin--v3-高保真与生产边界"></a>
+##### V3 高保真与生产边界
 
-1. 只依据有效视觉基线与 V1，生成完整高保真角色和代表性关键姿势；不得暗改 Slot、Attachment、轮廓边界或遮挡设计。
+1. 只依据有效视觉基线与 V2，生成完整高保真角色和代表性关键姿势；不得暗改 Slot、Attachment、轮廓边界或遮挡设计。
 2. F2 由非作者执行视觉一致性、Spine 可实现性和 UX/可读性审核；检查全部姿势、连接区、轮廓、层叠、Clipping、颜色识别和动画可读性。
-3. 将高保真、资产拆解、映射和生产规格冻结为同一 V2 边界；存在视觉取舍时绑定用户决定。任一边界或映射变化均生成新版本并重验受影响范围。
+3. 将高保真、资产拆解、映射和生产规格冻结为同一 V3 边界；存在视觉取舍时绑定用户决定。任一边界或映射变化均生成新版本并重验受影响范围。
 
-<a id="mode-unity-game-spine-reskin--v2-编号资产地图"></a>
-##### V2 编号资产地图
+<a id="mode-unity-game-spine-reskin--v3-编号资产地图"></a>
+##### V3 编号资产地图
 
 向用户只展示在冻结高保真原图上框选并附图内中文标注的资产地图，不输出文本拆解段落、表格或清单。图中稳定编号对应内部资产映射，标明部件用途、连接区、层叠关系和生产边界；密集部件另附同编号的局部放大标注图。遵守[图片框选与标注交付](../../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)，以下映射与规格仅作为内部生产和校验记录。
 
@@ -659,27 +665,27 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 2. 每项固定记录 `skinId → slotName → attachmentName → sourceImage → atlasRegion`，并记录相同画布、Pivot/原点、连接区、完整遮挡补全、用途、朝向、像素尺寸、Alpha、PMA 策略和验收姿势。
 3. 资产地图生产边界冻结后，才按编号逐项独立生成或重绘。禁止裁切、抠取、放大或轻微修饰高保真效果图充当源图；禁止整张角色效果图进入 Atlas。
 4. 对每项核对现有 Attachment 类型、Mesh 顶点/UV/权重和 Linked Mesh。明显轮廓变化、画布/Pivot 不一致、连接区不兼容或网格无法承载时立即 `BLOCKED`，不得修改 Mesh、UV 或权重解决。
-5. 每张源图分别验证透明边缘、完整轮廓、连接区、方向、尺寸、采样、色彩和在关键姿势中的变形，再允许进入 V3。
+5. 每张源图分别验证透明边缘、完整轮廓、连接区、方向、尺寸、采样、色彩和在关键姿势中的变形，再允许进入 V4。
 
-<a id="mode-unity-game-spine-reskin--v3-分批生产记录"></a>
-##### V3 分批生产记录
+<a id="mode-unity-game-spine-reskin--v4-分批生产记录"></a>
+##### V4 分批生产记录
 
-只有完整 V2 资产地图与生产边界冻结后才可拆批。分批只是执行调度，不能替代 V0-V2 任何门禁；所有资产仍必须先完成全量编号、分类、映射和地图确认。
+只有完整 V3 资产地图与生产边界冻结后才可拆批。分批只是执行调度，不能替代 V0-V3 任何门禁；所有资产仍必须先完成全量编号、分类、映射和地图确认。
 
 1. 在项目内建立机器可读 JSON 台账：`Artifacts/Spine/<characterId>/batch-ledger.json`。路径必须是项目根内的 POSIX 相对路径，不得使用绝对路径、项目外路径、符号链接段或临时聊天附件；台账和证据写入由一个单写者维护。
-2. 台账根对象至少记录 `ledgerVersion`、`projectId`、`characterId`、`sourceRevision`、`assetMapVersion`、`visualBibleVersion`、实际交付的完整 `assetIds`、`batches`、追加式 `events` 和 `overallStatus`。核对实际资源覆盖已确认角色要求，不要求回改 V2 地图或计算摘要。
+2. 台账根对象至少记录 `ledgerVersion`、`projectId`、`characterId`、`sourceRevision`、`assetMapVersion`、`visualBibleVersion`、实际交付的完整 `assetIds`、`batches`、追加式 `events` 和 `overallStatus`。核对实际资源覆盖已确认角色要求，不要求回改 V3 地图或计算摘要。
 3. 每个批次至少记录：`taskId`、`skinId`、`batchId`、从 1 开始且不重复的 `ordinal`、唯一 `assetIds`、`dependsOnBatchIds`、`inputVersion` 与实际输入位置、`outputVersion` 与实际输出位置、`owner`、`singleWriter`、`status`、创建/开工/更新时间、验证/审核/用户决定证据、失败与阻塞原因、`recoveryPoint`、`unityVersion`、`spineEditorVersion`、`spineRuntimeVersion`、`exportFormat`、`supersedes` 和 `supersededBy`。
-4. 每个 V2 `assetId` 必须在且只能在一个当前有效批次中出现；建批时校验集合与 V2 地图完全相等，禁止遗漏、重复、空批次或依赖循环。失败批次仍保留原资产归属，修订时建立新 `batchId` 并记录 supersedes 关系。
+4. 每个 V3 `assetId` 必须在且只能在一个当前有效批次中出现；建批时校验集合与 V3 地图完全相等，禁止遗漏、重复、空批次或依赖循环。失败批次仍保留原资产归属，修订时建立新 `batchId` 并记录 supersedes 关系。
 5. 状态只能按 `PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED` 推进；异常进入 `FAILED` 或 `BLOCKED`，不得写 `PASS` 或伪造完成。建批、开工、每次产物生成、审核、Unity 集成和验证完成后立即向 `events` 追加事件，事件记录时间、执行者、状态、实际输入/输出位置和证据路径；禁止覆盖旧事件、旧证据或用聊天记录补写历史。
 6. 恢复批次前读取实际输入/输出、依赖批次状态、Spine/Unity 导出版本和单写者，判断是否满足已确认要求；实际资源错误或依赖未完成时修复对应批次，不因合同、版本或文件内容变化自动作废批次，不校验 SHA，不得凭对话记忆续做。
-7. 全部批次达到 `VALIDATED`、整批映射无遗漏且 V4 集成完成后，仍必须做一次整角色全量回归：完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射、Atlas/材质/PMA/Draw Call/纹理内存、全部动画与 Attachment Timeline、默认/新 Skin、多实例隔离、极端姿势、Clipping 和遮挡。只有全量回归实际 `PASS`，才可写整体 `COMPLETE`；任何失败或阻塞都保留台账并回到对应批次。
+7. 全部批次达到 `VALIDATED`、整批映射无遗漏且 V5 集成完成后，仍必须做一次整角色全量回归：完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射、Atlas/材质/PMA/Draw Call/纹理内存、全部动画与 Attachment Timeline、默认/新 Skin、多实例隔离、极端姿势、Clipping 和遮挡。只有全量回归实际 `PASS`，才可写整体 `COMPLETE`；任何失败或阻塞都保留台账并回到对应批次。
 
-<a id="mode-unity-game-spine-reskin--v4-spine-源工程与-unity-接入"></a>
-##### V4 Spine 源工程与 Unity 接入
+<a id="mode-unity-game-spine-reskin--v5-spine-源工程与-unity-接入"></a>
+##### V5 Spine 源工程与 Unity 接入
 
 1. 在原 Spine 源工程新增原生 Skin，复用冻结的 Skeleton、Slot、Attachment 名称/类型、Mesh、权重、约束、动画和 Attachment Timeline；只替换各 Skin 的区域/图片绑定。
 2. 使用已确认兼容的 Spine Editor 与既有导出配置重新打包 Atlas 并导出 JSON/Binary。输出到新版本路径，核对导出前后冻结清单；任何结构差异均失败。
-3. 保持 Atlas Region 与 V2 映射一致。明确使用 PMA 或 Straight Alpha，纹理导入、Atlas 设置和材质 Shader 必须同一策略，禁止混用导致黑边/白边。URP 使用当前 `spine-unity` 支持的 Spine/Skeleton Shader 与正确材质关键字，不擅自换成不兼容通用 Shader。
+3. 保持 Atlas Region 与 V3 映射一致。明确使用 PMA 或 Straight Alpha，纹理导入、Atlas 设置和材质 Shader 必须同一策略，禁止混用导致黑边/白边。URP 使用当前 `spine-unity` 支持的 Spine/Skeleton Shader 与正确材质关键字，不擅自换成不兼容通用 Shader。
 4. 记录 Atlas 页数、材质/混合模式、Clipping、Draw Call、纹理尺寸、格式、MipMap 和估算/实测纹理内存；新 Skin 不得以无预算的额外 Atlas 页或材质放大批次数。只有用户明确需要独立下载、卸载或内容分包时才引入 Addressables，并验证 `SkeletonDataAsset`、AtlasAsset、材质和纹理引用原子加载。
 5. 在 Unity 中以当前实例切换 Skin：先确认目标 Skin 存在；保持原 `AnimationState` 与当前 Track，不重建或清空动画状态；对该实例的 `Skeleton` 设置 Skin，恢复 Slot setup pose，再重新应用当前 AnimationState。目标 Skin 缺失时回退默认 Skin并报告，不写入共享 `SkeletonData`，不让一个实例的切换污染其他实例。
 6. 重新导入后核对 `SkeletonDataAsset`、AtlasAsset、材质、纹理、GUID/地址、Prefab/Scene 引用和 Console；不得用 `unity command` 返回成功代替真实验证。
@@ -702,7 +708,7 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 <a id="mode-unity-game-spine-reskin--证据失效与交接"></a>
 #### 证据、失效与交接
 
-- Visual Bible 变化使受影响 V1-V4 失效；V1 变化使受影响 V2-V4 失效；V2 映射或源图变化使受影响生产项与 V3/V4 失效。
+- Visual Bible 变化使受影响 V2-V5 失效；V2 变化使受影响 V3-V5 失效；V3 映射或源图变化使受影响生产项与 V4/V5 失效。
 - Spine 源结构、导出设置、Editor/Runtime 版本、Atlas、材质、GUID/地址或运行时切换逻辑变化，使对应导出与 Unity 验证失效；结构冻结项变化则退出本 Skill 并 `BLOCKED`。
 - 保存冻结清单、草图/高保真/资产地图确认、逐项源图、Spine 源修订、导出日志、差异报告、Unity 引用、测试、截图、性能和失败证据。旧批准只作历史记录。
 - 完成时向总控报告变更文件、固定项差异为零的证据、验证矩阵结果、Atlas/性能影响、未运行项和剩余风险；不得把缺少 Spine Editor、源工程、许可证、Unity 环境或设备写成通过。
@@ -741,16 +747,16 @@ V0-V4 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 <a id="mode-unity-game-visual-assets--unity-视觉与资源接入"></a>
 ### Unity 视觉与资源接入
 
-本角色消费 `$app-workflow-control` 的 Work Item 和 `$app-creator-workflow` 的场景计划。视觉生产使用 V0-V4；A0-A6 只表示动作风险，F2 记录领域质量，F3 记录 Unity 工程验证。
+本角色消费 `$app-workflow-control` 的 Work Item 和 `$app-creator-workflow` 的场景计划。视觉生产使用 V0-V5；A0-A6 只表示动作风险，F2 记录领域质量，F3 记录 Unity 工程验证。
 
 <a id="mode-unity-game-visual-assets--输入与边界"></a>
 #### 输入与边界
 
 读取 Visual Bible、场景契约、结构草图、资源登记、性能预算和当前 V 阶段。只有存在实质视觉取舍、授权、外部生成成本或替代策略时，才把精确问题交给 `$grilling`；已有有效决定不重复询问。
 
-公共字体、贴图、材质、图标、九宫格和 Prefab 遵守[公共资源登记与使用](../../unity-development-workflow/references/shared-asset-usage.md)：V2 先查库，合格资源按真实身份复用；V3 提交独立生产/导入事实，由指定单写者同步总表，交付各场景的消费绑定，不重复生产或私改共享源。
+公共字体、贴图、材质、图标、九宫格和 Prefab 遵守[公共资源登记与使用](../../unity-development-workflow/references/shared-asset-usage.md)：V3 先查库，合格资源按真实身份复用；V4 提交独立生产/导入事实，由指定单写者同步总表，交付各场景的消费绑定，不重复生产或私改共享源。
 
-生产级 3D 模型与 PBR 贴图分别交给 `$app-3d-modeling` 和 `$app-3d-texturing`；3D 绑定与动作分别交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging)、[`$app-animation`](#mode-unity-game-3d-animation)，四者固定通过 Blender MCP 源生产，按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)和角色交接接入。本角色不把这些产物转为图片生成任务，也不从效果图裁切贴图。现有 Spine 角色仅换皮且 Bone、Slot、Attachment、Mesh、约束与动画固定时交给 `$app-spine-reskin`。美术 brief 和 V4 体验验收遵循[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)：主题、受众、玩法可读、观看舒适、美术完成度逐项通过。动画与反馈事件交给 [`$app-feedback`](#mode-unity-game-juice) 协调；具体资产生产者按[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)明确。
+生产级 3D 模型与 PBR 贴图分别交给 `$app-3d-modeling` 和 `$app-3d-texturing`；3D 绑定与动作分别交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging)、[`$app-animation`](#mode-unity-game-3d-animation)，四者固定通过 Blender MCP 源生产，按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)和角色交接接入。本角色不把这些产物转为图片生成任务，也不从效果图裁切贴图。现有 Spine 角色仅换皮且 Bone、Slot、Attachment、Mesh、约束与动画固定时交给 `$app-spine-reskin`。美术 brief 和 V5 体验验收遵循[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)：主题、受众、玩法可读、观看舒适、美术完成度逐项通过。动画与反馈事件交给 [`$app-feedback`](#mode-unity-game-juice) 协调；具体资产生产者按[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)明确。
 
 Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2d-rigging)；本角色消费其已确认的视角与拆件合同，独立生产部件、遮挡补全和连接区，不直接裁切完整效果图充当 Sprite。交付稳定部件 ID、视角/方向、画布与 Pivot、角色局部位置、层叠、源图位置、导入规格和资源身份；骨架、网格、权重与动画由骨骼角色负责，图片生成或编辑委派给图片子代理。
 
@@ -762,32 +768,39 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 
 具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；本地化/TMP、URP 后处理和 Shader Graph 分别使用对应 `unity:*` Skill。本角色只维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
 
-<a id="mode-unity-game-visual-assets--v0-v4"></a>
-#### V0-V4
+<a id="mode-unity-game-visual-assets--v0-v5"></a>
+#### V0-V5
 
 1. **V0 分流**：识别全局基线、场景、显示层、参考图使用边界和实际交付类型。场景只包含自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item。新建且包含可见画面的场景或显示层必须安排效果图任务；已有有效视觉规范时用它指导效果图，需要方向探索时生成由任务决定数量的实质不同候选，并让用户选择。
-2. **V1 对象定义**：为新建且包含可见画面的 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，确认后作为 V2–V4 的持续视觉目标；独立生产不等于重新设计，后续生成图不得静默替代 V1，具体见[持续目标规则](../../unity-development-workflow/references/visual-workflow.md#v1-场景定义)。同时冻结主题、受众、核心循环、体验目标和观看情境，并与 `$app-feedback` 定义关键反馈意图。提交草图/灰盒和 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图不注册为正式资源。
-3. **V2 拆解确认**：先按[文本与色彩拆分路线](../../unity-development-workflow/references/visual-decomposition-routes.md)覆盖 V1 的实际可见特征及空间结构，逐项绑定稳定编号、生产归属、消费节点和组件×状态，不能仅列功能名称；系统文本、原生绘制及原子资源内含特征同样登记。按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。适用的九宫格资源冻结源图尺寸、Unity border 与内容内边距；动作资产冻结独立时间轴、关键事件、资源生产者与消费接口。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。
-4. **V3 资源生产与验收**：按编号独立生产、创作或复用正式资源，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID 和 Addressables，并检查资源在宿主场景中的组合预览。九宫格导入后回读实际 Border 并检查组件呈现；V3 可生产并验证资产自身的资源级 Prefab，不负责正式宿主 Scene/场景装配 Prefab/UI 实现或布局校准。资源与 `.meta` 同属一个所有权单元。
-5. **V4 正式接入与校准**：由单写者按冻结结构实现并拼装 Scene、Prefab 或 UXML/USS，校准正式组合，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
+1. **V1 功能验证**：先使用临时资源实现并验证玩法、交互和跨场景状态；白盒可选，不要求先冻结视觉目标。
+
+2. **V2 对象定义**：为新建且包含可见画面的 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，确认后作为 V3–V5 的持续视觉目标；独立生产不等于重新设计，后续生成图不得静默替代 V2，具体见[持续目标规则](../../unity-development-workflow/references/visual-workflow.md#v2-场景定义)。同时冻结主题、受众、核心循环、体验目标和观看情境，并与 `$app-feedback` 定义关键反馈意图。按需提交草图或灰盒，并记录 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图不注册为正式资源。
+3. **V3 拆解确认**：先按[文本与色彩拆分路线](../../unity-development-workflow/references/visual-decomposition-routes.md)覆盖 V2 的实际可见特征及空间结构，逐项绑定稳定编号、生产归属、消费节点和组件×状态，不能仅列功能名称；系统文本、原生绘制及原子资源内含特征同样登记。按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。适用的九宫格资源冻结源图尺寸、Unity border 与内容内边距；动作资产冻结独立时间轴、关键事件、资源生产者与消费接口。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。
+4. **V4 资源生产与验收**：按编号独立生产、创作或复用正式资源，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID 和 Addressables，并检查资源在宿主场景中的组合预览。九宫格导入后回读实际 Border 并检查组件呈现；V4 可生产并验证资产自身的资源级 Prefab，不负责正式宿主 Scene/场景装配 Prefab/UI 实现或布局校准。资源与 `.meta` 同属一个所有权单元。
+5. **V5 正式接入与校准**：由单写者按冻结结构实现并拼装 Scene、Prefab 或 UXML/USS，校准正式组合，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
 
 <a id="mode-unity-game-visual-assets--生产规则"></a>
 #### 生产规则
 
-- 当前阶段内先内部完成分析、技术记录、布局决策和提示词，直接交付真实候选供用户检查，不等待常规文字方案确认；动画正式素材遵循[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)，先说明设计理念与动作方案并取得用户明确确认再制作。同目标返修直接展示前后对照。V2、V3 等实际阶段确认与父图/视频专项确认仍保留，详见[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)。
+- 当前阶段内先内部完成分析、技术记录、布局决策和提示词，直接交付真实候选供用户检查，不等待常规文字方案确认；动画正式素材遵循[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)，先说明设计理念与动作方案并取得用户明确确认再制作。同目标返修直接展示前后对照。V3、V4 等实际阶段确认与父图/视频专项确认仍保留，详见[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)。
 - 生成全局方向图、场景效果图或宿主上下文图前，按[游戏内文案](../../unity-development-workflow/references/game-copy.md)列明允许的可见文字、图标和示例数值，内部规格不得绘入画面；候选共用同一内容。冻结后按目标拆解，不从策划说明追加文字，也不擅自删改冻结文字；动态/本地化文本由真实数据与文本节点呈现。
-- 静态资源以画廊或可放大的 V1 相关区域/输出对照直接交付，透明资源并排给深浅底预览；V3/V4 按[组合对照交付](../../unity-development-workflow/references/visual-workflow.md#v3-正式资源生产与导入验收)提供 V1 与当前实际 Unity 组合并列对照及已知未还原项。完整来源与工程结果内部保存，预览成功不代表用户已验收显示效果。
-- V2 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单。在冻结的 V1 效果图上逐项框选并绑定稳定编号，用引线说明用途、来源、关系、装配和生产边界；结构化合同内部保存。遵守[图片框选与标注交付](../../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)。
+- 静态资源以画廊或可放大的 V2 相关区域/输出对照直接交付，透明资源并排给深浅底预览；V4/V5 按[组合对照交付](../../unity-development-workflow/references/visual-workflow.md#v4-正式资源生产与导入验收)提供 V2 与当前实际 Unity 组合并列对照及已知未还原项。完整来源与工程结果内部保存，预览成功不代表用户已验收显示效果。
+- V3 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单。在冻结的 V2 效果图上逐项框选并绑定稳定编号，用引线说明用途、来源、关系、装配和生产边界；结构化合同内部保存。遵守[图片框选与标注交付](../../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)。
 - 参考图和高保真图用于保留目标内容、构图、轮廓、配色、材质、光影及视觉层级；禁止裁切、抠取、放大或轻微修饰后充当 Sprite/纹理，也禁止整图铺底冒充结构化实现。该限制只约束资产取得方式，不要求放弃目标特征。
-- 图片生成或编辑委派给图片子代理；V1 确认后的部件生产、编辑与返修，任务包必须包含可读取的原始 V1 目标图、稳定编号、相关部件区域说明、所含特征及状态。按实际部件明确构图、主要轮廓与比例、关键颜色、材质、层次、透明/不透明区域和文本留白；还原任务不能只写“风格参考”并放弃构图或外形约束，不得无依据改色、删去装饰或把目标特征写进禁止项。返修仍携带 V1，旧生成图仅作辅助，注明其中须保留与纠正的内容；完整实际提示词随生产记录保存。首次 V1 效果图生成沿用上方方向图与文案规则。
-- 生成后及透明处理、尺寸归一化后，核对独立源素材的主体、轮廓、颜色、完整性、有效内容边界及透明/不透明区域是否满足任务；已有确认 V1 的部件生产与返修还须对照该图，并记录证据与缺陷。文件存在、尺寸正确、有 Alpha、成功导入只证明工程事实，不能据此宣告资源合格；例如目标不透明内板被生成为透明开口，即使 PNG 技术检查通过也属于生产失败。缺陷交回相应生产环节修复，不能靠缩放、移动节点或提高容差掩盖。此检查遵守[源素材与运行截图边界](../../unity-development-workflow/references/art-quality-contract.md#追溯与检查边界)，不代替人工阶段验收。
+- 图片生成或编辑委派给图片子代理；V2 确认后的部件生产、编辑与返修，任务包必须包含可读取的原始 V2 目标图、稳定编号、相关部件区域说明、所含特征及状态。按实际部件明确构图、主要轮廓与比例、关键颜色、材质、层次、透明/不透明区域和文本留白；还原任务不能只写“风格参考”并放弃构图或外形约束，不得无依据改色、删去装饰或把目标特征写进禁止项。返修仍携带 V2，旧生成图仅作辅助，注明其中须保留与纠正的内容；完整实际提示词随生产记录保存。首次 V2 效果图生成沿用上方方向图与文案规则。
+- 生成后及透明处理、尺寸归一化后，核对独立源素材的主体、轮廓、颜色、完整性、有效内容边界及透明/不透明区域是否满足任务；已有确认 V2 的部件生产与返修还须对照该图，并记录证据与缺陷。文件存在、尺寸正确、有 Alpha、成功导入只证明工程事实，不能据此宣告资源合格；例如目标不透明内板被生成为透明开口，即使 PNG 技术检查通过也属于生产失败。缺陷交回相应生产环节修复，不能靠缩放、移动节点或提高容差掩盖。此检查遵守[源素材与运行截图边界](../../unity-development-workflow/references/art-quality-contract.md#追溯与检查边界)，不代替人工阶段验收。
 - 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用 `scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景；显式记录背景色、容差、源/输出位置、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。工具自行生成的 SHA 不参与验收。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
 - 文字与填充先按[视觉显著性](../../unity-development-workflow/references/visual-decomposition-routes.md#完整拆解与视觉显著性)判断：低显著性文字优先系统文本，简单填充/规则边框优先原生绘制；明显字形、材质、纹理和光影保留独立资产，有风格的重复表面优先复用贴图。拆开来源仍由原组件统一管理交互、布局、本地化和动态状态，不静默简化已确认效果。
-- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V1 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内实现调整无需回改合同，不校验 SHA。
+- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V2 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内实现调整无需回改合同，不校验 SHA。
 - UI/2D 位图默认以目标最大显示尺寸的 `sourceScale=1` 规划源像素密度，像素美术或已批准平台预算可明确覆盖。它不是浏览器 DPR；运行时缩放必须读取 CanvasScaler、PanelSettings、Camera、Screen、动态分辨率和 Importer 的真实配置。SpriteAtlas、压缩、MipMap、Read/Write、色彩空间和 Addressables 仍由 Unity 平台预算决定。
-- 程序化文本必须覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`，逐语言声明 `single-line` 或 `wrap`，验证 TMP/UI Toolkit 字体回退、真实字形宽度、基线和容器；禁止截断。
+- 程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目选择覆盖，逐语言声明 `single-line` 或 `wrap`，验证 TMP/UI Toolkit 字体回退、真实字形宽度、基线和容器；禁止截断。
 - 独立 DISPLAY_LAYER 在宿主上下文中验证打开、交互、关闭和焦点/输入/底层状态恢复；其失败或延期不回写为宿主场景未完成。
 - 研发阶段只做 Editor/Game View/PlayMode 视觉验证。未经用户明确要求，不启动 Standalone/Player 或真机。
 
 向玩法交付当前资源 ID、GUID/地址、路径、规格、导入约定和限制；向 QA 交付逐项检查、清理、Editor 画面和预算证据；向发布交付来源、许可与生成记录。复杂透明边缘缺少独立遮罩或干净背景时必须补绘或重新生成，不伪造透明结果。
+
+<a id="mode-unity-game-visual-assets--ui-相对布局约束"></a>
+#### UI 相对布局约束
+
+UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
 <!-- native-source:unity-game-visual-assets:end -->

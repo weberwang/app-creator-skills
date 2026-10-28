@@ -3,9 +3,43 @@ expected: pass
 expected_attention: [Positioned]
 mutations:
   - op: append
+    path: regions
+    value:
+      id: avatar
+      role: avatar
+      parent_id: header
+      flutter_key: avatarKey
+      positioning: relative
+      anchors:
+        horizontal: {center: {relation: centered, reference: header.center}}
+        vertical: {top: {relation: aligned, reference: header.top}}
+      size:
+        min: {width: 32, height: 32}
+        preferred: {width: 40, height: 40}
+        max: {width: 48, height: 48}
+  - op: append
+    path: regions
+    value:
+      id: badge
+      role: badge
+      parent_id: avatar
+      flutter_key: badgeKey
+      positioning: relative
+      anchors:
+        horizontal: {end: {relation: aligned, reference: avatar.end}}
+        vertical: {top: {relation: aligned, reference: avatar.top}}
+      size:
+        min: {width: 8, height: 8}
+        preferred: {width: 12, height: 12}
+        max: {width: 16, height: 16}
+  - op: append
     path: implementation_signals
     value:
       signal: Positioned
+      element_id: badge
+      flutter_key: badgeKey
+      parent_id: avatar
+      reference_id: avatar
       reason: 徽标覆盖头像边界
       boundary: avatar bounds
       viewport_scope: compact and medium constraints

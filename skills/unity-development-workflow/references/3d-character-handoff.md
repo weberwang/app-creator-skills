@@ -1,6 +1,6 @@
 # 3D 角色建模、贴图、绑定与动画交接
 
-建模、贴图、绑定和动画源制作统一使用 Blender MCP。使用现有 Work Item、Implementation Package、V0-V4 和 F2/F3；下列清单是角色交接依据，不新增状态机、Schema 字段或审批阶段。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
+建模、贴图、绑定和动画源制作统一使用 Blender MCP。使用现有 Work Item、Implementation Package、V0-V5 和 F2/F3；下列清单是角色交接依据，不新增状态机、Schema 字段或审批阶段。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
 
 ## 职责与文件所有权
 
@@ -10,7 +10,7 @@
 | [贴图](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-texturing) | 材质节点、绘制图、主通道与打包图、纹理源和贴图导出 | 模型、UV、骨架、权重只读；只向既有槽位赋材质，沿用实际槽位/LOD 用图与法线基准 |
 | [绑定](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-rigging) | Armature、静置/绑定姿势、骨骼名/层级/局部轴、控制与变形骨映射、Root/挂点、权重、校正驱动、各 LOD 蒙皮、带骨架/蒙皮的角色导出 | 不能修改生产拓扑、UV、槽位或 BlendShape 目标几何；校正形状由建模提交，绑定管理其驱动。角色蒙皮 FBX 由本角色导出，替代静态导出作为该角色的运行时模型来源 |
 | [动画](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-animation) | 动作方案、Actions/曲线、NLA 使用范围、表演/节奏、根运动轨迹、事件标记、导出骨架动画烘焙和逐 Clip 动画导出 | 绑定输入只读，不改 rest pose、bind matrices、骨架名/层级、权重或控制 Rig；驱动已有 BlendShape 通道，不创建目标几何。结构缺陷退回绑定 |
-| Unity 集成单写者 | ModelImporter/TextureImporter、Avatar、AnimationClip 设置、Material/Renderer、角色内部 Animator 与资源级 Prefab | 由实施包明确到绑定/动画/集成负责人，执行[导入合同](./3d-character-unity-import.md)；玩法拥有触发、权威状态、命中/伤害和位移裁定，正式场景接入属于 V4 |
+| Unity 集成单写者 | ModelImporter/TextureImporter、Avatar、AnimationClip 设置、Material/Renderer、角色内部 Animator 与资源级 Prefab | 由实施包明确到绑定/动画/集成负责人，执行[导入合同](./3d-character-unity-import.md)；玩法拥有触发、权威状态、命中/伤害和位移裁定，正式场景接入属于 V5 |
 
 各角色保存版本化派生 `.blend` 和可编辑依赖，原始输入只读。同一源、导出目标和 Unity 对象同时只允许一个写者；不能通过复制派生文件绕过网格/骨架所有权，也不能从纹理或动画派生文件覆盖正式蒙皮角色。项目内部可引用同一资产，但接收记录必须绑定实际文件和候选，不凭“最新版”猜测。
 
@@ -42,7 +42,7 @@
 - 交付可编辑动画 `.blend`、所需 Rig 与依赖、逐 Clip 烘焙到运行时骨架的曲线、必要的 BlendShape 曲线、导出配方和实际 FBX 等产物。不要求控制骨随运行时模型导出；约束/驱动的结果必须落成当前格式实际支持的曲线，不能假定 Unity 读取 Blender Rig。
 - 每个导出绑定同一骨架的实际层级、rest/bind 和 Root 策略；明确哪些文件含网格/蒙皮、哪些仅含同构骨架和动画，不能把不同 Rig 的动作文件套用同一 Avatar。
 - 交付动作/事件到 Unity Clip 的映射、目标 Avatar、Animator 参数/状态/过渡/中断接口及动作负责人；事件可通知表现或玩法入口，不能在资产里自行定义伤害、命中或第二套位移权威。
-- 材质图不随每个动作重建；Unity 资源级 Prefab 组合正式蒙皮角色、贴图 Material、Avatar 与 Clips，按[导入合同](./3d-character-unity-import.md)记录技术证据与用户显示确认。正式场景运行、响应和生命周期属于 V4。
+- 材质图不随每个动作重建；Unity 资源级 Prefab 组合正式蒙皮角色、贴图 Material、Avatar 与 Clips，按[导入合同](./3d-character-unity-import.md)记录技术证据与用户显示确认。正式场景运行、响应和生命周期属于 V5。
 
 ## 返修与依赖范围
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 视觉 V0→V4 跨阶段硬门。
+ * 视觉 V0→V5 跨阶段硬门。
  *
  * 该模块只读取 Work Item 及其显式绑定的视觉证据，不接受根节点布尔值、
  * Approval Ledger 文本或 stageId 猜测。所有控制入口都应调用同一个函数，
@@ -15,7 +15,7 @@ import { V2_PLAN_FIELDS } from './v2-reconstruction-plan-contract.mjs';
 import { canonicalJson, deriveVisualDisposition, earliestVisualReturnStage as earliestReturnStage, isPlainObject as isObject, nonEmptyString as nonEmpty, VISUAL_REMEDIATION, VISUAL_REMEDIATION_LABEL, VISUAL_REMEDIATION_NEXT_ACTION } from './visual-contract-core.mjs';
 export { VISUAL_REMEDIATION } from './visual-contract-core.mjs';
 
-export const VISUAL_STAGE_IDS = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
+export const VISUAL_STAGE_IDS = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
 export const VISUAL_STAGE_STATES = Object.freeze([
   'not-started',
   'in-progress',
@@ -24,17 +24,19 @@ export const VISUAL_STAGE_STATES = Object.freeze([
   'stale',
   'invalid',
   'global-static-baseline-frozen',
-  'v2-production-planning-complete',
-  'v3-formal-acceptance-complete',
-  'v4-runtime-integration-candidate',
+  'v3-production-planning-complete',
+  'v4-formal-acceptance-complete',
+  'v5-runtime-integration-candidate',
 ]);
 
 export const VISUAL_STAGE_STATE_FOR = Object.freeze({
-  V0: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'global-static-baseline-frozen']),
-  V1: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'global-static-baseline-frozen']),
-  V2: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v2-production-planning-complete']),
-  V3: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v3-formal-acceptance-complete']),
-  V4: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v4-runtime-integration-candidate']),
+  V0: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid']),
+  // V1 只验证功能，不预设视觉基线或正式视觉工件。
+  V1: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid']),
+  V2: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'global-static-baseline-frozen']),
+  V3: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v3-production-planning-complete']),
+  V4: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v4-formal-acceptance-complete']),
+  V5: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'v5-runtime-integration-candidate']),
 });
 
 export const VISIBLE_VISUAL_BEHAVIORS = Object.freeze([
@@ -73,8 +75,8 @@ const OPTIONAL_SNAPSHOT_FIELDS = new Set([
 ]);
 const SNAPSHOT_IDENTITY_KEYS = Object.freeze([
   'workItemId', 'unitResultId', 'candidateId', 'candidateVersion',
-  'V2DecompositionConfirmationId', 'V2PlanSceneId', 'V3AcceptanceId', 'V4CandidateId',
-  'V2ReferencePath', 'V3ReferencePath', 'V4ReferencePath',
+  'V3DecompositionConfirmationId', 'V3PlanSceneId', 'V4AcceptanceId', 'V5CandidateId',
+  'V3ReferencePath', 'V4ReferencePath', 'V5ReferencePath',
 ]);
 
 const REMEDIATION_LABEL = VISUAL_REMEDIATION_LABEL;
@@ -88,7 +90,7 @@ function valuesOnly(value, depth = 0) {
   return [];
 }
 
-/** 只接受显式 V0-V4；stageId、文本和用户回复不能替代阶段声明。 */
+/** 只接受显式 V0-V5；stageId、文本和用户回复不能替代阶段声明。 */
 export function normalizeVisualStage(value) {
   const stage = typeof value === 'string' ? value.trim().toUpperCase() : '';
   return VISUAL_STAGE_IDS.includes(stage) ? stage : null;
@@ -110,21 +112,25 @@ export function validateVisualStageDeclaration(subject = {}) {
   const baselineState = firstValue(subject.globalStaticBaselineState, subject.global_static_baseline_state);
   const visualContext = Boolean(subject.visualStage || subject.visual_stage || subject.visualStageState || subject.visual_stage_state || baselineState || subject.visualDomain || subject.visualWork || VISUAL_CONTEXT_TEXT.test(String(subject.domain ?? '')) || /^V/i.test(rawStageId));
   if (!visualContext) return errors;
+  // 阶段语义变化后必须拒绝未标识或标识错误的旧工作记录。
+  if (stage && subject.visualStageModel !== 'function-first-v1') errors.push(error('VISUAL_STAGE_MODEL_INVALID', '阶段记录必须声明 visualStageModel=function-first-v1', { missingEvidence: ['visualStageModel'] }));
   if (conflicts.length) errors.push(error('VISUAL_STAGE_DECLARATION_INVALID', 'visualStage 字段未知或互相矛盾，不允许猜测', { missingEvidence: ['visualStage'] }));
-  if (/^V/i.test(rawStageId) && !/^V[0-4]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_UNKNOWN', `未知视觉阶段：${rawStageId}`, { missingEvidence: ['visualStage'] }));
-  if ((subject.visualStageState ?? subject.visual_stage_state ?? subject.visualState ?? subject.visual_state) === 'frozen') errors.push(error('VISUAL_BARE_FROZEN', '裸 frozen 没有视觉阶段语义；请使用 global-static-baseline-frozen 或 v2-production-planning-complete', { missingEvidence: ['visualStageState'] }));
-  if (baselineState && baselineState !== 'global-static-baseline-frozen') errors.push(error(baselineState === 'frozen' ? 'VISUAL_BARE_FROZEN' : 'VISUAL_STAGE_STATE_INVALID', '全局静态基线状态必须为 global-static-baseline-frozen，且不能代替 V2', { missingEvidence: ['globalStaticBaselineState'] }));
+  if (/^V/i.test(rawStageId) && !/^V[0-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_UNKNOWN', `未知视觉阶段：${rawStageId}`, { missingEvidence: ['visualStage'] }));
+  if ((subject.visualStageState ?? subject.visual_stage_state ?? subject.visualState ?? subject.visual_state) === 'frozen') errors.push(error('VISUAL_BARE_FROZEN', '裸 frozen 没有视觉阶段语义；请使用 global-static-baseline-frozen 或 v3-production-planning-complete', { missingEvidence: ['visualStageState'] }));
+  if (baselineState && baselineState !== 'global-static-baseline-frozen') errors.push(error(baselineState === 'frozen' ? 'VISUAL_BARE_FROZEN' : 'VISUAL_STAGE_STATE_INVALID', '全局静态基线状态必须为 global-static-baseline-frozen，且不能代替 V3', { missingEvidence: ['globalStaticBaselineState'] }));
   const state = firstValue(subject.visualStageState, subject.visual_stage_state, subject.visualState, subject.visual_state);
   if (stage && state !== null && !VISUAL_STAGE_STATE_FOR[stage]?.has(String(state))) errors.push(error('VISUAL_STAGE_STATE_INVALID', `阶段 ${stage} 与状态 ${String(state)} 不匹配`, { missingEvidence: ['visualStageState'] }));
+  // 功能尚未确认前不能把正式视觉基线冻结为当前阶段证据。
+  if (['V0', 'V1'].includes(stage) && (baselineState === 'global-static-baseline-frozen' || state === 'global-static-baseline-frozen')) errors.push(error('VISUAL_BASELINE_TOO_EARLY', '正式视觉基线须在 V2 才能冻结，V0/V1 不接受冻结声明', { missingEvidence: ['visualStage'] }));
   // 全局冻结状态必须绑定三候选人工选择证据；只写状态字段不能绕过冻结前置。
   // 这里仅校验消费者引用的 path+sha 形状；根证据的生产者链由 loader 完整复核。
-  if (baselineState === 'global-static-baseline-frozen' || ((stage === 'V0' || stage === 'V1') && state === 'global-static-baseline-frozen')) {
+  if (baselineState === 'global-static-baseline-frozen' || (stage === 'V2' && state === 'global-static-baseline-frozen')) {
     const selectionErrors = validateGlobalVisualBaselineSelectionReferenceShape(subject.globalVisualBaselineSelectionRef);
     for (const message of selectionErrors) errors.push(error('GLOBAL_VISUAL_BASELINE_SELECTION_MISSING', message, { missingEvidence: ['globalVisualBaselineSelectionRef'] }));
   }
-  if (/^V[0-4]$/i.test(rawStageId) && stage && rawStageId.toUpperCase() !== stage) errors.push(error('VISUAL_STAGE_DECLARATION_CONFLICT', 'stageId 仅作范围标签，必须与显式 visualStage 一致且不能替代它', { missingEvidence: ['visualStage'] }));
+  if (/^V[0-5]$/i.test(rawStageId) && stage && rawStageId.toUpperCase() !== stage) errors.push(error('VISUAL_STAGE_DECLARATION_CONFLICT', 'stageId 仅作范围标签，必须与显式 visualStage 一致且不能替代它', { missingEvidence: ['visualStage'] }));
   if (stage && !state) errors.push(error('VISUAL_STAGE_STATE_MISSING', `阶段 ${stage} 缺少有语义状态`, { missingEvidence: ['visualStageState'] }));
-  if (!stage && /^V[0-4]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_MISSING', 'V0-V4 工作必须显式声明 visualStage，不能从 stageId 推断', { missingEvidence: ['visualStage'] }));
+  if (!stage && /^V[0-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_MISSING', 'V0-V5 工作必须显式声明 visualStage，不能从 stageId 推断', { missingEvidence: ['visualStage'] }));
   return errors;
 }
 
@@ -151,8 +157,8 @@ export function classifyVisibleVisualProductionIntegration(subject = {}) {
   }).join(' ');
   const visualContext = Boolean(subject.visualDomain || subject.visualWork || subject.visualStage || subject.visual_stage || VISUAL_CONTEXT_TEXT.test(`${subject.domain ?? ''} ${behaviorText}`));
   const stage = readVisualStage(subject).stage;
-  // V3 本身就是正式资源生产阶段，Main 等 stageId 只是贯穿 Work Item 的范围标签；只有真实运行入口/消费意图才触发下游硬门。
-  const v3ResourceStageWithoutRuntimeIntent = stage === 'V3' && !FORMAL_RUNTIME_INTENT_TEXT.test(behaviorText);
+  // V4 本身就是正式资源生产阶段，Main 等 stageId 只是贯穿 Work Item 的范围标签；只有真实运行入口/消费意图才触发下游硬门。
+  const v3ResourceStageWithoutRuntimeIntent = stage === 'V4' && !FORMAL_RUNTIME_INTENT_TEXT.test(behaviorText);
   const stageHint = /(?:production-entry|formal-entry|main|integration|integrate|正式入口|主场景|集成)/i.test(String(subject.stageId ?? ''));
   if (visualContext && stageHint && !v3ResourceStageWithoutRuntimeIntent) behaviors.push('stage-scope-requires-visual-gate');
   if (!behaviors.length && FORMAL_TEXT.test(behaviorText) && visualContext && !v3ResourceStageWithoutRuntimeIntent) behaviors.push('formal-visual-text');
@@ -173,7 +179,7 @@ function firstObject(...values) { return values.find(isObject) ?? null; }
 /** 取得候选列表中的首个已声明值。 */
 function firstValue(...values) { return values.find((value) => value !== undefined && value !== null && value !== '') ?? null; }
 
-/** 从冻结 V2 场景及当前工作包的显示层上下文确定验收场景身份。 */
+/** 从冻结 V3 场景及当前工作包的显示层上下文确定验收场景身份。 */
 function artAcceptanceSceneId(subject, v2, options) {
   const sceneId = nonEmpty(v2?.sceneId) ? v2.sceneId : null;
   if (!sceneId) return null;
@@ -187,7 +193,7 @@ function artAcceptanceSceneId(subject, v2, options) {
     const matches = contexts.filter((context) => context?.displayLayerId === layerId);
     if (matches.length !== 1 || matches[0].hostSceneId !== sceneId || (declaredHost && declaredHost !== matches[0].hostSceneId)) return null;
   }
-  // DISPLAY_LAYER 的身份只能沿 V2 中唯一的 layer→host 关系归一到实际宿主场景。
+  // DISPLAY_LAYER 的身份只能沿 V3 中唯一的 layer→host 关系归一到实际宿主场景。
   const displayUnits = (options.implementationPackage?.executionUnits ?? []).filter((unit) => unit?.unitType === 'DISPLAY_LAYER');
   for (const unit of displayUnits) {
     const matches = contexts.filter((context) => context?.displayLayerId === unit.displayLayerId);
@@ -233,11 +239,11 @@ function evidenceObjects(subject = {}, options = {}) {
   const refs = stageReferences(subject, options);
   const evidence = firstObject(options.evidence, options.visualEvidence, options.visualStageEvidence, subject.visualStageEvidence, subject.visual_stage_evidence, subject.visualDependencyChain, subject.visual_dependency_chain) ?? {};
   const refFor = (stage) => firstObject(refs[stage], refs[stage.toLowerCase()], refs[`V${stage.slice(1)}`], refs[`${stage.toLowerCase()}Evidence`], refs[`${stage.toLowerCase()}_evidence`]);
-  const v2Ref = refFor('V2'); const v3Ref = refFor('V3'); const v4Ref = refFor('V4');
-  const v2 = loadImmutableVisualStageReference(v2Ref, 'V2 reconstruction production plan', options)?.value ?? null;
-  const v3 = loadImmutableVisualStageReference(v3Ref, 'V3 formal acceptance', options)?.value ?? null;
-  const v4 = loadImmutableVisualStageReference(v4Ref, 'V4 runtime candidate', options)?.value ?? null;
-  return { evidence: { ...evidence, __references: { V2: v2Ref, V3: v3Ref, V4: v4Ref } }, v2, v3, v4, refs: { V2: v2Ref, V3: v3Ref, V4: v4Ref } };
+  const v2Ref = refFor('V3'); const v3Ref = refFor('V4'); const v4Ref = refFor('V5');
+  const v2 = loadImmutableVisualStageReference(v2Ref, 'V3 reconstruction production plan', options)?.value ?? null;
+  const v3 = loadImmutableVisualStageReference(v3Ref, 'V4 formal acceptance', options)?.value ?? null;
+  const v4 = loadImmutableVisualStageReference(v4Ref, 'V5 runtime candidate', options)?.value ?? null;
+  return { evidence: { ...evidence, __references: { V3: v2Ref, V4: v3Ref, V5: v4Ref } }, v2, v3, v4, refs: { V3: v2Ref, V4: v3Ref, V5: v4Ref } };
 }
 
 /** 仅接受明确的成功终态，不读取根摘要布尔值。 */
@@ -251,13 +257,13 @@ export function visualPrerequisiteSnapshot(subject = {}, options = {}) {
     unitResultId: firstValue(subject.unitResultId, subject.unit_result_id, evidence.unitResultId, evidence.unit_result_id),
     candidateId: firstValue(subject.candidateId, subject.candidate_id, evidence.candidateId, evidence.candidate_id, v4?.candidateId, v4?.candidate_id),
     candidateVersion: firstValue(subject.candidateVersion, subject.candidate_version, evidence.candidateVersion, evidence.candidate_version, v3?.candidateVersion),
-    V2DecompositionConfirmationId: firstValue(decompositionConfirmation?.confirmationId),
-    V2PlanSceneId: firstValue(v2?.sceneId),
-    V3AcceptanceId: firstValue(v3?.acceptanceId),
-    V4CandidateId: firstValue(v4?.candidateId),
-    V2ReferencePath: firstValue(refs?.V2?.path),
+    V3DecompositionConfirmationId: firstValue(decompositionConfirmation?.confirmationId),
+    V3PlanSceneId: firstValue(v2?.sceneId),
+    V4AcceptanceId: firstValue(v3?.acceptanceId),
+    V5CandidateId: firstValue(v4?.candidateId),
     V3ReferencePath: firstValue(refs?.V3?.path),
     V4ReferencePath: firstValue(refs?.V4?.path),
+    V5ReferencePath: firstValue(refs?.V5?.path),
   };
   return Object.fromEntries(Object.entries(identity).filter(([, value]) => value !== null && value !== undefined));
 }
@@ -314,8 +320,8 @@ function collectIdentityChanges(subject, { v2, oldSnapshot, snapshot } = {}) {
   };
   // 阶段回退只由稳定业务身份变化触发，文件摘要变化留给人工验收处理。
   compare('workItemId', [subject?.workItemId, v2?.workItemId]);
-  compare('V2 plan scene identity', [subject?.sceneId ?? subject?.scene_id, v2?.sceneId]);
-  for (const key of ['candidateId', 'candidateVersion', 'V2DecompositionConfirmationId', 'V2PlanSceneId']) {
+  compare('V3 plan scene identity', [subject?.sceneId ?? subject?.scene_id, v2?.sceneId]);
+  for (const key of ['candidateId', 'candidateVersion', 'V3DecompositionConfirmationId', 'V3PlanSceneId']) {
     compare(key, [oldSnapshot?.[key], snapshot?.[key]]);
   }
   return [...new Set(changes)];
@@ -349,7 +355,7 @@ function finalizeRemediation(result, context = {}) {
   if (finalDisposition === VISUAL_REMEDIATION.RETURN) {
     const stage = context.returnStage && identityChanges.length === 0
       ? context.returnStage
-      : earliestReturnStage(identityChanges, context.returnStage ?? (result.stage && /^V[0-4]$/.test(result.stage) ? result.stage : 'V2'));
+      : earliestReturnStage(identityChanges, context.returnStage ?? (result.stage && /^V[0-5]$/.test(result.stage) ? result.stage : 'V3'));
     result.returnStage = stage;
     const startIndex = VISUAL_STAGE_IDS.indexOf(stage);
     result.invalidatedStages = startIndex >= 0 ? VISUAL_STAGE_IDS.slice(startIndex) : [];
@@ -373,24 +379,24 @@ function collectPendingEvidence(value, path = '', output = []) {
   return output;
 }
 
-/** 校验标准冻结 V2 方案及其拆解、技术和布局来源文件。 */
-function validateV2ProductionPlan(v2, subject, options, missingEvidence) {
+/** 校验标准冻结 V3 方案及其拆解、技术和布局来源文件。 */
+function validateV3ProductionPlan(v2, subject, options, missingEvidence) {
   if (!isObject(v2)) return;
   const missing = V2_PLAN_FIELDS.filter((field) => v2[field] === undefined);
   const extra = Object.keys(v2).filter((field) => !V2_PLAN_FIELDS.includes(field) && !isOptionalSnapshotField(field));
-  if (missing.length || extra.length) missingEvidence.push(`V2 reconstruction plan fields (missing: ${missing.join(',') || 'none'}; extra: ${extra.join(',') || 'none'})`);
-  if (v2.schemaVersion !== 'phaser4-scene-v2-reconstruction-plan/1.0' || v2.status !== 'COMPLETE' || v2.stage !== 'V2' || v2.frozen !== true
+  if (missing.length || extra.length) missingEvidence.push(`V3 reconstruction plan fields (missing: ${missing.join(',') || 'none'}; extra: ${extra.join(',') || 'none'})`);
+  if (v2.visualStageModel !== 'function-first-v1' || v2.schemaVersion !== 'phaser4-scene-v2-reconstruction-plan/1.0' || v2.status !== 'COMPLETE' || v2.stage !== 'V3' || v2.frozen !== true
     || !nonEmpty(v2.workItemId) || (subject?.workItemId && v2.workItemId !== subject.workItemId)
     || !nonEmpty(v2.sceneId)) {
-    missingEvidence.push('V2 COMPLETE/frozen plan identity (work/scene)');
+    missingEvidence.push('V3 COMPLETE/frozen plan identity (work/scene)');
   }
   if (!isObject(v2.visualProductionContract) || !Array.isArray(v2.visualProductionUnits) || v2.visualProductionUnits.length === 0 || !Array.isArray(v2.displayLayerContexts)) {
-    missingEvidence.push('V2 production contract/units/display-layer contexts');
+    missingEvidence.push('V3 production contract/units/display-layer contexts');
   }
 
   const root = resolve(options.projectRoot ?? process.cwd());
   const rootReal = (() => { try { return realpathSync(root); } catch { return null; } })();
-  /** 安全读取 V2 来源文件；摘要快照不参与文件有效性判断。 */
+  /** 安全读取 V3 来源文件；摘要快照不参与文件有效性判断。 */
   const readSourceFile = (file, label) => {
     if (!rootReal || !nonEmpty(file) || isAbsolute(file) || file.includes('\0')) {
       missingEvidence.push(`${label} source path`);
@@ -411,15 +417,15 @@ function validateV2ProductionPlan(v2, subject, options, missingEvidence) {
   };
   const sceneMaster = v2.sceneMaster;
   if (!isObject(sceneMaster) || Object.keys(sceneMaster).some((key) => !['file', 'sha256', 'sceneId'].includes(key) && !isOptionalSnapshotField(key))
-    || !nonEmpty(sceneMaster.file) || sceneMaster.sceneId !== v2.sceneId) missingEvidence.push('V2 sceneMaster source/scene binding');
-  readSourceFile(sceneMaster?.file, 'V2 sceneMaster');
+    || !nonEmpty(sceneMaster.file) || sceneMaster.sceneId !== v2.sceneId) missingEvidence.push('V3 sceneMaster source/scene binding');
+  readSourceFile(sceneMaster?.file, 'V3 sceneMaster');
   for (const field of ['sceneReconstructionContract', 'decompositionAnnotation', 'technicalDecomposition']) {
     const artifact = v2[field];
     if (!isObject(artifact) || Object.keys(artifact).some((key) => !['file', 'sha256', 'sceneId'].includes(key) && !isOptionalSnapshotField(key)) || !nonEmpty(artifact.file) || artifact.sceneId !== v2.sceneId) {
-      missingEvidence.push(`V2 ${field} scene/source binding`);
+      missingEvidence.push(`V3 ${field} scene/source binding`);
       continue;
     }
-    const bytes = readSourceFile(artifact.file, `V2 ${field}`);
+    const bytes = readSourceFile(artifact.file, `V3 ${field}`);
     if (bytes && field === 'sceneReconstructionContract') {
       try {
         const contract = JSON.parse(bytes.toString('utf8'));
@@ -430,10 +436,10 @@ function validateV2ProductionPlan(v2, subject, options, missingEvidence) {
         if (!isObject(conditions) || conditions.scene_id !== v2.sceneId || !nonEmpty(conditions.state_id)
           || !Array.isArray(nodes) || nodes.length === 0 || !isObject(annotation)
           || !nonEmpty(annotation.layout_nodes_file)) {
-          missingEvidence.push('V2 scene reconstruction target/layout coverage');
+          missingEvidence.push('V3 scene reconstruction target/layout coverage');
           continue;
         }
-        const nodesBytes = readSourceFile(annotation.layout_nodes_file, 'V2 layout nodes');
+        const nodesBytes = readSourceFile(annotation.layout_nodes_file, 'V3 layout nodes');
         if (nodesBytes) {
           const document = JSON.parse(nodesBytes.toString('utf8'));
           const sourceNodes = document?.layout_nodes;
@@ -441,24 +447,24 @@ function validateV2ProductionPlan(v2, subject, options, missingEvidence) {
           const sourceIds = Array.isArray(sourceNodes) ? sourceNodes.map((node) => node?.layout_node_id) : [];
           if (!Array.isArray(sourceNodes) || sourceNodes.length === 0 || sourceIds.some((id) => !nonEmpty(id))
             || new Set(sourceIds).size !== sourceIds.length || JSON.stringify(contractIds) !== JSON.stringify(sourceIds)
-            || document.scene_id !== v2.sceneId) missingEvidence.push('V2 contract/layout node identity and coverage');
+            || document.scene_id !== v2.sceneId) missingEvidence.push('V3 contract/layout node identity and coverage');
         }
       } catch {
-        missingEvidence.push('V2 scene reconstruction contract/layout JSON');
+        missingEvidence.push('V3 scene reconstruction contract/layout JSON');
       }
     }
   }
   const confirmation = v2.visualDecompositionConfirmation;
   if (!isObject(confirmation) || confirmation.confirmationMode !== 'manual' || !['PASS', 'accepted'].includes(confirmation.status)
-    || !nonEmpty(confirmation.confirmationId) || !nonEmpty(confirmation.evidenceFile)) missingEvidence.push('V2 manual decomposition confirmation identity');
-  if (isObject(confirmation)) readSourceFile(confirmation.evidenceFile, 'V2 decomposition confirmation');
+    || !nonEmpty(confirmation.confirmationId) || !nonEmpty(confirmation.evidenceFile)) missingEvidence.push('V3 manual decomposition confirmation identity');
+  if (isObject(confirmation)) readSourceFile(confirmation.evidenceFile, 'V3 decomposition confirmation');
 }
 
-/** 对外复用同一 V2 来源文件和身份校验，避免阶段入口出现较弱的独立门。 */
-export function validateStandardV2ProductionPlan(value, subject = {}, options = {}) {
+/** 对外复用同一 V3 来源文件和身份校验，避免阶段入口出现较弱的独立门。 */
+export function validateStandardV3ProductionPlan(value, subject = {}, options = {}) {
   const missingEvidence = [];
   const staleFiles = [];
-  validateV2ProductionPlan(value, subject, options, missingEvidence);
+  validateV3ProductionPlan(value, subject, options, missingEvidence);
   return { ok: missingEvidence.length === 0, missingEvidence, staleFiles };
 }
 
@@ -534,9 +540,9 @@ function readProjectSourceFile(file, label, options, missingEvidence) {
   }
 }
 
-/** 逐层核对 V2 冻结目标、真实 layout_nodes 来源与 V3 manifest 覆盖画布。 */
-function validateV2ManifestTarget(v2, manifest, options, missingEvidence) {
-  const contractBytes = readProjectSourceFile(v2?.sceneReconstructionContract?.file, 'V2 scene reconstruction contract', options, missingEvidence);
+/** 逐层核对 V3 冻结目标、真实 layout_nodes 来源与 V4 manifest 覆盖画布。 */
+function validateV3ManifestTarget(v2, manifest, options, missingEvidence) {
+  const contractBytes = readProjectSourceFile(v2?.sceneReconstructionContract?.file, 'V3 scene reconstruction contract', options, missingEvidence);
   if (!contractBytes) return;
   try {
     const contract = JSON.parse(contractBytes.toString('utf8'));
@@ -548,10 +554,10 @@ function validateV2ManifestTarget(v2, manifest, options, missingEvidence) {
     if (!isObject(conditions) || conditions.scene_id !== v2.sceneId || !nonEmpty(conditions.state_id)
       || !isObject(viewport) || !Number.isFinite(viewport.width) || viewport.width <= 0
       || !Number.isFinite(viewport.height) || viewport.height <= 0 || !Array.isArray(nodes) || nodes.length === 0) {
-      missingEvidence.push('V2 scene/state/viewport/layout target identity');
+      missingEvidence.push('V3 scene/state/viewport/layout target identity');
       return;
     }
-    const nodesBytes = readProjectSourceFile(nodesFile, 'V2 layout_nodes source', options, missingEvidence);
+    const nodesBytes = readProjectSourceFile(nodesFile, 'V3 layout_nodes source', options, missingEvidence);
     if (!nodesBytes) return;
     const nodesDocument = JSON.parse(nodesBytes.toString('utf8'));
     const sourceNodes = nodesDocument?.layout_nodes;
@@ -559,42 +565,42 @@ function validateV2ManifestTarget(v2, manifest, options, missingEvidence) {
       || nodesDocument.scene_id !== conditions.scene_id || nodesDocument.state_id !== conditions.state_id
       || canonicalJson(nodesDocument.viewport) !== canonicalJson(viewport)
       || canonicalJson(sourceNodes) !== canonicalJson(nodes)) {
-      missingEvidence.push('V2 contract/layout_nodes scene/state/viewport/content binding');
+      missingEvidence.push('V3 contract/layout_nodes scene/state/viewport/content binding');
       return;
     }
 
     const target = manifest?.reference_target;
     const normalizePath = (value) => typeof value === 'string' ? value.replaceAll('\\', '/').replace(/^\.\//, '') : '';
-    if (normalizePath(target?.original_file) !== normalizePath(v2.sceneMaster?.file)) missingEvidence.push('V3 reference_target.original_file must bind V2 sceneMaster');
-    if (!target?.scene_ids?.includes(conditions.scene_id) || !target?.state_ids?.includes(conditions.state_id)) missingEvidence.push('V3 reference_target scene/state coverage must include the V2 target');
+    if (normalizePath(target?.original_file) !== normalizePath(v2.sceneMaster?.file)) missingEvidence.push('V4 reference_target.original_file must bind V3 sceneMaster');
+    if (!target?.scene_ids?.includes(conditions.scene_id) || !target?.state_ids?.includes(conditions.state_id)) missingEvidence.push('V4 reference_target scene/state coverage must include the V3 target');
     const canvases = Array.isArray(manifest?.coverage_audit?.canvases)
       ? manifest.coverage_audit.canvases.filter((item) => item?.scene_id === conditions.scene_id && item?.state_id === conditions.state_id)
       : [];
     const canvas = canvases[0];
-    if (canvases.length !== 1 || !isObject(canvas) || canvas.width !== viewport.width || canvas.height !== viewport.height) missingEvidence.push('V3 coverage_audit must contain exactly one canvas matching the V2 target viewport');
+    if (canvases.length !== 1 || !isObject(canvas) || canvas.width !== viewport.width || canvas.height !== viewport.height) missingEvidence.push('V4 coverage_audit must contain exactly one canvas matching the V3 target viewport');
   } catch {
-    missingEvidence.push('V2 scene/state/viewport/layout target JSON');
+    missingEvidence.push('V3 scene/state/viewport/layout target JSON');
   }
 }
 
-/** 复核 V3 清单身份与可用来源，分别检查图片文件和原生实现路径。 */
-function validateV3ManifestSource(v2, v3, subject, options, missingEvidence) {
+/** 复核 V4 清单身份与可用来源，分别检查图片文件和原生实现路径。 */
+function validateV4ManifestSource(v2, v3, subject, options, missingEvidence) {
   if (!nonEmpty(v3?.visualManifestFile)) {
-    missingEvidence.push('V3 visualManifestFile source path');
+    missingEvidence.push('V4 visualManifestFile source path');
     return;
   }
-  const bytes = readProjectSourceFile(v3.visualManifestFile, 'V3 visual manifest', options, missingEvidence);
+  const bytes = readProjectSourceFile(v3.visualManifestFile, 'V4 visual manifest', options, missingEvidence);
   if (!bytes) return;
   let manifest;
   try { manifest = JSON.parse(bytes.toString('utf8')); }
-  catch { missingEvidence.push('V3 visual manifest source JSON'); return; }
+  catch { missingEvidence.push('V4 visual manifest source JSON'); return; }
   if (!isObject(manifest) || manifest.schema_version !== '1.5'
     || manifest.workItemId !== (subject.workItemId ?? v3.workItemId)
     || manifest.candidateVersion !== v3.candidateVersion) {
-    missingEvidence.push('V3 visual manifest schema/workItemId/candidateVersion identity');
+    missingEvidence.push('V4 visual manifest schema/workItemId/candidateVersion identity');
     return;
   }
-  validateV2ManifestTarget(v2, manifest, options, missingEvidence);
+  validateV3ManifestTarget(v2, manifest, options, missingEvidence);
 
   const manifestAssets = Array.isArray(manifest.assets) ? manifest.assets : [];
   const assetsById = new Map(manifestAssets.filter(isObject).map((asset) => [asset.id, asset]));
@@ -609,32 +615,32 @@ function validateV3ManifestSource(v2, v3, subject, options, missingEvidence) {
     if (['runtime-program', 'phaser-graphics'].includes(method) && Array.isArray(files) && files.length) nativeFilesByRegion.set(region.id, files);
   }
   const formalAssets = Array.isArray(v3.formalAssets) ? v3.formalAssets : [];
-  if (!formalAssets.length && nativeFilesByRegion.size === 0) missingEvidence.push('V3 accepted formal asset or native implementation source');
+  if (!formalAssets.length && nativeFilesByRegion.size === 0) missingEvidence.push('V4 accepted formal asset or native implementation source');
   for (const asset of formalAssets) {
     const assetId = firstValue(asset?.id, asset?.asset_id, asset?.assetId);
     if (!nonEmpty(assetId)) {
-      missingEvidence.push('V3 formal asset ID binding');
+      missingEvidence.push('V4 formal asset ID binding');
       continue;
     }
     const manifestAsset = assetsById.get(assetId);
     if (manifestAsset) {
       if (!statusPass(manifestAsset.status)) {
-        missingEvidence.push(`V3 visual manifest accepted asset ${assetId}`);
+        missingEvidence.push(`V4 visual manifest accepted asset ${assetId}`);
         continue;
       }
       const runtimeFiles = Array.isArray(manifestAsset.runtime_outputs) ? manifestAsset.runtime_outputs : [];
-      if (!runtimeFiles.length) missingEvidence.push(`V3 accepted asset ${assetId} runtime output path`);
-      else validateEvidenceFiles({ files: runtimeFiles }, `V3 accepted asset ${assetId}`, options, missingEvidence);
+      if (!runtimeFiles.length) missingEvidence.push(`V4 accepted asset ${assetId} runtime output path`);
+      else validateEvidenceFiles({ files: runtimeFiles }, `V4 accepted asset ${assetId}`, options, missingEvidence);
       continue;
     }
     const regionId = firstValue(asset?.region_id, asset?.regionId, asset?.id, asset?.asset_id);
     const integrationFiles = nativeFilesByRegion.get(regionId);
-    if (!statusPass(asset?.status) || !integrationFiles?.length) missingEvidence.push(`V3 accepted asset ${assetId} file/native source binding`);
-    else validateEvidenceFiles({ files: integrationFiles }, `V3 native implementation ${regionId}`, options, missingEvidence);
+    if (!statusPass(asset?.status) || !integrationFiles?.length) missingEvidence.push(`V4 accepted asset ${assetId} file/native source binding`);
+    else validateEvidenceFiles({ files: integrationFiles }, `V4 native implementation ${regionId}`, options, missingEvidence);
   }
 
   if (!Array.isArray(auditUnits) || !auditUnits.length) {
-    missingEvidence.push('V3 production_contract_audit actual_assets');
+    missingEvidence.push('V4 production_contract_audit actual_assets');
     return;
   }
   for (const [unitIndex, unit] of auditUnits.entries()) {
@@ -644,19 +650,19 @@ function validateV3ManifestSource(v2, v3, subject, options, missingEvidence) {
     const nativeFiles = contract?.runtime_implementation?.integration_files;
     if (['runtime-program', 'phaser-graphics'].includes(method)) {
       if (!statusPass(unit?.status) || !Array.isArray(nativeFiles) || !nativeFiles.length) {
-        missingEvidence.push(`V3 production unit ${unitIndex} native integration_files PASS`);
-      } else validateEvidenceFiles({ files: nativeFiles }, `V3 native production unit ${unitIndex}`, options, missingEvidence);
+        missingEvidence.push(`V4 production unit ${unitIndex} native integration_files PASS`);
+      } else validateEvidenceFiles({ files: nativeFiles }, `V4 native production unit ${unitIndex}`, options, missingEvidence);
       continue;
     }
     const actualAssets = Array.isArray(unit?.actual_assets) ? unit.actual_assets : [];
     if (!statusPass(unit?.status) || !actualAssets.length) {
-      missingEvidence.push(`V3 production_contract_audit.units[${unitIndex}] actual_assets PASS`);
+      missingEvidence.push(`V4 production_contract_audit.units[${unitIndex}] actual_assets PASS`);
       continue;
     }
     for (const [assetIndex, actual] of actualAssets.entries()) {
       const file = firstValue(actual?.file, actual?.path, actual?.output_file);
-      if (!nonEmpty(file)) missingEvidence.push(`V3 actual_assets[${assetIndex}] source file`);
-      else validateEvidenceFiles({ files: [file] }, `V3 actual_assets[${assetIndex}]`, options, missingEvidence);
+      if (!nonEmpty(file)) missingEvidence.push(`V4 actual_assets[${assetIndex}] source file`);
+      else validateEvidenceFiles({ files: [file] }, `V4 actual_assets[${assetIndex}]`, options, missingEvidence);
     }
   }
 }
@@ -673,7 +679,7 @@ function validateCandidateIdentity(value, label, missingEvidence, strict = false
   return true;
 }
 
-/** 校验视觉 V3 正式资源与 V4 正式运行态的阶段门。 */
+/** 校验视觉 V4 正式资源与 V5 正式运行态的阶段门。 */
 export function validateVisualStagePrerequisites(subject = {}, options = {}) {
   const classification = classifyVisibleVisualProductionIntegration(subject);
   const result = { ok: true, required: classification.isVisibleVisualProductionIntegration, classification, stage: null, state: null, missingStages: [], missingEvidence: [], invalidatedDependencies: [], errors: [], snapshot: null, nextAction: null, disposition: null, remediation: null, affectedScope: [], identityChanges: [], invalidatesDownstream: false, returnStage: null, invalidatedStages: [] };
@@ -681,6 +687,7 @@ export function validateVisualStagePrerequisites(subject = {}, options = {}) {
   result.stage = stage;
   const state = firstValue(subject.visualStageState, subject.visual_stage_state, subject.visualState, subject.visual_state);
   result.state = state;
+  if (stage && subject.visualStageModel !== 'function-first-v1') { result.ok = false; result.errors.push(error('VISUAL_STAGE_MODEL_INVALID', '阶段记录必须声明 visualStageModel=function-first-v1', { missingEvidence: ['visualStageModel'] })); }
   if (!result.required) {
     if (conflicts.length) { result.ok = false; result.errors.push(error('VISUAL_STAGE_DECLARATION_INVALID', '视觉阶段字段未知或互相矛盾', { missingEvidence: ['visualStage'] })); }
     return finalizeRemediation(result, { subject, changed: [] });
@@ -688,53 +695,53 @@ export function validateVisualStagePrerequisites(subject = {}, options = {}) {
   if (classification.isolatedGraybox) return finalizeRemediation(result, { subject, changed: [] });
   if (conflicts.length) result.errors.push(error('VISUAL_STAGE_DECLARATION_INVALID', '视觉阶段字段未知或互相矛盾，不允许猜测', { missingEvidence: ['visualStage'] }));
 
-  const formalImplementation = stage === 'V4' && state === 'in-progress';
-  const runtimeAccepted = stage === 'V4' && state === 'v4-runtime-integration-candidate';
-  const v3ReadyForImplementation = stage === 'V3' && state === 'v3-formal-acceptance-complete';
+  const formalImplementation = stage === 'V5' && state === 'in-progress';
+  const runtimeAccepted = stage === 'V5' && state === 'v5-runtime-integration-candidate';
+  const v3ReadyForImplementation = stage === 'V4' && state === 'v4-formal-acceptance-complete';
   if (!v3ReadyForImplementation && !formalImplementation && !runtimeAccepted) {
-    const missingStage = 'V4';
+    const missingStage = 'V5';
     result.missingStages.push(missingStage);
-    result.errors.push(error('VISUAL_STAGE_NOT_READY', `正式可见视觉行为必须在 V4 正式实现/运行验收状态执行；当前为 ${stage ?? 'unknown'}/${state ?? 'missing'}`, { missingStages: [missingStage], missingEvidence: ['visualStage', 'visualStageState'] }));
+    result.errors.push(error('VISUAL_STAGE_NOT_READY', `正式可见视觉行为必须在 V5 正式实现/运行验收状态执行；当前为 ${stage ?? 'unknown'}/${state ?? 'missing'}`, { missingStages: [missingStage], missingEvidence: ['visualStage', 'visualStageState'] }));
   }
 
   const { evidence, v2, v3, v4, refs } = evidenceObjects(subject, options);
   const missingEvidence = result.missingEvidence;
-  const requiredRefs = ['V2', 'V3', ...(runtimeAccepted ? ['V4'] : [])];
+  const requiredRefs = ['V3', 'V4', ...(runtimeAccepted ? ['V5'] : [])];
   for (const referenceStage of requiredRefs) {
     const reference = refs[referenceStage];
     if (!isObject(reference) || !nonEmpty(reference.path)) missingEvidence.push(`${referenceStage} source evidence path`);
     else if (!loadImmutableVisualStageReference(reference, `${referenceStage} source evidence`, options)) missingEvidence.push(`${referenceStage} source evidence file/JSON/identity`);
   }
   if (isObject(v2)) {
-    validateV2ProductionPlan(v2, subject, options, missingEvidence);
-  } else missingEvidence.push('V2 standard frozen reconstruction plan');
-  if (!isObject(v3) || v3.evidenceType !== 'v3-formal-acceptance' || v3.status !== 'PASS') missingEvidence.push('V3 acceptance PASS');
+    validateV3ProductionPlan(v2, subject, options, missingEvidence);
+  } else missingEvidence.push('V3 standard frozen reconstruction plan');
+  if (!isObject(v3) || v3.visualStageModel !== 'function-first-v1' || v3.evidenceType !== 'v4-formal-acceptance' || v3.status !== 'PASS') missingEvidence.push('V4 acceptance PASS');
   if (isObject(v3)) {
     if (!nonEmpty(v3.acceptanceId) || !nonEmpty(v3.workItemId) || (subject.workItemId && v3.workItemId !== subject.workItemId)
-      || !nonEmpty(v3.candidateVersion)) missingEvidence.push('V3 acceptance work/candidate identity');
-    validateEvidenceFiles(v3, 'V3 formal acceptance', options, missingEvidence);
-    validateCandidateIdentity(v3, 'V3 formal acceptance', missingEvidence, true);
+      || !nonEmpty(v3.candidateVersion)) missingEvidence.push('V4 acceptance work/candidate identity');
+    validateEvidenceFiles(v3, 'V4 formal acceptance', options, missingEvidence);
+    validateCandidateIdentity(v3, 'V4 formal acceptance', missingEvidence, true);
     const formalAssets = v3.formalAssets;
     const components = v3.components;
-    if (!Array.isArray(formalAssets) || formalAssets.length === 0) missingEvidence.push('V3 accepted formal assets');
-    else if (formalAssets.some((asset) => !isObject(asset) || !statusPass(asset.status))) missingEvidence.push('V3 formal asset accepted statuses');
-    if (!Array.isArray(components) || components.length === 0) missingEvidence.push('V3 accepted component states');
-    else if (components.some((component) => !isObject(component) || !statusPass(component.status))) missingEvidence.push('V3 component accepted statuses');
-    validateV3ManifestSource(v2, v3, subject, options, missingEvidence);
+    if (!Array.isArray(formalAssets) || formalAssets.length === 0) missingEvidence.push('V4 accepted formal assets');
+    else if (formalAssets.some((asset) => !isObject(asset) || !statusPass(asset.status))) missingEvidence.push('V4 formal asset accepted statuses');
+    if (!Array.isArray(components) || components.length === 0) missingEvidence.push('V4 accepted component states');
+    else if (components.some((component) => !isObject(component) || !statusPass(component.status))) missingEvidence.push('V4 component accepted statuses');
+    validateV4ManifestSource(v2, v3, subject, options, missingEvidence);
   }
 
   if (runtimeAccepted) {
-    if (!isObject(v4) || v4.evidenceType !== 'v4-runtime-integration-candidate' || v4.status !== 'PASS') missingEvidence.push('V4 runtime candidate PASS');
+    if (!isObject(v4) || v4.visualStageModel !== 'function-first-v1' || v4.evidenceType !== 'v5-runtime-integration-candidate' || v4.status !== 'PASS') missingEvidence.push('V5 runtime candidate PASS');
     if (isObject(v4)) {
-      if (!nonEmpty(v4.candidateId) || v4.workItemId !== subject.workItemId) missingEvidence.push('V4 candidate/work item identity');
-      validateEvidenceFiles(v4, 'V4 runtime candidate', options, missingEvidence);
-      validateCandidateIdentity(v4, 'V4 runtime candidate', missingEvidence, true);
+      if (!nonEmpty(v4.candidateId) || v4.workItemId !== subject.workItemId) missingEvidence.push('V5 candidate/work item identity');
+      validateEvidenceFiles(v4, 'V5 runtime candidate', options, missingEvidence);
+      validateCandidateIdentity(v4, 'V5 runtime candidate', missingEvidence, true);
       const acceptanceErrors = validateArtExperienceAcceptance(v4.artExperienceAcceptance, {
         workItemId: subject.workItemId,
         candidateId: v4.candidateId,
         sceneId: artAcceptanceSceneId(subject, v2, options),
       }, options);
-      if (acceptanceErrors.length) missingEvidence.push(...acceptanceErrors.map((item) => `V4 art experience acceptance: ${item}`));
+      if (acceptanceErrors.length) missingEvidence.push(...acceptanceErrors.map((item) => `V5 art experience acceptance: ${item}`));
     }
   }
 
@@ -747,11 +754,11 @@ export function validateVisualStagePrerequisites(subject = {}, options = {}) {
   if (changed.length) result.invalidatedDependencies.push(...changed);
   if (pending.length) result.errors.push(error('VISUAL_PENDING_ASSET', '存在 planned/pending 资源或未批准替代，当前门尚未满足', { invalidatedDependencies: result.invalidatedDependencies, disposition: VISUAL_REMEDIATION.REVALIDATE, affectedScope: pending.map((item) => item.path) }));
   if (changed.length) result.errors.push(error('VISUAL_PENDING_STALE', '当前门使用的工作项、候选或证据来源身份已更新，需要重新验证；不因文件摘要变化自动回退阶段', { invalidatedDependencies: changed, disposition: VISUAL_REMEDIATION.REVALIDATE, affectedScope: changed }));
-  if (missingEvidence.length) result.errors.push(error('VISUAL_PREREQUISITES_MISSING', 'V2/V3/V4 下游证据不完整；根摘要、手写 PASS 或用户批准不具备证明力', { missingEvidence }));
+  if (missingEvidence.length) result.errors.push(error('VISUAL_PREREQUISITES_MISSING', 'V3/V4/V5 下游证据不完整；根摘要、手写 PASS 或用户批准不具备证明力', { missingEvidence }));
   result.missingEvidence = [...new Set(missingEvidence)];
   result.invalidatedDependencies = [...new Set(result.invalidatedDependencies)];
   result.ok = result.errors.length === 0;
-  return finalizeRemediation(result, { subject, v2, v3, v4, oldSnapshot, snapshot, changed, returnStage: 'V2' });
+  return finalizeRemediation(result, { subject, v2, v3, v4, oldSnapshot, snapshot, changed, returnStage: 'V3' });
 }
 
 /** 供 CLI 使用的异常，保留结构化门禁信息而非拼接不可解析文本。 */
@@ -768,7 +775,7 @@ export class VisualStagePrerequisiteError extends Error {
 
 export function assertVisualStagePrerequisites(subject, options = {}) {
   const result = validateVisualStagePrerequisites(subject, options);
-  if (result.required && !result.ok) throw new VisualStagePrerequisiteError(result, options.command);
+  if (!result.ok) throw new VisualStagePrerequisiteError(result, options.command);
   return result;
 }
 
@@ -802,9 +809,9 @@ export function structuredVisualStageFailure(errorValue, command = 'visual-stage
 export function enforceVisualStageGate(work, options = {}) {
   const result = validateVisualStagePrerequisites(work, options);
   const actionLevel = String(options.actionLevel ?? '');
-  const formalCodeWork = result.stage === 'V4' && result.state === 'in-progress';
-  const runtimeProofReady = result.stage === 'V4' && result.state === 'v4-runtime-integration-candidate';
-  const directV4Activation = result.stage === 'V3' && result.state === 'v3-formal-acceptance-complete'
+  const formalCodeWork = result.stage === 'V5' && result.state === 'in-progress';
+  const runtimeProofReady = result.stage === 'V5' && result.state === 'v5-runtime-integration-candidate';
+  const directV4Activation = result.stage === 'V4' && result.state === 'v4-formal-acceptance-complete'
     && String(options.actionLevel ?? '') === 'A3';
   const prematureA4 = result.required && actionLevel === 'A4' && !runtimeProofReady && !result.classification.isolatedGraybox;
   const prematureFormalAction = result.required && ['A0', 'A1', 'A2', 'A3'].includes(actionLevel)
@@ -812,12 +819,12 @@ export function enforceVisualStageGate(work, options = {}) {
   if (prematureA4 || prematureFormalAction) {
     result.ok = false;
     result.errors.unshift(error(prematureA4 ? 'VISUAL_A4_REQUIRES_V4_RUNTIME_ACCEPTANCE' : 'VISUAL_FORMAL_ENTRY_REQUIRES_A4', prematureA4
-      ? 'A4/F4 正式入口必须等待 V4 运行验收候选完成'
-      : '正式可见视觉集成必须通过 V4 正式实现和运行验收；V3 资源验收完成后仅允许 A3 激活正式实施包', {
-      missingStages: [prematureA4 ? 'V4' : 'V4'],
+      ? 'A4/F4 正式入口必须等待 V5 运行验收候选完成'
+      : '正式可见视觉集成必须通过 V5 正式实现和运行验收；V4 资源验收完成后仅允许 A3 激活正式实施包', {
+      missingStages: [prematureA4 ? 'V5' : 'V5'],
       affectedScope: ['当前动作等级', 'A4/F4 pending'],
       disposition: VISUAL_REMEDIATION.REPAIR,
-      nextAction: '原地修复当前动作等级或 pending 上下文，再重新运行当前门；A4/F4 只能在 V4 运行验收后进入',
+      nextAction: '原地修复当前动作等级或 pending 上下文，再重新运行当前门；A4/F4 只能在 V5 运行验收后进入',
     }));
     // 该错误只说明当前动作与门不匹配，不使已冻结的候选失效，也不触发阶段回退。
     result.affectedScope = [...new Set([...result.affectedScope, '当前动作等级', 'A4/F4 pending'])];
@@ -827,7 +834,7 @@ export function enforceVisualStageGate(work, options = {}) {
       result.invalidatesDownstream = false;
       result.returnStage = null;
       result.invalidatedStages = [];
-      result.nextAction = '原地修复当前动作等级或 pending 上下文，再重新运行当前门；A4/F4 只能在 V4 运行验收后进入';
+      result.nextAction = '原地修复当前动作等级或 pending 上下文，再重新运行当前门；A4/F4 只能在 V5 运行验收后进入';
     }
   }
   if (result.required && !result.ok) throw new VisualStagePrerequisiteError(result, options.command ?? 'visual-stage-gate');

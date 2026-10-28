@@ -111,7 +111,7 @@ function checkCenterAlignment(value, path, errors) {
 function checkUiLayout(value, path, errors) {
   const keys = new Set([
     "groupingBasis", "layoutOwner", "positionDriver", "sizeDrivers", "imageSizing", "sizePolicy", "overflowPolicy", "safeAreaPolicy",
-    "interactionPolicy", "visualOverflow", "independentContainerReason", "minimumSize",
+    "interactionPolicy", "visualOverflow", "independentContainerReason", "minimumSize", "positioning", "floatingRootKind", "independentPosition",
   ]);
   const required = ["groupingBasis", "layoutOwner", "sizePolicy", "overflowPolicy", "safeAreaPolicy", "interactionPolicy"];
   if (!checkObject(value, path, keys, required, errors)) return;
@@ -128,6 +128,12 @@ function checkUiLayout(value, path, errors) {
     });
   }
   checkString(value.layoutOwner, `${path}.layoutOwner`, errors, new Set(["PARENT", "SELF", "NONE"]));
+  // 仅字段真正省略时采用相对默认；显式 null、undefined 或无效枚举必须失败。
+  if (Object.hasOwn(value, "positioning")) checkString(value.positioning, `${path}.positioning`, errors, new Set(["relative", "absolute"]));
+  if (Object.hasOwn(value, "floatingRootKind")) checkString(value.floatingRootKind, `${path}.floatingRootKind`, errors, new Set(["popup", "floating", "toast"]));
+  if (Object.hasOwn(value, "independentPosition")) checkVector2(value.independentPosition, `${path}.independentPosition`, errors);
+  if (value.positioning === "absolute" && !Object.hasOwn(value, "independentPosition")) addError(errors, path, "绝对浮层本体必须声明 independentPosition");
+  if (value.positioning !== "absolute" && Object.hasOwn(value, "independentPosition")) addError(errors, path, "只有绝对浮层本体可以声明 independentPosition");
   if (value.positionDriver !== undefined) checkString(value.positionDriver, `${path}.positionDriver`, errors, LAYOUT_DRIVERS);
   if (value.sizeDrivers !== undefined) {
     const drivers = value.sizeDrivers;

@@ -1,0 +1,94 @@
+# 通用动画分组与区域规划
+
+需要合批、效果图尺寸推理或空间裁剪时读取本文件。先按 [SKILL.md 分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择用途规则；动画单元、来源批次与区域分别记录，每个区域有自己的有效时长和游戏时间映射，制作批次不改变运行时行为边界。运行资源预算见[效果与性能平衡](./action-timing.md#效果与性能平衡)，图片固定画布与补帧细节见[图片递归补帧](./image-inbetween.md)。
+
+## 分组规则
+
+- 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#分组规则)。
+- **视频批次**先收齐当前任务全部动作，再按可共享的美术风格、视角、背景处理和生成能力组织，尽量用最少可行视频条数覆盖全部动作。多个单元在同一条视频的固定区域同时呈现，不同用途类型也可合批；各区域独立选择类型规则、有效源区间和游戏时间映射。游戏时长不同不直接构成拆批理由，能保留完整动作并分别映射时可共用来源。
+- 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#分组规则)。
+- 区域数与尺寸取决于效果图和完整运动范围，不预设均分网格或固定每批数量。容纳不下、背景冲突或互相干扰时拆批，并记录理由；不压缩必要像素来凑动画数量。
+- 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#分组规则)。
+
+## 从效果图推断尺寸
+
+1. 读取当前有效效果图与布局合同，记录参考文件及身份、主体在游戏中的显示宽高和视角；效果图像素应换算到游戏设计尺寸，不能把整张效果图尺寸作为单个动画尺寸。
+2. 推断完整运动包络：主体尺寸、位移、部件展开、道具扫掠、发光或粒子范围及可见阴影，围绕语义根锚点保留安全边距。输出 cell 应能容纳整个动画的包络；细长特效、展开机关等可以使用非正方形画布。
+3. 根据目标显示质量确定源区域与输出 cell 的比例。区域可以大于最终输出尺寸；宽高比例须服务于运动包络，不能为了均分视频而拉伸主体。各动画尺寸可不同，但同一动画所有帧共享固定 cell 和锚点。
+4. 视频分别尝试实际可用的 768p 与 2K 画布，按各动作的完整运动包络安排不重叠区域，留出间隔和画面外边距；区域可大小不同，不强制均分网格。逐区域记录用途类型、`x、y、width、height`、输出宽高、局部锚点、允许位移、推理依据和安全边距，使用左上角原点的整数像素。按[视频条数与消耗比较](#视频条数与消耗比较)选择合批方案；不能只按区域总面积判断是否放得下，还须给出实际宽高内的排布。
+5. 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#从效果图推断尺寸)。
+
+## 视频参数与空间依据
+
+视频分辨率按当前全部动作的完整运动范围、目标显示细节、实际画幅和合批消耗推理，在 **768p** 与 **2K** 中选择。选择顺序为：满足质量、完整入框与工具能力等硬约束后，先选视频条数最少的可行方案，再在这些方案中选整组预计消耗最少者，同等条件优先 **768p**。不同批次可以选择不同档位；不能认定低分辨率一定低消耗，也不能认定一条 2K 一定比多条 768p 便宜。将比较与推荐依据保存在内部设计工件并纳入待确认的动作方案，用户确认后才按已有预算和生成授权推进；新增费用、超预算或改变授权范围时，仍须请求对应操作批准。该分辨率比较是生成成本规划，不代表运行时纹理成本。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#视频参数与空间依据)。
+
+### 视频条数与消耗比较
+
+1. 先确定全部动作清单和每个区域的最低可读像素需求、完整运动包络及安全边距，并核对风格、视角、背景和工具的多区域生成能力。完整连续行为不因阶段数或拳数拆为独立生成任务。
+2. 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#视频条数与消耗比较)。
+
+设计工件中的比较表至少列出：候选档位与实际宽高、视频条数、各条覆盖的动作/区域、各区域有效时长、各条生成时长、总消耗及其依据、不可合批原因和推荐理由。将选择结果纳入当前动作方案，取得用户确认后再编写提示词；确认范围内的尺寸或分组小幅修正更新内部记录并制作受影响的真实候选，改变核心动作方案时先重新确认。不通过静默升级到授权范围外的分辨率或增加费用修复失败。
+
+### 图片分辨率约定
+
+图片生成默认 **768p**。在当前已授权预算与工具能力内确需 **2K** 时，内部记录尺寸依据并纳入动作方案确认；用户确认方案后再制作，不为分辨率单独增加确认步骤。新增费用、超预算或改变授权范围时仍须请求对应操作批准。图片画布须写明确切宽高，生成工具没有对应参数时用真实可用尺寸生成，再按记录的统一变换规范化，不宣称工具保证精确尺寸。
+
+## 生成参数核对与来源空间
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#生成参数核对与来源空间)。
+
+图片来源中的 `canvas` 是全部最终帧共用的真实画布；原生成图保留实际尺寸及 SHA。打包逐帧核对最终画布，不按主体包围盒自动裁剪，也不通过放大输出 cell 掩盖源图漂移。`--region` 仍使用整画布坐标，`--anchor` 是区域内坐标；固定区域与内容留白变换沿用相同语义。
+
+各区域同时独立呈现，镜头和区域位置固定。默认保持要求呈现的内容与完整运动范围入框；裁剪例外须沿用当前任务的明确授权，逐项记录，不因合批或类型自动放宽。提示词不绘制边框、编号或分隔标签。背景处理按各自类型和边缘选择，不能为了合批把发光/半透明边缘统一按硬边去背。工具的 `input.has_audio` 是实际探测事实，音频与角色素材中的声音/特效/镜头反馈按任务合同选择；图集交付不等于游戏音效已接入。
+
+批次视频时长与每个动画/区域的游戏时长分别记录，按各区域完整动作所需的有效源区间和生成工具支持的时长选择载体。各区域按自己的目的安排时长和节奏，不强制等长、等速或同时结束。较短区域在自己的设计终点结束；后续时间不继续要求该区域生成动作，不计入其抽帧、播放时长或动作验收。不得为等待长区域补定格、重复循环、拉长短动作或压缩长动作。当前工具对一个区域会抽取完整输入视频的全部帧，且 `--fps` 同时控制采样与播放；若区域的有效时长不同，分别准备保留整幅空间布局的派生视频，使各自输入覆盖该区域有效区间，不能只在报告中缩短帧数来伪造时间裁剪。时间整理见[视频节奏整理](./action-timing.md#视频节奏整理)，派生视频须保留整幅空间尺寸、位置与朝向。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#生成参数核对与来源空间)。
+
+效果图身份、各区域用途类型、有效源区间、有效时长与游戏时间映射、FPS/事件/锚点及输出路径保存在 Work Item 设计工件；区域表是生产规划，不新增报告或 accepted schema 字段。下方命令假设两个区域已整理为相同有效时间段；不同时间段须各自准备保留整幅空间布局的派生来源。
+
+## 按区域抽帧
+
+先检查 `ffmpeg`、`ffprobe` 和项目依赖可用；空间裁剪由本地工具处理，输入视频必须已经满足对应区域的游戏时间轴。只有区域有效区间及播放 FPS 相同，才共用同一输入；时间长度不同则分别准备经人工确认的全画布时间整理视频，再按各自区域抽帧。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#按区域抽帧)。
+
+```powershell
+node <skill-dir>/scripts/video-to-atlas.mjs `
+  --input-video art/animation-batch.mp4 `
+  --region 16,16,320,288 `
+  --anchor 160,264 `
+  --output-sheet public/assets/mechanism-open/mechanism-open.png `
+  --project-root . --runtime-kind public --deployment-base /game/ `
+  --width 160 --height 144 --fps 12 --no-loop `
+  --animation-key mechanism-open --texture-key mechanism-open `
+  --remove-background --background-color '#00ff00' `
+  --edge-profile hard-edge --color-separation-verified
+
+node <skill-dir>/scripts/video-to-atlas.mjs `
+  --input-video art/animation-batch.mp4 `
+  --region 352,16,640,400 `
+  --anchor 320,200 `
+  --output-sheet public/assets/impact-burst/impact-burst.png `
+  --project-root . --runtime-kind public --deployment-base /game/ `
+  --width 320 --height 200 --fps 12 --no-loop `
+  --animation-key impact-burst --texture-key impact-burst `
+  --remove-background --background-color '#00ff00' `
+  --edge-profile hard-edge --color-separation-verified
+```
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#按区域抽帧)。
+
+当前 `--fps` 同时控制抽样和播放，示例数值不代表类型默认节奏；游戏时间先按 [action-timing.md](./action-timing.md)整理。`--no-loop` 用于计划中的单次播放；结束保持、组合和事件按现有运行时合同记录，不能只改报告来伪造工具能力。未指定 `--region` 时处理整幅画布。`--output-report` 可指定报告路径；仅需要动画播放时通过 `--output-preview` 显式指定 HTML 路径，默认不生成网页。
+
+运行加载示例必须显式绑定项目内资源：public 产物使用 `--project-root`、`--runtime-kind public` 和 `--deployment-base /`（或实际部署前缀，如 `/game/`）；模块资源使用 `--runtime-kind module-import`、`--importer` 和 `--specifier`。工具从图集文件路径推导 URL/导入表达式，不根据文件名猜地址。`--runtime-url` 仅可作为与推导值比较的核对参数，单独提供会报错。未绑定时仍可打包并生成预览与 PASS 报告，但 `runtime_binding`、`runtime_url`、`threejs` 均为空；这只表示打包成功，不能提交 accepted。accepted 文件门要求绑定、报告与 `asset.runtime_outputs` 一致。
+
+每个动画的 `frame_animation.settings.region`、报告的 `input.region` 与 `settings.region` 必须一致。人工检查区域内是否完整、是否混入邻区内容、运动与锚点是否稳定、透明边缘、阶段事件与循环/终态；文件门通过仅代表结构和身份一致。
+
+> 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-region-planning.md#按区域抽帧)。
+
+## 本栈配套资料
+
+- [多区域图片](./image-inbetween.md#多区域图片)

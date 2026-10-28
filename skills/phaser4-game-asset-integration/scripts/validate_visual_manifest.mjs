@@ -12,8 +12,8 @@ import { productionFileGateError } from "../../phaser-domain-contracts/scripts/v
 import { buildVisualConfirmationAuthorityByRegion, validateVisualDecompositionConfirmations } from "../../phaser-domain-contracts/scripts/visual-decomposition-confirmation.mjs";
 import { validateReuseProductionGate } from "../../phaser-domain-contracts/scripts/visual-confirmation-reuse-gates.mjs";
 import { validateFormalAnnotationPng } from "./visual-annotation-evidence.mjs";
-import { auditProductionContractByGroups, confirmationAuthorityBase, validateConfirmationGroups, validateImplementationPlan as validateImplementationPlanContract, validateManualConfirmationEvidence, validateReusePlanRelation, validateV4ProductionGateByGroups } from "./visual-manifest-confirmation.mjs";
-import { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateTransparentBackgroundContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV4ProductionGate } from "../../phaser-domain-contracts/scripts/visual-production-contract.mjs";
+import { auditProductionContractByGroups, confirmationAuthorityBase, validateConfirmationGroups, validateImplementationPlan as validateImplementationPlanContract, validateManualConfirmationEvidence, validateReusePlanRelation, validateV5ProductionGateByGroups } from "./visual-manifest-confirmation.mjs";
+import { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateTransparentBackgroundContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV5ProductionGate } from "../../phaser-domain-contracts/scripts/visual-production-contract.mjs";
 import { validateVisualPostApprovalReviewFields } from "../../phaser-domain-contracts/scripts/visual-human-review-contract.mjs";
 import { validateSceneReconstructionGate, validateSceneReconstructionContract, validateStructuredFidelityCases } from "../../phaser-domain-contracts/scripts/scene-reconstruction-contract.mjs";
 import { resolveVisualValidationMode, validateVisualValidationPolicy, validateVisualManifestFidelityCases } from "../../phaser-domain-contracts/scripts/visual-validation-policy.mjs";
@@ -22,10 +22,10 @@ import { checkManifestFileEvidence, collectManifestFileEvidenceEntries } from ".
 import { validateImageGenerationSizeManifest } from "../../phaser-domain-contracts/scripts/visual-generation-size-contract.mjs";
 import { isWorkflowDpr, workflowDprError } from "../../phaser-domain-contracts/scripts/workflow-dpr-contract.mjs";
 import { VISUAL_STAGE_IDS, VISUAL_STAGE_STATES } from "../../phaser-domain-contracts/scripts/visual-stage-prerequisites.mjs";
-import { validateEffectImageLayoutBindings, validatePngLayoutMetadata, validateTechnicalLayoutNodeIds, validateTechnicalRegionLayout, validateV4LayoutMeasurements } from "./validate_visual_layout_mapping.mjs";
+import { validateEffectImageLayoutBindings, validatePngLayoutMetadata, validateTechnicalLayoutNodeIds, validateTechnicalRegionLayout, validateV5LayoutMeasurements } from "./validate_visual_layout_mapping.mjs";
 import { checkFrameAnimationWorkflowFiles, validateFrameAnimationWorkflowContract } from "./frame-animation-workflow-contract.mjs";
 export { computeRegionDefinitionSha256 } from "./effect_image_annotation_core.mjs";
-export { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV4ProductionGate } from "../../phaser-domain-contracts/scripts/visual-production-contract.mjs";
+export { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV5ProductionGate } from "../../phaser-domain-contracts/scripts/visual-production-contract.mjs";
 export { validateSceneReconstructionGate, validateSceneReconstructionContract, validateStructuredFidelityCases } from "../../phaser-domain-contracts/scripts/scene-reconstruction-contract.mjs";
 export { calculateComponentDisplaySize, validateImageGenerationSizeContract, validateImageGenerationSizeManifest } from "../../phaser-domain-contracts/scripts/visual-generation-size-contract.mjs";
 
@@ -75,19 +75,19 @@ function validateReferenceTarget(target, errors, baseline = null) {
   if (!isObject(target)) { errors.push("reference_target 必须是对象"); return null; }
   for (const field of ["candidate_id", "original_file", "frozen_at"]) if (!nonEmptyString(target[field])) errors.push(`reference_target.${field} 必须是非空字符串`);
   if (nonEmptyString(target.frozen_at) && Number.isNaN(Date.parse(target.frozen_at))) errors.push("reference_target.frozen_at 必须是可解析时间");
-  if (target.status !== "reference-target-frozen") errors.push("reference_target.status 必须为 reference-target-frozen；裸 frozen 不代表 V2");
+  if (target.status !== "reference-target-frozen") errors.push("reference_target.status 必须为 reference-target-frozen；裸 frozen 不代表 V3");
   for (const field of ["scene_ids", "state_ids"]) if (!Array.isArray(target[field]) || target[field].length === 0 || !target[field].every(nonEmptyString)) errors.push(`reference_target.${field} 必须是非空字符串列表`);
   // 外部提供的冻结图只记录 provided 身份；只有真正由生成器产出的目标才能声明生成记录。
   errors.push(...validateVisualEffectImageOrigin(target, { label: "reference_target", visual_baseline: baseline, target_sha256: target.target_sha256, output_sha256: target.target_sha256 }));
   return target;
 }
 
-/** 验证 V2 冻结后、V3 前的合同回对门。 */
+/** 验证 V3 冻结后、V4 前的合同回对门。 */
 function validateContractReconciliation(gate, errors) {
   if (!isObject(gate)) { errors.push("contract_reconciliation 必须是对象"); return; }
   for (const field of ["decision_id", "reconciled_at", "rollback"]) if (!nonEmptyString(gate[field])) errors.push(`contract_reconciliation.${field} 必须是非空字符串`);
   if (Object.hasOwn(gate, "reviewed_at") || Object.hasOwn(gate, "reviewedAt")) errors.push("contract_reconciliation 禁止使用 reviewed_at；机器回对请使用 reconciled_at");
-  if (gate.status !== "passed") errors.push("contract_reconciliation.status 必须为 passed，变化时退回 V1/模块审计");
+  if (gate.status !== "passed") errors.push("contract_reconciliation.status 必须为 passed，变化时退回 V2/模块审计");
   const bindings = gate.bindings;
   if (!isObject(bindings)) errors.push("contract_reconciliation.bindings 必须是对象");
   else for (const field of ["gdd", "tdd", "gameplay_visual_contract", "gameplay_function_contract", "layout_contract", "module_scene_ownership", "budget_baseline"]) if (!nonEmptyString(bindings[field])) errors.push(`contract_reconciliation.bindings.${field} 必须是非空字符串`);
@@ -96,7 +96,7 @@ function validateContractReconciliation(gate, errors) {
   gate.checks.forEach((item, index) => {
     if (!isObject(item) || !RECONCILIATION_DOMAINS.has(item.domain)) errors.push(`contract_reconciliation.checks[${index}].domain 无效`);
     else if (seenDomains.has(item.domain)) errors.push(`contract_reconciliation.checks domain 重复：${item.domain}`);
-    else if (item.status !== "passed") errors.push(`contract_reconciliation.checks[${index}] 未通过，必须退回 V1/模块审计`);
+    else if (item.status !== "passed") errors.push(`contract_reconciliation.checks[${index}] 未通过，必须退回 V2/模块审计`);
     else passed.add(item.domain);
     if (RECONCILIATION_DOMAINS.has(item?.domain)) seenDomains.add(item.domain);
     if (!nonEmptyString(item?.evidence)) errors.push(`contract_reconciliation.checks[${index}].evidence 必须是非空字符串`);
@@ -179,7 +179,7 @@ function validateCoverageAudit(audit, target, assetIds, errors, assetById = new 
     }
     const planMode = validateImplementationPlan(region.implementation_plan, region, assetById, baseline, label, errors);
     // 区域先完成状态分析，再按可复用部件建立资产清单；编号本身不代表资产数量。
-    errors.push(...validateVisualComponentContract(region, { stage: "V2", annotation_number: region.annotation_number, region_id: region.id }, { requireImageAssets: true, referenceTargetSha: target?.target_sha256, canvas: canvases.get(pair) }));
+    errors.push(...validateVisualComponentContract(region, { stage: "V3", annotation_number: region.annotation_number, region_id: region.id }, { requireImageAssets: true, referenceTargetSha: target?.target_sha256, canvas: canvases.get(pair) }));
     const confirmation = region.confirmation;
     // 效果图的每个编号都必须等待同一套人工 accepted 确认；编号、生产标签和文件身份
     // 由 workflow-control 文件门继续复算，旧 AUTO/USER_DECISION 记录不再兼容。
@@ -213,7 +213,7 @@ function rectangleUnionArea(rectangles) {
   return area;
 }
 
-/** V3 资源审计只接收固定视觉生产单元；运行数据/运行渲染的编号仍由确认文件门覆盖。 */
+/** V4 资源审计只接收固定视觉生产单元；运行数据/运行渲染的编号仍由确认文件门覆盖。 */
 function fixedVisualAuditManifest(data) {
   if (!isObject(data?.coverage_audit)) return data;
   return { ...data, coverage_audit: { ...data.coverage_audit, regions: (data.coverage_audit.regions ?? []).filter((region) => normalizeVisualRegionDefinition(region).owner_type === "fixed-production-visual") } };
@@ -230,7 +230,7 @@ function validateReconstructionLifecycle(data, errors) {
     return reconstruction;
   }
   if (reconstruction.applicability !== "effect-image") { errors.push("effect_image_reconstruction.applicability 必须为 not-applicable 或 effect-image"); return reconstruction; }
-  if (!["v2-ready", "v4-complete"].includes(reconstruction.lifecycle)) errors.push("effect-image lifecycle 必须为 v2-ready 或 v4-complete");
+  if (!["v3-ready", "v5-complete"].includes(reconstruction.lifecycle)) errors.push("effect-image lifecycle 必须为 v3-ready 或 v5-complete");
   return reconstruction;
 }
 
@@ -249,26 +249,27 @@ function validateVisualBaseline(baseline, errors) {
   if (!isObject(baseline)) { errors.push("visual_baseline 必须是对象"); return null; }
   for (const field of ["id", "version", "document"]) if (!nonEmptyString(baseline[field])) errors.push(`visual_baseline.${field} 必须是非空字符串`);
   if (nonEmptyString(baseline.document) && baseline.document !== GLOBAL_VISUAL_BASELINE_DOCUMENT) errors.push(`visual_baseline.document 必须指向不可变 ${GLOBAL_VISUAL_BASELINE_DOCUMENT}，阶段证据不得参与哈希`);
-  if (baseline.status !== "global-static-baseline-frozen") errors.push("visual_baseline.status 必须为 global-static-baseline-frozen；静态基线冻结不代表 V2 拆解方案完成");
+  if (baseline.status !== "global-static-baseline-frozen") errors.push("visual_baseline.status 必须为 global-static-baseline-frozen；静态基线冻结不代表 V3 拆解方案完成");
   // 共享合同负责锚点去重、对象格式和全局身份，避免资产文件门与提示词门各自解释基线。
   errors.push(...validateGlobalVisualBaseline(baseline, { label: "visual_baseline" }));
   return baseline;
 }
 
-/** 校验资源清单的显式阶段，正式运行直接消费 V2/V3 合同。 */
+/** 校验资源清单的显式阶段，正式运行直接消费 V3/V4 合同。 */
 function validateVisualStageMetadata(data, requestedStage, errors) {
   const stage = data.visualStage ?? data.visual_stage; const state = data.visualStageState ?? data.visual_stage_state; const stageId = String(stage ?? "").toUpperCase();
   const isVisualManifest = data.effect_image_reconstruction?.applicability === "effect-image"; const stageState = String(state ?? "");
   if (!isVisualManifest && stage === undefined && state === undefined) return;
-  if (!VISUAL_STAGE_IDS.includes(stageId)) errors.push("visualStage 必须显式使用已知的 V0→V4 阶段，不能从 stageId/文本推断");
-  if (!VISUAL_STAGE_STATES.includes(stageState)) errors.push("visualStageState 必须使用有语义的 V0→V4 状态，裸 frozen 或未知状态均失败");
-  if (isVisualManifest && !["V2", "V3", "V4"].includes(stageId)) errors.push("effect-image manifest 阶段只能为 V2、V3 或 V4");
+  if (data.visualStageModel !== "function-first-v1") errors.push("阶段记录必须声明 visualStageModel=function-first-v1");
+  if (!VISUAL_STAGE_IDS.includes(stageId)) errors.push("visualStage 必须显式使用已知的 V0→V5 阶段，不能从 stageId/文本推断");
+  if (!VISUAL_STAGE_STATES.includes(stageState)) errors.push("visualStageState 必须使用有语义的 V0→V5 状态，裸 frozen 或未知状态均失败");
+  if (isVisualManifest && !["V3", "V4", "V5"].includes(stageId)) errors.push("effect-image manifest 阶段只能为 V3、V4 或 V5");
   if (stage && requestedStage && stageId !== String(requestedStage).toUpperCase()) errors.push(`visualStage=${stage} 与 --stage=${requestedStage} 冲突`);
-  if (stageState === "global-static-baseline-frozen" && stageId === "V2") errors.push("global-static-baseline-frozen 只表示静态基线冻结，不能冒充 v2-production-planning-complete");
+  if (stageState === "global-static-baseline-frozen" && stageId === "V3") errors.push("global-static-baseline-frozen 只表示静态基线冻结，不能冒充 v3-production-planning-complete");
   if (isVisualManifest && (!stage || !state)) errors.push("effect-image 清单必须同时提供 visualStage 与 visualStageState，缺失时不允许继续生产");
-  if (stageId === "V2" && stageState !== "v2-production-planning-complete") errors.push("V2 必须声明 v2-production-planning-complete，静态基线或笼统 frozen 不足");
-  if (stageId === "V3" && stageState !== "v3-formal-acceptance-complete") errors.push("V3 必须声明 v3-formal-acceptance-complete");
-  if (stageId === "V4" && stageState !== "v4-runtime-integration-candidate") errors.push("V4 必须声明 v4-runtime-integration-candidate");
+  if (stageId === "V3" && stageState !== "v3-production-planning-complete") errors.push("V3 必须声明 v3-production-planning-complete，静态基线或笼统 frozen 不足");
+  if (stageId === "V4" && stageState !== "v4-formal-acceptance-complete") errors.push("V4 必须声明 v4-formal-acceptance-complete");
+  if (stageId === "V5" && stageState !== "v5-runtime-integration-candidate") errors.push("V5 必须声明 v5-runtime-integration-candidate");
 }
 
 /** 验证生产中及已验收资源绑定当前根基线。 */
@@ -342,7 +343,7 @@ export function validateManifest(data, options = {}) {
   const visualValidationMode = resolveVisualValidationMode(data, data.scene_reconstruction_contract);
   validateVisualValidationPolicy(errors, "visual_validation", data, data.scene_reconstruction_contract);
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase();
-  if (requestedStage && !["V2", "V3", "V4"].includes(requestedStage)) errors.push("--stage 只能是 V2、V3 或 V4");
+  if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5");
   if (data.schema_version !== SCHEMA_VERSION) errors.push(`schema_version 必须为 ${SCHEMA_VERSION}`);
   const baseline = validateVisualBaseline(data.visual_baseline, errors);
   validateVisualStageMetadata(data, requestedStage, errors);
@@ -368,34 +369,35 @@ export function validateManifest(data, options = {}) {
   if (!Array.isArray(data.assets)) { errors.push("assets 必须是数组"); return errors; }
   const assetIds = new Set(data.assets.filter(isObject).map((item) => item.id).filter(nonEmptyString));
   const assetById = new Map(data.assets.filter(isObject).filter((item) => nonEmptyString(item.id)).map((item) => [item.id, item]));
-  const fixedMappings = reconstruction?.applicability === "effect-image" ? validateCoverageAudit(data.coverage_audit, target, assetIds, errors, assetById, baseline) : new Map(); const layoutBindings = reconstruction?.applicability === "effect-image" && requestedStage !== "V3" ? validateEffectImageLayoutBindings(data, errors, { stage: requestedStage, visual_validation: { mode: visualValidationMode } }) : null;
+  const fixedMappings = reconstruction?.applicability === "effect-image" ? validateCoverageAudit(data.coverage_audit, target, assetIds, errors, assetById, baseline) : new Map(); const layoutBindings = reconstruction?.applicability === "effect-image" && requestedStage !== "V4" ? validateEffectImageLayoutBindings(data, errors, { stage: requestedStage, visual_validation: { mode: visualValidationMode } }) : null;
   const coverageRegions = Array.isArray(data.coverage_audit?.regions) ? data.coverage_audit.regions : [];
   const fixedRegionAssetIds = (region) => (Array.isArray(region?.asset_ids) ? region.asset_ids : [region?.asset_id]).filter(nonEmptyString);
   const bitmapAssetIds = new Set(coverageRegions.filter((region) => isObject(region) && region.owner_type === "fixed-production-visual" && region.production_origin === "bitmap-decomposition").flatMap(fixedRegionAssetIds));
   const independentAssetIds = new Set(coverageRegions.filter((region) => isObject(region) && region.owner_type === "fixed-production-visual" && region.production_origin === "independent-production").flatMap(fixedRegionAssetIds));
   if (reconstruction?.applicability === "effect-image" && data.fidelity_cases != null && !Array.isArray(data.fidelity_cases)) errors.push("fidelity_cases 必须是数组");
-  if (reconstruction?.lifecycle === "v4-complete") {
+  if (reconstruction?.lifecycle === "v5-complete") {
     validateVisualManifestFidelityCases(data.fidelity_cases, target, candidate, baseline, errors, { requireCompleteCoverage: true, mode: visualValidationMode });
-    if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.some((item) => item?.conclusion !== "passed")) errors.push("V4 complete 的 fidelity_cases 必须全部 passed");
+    if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.some((item) => item?.conclusion !== "passed")) errors.push("V5 complete 的 fidelity_cases 必须全部 passed");
   } else if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.length > 0) validateVisualManifestFidelityCases(data.fidelity_cases, target, candidate, baseline, errors, { mode: visualValidationMode });
   const strictProductionContract = reconstruction?.applicability === "effect-image";
   if (strictProductionContract) {
-    const stage = requestedStage ?? (reconstruction.lifecycle === "v4-complete" ? "V4" : "V2");
-    // V2 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
+    // 清单声明的阶段是实际身份，生命周期不能把 V5 记录降级为 V3。
+    const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (reconstruction.lifecycle === "v5-complete" ? "V5" : "V3");
+    // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
-    // V3 只验收资源生产结果；正式 Scene、同屏组合和运行时消费统一留到 V4。
-    if (stage !== "V3") errors.push(...validateSceneReconstructionGate(data, { stage, displayLayerScope, requireFinalLayout: stage === "V4" || reconstruction.lifecycle === "v4-complete" || (stage === "V2" && [data.visualStageState, data.visual_stage_state].includes("v2-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
+    // V4 只验收资源生产结果；正式 Scene、同屏组合和运行时消费统一留到 V5。
+    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
-    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage: "V2", requireManualConfirmation: false }));
+    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage: "V3", requireManualConfirmation: false }));
     errors.push(...validateImageGenerationSizeManifest(data, { stage }));
-    const requireAudit = stage === "V3" || stage === "V4" || reconstruction.lifecycle === "v4-complete";
-    const requireV4 = stage === "V4" || reconstruction.lifecycle === "v4-complete";
-    if (requireV4) { validateV4LayoutMeasurements(data, layoutBindings, errors, { visual_validation: { mode: visualValidationMode } });
-      // 显式传入 V4，让生产审计同时校验每个区域的运行时消费身份。
-      errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, stage: "V4", projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
+    const requireAudit = stage === "V4" || stage === "V5" || reconstruction.lifecycle === "v5-complete";
+    const requireRuntime = stage === "V5" || reconstruction.lifecycle === "v5-complete";
+    if (requireRuntime) { validateV5LayoutMeasurements(data, layoutBindings, errors, { visual_validation: { mode: visualValidationMode } });
+      // 显式传入 V5，让生产审计同时校验每个区域的运行时消费身份。
+      errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
       const structuralGate = { ...data, coverage_audit: isObject(data.coverage_audit) ? { ...data.coverage_audit, regions: [] } : data.coverage_audit };
-      errors.push(...validateV4ProductionGate(structuralGate, { requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
+      errors.push(...validateV5ProductionGate(structuralGate, { requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
     } else if (requireAudit) {
       errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
     } else if (isObject(data.production_contract_audit)) errors.push(...validateProductionAuditShape(data));
@@ -438,7 +440,7 @@ export function validateManifest(data, options = {}) {
       if (assetContract.image_generation_required === true && asset.origin !== "generated") errors.push(`${label} image_generation_required=true 必须声明 origin=generated`);
     }
     if (Object.keys(assetContract).length > 0) {
-      const assetContext = { stage: "V2", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, observedMethod: assetContract.production_method ?? "unspecified" };
+      const assetContext = { stage: "V3", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, observedMethod: assetContract.production_method ?? "unspecified" };
       errors.push(...validateProductionContract(asset, assetContext, { requireComplete: true }));
       if (assetContract.image_generation_required === true) {
         const regionId = asset.coverage_region_id ?? asset.coverageRegionId ?? asset.coverage_region_ids?.[0] ?? asset.coverageRegionIds?.[0];
@@ -719,7 +721,7 @@ function checkSnapshotPath(projectRoot, label, value, errors) {
 /** 校验不可变复用快照的最小身份，避免把当前机器清单伪装成历史证据。 */
 export async function checkReuseSourceFiles(projectRoot, label, source, errors) {
   // 复用证据统一交给 workflow 的不可变快照门，避免资产层和工作流层各自解释两套字段。
-  const context = { stage: "V3", annotation_number: "?", region_id: label, expectedMethod: "reuse", observedMethod: "reuse" };
+  const context = { stage: "V4", annotation_number: "?", region_id: label, expectedMethod: "reuse", observedMethod: "reuse" };
   errors.push(...validateReuseProductionGate({ production_method: "reuse", reuse_snapshot: source, implementation_plan: { mode: "reuse-existing" } }, context, { projectRoot, checkFiles: true }));
 }
 
@@ -786,10 +788,12 @@ async function checkBitmapEvidenceFiles(projectRoot, label, region, confirmation
 /** 检查全局基线与已验收资源声明的本地文件是否存在。 */
 export async function checkManifestFiles(data, projectRoot, options = {}) {
   const errors = [];
-  const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase(); if (requestedStage && !["V2", "V3", "V4"].includes(requestedStage)) errors.push("--stage 只能是 V2、V3 或 V4"); const lifecycle = data.effect_image_reconstruction?.lifecycle; const stage = requestedStage ?? (lifecycle === "v4-complete" ? "V4" : "V2");
+  if ((data?.visualStage !== undefined || data?.visual_stage !== undefined || data?.visualStageState !== undefined || data?.effect_image_reconstruction?.applicability === "effect-image") && data.visualStageModel !== "function-first-v1") errors.push("阶段记录必须声明 visualStageModel=function-first-v1");
+  // 文件审计必须使用清单声明的阶段，与结构门保持一致。
+  const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase(); if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5"); const lifecycle = data.effect_image_reconstruction?.lifecycle; const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (lifecycle === "v5-complete" ? "V5" : "V3");
   const isEffectImage = data.effect_image_reconstruction?.applicability === "effect-image";
-  const requireAudit = isEffectImage && (["V3", "V4"].includes(stage) || lifecycle === "v4-complete"); const requireV4 = isEffectImage && (stage === "V4" || lifecycle === "v4-complete");
-  // V2/V3/V4 文件门直接读取资源清单，不依赖额外草图文件。
+  const requireAudit = isEffectImage && (["V4", "V5"].includes(stage) || lifecycle === "v5-complete"); const requireRuntime = isEffectImage && (stage === "V5" || lifecycle === "v5-complete");
+  // V3/V4/V5 文件门直接读取资源清单，不依赖额外草图文件。
   if (isEffectImage) errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
   const baseline = data.visual_baseline; const target = data.reference_target;
   let referenceTargetFile = null;
@@ -809,15 +813,15 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
   const supplementalPaths = collectManifestFileEvidenceEntries(data);
   // 文件门把清单根身份传给共享确认器；逐组校验时再注入该组 authorityByRegion。
   const confirmationAuthority = confirmationAuthorityBase(data, projectRoot, options);
-  if (requireV4) {
-    errors.push(...validateVisualPostApprovalReviewFields(data, { stage: "V4" }));
-    errors.push(...validateProductionAuditShape(data, { ...options, ...confirmationAuthority, projectRoot, checkFiles: true }));
-    errors.push(...validateV4ProductionGateByGroups(data, { ...options, ...confirmationAuthority, projectRoot, checkFiles: true, requireEvidenceIdentity: true, identity: manifestEvidenceIdentity(data) }));
+  if (requireRuntime) {
+    errors.push(...validateVisualPostApprovalReviewFields(data, { stage: "V5" }));
+    errors.push(...validateProductionAuditShape(data, { ...options, ...confirmationAuthority, stage, projectRoot, checkFiles: true }));
+    errors.push(...validateV5ProductionGateByGroups(data, { ...options, ...confirmationAuthority, stage, projectRoot, checkFiles: true, requireEvidenceIdentity: true, identity: manifestEvidenceIdentity(data) }));
   } else if (requireAudit) {
-    errors.push(...validateProductionAuditShape(data, { ...options, ...confirmationAuthority, projectRoot, checkFiles: true }));
+    errors.push(...validateProductionAuditShape(data, { ...options, ...confirmationAuthority, stage, projectRoot, checkFiles: true }));
   }
   if (requireAudit) {
-    errors.push(...await auditProductionContractByGroups(data, { ...options, ...confirmationAuthority, projectRoot, checkFiles: true }));
+    errors.push(...await auditProductionContractByGroups(data, { ...options, ...confirmationAuthority, stage, projectRoot, checkFiles: true }));
   }
   // 文件门必须调用同一套 accepted/manual 确认硬门；只检查路径格式不能证明人工确认仍绑定当前目标。
   if (data.effect_image_reconstruction?.applicability === "effect-image") errors.push(...validateConfirmationGroups(data, { ...options, ...confirmationAuthority, projectRoot, checkFiles: true, stage }));
@@ -862,7 +866,7 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
   data.assets.forEach((asset, index) => {
     if (!isObject(asset)) return; const assetPaths = []; const contract = resolveProductionContract(asset);
     if (contract.image_generation_required === true) {
-      errors.push(...validateEvidenceIdentity(asset.runtime_consumption, { stage: "V2", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, expectedMethod: "image-generation", observedMethod: contract.production_method ?? "missing" }, manifestEvidenceIdentity(data), { projectRoot }));
+      errors.push(...validateEvidenceIdentity(asset.runtime_consumption, { stage: "V3", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, expectedMethod: "image-generation", observedMethod: contract.production_method ?? "missing" }, manifestEvidenceIdentity(data), { projectRoot }));
       if (nonEmptyString(asset.source_file)) assetPaths.push(["production_contract.source_file", asset.source_file]);
       if (Array.isArray(asset.source_files)) for (const value of asset.source_files) if (nonEmptyString(value)) assetPaths.push(["production_contract.source_files", value]);
       if (nonEmptyString(asset.output_file)) assetPaths.push(["production_contract.output_file", asset.output_file]);
@@ -933,7 +937,7 @@ function requiresBitmapFileGate(data) {
 export async function main(argv = process.argv.slice(2)) {
   try {
     const args = parseArgs(argv); const data = await loadManifest(args.manifest);
-    if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V2 --check-files --project-root ."); return 2; }
+    if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V3 --check-files --project-root ."); return 2; }
     const errors = validateManifest(data, { stage: args.stage, checkFiles: args.checkFiles, projectRoot: args.projectRoot, workItemType: args.workItemType });
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));
     const uniqueErrors = [...new Set(errors)];

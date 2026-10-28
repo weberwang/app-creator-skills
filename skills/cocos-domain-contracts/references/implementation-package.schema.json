@@ -21,6 +21,7 @@
     "definitionOfDone"
   ],
   "properties": {
+    "visualStageModel": {"const": "function-first-v1"},
     "packageId": {
       "type": "string",
       "minLength": 1
@@ -54,7 +55,7 @@
     "executionUnits": {
       "type": "array",
       "minItems": 1,
-      "description": "数组顺序由计划制定者预设并作为唯一执行顺序；串行单元各占一个位置，同一并行组必须连续出现。若全部单元仅为 SHARED/MODULE，则该包属于 foundation-only：无视觉产物或行为的纯工程包只需 Work Item 范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明 visualProductionUnits、visualManifestFile、visualContractVersion 等视觉合同或资产生产依赖的基础包，必须完整复核 globalVisualBaselineSelectionRef（三张同条件 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文真实 SHA）且 globalStaticBaselineState=global-static-baseline-frozen；声明正式入口或可见资源消费等视觉行为时，仍受正式 V2/V3/V4 门约束。混入 SCENE/DISPLAY_LAYER/INTEGRATION 时仍受正式 V2/V3/V4 门约束。",
+      "description": "数组顺序由计划制定者预设并作为唯一执行顺序；串行单元各占一个位置，同一并行组必须连续出现。若全部单元仅为 SHARED/MODULE，则该包属于 foundation-only：无视觉产物或行为的纯工程包只需 Work Item 范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明 visualProductionUnits、visualManifestFile、visualContractVersion 等视觉合同或资产生产依赖的基础包，必须完整复核 globalVisualBaselineSelectionRef（三张同条件 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文真实 SHA）且 globalStaticBaselineState=global-static-baseline-frozen；声明正式入口或可见资源消费等视觉行为时，仍受正式 V3/V4/V5 门约束。混入 SCENE/DISPLAY_LAYER/INTEGRATION 时仍受正式 V3/V4/V5 门约束。",
       "items": {
         "$ref": "#/$defs/executionUnit"
       }
@@ -114,7 +115,8 @@
         "V1",
         "V2",
         "V3",
-        "V4"
+        "V4",
+        "V5"
       ]
     },
     "currentStage": {
@@ -122,7 +124,8 @@
         "V1",
         "V2",
         "V3",
-        "V4"
+        "V4",
+        "V5"
       ]
     },
     "scene_reconstruction_contract": {
@@ -212,18 +215,23 @@
     }
   },
   "allOf": [
+    {"if": {"anyOf": [{"required": ["current_stage"], "properties": {"current_stage": {"const": "V1"}}}, {"required": ["currentStage"], "properties": {"currentStage": {"const": "V1"}}}]}, "then": {"not": {"anyOf": [{"required": ["visualContractVersion"]}, {"required": ["candidateVersion"]}, {"required": ["visualManifestFile"]}, {"required": ["visualProductionUnits"]}]}}},
+    {"if": {"not": {"anyOf": [{"required": ["current_stage"], "properties": {"current_stage": {"const": "V1"}}}, {"required": ["currentStage"], "properties": {"currentStage": {"const": "V1"}}}]}}, "then": {"properties": {"executionUnits": {"items": {"if": {"required": ["unitType"], "properties": {"unitType": {"enum": ["SCENE", "DISPLAY_LAYER"]}}}, "then": {"properties": {"highFidelityPrerequisite": {"$ref": "#/$defs/highFidelityPrerequisite"}}}}}}}},
+    {"if": {"anyOf": [{"required": ["current_stage"]}, {"required": ["currentStage"]}]}, "then": {"required": ["visualStageModel"]}},
     {
       "if": {
         "anyOf": [
           {
             "required": [
               "current_stage"
-            ]
+            ],
+            "properties": {"current_stage": {"enum": ["V2", "V3", "V4", "V5"]}}
           },
           {
             "required": [
               "currentStage"
-            ]
+            ],
+            "properties": {"currentStage": {"enum": ["V2", "V3", "V4", "V5"]}}
           },
           {
             "required": [
@@ -323,7 +331,7 @@
             ],
             "properties": {
               "current_stage": {
-                "const": "V4"
+                "const": "V5"
               }
             }
           },
@@ -333,7 +341,7 @@
             ],
             "properties": {
               "currentStage": {
-                "const": "V4"
+                "const": "V5"
               }
             }
           }
@@ -990,7 +998,7 @@
           "then": {
             "properties": {
               "highFidelityPrerequisite": {
-                "$ref": "#/$defs/highFidelityPrerequisite"
+                "anyOf": [{"$ref": "#/$defs/highFidelityPrerequisite"}, {"type": "null"}]
               }
             }
           },
@@ -1129,8 +1137,9 @@
     "highFidelityPrerequisite": {
       "type": "object",
       "additionalProperties": false,
-      "description": "当前 SCENE 或独立 DISPLAY_LAYER Work Item 的 V2 拆解还原方案引用；DISPLAY_LAYER 从自身证据的 displayLayerContexts 查找唯一宿主上下文。",
+      "description": "当前 SCENE 或独立 DISPLAY_LAYER Work Item 的 V3 拆解还原方案引用；DISPLAY_LAYER 从自身证据的 displayLayerContexts 查找唯一宿主上下文。",
       "required": [
+        "visualStageModel",
         "workItemId",
         "status",
         "stage",
@@ -1141,6 +1150,7 @@
         "evidenceFile"
       ],
       "properties": {
+        "visualStageModel": {"const": "function-first-v1"},
         "workItemId": {
           "type": "string",
           "minLength": 1
@@ -1149,7 +1159,7 @@
           "const": "COMPLETE"
         },
         "stage": {
-          "const": "V2"
+          "const": "V3"
         },
         "frozen": {
           "const": true
@@ -2038,7 +2048,7 @@
     },
     "sceneReconstructionContract": {
       "type": "object",
-      "description": "effect-image V1-V4 场景还原合同；V1 必须显式记录冲突，V2 通过拆解图、技术 JSON 与生产方案确认后才能进入 V3。",
+      "description": "effect-image V2-V5 场景还原合同；V2 必须显式记录冲突，V3 通过拆解图、技术 JSON 与生产方案确认后才能进入 V4。",
       "required": [
         "contract_version",
         "reference_technical_conflicts",
@@ -2182,7 +2192,7 @@
         },
         "layout_source": {
           "type": "object",
-          "description": "唯一确认的 V2 layout-nodes.json；下游只引用，不复制分组、父子、定位参照或布局策略。",
+          "description": "唯一确认的 V3 layout-nodes.json；下游只引用，不复制分组、父子、定位参照或布局策略。",
           "required": [
             "nodes_file"
           ],
@@ -2221,7 +2231,6 @@
         "layout_annotation_height",
         "layout_annotation_schema",
         "layout_annotation_layout",
-        "layout_review_file",
         "layout_nodes_file",
         "decomposition_confirmation_id",
         "scene_id",
@@ -2330,7 +2339,6 @@
         "layout_annotation_height",
         "layout_annotation_schema",
         "layout_annotation_layout",
-        "layout_review_file",
         "layout_nodes_file",
         "decomposition_confirmation_id",
         "scene_id",
@@ -6031,7 +6039,7 @@
     },
     "sceneAssetUsage": {
       "type": "object",
-      "description": "V4 资源放入正式 Scene 后的目标显示和组合条件；不能只用独立图片尺寸替代。",
+      "description": "V5 资源放入正式 Scene 后的目标显示和组合条件；不能只用独立图片尺寸替代。",
       "required": [
         "target_display_size",
         "intended_scale_range",

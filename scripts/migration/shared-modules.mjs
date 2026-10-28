@@ -1,6 +1,17 @@
 import { createHash } from 'node:crypto';
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+export { buildDirectSharedCapabilities } from './direct-shared-candidates.mjs';
+export { buildSharedFrameSourceCapability } from './shared-frame-source.mjs';
+export { buildSharedFrameAtlasCapability } from './shared-frame-atlas.mjs';
+export { buildSharedVideoAtlasCapability } from './shared-video-atlas.mjs';
+export { buildSharedUiAlignmentCapability } from './shared-ui-alignment.mjs';
+export { buildSharedVisualNormalizationCapability } from './shared-visual-normalization.mjs';
+export { buildSharedTransparencyContractCapability } from './shared-transparency-contract.mjs';
+export { buildSharedProjectInitCapability } from './shared-project-init.mjs';
+import { mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync } from './file-io.mjs';
 import { dirname, posix } from 'node:path';
+import { isReferenceRedirect } from './reference-redirects.mjs';
+export { prepareReferenceRedirects, referenceRedirectHash } from './reference-redirects.mjs';
 
 const BROWSER_GAME_STACKS = Object.freeze(['cocos', 'phaser', 'threejs']);
 const STACK_SOURCE_PREFIXES = Object.freeze({
@@ -245,7 +256,12 @@ export function applySharedCapabilities({ capabilities, files, previousHashes, r
     const implementationTarget = resolveDestination(capability.implementation);
     const implementationHash = destinationHash(capability.implementation);
     const previousImplementationHash = previousHashes.get(capability.implementation);
-    if (implementationHash && implementationHash !== expectedHash && implementationHash !== previousImplementationHash) {
+    // 首次迁移的基础输出已由各源计划核验，只有全部对应条目都指向当前字节才可替换。
+    const plannedStageOutput = capability.transforms?.includes('unified-visual-stages') && capability.sources.length >= 2 && capability.sources.every((source) => {
+      const matches = files.filter((row) => row.stack === source.stack && row.sourcePath === source.sourcePath);
+      return source.adapterDestination === capability.implementation && matches.length === 1 && matches[0].destination === capability.implementation && matches[0].sourceSha256 === source.sourceSha256 && matches[0].destinationSha256 === implementationHash;
+    });
+    if (implementationHash && implementationHash !== expectedHash && implementationHash !== previousImplementationHash && !plannedStageOutput) {
       throw new Error(`共享实现已存在且不属于未修改的迁移输出，拒绝覆盖：${capability.implementation}`);
     }
     if (implementationHash !== expectedHash) {
@@ -264,6 +280,30 @@ export function applySharedCapabilities({ capabilities, files, previousHashes, r
       }
       if (ledgerRow.sourceSha256 !== source.sourceSha256) {
         throw new Error(`共享能力 ${capability.id} 的源摘要与迁移账本不符：${source.stack}:${source.sourcePath}`);
+      }
+      if (capability.transforms?.includes('unified-visual-stages') && source.adapterDestination === capability.implementation && !ledgerRow.referenceRedirect) {
+        // 公共真源经过审计改写后，账本必须记为适配而不是伪称直接复制。
+        ledgerRow.destinationSha256 = expectedHash;
+        ledgerRow.disposition = 'adapted';
+        ledgerRow.transforms = [...new Set([...(ledgerRow.transforms ?? []), 'unified-visual-stages'])];
+        ledgerRow.sharedImplementationRef = capability.implementation;
+        delete ledgerRow.directShared;
+      }
+      if (ledgerRow.referenceRedirect) {
+        // 只接受已审阅的引用合并；目标由公共计划写入，源内容不能覆盖目标。
+        if (!isReferenceRedirect(ledgerRow, capability.implementation) || capability.kind !== 'workflow'
+          || source.adapterDestination !== capability.implementation || ledgerRow.destinationSha256 !== expectedHash
+          || destinationHash(capability.implementation) !== expectedHash || !source.sections?.length) {
+          throw new Error(`导航归并来源或公共目标不匹配：${source.stack}:${source.sourcePath}`);
+        }
+      }
+      if (capability.directShared) {
+        // 直接共享只接受源、目标与公共真源均为同一字节，不能以相似代码覆盖专业差异。
+        if (source.adapterDestination !== capability.implementation || source.sourceSha256 !== expectedHash || ledgerRow.destinationSha256 !== expectedHash) {
+          throw new Error(`直接共享来源或目标摘要不一致：${source.stack}:${source.sourcePath}`);
+        }
+        ledgerRow.directShared = true;
+        ledgerRow.sharedImplementationRef = capability.implementation;
       }
       if (source.adapterContent !== undefined || typeof source.adapterTransform === 'function') {
         const adapterTarget = resolveDestination(source.adapterDestination);
@@ -296,6 +336,8 @@ export function applySharedCapabilities({ capabilities, files, previousHashes, r
     sharedCapabilities.push({
       id: capability.id,
       kind: capability.kind,
+      ...(capability.directShared ? { directShared: true } : {}),
+      ...(capability.transforms?.length ? { transforms: capability.transforms } : {}),
       implementation: capability.implementation,
       stacks: capability.stacks ?? [...new Set(capability.sources.map((source) => source.stack))].sort(),
       sources: capability.sources.map((source) => ({

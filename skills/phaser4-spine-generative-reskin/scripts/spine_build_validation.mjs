@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import sharp from "../../app-skill-runtime/sharp.mjs";
-import { parseAtlas } from "./spine_atlas.mjs";
+import { parseAtlas } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { decodeRgba, outputPageName } from "./spine_images.mjs";
 import { auditSkeleton } from "./spine_skeleton.mjs";
 

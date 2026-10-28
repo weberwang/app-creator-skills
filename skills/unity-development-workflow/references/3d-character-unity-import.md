@@ -42,11 +42,11 @@
 - FBX 内的 Clips、Avatar、Mesh 等子资源不能只凭容器 GUID 或同名定位；实际回读并在导入报告记录容器 GUID、子资源 local file ID、类型和名称，消费方回读真实序列化引用。重新导入或切分 Clip 后复验子资源身份；不要手写 local file ID，也不要为记录它向封闭的登记对象添加未定义字段。
 - 压缩/降采样后对比基准曲线/姿势、Root 位移和事件时机，保留项目误差预算与结果；不只检查文件变小。必要挂点、BlendShape 和短促接触动作都纳入覆盖。
 
-## 资源级 Prefab 与 V4 接入
+## 资源级 Prefab 与 V5 接入
 
-- V3 由单写者组装角色资源级 Prefab：SkinnedMeshRenderer 的骨数组/RootBone、权重、材质槽、正式 Material、各 LOD、Avatar、Animator/Clips、挂点、必要形态通道与引用完整。禁止导入副本自带材质覆盖已完成的 PBR Material。
+- V4 由单写者组装角色资源级 Prefab：SkinnedMeshRenderer 的骨数组/RootBone、权重、材质槽、正式 Material、各 LOD、Avatar、Animator/Clips、挂点、必要形态通道与引用完整。禁止导入副本自带材质覆盖已完成的 PBR Material。
 - 按真实动作范围核对 SkinnedMeshRenderer Bounds 与剔除结果，覆盖伸展、Root Motion、BlendShape 和各 LOD；不能用无限 Bounds 或长期强制离屏更新掩盖问题。调整预算与 Bounds 需记录技术结果并复验相关动作。
-- 角色内部 Animator 的参数、状态、层/AvatarMask、过渡/退出时间/中断和重置由实施包指定给动画/集成负责人；玩法拥有触发与权威状态。V4 在实际场景验证连续触发、移动/动作过渡、转向、打断、暂停恢复、禁用/启用、对象池和多实例隔离等适用情境。
+- 角色内部 Animator 的参数、状态、层/AvatarMask、过渡/退出时间/中断和重置由实施包指定给动画/集成负责人；玩法拥有触发与权威状态。V5 在实际场景验证连续触发、移动/动作过渡、转向、打断、暂停恢复、禁用/启用、对象池和多实例隔离等适用情境。
 - 通过真实目标项目的 EditMode/PlayMode 检查引用、Avatar、Clip/事件、根运动、材质/LOD、Bounds 与生命周期，保留实际用例、数量、终态与原始日志；未发现检查能力时输出缺口，不能虚报执行。
 - 专业审查覆盖表演意图、姿态/节奏、变形材料和覆盖范围；实际截图/片段仅供用户人工检查，不自动分析截图或据此通过。技术结果、F2/F3 和用户显示确认分开，实际 Blender/Unity 未执行时不得表述已验收。未经用户明确要求，不启动 Standalone/Player 或真机。
 

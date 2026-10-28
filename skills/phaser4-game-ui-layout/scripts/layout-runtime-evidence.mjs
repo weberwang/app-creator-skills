@@ -82,7 +82,8 @@ export function validateLayoutRuntimeEvidence(nodes, geometry, context, errors =
     validateActualBounds(nodes, geometry, roots, runtimeErrors, label);
     // 中心验证器消费几何字段；必须先替换为实际测量，避免把目标居中误报为运行居中。
     const actualNodes = projectRuntimeSnapshotsForCenterAlignment(nodes, geometry)
-      .filter((node) => !isSyntheticLayoutRoot(node));
+      .filter((node) => !isSyntheticLayoutRoot(node))
+      .map((node) => (node?.ui_layout ?? node?.uiLayout)?.positioning === "absolute" && ["popup", "floating", "toast"].includes((node?.ui_layout ?? node?.uiLayout)?.floating_root_kind) ? { ...node, axis_alignment: { horizontal: "left", vertical: "top" }, center_alignment: undefined } : node);
     validateCenterAlignmentNodes(actualNodes, runtimeErrors, `${label}.runtime_center`, geometry.runtime_capture.viewport, { precision: "phaser-float32" });
   }
   errors.push(...runtimeErrors);

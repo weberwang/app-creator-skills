@@ -18,6 +18,6 @@
 
 先盘点原有共享资源与许可，登记正式来源、导入规格、稳定身份、唯一所有者和所有消费者。资源移动后同步运行引用、资源目录与验证记录。正式运行内容从项目登记的资源位置加载，不能从临时候选或审阅产物读取；仅在实际需要时启用 `Resources` 或 Addressables。
 
-V3 的资源导入证据与 V4 的 Scene/Prefab 运行证据分别保留：资源通过不能代替最终组合和播放检查。将视觉候选、导入/机器证据、F2 美术判断、F3 工程/运行证据分别记录。生成记录可追溯，但哈希仅作取证线索，不作为视觉合格、用户确认或授权凭证。
+公共 V4 的资源导入证据与 V5 的 Scene/Prefab 运行证据分别保留：资源通过不能代替最终组合和播放检查。将视觉候选、导入/机器证据、F2 美术判断、F3 工程/运行证据分别记录。生成记录可追溯，但哈希仅作取证线索，不作为视觉合格、用户确认或授权凭证。
 
 来源：`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-visual-assets`、`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-3d-modeling`、`unity-game-3d-texturing/references/pbr-texture-workflow.md`、`unity-development-workflow/references/artifact-storage.md`、`unity-development-workflow/references/resource-loading-and-frame-handoff.md`、`unity-development-workflow/references/3d-asset-workflow.md`。

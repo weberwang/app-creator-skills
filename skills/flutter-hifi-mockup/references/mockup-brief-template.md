@@ -21,7 +21,7 @@ Fill this transiently in conversation before generating page images or dispatchi
 - First-value contribution:
 - Safe-to-try condition:
 - UX/UI decision to confirm:
-- Source Code Sketch Level and reviewed semantic contract:
+- Verified function and semantic contract; Code Sketch Level and review only if used:
 - High-fidelity recomposition freedom: exact geometry, containers, whitespace, component silhouettes, image ratios/crops, text-image orientation, and decoration placement
 - Primary action:
 - Secondary actions:

@@ -12,13 +12,10 @@ export const DISPLAY_LAYER_TYPES = Object.freeze(['modal', 'popup', 'drawer', 't
 /** 当前 Unity 原生响应式合同格式的版本标识。 */
 export const UNITY_RESPONSIVE_CONTRACT_VERSION = 'unity-responsive/1.0';
 
-/** 程序化文本必须覆盖且只能覆盖的语言集合。 */
-export const PROGRAMMATIC_TEXT_LOCALES = Object.freeze(['en', 'zh-CN', 'ja', 'ru', 'es']);
-
 /** 可见工作项的运行证据阶段。 */
-export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
+export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
 
-/** V4 必须由真实 Unity 运行事实覆盖的证据槽位。 */
+/** V5 必须由真实 Unity 运行事实覆盖的证据槽位。 */
 export const UNITY_RESPONSIVE_EVIDENCE_FIELDS = Object.freeze([
   'gameView', 'screen', 'backbuffer', 'canvasScalerOrPanelSettings', 'camera',
   'screenSafeArea', 'inputHit', 'resizeOrientationTrajectory', 'screenshot', 'supportedOrientations',
@@ -180,11 +177,12 @@ export function validateUnityResponsiveContract(contract, options = {}) {
   if (knownObject(text, new Set(['programmatic', 'locales', 'localePolicies']), `${scope}.textLocalization`, errors)) {
     if (typeof text.programmatic !== 'boolean') errors.push(contractError(scope, 'textLocalization.programmatic 必须为布尔值'));
     if (text.programmatic === true) {
-      if (JSON.stringify(text.locales) !== JSON.stringify(PROGRAMMATIC_TEXT_LOCALES)) errors.push(contractError(scope, '程序化文本 locales 必须精确为 en、zh-CN、ja、ru、es'));
-      if (!knownObject(text.localePolicies, new Set(PROGRAMMATIC_TEXT_LOCALES), `${scope}.textLocalization.localePolicies`, errors)) {
+      const locales = Array.isArray(text.locales) ? text.locales : [];
+      if (!locales.length || locales.some((locale) => !nonEmptyString(locale) || !/^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/.test(locale)) || new Set(locales.map((locale) => String(locale).toLowerCase())).size !== locales.length) errors.push(contractError(scope, '程序化文本 locales 必须非空，且语言标识合法、不重复'));
+      if (!knownObject(text.localePolicies, new Set(locales), `${scope}.textLocalization.localePolicies`, errors)) {
         // 具体语言键的错误已由 knownObject 给出。
       } else {
-        for (const locale of PROGRAMMATIC_TEXT_LOCALES) {
+        for (const locale of locales) {
           const policy = text.localePolicies[locale];
           if (!knownObject(policy, new Set(['singleLine', 'wrap', 'truncation']), `${scope}.${locale}`, errors)) continue;
           if (typeof policy.singleLine !== 'boolean' || typeof policy.wrap !== 'boolean' || policy.truncation !== 'forbidden') errors.push(contractError(scope, `${locale} 必须声明 singleLine、wrap 且禁止截断`));
@@ -223,7 +221,7 @@ export function validateUnityResponsiveContract(contract, options = {}) {
     }
   }
   const requiredEvidence = contract.requiredRuntimeEvidence;
-  if (!Array.isArray(requiredEvidence) || !UNITY_RESPONSIVE_EVIDENCE_FIELDS.every((field) => requiredEvidence.includes(field))) errors.push(contractError(scope, 'requiredRuntimeEvidence 未覆盖完整 Unity V4 运行证据', 'requiredRuntimeEvidence'));
+  if (!Array.isArray(requiredEvidence) || !UNITY_RESPONSIVE_EVIDENCE_FIELDS.every((field) => requiredEvidence.includes(field))) errors.push(contractError(scope, 'requiredRuntimeEvidence 未覆盖完整 Unity V5 运行证据', 'requiredRuntimeEvidence'));
   return [...new Set(errors)];
 }
 
@@ -237,7 +235,7 @@ export function validateVisibleWorkItemContract(work) {
   if (type === 'SCENE') {
     if (work.stageId !== 'scene-production') errors.push('SCENE Work Item 必须位于 scene-production');
     if (!isObject(scene) || !nonEmptyString(scene.sceneId)) errors.push('SCENE Work Item 必须提供 scene.sceneId');
-    if (isObject(scene) && (!VISUAL_STAGES.includes(scene.stage) || !['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(scene.status))) errors.push('SCENE.scene 必须同时声明 V0-V4 stage 和 status');
+    if (isObject(scene) && (!VISUAL_STAGES.includes(scene.stage) || !['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(scene.status))) errors.push('SCENE.scene 必须同时声明 V0-V5 stage 和 status');
     if (layer !== undefined) errors.push('SCENE Work Item 不得携带 displayLayer 身份');
   } else if (type === 'DISPLAY_LAYER') {
     if (work.stageId !== 'scene-production') errors.push('DISPLAY_LAYER Work Item 必须位于 scene-production');
@@ -246,15 +244,21 @@ export function validateVisibleWorkItemContract(work) {
       knownObject(layer, new Set(['displayLayerId', 'hostSceneId', 'type', 'stage', 'status']), 'Work Item.displayLayer', errors);
       if (!DISPLAY_LAYER_TYPES.includes(layer.type)) errors.push('DISPLAY_LAYER.displayLayer.type 必须是 modal、popup、drawer 或 toast');
     }
-    if (layer?.stage === undefined || !VISUAL_STAGES.includes(layer.stage)) errors.push('DISPLAY_LAYER.displayLayer.stage 必须是 V0-V4');
+    if (layer?.stage === undefined || !VISUAL_STAGES.includes(layer.stage)) errors.push('DISPLAY_LAYER.displayLayer.stage 必须是 V0-V5');
     if (!['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(layer?.status)) errors.push('DISPLAY_LAYER.displayLayer.status 无效');
     if (scene !== undefined) errors.push('DISPLAY_LAYER Work Item 不得携带 scene 身份；hostSceneId 仅是上下文');
   } else if (scene !== undefined || layer !== undefined) {
     errors.push(`${type} Work Item 不得携带 SCENE/DISPLAY_LAYER 身份字段`);
   }
+  // 显式阶段身份防止旧编号按新语义被静默读取。
+  if ((['SCENE', 'DISPLAY_LAYER'].includes(type) || work.visualStageModel !== undefined) && work.visualStageModel !== 'function-first-v1') errors.push('Work Item.visualStageModel 必须为 function-first-v1');
   if (['SCENE', 'DISPLAY_LAYER'].includes(type)) {
-    const contractErrors = validateUnityResponsiveContract(work.responsiveContract, { scope: work.workItemId });
-    errors.push(...contractErrors);
+    const stage = type === 'SCENE' ? scene?.stage : layer?.stage;
+    // 功能阶段不强制视觉合同；主动提供时仍按完整合同校验。
+    if (!['V0', 'V1'].includes(stage) || work.responsiveContract !== undefined) {
+      const contractErrors = validateUnityResponsiveContract(work.responsiveContract, { scope: work.workItemId });
+      errors.push(...contractErrors);
+    }
   } else if (work.responsiveContract !== undefined) {
     errors.push(`${type} Work Item 不应声明可见响应式合同`);
   }
@@ -309,8 +313,9 @@ export function validateVisibleImplementationPackage(pkg, work, repo) {
     }
   }
   if (['SCENE', 'DISPLAY_LAYER'].includes(type)) {
-    if (!pkg.responsiveContractRef) errors.push('可见 Implementation Package 必须绑定 responsiveContractRef');
-    else errors.push(...validateResponsiveContractReference(pkg.responsiveContractRef, work, repo));
+    const stage = type === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
+    if (!pkg.responsiveContractRef && !['V0', 'V1'].includes(stage)) errors.push('V2 起可见 Implementation Package 必须绑定 responsiveContractRef');
+    else if (pkg.responsiveContractRef) errors.push(...validateResponsiveContractReference(pkg.responsiveContractRef, work, repo));
   } else if (pkg.responsiveContractRef !== undefined) errors.push(`${type} Implementation Package 不得携带 responsiveContractRef`);
   errors.push(...validateUiLayoutPackage(pkg, work, repo));
   return [...new Set(errors)];
@@ -347,7 +352,7 @@ function measuredArtifact(value, source, scope, field, errors, repo) {
   else validateMeasuredFile(value, repo, scope, field, errors);
 }
 
-/** 校验 V4 真实 Game View、Screen、backbuffer、输入和同进程轨迹。 */
+/** 校验 V5 真实 Game View、Screen、backbuffer、输入和同进程轨迹。 */
 export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   const scope = work?.workItemId ?? '*';
   const errors = [];
@@ -357,7 +362,7 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   measuredArtifact(evidence.backbuffer, 'backbuffer', scope, 'backbuffer', errors, options.repo);
   const scaler = evidence.canvasScaler;
   const panel = evidence.panelSettings;
-  if (!scaler && !panel) errors.push(contractError(scope, 'V4 必须实测 CanvasScaler 或 PanelSettings'));
+  if (!scaler && !panel) errors.push(contractError(scope, 'V5 必须实测 CanvasScaler 或 PanelSettings'));
   for (const [field, expected] of [['canvasScaler', 'CanvasScaler'], ['panelSettings', 'PanelSettings']]) {
     const value = evidence[field];
     if (value !== undefined) measuredArtifact(value, expected, scope, field, errors, options.repo);
@@ -384,20 +389,22 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
   return [...new Set(errors)];
 }
 
-/** 校验 Evidence Manifest 的可见类型、阶段、来源记录和 V4 生产合同审计。 */
+/** 校验 Evidence Manifest 的可见类型、阶段、来源记录和 V5 生产合同审计。 */
 export function validateVisibleEvidenceContract(evidence, work, repo) {
   const errors = [];
   if (evidence.workItemType !== work.workItemType) errors.push('Evidence Manifest.workItemType 必须与 Work Item 一致');
-  if (!VISUAL_STAGES.includes(evidence.visualStage)) errors.push('Evidence Manifest.visualStage 必须是 V0-V4');
-  if (!isObject(evidence.contractVersions) || !nonEmptyString(evidence.contractVersions.responsiveContract)) errors.push('Evidence Manifest.contractVersions.responsiveContract 必须记录来源');
+  if (!VISUAL_STAGES.includes(evidence.visualStage)) errors.push('Evidence Manifest.visualStage 必须是 V0-V5');
   const visible = ['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType);
   const stage = work.workItemType === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
+  // 证据必须独立声明阶段身份，不能只依赖关联工作项。
+  if ((visible || evidence.visualStageModel !== undefined) && evidence.visualStageModel !== 'function-first-v1') errors.push('Evidence Manifest.visualStageModel 必须为 function-first-v1');
+  if (visible && !['V0', 'V1'].includes(stage) && (!isObject(evidence.contractVersions) || !nonEmptyString(evidence.contractVersions.responsiveContract))) errors.push('V2 起 Evidence Manifest.contractVersions.responsiveContract 必须记录来源');
   if (visible && evidence.visualStage !== stage) errors.push('Evidence Manifest.visualStage 未绑定当前可见 Work Item 阶段');
-  if (visible && evidence.visualStage === 'V4' && evidence.verdict === 'PASS') {
+  if (visible && evidence.visualStage === 'V5' && evidence.verdict === 'PASS') {
     errors.push(...validateArtExperienceAcceptance(evidence, work, repo));
     errors.push(...validateUnityResponsiveEvidence(evidence.responsiveEvidence, work, { repo }));
     const audit = evidence.productionContractAudit;
-    if (!isObject(audit) || audit.status !== 'PASS' || !nonEmptyString(audit.contractVersion) || audit.staticDeclarationOnly !== false || audit.buildOnly !== false || audit.singleScreenshotOnly !== false) errors.push('V4 PASS 必须有真实 productionContractAudit，静态声明/构建成功/单图不能替代运行证据');
+    if (!isObject(audit) || audit.status !== 'PASS' || !nonEmptyString(audit.contractVersion) || audit.staticDeclarationOnly !== false || audit.buildOnly !== false || audit.singleScreenshotOnly !== false) errors.push('V5 PASS 必须有真实 productionContractAudit，静态声明/构建成功/单图不能替代运行证据');
   }
   return [...new Set(errors)];
 }

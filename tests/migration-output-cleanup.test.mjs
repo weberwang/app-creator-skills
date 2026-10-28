@@ -62,6 +62,24 @@ test('清理只移除未手改且未被当前计划引用的上轮登记输出',
   assert.equal(readFileSync(stale, 'utf8'), 'edited by a person');
 });
 
+test('清理旧技能空目录时保留含用户文件的目录', (t) => {
+  const root = mkdtempSync(join(tmpdir(), 'migration-empty-skills-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const paths = ['skills/empty/agents/openai.yaml', 'skills/kept/agents/openai.yaml'];
+  for (const path of paths) {
+    const absolute = join(root, ...path.split('/'));
+    mkdirSync(join(absolute, '..'), { recursive: true });
+    writeFileSync(absolute, '旧元数据');
+  }
+  writeFileSync(join(root, 'skills/kept/用户文件.txt'), '保留');
+  const resolveTarget = (path) => assertNoDestinationLinks(root, path);
+  removeStaleGeneratedFiles(new Map(paths.map((path) => [path, hashFile(resolveTarget(path))])), new Set(), resolveTarget, (path) => hashFile(resolveTarget(path)));
+  assert.equal(existsSync(join(root, 'skills/empty')), false);
+  assert.equal(readFileSync(join(root, 'skills/kept/用户文件.txt'), 'utf8'), '保留');
+  assert.equal(existsSync(join(root, 'skills/kept/agents')), false);
+  assert.equal(existsSync(join(root, 'skills')), true);
+});
+
 test('悬空 Junction 即使 existsSync 为 false 也会阻止写入和清理', (t) => {
   const sandbox = mkdtempSync(join(tmpdir(), 'migration-output-dangling-junction-'));
   t.after(() => rmSync(sandbox, { recursive: true, force: true }));

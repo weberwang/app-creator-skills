@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, join, relative, resolve } from "node:path";
 import sharp from "../../cocos-domain-contracts/scripts/runtime/image-runtime.mjs";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { decodeRgba, pasteRgba, blankRgba } from "./spine_images.mjs";
 
 const MODES = new Set(["palette-refresh", "mesh-safe", "constrained-redraw"]);

@@ -73,7 +73,7 @@ test('公共项目模板直接可用且链接指向真实控制合同', () => {
     assert.equal(profile.stack, stack);
     assert.equal(profile['技术栈配置'], `../.agents/skills/app-stack-${stack}/profile.json`);
     assert.equal(profile.workflow['素材工作流'], '../.agents/skills/app-asset-workflow/SKILL.md');
-    assert.match(profile.workflow['原子资源条件'], /V2.*V3.*V4/);
+    assert.match(profile.workflow['原子资源条件'], /V3.*V4.*V5/);
     assert.match(templates['project-profile.yaml'], new RegExp(`^stack: ${stack}$`, 'm'));
     assert.match(templates['project-profile.yaml'], new RegExp(`app-stack-${stack}/profile\\.json`));
     assert.doesNotMatch(templates['project-profile.yaml'], /Approval Ledger|Delegation Package/);
@@ -85,6 +85,7 @@ test('公共项目模板直接可用且链接指向真实控制合同', () => {
     assert.match(templates['control-plane.md'], /Grilling Record/);
     assert.match(templates['control-plane.md'], /Work Item 的 action/);
     assert.match(templates['control-plane.md'], /普通单素材任务.*完整项目记录链/);
+    assert.match(templates['control-plane.md'], /<V1\|V2\|V3\|V4\|V5>/);
 
     for (const match of templates['control-plane.md'].matchAll(/\]\((\.\.\/\.agents\/skills\/app-workflow-control\/[^)]+)\)/g)) {
       const installedPath = match[1].replace('../.agents/skills/app-workflow-control/', '');
@@ -203,4 +204,15 @@ test('模板 key 或值形态漂移会停止适配', async () => {
     assert.throws(() => transform(duplicateControlKey), /必须恰好出现一次/);
     assert.throws(() => transform(sourceText.replace('"project-profile.yaml": "', '"project-profile.yaml": buildProfile("')), /必须是静态双引号字符串/);
   });
+});
+
+test('三栈新建视觉清单直接声明统一阶段语义', async () => {
+  for (const { orchestrator } of Object.values(STACK_LAYOUT)) {
+    const entry = path.join(REPOSITORY_ROOT, 'skills', orchestrator, 'scripts', 'project_doc_templates.mjs');
+    const { OPTIONAL_TEMPLATES } = await import(pathToFileURL(entry).href);
+    const manifest = JSON.parse(OPTIONAL_TEMPLATES.assets['visual-assets.json']);
+    assert.equal(manifest.visualStageModel, 'function-first-v1', orchestrator);
+    assert.equal(manifest.visualStage, 'V0', orchestrator);
+    assert.deepEqual(Object.keys(manifest.visualStageEvidenceRefs).sort(), ['V3', 'V4', 'V5']);
+  }
 });

@@ -58,27 +58,18 @@
     "app-domain-toolkit",
     "unity-development-workflow",
     "unity-domain-contracts",
-    "unity-game-2d-animation-ta",
     "unity-game-2d-rigging",
     "unity-game-3d-animation",
     "unity-game-3d-modeling",
     "unity-game-3d-rigging",
-    "unity-game-3d-texturing",
-    "unity-game-architecture",
-    "unity-game-audio",
-    "unity-game-balance",
-    "unity-game-juice",
-    "unity-game-production",
-    "unity-game-qa-performance",
-    "unity-game-release",
-    "unity-game-spine-reskin",
-    "unity-game-visual-assets",
-    "unity-gameplay-development"
+    "unity-game-3d-texturing"
   ],
   "sharedCapabilities": [
     "audio",
     "balance",
-    "modeling-production"
+    "modeling-production",
+    "ui-game-copy",
+    "art-quality-principles"
   ],
   "capabilitySkills": [
     "app-product-planning",

@@ -57,6 +57,19 @@ test('只返回所选模式与直接公共片段，资源和其他模式按需�
   assert.equal(result.stats.omittedNativeCharacters, result.stats.manualCharacters - result.stats.nativeCharacters);
 });
 
+test('按需公共参考保留可达路径，不自动展开整类资料', (t) => {
+  const context = fixture(t);
+  context.manifest.sharedWorkflows.push({ id: 'large-reference', path: '../app-domain-toolkit/references/large.md', stacks: ['flutter'], onDemand: true });
+  write(context.skillsRoot, 'app-domain-toolkit/references/large.md', '# 分类参考\nON_DEMAND_MUST_NOT_LOAD\n');
+  write(context.skillsRoot, 'app-feedback/native-adapters.json', context.manifest);
+  const result = loadNativeMode(context.options);
+  assert.doesNotMatch(formatNativeMode(result), /ON_DEMAND_MUST_NOT_LOAD/);
+  assert.ok(result.resources.some((entry) => entry.path === 'app-domain-toolkit/references/large.md' && entry.available));
+  context.manifest.sharedWorkflows[1].path = '../app-domain-toolkit/references/absent.md';
+  write(context.skillsRoot, 'app-feedback/native-adapters.json', context.manifest);
+  assert.throws(() => loadNativeMode(context.options), /按需公共参考不存在/);
+});
+
 test('多模式必须明确选择，未知栈、能力和模式不自动回退', (t) => {
   const context = fixture(t);
   context.manifest.adapters.flutter.push({ ...context.manifest.adapters.flutter[0], sourceSkill: 'flutter-second', section: 'mode-flutter-second' });

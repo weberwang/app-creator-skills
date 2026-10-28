@@ -66,6 +66,37 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "art-quality-principles",
+      "path": "../app-domain-toolkit/references/art-quality-principles.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-feedback-design-guide",
+      "path": "../app-domain-toolkit/references/reference-feedback-design-guide.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-feedback-workflow-integration",
+      "path": "../app-domain-toolkit/references/reference-feedback-workflow-integration.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

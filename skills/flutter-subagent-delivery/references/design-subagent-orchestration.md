@@ -4,18 +4,18 @@
 
 ## 顺序
 
-语义合同 → `phase: sketch` layout-spec → Code Sketch → 关系测试/必要截图 → 独立 Code Sketch Review → 必要时生成/评审候选 → 用户冻结 → 合同回对 → 必要资产编号确认与生产 → 同一 spec 升级 `phase: fidelity` → 生产骨架还原 → fidelity validator、实际测量、同视口 parity → Visual QA。
+V1 验证真实功能与语义合同 → 必要时生成候选并由用户确认 → 合同回对 → 必要资产确认与生产 → 在生产结构中完成实现和可用性验证。白盒、Code Sketch 按风险选择；仅选用草图路线时执行草图及独立审阅。仅明确选择 `exact` 时升级同一 spec 为 `phase: fidelity` 并执行完整同视口 parity；截图由用户人工检查，除非明确要求自动验证。
 
-合同回对若改变范围、状态、导航、滚动 owner、断点、无障碍或 ownership，回到语义/草图阶段并只重做受影响审阅。
+合同回对若改变范围、状态、导航、滚动 owner、断点、无障碍或 ownership，更新并重验受影响功能；仅草图路线更新相关草图审阅。
 
 ## 角色边界
 
 | 角色 | 核心职责 | 禁止事项 |
 |---|---|---|
 | UX/UI / Page Contract | 语义、状态、交互、响应式和无障碍 | 写页面代码、替用户冻结 |
-| Code Sketch | 生产骨架、稳定 key、关系测试 | 建重复页、自审放行 |
+| Code Sketch（可选） | 选用时提供生产骨架、稳定 key、关系测试 | 建重复页、自审放行 |
 | High-Fidelity / Effect Review | 候选生成或独立评审 | 未冻结即持久化或生产资产 |
 | Asset / Fidelity | 已确认资产与同一 spec 的高保真实现 | 未确认生产、绝对叠层凑像素 |
-| Visual QA | 指定视口的测量和 parity | 用单张截图替代完整证据 |
+| Visual QA | 适用视口的功能布局验证；`exact` 时测量和 parity | 替用户检查截图、用单张截图替代完整证据 |
 
 所有交接使用八字段任务契约；审核绑定 `snapshot-id`，不强制提交。冻结、确认和持久决策由 Controller 记录。

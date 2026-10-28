@@ -5,12 +5,12 @@ import { join } from 'node:path';
 import test from 'node:test';
 import { inspectUiLayoutEvidence, validateUiLayoutPackage } from './ui-layout-evidence.mjs';
 
-test('屏幕 UI 从 V2 起绑定领域布局计划，其他工程工作不被扩围', () => {
+test('屏幕 UI 从 V3 起绑定领域布局计划，其他工程工作不被扩围', () => {
   const repo = mkdtempSync(join(tmpdir(), 'unity-domain-ui-layout-'));
   try {
     const screenWork = {
       workItemType: 'SCENE',
-      scene: { sceneId: 'MainScene', stage: 'V2' },
+      scene: { sceneId: 'MainScene', stage: 'V3' },
       responsiveContract: { uiSystem: 'UGUI' },
     };
     const missingPlan = validateUiLayoutPackage({}, screenWork, repo);

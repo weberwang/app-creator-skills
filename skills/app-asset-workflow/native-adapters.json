@@ -63,6 +63,198 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "ui-game-copy",
+      "path": "../app-domain-toolkit/references/ui-game-copy.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "art-quality-principles",
+      "path": "../app-domain-toolkit/references/art-quality-principles.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-visual-production-pipeline",
+      "path": "../app-domain-toolkit/references/reference-asset-visual-production-pipeline.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-asset-production-routes",
+      "path": "../app-domain-toolkit/references/reference-asset-asset-production-routes.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-global-visual-control",
+      "path": "../app-domain-toolkit/references/reference-asset-global-visual-control.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-visual-reconstruction",
+      "path": "../app-domain-toolkit/references/reference-asset-visual-reconstruction.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-effect-image-prompt-contract",
+      "path": "../app-domain-toolkit/references/reference-asset-effect-image-prompt-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-effect-image-splitting",
+      "path": "../app-domain-toolkit/references/reference-asset-effect-image-splitting.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-art-quality-contract",
+      "path": "../app-domain-toolkit/references/reference-asset-art-quality-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-game-feel-quality-gate",
+      "path": "../app-domain-toolkit/references/reference-asset-game-feel-quality-gate.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-gameplay-visual-contract",
+      "path": "../app-domain-toolkit/references/reference-asset-gameplay-visual-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-full-bleed-background",
+      "path": "../app-domain-toolkit/references/reference-asset-full-bleed-background.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-nine-slice-ui",
+      "path": "../app-domain-toolkit/references/reference-asset-nine-slice-ui.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-transparency-capability-audit",
+      "path": "../app-domain-toolkit/references/reference-asset-transparency-capability-audit.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-asset-visual-alignment-authoring",
+      "path": "../app-domain-toolkit/references/reference-asset-visual-alignment-authoring.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-visual-sequence",
+      "path": "../app-domain-toolkit/references/reference-domain-visual-sequence.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-visual-schema",
+      "path": "../app-domain-toolkit/references/reference-domain-visual-schema.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-scene-contract",
+      "path": "../app-domain-toolkit/references/reference-domain-scene-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-visual-review",
+      "path": "../app-domain-toolkit/references/reference-domain-visual-review.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

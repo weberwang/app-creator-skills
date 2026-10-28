@@ -5,7 +5,7 @@
  *
  * 该模块只约束“参考图中的视觉事实应该由什么来源实现”，不替代现有
  * visual-production-contract 的文件、生成记录和运行时消费审计。这样可以
- * 在 V1 就阻断把特色美术误降级为 Graphics，也能让布局/行为代码保持独立。
+ * 在 V2 就阻断把特色美术误降级为 Graphics，也能让布局/行为代码保持独立。
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -21,7 +21,7 @@ export const SCENE_VISUAL_ROUTES = Object.freeze({
   COCOS_NATIVE: "cocos-native",
 });
 
-// composite 仅保留为诊断输入；混合区域必须退回 V1 重新拆分，不能进入生产或验收。
+// composite 仅保留为诊断输入；混合区域必须退回 V2 重新拆分，不能进入生产或验收。
 const COMPOSITE_ROUTE = "composite";
 
 /** scene coverage 的实现 owner；与既有生产合同的 owner_type 保持同一词汇。 */
@@ -119,7 +119,7 @@ function compositeRouteError(stage, contract, region, actual) {
   return routeError(stage, contract, region, "程序逻辑与独立视觉资产必须重新拆解；禁止单一区域闭环（禁止单一 composite region 继续生产或验收）", {
     expected: "selected_route=image-asset|cocos-native 且不得携带 composite_parts",
     actual,
-    returnStage: "V1/PROPOSAL",
+    returnStage: "V2/PROPOSAL",
     rootCause: "方案缺失",
   });
 }
@@ -141,7 +141,7 @@ function hasEvidence(value) {
     || (isObject(value) && Object.keys(value).length > 0);
 }
 
-/** 把 region/target 的身份拼入错误，便于 V1 直接定位方案缺口。 */
+/** 把 region/target 的身份拼入错误，便于 V2 直接定位方案缺口。 */
 function routeError(stage, contract, region, message, details = {}) {
   const target = contract?.target_conditions ?? contract?.target ?? {};
   const scene = region?.scene_id ?? region?.sceneId ?? target.scene_id ?? target.sceneId ?? "?";
@@ -152,7 +152,7 @@ function routeError(stage, contract, region, message, details = {}) {
   const expected = details.expected ?? details.expectedRoute ?? "visual-route-analysis";
   const actual = details.actual ?? details.actualRoute ?? route;
   const missing = details.missing ? ` 缺失视觉事实=${details.missing}` : "";
-  const returnStage = details.returnStage ?? "V1/PROPOSAL";
+  const returnStage = details.returnStage ?? "V2/PROPOSAL";
   const rootCause = details.rootCause ?? "方案缺失";
   return `[${stage}] scene/state=${scene}/${state} annotation_number=${annotation} region_id=${regionId} route=${route} expected=${expected} actual=${actual} 根因=${rootCause} ${message}${missing} 应退回阶段=${returnStage}`;
 }
@@ -331,7 +331,7 @@ function validateAllNativeJustification(contract, regions, options, stage, error
 
 /** 验证单个 coverage 的 canonical visual_route_analysis。 */
 export function validateSceneVisualRouteAnalysis(region, contract = {}, options = {}) {
-  const stage = options.stage ?? "V1";
+  const stage = options.stage ?? "V2";
   const errors = [];
   if (!isObject(region)) return [routeError(stage, contract, region, "coverage region 必须是对象", { missing: "coverage region" })];
   const analysis = region.visual_route_analysis;
@@ -455,7 +455,7 @@ export function validateSceneVisualRouteAnalysis(region, contract = {}, options 
 /** 把场景 route 与 coverage_audit/Implementation Package 的既有字段做单向一致性校验。 */
 function validateBoundProductionFields(region, analysis, bound, sourceLabel, contract, stage, errors) {
   if (!isObject(bound)) return;
-  const returnStage = sourceLabel.includes("visualProductionUnit") ? "V3/V4" : "V1/PROPOSAL";
+  const returnStage = sourceLabel.includes("visualProductionUnit") ? "V4/V5" : "V2/PROPOSAL";
   const rootCause = sourceLabel.includes("visualProductionUnit") ? "执行问题" : "方案缺失";
   if (analysis.selected_route === SCENE_VISUAL_ROUTES.COCOS_NATIVE && (bound.production_method ?? bound.production_contract?.production_method) !== undefined) {
     // 参数进入既有 runtime_implementation 确认哈希，不能在行为装配阶段悄悄改变外观。
@@ -474,7 +474,7 @@ function validateBoundProductionFields(region, analysis, bound, sourceLabel, con
 
 /** 验证 effect-image 所有 coverage region 的视觉路线；普通工作流不进入此入口。 */
 export function validateSceneVisualRouteContract(contract, manifest = null, options = {}) {
-  const stage = options.stage ?? "V1";
+  const stage = options.stage ?? "V2";
   const regions = contract?.coverage_regions;
   if (!Array.isArray(regions)) return [routeError(stage, contract, null, "effect-image 缺少 coverage_regions，无法分析视觉路线", { missing: "coverage_regions" })];
   const errors = [];
@@ -485,7 +485,7 @@ export function validateSceneVisualRouteContract(contract, manifest = null, opti
     const analysis = region?.visual_route_analysis;
     if (!isObject(analysis)) continue;
     if (analysis.selected_route === SCENE_VISUAL_ROUTES.COCOS_NATIVE) {
-      for (const message of validateNativeRuntimeEvidence(region, contract, manifest, { ...options, stage })) errors.push(routeError(stage, contract, region, message, { returnStage: "V3/V4", rootCause: "执行问题" }));
+      for (const message of validateNativeRuntimeEvidence(region, contract, manifest, { ...options, stage })) errors.push(routeError(stage, contract, region, message, { returnStage: "V4/V5", rootCause: "执行问题" }));
     }
     const regionId = region.region_id;
     validateBoundProductionFields(region, analysis, manifestRegions.get(regionId), "coverage_audit region", contract, stage, errors);

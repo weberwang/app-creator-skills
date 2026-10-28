@@ -14,4 +14,6 @@ description: 在 Cocos Creator 项目中实现或审查场景、节点、Compone
 
 公共工作项和控制记录由统一工作流维护。Creator 编辑器、AssetDB、组件、布局和平台打包行为只由本技术规范界定。
 
+各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。
+
 来源：`README.md`、`skills/cocos-game-architecture/references/project-structure.md`、`skills/app-stack-cocos/references/native-contracts.md#mode-cocos-game-ui-layout`、`skills/app-stack-cocos/references/native-contracts.md#mode-cocos-game-asset-integration`、`skills/cocos-game-workflow-control/references/cocos-mcp-protocol.md`。

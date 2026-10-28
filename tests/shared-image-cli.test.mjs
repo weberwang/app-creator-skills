@@ -10,9 +10,9 @@ import { buildSharedCliPlan } from '../scripts/migration/shared-cli-modules.mjs'
 
 const REPOSITORY_ROOT = path.resolve(import.meta.dirname, '..');
 const STACKS = Object.freeze({
-  cocos: Object.freeze({ assetSkill: 'cocos-game-asset-integration', frameSkill: 'cocos-frame-animation', technologyName: 'Cocos', schema: 'cocos-image-inbetween-plan/1' }),
-  phaser: Object.freeze({ assetSkill: 'phaser4-game-asset-integration', frameSkill: 'phaser4-frame-animation', technologyName: 'Phaser', schema: 'phaser4-image-inbetween-plan/1' }),
-  threejs: Object.freeze({ assetSkill: 'threejs-game-asset-integration', frameSkill: 'threejs-frame-animation', technologyName: 'ThreeJS', schema: 'threejs-image-inbetween-plan/1' }),
+  cocos: Object.freeze({ assetSkill: 'cocos-game-asset-integration', frameSkill: 'cocos-frame-animation', frameRoot: 'cocos-domain-contracts', technologyName: 'Cocos', schema: 'cocos-image-inbetween-plan/1' }),
+  phaser: Object.freeze({ assetSkill: 'phaser4-game-asset-integration', frameSkill: 'phaser4-frame-animation', frameRoot: 'phaser-domain-contracts', technologyName: 'Phaser', schema: 'phaser4-image-inbetween-plan/1' }),
+  threejs: Object.freeze({ assetSkill: 'threejs-game-asset-integration', frameSkill: 'threejs-frame-animation', frameRoot: 'threejs-domain-contracts', technologyName: 'ThreeJS', schema: 'threejs-image-inbetween-plan/1' }),
 });
 const CAPABILITY_PATHS = Object.freeze([
   'skills/app-domain-toolkit/scripts/image/transparent-raster.mjs',
@@ -27,7 +27,7 @@ function missingPublicRuntimeFiles() {
     ...Object.values(STACKS).flatMap((stack) => [
       `skills/${stack.assetSkill}/scripts/transparent-raster.mjs`,
       `skills/${stack.assetSkill}/scripts/remove-background-local.mjs`,
-      `skills/${stack.frameSkill}/scripts/image-inbetween-plan.mjs`,
+      `skills/${stack.frameRoot}/resources/frame-animation/scripts/image-inbetween-plan.mjs`,
     ]),
     'skills/app-asset-workflow/scripts/png-raster.mjs',
   ];
@@ -201,7 +201,7 @@ test('三栈图片工具共用真实算法并保留专业入口差异', async (t
       const directory = mkdtempSync(path.join(tmpdir(), 'image-inbetween-plan-'));
       try {
         for (const [stackName, stack] of Object.entries(STACKS)) {
-          const module = await import(pathToFileURL(runtimePath(root, `skills/${stack.frameSkill}/scripts/image-inbetween-plan.mjs`)).href);
+          const module = await import(pathToFileURL(runtimePath(root, `skills/${stack.frameRoot}/resources/frame-animation/scripts/image-inbetween-plan.mjs`)).href);
           assert.deepEqual(Object.keys(module).sort(), [
             'createImageInbetweenPlan',
             'imageInbetweenPlanHelp',
@@ -219,7 +219,7 @@ test('三栈图片工具共用真实算法并保留专业入口差异', async (t
           assert.throws(() => module.createImageInbetweenPlan({ ...options, keyframes: [1, 1] }), /关键帧索引重复/);
           assert.match(module.imageInbetweenPlanHelp(), new RegExp(stack.schema));
 
-          const scriptPath = runtimePath(root, `skills/${stack.frameSkill}/scripts/image-inbetween-plan.mjs`);
+          const scriptPath = runtimePath(root, `skills/${stack.frameRoot}/resources/frame-animation/scripts/image-inbetween-plan.mjs`);
           const help = runCli(scriptPath, ['--help'], root);
           assert.equal(help.status, 0, help.stderr);
           assert.match(help.stdout, new RegExp(stack.schema));

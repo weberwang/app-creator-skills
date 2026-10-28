@@ -38,6 +38,6 @@
 
 对应消费代码为 `import atlasUrl from "./decor.png?url";`，再将变量传给资源加载器。相对导入必须从声明的 importer 唯一解析到同一个文件；文件门检查运行产物和 importer 实际存在。默认共享解析器支持安全的文件路径，帧动画另要求 PNG。
 
-普通资源在需要显式加载地址绑定时声明 `runtime_bindings`；声明后逐项校验 URL、部署前缀、模块表达式和 `runtime_outputs` 归属，拒绝重复文件。未声明时沿用项目资源系统的实际消费证据，不能把“存在文件”当成“已加载”。帧动画的正式 accepted 合同强制提供 `spritesheet.runtime_binding`，其生成器与验收门共用同一解析器；未绑定图集仅用于制作与人工预览，不生成正式加载示例。详见[帧动画接入](../../threejs-frame-animation/references/workflow-integration.md)。
+普通资源在需要显式加载地址绑定时声明 `runtime_bindings`；声明后逐项校验 URL、部署前缀、模块表达式和 `runtime_outputs` 归属，拒绝重复文件。未声明时沿用项目资源系统的实际消费证据，不能把“存在文件”当成“已加载”。帧动画的正式 accepted 合同强制提供 `spritesheet.runtime_binding`，其生成器与验收门共用同一解析器；未绑定图集仅用于制作与人工预览，不生成正式加载示例。详见[帧动画接入](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md)。
 
 这些检查证明静态路径映射及本地文件绑定，不证明部署服务器可访问、构建产物已发布或游戏实际完成加载；运行消费仍通过既有 ThreeJS 证据验收。

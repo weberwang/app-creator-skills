@@ -1,4 +1,6 @@
 import { capabilityForSourceSkill, nativeAdapterPath } from '../capability-map.mjs';
+import { directSharedTarget } from './direct-shared-candidates.mjs';
+import { mapAuthoredAssetReuse } from './authored-asset-reuse.mjs';
 
 /**
  * 源仓库映射规则集中放置于此，迁移流程只按本策略判定文件去向。
@@ -170,6 +172,21 @@ function archiveReplacedTest(stack, sourcePath) {
   return `migration/source-tests/${stack}/replaced/${sourcePath}.source`;
 }
 
+/** 帧动画旧目录收敛到所选栈领域资源中，公共入口和完整原生正文仍单独处理。 */
+export function frameResourceTarget(stack, sourcePath) {
+  const skills = { cocos: 'cocos-frame-animation', phaser: 'phaser4-frame-animation', threejs: 'threejs-frame-animation' };
+  const skill = skills[stack];
+  if (!skill || typeof sourcePath !== 'string') return null;
+  const prefix = `skills/${skill}/`;
+  if (!sourcePath.startsWith(prefix)) return null;
+  const remainder = sourcePath.slice(prefix.length);
+  if (remainder === 'SKILL.md') return null;
+  if (!remainder || /[\\:]/.test(remainder) || remainder.split('/').some((part) => !part || part === '.' || part === '..')) {
+    throw new Error(`帧动画源资源路径无效：${sourcePath}`);
+  }
+  return `skills/${stack}-domain-contracts/resources/frame-animation/${remainder}`;
+}
+
 /**
  * 将 Git 返回的源相对路径转换成目标相对路径。
  * @param {string} stack 技术栈名
@@ -179,6 +196,10 @@ function archiveReplacedTest(stack, sourcePath) {
  */
 export function mapSourceFile(stack, sourcePath, rootSkills) {
   const policy = STACK_POLICIES[stack];
+  const authoredReuse = mapAuthoredAssetReuse(stack, sourcePath);
+  if (authoredReuse) return authoredReuse;
+  const sharedTarget = directSharedTarget(stack, sourcePath);
+  if (sharedTarget) return { destination: sharedTarget, disposition: 'copied', reason: '源文件与其他技术栈逐字节一致，迁入公共能力并逐项记录来源。', transforms: [] };
   const localPath = policy.skillPrefix && sourcePath.startsWith(policy.skillPrefix)
     ? sourcePath.slice(policy.skillPrefix.length)
     : sourcePath;
@@ -247,6 +268,8 @@ export function mapSourceFile(stack, sourcePath, rootSkills) {
     const capability = capabilityForSourceSkill(stack, first);
     if (!capability) throw new Error(`未分组的源专业技能：${stack}/${first}`);
     if (remainder === 'SKILL.md') return { destination: nativeAdapterPath(first), capabilityRef: `skills/${capability.name}/SKILL.md`, disposition: 'adapted', reason: '专业入口合并到公共能力；完整原生正文保留为非入口 ADAPTER.md。', transforms: ['merge-entry-into-capability', 'retain-native-adapter'] };
+    const frameTarget = frameResourceTarget(stack, sourcePath);
+    if (frameTarget) return { destination: frameTarget, disposition: 'copied', reason: '帧动画专业资源归入技术栈领域目录，保留完整脚本、资料和测试。', transforms: [] };
     return { destination: `skills/${first}/${remainder}`, disposition: 'copied', reason: '按原技能目录名完整保留专业技能及其脚本、模板、校验器和测试。', transforms: [] };
   }
 

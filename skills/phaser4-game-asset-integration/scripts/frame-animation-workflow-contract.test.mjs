@@ -540,3 +540,20 @@ test("默认源锚点必须绑定区域或整画布的底部中心", async () =>
     });
   }
 });
+
+test("动画合同可省略网页，但声明预览后必须读取并绑定同批报告", async () => {
+  await withFixture(async (root, fixture) => {
+    const preview = fixture.asset.frame_animation.preview;
+    delete fixture.asset.frame_animation.preview;
+    delete fixture.report.artifacts.preview;
+    await writeReport(root, fixture);
+    assert.deepEqual(await runGate(root, fixture.asset), []);
+    fixture.asset.frame_animation.preview = preview;
+    assert((await runGate(root, fixture.asset)).some((error) => error.includes("同时声明")));
+    fixture.report.artifacts.preview = { file: preview.file };
+    await writeReport(root, fixture);
+    assert.deepEqual(await runGate(root, fixture.asset), []);
+    await rm(join(root, preview.file));
+    assert((await runGate(root, fixture.asset)).some((error) => error.includes("preview")));
+  });
+});

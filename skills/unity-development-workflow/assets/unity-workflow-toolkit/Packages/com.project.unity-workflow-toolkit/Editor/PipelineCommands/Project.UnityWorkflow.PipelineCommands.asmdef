@@ -4,6 +4,8 @@
   "references": [
     "Unity.Pipeline",
     "Project.UnityWorkflow.Core",
+    "Project.UnityWorkflow.Runtime",
+    "Project.UnityWorkflow.FontPipeline",
     "Project.UnityWorkflow.ImagePipeline",
     "Project.UnityWorkflow.ProjectValidation",
     "Project.UnityWorkflow.RiggingValidation",

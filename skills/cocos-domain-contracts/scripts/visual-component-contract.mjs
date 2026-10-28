@@ -5,7 +5,7 @@
  *
  * annotation_number 只标识效果图上的审阅区域，不能直接当作资产数量。
  * 该模块把“区域 → 部件 → 状态 → 资产/图集切片”收敛成可验证的映射，
- * 供 V2、V3、Implementation Package、V4 和 F2 共用。
+ * 供 V3、V4、Implementation Package、V5 和 F2 共用。
  */
 import { getVisualRegionDefinitionAliasConflicts, normalizeVisualRegionDefinition } from "../../cocos-game-asset-integration/scripts/effect_image_annotation_core.mjs";
 import { atomicImageRequirementsEqual, deriveAtomicImageRequirements, normalizeAtomicComponents, normalizeAtomicImageRequirements } from "./visual-atomic-contract.mjs";
@@ -78,7 +78,7 @@ export function canonicalStateId(value) {
 
 /** 生成包含编号、区域、部件和状态的合同错误，避免只显示笼统的 region 错误。 */
 function componentError(context = {}, message, details = {}) {
-  const stage = context.stage ?? "V3";
+  const stage = context.stage ?? "V4";
   const annotation = context.annotation_number ?? context.annotationNumber ?? "?";
   const region = context.region_id ?? context.regionId ?? "?";
   const component = details.componentId ?? context.component_id ?? "?";
@@ -346,7 +346,7 @@ function validateInventory(region, context, errors, options = {}, canonicalRegio
     validateDisplayNodeRole({ ...component, owner_type: region.owner_type, region_layer: region.layer, visual_route_element_type: canonicalRegion.visual_route_analysis?.element_type }, displayErrors, `component ${component.component_id}`);
     for (const message of displayErrors) componentFail(message);
     if (component.nine_slice !== undefined && isNineSliceStretch(component.nine_slice)) {
-      // 使用规范化区域的权威视觉路线，保证 V2/V3/V4 判定一致，不按 background 名称子串推断职责。
+      // 使用规范化区域的权威视觉路线，保证 V3/V4/V5 判定一致，不按 background 名称子串推断职责。
       const routeAnalysis = canonicalRegion.visual_route_analysis;
       const routeElementType = routeAnalysis?.element_type ?? routeAnalysis?.elementType;
       if (!isNineSliceStretchTargetAllowed({ ...component, element_type: component.element_type ?? "component", role: component.role, region_layer: region.layer, visual_route_element_type: routeElementType })) componentFail("九宫格 stretch 只能用于非背景图片或显式 Sprite 底板容器，不能用于纯结构容器");
@@ -658,25 +658,25 @@ export function validateVisualComponentContract(region, context = {}, options = 
   return errors;
 }
 
-/** 读取 V3 正式 atlas 资产的登记尺寸，用于复核切片不能越界。 */
+/** 读取 V4 正式 atlas 资产的登记尺寸，用于复核切片不能越界。 */
 function resolveAtlasAssetSize(asset) {
   const output = isObject(asset?.output) ? asset.output : (isObject(asset?.output_metadata) ? asset.output_metadata : {});
   return { width: asset?.width ?? output.width, height: asset?.height ?? output.height };
 }
 
-/** 校验 V4 实际输出是否逐 component×state 覆盖 V3 合同。 */
+/** 校验 V5 实际输出是否逐 component×state 覆盖 V4 合同。 */
 export function validateComponentAuditEvidence(region, auditUnit, context = {}, options = {}) {
   const errors = [];
   const canonical = normalizeVisualRegionDefinition(region);
   if (!isObject(region) || canonical.owner_type !== "fixed-production-visual") return errors;
   const derivedRequirements = deriveAtomicImageRequirements(region);
-  if (!atomicImageRequirementsEqual(canonical.atomic_image_requirements, derivedRequirements)) errors.push(componentError(context, "V3 atomic_image_requirements 与状态分析派生结果不一致", { missing: "atomic_image_requirements" }));
+  if (!atomicImageRequirementsEqual(canonical.atomic_image_requirements, derivedRequirements)) errors.push(componentError(context, "V4 atomic_image_requirements 与状态分析派生结果不一致", { missing: "atomic_image_requirements" }));
   const inventory = normalizeComponentInventory(canonical.component_inventory ?? {});
   const stateInfo = normalizeStateAnalysis(canonical.state_analysis ?? {});
   const expected = Array.isArray(canonical.expected_assets) ? canonical.expected_assets.map(normalizeComponentExpectedAsset) : [];
   const placementIdsByComponent = new Map(inventory.components.map((component) => [component.component_id, (component.placements ?? []).map((placement) => placement.placement_id).sort()]));
   const actual = Array.isArray(auditUnit?.actual_assets) ? auditUnit.actual_assets : [];
-  // V3 不能只相信区域的 production_method；实际资源记录也必须逐项拒绝程序绘制图片身份。
+  // V4 不能只相信区域的 production_method；实际资源记录也必须逐项拒绝程序绘制图片身份。
   errors.push(...validateFixedVisualProductionMethod({ ...region, actual_assets: actual, runtime_consumption: auditUnit?.runtime_consumption }, context));
   const required = [];
   for (const component of inventory.components) {
@@ -691,7 +691,7 @@ export function validateComponentAuditEvidence(region, auditUnit, context = {}, 
     const asset = normalizeComponentExpectedAsset(item);
     const actualFile = item?.file ?? item?.path ?? item?.output_file ?? item?.runtime_file ?? item?.runtimeFile ?? "";
     const local = { ...context, component_id: asset.component_id || "?", state_id: asset.canonical_state_id || "?", asset_id: asset.asset_id || item?.id || "?" };
-    // V3 复核实际文件和组件状态；拆解确认已在 V2 唯一收敛，
+    // V4 复核实际文件和组件状态；拆解确认已在 V3 唯一收敛，
     // 不再要求每个 actual asset 复制 human_review。
     if (canonical.production_method === "image-generation" || canonical.image_generation_required === true) for (const violation of collectImageGenerationRasterViolations(item, { requiredMime: true, fileFields: ["file", "path", "runtime_file", "output_file"] })) errors.push(componentError(local, `actual_assets[${index}].${violation.field} ${violation.message}`));
     if (!nonEmptyString(asset.component_id) || !nonEmptyString(asset.state_id)) errors.push(componentError(local, `actual_assets[${index}] 必须绑定 component_id/state_id，不能只登记区域组图`, { missing: `actual_assets[${index}].component_id/state_id` }));
@@ -700,20 +700,20 @@ export function validateComponentAuditEvidence(region, auditUnit, context = {}, 
     actualByPair.set(key, item);
     if (asset.asset_kind && isHitAreaKind(asset.asset_kind)) errors.push(componentError(local, `actual_assets[${index}] 交互热区不能作为视觉资产`));
     const expectedAsset = expectedByPair.get(key);
-    if (expectedAsset && asset.asset_id !== expectedAsset.asset_id) errors.push(componentError(local, `actual_assets[${index}] asset_id 与 V3 expected_assets 不一致`, { missing: expectedAsset.asset_id }));
-    if (expectedAsset && asset.asset_scope !== expectedAsset.asset_scope) errors.push(componentError(local, `actual_assets[${index}] asset_scope 与 V3 expected_assets 不一致`, { missing: expectedAsset.asset_scope || "atomic-component" }));
-    if (expectedAsset && asset.atomic_visual_key !== expectedAsset.atomic_visual_key) errors.push(componentError(local, `actual_assets[${index}] atomic_visual_key 与 V3 expected_assets 不一致`, { missing: expectedAsset.atomic_visual_key }));
-    if (expectedAsset?.runtime_file && !sameProjectPath(actualFile, expectedAsset.runtime_file)) errors.push(componentError(local, `actual_assets[${index}] 必须使用 V3 expected runtime_file，不能使用 source_file`, { missing: expectedAsset.runtime_file }));
+    if (expectedAsset && asset.asset_id !== expectedAsset.asset_id) errors.push(componentError(local, `actual_assets[${index}] asset_id 与 V4 expected_assets 不一致`, { missing: expectedAsset.asset_id }));
+    if (expectedAsset && asset.asset_scope !== expectedAsset.asset_scope) errors.push(componentError(local, `actual_assets[${index}] asset_scope 与 V4 expected_assets 不一致`, { missing: expectedAsset.asset_scope || "atomic-component" }));
+    if (expectedAsset && asset.atomic_visual_key !== expectedAsset.atomic_visual_key) errors.push(componentError(local, `actual_assets[${index}] atomic_visual_key 与 V4 expected_assets 不一致`, { missing: expectedAsset.atomic_visual_key }));
+    if (expectedAsset?.runtime_file && !sameProjectPath(actualFile, expectedAsset.runtime_file)) errors.push(componentError(local, `actual_assets[${index}] 必须使用 V4 expected runtime_file，不能使用 source_file`, { missing: expectedAsset.runtime_file }));
     if (expectedAsset?.atlas_slice) {
-      if (!asset.atlas_slice) errors.push(componentError(local, `actual_assets[${index}] 缺少与 V3 对应的 atlas_slice`, { missing: "atlas_slice" }));
-      else if (JSON.stringify(asset.atlas_slice) !== JSON.stringify(expectedAsset.atlas_slice)) errors.push(componentError(local, `actual_assets[${index}] atlas_slice identity 与 V3 不一致`));
+      if (!asset.atlas_slice) errors.push(componentError(local, `actual_assets[${index}] 缺少与 V4 对应的 atlas_slice`, { missing: "atlas_slice" }));
+      else if (JSON.stringify(asset.atlas_slice) !== JSON.stringify(expectedAsset.atlas_slice)) errors.push(componentError(local, `actual_assets[${index}] atlas_slice identity 与 V4 不一致`));
       const atlasSize = expectedAsset.atlas_slice.atlas_size;
       const formalAsset = options.manifestAssets instanceof Map ? options.manifestAssets.get(expectedAsset.asset_id) : null;
       const formalSize = resolveAtlasAssetSize(formalAsset);
-      if (formalAsset && (!Number.isFinite(formalSize.width) || !Number.isFinite(formalSize.height) || formalSize.width <= 0 || formalSize.height <= 0)) errors.push(componentError(local, "V3 正式 atlas 资产缺少有效 width/height", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
-      else if (formalAsset && (formalSize.width !== atlasSize.width || formalSize.height !== atlasSize.height)) errors.push(componentError(local, "V3 atlas_size 与正式 atlas 资产尺寸不一致", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
+      if (formalAsset && (!Number.isFinite(formalSize.width) || !Number.isFinite(formalSize.height) || formalSize.width <= 0 || formalSize.height <= 0)) errors.push(componentError(local, "V4 正式 atlas 资产缺少有效 width/height", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
+      else if (formalAsset && (formalSize.width !== atlasSize.width || formalSize.height !== atlasSize.height)) errors.push(componentError(local, "V4 atlas_size 与正式 atlas 资产尺寸不一致", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
       const rect = expectedAsset.atlas_slice.rect;
-      if (formalAsset && (rect.x + rect.width > formalSize.width || rect.y + rect.height > formalSize.height)) errors.push(componentError(local, "V3 atlas_slice rect 越过正式 atlas 资产边界", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
+      if (formalAsset && (rect.x + rect.width > formalSize.width || rect.y + rect.height > formalSize.height)) errors.push(componentError(local, "V4 atlas_slice rect 越过正式 atlas 资产边界", { missing: `assets.${expectedAsset.asset_id}.width/height` }));
     }
   }
   const actualSlices = new Map();
@@ -727,13 +727,13 @@ export function validateComponentAuditEvidence(region, auditUnit, context = {}, 
   for (const pair of required) {
     const key = `${pair.componentId}\0${pair.stateId}`;
     const observed = actualPairs.get(key) ?? 0;
-    if (observed !== 1) errors.push(componentError(context, "V3 actual_assets 必须逐 component×state 一一对应", { componentId: pair.componentId, stateId: pair.stateId, expectedCount: 1, observedCount: observed, missing: observed === 0 ? "actual_assets" : undefined }));
+    if (observed !== 1) errors.push(componentError(context, "V4 actual_assets 必须逐 component×state 一一对应", { componentId: pair.componentId, stateId: pair.stateId, expectedCount: 1, observedCount: observed, missing: observed === 0 ? "actual_assets" : undefined }));
   }
-  if (actual.length !== required.length) errors.push(componentError(context, "V3 actual_assets 总数量必须等于所有 required component×state", { expectedCount: required.length, observedCount: actual.length }));
-  // V3 确认资源和组件产物；逐部件 runtime_consumption 只证明 V4 正式 Scene 接入。
-  if (context.stage === "V4") {
+  if (actual.length !== required.length) errors.push(componentError(context, "V4 actual_assets 总数量必须等于所有 required component×state", { expectedCount: required.length, observedCount: actual.length }));
+  // V4 确认资源和组件产物；逐部件 runtime_consumption 只证明 V5 正式 Scene 接入。
+  if (context.stage === "V5") {
   const usages = auditUnit?.runtime_consumption?.component_usages ?? auditUnit?.runtime_consumption?.componentUsages;
-  if (!Array.isArray(usages)) errors.push(componentError(context, "V4 runtime_consumption 必须逐部件登记 component_usages", { missing: "runtime_consumption.component_usages" }));
+  if (!Array.isArray(usages)) errors.push(componentError(context, "V5 runtime_consumption 必须逐部件登记 component_usages", { missing: "runtime_consumption.component_usages" }));
   else {
     const usagePairs = new Map();
     usages.forEach((usage, index) => {
@@ -746,20 +746,20 @@ export function validateComponentAuditEvidence(region, auditUnit, context = {}, 
       const expectedAsset = expectedByPair.get(key);
       const assetId = usage?.asset_id ?? usage?.assetId;
       if (!nonEmptyString(assetId)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] 缺少 asset_id，运行时消费不能只绑定 component/state`, { missing: "runtime_consumption.component_usages.asset_id" }));
-      else if (expectedAsset && assetId !== expectedAsset.asset_id) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] asset_id 与 V3 expected_assets 不一致`, { missing: expectedAsset.asset_id }));
+      else if (expectedAsset && assetId !== expectedAsset.asset_id) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] asset_id 与 V4 expected_assets 不一致`, { missing: expectedAsset.asset_id }));
       const runtimeFile = usage?.runtime_file ?? usage?.runtimeFile ?? "";
       const expectedPlacementIds = placementIdsByComponent.get(componentId) ?? [];
       const observedPlacementIds = Array.isArray(usage?.placement_ids) ? usage.placement_ids.slice().sort() : (Array.isArray(usage?.placementIds) ? usage.placementIds.slice().sort() : null);
       if (!observedPlacementIds || JSON.stringify(observedPlacementIds) !== JSON.stringify(expectedPlacementIds)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] placement_ids 必须精确覆盖该 component 的全部可见 placement`, { missing: expectedPlacementIds.join(",") || "placement_ids" }));
       if (!nonEmptyString(runtimeFile)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] 缺少 runtime_file`, { missing: "runtime_file" }));
-      if (expectedAsset?.runtime_file && !sameProjectPath(runtimeFile, expectedAsset.runtime_file)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] runtime_file 与 V3 expected 不一致`, { missing: expectedAsset.runtime_file }));
+      if (expectedAsset?.runtime_file && !sameProjectPath(runtimeFile, expectedAsset.runtime_file)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] runtime_file 与 V4 expected 不一致`, { missing: expectedAsset.runtime_file }));
       const actualItem = actualByPair.get(key);
       const actualItemFile = actualItem?.file ?? actualItem?.path ?? actualItem?.output_file ?? actualItem?.runtime_file ?? actualItem?.runtimeFile ?? "";
       if (actualItem && !sameProjectPath(runtimeFile, actualItemFile)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] runtime_file 与 actual_assets 不一致`, { missing: actualItemFile || "actual_assets.file" }));
       if (expectedAsset?.atlas_slice) {
         const usageSlice = normalizeAtlasSlice(usage?.atlas_slice ?? usage?.atlasSlice);
-        if (!usageSlice) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] 缺少 V3 对应 atlas_slice`, { missing: "atlas_slice" }));
-        else if (JSON.stringify(usageSlice) !== JSON.stringify(expectedAsset.atlas_slice)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] atlas_slice identity 与 V3 不一致`));
+        if (!usageSlice) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] 缺少 V4 对应 atlas_slice`, { missing: "atlas_slice" }));
+        else if (JSON.stringify(usageSlice) !== JSON.stringify(expectedAsset.atlas_slice)) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] atlas_slice identity 与 V4 不一致`));
       } else if (usage?.atlas_slice ?? usage?.atlasSlice) errors.push(componentError(local, `runtime_consumption.component_usages[${index}] 不得为 individual 资产附加 atlas_slice`));
       usagePairs.set(key, (usagePairs.get(key) ?? 0) + 1);
     });
@@ -775,7 +775,7 @@ export function validateComponentAuditEvidence(region, auditUnit, context = {}, 
     const expectedKeys = new Set(expected.map((asset) => `${asset.component_id}\0${asset.canonical_state_id}`));
     for (const key of expectedKeys) if (!actualPairs.has(key)) {
       const [componentId, stateId] = key.split("\0");
-      errors.push(componentError(context, "V3 实际输出缺少 expected_assets 部件状态", { componentId, stateId, expectedCount: 1, observedCount: 0, missing: "actual_assets" }));
+      errors.push(componentError(context, "V4 实际输出缺少 expected_assets 部件状态", { componentId, stateId, expectedCount: 1, observedCount: 0, missing: "actual_assets" }));
     }
   }
   return errors;

@@ -10,6 +10,8 @@
 
 平台代码按 Web、Android、iOS 或小游戏适配边界选用。浏览器可见性、ResizeObserver、存档和返回导航采用平台独立服务，不在具体 Scene 内重复初始化第三方 SDK。
 
+真实大厅或主菜单按 SCENE 管理；跨场景路由、常驻导航逻辑及可复用 HUD/DOM 资源由共享模块维护，分别在实际宿主验证输入、生命周期和显示，不为导航虚构场景或常驻 DISPLAY_LAYER。瞬态层工作项绑定单一 `visual.hostId`，组件在多个宿主复用时分别核对上下文。V1 先验证本批次跳转、参数、返回和状态恢复，白盒可选；临时目标只证明通路，目的地功能另测，正式组合在 `final` INTEGRATION 重验，不等待无关场景 V5。
+
 ## 世界空间 vs HUD
 
 真实游戏世界用 `Scene`、`Object3D`、Camera、单位、轴向、层级和世界碰撞描述。记录视野角/正交视口、near/far、相机阻尼、viewport 尺寸、render size、Canvas CSS size、设备像素比、移动端最大 DPR 策略、阴影、景深和透明排序。

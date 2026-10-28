@@ -63,6 +63,57 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "responsive-visual-validation",
+      "path": "../app-domain-toolkit/references/responsive-visual-validation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "art-quality-principles",
+      "path": "../app-domain-toolkit/references/art-quality-principles.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-completion",
+      "path": "../app-domain-toolkit/references/reference-domain-completion.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-visual-gates",
+      "path": "../app-domain-toolkit/references/reference-domain-visual-gates.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-visual-admission",
+      "path": "../app-domain-toolkit/references/reference-domain-visual-admission.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

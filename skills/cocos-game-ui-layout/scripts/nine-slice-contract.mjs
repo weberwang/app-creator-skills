@@ -1,7 +1,7 @@
 import { hasSpriteRendering, isBackgroundDisplayNode, isLayoutContainer, isSpriteContainer } from "./display-node-role.mjs";
 
 /**
- * V2 冻结、V3 生产和正式界面渲染共用的纯九宫格数据合同。
+ * V3 冻结、V4 生产和正式界面渲染共用的纯九宫格数据合同。
  * 必评估对象只由显式生产归属、职责或视觉路线判定，不猜名称/像素，也不隐式裁切或缩放角边。
  */
 
@@ -31,7 +31,7 @@ function normalizeRole(value) {
   return typeof value === "string" ? value.trim().toLowerCase().replace(/[\s_]+/gu, "-").replace(/-+/gu, "-") : "";
 }
 
-/** 判断固定生产图片是否必须在 V2 明确选择九宫格或 not-applicable。 */
+/** 判断固定生产图片是否必须在 V3 明确选择九宫格或 not-applicable。 */
 export function requiresNineSliceDecision(input = {}) {
   const ownerType = input.owner_type ?? input.ownerType;
   const elementType = input.element_type ?? input.elementType;

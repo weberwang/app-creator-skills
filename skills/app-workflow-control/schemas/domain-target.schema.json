@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Unity 场景目标领域证据包装",
+  "description": "将原生领域记录不包含的视图身份绑定到公共目标；原生 Work Item 与 Evidence 仍须分别验证。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["workItemId", "targetId", "candidateId", "sceneId", "stateId", "viewport", "referenceTarget", "nativeWorkItemRef"],
+  "properties": {
+    "workItemId": {"type": "string", "minLength": 1},
+    "targetId": {"type": "string", "minLength": 1},
+    "candidateId": {"type": "string", "minLength": 1},
+    "sceneId": {"type": "string", "minLength": 1},
+    "stateId": {"type": "string", "minLength": 1},
+    "viewport": {"type": "object", "additionalProperties": false, "required": ["width", "height"], "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}},
+    "referenceTarget": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "nativeWorkItemRef": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"type": "string", "minLength": 1}}},
+    "nativeEvidenceRef": {"type": "object", "additionalProperties": false, "required": ["path"], "properties": {"path": {"type": "string", "minLength": 1}}}
+  }
+}

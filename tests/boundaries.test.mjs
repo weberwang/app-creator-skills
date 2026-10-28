@@ -1,5 +1,6 @@
 /** 验证控制器关于证据、路径、视觉身份和外部批准的关键边界。 */
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, win32 } from 'node:path';
@@ -109,15 +110,16 @@ test('同项目同技术栈视觉基线可跨工作项复用，错项目或错�
   put(first.repo, selectionReview, JSON.stringify({
     schemaVersion: '1.0', objectId: 'visual-baseline-1', candidateId: 'direction-a',
     stage: 'BASELINE', purpose: 'visual-baseline', decision: 'APPROVED',
-    userMessageRef: 'synthetic://selection', qualityChecks: dimensions,
+    userMessageRef: 'synthetic://selection', qualityChecks: dimensions, targetRef: candidates[0].path,
+    targetSha256: createHash('sha256').update(readFileSync(join(first.repo, candidates[0].path))).digest('hex'),
   }));
   const baselinePath = '.workflow-control/visual/global-baseline.json';
   put(first.repo, baselinePath, JSON.stringify({
     schemaVersion: '1.0', baselineId: 'visual-baseline-1', projectId: first.work.projectId,
     stack: first.work.stack, candidates, selectedCandidateId: 'direction-a',
-    selectionReviewRef: { path: selectionReview },
+    selectionReviewRef: { path: selectionReview, sha256: createHash('sha256').update(readFileSync(join(first.repo, selectionReview))).digest('hex') },
   }));
-  second.globalVisualBaselineRef = { path: baselinePath };
+  second.globalVisualBaselineRef = { path: baselinePath, sha256: createHash('sha256').update(readFileSync(join(first.repo, baselinePath))).digest('hex') };
   assert.doesNotThrow(() => validateGlobalBaseline(first.repo, second));
 
   assert.throws(() => validateGlobalBaseline(first.repo, { ...second, projectId: 'different-project' }), /项目或技术栈错绑/);

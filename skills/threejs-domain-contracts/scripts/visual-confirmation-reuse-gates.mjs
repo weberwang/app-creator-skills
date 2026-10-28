@@ -15,7 +15,7 @@ const REUSE_SCHEMA = "asset-reuse-snapshot/1.0";
 
 /** 统一生成门禁错误，保证每条失败都能定位编号和区域。 */
 function gateError(context = {}, message, details = {}) {
-  const stage = context.stage ?? "V3";
+  const stage = context.stage ?? "V4";
   const annotation = context.annotation_number ?? context.annotationNumber ?? "?";
   const region = context.region_id ?? context.regionId ?? "?";
   const expected = details.expectedMethod ?? context.expectedMethod ?? "production-contract";

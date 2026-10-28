@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter Tech Design"
+  short_description: "Create Flutter app architecture decisions."
+  default_prompt: "Use $flutter-tech-design to define on-demand dependency capabilities, API/service boundaries, migrations and recovery, and layered platform verification for a Flutter app."

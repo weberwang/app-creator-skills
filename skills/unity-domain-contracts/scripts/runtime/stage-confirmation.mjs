@@ -1,4 +1,4 @@
-/** Unity 场景与显示层五阶段的人工作业确认合同。 */
+/** Unity 场景与显示层 V2–V5 视觉阶段的人工作业确认合同。 */
 
 import { VISUAL_STAGES } from './visible-contract.mjs';
 import { isValidIsoTimestamp } from './timestamp-contract.mjs';
@@ -6,7 +6,7 @@ import { isValidIsoTimestamp } from './timestamp-contract.mjs';
 export { VISUAL_STAGES };
 
 const VISIBLE_TYPES = new Set(['SCENE', 'DISPLAY_LAYER']);
-const REVIEW_STAGES = Object.freeze(['V1', 'V2', 'V3', 'V4']);
+const REVIEW_STAGES = Object.freeze(['V2', 'V3', 'V4', 'V5']);
 const REVIEW_FIELDS = new Set(['stage', 'confirmation', 'decompositionConfirmation', 'layoutConfirmation']);
 const CONFIRMATION_FIELDS = new Set([
   'workItemId', 'stage', 'confirmedBy', 'confirmedAt', 'userMessageRef',
@@ -51,17 +51,17 @@ export function validateStageReviewsShape(work) {
       continue;
     }
     for (const key of Object.keys(review)) if (!REVIEW_FIELDS.has(key)) errors.push(`${label} 含未声明字段：${key}`);
-    if (!REVIEW_STAGES.includes(review.stage)) errors.push(`${label}.stage 只能是 V1、V2、V3 或 V4`);
+    if (!REVIEW_STAGES.includes(review.stage)) errors.push(`${label}.stage 只能是 V2、V3、V4 或 V5`);
     else if (seenStages.has(review.stage)) errors.push(`Work Item.stageReviews 不能重复阶段：${review.stage}`);
     else seenStages.add(review.stage);
-    if (review.stage === 'V2') {
-      if (review.confirmation !== undefined) errors.push(`${label}.V2 必须分别使用 decompositionConfirmation 和 layoutConfirmation`);
+    if (review.stage === 'V3') {
+      if (review.confirmation !== undefined) errors.push(`${label}.V3 必须分别使用 decompositionConfirmation 和 layoutConfirmation`);
       const decomposition = review.decompositionConfirmation === undefined
         ? null
-        : validateConfirmation(review.decompositionConfirmation, `${label}.decompositionConfirmation`, 'V2', errors);
+        : validateConfirmation(review.decompositionConfirmation, `${label}.decompositionConfirmation`, 'V3', errors);
       const layout = review.layoutConfirmation === undefined
         ? null
-        : validateConfirmation(review.layoutConfirmation, `${label}.layoutConfirmation`, 'V2', errors);
+        : validateConfirmation(review.layoutConfirmation, `${label}.layoutConfirmation`, 'V3', errors);
       if (decomposition && layout && Date.parse(layout.confirmedAt) < Date.parse(decomposition.confirmedAt)) {
         errors.push(`${label}.layoutConfirmation 不能早于 decompositionConfirmation`);
       }
@@ -78,10 +78,10 @@ export function stageConfirmationBlockers(work, evidence = null, targetState = w
   if (!VISIBLE_TYPES.has(work.workItemType)) return [];
   const currentStage = work.workItemType === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
   const blockers = [];
-  if ((work.globalState === 'COMPLETE' || targetState === 'COMPLETE') && currentStage !== 'V4') {
-    blockers.push({ code: 'STAGE_COMPLETE_REQUIRES_V4', message: '可见 Work Item 必须到达 V4 并完成全部阶段确认后才能 COMPLETE', next: '推进到 V4 并完成逐阶段人工确认' });
+  if ((work.globalState === 'COMPLETE' || targetState === 'COMPLETE') && currentStage !== 'V5') {
+    blockers.push({ code: 'STAGE_COMPLETE_REQUIRES_V5', message: '可见 Work Item 必须到达 V5 并完成全部阶段确认后才能 COMPLETE', next: '推进到 V5 并完成逐阶段人工确认' });
   }
-  // V0 只做内部路由；即使阶段状态为 PASS，也不要求用户阶段确认。
+  // V0 路由和 V1 功能验证均不强制视觉人工确认。
   if (!REVIEW_STAGES.includes(currentStage)) return blockers;
   const currentStatus = work.workItemType === 'SCENE' ? work.scene?.status : work.displayLayer?.status;
   const currentNeedsConfirmation = currentStatus === 'PASS'
@@ -94,8 +94,8 @@ export function stageConfirmationBlockers(work, evidence = null, targetState = w
   for (let index = 0; index <= lastRequiredIndex; index += 1) {
     const stage = REVIEW_STAGES[index];
     const review = reviews.get(stage);
-    const fields = stage === 'V2'
-      ? [['decompositionConfirmation', 'V2 拆解'], ['layoutConfirmation', 'V2 布局']]
+    const fields = stage === 'V3'
+      ? [['decompositionConfirmation', 'V3 拆解'], ['layoutConfirmation', 'V3 布局']]
       : [['confirmation', stage]];
     for (const [field, confirmationLabel] of fields) {
       const confirmation = review?.[field];
@@ -108,13 +108,13 @@ export function stageConfirmationBlockers(work, evidence = null, targetState = w
         blockers.push({ code: 'STAGE_CONFIRMATION_STALE', message: `${confirmationLabel} 人工确认与当前 Work Item 或阶段不匹配`, next: `由原确认人确认当前 ${confirmationLabel}，或记录对应阶段的用户确认` });
       }
     }
-    if (stage === 'V2') {
+    if (stage === 'V3') {
       const decomposition = review?.decompositionConfirmation;
       const layout = review?.layoutConfirmation;
       if (isRecord(decomposition) && isRecord(layout)
         && isValidIsoTimestamp(decomposition.confirmedAt) && isValidIsoTimestamp(layout.confirmedAt)
         && Date.parse(layout.confirmedAt) < Date.parse(decomposition.confirmedAt)) {
-        blockers.push({ code: 'STAGE_CONFIRMATION_ORDER_INVALID', message: 'V2 布局确认不得早于拆解确认', next: '在拆解确认之后重新取得布局确认并更新 V2 记录' });
+        blockers.push({ code: 'STAGE_CONFIRMATION_ORDER_INVALID', message: 'V3 布局确认不得早于拆解确认', next: '在拆解确认之后重新取得布局确认并更新 V3 记录' });
       }
     }
   }

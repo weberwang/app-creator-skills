@@ -1,6 +1,6 @@
 # 居中策略与组合定位
 
-本参考约束 effect-image V2 自动布局决策及其布局节点投影。`axis_alignment` 继续表示九点停靠语义；当某轴选择 `center` 时，`center_alignment` 决定中心对齐是否严格，或是否带有经说明的设计偏移。它不改变节点身份、顺序或尺寸，也不改变普通图片的 RAW 原尺寸。
+本参考约束 effect-image V3 自动布局决策及其布局节点投影。`axis_alignment` 继续表示九点停靠语义；当某轴选择 `center` 时，`center_alignment` 决定中心对齐是否严格，或是否带有经说明的设计偏移。它不改变节点身份、顺序或尺寸，也不改变普通图片的 RAW 原尺寸。
 
 ## 单个元素的严格居中与中心参照
 
@@ -105,7 +105,7 @@
 
 `proposal.decomposition_elements[].bounds` 是拆解确认中的原始测量事实，布局阶段不得回写它。自动布局决策必须绑定当前拆解确认；布局生成器从确认 proposal 与决策重新计算布局节点的 `target_bounds`。strict/reference 中心策略可在声明轴上平移单个节点或整组。父级或定位参照发生整体平移时，依赖它们的节点也沿相应轴跟随同一位移，以保持原有相对间距；这项传播不要求依赖节点自身声明中心策略，非 center 轴也会传播。组合居中的成员随 leader 等量移动。按依赖关系计算时，同一祖先或参照位移只累计一次；所有受影响节点的 `target_bounds`、`relative_position` 和 `offset` 都按最终位置复算。上述位置变化保持 `width`、`height`、元素顺序、身份、父级和组内间距不变。
 
-有独立中心约束的布局节点保留规范化 `center_alignment`；整体居中 leader 节点同时保留 `member_ids`。组员受控轴继承 leader 策略，不复制为独立策略。布局确认从绑定的 proposal 和原 decision 字节复算中心位移、父/参照位移传播及每个最终 bounds 与 `offset`，逐项比较生成节点；不能把生成结果静默写回 proposal 或改写 decision 字节，也不能在 V4 通过补丁改写已确认的 V2 位置。调整策略、依赖关系或成员关系时，重新生成并确认受影响的 V2 布局图。
+有独立中心约束的布局节点保留规范化 `center_alignment`；整体居中 leader 节点同时保留 `member_ids`。组员受控轴继承 leader 策略，不复制为独立策略。布局确认从绑定的 proposal 和原 decision 字节复算中心位移、父/参照位移传播及每个最终 bounds 与 `offset`，逐项比较生成节点；不能把生成结果静默写回 proposal 或改写 decision 字节，也不能在 V5 通过补丁改写已确认的 V3 位置。调整策略、依赖关系或成员关系时，重新生成并确认受影响的 V3 布局图。
 
 生成与确认校验还必须拒绝：非 center 轴声明中心策略；非法 `mode`；reference 偏移非有限或理由为空；成员数少于两个、成员 ID 重复/不存在/不含 leader、成员跨父级或布局上下文；成员出现在重叠居中组；leader 将组内成员作为外部定位参照；组员在组控制轴重复声明独立中心策略；或父子与参照边形成环。确认校验须从绑定的 proposal 与 decision 重新计算布局结果，不能仅检查 PNG、decision 和 nodes 三份产物彼此一致。
 

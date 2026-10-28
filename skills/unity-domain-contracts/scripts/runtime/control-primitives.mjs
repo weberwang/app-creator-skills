@@ -8,7 +8,7 @@ export const SCHEMA_VERSION = '1.0';
 /** 用户可见的六个项目阶段。 */
 export const STAGES = Object.freeze(['requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'global-integration-validation', 'release']);
 /** 单场景证据阶段。 */
-export const SCENE_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
+export const SCENE_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
 /** 工作项全局状态。 */
 export const STATES = Object.freeze(['INTAKE', 'BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'COMPLETE', 'RETURN', 'BLOCKED']);
 /** 控制门集合。 */
@@ -61,7 +61,7 @@ export const STAGE_LABELS = Object.freeze({
   release: '发布',
 });
 /** 场景阶段中文标签仅用于稳定展示。 */
-export const SCENE_LABELS = Object.freeze({ V0: '分流', V1: '场景定义', V2: '拆解与布局确认', V3: '正式资源验收', V4: '正式实现与运行验收' });
+export const SCENE_LABELS = Object.freeze({ V0: '分流', V1: '功能实现与验证', V2: '场景目标', V3: '拆解与布局确认', V4: '正式资源验收', V5: '正式组合与运行验收' });
 /** 控制面异常；CLI 入口会把它转换为稳定 JSON 错误。 */
 export class WorkflowControlError extends Error {
   /** 创建带机器可读错误码的控制面异常。 */

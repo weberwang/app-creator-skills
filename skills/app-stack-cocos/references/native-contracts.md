@@ -2,6 +2,8 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
+各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+
 ## 能力索引
 
 - **产品与游戏需求**
@@ -92,7 +94,7 @@
 <a id="mode-cocos-game-architecture--全局控制接入"></a>
 #### 全局控制接入
 
-本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V0-V4、A0-A6、F0-F4 与 Work Item 的当前控制模型。任务内方案和路径变化同步更新计划并重验受影响部分；只有实质架构取舍才停止并进入 grilling。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
+本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V0-V5、A0-A6、F0-F4 与 Work Item 的当前控制模型。任务内方案和路径变化同步更新计划并重验受影响部分；只有实质架构取舍才停止并进入 grilling。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
 
 <a id="mode-cocos-game-architecture--工程边界"></a>
 #### 工程边界
@@ -152,7 +154,7 @@ Creator 编辑器写入、AssetDB、场景、节点、组件、Prefab、构建�
 <a id="mode-cocos-gameplay-development--cocos-creator-3x-玩法开发"></a>
 ### Cocos Creator 3.x 玩法开发
 
-全局阶段、V0–V4、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景仍使用同一 Work Item 的 V1→V2→V3→V4 链，V2 拆解和布局分别确认。
+全局阶段、V0–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V0–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
 
 <a id="mode-cocos-gameplay-development--全局控制接入"></a>
 #### 全局控制接入
@@ -164,6 +166,8 @@ Work Item 范围、实际实施结果、证据与阶段迁移统一按[当前公
 <a id="mode-cocos-gameplay-development--所有权"></a>
 #### 所有权
 
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#玩法与美术职责)。
+
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 
 <a id="mode-cocos-gameplay-development--实现"></a>
@@ -172,7 +176,7 @@ Work Item 范围、实际实施结果、证据与阶段迁移统一按[当前公
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 3. 对当前场景明确可观察玩家行为、状态迁移、时序、反馈、成功/失败和异常恢复。截图无法证明的行为标为待定义，不自行推断。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
-6. 只使用绑定当前 `scene_id` 或合规 `shared` 且 V3 `accepted` 的资源进入正式功能实现。用独立 Node、Component、Prefab 和命名节点层组织场景，按[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)显式设置渲染节点的 `UITransform.anchorPoint`，逐对象记录非中心例外及坐标转换，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属；UI 从 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 布局合同计算，区分左上布局坐标、Creator 锚点局部坐标、父子停靠与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证关系不变量，不把绝对屏幕坐标当作通用验收标准。
+6. 只使用绑定当前 `scene_id` 或合规 `shared` 且 V4 `accepted` 的资源进入正式功能实现。用独立 Node、Component、Prefab 和命名节点层组织场景，按[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)显式设置渲染节点的 `UITransform.anchorPoint`，逐对象记录非中心例外及坐标转换，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属；UI 从 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 布局合同计算，区分左上布局坐标、Creator 锚点局部坐标、父子停靠与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证关系不变量，不把绝对屏幕坐标当作通用验收标准。
 7. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 
 <a id="mode-cocos-gameplay-development--证据"></a>
@@ -360,7 +364,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 3. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/quality-verification.md#完整流程)。
 10. 共享基础完成后验证 Creator 项目启动、Boot/首场景、资源加载和适用插件；关键玩法流完成后在主目标平台验证核心循环与失败恢复；只有最终集成/G3/release 执行完整渠道/平台矩阵。G3/release 候选还按[Creator 生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核验实际 release 构建配置、最终已解包包体中的 Source Map 文件/引用、压缩与注释处理、Feature Cropping 采用结果和构建资源路径；不将生产配置截图当作最终包检查。Creator 编辑器、AssetDB、Scene/Node/Component、Prefab、构建和预览操作按[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)执行。当前 MCP 的运行/构建工具只打开构建面板或报告 worker ready，不表示预览或构建完成；实际运行和构建没有证据时保持 pending/blocked。[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
 
-[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)V1/V2 条件门必须绑定当前候选；沉默、继续工作或旧决定不能替代真正需要的 `USER_DECISION`，用户决定也不能跳过 V2 拆解与布局确认所需的确定性机器 F2。固定宽/固定高模式的声明不证明满屏或响应式重排；禁止用构建面板打开、元素存在或无控制台错误假通过。
+[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)V2/V3 条件门必须绑定当前候选；沉默、继续工作或旧决定不能替代真正需要的 `USER_DECISION`，用户决定也不能跳过 V3 拆解与布局确认所需的确定性机器 F2。固定宽/固定高模式的声明不证明满屏或响应式重排；禁止用构建面板打开、元素存在或无控制台错误假通过。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/quality-verification.md#完整流程)。
 
@@ -412,12 +416,12 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 <a id="mode-cocos-frame-animation--共用流程"></a>
 #### 共用流程
 
-1. 按[导演与动作指导](../../cocos-frame-animation/references/animation-direction.md)判断设计复杂度：简单任务由对应专业设计师兼任导演，复杂表演或紧密跨类型配合时独立委派导演。先构思观看体验与表演亮点，再读取视觉基线、用途类型参考与[完整动作与时间轴](../../cocos-frame-animation/references/action-timing.md)，建立当前动画的内部设计工件。明确来源路线、行为边界、初态/终态、游戏时长、阶段区间、关键姿态、事件、播放方式、资源锚点映射与允许位移、完整运动范围、目标显示尺寸、FPS 和背景处理。角色动作还须明确前后动作衔接、是否循环及进入/退出条件，见[衔接与循环设计](../../cocos-frame-animation/references/character-animation.md#衔接与循环设计)。按需要读取[区域规划](../../cocos-frame-animation/references/region-planning.md)，合批时各区域仍有独立类型和时间映射。
-2. 按[动作分析规则](../../cocos-frame-animation/references/action-timing.md#动作分析与时间轴)和[玩法与意图设计方法](../../cocos-frame-animation/references/intent-driven-design.md)，从观看体验、玩法目的和已有时间约束内部推导行为边界、阶段与空间变化、衔接/循环及节奏取舍，并记录建议时间轴、事件时点、关键姿态意图、显示尺寸与性能取舍和逐阶段检查点。视频同时推导 768p/2K 区域排布、条数、整组消耗与推荐方案。只对确实缺失且无法推导的玩法事件、时长或行为权限提问，并只暂停受影响动作的设计。不制作灰盒或可播放几何示意。
-3. 方案完成后，先按[设计理念说明](../../cocos-frame-animation/references/intent-driven-design.md#方案完成后阐述设计理念)向用户说明目标感受、动作依据、节奏和性能取舍及观看重点，并暂停等待用户明确确认当前动作方案。收到确认后，才按“表演过程与当前参数＋类型规则＋身份与资源要求”编写正式提示词，并在已有授权范围内制作真实候选或预览。视频按[分辨率与合批比较](../../cocos-frame-animation/references/region-planning.md#视频条数与消耗比较)选择 768p 或 2K：先最少条数覆盖全部动作，再在该条数下选整组消耗最少者，同等条件优先 768p；图片按[图片分辨率约定](../../cocos-frame-animation/references/region-planning.md#图片分辨率约定)处理。首次素材交付直接展示真实视频候选/预览或真实图片首帧及关键帧，并附与设计理念对应的简短检查点。用户确认实际素材时可同时接受该素材所表达的时序，不另行确认文字复述。无现有生成授权时遵守外部操作边界，不把路线选择视为授权。
+1. 按[导演与动作指导](../../cocos-domain-contracts/resources/frame-animation/references/animation-direction.md)判断设计复杂度：简单任务由对应专业设计师兼任导演，复杂表演或紧密跨类型配合时独立委派导演。先构思观看体验与表演亮点，再读取视觉基线、用途类型参考与[完整动作与时间轴](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md)，建立当前动画的内部设计工件。明确来源路线、行为边界、初态/终态、游戏时长、阶段区间、关键姿态、事件、播放方式、资源锚点映射与允许位移、完整运动范围、目标显示尺寸、FPS 和背景处理。角色动作还须明确前后动作衔接、是否循环及进入/退出条件，见[衔接与循环设计](../../cocos-domain-contracts/resources/frame-animation/references/character-animation.md#衔接与循环设计)。按需要读取[区域规划](../../cocos-domain-contracts/resources/frame-animation/references/region-planning.md)，合批时各区域仍有独立类型和时间映射。
+2. 按[动作分析规则](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md#动作分析与时间轴)和[玩法与意图设计方法](../../cocos-domain-contracts/resources/frame-animation/references/intent-driven-design.md)，从观看体验、玩法目的和已有时间约束内部推导行为边界、阶段与空间变化、衔接/循环及节奏取舍，并记录建议时间轴、事件时点、关键姿态意图、显示尺寸与性能取舍和逐阶段检查点。视频同时推导 768p/2K 区域排布、条数、整组消耗与推荐方案。只对确实缺失且无法推导的玩法事件、时长或行为权限提问，并只暂停受影响动作的设计。不制作灰盒或可播放几何示意。
+3. 方案完成后，先按[设计理念说明](../../cocos-domain-contracts/resources/frame-animation/references/intent-driven-design.md#方案完成后阐述设计理念)向用户说明目标感受、动作依据、节奏和性能取舍及观看重点，并暂停等待用户明确确认当前动作方案。收到确认后，才按“表演过程与当前参数＋类型规则＋身份与资源要求”编写正式提示词，并在已有授权范围内制作真实候选或预览。视频按[分辨率与合批比较](../../cocos-domain-contracts/resources/frame-animation/references/region-planning.md#视频条数与消耗比较)选择 768p 或 2K：先最少条数覆盖全部动作，再在该条数下选整组消耗最少者，同等条件优先 768p；图片按[图片分辨率约定](../../cocos-domain-contracts/resources/frame-animation/references/region-planning.md#图片分辨率约定)处理。首次素材交付直接展示真实视频候选/预览或真实图片首帧及关键帧，并附与设计理念对应的简短检查点。用户确认实际素材时可同时接受该素材所表达的时序，不另行确认文字复述。无现有生成授权时遵守外部操作边界，不把路线选择视为授权。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/frame-animation-execution.md#完整流程)。
-5. 视频按固定区域抽帧，图片按真实来源清单打包；两者共用背景处理、等比缩放、固定 cell/锚点、独立图集、报告和 HTML 预览。依据当前类型反馈局部修帧，保留已有修图成果及来源身份，更新图集、报告和预览；SHA 如被记录，仅作可选身份追踪，不作为验收门。缺陷修复不默认替换整组来源。
-6. 先由用户按正常速度完整观看真实帧序列，判断目标感受、吸引力、表演亮点与节奏，再按内部设计工件中的逐阶段检查点人工检查可读性、连续性、事件及单次/循环/终态和外部动作衔接，记录具体偏差与用户结论。同目标的局部纠错直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质改变时须重新确认，不重新索取已有生成授权。保存分类规则、方案版本与确认、玩法与意图推导、真实候选审阅、时间映射与最终人工验收证据，按[工作流接入合同](../../cocos-frame-animation/references/workflow-integration.md)提交资源，再回到控制面完成 Cocos 接入和运行验证。
+5. 视频按固定区域抽帧，图片按真实来源清单打包；两者共用背景处理、等比缩放、固定 cell/锚点、独立图集和报告；需要动画播放时通过 `--output-preview` 指定 HTML 预览路径。依据当前类型反馈局部修帧，保留已有修图成果及来源身份，更新图集、报告及实际生成的预览；SHA 如被记录，仅作可选身份追踪，不作为验收门。缺陷修复不默认替换整组来源。
+6. 先由用户按正常速度完整观看真实帧序列，判断目标感受、吸引力、表演亮点与节奏，再按内部设计工件中的逐阶段检查点人工检查可读性、连续性、事件及单次/循环/终态和外部动作衔接，记录具体偏差与用户结论。同目标的局部纠错直接返修并展示前后对照；目标感受、核心动作方案、玩法语义或来源路线实质改变时须重新确认，不重新索取已有生成授权。保存分类规则、方案版本与确认、玩法与意图推导、真实候选审阅、时间映射与最终人工验收证据，按[工作流接入合同](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md)提交资源，再回到控制面完成 Cocos 接入和运行验证。
 
 <a id="mode-cocos-frame-animation--动作设计与真实素材确认"></a>
 #### 动作设计与真实素材确认
@@ -427,8 +431,8 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 <a id="mode-cocos-frame-animation--共用质量与关键约束"></a>
 #### 共用质量与关键约束
 
-- 先由用户完整观看吸引力、目标感受、节奏与表现亮点，再检查可读性、主次、连续性和事件同步；具体判断及优化方法见[共用质量与优化](../../cocos-frame-animation/references/action-timing.md#共用质量与优化)。重量感、夸张程度、停顿和跟随运动按类型、对象性质与视觉基线配置，不统一套用战斗节奏。
-- 按[效果与性能平衡](../../cocos-frame-animation/references/action-timing.md#效果与性能平衡)，结合目标显示尺寸、动作可读性和项目已有平台预算选择 FPS、帧数、cell 与图集规模，并评估加载、纹理驻留、同屏并发和透明叠加成本。制作前的设计理念说明包含推荐精细程度、必须保留的表现及取舍理由；制作后结合用户视觉验收和实际资源/运行性能证据判断，不默认追求最高参数。
+- 先由用户完整观看吸引力、目标感受、节奏与表现亮点，再检查可读性、主次、连续性和事件同步；具体判断及优化方法见[共用质量与优化](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md#共用质量与优化)。重量感、夸张程度、停顿和跟随运动按类型、对象性质与视觉基线配置，不统一套用战斗节奏。
+- 按[效果与性能平衡](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md#效果与性能平衡)，结合目标显示尺寸、动作可读性和项目已有平台预算选择 FPS、帧数、cell 与图集规模，并评估加载、纹理驻留、同屏并发和透明叠加成本。制作前的设计理念说明包含推荐精细程度、必须保留的表现及取舍理由；制作后结合用户视觉验收和实际资源/运行性能证据判断，不默认追求最高参数。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/frame-animation-execution.md#完整流程)。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/frame-animation.md#共用质量与关键约束)。
 - 默认保持要求呈现的内容及完整运动范围入框，保留安全边距。裁剪例外须有当前任务的明确授权，逐项记录对象、范围与理由；不能为合批或强调力度自行裁边。
@@ -440,7 +444,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 <a id="mode-cocos-frame-animation--执行代理"></a>
 #### 执行代理
 
-帧动画 Work Item 按[动画导演与动作指导](../../cocos-frame-animation/references/animation-direction.md)判断岗位：简单任务由对应专业设计师兼任导演，复杂表演或紧密跨类型配合时独立委派导演。导演负责观看体验、整体构思、动作亮点、空间与节奏及跨类型配合；各专业设计师负责细化对应类型的时间轴、提示词、时间整理、抽帧/图片序列集成和修正。主代理负责分类、复杂度判断、任务包、所有权与范围裁决、人工反馈、接入、审查与最终验证。
+帧动画 Work Item 按[动画导演与动作指导](../../cocos-domain-contracts/resources/frame-animation/references/animation-direction.md)判断岗位：简单任务由对应专业设计师兼任导演，复杂表演或紧密跨类型配合时独立委派导演。导演负责观看体验、整体构思、动作亮点、空间与节奏及跨类型配合；各专业设计师负责细化对应类型的时间轴、提示词、时间整理、抽帧/图片序列集成和修正。主代理负责分类、复杂度判断、任务包、所有权与范围裁决、人工反馈、接入、审查与最终验证。
 
 | 用途类型 | 负责设计的职业 | 设计重点与交付依据 |
 | --- | --- | --- |
@@ -451,7 +455,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 
 职业身份写入委派提示词，不新增工具未提供的 `agent_type`。按动画用途分配，不按来源、文件格式或循环/单次方式分配。各设计师读取对应分类参考，在设计工件中记录负责动画、设计依据和逐阶段检查点，不能只更换称谓而沿用同一套标准。混合任务按可独立设计的动画或区域拆分；导演或兼任设计师先统一构思、事件时点、锚点与遮挡关系，再按依赖交接，只有文件所有权不重叠的独立部分可并行。
 
-各职业按对应分类参考的设计依据和人工验收重点执行，并遵循[共用设计交付与验收检查点](../../cocos-frame-animation/references/intent-driven-design.md#设计师交付与验收检查点)：在当前设计工件中关联依据、设计决定、阶段/事件与人工检查点，交付目标感受、完整时间轴、关键状态意图、空间约束及采样与性能取舍。具体时长、帧数、FPS、幅度和尺寸按当前任务推导并说明理由，不将通用示例或某职业惯用节奏写成固定参数。
+各职业按对应分类参考的设计依据和人工验收重点执行，并遵循[共用设计交付与验收检查点](../../cocos-domain-contracts/resources/frame-animation/references/intent-driven-design.md#设计师交付与验收检查点)：在当前设计工件中关联依据、设计决定、阶段/事件与人工检查点，交付目标感受、完整时间轴、关键状态意图、空间约束及采样与性能取舍。具体时长、帧数、FPS、幅度和尺寸按当前任务推导并说明理由，不将通用示例或某职业惯用节奏写成固定参数。
 
 帧动画时间轴与素材工作按对应设计师职责委派；符合复杂度条件的导演任务另行委派。使用 `collaboration.spawn_agent`，设置 `agent_type="default"`、`model="gpt-6.1-sol"`、`reasoning_effort="max"`、`fork_turns="none"`。完整任务包包含 Work Item、复杂度判断与导演安排、导演构思与跨类型依赖、设计师职业与职责、用途类型和来源路线、对应参考、玩法目的与表现意图、已有时间约束、行为/输入边界、阶段检查点、素材与基线路径、允许修改范围、当前候选版本/内部时间轴、允许推进步骤、验收标准、测试等级与命令、禁止操作及并行提醒。执行代理在方案完成后、制作前交接设计理念与目标感受并暂停；主代理取得用户对当前动作方案的明确确认后，才交接确认范围与可推进步骤。未确认方案不得开始素材制作或具体实现。首次素材交付提供真实候选/预览和对应检查点；详细推导保存在内部工件。
 
@@ -472,34 +476,34 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 
 | 当前阶段 | 按需读取 |
 | --- | --- |
-| 导演职责与表演构思 | [animation-direction.md](../../cocos-frame-animation/references/animation-direction.md)，简单任务由设计师兼任，复杂任务独立委派，交接核心表演与跨类型依赖 |
+| 导演职责与表演构思 | [animation-direction.md](../../cocos-domain-contracts/resources/frame-animation/references/animation-direction.md)，简单任务由设计师兼任，复杂任务独立委派，交接核心表演与跨类型依赖 |
 | 用途判断与类型制作 | 上方对应的一份分类参考；涉及独立特效或 UI 位图时再读取其规则 |
-| 从玩法与表现意图推导时长、节奏及检查点 | [intent-driven-design.md](../../cocos-frame-animation/references/intent-driven-design.md)，在动作分析时读取并写入既有设计工件，制作与验收复用 |
+| 从玩法与表现意图推导时长、节奏及检查点 | [intent-driven-design.md](../../cocos-domain-contracts/resources/frame-animation/references/intent-driven-design.md)，在动作分析时读取并写入既有设计工件，制作与验收复用 |
 | 需要反馈语义、类型适用或事件覆盖规则 | [Cocos 2D 汁水感设计指南](../../cocos-game-juice/references/design-guide.md)；本 Skill 仍按既有时间轴设计、真实素材审阅和完整序列人工验收生产帧动画 |
-| 游戏时间、分组、阶段及修正 | [action-timing.md](../../cocos-frame-animation/references/action-timing.md) |
-| 效果图尺寸推理、合批与空间裁剪 | [region-planning.md](../../cocos-frame-animation/references/region-planning.md) |
-| 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../cocos-frame-animation/references/image-inbetween.md) |
-| 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../cocos-frame-animation/references/workflow-integration.md) |
+| 游戏时间、分组、阶段及修正 | [action-timing.md](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md) |
+| 效果图尺寸推理、合批与空间裁剪 | [region-planning.md](../../cocos-domain-contracts/resources/frame-animation/references/region-planning.md) |
+| 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../cocos-domain-contracts/resources/frame-animation/references/image-inbetween.md) |
+| 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md) |
 
-Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)，按实时 `tools/list` schema 调用，不手写 `.meta`、`.scene` 或 `.prefab`。图集报告中的 `cc` 是 `SpriteFrame`、`UITransform` 与 `AnimationClip` 的描述清单，脚本不会物化 Creator 资产；V4 需通过 MCP 核验资源、逐项读回子工具结果，并在 Creator 中实际接入和验证。不能发现所需子资源查询或编辑能力时，受影响接入保持 pending/blocked。全局阶段仍由[唯一控制面](../../app-workflow-control/SKILL.md)管理：V2 内部推导并记录动作时间轴、阐述设计理念并取得用户对当前方案的明确确认，V3 制作并审阅真实视频或关键帧、验收完整序列，V4 消费 Creator `SpriteFrame`/`AnimationClip` 与 `UITransform` 锚点合同并验证运行态。
+Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)，按实时 `tools/list` schema 调用，不手写 `.meta`、`.scene` 或 `.prefab`。图集报告中的 `cc` 是 `SpriteFrame`、`UITransform` 与 `AnimationClip` 的描述清单，脚本不会物化 Creator 资产；V5 需通过 MCP 核验资源、逐项读回子工具结果，并在 Creator 中实际接入和验证。不能发现所需子资源查询或编辑能力时，受影响接入保持 pending/blocked。全局阶段仍由[唯一控制面](../../app-workflow-control/SKILL.md)管理：V3 内部推导并记录动作时间轴、阐述设计理念并取得用户对当前方案的明确确认，V4 制作并审阅真实视频或关键帧、验收完整序列，V5 消费 Creator `SpriteFrame`/`AnimationClip` 与 `UITransform` 锚点合同并验证运行态。
 
-帧动画图集默认放在 `assets/animations/` 等已规划的普通资源目录，由 Scene/Prefab 的 UUID 引用；只有明确使用 `resources.load/loadDir` 按路径动态加载时才放进 `assets/resources/`。详见[项目目录规范中的资源与引用规则](../../cocos-game-architecture/references/project-structure.md#资源与引用)及[工作流接入合同](../../cocos-frame-animation/references/workflow-integration.md#accepted-资源文件门)。
+帧动画图集默认放在 `assets/animations/` 等已规划的普通资源目录，由 Scene/Prefab 的 UUID 引用；只有明确使用 `resources.load/loadDir` 按路径动态加载时才放进 `assets/resources/`。详见[项目目录规范中的资源与引用规则](../../cocos-game-architecture/references/project-structure.md#资源与引用)及[工作流接入合同](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md#accepted-资源文件门)。
 
 <a id="mode-cocos-frame-animation--本栈配套资料"></a>
 #### 本栈配套资料
 
-- [游戏时间先于来源](../../cocos-frame-animation/references/action-timing.md#游戏时间先于来源)
-- [动作设计与素材确认](../../cocos-frame-animation/references/workflow-integration.md#动作设计与素材确认)
-- [真实素材审阅与验收](../../cocos-frame-animation/references/workflow-integration.md#真实素材审阅与验收)
-- [设计与美术的边界](../../cocos-frame-animation/references/workflow-integration.md#设计与美术的边界)
-- [一致性及衔接门](../../cocos-frame-animation/references/image-inbetween.md#关键帧的一致性与衔接门)
-- [视频节奏整理](../../cocos-frame-animation/references/action-timing.md#视频节奏整理)
-- [按区域抽帧](../../cocos-frame-animation/references/region-planning.md#按区域抽帧)
-- [图片递归补帧](../../cocos-frame-animation/references/image-inbetween.md)
-- [普通动画](../../cocos-frame-animation/references/object-animation.md)
-- [角色动作动画](../../cocos-frame-animation/references/character-animation.md)
-- [特效动画](../../cocos-frame-animation/references/effect-animation.md)
-- [UI 帧动画](../../cocos-frame-animation/references/ui-frame-animation.md)
+- [游戏时间先于来源](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md#游戏时间先于来源)
+- [动作设计与素材确认](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md#动作设计与素材确认)
+- [真实素材审阅与验收](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md#真实素材审阅与验收)
+- [设计与美术的边界](../../cocos-domain-contracts/resources/frame-animation/references/workflow-integration.md#设计与美术的边界)
+- [一致性及衔接门](../../cocos-domain-contracts/resources/frame-animation/references/image-inbetween.md#关键帧的一致性与衔接门)
+- [视频节奏整理](../../cocos-domain-contracts/resources/frame-animation/references/action-timing.md#视频节奏整理)
+- [按区域抽帧](../../cocos-domain-contracts/resources/frame-animation/references/region-planning.md#按区域抽帧)
+- [图片递归补帧](../../cocos-domain-contracts/resources/frame-animation/references/image-inbetween.md)
+- [普通动画](../../cocos-domain-contracts/resources/frame-animation/references/object-animation.md)
+- [角色动作动画](../../cocos-domain-contracts/resources/frame-animation/references/character-animation.md)
+- [特效动画](../../cocos-domain-contracts/resources/frame-animation/references/effect-animation.md)
+- [UI 帧动画](../../cocos-domain-contracts/resources/frame-animation/references/ui-frame-animation.md)
 <!-- native-source:cocos-frame-animation:end -->
 
 
@@ -561,12 +565,12 @@ Creator 资源、`sp.Skeleton` 组件、Scene/Node/Prefab、AssetDB 和构建操
 node <skill-dir>/scripts/spine_reskin_progress.mjs --help
 ```
 
-正式原版目录可用 `inspect --asset-dir <原版资源目录>` 或 `init --asset-dir <原版资源目录>`；独立 Skeleton/Atlas/Page 会直接审计，Cocos `sp.SkeletonData` 的 `_atlasText`/`_skeletonJson` 会先导出到独立规范化候选目录，绝不改写源目录。`init` 必须同时传入控制面 manifest，绑定 Work Item、production contract 和适用的 V2 方案证据。
+正式原版目录可用 `inspect --asset-dir <原版资源目录>` 或 `init --asset-dir <原版资源目录>`；独立 Skeleton/Atlas/Page 会直接审计，Cocos `sp.SkeletonData` 的 `_atlasText`/`_skeletonJson` 会先导出到独立规范化候选目录，绝不改写源目录。`init` 必须同时传入控制面 manifest，绑定 Work Item、production contract 和适用的 V3 方案证据。
 
 进度清单必须是 schema v3。所有会修改清单的命令使用跨进程锁和原子写入；禁止手动编辑状态伪造完成。详细规则见：
 
 - [Skeleton 审计与升级](../../cocos-spine-generative-reskin/references/skeleton-upgrade.md)
-- [批次计划与人工锁定](../../cocos-spine-generative-reskin/references/batch-review.md)
+- [批次计划与人工锁定](../../app-domain-toolkit/references/spine-reskin/batch-review.md)
 - [运行态验证与最终交付](../../cocos-spine-generative-reskin/references/runtime-validation.md)
 - [状态、恢复与锁](../../cocos-spine-generative-reskin/references/progress-state.md)
 - [Atlas 重建](../../cocos-spine-generative-reskin/references/atlas-rebuild.md)
@@ -609,16 +613,16 @@ pending → generating → generated → validating → packing → packed → r
 <a id="mode-cocos-game-ui-layout--cocos-creator-3x-游戏-ui-布局"></a>
 ### Cocos Creator 3.x 游戏 UI 布局
 
-正式渲染 Node、Canvas UI 与独立显示层统一遵守[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)：具有 `UITransform` 的节点默认使用中心 `anchorPoint=(0.5, 0.5)`；例外逐对象记录原因并换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V4 正式 Scene 中验证运行遮挡。
+正式渲染 Node、Canvas UI 与独立显示层统一遵守[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)：具有 `UITransform` 的节点默认使用中心 `anchorPoint=(0.5, 0.5)`；例外逐对象记录原因并换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。
 
 UI 布局参照按[场景与弹窗尺寸参照](../../cocos-game-ui-layout/references/layout-hierarchy.md#场景与弹窗尺寸参照)统一确定：全屏 UI 的父级是场景，按场景逻辑尺寸相对布局；弹窗有底板时，内容按底板对应功能容器的宽高相对布局；弹窗没有底板时，按宿主场景逻辑尺寸相对布局。弹窗底板容器本身相对场景定位，简单结构中底板 Sprite 节点可直接兼任容器根；全屏装饰背景仍是独立显示层。安全区约束关键内容的可见范围，不替换这三种尺寸参照。
 
-效果图 V2 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。Widget 只在已确认的父/祖先参照和单一位置所有权下使用，兄弟参照、图文整体居中及 REFLOW/SCROLL 交给共享布局；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
+效果图 V3 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。Widget 只在已确认的父/祖先参照和单一位置所有权下使用，兄弟参照、图文整体居中及 REFLOW/SCROLL 交给共享布局；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
 
 <a id="mode-cocos-game-ui-layout--全局控制接入"></a>
 #### 全局控制接入
 
-位置参照根 `viewport`/`safe-area` 使用合成布局几何，不代表同名 Creator Node，也不能作为 Widget target，直接参照时由 `SHARED` 处理。`viewport` 使用当前完整逻辑视口；`safe-area` 使用整批节点统一的实际安全区矩形。已存在的实际 Canvas 等父/祖先节点才可作为 Widget target。位置与尺寸驱动器分开判定，Widget 定位和共享或自身 Layout 尺寸计算可顺序协作，只有同一属性出现多个并行写入者才是冲突；V4 组件快照规则见 [Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)，完整策略见 [Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)。
+位置参照根 `viewport`/`safe-area` 使用合成布局几何，不代表同名 Creator Node，也不能作为 Widget target，直接参照时由 `SHARED` 处理。`viewport` 使用当前完整逻辑视口；`safe-area` 使用整批节点统一的实际安全区矩形。已存在的实际 Canvas 等父/祖先节点才可作为 Widget target。位置与尺寸驱动器分开判定，Widget 定位和共享或自身 Layout 尺寸计算可顺序协作，只有同一属性出现多个并行写入者才是冲突；V5 组件快照规则见 [Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)，完整策略见 [Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)。
 
 
 
@@ -633,7 +637,7 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 
 项目公共布局策略文件（`schema_version=1.0.0`）统一保存可见 Scene、HUD、弹窗和 `DISPLAY_LAYER` 共用的 `logicalViewportSpace`、`designResolutionPolicy`、`canvasBackingPolicy`、`runtimeDprPolicy`、`maxRuntimeDpr`、`scaleMode`、Camera、输入、安全区、resize、方向、文字/资源分辨率、性能预算、代表性视口与运行证据要求。effect-image 的 schema 2.0.0 UI 合同只引用该文件，不复制共享配置；普通 UI schema 1.2.0 按[普通 UI 模板](../../cocos-game-ui-layout/assets/ordinary-ui-layout-contract-template.yaml)维护其已有合同结构。`orientationPolicy.allowed` 声明项目支持的方向；`designResolutionPolicy` 只需提供这些方向的分支，`targets.orientations` 与其一致。竖屏以 1080×1920 为设计基准并按宽度适配，横屏以 1920×1080 为设计基准并按高度适配；另一轴随视口展开或裁切。Canvas 填满 CSS 视口，装饰性背景等比 cover，禁止黑边。Canvas backing 由 CSS 尺寸乘有效 DPR（向上取整）得到，物理像素不得直接用于布局或命中。
 
-运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。Creator `scaleMode` 按冻结设计分辨率选择 `FIXED_WIDTH`、`FIXED_HEIGHT` 或有实测证据的 `custom`；实施包必须证明实际设计视口、Camera 映射、Canvas/backing 尺寸、输入变换和 DPR 的关系，不能只靠声明模式或构建面板状态认定高分屏适配通过。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V4 必须独立记录其运行轨迹。
+运行时 DPR 从设备动态读取，非法输入回退 1，正有限值封顶 2，且必须覆盖 resize、显示密度变化以及双方向项目的方向切换并清理监听器。资源生产 DPR 固定基线为 1（逻辑尺寸 1:1），必须与运行时 DPR 分离。Creator `scaleMode` 按冻结设计分辨率选择 `FIXED_WIDTH`、`FIXED_HEIGHT` 或有实测证据的 `custom`；实施包必须证明实际设计视口、Camera 映射、Canvas/backing 尺寸、输入变换和 DPR 的关系，不能只靠声明模式或构建面板状态认定高分屏适配通过。弹窗默认继承宿主逻辑视口、DPR、安全区、Camera 和输入合同，V5 必须独立记录其运行轨迹。
 
 <a id="mode-cocos-game-ui-layout--视觉语言默认原则"></a>
 #### 视觉语言默认原则
@@ -647,22 +651,22 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 <a id="mode-cocos-game-ui-layout--核心流程"></a>
 #### 核心流程
 
-正式场景的布局校准与关键几何验收读取[布局校准与参考还原](../../cocos-game-ui-layout/references/layout-calibration.md)。V4 直接消费冻结 V2 布局与 V3 正式资源，在实际 Cocos Scene 中调整并复验受影响范围；布局矩形与素材可见边界分别检查，不能用可用性通过代替参考还原。
+正式场景的布局校准与关键几何验收读取[布局校准与参考还原](../../cocos-game-ui-layout/references/layout-calibration.md)。V5 直接消费冻结 V3 布局与 V4 正式资源，在实际 Cocos Scene 中调整并复验受影响范围；布局矩形与素材可见边界分别检查，不能用可用性通过代替参考还原。
 
 1. 读取项目的 GDD/TDD、当前候选、总控审核漏斗和适用视觉阶段；确定稳定 UI ID、坐标空间、参照物、状态与平台输入。
-2. 普通 UI 使用 schema 1.2.0 [普通合同模板](../../cocos-game-ui-layout/assets/ordinary-ui-layout-contract-template.yaml)；effect-image 使用 schema 2.0.0 [引用式合同模板](../../cocos-game-ui-layout/assets/ui-layout-contract-template.yaml)，精确字段见[JSON Schema](../../cocos-game-ui-layout/references/ui-layout-contract.schema.json)，并按[项目公共策略模板](../../cocos-game-ui-layout/assets/project-ui-layout-policy-template.yaml)建立共享策略。V2 分组、真实父子、定位参照、`ui_layout`、位置/尺寸权限、中心策略、RAW/九宫格计划和 `layout_execution` 只保存在同批 `layout-nodes.json`，由 scene contract 的 `layout_decomposition.layout_source.nodes_file` 指向。节点坐标由文件的 `doc.viewport` 统一定义；UI 引用合同不内联节点树或运行快照；annotation/confirmation 只记身份与图像确认依据，且其 `layout_nodes_file` 必须与 source 路径一致。Stage A proposal 是历史确认输入；Stage B decision 是生成输入。用户按图要求改变分组或父子时，从新的 Stage A 确认重生成；布局 PNG、`review.html` 和快照是只读投影，不回写 proposal，也不能另存手工事实。两次人工图像确认保持独立。
-3. V3 正式资源验收后直接进入 V4：按[正式场景视觉还原与校准](../../cocos-game-asset-integration/references/visual-alignment-authoring.md)从 scene contract 引用的 V2 `layout-nodes.json` 读取唯一布局事实，并消费 V3 验收资源，在正式 Scene 接入实际交互、动态数据和 required state。坐标、尺寸和响应式调整写入正式布局配置；改变确认的分组、父子或定位事实时回到 V2 重生成、重确认。具体 Cocos 视口、Camera、输入与幂等重排规则见[Cocos 适配参考](../../cocos-game-ui-layout/references/cocos-adapter.md)。
-4. schema 2.0.0 默认以 V2 检查：`node scripts/validate_ui_layout_contract.mjs <ref-contract> --project-root . --stage V2`（`--stage` 默认 `V2`）。V4 可运行 `node scripts/validate_ui_layout_contract.mjs <ref-contract> --project-root . --stage V4 --check-files`；引用合同、公共策略、场景合同和唯一 layout source 始终真实读取，`--check-files` 再检查对应正式文件证据。纯函数测试才可显式注入 Map，不能用于正式文件门自证。
+2. 普通 UI 使用 schema 1.2.0 [普通合同模板](../../cocos-game-ui-layout/assets/ordinary-ui-layout-contract-template.yaml)；effect-image 使用 schema 2.0.0 [引用式合同模板](../../cocos-game-ui-layout/assets/ui-layout-contract-template.yaml)，精确字段见[JSON Schema](../../cocos-game-ui-layout/references/ui-layout-contract.schema.json)，并按[项目公共策略模板](../../cocos-game-ui-layout/assets/project-ui-layout-policy-template.yaml)建立共享策略。V3 分组、真实父子、定位参照、`ui_layout`、位置/尺寸权限、中心策略、RAW/九宫格计划和 `layout_execution` 只保存在同批 `layout-nodes.json`，由 scene contract 的 `layout_decomposition.layout_source.nodes_file` 指向。节点坐标由文件的 `doc.viewport` 统一定义；UI 引用合同不内联节点树或运行快照；annotation/confirmation 只记身份与图像确认依据，且其 `layout_nodes_file` 必须与 source 路径一致。Stage A proposal 是历史确认输入；Stage B decision 是生成输入。用户按图要求改变分组或父子时，从新的 Stage A 确认重生成；布局 PNG、`review.html` 和快照是只读投影，不回写 proposal，也不能另存手工事实。两次人工图像确认保持独立。
+3. V4 正式资源验收后直接进入 V5：按[正式场景视觉还原与校准](../../cocos-game-asset-integration/references/visual-alignment-authoring.md)从 scene contract 引用的 V3 `layout-nodes.json` 读取唯一布局事实，并消费 V4 验收资源，在正式 Scene 接入实际交互、动态数据和 required state。坐标、尺寸和响应式调整写入正式布局配置；改变确认的分组、父子或定位事实时回到 V3 重生成、重确认。具体 Cocos 视口、Camera、输入与幂等重排规则见[Cocos 适配参考](../../cocos-game-ui-layout/references/cocos-adapter.md)。
+4. schema 2.0.0 默认以 V3 检查：`node scripts/validate_ui_layout_contract.mjs <ref-contract> --project-root . --stage V3`（`--stage` 默认 `V3`）。V5 可运行 `node scripts/validate_ui_layout_contract.mjs <ref-contract> --project-root . --stage V5 --check-files`；引用合同、公共策略、场景合同和唯一 layout source 始终真实读取，`--check-files` 再检查对应正式文件证据。纯函数测试才可显式注入 Map，不能用于正式文件门自证。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-正式场景依据项目现有 Cocos Scene 结构和布局合同实现。V2 锚点、父子 bounds、资源 origin 与 Cocos 父级局部坐标分别处理，祖先偏移只累计一次。V4 直接加载已验收资源并在真实 Cocos Scene 中组合；背景覆盖按实际可见视口计算，图片按冻结 fit/裁切规则呈现，不能缩进安全区、留边或平移露出空隙。图片 fit 和 Cocos 文字字段按适配参考执行；资源/字体未就绪、布局或渲染异常必须令运行验收失败。Scene 创建、唤醒和 resize 使用同一幂等布局入口；发布画面不含编辑辅助内容。运行证据来自正式场景的实际消费与画面。
+正式场景依据项目现有 Cocos Scene 结构和布局合同实现。V3 锚点、父子 bounds、资源 origin 与 Cocos 父级局部坐标分别处理，祖先偏移只累计一次。V5 直接加载已验收资源并在真实 Cocos Scene 中组合；背景覆盖按实际可见视口计算，图片按冻结 fit/裁切规则呈现，不能缩进安全区、留边或平移露出空隙。图片 fit 和 Cocos 文字字段按适配参考执行；资源/字体未就绪、布局或渲染异常必须令运行验收失败。Scene 创建、唤醒和 resize 使用同一幂等布局入口；发布画面不含编辑辅助内容。运行证据来自正式场景的实际消费与画面。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
 <a id="mode-cocos-game-ui-layout--effect-image-场景绑定"></a>
 #### effect-image 场景绑定
 
-当 Work Item 的 `effect_image_reconstruction.applicability=effect-image` 时，独立 UI 合同只以 `scene_contract_file` 引用场景合同。场景的 `layout_decomposition.layout_source` 必须仅含 `nodes_file`，并指向同批已确认 `layout-nodes.json`；annotation 与 confirmation 各自只保留身份/证据，其 `layout_nodes_file` 必须与该路径逐字匹配。禁止在 UI 合同或 scene contract 复制 `layout_nodes`/`layoutNodes`、`regions`、`scope.ui_ids`、`fidelity` 或运行快照。项目范围的 viewport/DPR/Camera/input/safe-area/resize/方向/文字与资源/性能/`targets`/`coordinate_spaces` 放在 `project_policy_file`；场景级 V2 事实留在唯一节点源，scene contract 中的绑定与确认对象只引用其身份及证据。V2 节点直接进入 V3/V4 还原；其他 viewport 默认验证确认的不变量和可用性，只有 `visual_validation.mode=exact` 或明确精确需求时才要求目标 viewport 的严格还原。
+当 Work Item 的 `effect_image_reconstruction.applicability=effect-image` 时，独立 UI 合同只以 `scene_contract_file` 引用场景合同。场景的 `layout_decomposition.layout_source` 必须仅含 `nodes_file`，并指向同批已确认 `layout-nodes.json`；annotation 与 confirmation 各自只保留身份/证据，其 `layout_nodes_file` 必须与该路径逐字匹配。禁止在 UI 合同或 scene contract 复制 `layout_nodes`/`layoutNodes`、`regions`、`scope.ui_ids`、`fidelity` 或运行快照。项目范围的 viewport/DPR/Camera/input/safe-area/resize/方向/文字与资源/性能/`targets`/`coordinate_spaces` 放在 `project_policy_file`；场景级 V3 事实留在唯一节点源，scene contract 中的绑定与确认对象只引用其身份及证据。V3 节点直接进入 V4/V5 还原；其他 viewport 默认验证确认的不变量和可用性，只有 `visual_validation.mode=exact` 或明确精确需求时才要求目标 viewport 的严格还原。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
@@ -696,6 +700,11 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 - [证据矩阵](../../cocos-game-ui-layout/references/evidence-matrix.md)
 - [拆解时确定九宫格](../../cocos-game-asset-integration/references/nine-slice-ui.md)
 - [游戏内文案](../../cocos-game-ui-layout/references/game-copy.md)
+
+<a id="mode-cocos-game-ui-layout--ui-相对布局约束"></a>
+#### UI 相对布局约束
+
+UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
 <!-- native-source:cocos-game-ui-layout:end -->
 
 
@@ -725,7 +734,7 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 | --- | --- |
 | `.workflow-control/work-items/`、审批账本、状态迁移/返工记录 | 保留；终态也不自动删除，历史记录支撑追踪和审计 |
 | 控制面中的实施包、执行状态、Result、Evidence Manifest、验证清单和路径/归属绑定文件 | 按 `.workflow-control/` 下工具实际路径保留，包括 `user-resolutions/` 视觉确认账本与回执；失效不等于可删 |
-| V2 拆解与布局确认、V3 正式资源/生产记录、V4 实现与运行证据 | 保留完整依赖闭包，包括原图、JSON、审阅页、运行证据及宿主上下文 |
+| V3 拆解与布局确认、V4 正式资源/生产记录、V5 实现与运行证据 | 保留完整依赖闭包，包括原图、JSON、审阅页、运行证据及宿主上下文 |
 | 明确属于本任务的临时日志、临时导出、失败候选、重复预览、可再生成构建或缓存 | 证明无引用、无运行占用且可再生成后，纳入清理清单 |
 | 源码、正式资源、源素材/视频、用户交付物、锁文件、测试夹具、发布产物 | 默认保留；不是一般中间产物 |
 
@@ -903,28 +912,28 @@ MCP 若提供的 Build/Preview 操作只打开构建面板或报告 worker ready
 <a id="mode-cocos-game-asset-integration--场景还原合同effect-image-强制"></a>
 ##### 场景还原合同（effect-image 强制）
 
-V2 拆解先遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)：确认区域、功能组件、部件和独立元素的功能归属及理由，再分别记录真实父级与位置参照。位置依赖方不必成为被参照元素的直接子项；`parent_element_id` 表达功能/状态/交互/生命周期或真实布局管理归属，可选 `ui_layout.position_reference_id` 表达定位依据，省略时默认实际父级。共同表达同一信息的元素可同属组件并保持同级。简单“底板+图标+文本”优先由底板 Sprite 节点兼任容器根，使用 `element_type=container`、`render_kind=sprite`、`kind=component|region` 并保留自身 `component_id`/`placement_id` 图片身份；不拆成空根和底板叶子。只有确有独立职责时才新增纯结构容器；若它包裹可用底板和内容，必须填写 `ui_layout.independent_container_reason`。布局不得按文字类型、元素类别、显示层序或几何包含重新分组，也不得为满足校验增加包装容器；归属不明留在拆解确认，不自动生成可放行布局。中心轴严格居中、显式中心偏移、图文组合整体居中及位置确认规则按[居中策略与组合定位](../../cocos-game-ui-layout/references/center-alignment.md)执行。Widget 适用条件、参照、唯一位置驱动器及尺寸授权按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)执行；拆解图的位置只提供测量，不能替代停靠意图确认。明确视觉溢出、RAW 原尺寸及九宫格尺寸规则按 UI 布局参考执行。
+V3 拆解先遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)：确认区域、功能组件、部件和独立元素的功能归属及理由，再分别记录真实父级与位置参照。位置依赖方不必成为被参照元素的直接子项；`parent_element_id` 表达功能/状态/交互/生命周期或真实布局管理归属，可选 `ui_layout.position_reference_id` 表达定位依据，省略时默认实际父级。共同表达同一信息的元素可同属组件并保持同级。简单“底板+图标+文本”优先由底板 Sprite 节点兼任容器根，使用 `element_type=container`、`render_kind=sprite`、`kind=component|region` 并保留自身 `component_id`/`placement_id` 图片身份；不拆成空根和底板叶子。只有确有独立职责时才新增纯结构容器；若它包裹可用底板和内容，必须填写 `ui_layout.independent_container_reason`。布局不得按文字类型、元素类别、显示层序或几何包含重新分组，也不得为满足校验增加包装容器；归属不明留在拆解确认，不自动生成可放行布局。中心轴严格居中、显式中心偏移、图文组合整体居中及位置确认规则按[居中策略与组合定位](../../cocos-game-ui-layout/references/center-alignment.md)执行。Widget 适用条件、参照、唯一位置驱动器及尺寸授权按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)执行；拆解图的位置只提供测量，不能替代停靠意图确认。明确视觉溢出、RAW 原尺寸及九宫格尺寸规则按 UI 布局参考执行。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
-3. foundation-only 基础实施完成后，V1 建立功能规格、玩法视觉契约、必要低保真/灰盒与预算，只定义契约，不写正式场景功能代码；Work Item 指定效果图为还原目标时，V1 同时按[视觉还原](../../cocos-game-asset-integration/references/visual-reconstruction.md)生成或接收并冻结 scene master/reference target、宿主上下文效果图、参考身份、对比条件、可观察视觉事实和初步还原草案。需求或基线已明确时，V1 记录 `AUTO` 并直接提供场景目标/宿主上下文预览；只有产品方向、玩法语义或结构存在实质歧义时才询问。V2 保持“拆解图确认 → 布局图确认”的串行硬门：阶段 A 在内部完成状态分析、组件/placement、生产路线、技术 JSON 与 `decomposition_elements`，直接展示按确认顺序编号的拆解 PNG，只请用户看图确认；技术记录供代理和机器门使用，不另行要求阅读或确认。阶段 B 在拆解图确认后自动生成逐元素对齐决策和唯一 `layout-nodes.json`，并生成布局 PNG 与 `review.html`；scene contract 的 `layout_decomposition.layout_source.nodes_file` 直接引用该节点文件，布局 annotation/confirmation 只记录身份和图像证据。用户直接检查最终布局图/预览并独立确认；Stage A proposal 是历史确认输入，Stage B decision 是生成输入，PNG/review/派生快照仅为只读投影。分组或父子关系要改时从 Stage A 原规则更新、重生成并重新确认，不在 UI/scene contract 中维护第二份节点树，也不回写 proposal。无需先提交文字布局方案；布局只在冻结原图上叠加父子框与说明，不重新生成或替换视觉参考图，也不提供多个布局方案。
-4. schema 1.5 `visual-assets.json` 先声明 `effect_image_reconstruction`：普通资产为 `not-applicable`，不要求还原工件；效果图还原为 `effect-image`。后者冻结目标后、进入 V3 前以 `v2-ready` 完成合同回对和 coverage，V2/V3 可暂无 fidelity case；只有 V4 验证完成才为 `v4-complete` 并要求全部 case 通过。效果图 coverage 逐区登记 `annotation_number` 与 `implementation_plan`，先完成 ownership/实现分类，再做带实际证据文件、冻结目标文件、分析 ID 和完成时间的 `state_analysis`，严格在 component inventory 之前完成，最后按唯一原子部件填写 `component_inventory`、placements 与 `expected_assets`；编号不是资产数量单位。视觉来源与装配方式必须分开：`visual_route_analysis` 只能在独立 coverage region 上选择 `image-asset` 或 `cocos-native`，`assembly_analysis` 再独立声明原子 Scene 装配、禁止整屏捕获并允许独立图片资产；不得从“不能整屏贴图”推导 `runtime-program`。如果同一视觉事实同时包含程序逻辑与独立视觉资产，必须回到 V1/PROPOSAL 重新划分 coverage/annotation：图片外观进入独立 image-asset region，程序行为进入独立 cocos-native/runtime region，分别进入各自生产与运行逻辑合同。禁止使用单一 `composite` region 或 `composite_parts` 在一个区域内闭环生产、验收。全部区域均为 `cocos-native` 时必须提供绑定目标文件、完整 region 集合和独立 JSON 工件 的 `all_native_justification`，文件门会读取实际文件并逐区核对资格事实。状态分析必须覆盖普通、selected/active、disabled、pressed/hover、victory/defeat/paused，实际适用写 `required`，不适用写 `not-applicable+reason`。② 顶部 6 个按钮必须 6 个 component；⑧ 的 3 个相同底部表面可登记 1 个 component+3 个 placements，⑨ 的动作图标按实际复用关系登记；③、④、⑦ 只有在明确单部件且其余状态不适用时才保持单图。默认 individual 模式禁止横向组图；`image_generation_required=true` 的生成式位图使用 `individual + atlas_allowed=false`，其 `expected_assets.width/height` 由验证器按逻辑像素 `ceil(max placement width/height × intended_scale_range.max)` 自动计算，必须精确为最小尺寸；`scene_asset_usage.max_dpr` 必须严格为数字 `1`，`padding_policy` 必须为 `none`，尺寸合同本身不需要 human_review。这里的 1 表示图片按最大约定逻辑显示尺寸 1:1 生产；运行时实际 DPR 按设备动态读取并封顶为 2。历史 1.5/2 倍生产证据须重生成或标记 `stale`。其他生产方法只有在显式合同下才能使用完整 `atlas_slice` 图集。每个 placement 必须声明 `interaction_required`，真实 `interaction_hotspots` 只能按 placement 一一绑定且不计入视觉资产。确认图仍同时呈现 `generate-now`、`reuse-existing` 和 `runtime-program`，但 PNG 仅绘制用户摘要与“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签；placement ID、坐标尺寸、组件/状态/资产技术字段不进入可见行。运行 `--proposal` 时，这些技术字段完整写入拆解分析技术 JSON，并与 PNG 元数据、实际区域定义及现有 confirmation 业务字段绑定。系统按提示词、参考输入、材质、透明需求和可用能力决定是否使用图像生成；`independent-production` 与 `generate-now` 不作任何生成器推断。V2 再按 [资产生产路线](../../cocos-game-asset-integration/references/asset-production-routes.md) 选择路线。
+3. foundation-only 基础实施完成后，V1 建立功能规格并实现、验证功能，低保真或白盒按需使用；V2 基于已验证功能确认玩法视觉契约与预算；Work Item 指定效果图为还原目标时，V2 同时按[视觉还原](../../cocos-game-asset-integration/references/visual-reconstruction.md)生成或接收并冻结 scene master/reference target、宿主上下文效果图、参考身份、对比条件、可观察视觉事实和初步还原草案。需求或基线已明确时，V2 记录 `AUTO` 并直接提供场景目标/宿主上下文预览；只有产品方向、玩法语义或结构存在实质歧义时才询问。V3 保持“拆解图确认 → 布局图确认”的串行硬门：阶段 A 在内部完成状态分析、组件/placement、生产路线、技术 JSON 与 `decomposition_elements`，直接展示按确认顺序编号的拆解 PNG，只请用户看图确认；技术记录供代理和机器门使用，不另行要求阅读或确认。阶段 B 在拆解图确认后自动生成逐元素对齐决策和唯一 `layout-nodes.json`，并生成布局 PNG；需要交互对照时使用 `--interactive-review` 生成同批 `review.html`。scene contract 的 `layout_decomposition.layout_source.nodes_file` 直接引用该节点文件，布局 annotation/confirmation 只记录身份和图像证据。用户直接检查最终布局图/预览并独立确认；Stage A proposal 是历史确认输入，Stage B decision 是生成输入，PNG/review/派生快照仅为只读投影。分组或父子关系要改时从 Stage A 原规则更新、重生成并重新确认，不在 UI/scene contract 中维护第二份节点树，也不回写 proposal。无需先提交文字布局方案；布局只在冻结原图上叠加父子框与说明，不重新生成或替换视觉参考图，也不提供多个布局方案。
+4. schema 1.5 `visual-assets.json` 先声明 `effect_image_reconstruction`：普通资产为 `not-applicable`，不要求还原工件；效果图还原为 `effect-image`。后者冻结目标后、进入 V4 前以 `v3-ready` 完成合同回对和 coverage，V3/V4 可暂无 fidelity case；只有 V5 验证完成才为 `v5-complete` 并要求全部 case 通过。效果图 coverage 逐区登记 `annotation_number` 与 `implementation_plan`，先完成 ownership/实现分类，再做带实际证据文件、冻结目标文件、分析 ID 和完成时间的 `state_analysis`，严格在 component inventory 之前完成，最后按唯一原子部件填写 `component_inventory`、placements 与 `expected_assets`；编号不是资产数量单位。视觉来源与装配方式必须分开：`visual_route_analysis` 只能在独立 coverage region 上选择 `image-asset` 或 `cocos-native`，`assembly_analysis` 再独立声明原子 Scene 装配、禁止整屏捕获并允许独立图片资产；不得从“不能整屏贴图”推导 `runtime-program`。如果同一视觉事实同时包含程序逻辑与独立视觉资产，必须回到 V2/PROPOSAL 重新划分 coverage/annotation：图片外观进入独立 image-asset region，程序行为进入独立 cocos-native/runtime region，分别进入各自生产与运行逻辑合同。禁止使用单一 `composite` region 或 `composite_parts` 在一个区域内闭环生产、验收。全部区域均为 `cocos-native` 时必须提供绑定目标文件、完整 region 集合和独立 JSON 工件 的 `all_native_justification`，文件门会读取实际文件并逐区核对资格事实。状态分析必须覆盖普通、selected/active、disabled、pressed/hover、victory/defeat/paused，实际适用写 `required`，不适用写 `not-applicable+reason`。② 顶部 6 个按钮必须 6 个 component；⑧ 的 3 个相同底部表面可登记 1 个 component+3 个 placements，⑨ 的动作图标按实际复用关系登记；③、④、⑦ 只有在明确单部件且其余状态不适用时才保持单图。默认 individual 模式禁止横向组图；`image_generation_required=true` 的生成式位图使用 `individual + atlas_allowed=false`，其 `expected_assets.width/height` 由验证器按逻辑像素 `ceil(max placement width/height × intended_scale_range.max)` 自动计算，必须精确为最小尺寸；`scene_asset_usage.max_dpr` 必须严格为数字 `1`，`padding_policy` 必须为 `none`，尺寸合同本身不需要 human_review。这里的 1 表示图片按最大约定逻辑显示尺寸 1:1 生产；运行时实际 DPR 按设备动态读取并封顶为 2。历史 1.5/2 倍生产证据须重生成或标记 `stale`。其他生产方法只有在显式合同下才能使用完整 `atlas_slice` 图集。每个 placement 必须声明 `interaction_required`，真实 `interaction_hotspots` 只能按 placement 一一绑定且不计入视觉资产。确认图仍同时呈现 `generate-now`、`reuse-existing` 和 `runtime-program`，但 PNG 仅绘制用户摘要与“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签；placement ID、坐标尺寸、组件/状态/资产技术字段不进入可见行。运行 `--proposal` 时，这些技术字段完整写入拆解分析技术 JSON，并与 PNG 元数据、实际区域定义及现有 confirmation 业务字段绑定。系统按提示词、参考输入、材质、透明需求和可用能力决定是否使用图像生成；`independent-production` 与 `generate-now` 不作任何生成器推断。V3 再按 [资产生产路线](../../cocos-game-asset-integration/references/asset-production-routes.md) 选择路线。
    路线按可观察视觉事实和 Cocos 实际渲染能力判断，不按“按钮”“面板”等语义，也不以静态/动态作为唯一条件。文本、纯色矩形、基础几何、规则边框、可确定性表达的简单规则渐变、遮罩和进度填充，在 Cocos 原生能力可精确表达冻结外观时可选 `cocos-native`；特色插画、复杂纹饰、不规则轮廓、复杂材质及明显具有美术特征的装饰使用独立图片路线。原生路线冻结 `native_suitability.render_contract` 的 renderer、尺寸、颜色、线宽、圆角、渐变、透明度、适用状态和不支持特征；无法支持的视觉特征必须阻断，不能近似替代后通过。
    图片、图片局部和文字先按[完整拆解与视觉显著性](../../cocos-game-asset-integration/references/asset-production-routes.md#完整拆解与视觉显著性)登记可独立部件，保持功能、交互与状态联动；明显美术外观优先位图，低显著性操作文字考虑系统文本，简单填充考虑原生绘制。再核对[完整程序还原资格](../../cocos-game-asset-integration/references/asset-production-routes.md#程序还原资格与位图回退)：程序必须完整实现方案要求保留的外观；主体与效果无法可靠分离时保留完整原子视觉部件。动态/本地化文字按[文字路线判定](../../cocos-game-ui-layout/references/layout-contract.md#文字路线判定)保留可变能力，不在实现时静默简化已确认的美术效果。
    色彩填充同样按[色彩填充路线判定](../../cocos-game-asset-integration/references/asset-production-routes.md#色彩填充路线判定)拆分：明显材质和光影保留独立位图，有风格的重复表面优先复用贴图，低显著性基础填充考虑原生绘制；动态比例和状态仍保持可变，不能把填充与边框、辉光或纹饰混作纯色区域。
    外观来源与行为装配分别记录和绑定；例如按钮可由原生框体、独立图标图片和 Creator `Label` 文字组成，并通过明确组件/节点引用接入交互，不合并为 `composite` 区域。`image_generation_required=true` 一经冻结不得自动换成原生路线，只能遵循明确接受的 Change Request 变更。
-5. V2 可运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V2`；V3 正式验收运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3 --check-files --project-root .`，V4 正式验收运行同命令但使用 `--stage V4`。独立弹窗工作项必须额外传入 `--work-item-type DISPLAY_LAYER`，场景工作项默认按 `SCENE` 校验；该参数只改变显示层作用域，不把弹窗纳入宿主场景验收。V3 逐项验证真实资源文件、来源/许可信息（如适用）、预算、冻结基线、coverage 和 `production_contract_audit`；V4 验证正式 Scene 消费、运行组合、F2 两类机器证据、F3 runtime replay 与适用 fidelity cases。
+5. V3 可运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3`；V4 正式验收运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V4 --check-files --project-root .`，V5 正式验收运行同命令但使用 `--stage V5`。独立弹窗工作项必须额外传入 `--work-item-type DISPLAY_LAYER`，场景工作项默认按 `SCENE` 校验；该参数只改变显示层作用域，不把弹窗纳入宿主场景验收。V4 逐项验证真实资源文件、来源/许可信息（如适用）、预算、冻结基线、coverage 和 `production_contract_audit`；V5 验证正式 Scene 消费、运行组合、F2 两类机器证据、F3 runtime replay 与适用 fidelity cases。
 6. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 
-透明路线由 `expected_assets.transparency_requirements` 冻结策略与 `edge_profile`。只有 `hard-edge` 且主体与纯色背景明显区分时才可走 `background-removal`；复杂边缘禁止阈值去背。`direct-alpha` 必须匹配已验证的工具、版本和边缘类型，并用 PNG 解码证明真实透明像素；generation record 顶层 `generator/generator_version` 是实际身份，`capability.tool/tool_version` 必须与之相同。`mask-composition` 必须绑定独立遮罩或人工创作的实际输入和工具参数。能力不足时报告缺口，不提高容差、硬抠轮廓、删除光效或伪造结果。生成记录按实际路线登记生成器身份、参数、输入/输出 SHA 和后处理；归一化保持比例、Alpha 和主体边界，并禁止把棋盘格预览烘焙进素材。每个候选都生成浅底与深底预览，V4 完成主体缺损、残留背景、色边和半透明区域的视觉检查。已有真实透明图按资源复用合同接入，不伪造生成或去背记录。`image_generation_required=true` 的冻结合同不能由透明路线判断或提示词生成器自动替换。
-7. V2 前的灰盒或视觉样片必须与正式运行链隔离，不得注册正式入口或实现正式业务逻辑；V2 确认后生产 V3 正式资源；V4 在正式 Cocos Scene 中实现功能并消费已验收资源，禁止一次性截图 Scene、整屏铺图、隐藏覆盖层和绝对叠层凑像素。V4 在正式功能实现之后与玩法协作完成结构化集成、动态验收和低保真清理；上游事实或当前受影响候选身份变化时才使对应 fidelity case 失效重采，其他单元证据继续有效。
+透明路线由 `expected_assets.transparency_requirements` 冻结策略与 `edge_profile`。只有 `hard-edge` 且主体与纯色背景明显区分时才可走 `background-removal`；复杂边缘禁止阈值去背。`direct-alpha` 必须匹配已验证的工具、版本和边缘类型，并用 PNG 解码证明真实透明像素；generation record 顶层 `generator/generator_version` 是实际身份，`capability.tool/tool_version` 必须与之相同。`mask-composition` 必须绑定独立遮罩或人工创作的实际输入和工具参数。能力不足时报告缺口，不提高容差、硬抠轮廓、删除光效或伪造结果。生成记录按实际路线登记生成器身份、参数、输入/输出 SHA 和后处理；归一化保持比例、Alpha 和主体边界，并禁止把棋盘格预览烘焙进素材。每个候选都生成浅底与深底预览，V5 完成主体缺损、残留背景、色边和半透明区域的视觉检查。已有真实透明图按资源复用合同接入，不伪造生成或去背记录。`image_generation_required=true` 的冻结合同不能由透明路线判断或提示词生成器自动替换。
+7. V1 可按已授权范围实现并验证正式功能，白盒按需使用；视觉样片不能伪装成正式可交互场景。V3 确认后生产 V4 正式资源；V5 在正式 Cocos Scene 中实现功能并消费已验收资源，禁止一次性截图 Scene、整屏铺图、隐藏覆盖层和绝对叠层凑像素。V5 在正式功能实现之后与玩法协作完成结构化集成、动态验收和低保真清理；上游事实或当前受影响候选身份变化时才使对应 fidelity case 失效重采，其他单元证据继续有效。
 
 正式效果图标注命令必须带 `--proposal <file>.json`；省略该参数直接失败，不生成只有用户图示的成功产物。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 
-布局生成的标准交付除 PNG 外必须包含同一候选目录的唯一 `layout-nodes.json`、`layout-decision.json`、自包含 `review.html` 和 `generation-result.json`。正式 `scene_reconstruction_contract.layout_decomposition.layout_source.nodes_file`、annotation 和 confirmation 的 `layout_nodes_file` 必须指向同一节点文件；`layout_binding`、annotation 与 confirmation 只保存身份/证据，不能复制节点树。布局审阅页只用于可读的人工作业，不能替代拆解确认、独立布局确认或 PNG/F2 机器门；其模板、真实文件与业务绑定、候选状态和离线边界见 [`离线布局审阅产物`](../../cocos-game-ui-layout/references/layout-review-artifacts.md)。
+布局生成的标准交付除 PNG 外必须包含同一候选目录的唯一 `layout-nodes.json`、`layout-decision.json` 和 `generation-result.json`；需要交互对照时通过 `--interactive-review` 额外生成同批自包含 `review.html`。正式 `scene_reconstruction_contract.layout_decomposition.layout_source.nodes_file`、annotation 和 confirmation 的 `layout_nodes_file` 必须指向同一节点文件；`layout_binding`、annotation 与 confirmation 只保存身份/证据，不能复制节点树。布局审阅页只用于可读的人工作业，不能替代拆解确认、独立布局确认或 PNG/F2 机器门；其模板、真实文件与业务绑定、候选状态和离线边界见 [`离线布局审阅产物`](../../cocos-game-ui-layout/references/layout-review-artifacts.md)。
 
-V2 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边与可伸展区域评估九宫格，记录适用/不适用原因及源图尺寸、四边切片值；采用九宫格时，选择随已有拆解确认冻结并贯穿 V3 小图生产与 V4 正式场景实现。具体合同读取[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)，V3 生产按冻结切片参数执行。普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，使用正式 SpriteFrame 的完整未裁切原尺寸；即使底板兼任容器根并有子项，也保留 RAW 原尺寸计划。运行时 RAW 只要求 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，不禁止 Node 缩放/动画或 SHARED 坐标变换；视觉 bounds 另行验收。只有冻结九宫格图片派生 `SLICED + CUSTOM` 与目标宽高。九点停靠（水平/垂直对齐、锚点和偏移）表示位置意图，与九宫格纹理切片独立，不触发 CUSTOM。普通图片不得使用 `STRETCH`/`FLEX` 尺寸策略，父级 Creator Layout、Widget 或其他尺寸驱动器不得改写其 `UITransform.contentSize`；其 `size_driver` 固定为 `SPRITE_RAW`。`widget_stretch_axes` 使尺寸由 `WIDGET` 控制，其他显式 `size_driver` 必须与 `size_policy` 匹配。父级 Creator Layout 排布活动子节点位置时，子节点必须由原生 Layout 控制位置；自定义项目布局器用 `SHARED` 驱动并保留 `PARENT` 职责；当前节点原生 Layout 以 `CONTAINER` 计算自身尺寸时，可在先计算尺寸后使用 Widget 定位。纯结构容器、文字与命中区域的尺寸独立管理。具体边界见[图片原尺寸与九宫格尺寸](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)、[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)及[Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)。
+V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边与可伸展区域评估九宫格，记录适用/不适用原因及源图尺寸、四边切片值；采用九宫格时，选择随已有拆解确认冻结并贯穿 V4 小图生产与 V5 正式场景实现。具体合同读取[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)，V4 生产按冻结切片参数执行。普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，使用正式 SpriteFrame 的完整未裁切原尺寸；即使底板兼任容器根并有子项，也保留 RAW 原尺寸计划。运行时 RAW 只要求 `UITransform.contentSize` 等于正式 SpriteFrame 原尺寸，不禁止 Node 缩放/动画或 SHARED 坐标变换；视觉 bounds 另行验收。只有冻结九宫格图片派生 `SLICED + CUSTOM` 与目标宽高。九点停靠（水平/垂直对齐、锚点和偏移）表示位置意图，与九宫格纹理切片独立，不触发 CUSTOM。普通图片不得使用 `STRETCH`/`FLEX` 尺寸策略，父级 Creator Layout、Widget 或其他尺寸驱动器不得改写其 `UITransform.contentSize`；其 `size_driver` 固定为 `SPRITE_RAW`。`widget_stretch_axes` 使尺寸由 `WIDGET` 控制，其他显式 `size_driver` 必须与 `size_policy` 匹配。父级 Creator Layout 排布活动子节点位置时，子节点必须由原生 Layout 控制位置；自定义项目布局器用 `SHARED` 驱动并保留 `PARENT` 职责；当前节点原生 Layout 以 `CONTAINER` 计算自身尺寸时，可在先计算尺寸后使用 Widget 定位。纯结构容器、文字与命中区域的尺寸独立管理。具体边界见[图片原尺寸与九宫格尺寸](../../cocos-game-ui-layout/references/cocos-adapter.md#图片原尺寸与九宫格尺寸)、[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)及[Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)。
 
 <a id="mode-cocos-game-asset-integration--条件参考"></a>
 #### 条件参考
@@ -943,7 +952,7 @@ V2 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边�
 <a id="mode-cocos-game-asset-integration--视觉确认边界"></a>
 ##### 视觉确认边界
 
-同一场景 Work Item 的 V0→V1→V2→V3→V4 链在 V2 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG/`review.html`；技术 JSON、proposal 和 decision 在后台用于机器校验与身份绑定，不构成额外文字确认门。Stage A proposal 是历史确认输入，Stage B decision 是唯一布局生成输入；同批 `layout-nodes.json` 保存唯一分组/父子/参照/布局事实，并由 scene contract 的 `layout_source.nodes_file` 引用。`layout_binding`、annotation 与 confirmation 只存身份/证据，且它们的 `layout_nodes_file` 必须匹配 source 路径。`visual-decomposition-confirmation/1.0` 绑定拆解 PNG、proposal、target、V2 candidate、diff、baseline、全部编号和用户原文；已确认分组或父子变化必须按原规则重生成并重新确认。Stage B 布局修改从 decision 派生更新，不回写 Stage A proposal；PNG、`review.html` 和派生快照是只读投影。V2 拆解图、技术 JSON、布局节点源、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图、decision 和同一 `layout_nodes_file`。V3 资源验收和 V4 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V2 图像确认。
+同一场景 Work Item 的 V0→V1→V2→V3→V4→V5 链在 V3 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG（需要交互对照时可使用同批 `review.html`）；技术 JSON、proposal 和 decision 在后台用于机器校验与身份绑定，不构成额外文字确认门。Stage A proposal 是历史确认输入，Stage B decision 是唯一布局生成输入；同批 `layout-nodes.json` 保存唯一分组/父子/参照/布局事实，并由 scene contract 的 `layout_source.nodes_file` 引用。`layout_binding`、annotation 与 confirmation 只存身份/证据，且它们的 `layout_nodes_file` 必须匹配 source 路径。`visual-decomposition-confirmation/1.0` 绑定拆解 PNG、proposal、target、V3 candidate、diff、baseline、全部编号和用户原文；已确认分组或父子变化必须按原规则重生成并重新确认。Stage B 布局修改从 decision 派生更新，不回写 Stage A proposal；PNG、`review.html` 和派生快照是只读投影。V3 拆解图、技术 JSON、布局节点源、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图、decision 和同一 `layout_nodes_file`。V4 资源验收和 V5 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V3 图像确认。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 

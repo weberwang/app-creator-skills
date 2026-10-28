@@ -1,4 +1,5 @@
 import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { isAbsolute, relative, resolve, sep } from 'node:path';
 import { isValidIsoTimestamp } from './timestamp-contract.mjs';
 
@@ -73,15 +74,15 @@ export function validateArtBrief(brief) {
   return errors;
 }
 
-/** 检查 V4 人工美术验收与当前工作项、候选及真实动态文件绑定。 */
+/** 检查 V5 人工美术验收与当前工作项、候选及真实动态文件绑定。 */
 export function validateArtExperienceAcceptance(evidence, work, repo) {
   const errors = [];
   const visible = ['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType);
-  if (!visible || evidence.visualStage !== 'V4' || evidence.verdict !== 'PASS') return errors;
-  if (!text(evidence.candidateId) || !text(evidence.candidateVersion)) errors.push('V4 PASS 必须明确 candidateId 和 candidateVersion');
+  if (!visible || evidence.visualStage !== 'V5' || evidence.verdict !== 'PASS') return errors;
+  if (!text(evidence.candidateId) || !text(evidence.candidateVersion)) errors.push('V5 PASS 必须明确 candidateId 和 candidateVersion');
   let acceptance;
   try { acceptance = readArtEvidenceFile(repo, evidence.artExperienceAcceptanceRef, true); }
-  catch { return [...errors, 'V4 PASS 缺少可读取的 artExperienceAcceptanceRef 人工美术验收材料']; }
+  catch { return [...errors, 'V5 PASS 缺少可读取的 artExperienceAcceptanceRef 人工美术验收材料']; }
   if (!shape(acceptance, ['schemaVersion', 'workItemId', 'candidateId', 'candidateVersion', 'sceneId', 'displayLayerId', 'artBriefRef', 'qualityResults', 'scenarios', 'confirmedBy', 'confirmedAt', 'userMessageRef', 'userText'], 'artExperienceAcceptance', errors)) return errors;
   if (acceptance.schemaVersion !== '1.0') errors.push('美术验收 schemaVersion 无效');
   for (const key of ['workItemId', 'candidateId', 'candidateVersion']) if (!text(acceptance[key]) || acceptance[key] !== (key === 'workItemId' ? work.workItemId : evidence[key])) errors.push(`美术验收 ${key} 未绑定当前候选`);
@@ -100,7 +101,7 @@ export function validateArtExperienceAcceptance(evidence, work, repo) {
   if (!Array.isArray(acceptance.scenarios)) return [...errors, '美术验收缺少动态情境'];
   const seen = new Set();
   for (const scenario of acceptance.scenarios) {
-    if (!shape(scenario, ['id', 'required', 'reason', 'status', 'recordingPath', 'durationSeconds', 'startSeconds', 'endSeconds', 'eventCount', 'peakConcurrency', 'viewport', 'observations'], 'scenario', errors)) continue;
+    if (!shape(scenario, ['id', 'required', 'reason', 'status', 'recordingPath', 'durationSeconds', 'startSeconds', 'endSeconds', 'eventCount', 'peakConcurrency', 'viewport', 'observations', 'targetId', 'stateId', 'referenceTarget'], 'scenario', errors)) continue;
     if (!ART_SCENARIOS.includes(scenario.id) || seen.has(scenario.id)) errors.push('动态情境身份无效或重复');
     seen.add(scenario.id);
     if (typeof scenario.required !== 'boolean' || !text(scenario.reason)) errors.push('动态情境必须声明适用性和理由');
@@ -110,6 +111,15 @@ export function validateArtExperienceAcceptance(evidence, work, repo) {
       continue;
     }
     if (scenario.status !== 'PASS' || !text(scenario.observations)) errors.push('适用动态情境缺少通过的实际人工观察');
+    // 按目标登记的人工情境必须绑定真实目标内容，避免目标图替换后沿用旧记录。
+    if (['targetId', 'stateId', 'referenceTarget'].some((key) => scenario[key] !== undefined)) {
+      const ref = scenario.referenceTarget;
+      if (!text(scenario.targetId) || !text(scenario.stateId) || !shape(ref, ['path', 'sha256'], 'scenario.referenceTarget', errors) || !/^[a-f0-9]{64}$/.test(ref?.sha256 ?? '')) errors.push('动态情境目标身份必须完整绑定 targetId、stateId 和目标内容');
+      else try {
+        const path = readArtEvidenceFile(repo, ref.path);
+        if (createHash('sha256').update(readFileSync(path)).digest('hex') !== ref.sha256) errors.push('动态情境目标文件内容已变化');
+      } catch { errors.push('动态情境目标文件不存在或不可读取'); }
+    }
     try {
       if (!/\.(mp4|webm|mov|mkv)$/i.test(scenario.recordingPath ?? '')) throw new Error('不是动态文件');
       readArtEvidenceFile(repo, scenario.recordingPath);

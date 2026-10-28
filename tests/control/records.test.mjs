@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
@@ -9,15 +10,17 @@ import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/v
 import { advanceVisual, completeUnit, initializeWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { validateEvidence } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
+import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
+import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
 /** 创建独立临时项目并准备可冻结的工作项。 */
-async function createFixture({ id = 'records-sample', type = 'FOUNDATION', state = 'REVIEW' } = {}) {
+async function createFixture({ id = 'records-sample', type = 'FOUNDATION', state = 'REVIEW', stack = 'flutter' } = {}) {
   const repo = await mkdtemp(resolve(tmpdir(), 'app-workflow-records-'));
   const initialized = await initializeWork({
     repo,
-    args: { id, stack: 'flutter', type, objective: '验证自动生成计划与执行记录' },
+    args: { id, stack, type, objective: '验证自动生成计划与执行记录', ...(type === 'DISPLAY_LAYER' ? { 'host-id': 'home', 'layer-type': 'modal' } : {}) },
   });
   const workPath = initialized.metadata.workItemPath;
   const work = await readJson(repo, workPath);
@@ -129,6 +132,40 @@ test('从 Work Item 推导包身份、阶段、序号与结果路径，并收窄
   assert.equal(pack.executionUnits[0].resultPath, `${work.evidenceRoot}/unit-screen.json`);
   assert.equal(manifest.implementationPackageRef, work.implementationPackageRef.path);
   assert.deepEqual(manifest.items, []);
+});
+
+test('依赖路径别名不阻断计划、记录和执行单元迁移', async (t) => {
+  const fixture = await createFixture({ id: 'alias-records', type: 'PAGE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  await putJson(fixture.repo, 'deps/source.json', { workItemId: 'source' });
+  await putJson(fixture.repo, 'deps/case.json', { caseId: 'case' });
+  const work = await loadWork(fixture.repo, fixture.workPath);
+  work.visual.functionDependencies = [{ caseId: 'case', workItemRef: { path: './deps//source.json' }, evidenceRef: { path: 'deps/unused/../case.json', sha256: 'a'.repeat(64) } }];
+  await putJson(fixture.repo, fixture.workPath, work);
+  const started = await start(fixture, [unit('screen', { type: 'PAGE' })]);
+  const input = await writeReport(fixture, started.work, 'screen');
+  await recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'screen', reportPath: input.reportPath });
+  assert.equal((await completeUnit({ repo: fixture.repo, workItem: fixture.workPath, resultPath: started.pack.executionUnits[0].resultPath })).status, 'PASS');
+});
+
+test('显示层执行事实由报告明确绑定宿主，生成结果与 schema 一致', async (t) => {
+  const fixture = await createFixture({ id: 'layer-records', type: 'DISPLAY_LAYER' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const { work, pack } = await start(fixture, [unit('layer', { type: 'DISPLAY_LAYER' })]);
+  const input = await writeReport(fixture, work, 'layer');
+  await assert.rejects(recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'layer', reportPath: input.reportPath }), /未绑定当前宿主/);
+  await putJson(fixture.repo, input.reportPath, { ...input.report, hostId: 'other', layerType: 'modal' });
+  await assert.rejects(recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'layer', reportPath: input.reportPath }), /未绑定当前宿主/);
+  await putJson(fixture.repo, input.reportPath, { ...input.report, hostId: 'home', layerType: 'modal' });
+  await recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'layer', reportPath: input.reportPath });
+  const result = await readJson(fixture.repo, pack.executionUnits[0].resultPath);
+  assert.equal(result.hostId, 'home');
+  assert.equal(result.layerType, 'modal');
+  for (const path of ['execution-result', 'execution-report']) {
+    const schema = JSON.parse(await readFile(resolve('skills/app-workflow-control/schemas', `${path}.schema.json`), 'utf8'));
+    assert.equal(schema.properties.hostId.type, 'string');
+    assert.equal(schema.properties.layerType.type, 'string');
+  }
 });
 
 test('拒绝身份注入、未知字段、越界路径和覆盖控制记录的单元路径', async (t) => {
@@ -251,20 +288,60 @@ test('RETURN 后使用新计划源和 evidenceRoot 可冻结同一工作项的�
   assert.equal((await readJson(fixture.repo, replanned.evidenceRef.path)).items.length, 0);
 });
 
-test('V3→V4 阶段归档能授权重计划，未作废历史包仍会阻断', async (t) => {
+test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', async (t) => {
   const fixture = await createFixture({ id: 'visual-replan', type: 'PAGE', state: 'PROPOSAL' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  // 视觉阶段的历史包测试先实际完成 V1 工程证据，避免凭空构造功能基线。
+  let initial = await loadWork(fixture.repo, fixture.workPath);
+  initial.globalState = 'REVIEW';
+  await putJson(fixture.repo, fixture.workPath, initial);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  const v1 = await start(fixture, [unit('function-v1', { type: 'PAGE' })]);
+  const v1Evidence = [];
+  for (const category of loadProfile(fixture.repo, 'flutter').evidenceRequirements.engineering) {
+    const path = `${v1.work.evidenceRoot}/function-${category}.txt`;
+    await put(fixture.repo, path, '合成 V1 工程证据');
+    v1Evidence.push({ category, path });
+  }
+  const v1Report = await writeReport(fixture, v1.work, 'function-v1', { evidence: v1Evidence });
+  await recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'function-v1', reportPath: v1Report.reportPath });
+  await completeUnit({ repo: fixture.repo, workItem: fixture.workPath, resultPath: v1.pack.executionUnits[0].resultPath });
+  initial = await loadWork(fixture.repo, fixture.workPath);
+  initial.gateStatus.F3 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, initial);
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'VALIDATING', args: {} });
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'PASSED', args: {} });
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
   let work = await loadWork(fixture.repo, fixture.workPath);
+  work.allowedPaths = ['lib'];
   work.globalState = 'PASSED';
-  work.visual.stage = 'V3';
+  work.visual.stage = 'V4';
   work.visual.candidateId = 'candidate-v3';
+  // 阶段归档测试仍须提供可追溯的 V2/V3 确认，不能绕过上游图像绑定。
+  const targetPath = await put(fixture.repo, 'reviews/target.png', '真实目标内容');
+  const targetSha = createHash('sha256').update('真实目标内容').digest('hex');
+  const referenceTarget = { path: targetPath, sha256: targetSha };
+  for (const [name, stage, purpose] of [['V2', 'V2', 'target'], ['V3Decomposition', 'V3', 'decomposition'], ['V3Layout', 'V3', 'layout']]) {
+    const picturePath = name === 'V2' ? targetPath : await put(fixture.repo, `reviews/${name}.png`, name);
+    const pictureSha = name === 'V2' ? targetSha : createHash('sha256').update(name).digest('hex');
+    const reviewPath = `reviews/${name}.json`;
+    const review = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId, candidateId: work.visual.candidateId, stage, purpose, decision: 'APPROVED', userMessageRef: `chat://${name}`, targetRef: picturePath, targetSha256: pictureSha, referenceTarget };
+    if (name === 'V2') review.qualityChecks = await createQualityChecks(fixture.repo, 'reviews/v1-quality');
+    if (name === 'V3Layout') {
+      const decompositionPath = work.visual.reviews.V3Decomposition.path;
+      const bytes = await readFile(resolve(fixture.repo, decompositionPath));
+      review.decompositionReviewRef = { path: decompositionPath, sha256: createHash('sha256').update(bytes).digest('hex') };
+    }
+    await putJson(fixture.repo, reviewPath, review);
+    work.visual.reviews[name] = { path: reviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, reviewPath))).digest('hex') };
+  }
   for (const gate of ['F0', 'F1', 'F2', 'F3']) work.gateStatus[gate] = 'PASS';
   const oldPackagePath = '.workflow-control/implementation-packages/visual-replan-r1.json';
   const oldPlanPath = 'docs/v3-work-plan.json';
   const manifestPath = `${work.evidenceRoot}/manifest.json`;
   const pack = {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    workItemType: work.workItemType, visualStage: 'V3',
+    workItemType: work.workItemType, visualStage: 'V4',
     executionUnits: [{
       unitId: 'v3', sequence: 1, type: 'PAGE', owner: 'visual-agent', paths: ['lib/page.dart'],
       resultPath: `${work.evidenceRoot}/unit-v3.json`, acceptanceCommands: ['node --version'],
@@ -289,27 +366,39 @@ test('V3→V4 阶段归档能授权重计划，未作废历史包仍会阻断', 
   const userMessageRef = 'chat://v3-assets-reviewed';
   const assetReviewPath = 'reviews/v3-assets.json';
   await putJson(fixture.repo, assetReviewPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V3',
+    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4',
     candidateId: work.visual.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef,
     qualityChecks: await createQualityChecks(fixture.repo, 'reviews/v3-quality'),
     assets: [{ assetId: 'native-page', assetType: 'native-component', output: componentPath, componentEvidenceRef: componentEvidencePath }],
   });
-  work.assetReviewRef = { path: assetReviewPath };
+  work.assetReviewRef = { path: assetReviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, assetReviewPath))).digest('hex') };
   const v3ReviewPath = 'reviews/v3-human-review.json';
   await putJson(fixture.repo, v3ReviewPath, {
     schemaVersion: '1.0', objectId: work.visual.objectId, candidateId: work.visual.candidateId,
-    stage: 'V3', purpose: 'imported-assets', decision: 'APPROVED', userMessageRef,
+    stage: 'V4', purpose: 'imported-assets', decision: 'APPROVED', userMessageRef,
   });
-  work.visual.reviews.V3 = { path: v3ReviewPath };
+  work.visual.reviews.V4 = { path: v3ReviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, v3ReviewPath))).digest('hex') };
   await putJson(fixture.repo, manifestPath, {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    implementationPackageRef: oldPackagePath, visualStage: 'V3', items,
+    implementationPackageRef: oldPackagePath, visualStage: 'V4', items,
   });
+  // 阶段推进需要真实形状的完整执行状态及匹配的单元结果。
+  const commandOutput = await put(fixture.repo, `${work.evidenceRoot}/v4-command.log`, 'node --version\nv22\n');
+  await putJson(fixture.repo, pack.executionUnits[0].resultPath, {
+    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, implementationPackageRef: oldPackagePath,
+    unitId: 'v3', sequence: 1, status: 'PASS', exitCode: 0, files: [componentPath],
+    commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: commandOutput }],
+  });
+  await putJson(fixture.repo, `${work.evidenceRoot}/execution-state.json`, {
+    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, implementationPackageRef: oldPackagePath,
+    executionPlan: createExecutionPlanSnapshot(pack, { repo: fixture.repo }), units: [{ unitId: 'v3', sequence: 1, status: 'PASS' }], activeBatch: [],
+  });
+  await writeSingleDomainFixture(fixture.repo, work, 'V4');
   await putJson(fixture.repo, fixture.workPath, work);
 
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V4' });
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V5' });
   work = await loadWork(fixture.repo, fixture.workPath);
-  assert.equal(work.visual.stage, 'V4');
+  assert.equal(work.visual.stage, 'V5');
   assert.ok(work.invalidatedRefs.some((reference) => reference.path === oldPackagePath));
   // 移除直接失效索引，确认阶段归档本身也能证明该包已过期。
   work.invalidatedRefs = [];
@@ -320,7 +409,7 @@ test('V3→V4 阶段归档能授权重计划，未作废历史包仍会阻断', 
   await prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: newPlanPath });
   const replanned = await loadWork(fixture.repo, fixture.workPath);
   assert.equal(replanned.planningRef.path, newPlanPath);
-  assert.equal((await readJson(fixture.repo, replanned.implementationPackageRef.path)).visualStage, 'V4');
+  assert.equal((await readJson(fixture.repo, replanned.implementationPackageRef.path)).visualStage, 'V5');
 
   const orphan = await createFixture({ id: 'orphan-replan' });
   t.after(() => rm(orphan.repo, { recursive: true, force: true }));
@@ -395,6 +484,27 @@ test('有效结果可被既有 unit-check 和 Evidence Manifest 校验器消费'
   assert.equal(manifestResult.manifest.items.length, evidence.length);
   await completeUnit({ repo: fixture.repo, workItem: fixture.workPath, resultPath: pack.executionUnits[0].resultPath });
   assert.equal((await readJson(fixture.repo, `${work.evidenceRoot}/execution-state.json`)).units[0].status, 'PASS');
+});
+
+test('记录器保留逐目标证据绑定，拒绝未知场景目标', async (t) => {
+  const fixture = await createFixture({ id: 'scene-evidence', type: 'SCENE', stack: 'cocos' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const initial = await loadWork(fixture.repo, fixture.workPath);
+  initial.visual.targets = [{ targetId: 'view-one' }, { targetId: 'view-two' }];
+  await putJson(fixture.repo, fixture.workPath, initial);
+  const { work } = await start(fixture, [unit('scene', { type: 'SCENE', paths: ['assets/scene.ts'] })]);
+  const path = `${work.evidenceRoot}/shared-snapshot.txt`;
+  await put(fixture.repo, path, '同批真实运行证据');
+  const report = await writeReport(fixture, work, 'scene', { evidence: [
+    { category: 'runtime-layout', path, targetId: 'view-one' },
+    { category: 'runtime-layout', path, targetId: 'view-two' },
+  ] });
+  const invalid = { ...report.report, evidence: [{ category: 'runtime-layout', path, targetId: 'unknown-view' }] };
+  await putJson(fixture.repo, 'docs/invalid-view-report.json', invalid);
+  await assert.rejects(recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'scene', reportPath: 'docs/invalid-view-report.json' }), /未绑定当前场景视觉目标/);
+  await recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'scene', reportPath: report.reportPath });
+  const manifest = await readJson(fixture.repo, work.evidenceRef.path);
+  assert.deepEqual(manifest.items.map((item) => item.targetId), ['view-one', 'view-two']);
 });
 
 test('RELEASE.prepare 可用记录器合并正式准备材料并按既有门禁关闭', async (t) => {

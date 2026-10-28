@@ -18,8 +18,8 @@ import { validateResponsiveContract, validateResponsiveEvidenceManifest }
   from './.agents/skills/phaser-domain-contracts/scripts/responsive-viewport-contract.mjs';
 
 const errors = [
-  ...validateResponsiveContract(contract, { stage: 'V4' }),
-  ...validateResponsiveEvidenceManifest(observations, contract, { stage: 'V4', requiredUnits }),
+  ...validateResponsiveContract(contract, { stage: 'V5' }),
+  ...validateResponsiveEvidenceManifest(observations, contract, { stage: 'V5', requiredUnits }),
 ];
 if (errors.length) throw new Error(errors.join('\n'));
 ```
@@ -29,8 +29,8 @@ if (errors.length) throw new Error(errors.join('\n'));
 ## 实际工具入口
 
 - [initialize_project_docs.mjs](../../phaser4-game-orchestrator/scripts/initialize_project_docs.mjs) 在公共工作项范围内初始化 [project_doc_templates.mjs](../../phaser4-game-orchestrator/scripts/project_doc_templates.mjs) 的具体模板，工作项与写入路径使用项目相对路径。
-- [validate_visual_manifest.mjs](../../phaser4-game-asset-integration/scripts/validate_visual_manifest.mjs) 按 V2/V3/V4、`--check-files` 和真实项目根执行完整资源与视觉合同检查。
-- [image-inbetween-plan.mjs](../../phaser4-frame-animation/scripts/image-inbetween-plan.mjs) 保留帧序、循环及中间帧规划；视频/图片到图集、Spine、原生布局与图片处理仍使用各自专业入口。
+- [validate_visual_manifest.mjs](../../phaser4-game-asset-integration/scripts/validate_visual_manifest.mjs) 按 V3/V4/V5、`--check-files` 和真实项目根执行拆解、资源与运行视觉合同检查。
+- [image-inbetween-plan.mjs](../../phaser-domain-contracts/resources/frame-animation/scripts/image-inbetween-plan.mjs) 保留帧序、循环及中间帧规划；视频/图片到图集、Spine、原生布局与图片处理仍使用各自专业入口。
 
 ## 接入公共证据
 

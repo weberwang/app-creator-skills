@@ -13,8 +13,8 @@ import {
   validateImageGenerationContract,
   validateProductionContract,
   validateProductionMethodChangeRequest,
-  validateV4ProductionGate,
-  validateV4VisualManifest,
+  validateV5ProductionGate,
+  validateV5VisualManifest,
   validateVisualComponentContract,
   validateVisualEvidence,
   validateVisualProductionCoverage,
@@ -28,10 +28,10 @@ import { buildSolidBackgroundPrompt, DEFAULT_SOURCE_BACKGROUND_COLOR } from "./v
 
 const HASH = `sha256:${"a".repeat(64)}`;
 
-/** 阶段重命名后只分类 V2-V4，旧编号不能继续进入正式视觉生产范围。 */
-test("视觉生产阶段使用连续的 V2-V4 编号", () => {
-  for (const stageId of ["V2", "V3", "V4"]) assert.equal(isVisualProductionWork({ stageId }), true);
-  for (const stageId of ["V1", "V5", "V6"]) assert.equal(isVisualProductionWork({ stageId }), false);
+/** 阶段重命名后只分类 V3-V5，旧编号不能继续进入正式视觉生产范围。 */
+test("视觉生产阶段使用连续的 V3-V5 编号", () => {
+  for (const stageId of ["V3", "V4", "V5"]) assert.equal(isVisualProductionWork({ stageId }), true);
+  for (const stageId of ["V2", "V6", "V6"]) assert.equal(isVisualProductionWork({ stageId }), false);
 });
 
 const IMPLEMENTATION_PACKAGE_SCHEMA = JSON.parse(readFileSync(new URL("../references/implementation-package.schema.json", import.meta.url), "utf8"));
@@ -193,7 +193,7 @@ const IMAGEGEN_REGRESSION_FIXTURES = [
   { number: "⑨", annotation_number: 9, delivery_kind: "vector-image", mime_type: "image/svg+xml" },
 ];
 
-/** 组装固定回归夹具的完整 V4 清单，确保测试走总门而不是只拼接单项 helper。 */
+/** 组装固定回归夹具的完整 V5 清单，确保测试走总门而不是只拼接单项 helper。 */
 function v4FixtureManifest(fixture) {
   const componentId = `${fixture.number}-component`;
   const component = componentContract(componentId, fixture.number);
@@ -204,7 +204,7 @@ function v4FixtureManifest(fixture) {
   const placementIds = component.component_inventory.components[0].placements.map((placement) => placement.placement_id);
   const runtimeConsumption = { status: "passed", evidence: "runtime.json", ...identity, component_usages: [{ component_id: componentId, state_id: "default", asset_id: fixture.number, placement_ids: placementIds, runtime_file: `public/${fixture.number}.png`, runtime_sha256: HASH, status: "passed" }] };
   const audit = { status: "passed", candidate_version: "candidate-1", target_sha256: HASH, audited_at: "2026-08-15T00:00:00Z", units: [{ annotation_number: fixture.annotation_number, region_id: fixture.number, observed_method: "image-generation", observed_delivery_kind: fixture.delivery_kind, status: "passed", expected_assets: region.expected_assets, atomic_image_requirements: region.atomic_image_requirements, interaction_hotspots: [], actual_assets: [actualAsset], runtime_consumption: runtimeConsumption }] };
-  return { workItemId: "work-item-1", candidateVersion: "candidate-1", candidate_identity: { sha256: HASH, diff_fingerprint: "diff-1" }, visual_baseline: { style_fingerprint: HASH }, reference_target: { target_sha256: HASH }, coverage_audit: { regions: [region] }, assets: [asset], production_contract_audit: audit, visual_production_gate: { status: "passed", v3_status: "passed", implementation_package_status: "passed", v4_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "replay.json", ...identity }, fidelity_cases: [{ candidate_sha256: HASH, created_at: "2026-08-15T00:00:00Z", freshness_bound: true, evidence: "fidelity.json", ...identity }], candidate_sha256: HASH, target_sha256: HASH, runtime_consumption: runtimeConsumption, unapproved_substitution: false } };
+  return { workItemId: "work-item-1", candidateVersion: "candidate-1", candidate_identity: { sha256: HASH, diff_fingerprint: "diff-1" }, visual_baseline: { style_fingerprint: HASH }, reference_target: { target_sha256: HASH }, coverage_audit: { regions: [region] }, assets: [asset], production_contract_audit: audit, visual_production_gate: { status: "passed", v4_status: "passed", implementation_package_status: "passed", v5_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "replay.json", ...identity }, fidelity_cases: [{ candidate_sha256: HASH, created_at: "2026-08-15T00:00:00Z", freshness_bound: true, evidence: "fidelity.json", ...identity }], candidate_sha256: HASH, target_sha256: HASH, runtime_consumption: runtimeConsumption, unapproved_substitution: false } };
 }
 
 test("independent-production 显式 graphics 不推断 图像生成", () => {
@@ -230,13 +230,13 @@ test("SVG、Graphics 和 CanvasTexture 不能等价完成 图像生成", () => {
 
 test("图像生成 缺少生成记录和提示词时拒绝", () => {
   const contract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true });
-  const errors = validateImageGenerationContract({}, contract, { stage: "V3", annotation_number: 3, region_id: "r3" });
+  const errors = validateImageGenerationContract({}, contract, { stage: "V4", annotation_number: 3, region_id: "r3" });
   assert(errors.some((item) => item.includes("generation_record")));
 });
 
-test("V4 图像运行验收检查资源身份和实际消费，摘要错误不阻断", () => {
+test("V5 图像运行验收检查资源身份和实际消费，摘要错误不阻断", () => {
   const contract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true });
-  const errors = validateImageGenerationContract(imageGenAsset({ width: 0, sha256: "bad", runtime_consumption: null, runtime_consumed: true }), contract, { stage: "V4", annotation_number: 4, region_id: "r4" }, { requireRuntimeConsumption: true });
+  const errors = validateImageGenerationContract(imageGenAsset({ width: 0, sha256: "bad", runtime_consumption: null, runtime_consumed: true }), contract, { stage: "V5", annotation_number: 4, region_id: "r4" }, { requireRuntimeConsumption: true });
   assert(errors.some((item) => item.includes("width")));
   assert.equal(errors.some((item) => item.includes("SHA-256")), false, errors.join("\n"));
   assert(errors.some((item) => item.includes("runtime_consumption")));
@@ -255,20 +255,20 @@ test("生图分类允许不同实际生成器，但仍要求工具身份和版�
   }
 });
 
-test("V3 资源门不要求正式运行消费，V4 才要求逐部件 runtime_consumption", () => {
+test("V4 资源门不要求正式运行消费，V5 才要求逐部件 runtime_consumption", () => {
   const region = componentContract("component-v3", "asset-v3");
   const expected = region.expected_assets[0];
   const auditUnit = { actual_assets: [{ ...expected, file: expected.runtime_file, mime_type: "image/png", sha256: HASH, width: 64, height: 64, alpha: true, transparency_requirements: { strategy: "background-removal", edge_profile: "hard-edge" } }] };
-  assert.deepEqual(validateComponentAuditEvidence(region, auditUnit, { stage: "V3", annotation_number: 1, region_id: region.id }), []);
-  assert(validateComponentAuditEvidence(region, auditUnit, { stage: "V4", annotation_number: 1, region_id: region.id }).some((item) => item.includes("runtime_consumption.component_usages")));
+  assert.deepEqual(validateComponentAuditEvidence(region, auditUnit, { stage: "V4", annotation_number: 1, region_id: region.id }), []);
+  assert(validateComponentAuditEvidence(region, auditUnit, { stage: "V5", annotation_number: 1, region_id: region.id }).some((item) => item.includes("runtime_consumption.component_usages")));
 });
 
-test("文件门只对 V3 资源和 V4 正式验收开启，已移除阶段不作为运行门", () => {
+test("文件门只对 V4 资源和 V5 正式验收开启，已移除阶段不作为运行门", () => {
   const manifest = { effect_image_reconstruction: { applicability: "effect-image" } };
-  assert.equal(requiresVisualFileGate(manifest, "V3"), true);
-  assert.equal(requiresVisualFileGate(manifest, "V5"), false);
   assert.equal(requiresVisualFileGate(manifest, "V4"), true);
-  assert.equal(productionFileGateError(manifest, {}, "V4").startsWith("[V4]"), true);
+  assert.equal(requiresVisualFileGate(manifest, "V6"), false);
+  assert.equal(requiresVisualFileGate(manifest, "V5"), true);
+  assert.equal(productionFileGateError(manifest, {}, "V5").startsWith("[V5]"), true);
 });
 
 test("透明硬边去背必须保持已冻结背景与处理记录", () => {
@@ -328,14 +328,14 @@ test("图像生成 所有多路径入口逐项拒绝非法格式和重复别名"
   const contract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
   delete contract.runtime_implementation;
   const assetSourceFiles = imageGenAsset({ source_files: ["art/hero.png", "art/hero.webp"] });
-  const assetErrors = validateImageGenerationContract(assetSourceFiles, contract, { stage: "V3", annotation_number: 13, region_id: "asset-source-files" });
+  const assetErrors = validateImageGenerationContract(assetSourceFiles, contract, { stage: "V4", annotation_number: 13, region_id: "asset-source-files" });
   assert(assetErrors.some((item) => item.includes("扩展名仅允许") && item.includes("source_files")), assetErrors.join("\n"));
   const generationSourceFiles = imageGenAsset({ generation_record: { ...imageGenAsset().generation_record, source_files: ["art/hero.png", "art/hero.webp"] } });
-  const generationErrors = validateImageGenerationContract(generationSourceFiles, contract, { stage: "V3", annotation_number: 14, region_id: "generation-source-files" });
+  const generationErrors = validateImageGenerationContract(generationSourceFiles, contract, { stage: "V4", annotation_number: 14, region_id: "generation-source-files" });
   assert(generationErrors.some((item) => item.includes("扩展名仅允许") && item.includes("source_files")), generationErrors.join("\n"));
   const aliasContract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only", expected_assets: [{ asset_id: "alias-asset", source_file: "art/alias.png", sourceFile: "art/alias.webp", runtime_file: "public/alias.png", mime_type: "image/png" }] });
   delete aliasContract.runtime_implementation;
-  const aliasErrors = validateProductionContract(aliasContract, { stage: "V3", annotation_number: 15, region_id: "expected-asset-alias" });
+  const aliasErrors = validateProductionContract(aliasContract, { stage: "V4", annotation_number: 15, region_id: "expected-asset-alias" });
   assert(aliasErrors.some((item) => item.includes("别名") || item.includes("snake_case")), aliasErrors.join("\n"));
 
   const packageRegion = refreshAtomicRequirements({ ...multiComponentRegion(1), id: "package-imagegen-alias", annotation_number: 16, production_origin: "independent-production", production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
@@ -351,20 +351,20 @@ test("图像生成 source_files/sourceFiles 逐项检查，纯 PNG/JPG/JPEG 通�
   delete contract.runtime_implementation;
   for (const field of ["source_files", "sourceFiles"]) {
     const valid = imageGenAsset({ [field]: ["art/one.png", "art/two.jpg", "art/three.jpeg"] });
-    const validErrors = validateImageGenerationContract(valid, contract, { stage: "V3", annotation_number: 20, region_id: `${field}-valid` });
+    const validErrors = validateImageGenerationContract(valid, contract, { stage: "V4", annotation_number: 20, region_id: `${field}-valid` });
     assert(!validErrors.some((item) => item.includes("扩展名仅允许") || item.includes("source_files/sourceFiles")), validErrors.join("\n"));
     const validGeneration = imageGenAsset({ generation_record: { ...imageGenAsset().generation_record, [field]: ["art/one.png", "art/two.jpg", "art/three.jpeg"] } });
-    const validGenerationErrors = validateImageGenerationContract(validGeneration, contract, { stage: "V3", annotation_number: 20, region_id: `${field}-generation-valid` });
+    const validGenerationErrors = validateImageGenerationContract(validGeneration, contract, { stage: "V4", annotation_number: 20, region_id: `${field}-generation-valid` });
     assert(!validGenerationErrors.some((item) => item.includes("扩展名仅允许") || item.includes("source_files/sourceFiles")), validGenerationErrors.join("\n"));
     const mixed = imageGenAsset({ [field]: ["art/one.png", "art/two.webp", "art/three.jpeg"] });
-    const mixedErrors = validateImageGenerationContract(mixed, contract, { stage: "V3", annotation_number: 21, region_id: `${field}-mixed` });
+    const mixedErrors = validateImageGenerationContract(mixed, contract, { stage: "V4", annotation_number: 21, region_id: `${field}-mixed` });
     assert(mixedErrors.some((item) => item.includes("扩展名仅允许") && item.includes(field)), mixedErrors.join("\n"));
     const mixedGeneration = imageGenAsset({ generation_record: { ...imageGenAsset().generation_record, [field]: ["art/one.png", "art/two.webp", "art/three.jpeg"] } });
-    const mixedGenerationErrors = validateImageGenerationContract(mixedGeneration, contract, { stage: "V3", annotation_number: 21, region_id: `${field}-generation-mixed` });
+    const mixedGenerationErrors = validateImageGenerationContract(mixedGeneration, contract, { stage: "V4", annotation_number: 21, region_id: `${field}-generation-mixed` });
     assert(mixedGenerationErrors.some((item) => item.includes("扩展名仅允许") && item.includes(field)), mixedGenerationErrors.join("\n"));
   }
   const conflict = imageGenAsset({ source_files: ["art/one.png"], sourceFiles: ["art/two.webp"] });
-  const conflictErrors = validateImageGenerationContract(conflict, contract, { stage: "V3", annotation_number: 22, region_id: "source-file-alias-conflict" });
+  const conflictErrors = validateImageGenerationContract(conflict, contract, { stage: "V4", annotation_number: 22, region_id: "source-file-alias-conflict" });
   assert(conflictErrors.some((item) => item.includes("source_files/sourceFiles") && item.includes("冲突")), conflictErrors.join("\n"));
 });
 
@@ -375,29 +375,29 @@ test("图像生成 不得被 output/output_metadata 的合法顶层 MIME 掩盖"
     output: { mime_type: "image/png", file: "public/hero.png" },
     output_metadata: { mime_type: "image/webp", path: "public/hero.webp" },
   });
-  const nestedErrors = validateImageGenerationContract(nestedInvalid, contract, { stage: "V4", annotation_number: 23, region_id: "nested-output-metadata" });
+  const nestedErrors = validateImageGenerationContract(nestedInvalid, contract, { stage: "V5", annotation_number: 23, region_id: "nested-output-metadata" });
   assert(nestedErrors.some((item) => item.includes("output_metadata.mime_type") && item.includes("image/png 或 image/jpeg")), nestedErrors.join("\n"));
   assert(nestedErrors.some((item) => item.includes("output_metadata.path") && item.includes("扩展名仅允许")), nestedErrors.join("\n"));
 
   const nestedAliasConflict = imageGenAsset({
     output: { mime_type: "image/png", mimeType: "image/webp", file: "public/hero.png", path: "public/hero.webp" },
   });
-  const aliasErrors = validateImageGenerationContract(nestedAliasConflict, contract, { stage: "V4", annotation_number: 24, region_id: "nested-output-alias" });
+  const aliasErrors = validateImageGenerationContract(nestedAliasConflict, contract, { stage: "V5", annotation_number: 24, region_id: "nested-output-alias" });
   assert(aliasErrors.some((item) => item.includes("output.mime_type") && item.includes("冲突")), aliasErrors.join("\n"));
   assert(aliasErrors.some((item) => item.includes("output.file/path") && item.includes("冲突")), aliasErrors.join("\n"));
 
   const manifestAssetConflict = imageGenAsset({ mime_type: "image/png", output_file: "public/asset-a.png", output: { mime_type: "image/jpeg", file: "public/asset-b.png" } });
-  const manifestErrors = validateImageGenerationContract(manifestAssetConflict, contract, { stage: "V4", annotation_number: 25, region_id: "manifest-asset-identity" });
+  const manifestErrors = validateImageGenerationContract(manifestAssetConflict, contract, { stage: "V5", annotation_number: 25, region_id: "manifest-asset-identity" });
   assert(manifestErrors.some((item) => item.includes("统一输出身份MIME") && item.includes("冲突")), manifestErrors.join("\n"));
   assert(manifestErrors.some((item) => item.includes("统一输出身份路径") && item.includes("冲突")), manifestErrors.join("\n"));
 
   const generationRecordConflict = imageGenAsset({ generation_record: { ...imageGenAsset().generation_record, mime_type: "image/png", output_file: "public/generation-a.png", output: { mime_type: "image/jpeg", file: "public/generation-b.png" } } });
-  const generationErrors = validateImageGenerationContract(generationRecordConflict, contract, { stage: "V3", annotation_number: 26, region_id: "generation-record-identity" });
+  const generationErrors = validateImageGenerationContract(generationRecordConflict, contract, { stage: "V4", annotation_number: 26, region_id: "generation-record-identity" });
   assert(generationErrors.some((item) => item.includes("统一输出身份MIME") && item.includes("冲突")), generationErrors.join("\n"));
   assert(generationErrors.some((item) => item.includes("统一输出身份路径") && item.includes("冲突")), generationErrors.join("\n"));
 
   const consistent = imageGenAsset({ output: { mime_type: "image/png", file: "public/assets/hero.png" }, output_metadata: { mimeType: "image/png", path: "public/assets/hero.png" } });
-  const consistentErrors = validateImageGenerationContract(consistent, contract, { stage: "V3", annotation_number: 27, region_id: "consistent-output-identity" });
+  const consistentErrors = validateImageGenerationContract(consistent, contract, { stage: "V4", annotation_number: 27, region_id: "consistent-output-identity" });
   assert(!consistentErrors.some((item) => item.includes("统一输出身份")), consistentErrors.join("\n"));
 
   const authored = independentContract({ production_method: "authored-raster", delivery_kind: "raster-image", image_generation_required: false, generation_record_required: false, substitution_policy: "forbid", expected_assets: [{ asset_id: "authored-nested", source_file: "art/authored.webp", runtime_file: "public/authored.webp", output: { mime_type: "image/webp", file: "public/authored.webp" } }] });
@@ -405,7 +405,7 @@ test("图像生成 不得被 output/output_metadata 的合法顶层 MIME 掩盖"
   assert.deepEqual(validateProductionContract(authored), []);
 });
 
-test("V4 actual、runtime usage 和 runtime_outputs 的 snake/camel 别名冲突必须失败", () => {
+test("V5 actual、runtime usage 和 runtime_outputs 的 snake/camel 别名冲突必须失败", () => {
   const region = refreshAtomicRequirements({ ...multiComponentRegion(1), id: "v4-alias-region", annotation_number: 17, production_origin: "independent-production", production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
   region.expected_assets[0] = { ...region.expected_assets[0], mime_type: "image/png", width: 1, height: 1, alpha: true, transparency_requirements: { strategy: "background-removal", edge_profile: "hard-edge" }, sha256: HASH };
   refreshAtomicRequirements(region);
@@ -417,14 +417,14 @@ test("V4 actual、runtime usage 和 runtime_outputs 的 snake/camel 别名冲突
       component_usages: [{ component_id: expected.component_id, state_id: expected.state_id, asset_id: expected.asset_id, placement_ids: placementIds, runtime_file: expected.runtime_file, runtimeFile: "public/component-1.webp", runtime_sha256: HASH, status: "passed" }],
     },
   };
-  const errors = validateComponentAuditEvidence(region, auditUnit, { stage: "V4", annotation_number: 17, region_id: region.id });
+  const errors = validateComponentAuditEvidence(region, auditUnit, { stage: "V5", annotation_number: 17, region_id: region.id });
   assert(errors.some((item) => item.includes("file/path")), errors.join("\n"));
   assert(errors.some((item) => item.includes("mime_type/mimeType") || item.includes("mimeType")), errors.join("\n"));
   assert(errors.some((item) => item.includes("runtime_file/runtimeFile") || item.includes("runtimeFile")), errors.join("\n"));
 
   const contract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
   delete contract.runtime_implementation;
-  const outputAliasErrors = validateImageGenerationContract(imageGenAsset({ runtime_outputs: ["public/hero.png"], runtimeOutputs: ["public/hero.webp"] }), contract, { stage: "V4", annotation_number: 18, region_id: "runtime-output-alias" });
+  const outputAliasErrors = validateImageGenerationContract(imageGenAsset({ runtime_outputs: ["public/hero.png"], runtimeOutputs: ["public/hero.webp"] }), contract, { stage: "V5", annotation_number: 18, region_id: "runtime-output-alias" });
   assert(outputAliasErrors.some((item) => item.includes("runtime_outputs/runtimeOutputs") || item.includes("runtimeOutputs")), outputAliasErrors.join("\n"));
 });
 
@@ -433,7 +433,7 @@ test("图像生成 PNG/JPEG 通过且 authored-raster 的 WebP/AVIF/GIF/BMP 不�
   delete imageGenContract.runtime_implementation;
   for (const extension of ["png", "jpg", "jpeg"]) {
     const asset = imageGenAsset({ mime_type: extension === "png" ? "image/png" : "image/jpeg", source_file: `art/valid.${extension}`, runtime_outputs: [`public/valid.${extension}`] });
-    const errors = validateImageGenerationContract(asset, imageGenContract, { stage: "V3", annotation_number: 19, region_id: `imagegen-${extension}` });
+    const errors = validateImageGenerationContract(asset, imageGenContract, { stage: "V4", annotation_number: 19, region_id: `imagegen-${extension}` });
     assert(!errors.some((item) => item.includes("仅允许") || item.includes("扩展名仅允许")), errors.join("\n"));
   }
   for (const [extension, mime_type] of [["webp", "image/webp"], ["avif", "image/avif"], ["gif", "image/gif"], ["bmp", "image/bmp"]]) {
@@ -444,8 +444,8 @@ test("图像生成 PNG/JPEG 通过且 authored-raster 的 WebP/AVIF/GIF/BMP 不�
 });
 
 test("图像生成 错误包含阶段、annotation number、region ID、期望和观察方法", () => {
-  const errors = validateProductionContract(independentContract({ image_generation_required: true }), { stage: "V4", annotation_number: 6, region_id: "r6" });
-  assert.match(errors[0], /\[V4\].*annotation_number=6.*region_id=r6.*expected_method=.*observed_method=/);
+  const errors = validateProductionContract(independentContract({ image_generation_required: true }), { stage: "V5", annotation_number: 6, region_id: "r6" });
+  assert.match(errors[0], /\[V5\].*annotation_number=6.*region_id=r6.*expected_method=.*observed_method=/);
 });
 
 test("visualProductionUnits 拒绝重复编号和输出冲突", () => {
@@ -458,26 +458,26 @@ test("visualProductionUnits 拒绝重复编号和输出冲突", () => {
   assert(errors.some((item) => item.includes("输出路径与其他单元冲突")));
 });
 
-test("V4 production_contract_audit 必须逐区域匹配合同", async () => {
+test("V5 production_contract_audit 必须逐区域匹配合同", async () => {
   const manifest = {
     coverage_audit: { regions: [{ id: "r1", annotation_number: 1, owner_type: "fixed-production-visual", production_method: "cocos-graphics", delivery_kind: "runtime-drawing", production_origin: "independent-production", image_generation_required: false, generation_record_required: false, substitution_policy: "forbid", expected_assets: ["a"] }] },
     production_contract_audit: { status: "passed", candidate_version: "c1", audited_at: "2026-08-15T00:00:00Z", units: [{ annotation_number: 1, region_id: "r1", production_method: "authored-svg", delivery_kind: "vector-image", actual_assets: ["a"], status: "passed" }] },
   };
   const errors = await auditProductionContract(manifest, { checkFiles: false });
-  assert(errors.some((item) => item.includes("V4 实际生产方式")));
+  assert(errors.some((item) => item.includes("V5 实际生产方式")));
 });
 
-test("V4 拒绝缺少 runtime replay 和 freshness fidelity cases", () => {
-  const errors = validateV4ProductionGate({ visual_production_gate: { status: "passed", v3_status: "passed", implementation_package_status: "passed", v4_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "failed" } });
+test("V5 拒绝缺少 runtime replay 和 freshness fidelity cases", () => {
+  const errors = validateV5ProductionGate({ visual_production_gate: { status: "passed", v4_status: "passed", implementation_package_status: "passed", v5_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "failed" } });
   assert(errors.some((item) => item.includes("runtime replay")));
   assert(errors.some((item) => item.includes("fidelity_cases")));
 });
 
-test("V4 通过要求 freshness、消费和无未批准替换", () => {
+test("V5 通过要求 freshness、消费和无未批准替换", () => {
   const evidence = { status: "passed", evidence: "runtime.json", evidence_sha256: HASH, candidate_sha256: HASH, target_sha256: HASH, baseline_sha256: HASH, diff_fingerprint: "diff-1" };
-  const gate = { production_contract_audit: { status: "passed" }, visual_production_gate: { status: "passed", v2_status: "passed", v3_status: "passed", implementation_package_status: "passed", v4_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "replay.json" }, fidelity_cases: [{ candidate_sha256: HASH, created_at: "2026-08-15T00:00:00Z", freshness_bound: true }], runtime_consumption: evidence, unapproved_substitution: false } };
+  const gate = { production_contract_audit: { status: "passed" }, visual_production_gate: { status: "passed", v3_status: "passed", v4_status: "passed", implementation_package_status: "passed", v5_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "replay.json" }, fidelity_cases: [{ candidate_sha256: HASH, created_at: "2026-08-15T00:00:00Z", freshness_bound: true }], runtime_consumption: evidence, unapproved_substitution: false } };
   gate.visual_production_gate.candidate_sha256 = HASH; gate.visual_production_gate.target_sha256 = HASH;
-  assert.deepEqual(validateV4ProductionGate(gate), []);
+  assert.deepEqual(validateV5ProductionGate(gate), []);
 });
 
 test("production method 变更必须绑定 ACCEPTED Change Request、区域、候选、原文和时间", () => {
@@ -496,21 +496,21 @@ test("image_generation_required=false 不因 independent-production 或 generate
 
 test("编号②的六个顶部按钮不能由一张横向组图冒充", () => {
   const group = multiComponentRegion(6, "individual", [{ asset_id: "top-buttons-group", component_id: "top-buttons-group", state_id: "default", source_file: "art/top-buttons.png", runtime_file: "public/top-buttons.png" }]);
-  const errors = validateVisualComponentContract(group, { stage: "V3", annotation_number: 2, region_id: "top-buttons-region" });
+  const errors = validateVisualComponentContract(group, { stage: "V4", annotation_number: 2, region_id: "top-buttons-region" });
   assert(errors.some((item) => item.includes("component_id=component-1") && item.includes("expected_count=1") && item.includes("observed_count=0")));
 });
 
 test("编号⑧的三个底部表面和编号⑨的三个动作图标必须按部件独立交付", () => {
   for (const [annotation, count] of [[8, 3], [9, 3]]) {
     const shared = Array.from({ length: count }, (_, index) => ({ asset_id: "horizontal-group", component_id: `component-${index + 1}`, state_id: "default", source_file: "art/horizontal-group.png", runtime_file: "public/horizontal-group.png" }));
-    const errors = validateVisualComponentContract(multiComponentRegion(count, "individual", shared), { stage: "V3", annotation_number: annotation, region_id: `region-${annotation}` });
+    const errors = validateVisualComponentContract(multiComponentRegion(count, "individual", shared), { stage: "V4", annotation_number: annotation, region_id: `region-${annotation}` });
     assert(errors.some((item) => item.includes("横向组图") || item.includes("共享同一源/运行文件")), String(annotation));
   }
 });
 
 test("正确的六个独立按钮资源通过，单图区域可显式声明不适用状态", () => {
-  assert.deepEqual(validateVisualComponentContract(multiComponentRegion(6), { stage: "V3", annotation_number: 2, region_id: "top-buttons-region" }), []);
-  assert.deepEqual(validateVisualComponentContract(multiComponentRegion(1), { stage: "V3", annotation_number: 3, region_id: "single-region" }), []);
+  assert.deepEqual(validateVisualComponentContract(multiComponentRegion(6), { stage: "V4", annotation_number: 2, region_id: "top-buttons-region" }), []);
+  assert.deepEqual(validateVisualComponentContract(multiComponentRegion(1), { stage: "V4", annotation_number: 3, region_id: "single-region" }), []);
 });
 
 test("重复视觉部件只登记一个原子组件并用多个 placements 表达", () => {
@@ -523,13 +523,13 @@ test("重复视觉部件只登记一个原子组件并用多个 placements 表�
   assert.equal(region.component_inventory.component_count, 1);
   assert.equal(region.expected_assets.length, 1);
   assert.equal(region.atomic_image_requirements.length, 1);
-  assert.deepEqual(validateVisualComponentContract(region, { stage: "V3", annotation_number: 8, region_id: "bottom-surfaces" }), []);
+  assert.deepEqual(validateVisualComponentContract(region, { stage: "V4", annotation_number: 8, region_id: "bottom-surfaces" }), []);
 });
 
 test("缺少 selected 或 victory/defeat 状态分析时拒绝，不能只写 default", () => {
   const region = multiComponentRegion(1);
   region.state_analysis.states = region.state_analysis.states.filter((state) => !["selected", "victory", "defeat"].includes(state.state_id));
-  const errors = validateVisualComponentContract(region, { stage: "V3", annotation_number: 3, region_id: "missing-states" });
+  const errors = validateVisualComponentContract(region, { stage: "V4", annotation_number: 3, region_id: "missing-states" });
   assert(errors.some((item) => item.includes("缺少 selected 状态分析")));
   assert(errors.some((item) => item.includes("缺少 victory 状态分析")));
   assert(errors.some((item) => item.includes("缺少 defeat 状态分析")));
@@ -540,48 +540,48 @@ test("交互热区不计入视觉资产，合法 atlas 必须逐部件有唯一�
   const atlas = multiComponentRegion(6, "atlas", atlasAssets);
   atlas.component_inventory.components[0].placements[0].interaction_required = true;
   atlas.interaction_hotspots = [{ hotspot_id: "button-1-hit", component_id: "component-1", placement_id: "placement-1", bounds: { x: 0, y: 0, width: 32, height: 32 } }];
-  assert.deepEqual(validateVisualComponentContract(atlas, { stage: "V3", annotation_number: 2, region_id: "top-buttons-atlas" }), []);
+  assert.deepEqual(validateVisualComponentContract(atlas, { stage: "V4", annotation_number: 2, region_id: "top-buttons-atlas" }), []);
   const duplicatedSlice = structuredClone(atlas); duplicatedSlice.expected_assets[1].atlas_slice.slice_id = duplicatedSlice.expected_assets[0].atlas_slice.slice_id;
-  assert(validateVisualComponentContract(duplicatedSlice, { stage: "V3", annotation_number: 2, region_id: "top-buttons-atlas" }).some((item) => item.includes("atlas_slice identity")));
+  assert(validateVisualComponentContract(duplicatedSlice, { stage: "V4", annotation_number: 2, region_id: "top-buttons-atlas" }).some((item) => item.includes("atlas_slice identity")));
   const hotArea = structuredClone(multiComponentRegion(1)); hotArea.expected_assets[0].asset_kind = "hit-area";
-  assert(validateVisualComponentContract(hotArea, { stage: "V3", annotation_number: 3, region_id: "hot-area" }).some((item) => item.includes("交互热区")));
+  assert(validateVisualComponentContract(hotArea, { stage: "V4", annotation_number: 3, region_id: "hot-area" }).some((item) => item.includes("交互热区")));
 });
 
-test("V4 atlas actual_assets 必须复核 V3 切片身份", () => {
+test("V5 atlas actual_assets 必须复核 V4 切片身份", () => {
   const region = multiComponentRegion(2, "atlas", [
     { asset_id: "atlas", component_id: "component-1", state_id: "default", source_file: "art/atlas.png", runtime_file: "public/atlas.png", sha256: HASH, atlas_slice: { atlas_asset_id: "atlas", slice_id: "one", atlas_size: { width: 40, height: 20 }, rect: { x: 0, y: 0, width: 20, height: 20 } } },
     { asset_id: "atlas", component_id: "component-2", state_id: "default", source_file: "art/atlas.png", runtime_file: "public/atlas.png", sha256: HASH, atlas_slice: { atlas_asset_id: "atlas", slice_id: "two", atlas_size: { width: 40, height: 20 }, rect: { x: 20, y: 0, width: 20, height: 20 } } },
   ]);
   const baseUnit = { actual_assets: region.expected_assets.map((asset) => ({ ...asset })), runtime_consumption: { component_usages: [{ component_id: "component-1", state_id: "default", asset_id: "atlas", placement_ids: ["placement-1"], runtime_file: "public/atlas.png", runtime_sha256: HASH, status: "passed", atlas_slice: region.expected_assets[0].atlas_slice }, { component_id: "component-2", state_id: "default", asset_id: "atlas", placement_ids: ["placement-2"], runtime_file: "public/atlas.png", runtime_sha256: HASH, status: "passed", atlas_slice: region.expected_assets[1].atlas_slice }] } };
-  assert.deepEqual(validateComponentAuditEvidence(region, baseUnit, { stage: "V4", annotation_number: 2, region_id: "atlas" }), []);
+  assert.deepEqual(validateComponentAuditEvidence(region, baseUnit, { stage: "V5", annotation_number: 2, region_id: "atlas" }), []);
   const stale = structuredClone(baseUnit); stale.actual_assets[1].atlas_slice.slice_id = "wrong";
-  assert(validateComponentAuditEvidence(region, stale, { stage: "V4", annotation_number: 2, region_id: "atlas" }).some((item) => item.includes("atlas_slice identity")));
+  assert(validateComponentAuditEvidence(region, stale, { stage: "V5", annotation_number: 2, region_id: "atlas" }).some((item) => item.includes("atlas_slice identity")));
   const undersized = new Map([["atlas", { id: "atlas", width: 32, height: 20 }]]);
-  assert(validateComponentAuditEvidence(region, baseUnit, { stage: "V4", annotation_number: 2, region_id: "atlas" }, { manifestAssets: undersized }).some((item) => item.includes("尺寸不一致")));
+  assert(validateComponentAuditEvidence(region, baseUnit, { stage: "V5", annotation_number: 2, region_id: "atlas" }, { manifestAssets: undersized }).some((item) => item.includes("尺寸不一致")));
 });
 
-test("固定回归夹具①–④⑦–⑨只允许①⑦ PNG，错误交付被 V4/F2/V4 拒绝", async () => {
+test("固定回归夹具①–④⑦–⑨只允许①⑦ PNG，错误交付被 V5/F2/V5 拒绝", async () => {
   for (const fixture of IMAGEGEN_REGRESSION_FIXTURES) {
     const contract = independentContract({ production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, expected_assets: [{ asset_id: fixture.number, mime_type: fixture.mime_type }] });
     const asset = imageGenAsset({ mime_type: fixture.mime_type });
-    const v3Errors = validateImageGenerationContract(asset, contract, { stage: "V3", annotation_number: fixture.annotation_number, region_id: fixture.number });
+    const v3Errors = validateImageGenerationContract(asset, contract, { stage: "V4", annotation_number: fixture.annotation_number, region_id: fixture.number });
     const region = { id: fixture.number, annotation_number: fixture.annotation_number, owner_type: "fixed-production-visual", production_origin: "independent-production", production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "forbid", expected_assets: [{ asset_id: fixture.number, mime_type: fixture.mime_type }] };
     const v4Errors = await auditProductionContract({ coverage_audit: { regions: [region] }, production_contract_audit: { status: "passed", candidate_version: "fixture", audited_at: "2026-08-15T00:00:00Z", units: [{ annotation_number: fixture.annotation_number, region_id: fixture.number, observed_method: "image-generation", observed_delivery_kind: fixture.delivery_kind, status: "passed", expected_assets: [fixture.number], actual_assets: [{ file: `art/${fixture.number}.png`, mime_type: fixture.mime_type }], runtime_consumption: { status: "passed" } }] } }, { checkFiles: false });
     if (["①", "⑦"].includes(fixture.number)) assert.deepEqual(v3Errors, [], fixture.number);
     else {
-      assert(v3Errors.length > 0, `${fixture.number} V3 must reject non-PNG`);
-      assert(v4Errors.length > 0, `${fixture.number} V4 must reject non-PNG`);
+      assert(v3Errors.length > 0, `${fixture.number} V4 must reject non-PNG`);
+      assert(v4Errors.length > 0, `${fixture.number} V5 must reject non-PNG`);
     }
     const f2Errors = validateVisualF2MachineGate({ status: "failed", validationMode: "MACHINE", baselineHash: HASH, diffFingerprint: "diff-1" }, { stage: "F2" });
     assert(f2Errors.length > 0, `${fixture.number} F2 must reject failed machine validation`);
-    const gateErrors = validateV4ProductionGate({ visual_production_gate: { status: "failed", v3_status: "passed", implementation_package_status: "passed", v4_status: "failed", f2_status: "failed", f3_status: "failed" } });
-    assert(gateErrors.length > 0, `${fixture.number} V4 must reject failed upstream gate`);
-    const totalErrors = await validateV4VisualManifest(v4FixtureManifest(fixture));
-    assert(totalErrors.some((item) => item.includes("checkFiles=true") && item.includes("projectRoot")), `${fixture.number} V4 缺少文件门必须拒绝`);
+    const gateErrors = validateV5ProductionGate({ visual_production_gate: { status: "failed", v4_status: "passed", implementation_package_status: "passed", v5_status: "failed", f2_status: "failed", f3_status: "failed" } });
+    assert(gateErrors.length > 0, `${fixture.number} V5 must reject failed upstream gate`);
+    const totalErrors = await validateV5VisualManifest(v4FixtureManifest(fixture));
+    assert(totalErrors.some((item) => item.includes("checkFiles=true") && item.includes("projectRoot")), `${fixture.number} V5 缺少文件门必须拒绝`);
   }
 });
 
-test("F2/V4 Evidence 缺少显式文件门必须拒绝", () => {
+test("F2/V5 Evidence 缺少显式文件门必须拒绝", () => {
   const manifest = v4FixtureManifest(IMAGEGEN_REGRESSION_FIXTURES[0]);
   const pkg = { visualProductionUnits: [{ unitId: "U-1" }] };
   const evidence = { gateResults: { F2: manifest.visual_production_gate.f2_machine_validation, F3: { runtime_replay: manifest.visual_production_gate.runtime_replay } }, visual_production_gate: manifest.visual_production_gate };
@@ -630,23 +630,23 @@ test("Implementation Package 的来源、图像生成 开关和替换策略必�
 test("runtime_implementation.integration_files 重排等价、重复失败，文件方法与运行时方法互斥", () => {
   const runtime = runtimeRegionFixture();
   runtime.runtime_implementation.integration_files = ["src/components/b.mjs", "src/components/a.mjs"];
-  assert.deepEqual(validateVisualComponentContract(runtime, { stage: "V3", annotation_number: 1, region_id: runtime.id }), []);
+  assert.deepEqual(validateVisualComponentContract(runtime, { stage: "V4", annotation_number: 1, region_id: runtime.id }), []);
   const reordered = structuredClone(runtime);
   reordered.runtime_implementation.integration_files.reverse();
-  assert.deepEqual(validateVisualComponentContract(reordered, { stage: "V3", annotation_number: 1, region_id: runtime.id }), []);
+  assert.deepEqual(validateVisualComponentContract(reordered, { stage: "V4", annotation_number: 1, region_id: runtime.id }), []);
   const duplicate = structuredClone(runtime);
   duplicate.runtime_implementation.integration_files.push("src/components/./a.mjs");
-  assert(validateVisualComponentContract(duplicate, { stage: "V3", annotation_number: 1, region_id: runtime.id }).some((item) => item.includes("integration_files 不得重复")));
+  assert(validateVisualComponentContract(duplicate, { stage: "V4", annotation_number: 1, region_id: runtime.id }).some((item) => item.includes("integration_files 不得重复")));
 
   const authored = multiComponentRegion(1);
   Object.assign(authored, { production_method: "authored-raster", delivery_kind: "raster-image", image_generation_required: false, generation_record_required: false, substitution_policy: "forbid", runtime_implementation: { kind: "cocos-graphics", integration_files: ["src/components/main.mjs"] } });
-  const authoredErrors = validateVisualComponentContract(authored, { stage: "V3", annotation_number: 1, region_id: "authored-route" });
+  const authoredErrors = validateVisualComponentContract(authored, { stage: "V4", annotation_number: 1, region_id: "authored-route" });
   assert(authoredErrors.some((item) => item.includes("文件交付不得携带 runtime_implementation")), authoredErrors.join("\n"));
-  const nullRuntime = validateProductionContract({ ...authored, runtime_implementation: null }, { stage: "V3", annotation_number: 1, region_id: "authored-null-route" });
+  const nullRuntime = validateProductionContract({ ...authored, runtime_implementation: null }, { stage: "V4", annotation_number: 1, region_id: "authored-null-route" });
   assert(nullRuntime.some((item) => item.includes("文件交付不得携带 runtime_implementation")), nullRuntime.join("\n"));
   const missingRuntime = structuredClone(runtime);
   delete missingRuntime.runtime_implementation;
-  const missingErrors = validateVisualComponentContract(missingRuntime, { stage: "V3", annotation_number: 1, region_id: "runtime-route" });
+  const missingErrors = validateVisualComponentContract(missingRuntime, { stage: "V4", annotation_number: 1, region_id: "runtime-route" });
   assert(missingErrors.some((item) => item.includes("必须声明 runtime_implementation")), missingErrors.join("\n"));
 });
 
@@ -703,7 +703,7 @@ test("项目路径规范化拒绝 Windows 物理别名并保留合法点号文�
   const longAndAlias = multiComponentRegion(2);
   longAndAlias.expected_assets[0].source_file = "art/visual-long-name.png";
   longAndAlias.expected_assets[1].source_file = "art/VISUAL~1.png";
-  const aliasErrors = validateVisualComponentContract(longAndAlias, { stage: "V3", annotation_number: 2, region_id: "path-alias" });
+  const aliasErrors = validateVisualComponentContract(longAndAlias, { stage: "V4", annotation_number: 2, region_id: "path-alias" });
   assert(aliasErrors.some((item) => item.includes("expected_assets[1]") && item.includes("项目内相对路径")), aliasErrors.join("\n"));
 });
 
@@ -777,8 +777,8 @@ function multiImageGenerationManifest(count = 6) {
   return { workItemId: "work-item-1", candidateVersion: "candidate-1", candidate_identity: { sha256: HASH, diff_fingerprint: "diff-1" }, visual_baseline: { style_fingerprint: HASH }, reference_target: { target_sha256: HASH }, coverage_audit: { regions: [region] }, assets };
 }
 
-test("六按钮只有第一张有 generation_record 时，V3 必须逐部件拒绝其余五张", () => {
-  const errors = validateVisualProductionCoverage(multiImageGenerationManifest(6), { stage: "V3" });
+test("六按钮只有第一张有 generation_record 时，V4 必须逐部件拒绝其余五张", () => {
+  const errors = validateVisualProductionCoverage(multiImageGenerationManifest(6), { stage: "V4" });
   assert(errors.some((item) => item.includes("component_id=component-2") && item.includes("generation_record")), errors.join("\n"));
   assert(errors.some((item) => item.includes("component_id=component-6") && item.includes("generation_record")), errors.join("\n"));
 });
@@ -786,11 +786,11 @@ test("六按钮只有第一张有 generation_record 时，V3 必须逐部件拒�
 test("多部件 图像生成 不得复用同一个 generation_record.record_id", () => {
   const manifest = multiImageGenerationManifest(2);
   manifest.assets[1].generation_record = { ...structuredClone(manifest.assets[0].generation_record), component_id: "component-2", asset_id: "asset-2", source_file: "art/component-2.png", runtime_file: "public/component-2.png" };
-  const errors = validateVisualProductionCoverage(manifest, { stage: "V3" });
+  const errors = validateVisualProductionCoverage(manifest, { stage: "V4" });
   assert(errors.some((item) => item.includes("record_id=GEN-1") && item.includes("component_id=component-2")), errors.join("\n"));
 });
 
-test("V4 文件门不按 RGBA 像素摘要拒绝不同 ID/路径的重复 PNG", async () => {
+test("V5 文件门不按 RGBA 像素摘要拒绝不同 ID/路径的重复 PNG", async () => {
   const root = await mkdtemp(join(tmpdir(), "visual-raster-dedupe-")); await mkdir(join(root, "evidence"), { recursive: true }); await writeFile(join(root, "evidence/runtime.json"), "runtime");
   const png = encodePngRgba(2, 2, Buffer.alloc(16, 128)); const pngSha = "stale-summary-is-optional"; const identity = { evidence_sha256: HASH, candidate_sha256: HASH, target_sha256: HASH, baseline_sha256: HASH, diff_fingerprint: "diff-1" };
   const region = refreshAtomicRequirements({ ...multiComponentRegion(2), id: "duplicate-pixels", annotation_number: 5, production_origin: "independent-production", production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
@@ -812,13 +812,13 @@ test("atlas 禁止同一图集内完全相同或重叠 rect，且热区变体不
     { asset_id: "atlas", component_id: "component-1", state_id: "default", asset_kind: "visual", atlas_slice: { atlas_asset_id: "atlas", slice_id: "one", atlas_size: { width: 40, height: 40 }, rect: { x: 0, y: 0, width: 20, height: 20 } } },
     { asset_id: "atlas", component_id: "component-2", state_id: "default", asset_kind: "visual", atlas_slice: { atlas_asset_id: "atlas", slice_id: "two", atlas_size: { width: 40, height: 40 }, rect: { x: 10, y: 10, width: 20, height: 20 } } },
   ]);
-  const overlapErrors = validateVisualComponentContract(region, { stage: "V3", annotation_number: 2, region_id: "atlas-overlap" });
+  const overlapErrors = validateVisualComponentContract(region, { stage: "V4", annotation_number: 2, region_id: "atlas-overlap" });
   assert(overlapErrors.some((item) => item.includes("rect 不能重叠")), overlapErrors.join("\n"));
   const duplicateRect = structuredClone(region); duplicateRect.expected_assets[1].atlas_slice.rect = { x: 0, y: 0, width: 20, height: 20 };
-  const duplicateErrors = validateVisualComponentContract(duplicateRect, { stage: "V3", annotation_number: 2, region_id: "atlas-duplicate" });
+  const duplicateErrors = validateVisualComponentContract(duplicateRect, { stage: "V4", annotation_number: 2, region_id: "atlas-duplicate" });
   assert(duplicateErrors.some((item) => item.includes("rect 不能完全相同")), duplicateErrors.join("\n"));
   const hotspot = structuredClone(multiComponentRegion(1)); hotspot.component_inventory.components[0].role = "interaction_hotspot"; hotspot.expected_assets[0].asset_kind = "interaction hotspot";
-  const hotspotErrors = validateVisualComponentContract(hotspot, { stage: "V3", annotation_number: 3, region_id: "hotspot-variant" });
+  const hotspotErrors = validateVisualComponentContract(hotspot, { stage: "V4", annotation_number: 3, region_id: "hotspot-variant" });
   assert(hotspotErrors.some((item) => item.includes("交互热区")), hotspotErrors.join("\n"));
 });
 
@@ -827,24 +827,24 @@ test("individual 文件按规范化项目相对路径去重并拒绝绝对路径
     { asset_id: "asset-1", component_id: "component-1", state_id: "default", source_file: "art/shared.png", runtime_file: "public/a.png" },
     { asset_id: "asset-2", component_id: "component-2", state_id: "default", source_file: "ART/SHARED.PNG", runtime_file: "public/b.png" },
   ]);
-  const duplicateErrors = validateVisualComponentContract(normalized, { stage: "V3", annotation_number: 2, region_id: "path-duplicate" });
+  const duplicateErrors = validateVisualComponentContract(normalized, { stage: "V4", annotation_number: 2, region_id: "path-duplicate" });
   assert(duplicateErrors.some((item) => item.includes("共享同一源/运行文件")), duplicateErrors.join("\n"));
   const unsafe = structuredClone(multiComponentRegion(1)); unsafe.expected_assets[0].source_file = "../outside.png";
-  const unsafeErrors = validateVisualComponentContract(unsafe, { stage: "V3", annotation_number: 3, region_id: "path-escape" });
+  const unsafeErrors = validateVisualComponentContract(unsafe, { stage: "V4", annotation_number: 3, region_id: "path-escape" });
   assert(unsafeErrors.some((item) => item.includes("项目内相对路径")), unsafeErrors.join("\n"));
 });
 
 test("atlas slice 拒绝负坐标与越过 atlas_size 边界", () => {
   const negative = multiComponentRegion(1, "atlas", [{ asset_id: "atlas", component_id: "component-1", state_id: "default", atlas_slice: { atlas_asset_id: "atlas", slice_id: "negative", atlas_size: { width: 32, height: 32 }, rect: { x: -1, y: 0, width: 8, height: 8 } } }]);
-  const negativeErrors = validateVisualComponentContract(negative, { stage: "V3", annotation_number: 2, region_id: "atlas-negative" });
+  const negativeErrors = validateVisualComponentContract(negative, { stage: "V4", annotation_number: 2, region_id: "atlas-negative" });
   assert(negativeErrors.some((item) => item.includes("x/y 必须大于等于 0")), negativeErrors.join("\n"));
   const overflow = structuredClone(negative);
   overflow.expected_assets[0].atlas_slice.rect = { x: 24, y: 0, width: 9, height: 8 };
-  const overflowErrors = validateVisualComponentContract(overflow, { stage: "V3", annotation_number: 2, region_id: "atlas-overflow" });
+  const overflowErrors = validateVisualComponentContract(overflow, { stage: "V4", annotation_number: 2, region_id: "atlas-overflow" });
   assert(overflowErrors.some((item) => item.includes("越过 atlas_size 边界")), overflowErrors.join("\n"));
 });
 
-test("V4 actual_assets 和 runtime usage 按 runtime_file 绑定，runtime SHA 仅为可选摘要", async () => {
+test("V5 actual_assets 和 runtime usage 按 runtime_file 绑定，runtime SHA 仅为可选摘要", async () => {
   const base = v4FixtureManifest(IMAGEGEN_REGRESSION_FIXTURES[0]);
   const sourceSubstitution = structuredClone(base);
   sourceSubstitution.production_contract_audit.units[0].actual_assets[0].file = "art/①.png";
@@ -864,19 +864,19 @@ test("V4 actual_assets 和 runtime usage 按 runtime_file 绑定，runtime SHA �
 test("图像生成 区域强制 individual，atlas/横向组图不能作为位图交付", () => {
   const atlas = multiComponentRegion(6, "atlas");
   Object.assign(atlas, { production_method: "image-generation", delivery_kind: "raster-image", image_generation_required: true, generation_record_required: true, substitution_policy: "user-change-request-only" });
-  const errors = validateVisualComponentContract(atlas, { stage: "V3", annotation_number: 2, region_id: "top-buttons-region" });
+  const errors = validateVisualComponentContract(atlas, { stage: "V4", annotation_number: 2, region_id: "top-buttons-region" });
   assert(errors.some((item) => item.includes("图像生成 只能使用 individual") && item.includes("component_id=?")), errors.join("\n"));
 });
 
 test("interaction_hotspots 必须与 interaction_required 部件一一对应且不携带资产身份", () => {
   const missing = multiComponentRegion(1);
   missing.component_inventory.components[0].placements[0].interaction_required = true;
-  const missingErrors = validateVisualComponentContract(missing, { stage: "V3", annotation_number: 2, region_id: "hotspot-missing" });
+  const missingErrors = validateVisualComponentContract(missing, { stage: "V4", annotation_number: 2, region_id: "hotspot-missing" });
   assert(missingErrors.some((item) => item.includes("component_id=component-1") && item.includes("必须且只能对应一个 hotspot")), missingErrors.join("\n"));
 
   const orphan = structuredClone(missing);
   orphan.interaction_hotspots = [{ hotspot_id: "hit-1", component_id: "ghost", placement_id: "ghost-placement", bounds: { x: 0, y: 0, width: 8, height: 8 }, asset_id: "fake" }];
-  const orphanErrors = validateVisualComponentContract(orphan, { stage: "V3", annotation_number: 2, region_id: "hotspot-orphan" });
+  const orphanErrors = validateVisualComponentContract(orphan, { stage: "V4", annotation_number: 2, region_id: "hotspot-orphan" });
   assert(orphanErrors.some((item) => item.includes("component_id=ghost") && item.includes("悬空")), orphanErrors.join("\n"));
   assert(orphanErrors.some((item) => item.includes("不得声明 asset_id")), orphanErrors.join("\n"));
 
@@ -885,12 +885,12 @@ test("interaction_hotspots 必须与 interaction_required 部件一一对应且�
     { hotspot_id: "hit-1", component_id: "component-1", placement_id: "placement-1", bounds: { x: 0, y: 0, width: 8, height: 8 } },
     { hotspot_id: "hit-1", component_id: "component-1", placement_id: "placement-1", bounds: { x: 1, y: 1, width: 8, height: 8 } },
   ];
-  const duplicateErrors = validateVisualComponentContract(duplicate, { stage: "V3", annotation_number: 2, region_id: "hotspot-duplicate" });
+  const duplicateErrors = validateVisualComponentContract(duplicate, { stage: "V4", annotation_number: 2, region_id: "hotspot-duplicate" });
   assert(duplicateErrors.some((item) => item.includes("hotspot_id 重复") || item.includes("只能对应一个 hotspot")), duplicateErrors.join("\n"));
 
   const explicitNoHotspot = multiComponentRegion(1);
   explicitNoHotspot.interaction_hotspots = [{ hotspot_id: "unexpected", component_id: "component-1", placement_id: "placement-1", bounds: { x: 0, y: 0, width: 8, height: 8 } }];
-  const explicitNoHotspotErrors = validateVisualComponentContract(explicitNoHotspot, { stage: "V3", annotation_number: 2, region_id: "hotspot-not-required" });
+  const explicitNoHotspotErrors = validateVisualComponentContract(explicitNoHotspot, { stage: "V4", annotation_number: 2, region_id: "hotspot-not-required" });
   assert(explicitNoHotspotErrors.some((item) => item.includes("非 interactive placement")), explicitNoHotspotErrors.join("\n"));
 });
 
@@ -926,14 +926,14 @@ test("Implementation Package 不能过滤或偷换冻结透明路线", () => {
 test("状态分析完成时间必须严格早于部件清单创建时间", () => {
   const equal = multiComponentRegion(1);
   equal.component_inventory.created_at = "2026-08-15T00:00:00Z";
-  const equalErrors = validateVisualComponentContract(equal, { stage: "V3", annotation_number: 3, region_id: "state-order-equal" });
+  const equalErrors = validateVisualComponentContract(equal, { stage: "V4", annotation_number: 3, region_id: "state-order-equal" });
   assert(equalErrors.some((item) => item.includes("必须早于") && item.includes("state-order-equal")), equalErrors.join("\n"));
   const earlier = structuredClone(equal);
   earlier.component_inventory.created_at = "2026-08-16T00:00:00Z";
-  assert.deepEqual(validateVisualComponentContract(earlier, { stage: "V3", annotation_number: 3, region_id: "state-order-earlier" }), []);
+  assert.deepEqual(validateVisualComponentContract(earlier, { stage: "V4", annotation_number: 3, region_id: "state-order-earlier" }), []);
   const reversed = structuredClone(equal);
   reversed.component_inventory.created_at = "2026-08-14T00:00:00Z";
-  const errors = validateVisualComponentContract(reversed, { stage: "V3", annotation_number: 3, region_id: "state-order-reversed" });
+  const errors = validateVisualComponentContract(reversed, { stage: "V4", annotation_number: 3, region_id: "state-order-reversed" });
   assert(errors.some((item) => item.includes("annotation_number=3") && item.includes("region_id=state-order-reversed") && item.includes("必须先完成状态分析再拆解")), errors.join("\n"));
 });
 

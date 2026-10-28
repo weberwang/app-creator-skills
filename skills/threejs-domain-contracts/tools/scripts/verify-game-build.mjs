@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { createGame } from '../../../threejs-game-runtime/scripts/create-game.mjs';
-import { validateProductionBuild } from '../../../threejs-game-architecture/scripts/validate-production-build.mjs';
+import { validateProductionBuild } from '../../../app-domain-toolkit/scripts/build/validate-production-build.mjs';
 
 /** 在生成工程内执行真实工具，失败时保留退出状态和诊断。 */
 function runNpm(args, cwd) {

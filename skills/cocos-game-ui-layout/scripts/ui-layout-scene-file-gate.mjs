@@ -57,7 +57,7 @@ async function validateRealProjectPath(projectRoot, value, label) {
   return null;
 }
 
-/** 复用官方 evidence file gate 检查场景内 V4 组合与节点测量工件。 */
+/** 复用官方 evidence file gate 检查场景内 V5 组合与节点测量工件。 */
 export async function validateSceneRuntimeEvidenceFiles(scene, projectRoot) {
   const preacceptance = scene?.combination_preacceptance ?? scene?.combinationPreacceptance;
   const geometry = preacceptance?.layout_geometry ?? preacceptance?.layoutGeometry;
@@ -76,7 +76,7 @@ export async function validateSceneRuntimeEvidenceFiles(scene, projectRoot) {
   const identity = { sceneId: conditions.scene_id ?? conditions.sceneId, stateId: conditions.state_id ?? conditions.stateId };
 
   for (const { label, evidence } of evidenceRefs) {
-    errors.push(...validateEvidenceIdentity(evidence, { stage: "V4", annotation_number: "*", region_id: label }, identity, { projectRoot }));
+    errors.push(...validateEvidenceIdentity(evidence, { stage: "V5", annotation_number: "*", region_id: label }, identity, { projectRoot }));
     const realPathError = await validateRealProjectPath(projectRoot, evidence.evidence, label);
     if (realPathError) errors.push(realPathError);
   }

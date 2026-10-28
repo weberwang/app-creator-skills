@@ -1,8 +1,8 @@
 # Phaser 4 布局适配参考
 
-本参考说明如何把已确认的 V2 布局合同和 V3 资源接入 V4 正式 Phaser Scene。先审计项目现有 Scale、Camera 和 Scene 结构，再按当前 UI 布局合同完成正式实现。正式运行中的校准口径见[布局校准](./layout-calibration.md)。
+本参考说明如何把已确认的 V3 布局合同和 V4 资源接入 V5 正式 Phaser Scene。先审计项目现有 Scale、Camera 和 Scene 结构，再按当前 UI 布局合同完成正式实现。正式运行中的校准口径见[布局校准](./layout-calibration.md)。
 
-图片九宫格消费 V2/V3 共用的切片合同，并以 `object_fit="nine-slice"` 使用 Phaser NineSlice；项目使用九宫格时应选择支持该能力的渲染后端，内部重排优先更新 NineSlice 尺寸。源图尺寸和场景目标显示框分别校验，具体规则见[九宫格 UI](../../phaser4-game-asset-integration/references/nine-slice-ui.md)。
+图片九宫格消费 V3/V4 共用的切片合同，并以 `object_fit="nine-slice"` 使用 Phaser NineSlice；项目使用九宫格时应选择支持该能力的渲染后端，内部重排优先更新 NineSlice 尺寸。源图尺寸和场景目标显示框分别校验，具体规则见[九宫格 UI](../../phaser4-game-asset-integration/references/nine-slice-ui.md)。
 
 ## 视口、设计空间与高分屏
 
@@ -24,7 +24,7 @@
 
 纯布局计算尽量返回几何结果，再由 Phaser GameObject 写入。每次从合同值重新推导，不能在上一次坐标上累加偏移或缩放；相同输入重复调用须得到相同结果。Phaser Container 不自带有意义的布局宽高，须消费合同中的逻辑 bounds，不从子对象包围盒或底板纹理尺寸推断。
 
-V2 `anchor` 表达布局关系，纹理 `origin` 表达资源围绕 GameObject 的定位方式，两者不能互相替代。纯平移父级可用目标世界位置减父级世界位置计算局部位置；祖先偏移只累计一次。布局停靠、图片原点和动画反馈偏移分开保存。
+V3 `anchor` 表达布局关系，纹理 `origin` 表达资源围绕 GameObject 的定位方式，两者不能互相替代。纯平移父级可用目标世界位置减父级世界位置计算局部位置；祖先偏移只累计一次。布局停靠、图片原点和动画反馈偏移分开保存。
 
 独立定位参照不改变 `parentContainer` 归属；有旋转、缩放或非平凡祖先变换时，通过实际矩阵逆变换计算局部位置，不能只做世界坐标相减。执行计划分别指定位置和尺寸控制者，真实运行对象、写入记录、逻辑根及几何的采集与校验遵守[布局运行证据](./layout-runtime-evidence.md)。普通图片继续按当前 object-fit 与缩放合同显示，不能套用 Cocos RAW 内容尺寸限制。
 
@@ -40,4 +40,4 @@ V2 `anchor` 表达布局关系，纹理 `origin` 表达资源围绕 GameObject �
 
 `cameraViewportPolicy`、`cameraZoomPolicy` 和 `cameraOriginPolicy` 分别说明 viewport 的逻辑空间、zoom 是否独立于 DPR、origin 及物理映射。`gameSize` 使用逻辑 CSS 像素；Camera 负责逻辑 viewport 到 backing 的渲染映射，不得把 backing 宽高伪装成 gameSize。`inputCoordinatePolicy` 说明 CSS client → 逻辑 → Camera/World 的逆映射；命中测试使用逻辑坐标，未经 Camera 转换的物理像素事件不合格。
 
-在 V4 正式场景中记录 CSS/backing 尺寸、raw/effective DPR、Camera、输入命中、背景覆盖、关键 bounds、resize 轨迹和实际候选身份。身份和几何参数只能证明可复核事实；用户仍须人工检查实际画面。未验证的视口、状态和互动明确标为未验证。
+在 V5 正式场景中记录 CSS/backing 尺寸、raw/effective DPR、Camera、输入命中、背景覆盖、关键 bounds、resize 轨迹和实际候选身份。身份和几何参数只能证明可复核事实；用户仍须人工检查实际画面。未验证的视口、状态和互动明确标为未验证。

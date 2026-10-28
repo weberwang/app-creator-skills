@@ -54,28 +54,19 @@
 | audio | [skills/app-domain-toolkit/references/audio.md](../../app-domain-toolkit/references/audio.md) |
 | balance | [skills/app-domain-toolkit/references/balance.md](../../app-domain-toolkit/references/balance.md) |
 | modeling-production | [skills/app-domain-toolkit/references/modeling-production.md](../../app-domain-toolkit/references/modeling-production.md) |
+| ui-game-copy | [skills/app-domain-toolkit/references/ui-game-copy.md](../../app-domain-toolkit/references/ui-game-copy.md) |
+| art-quality-principles | [skills/app-domain-toolkit/references/art-quality-principles.md](../../app-domain-toolkit/references/art-quality-principles.md) |
 
 ## 支持资源
 
 - [app-domain-toolkit](../../app-domain-toolkit)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-development-workflow](../../unity-development-workflow)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-domain-contracts](../../unity-domain-contracts)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-2d-animation-ta](../../unity-game-2d-animation-ta)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-2d-rigging](../../unity-game-2d-rigging)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-animation](../../unity-game-3d-animation)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-modeling](../../unity-game-3d-modeling)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-rigging](../../unity-game-3d-rigging)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-texturing](../../unity-game-3d-texturing)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-architecture](../../unity-game-architecture)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-audio](../../unity-game-audio)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-balance](../../unity-game-balance)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-juice](../../unity-game-juice)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-production](../../unity-game-production)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-qa-performance](../../unity-game-qa-performance)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-release](../../unity-game-release)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-spine-reskin](../../unity-game-spine-reskin)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-visual-assets](../../unity-game-visual-assets)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-gameplay-development](../../unity-gameplay-development)：领域资料、模板和工具依赖；不含独立全局流程入口。
 
 ## 原工具入口
 

@@ -7,7 +7,7 @@ const SCENE_UNIT_TYPES = new Set(['SCENE', 'DISPLAY_LAYER']);
 const FOUNDATION_UNIT_TYPES = new Set(['SHARED', 'MODULE']);
 const FORMAL_UNIT_TYPES = new Set(['SHARED', 'MODULE', 'SCENE', 'DISPLAY_LAYER', 'INTEGRATION']);
 const PREREQUISITE_FIELDS = [
-  'workItemId', 'status', 'stage', 'frozen', 'sceneId', 'displayLayerId', 'hostSceneId',
+  'visualStageModel', 'workItemId', 'status', 'stage', 'frozen', 'sceneId', 'displayLayerId', 'hostSceneId',
   'evidenceFile',
 ];
 const IMAGE_FIELDS = ['file', 'sceneId'];
@@ -22,7 +22,7 @@ const OPTIONAL_SNAPSHOT_FIELDS = new Set([
   'diffFingerprint', 'diff_fingerprint', 'evidenceSha256', 'evidence_sha256',
   'baselineId', 'baseline_id',
 ]);
-const VISUAL_STAGES = ['V0', 'V1', 'V2', 'V3', 'V4'];
+const VISUAL_STAGES = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5'];
 const PACKAGE_VISUAL_FIELDS = Object.freeze([
   'visualContractVersion', 'candidateVersion', 'visualManifestFile', 'visualManifestSha256',
   'visualDecompositionConfirmations', 'current_stage',
@@ -62,14 +62,14 @@ export function validateHighFidelityPrerequisiteShape(unit) {
     return errors;
   }
   if (!isRecord(value)) {
-    errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 必须引用当前 Work Item 的 V2 拆解还原方案`);
+    errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 必须引用当前 Work Item 的 V3 拆解还原方案`);
     return errors;
   }
   const missing = PREREQUISITE_FIELDS.filter((field) => value[field] === undefined);
   const extra = Object.keys(value).filter((field) => !PREREQUISITE_FIELDS.includes(field) && !isOptionalSnapshotField(field));
   if (missing.length || extra.length) errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 字段不严格：缺少 ${missing.join('、') || '无'}；多余 ${extra.join('、') || '无'}`);
-  if (!isNonEmptyString(value.workItemId) || value.status !== 'COMPLETE' || value.stage !== 'V2' || value.frozen !== true || !isNonEmptyString(value.evidenceFile)) {
-    errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 必须绑定当前 Work Item 的 COMPLETE/frozen V2 拆解还原方案及来源文件`);
+  if (!isNonEmptyString(value.workItemId) || value.status !== 'COMPLETE' || value.stage !== 'V3' || value.visualStageModel !== 'function-first-v1' || value.frozen !== true || !isNonEmptyString(value.evidenceFile)) {
+    errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 必须绑定当前 Work Item 的 COMPLETE/frozen V3 拆解还原方案及来源文件`);
   }
   const expected = unitContext(unit);
   if (value.sceneId !== expected.sceneId || value.displayLayerId !== expected.displayLayerId || value.hostSceneId !== expected.hostSceneId) errors.push(`execution unit ${unit.unitId}.highFidelityPrerequisite 的 scene/layer/host 身份必须与宿主单元一致`);
@@ -78,12 +78,12 @@ export function validateHighFidelityPrerequisiteShape(unit) {
 
 /** 生成视觉前置失败的统一错误，明确回到当前场景或弹窗 Work Item。 */
 function prerequisiteError(unit, detail) {
-  return new Error(`视觉 V2 前置门拒绝 ${unit?.unitId ?? '<package>'}：${detail}；应回到当前 Work Item 的 V2 拆解方案确认`);
+  return new Error(`视觉 V3 前置门拒绝 ${unit?.unitId ?? '<package>'}：${detail}；应回到当前 Work Item 的 V3 拆解方案确认`);
 }
 
-/** 生成正式执行前置门错误，指出必须回到当前 Work Item 核实 V2/V3 来源。 */
+/** 生成正式执行前置门错误，指出必须回到当前 Work Item 核实 V3/V4 来源。 */
 function executionGateError(detail) {
-  return new Error(`V4 正式功能执行前置门拒绝：${detail}；应回到当前场景 Work Item 核实 V2 拆解与 V3 正式资源验收`);
+  return new Error(`V5 正式功能执行前置门拒绝：${detail}；应回到当前场景 Work Item 核实 V3 拆解与 V4 正式资源验收`);
 }
 
 /**
@@ -97,7 +97,8 @@ export function isFoundationOnlyPackage(pkg) {
 
 /** 判断实施包是否声明视觉合同、资产生产或场景视觉阶段字段。 */
 function hasPackageVisualDependency(pkg) {
-  return PACKAGE_VISUAL_FIELDS.some((field) => pkg?.[field] !== undefined);
+  // V1 的阶段声明仅表示功能验证，本身不构成视觉素材依赖。
+  return PACKAGE_VISUAL_FIELDS.some((field) => pkg?.[field] !== undefined && !(['current_stage', 'currentStage'].includes(field) && pkg[field] === 'V1'));
 }
 
 /** 判断 Work Item 或包是否声明正式可见视觉行为；灰盒声明不能降级正式门。 */
@@ -105,6 +106,14 @@ function hasFormalVisualBehavior(work, pkg) {
   const subjects = [work, pkg].filter(isRecord);
   // 正式入口、可见资源消费等行为统一由共享分类器判定，避免在此复制别名或引入旧包兼容路径。
   return subjects.some((subject) => classifyVisibleVisualProductionIntegration(subject).isVisibleVisualProductionIntegration);
+}
+
+/** 功能 V1 可以直接实施；声明正式视觉消费时仍必须经过视觉生产门。 */
+function isFunctionOnlyWork(work, pkg) {
+  const units = pkg?.executionUnits;
+  // 无视觉阶段的跨场景功能集成可先验证行为；混入可见对象仍须走视觉门。
+  const integration = !work?.visualStage && Array.isArray(units) && units.some((unit) => unit?.unitType === 'INTEGRATION') && units.every((unit) => ['SHARED', 'MODULE', 'INTEGRATION'].includes(unit?.unitType));
+  return (work?.visualStage === 'V1' || integration) && !hasPackageVisualDependency(pkg) && !hasFormalVisualBehavior(work, pkg);
 }
 
 /** 判断 foundation-only 包应走全局基线门、正式视觉门还是直接进入基础工程。 */
@@ -128,8 +137,11 @@ function assertFoundationBaselineFrozen(work, repo, io) {
   return true;
 }
 
-/** 判断实施包规划是否已经越过当前场景 Work Item 的 V2 视觉验收边界。 */
-export function assertFormalImplementationAfterV2(work, pkg, repo, io) {
+/** 判断实施包规划是否已经越过当前场景 Work Item 的 V3 视觉验收边界。 */
+export function assertFormalImplementationAfterV3(work, pkg, repo, io) {
+  if (work?.visualStage && work.visualStageModel !== 'function-first-v1') throw new Error('阶段记录必须声明 visualStageModel=function-first-v1');
+  // V1 功能验证无需视觉设计，且不能借此声明正式视觉装配。
+  if (isFunctionOnlyWork(work, pkg)) return true;
   const foundationMode = foundationGateMode(work, pkg);
   if (foundationMode === 'none') return true;
   if (foundationMode === 'global-baseline') return assertFoundationBaselineFrozen(work, repo, io);
@@ -137,26 +149,29 @@ export function assertFormalImplementationAfterV2(work, pkg, repo, io) {
   if (!formalUnits.length) return true;
   const stage = String(work?.visualStage ?? '').trim().toUpperCase();
   const stageIndex = VISUAL_STAGES.indexOf(stage);
-  const v2Approved = stageIndex >= VISUAL_STAGES.indexOf('V2') && (stage !== 'V2' || work?.visualStageState === 'v2-production-planning-complete');
-  if (!v2Approved) throw prerequisiteError(null, '正式功能实施包只能在 V2 拆解方案确认完成后创建或执行；V2 前仅允许隔离灰盒/无业务逻辑视觉样片');
+  const v2Approved = stageIndex >= VISUAL_STAGES.indexOf('V3') && (stage !== 'V3' || work?.visualStageState === 'v3-production-planning-complete');
+  if (!v2Approved) throw prerequisiteError(null, '正式视觉装配实施包只能在 V3 拆解方案确认完成后创建或执行');
   return true;
 }
 
 /**
- * 校验正式执行所需的 V2/V3 当前来源及 V4 实施状态。
- * V2 冻结拆解和 V3 正式资源均由同一视觉前置门复核，避免借状态字段或根 PASS 绕过来源校验。
+ * 校验正式执行所需的 V3/V4 当前来源及 V5 实施状态。
+ * V3 冻结拆解和 V4 正式资源均由同一视觉前置门复核，避免借状态字段或根 PASS 绕过来源校验。
  */
-export function assertFormalExecutionAfterV3(work, pkg, repo, io) {
+export function assertFormalExecutionAfterV4(work, pkg, repo, io) {
+  if (work?.visualStage && work.visualStageModel !== 'function-first-v1') throw new Error('阶段记录必须声明 visualStageModel=function-first-v1');
+  // V1 功能验证无需视觉设计，且不能借此声明正式视觉装配。
+  if (isFunctionOnlyWork(work, pkg)) return true;
   const foundationMode = foundationGateMode(work, pkg);
   if (foundationMode === 'none') return true;
   if (foundationMode === 'global-baseline') return assertFoundationBaselineFrozen(work, repo, io);
   const formalUnits = (pkg?.executionUnits ?? []).filter((unit) => FORMAL_UNIT_TYPES.has(unit?.unitType));
   if (!formalUnits.length) return true;
   const stage = String(work?.visualStage ?? '').trim().toUpperCase();
-  if (stage !== 'V4' || !['in-progress', 'v4-runtime-integration-candidate'].includes(String(work?.visualStageState ?? ''))) throw executionGateError(`正式功能单元只能在 V4 正式实施/运行验收状态执行，当前阶段为 ${stage || 'unknown'}/${work?.visualStageState ?? 'missing'}`);
-  if (!repo || !io) throw executionGateError('缺少 V2/V3 当前证据读取能力');
+  if (stage !== 'V5' || !['in-progress', 'v5-runtime-integration-candidate'].includes(String(work?.visualStageState ?? ''))) throw executionGateError(`正式视觉装配单元只能在 V5 正式实施/运行验收状态执行，当前阶段为 ${stage || 'unknown'}/${work?.visualStageState ?? 'missing'}`);
+  if (!repo || !io) throw executionGateError('缺少 V3/V4 当前证据读取能力');
   const result = assertVisualStagePrerequisites({ ...work, visibleVisualProductionIntegration: true }, { projectRoot: repo, implementationPackage: pkg });
-  if (!result.ok) throw executionGateError(result.errors?.[0]?.message ?? result.missingEvidence?.[0] ?? 'V2/V3 阶段证据未闭合');
+  if (!result.ok) throw executionGateError(result.errors?.[0]?.message ?? result.missingEvidence?.[0] ?? 'V3/V4 阶段证据未闭合');
   return true;
 }
 
@@ -192,34 +207,37 @@ function assertReviewEvidence(review, fields, repo, io, unit, label) {
   resolveRepoFile(repo, review.evidenceFile, io, unit, `${label}.evidenceFile`);
 }
 
-/** 读取并复核当前场景或弹窗 Work Item 的不可变 V2 拆解还原方案。 */
+/** 读取并复核当前场景或弹窗 Work Item 的不可变 V3 拆解还原方案。 */
 export function assertHighFidelityPrerequisite(unit, work, pkg, repo, io) {
+  if (work?.visualStage && work.visualStageModel !== 'function-first-v1') throw new Error('阶段记录必须声明 visualStageModel=function-first-v1');
+  // 仅功能 V1 跳过视觉拆解前置；正式视觉消费仍执行原有强校验。
+  if (isFunctionOnlyWork(work, pkg)) return null;
   const shapeErrors = validateHighFidelityPrerequisiteShape(unit);
   if (shapeErrors.length) throw prerequisiteError(unit, shapeErrors[0]);
   if (!SCENE_UNIT_TYPES.has(unit.unitType)) return null;
-  if (!repo || !io || typeof io.resolve !== 'function' || typeof io.existsSync !== 'function' || typeof io.readFileSync !== 'function') throw prerequisiteError(unit, '缺少 V2 证据读取能力');
+  if (!repo || !io || typeof io.resolve !== 'function' || typeof io.existsSync !== 'function' || typeof io.readFileSync !== 'function') throw prerequisiteError(unit, '缺少 V3 证据读取能力');
   const reference = unit.highFidelityPrerequisite;
   if (reference.workItemId !== work?.workItemId || pkg?.workItemId !== work?.workItemId) throw prerequisiteError(unit, 'Implementation Package、前置引用与当前 Work Item 不一致；只能引用当前任务结果');
-  const currentV2 = work?.visualStageEvidenceRefs?.V2;
-  if (!isRecord(currentV2) || currentV2.path !== reference.evidenceFile || (currentV2.workItemId && currentV2.workItemId !== work.workItemId)) throw prerequisiteError(unit, 'Implementation Package 必须只引用当前 Work Item 的 V2 拆解方案');
+  const currentV2 = work?.visualStageEvidenceRefs?.V3;
+  if (!isRecord(currentV2) || currentV2.path !== reference.evidenceFile || (currentV2.workItemId && currentV2.workItemId !== work.workItemId)) throw prerequisiteError(unit, 'Implementation Package 必须只引用当前 Work Item 的 V3 拆解方案');
   const evidencePath = resolveRepoFile(repo, reference.evidenceFile, io, unit, 'evidenceFile');
   let evidence;
   try { evidence = JSON.parse(io.readFileSync(evidencePath, 'utf8')); } catch (error) { throw prerequisiteError(unit, `evidenceFile 不是有效 JSON：${error.message}`); }
-  if (!isRecord(evidence)) throw prerequisiteError(unit, 'V2 拆解方案必须为对象');
+  if (!isRecord(evidence)) throw prerequisiteError(unit, 'V3 拆解方案必须为对象');
   const missing = V2_PLAN_FIELDS.filter((field) => evidence[field] === undefined);
   const extra = Object.keys(evidence).filter((field) => !V2_PLAN_FIELDS.includes(field) && !isOptionalSnapshotField(field));
-  if (missing.length || extra.length) throw prerequisiteError(unit, `V2 拆解方案字段不严格：缺少 ${missing.join('、') || '无'}；多余 ${extra.join('、') || '无'}`);
+  if (missing.length || extra.length) throw prerequisiteError(unit, `V3 拆解方案字段不严格：缺少 ${missing.join('、') || '无'}；多余 ${extra.join('、') || '无'}`);
   const expected = unitContext(unit);
-  if (evidence.schemaVersion !== EVIDENCE_SCHEMA || evidence.workItemId !== work.workItemId || evidence.status !== 'COMPLETE' || evidence.stage !== 'V2' || evidence.frozen !== true || evidence.sceneId !== expected.sceneId) throw prerequisiteError(unit, 'V2 拆解方案未绑定当前 Work Item、场景、完成状态或冻结状态');
+  if (evidence.visualStageModel !== 'function-first-v1' || evidence.schemaVersion !== EVIDENCE_SCHEMA || evidence.workItemId !== work.workItemId || evidence.status !== 'COMPLETE' || evidence.stage !== 'V3' || evidence.frozen !== true || evidence.sceneId !== expected.sceneId) throw prerequisiteError(unit, 'V3 拆解方案未绑定当前 Work Item、场景、完成状态或冻结状态');
   assertArtifact(evidence.sceneMaster, IMAGE_FIELDS, expected, repo, io, unit, 'sceneMaster');
   assertArtifact(evidence.sceneReconstructionContract, ARTIFACT_FIELDS, expected, repo, io, unit, 'sceneReconstructionContract');
   assertArtifact(evidence.decompositionAnnotation, ARTIFACT_FIELDS, expected, repo, io, unit, 'decompositionAnnotation');
   assertArtifact(evidence.technicalDecomposition, ARTIFACT_FIELDS, expected, repo, io, unit, 'technicalDecomposition');
   assertReviewEvidence(evidence.visualDecompositionConfirmation, CONFIRMATION_FIELDS, repo, io, unit, 'visualDecompositionConfirmation');
   if (evidence.visualDecompositionConfirmation.confirmationMode !== 'manual' || !['PASS', 'accepted'].includes(evidence.visualDecompositionConfirmation.status)) throw prerequisiteError(unit, 'visualDecompositionConfirmation 必须是 manual PASS/accepted 的拆解图确认');
-  if (!Array.isArray(evidence.visualProductionUnits) || evidence.visualProductionUnits.length === 0) throw prerequisiteError(unit, 'V2 拆解方案必须包含 visualProductionUnits');
-  if (!isRecord(evidence.visualProductionContract)) throw prerequisiteError(unit, 'V2 拆解方案必须包含 visualProductionContract');
-  if (!Array.isArray(evidence.displayLayerContexts)) throw prerequisiteError(unit, 'V2 拆解方案必须包含 displayLayerContexts 数组');
+  if (!Array.isArray(evidence.visualProductionUnits) || evidence.visualProductionUnits.length === 0) throw prerequisiteError(unit, 'V3 拆解方案必须包含 visualProductionUnits');
+  if (!isRecord(evidence.visualProductionContract)) throw prerequisiteError(unit, 'V3 拆解方案必须包含 visualProductionContract');
+  if (!Array.isArray(evidence.displayLayerContexts)) throw prerequisiteError(unit, 'V3 拆解方案必须包含 displayLayerContexts 数组');
   const contexts = evidence.displayLayerContexts;
   const seenContexts = new Set();
   for (const context of contexts) {
@@ -240,9 +258,9 @@ export function assertHighFidelityPrerequisite(unit, work, pkg, repo, io) {
   return evidence;
 }
 
-/** 复核实施包的 V2 规划前置；V3 执行门由 Execution State/READY 入口另行校验。 */
+/** 复核实施包的 V3 规划前置；V4 执行门由 Execution State/READY 入口另行校验。 */
 export function assertHighFidelityPrerequisites(pkg, work, repo, io) {
-  assertFormalImplementationAfterV2(work, pkg, repo, io);
+  assertFormalImplementationAfterV3(work, pkg, repo, io);
   for (const unit of pkg.executionUnits) assertHighFidelityPrerequisite(unit, work, pkg, repo, io);
   return true;
 }

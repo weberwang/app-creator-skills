@@ -6,7 +6,7 @@
 
 `run` 只沿主路径前向推进已满足门禁的安全状态，进入 `IMPLEMENTING` 后停止等待实际实施；它永远不选择 `RETURN`、不批准用户决定、不执行设备/外部/发布操作。
 
-可见 `SCENE` 与 `DISPLAY_LAYER` 在 `scene-production` 内分别推进自己的 V0-V4。V0 只作内部识别与分流，不进入 `stageReviews`；V1–V4 按阶段门推进，V2 必须分别确认拆解图和布局图。`hostSceneId` 仅作为 DISPLAY_LAYER 的上下文依赖；缺少独立 `displayLayerId`、层类型、阶段或状态时直接阻断，不允许把弹窗挂回宿主场景工作项。
+可见 `SCENE` 与 `DISPLAY_LAYER` 在 `scene-production` 内分别推进自己的 V0-V5。V0 只作内部识别与分流，不进入 `stageReviews`；V2–V5 按阶段门推进，V3 必须分别确认拆解图和布局图。`hostSceneId` 仅作为 DISPLAY_LAYER 的上下文依赖；缺少独立 `displayLayerId`、层类型、阶段或状态时直接阻断，不允许把弹窗挂回宿主场景工作项。
 
 ## 合法迁移
 
@@ -44,11 +44,11 @@ node <skill-dir>/scripts/workflow-control.mjs transition --repo <repo> --work-it
 
 BASELINE/PROPOSAL 等恢复入口同样沿用推导结果和解决说明，后续按正常门禁重新推进。控制面只核对已有事实，不会代为执行修复、验收命令或人工确认。
 
-视觉阶段和确认从真实受影响点失效：仅 V4 实现或当前阶段局部产物返修时，保持 V4 并保留已确认的 V1–V3；明确影响 V3 资源时退到 V3 并保留 V1/V2。多个范围取最早入口，退回不得使视觉阶段前进；实施包和机器证据仍须重新形成。
+视觉阶段和确认从真实受影响点失效：仅 V5 实现或当前阶段局部产物返修时，保持 V5 并保留已确认的 V2–V4；明确影响 V4 资源时退到 V4 并保留 V2/V3。多个范围取最早入口，退回不得使视觉阶段前进；实施包和机器证据仍须重新形成。
 
 ## 迁移门
 
-- `SCENE`、`DISPLAY_LAYER` 的 V1–V4 依次满足[人工确认](./stage-confirmation.md)。V0 不要求确认；V2 的拆解与布局须分别确认，且先拆解后布局。`scene-stage --to V1|V2|V3|V4 --work-item <file>` 只允许相邻推进；V3→V4 还要求 Evidence 为 `PASS` 且当前执行单元全部闭环。推进后清除旧阶段消费引用、归档执行状态，将新阶段置为 `PROPOSAL`，重置 F2/F3/F4，并绑定新实施包；之后由 `run` 进入实施。V4 未确认不能进入 COMPLETE，阶段确认不替代 F0–F4 或运行证据。
+- `SCENE`、`DISPLAY_LAYER` 的 V2–V5 依次满足[人工确认](./stage-confirmation.md)。V0 不要求确认；V3 的拆解与布局须分别确认，且先拆解后布局。`scene-stage --to V2|V3|V4|V5 --work-item <file>` 只允许相邻推进；V4→V5 还要求 Evidence 为 `PASS` 且当前执行单元全部闭环。推进后清除旧阶段消费引用、归档执行状态，将新阶段置为 `PROPOSAL`，重置 F2/F3/F4，并绑定新实施包；之后由 `run` 进入实施。V5 未确认不能进入 COMPLETE，阶段确认不替代 F0–F4 或运行证据。
 - 离开 `INTAKE` 必须通过 F0；离开 `BASELINE`/`PROPOSAL` 必须通过 F1；进入生产实施前必须通过 F2。
 - 进入 `IMPLEMENTING` 必须绑定当前 Work Item 的实施包；每个单元必须提供非空 `acceptanceCommands`。进入时在当前 `evidenceRoot` 创建 `execution-state.json`。
 - 当前单元完成必须提供绑定该工作项、实施包、单元业务身份、验收命令和计划顺序的 `Result`；业务身份包括 `moduleId`、`scopeId`、`sceneId`、`displayLayerId` 和 `hostSceneId`。真实证据文件及命令的 `outputFile` 必须位于 `evidenceRoot`。`unit-check --result <json>` 仅在 `IMPLEMENTING` 状态校验当前单元的结果、`PASS` 和顺序，不执行验收命令。业务资源、布局及其他合同引用按各自 schema 校验，不塞进受限的执行证据文件路径。
@@ -58,7 +58,7 @@ BASELINE/PROPOSAL 等恢复入口同样沿用推导结果和解决说明，后�
 - `PASSED` 没有证据时仍是未闭环状态；`status`/`run` 必须返回阻断，不能自动进入 `COMPLETE`。
 - A4-A6 的副作用必须通过 F4 精确批准；批准不继承到下一个对象、阶段、基线或发布批次。
 - 可见 Work Item 实施前明确 Unity 原生 `responsiveContract`；可见包通过 `responsiveContractRef.path/version` 记录来源，且 `SCENE` 与 `DISPLAY_LAYER` 不能混包。验收以实际完成情况满足用户要求为准，实现调整无需回改合同，不比对合同内容、版本或 SHA。
-- V4 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程连续 resize 轨迹和截图共同证明；按 `supportedOrientations` 验证实际支持方向，双方向或自动方向另须 orientation 切换轨迹。静态声明、构建成功或单图均不得替代。
+- V5 PASS 必须由真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中、同进程连续 resize 轨迹和截图共同证明；按 `supportedOrientations` 验证实际支持方向，双方向或自动方向另须 orientation 切换轨迹。静态声明、构建成功或单图均不得替代。
 
 ## 三级处置
 

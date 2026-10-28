@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter App Orchestrator"
-  short_description: "Route Flutter work through the minimal safe workflow."
-  default_prompt: "Use $app-creator-workflow to route the smallest risk-based Flutter workflow with one writer, an eight-field contract, snapshot-bound review, and only triggered skills."

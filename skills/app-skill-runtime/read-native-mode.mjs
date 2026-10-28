@@ -139,6 +139,12 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
     if (!Array.isArray(workflow.stacks) || !workflow.stacks.includes(stack)) continue;
     const target = safePath(root, relative(root, resolve(dirname(manifestFile.absolute), workflow.path)));
     if (!publicRoots.has(target.path.split('/')[0]) || !target.path.includes('/references/') || !target.path.endsWith('.md')) throw new Error(`公共工作流路径无效：${workflow.path}`);
+    // 分类参考按当前工作按需读取，避免载入一个动画模式时展开全部角色、特效和 UI 手册。
+    if (workflow.onDemand === true) {
+      if (!existsSync(target.absolute) || !lstatSync(target.absolute).isFile()) throw new Error(`按需公共参考不存在：${target.path}`);
+      resources.set(`${target.path}#`, { path: target.path, fragment: '', kind: 'public-reference', available: true });
+      continue;
+    }
     const file = readRequired(root, target.path);
     requestPublic(file.path);
   }

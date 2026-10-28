@@ -1,4 +1,0 @@
-interface:
-  display_name: "Flutter Implementation Plan"
-  short_description: "Turn accepted Flutter decisions into scoped tasks."
-  default_prompt: "Use $app-creator-workflow to create scoped milestones and eight-field tasks from accepted Flutter decisions."

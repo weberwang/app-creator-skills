@@ -38,12 +38,11 @@ export const FRAME_ANIMATION_WORKFLOW_SCHEMA = "threejs-video-atlas-workflow/1";
 /** 抽帧工具质量报告 schema。 */
 export const FRAME_ANIMATION_REPORT_SCHEMA = "threejs-video-atlas/1";
 
-/** accepted 合同必须绑定的五个文件，顺序用于稳定错误输出。 */
+/** accepted 合同必须绑定的四个文件，顺序用于稳定错误输出。 */
 export const FRAME_ANIMATION_WORKFLOW_ARTIFACTS = Object.freeze([
   "video_prompt",
   "source_video",
   "quality_report",
-  "preview",
   "spritesheet",
 ]);
 
@@ -70,6 +69,8 @@ function validateVideoFrameAnimationWorkflowContract(value, options = {}) {
   for (const artifact of FRAME_ANIMATION_WORKFLOW_ARTIFACTS) {
     validateArtifactBinding(value[artifact], label + "." + artifact, errors);
   }
+  // 播放预览是可选证据；一旦声明仍必须是真实且安全的文件绑定。
+  if (Object.hasOwn(value, "preview")) validateArtifactBinding(value.preview, label + ".preview", errors);
   validateRuntimeResourceBindingContract(value.spritesheet, label + ".spritesheet", errors);
   return [...new Set(errors)];
 }
@@ -152,10 +153,14 @@ function validateQualityReport(report, sheetArtifact, contract, asset, label, er
     || !Number.isInteger(reportedSheet.height) || reportedSheet.height <= 0) {
     errors.push(label + ".artifacts.sheet 必须包含正整数 width/height");
   }
-  if (!nonEmptyString(report.artifacts?.preview?.file)) errors.push(label + ".artifacts.preview.file 必须是非空字符串");
+  // 报告与已接受合同必须同时声明同一预览，不能用单侧声明绕过文件门。
+  const hasPreview = Object.hasOwn(contract, "preview");
+  const hasReportedPreview = isObject(report.artifacts) && Object.hasOwn(report.artifacts, "preview");
+  if (hasPreview !== hasReportedPreview) errors.push(label + ".artifacts.preview 必须与合同同时声明或同时省略");
+  if (hasPreview && !nonEmptyString(report.artifacts?.preview?.file)) errors.push(label + ".artifacts.preview.file 必须是非空字符串");
   if (!nonEmptyString(report.artifacts?.report?.file)) errors.push(label + ".artifacts.report.file 必须是非空字符串");
   validateReportedArtifactPath(reportedSheet?.file, contract.spritesheet, label + ".artifacts.sheet.file", errors);
-  validateReportedArtifactPath(report.artifacts?.preview?.file, contract.preview, label + ".artifacts.preview.file", errors);
+  if (hasPreview && hasReportedPreview) validateReportedArtifactPath(report.artifacts?.preview?.file, contract.preview, label + ".artifacts.preview.file", errors);
   validateReportedArtifactPath(report.artifacts?.report?.file, contract.quality_report, label + ".artifacts.report.file", errors);
 
   const dimensions = readPngDimensions(sheetArtifact?.bytes);
@@ -205,7 +210,11 @@ async function checkVideoFrameAnimationWorkflowFiles(asset, context = {}) {
     artifacts[key] = await readBoundArtifact(contract[key], label + "." + key, context, errors);
   }
   validateVideoPrompt(artifacts.video_prompt, label + ".video_prompt", errors);
+  // 明确要求播放预览时再读取并校验真实 HTML。
+  if (Object.hasOwn(contract, "preview")) {
+    artifacts.preview = await readBoundArtifact(contract.preview, label + ".preview", context, errors);
   validatePreview(artifacts.preview, label + ".preview", errors);
+  }
 
   const reportArtifact = artifacts.quality_report;
   if (!reportArtifact) return [...new Set(errors)];

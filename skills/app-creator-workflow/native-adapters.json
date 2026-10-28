@@ -18,5 +18,115 @@
       }
     ]
   },
-  "sharedWorkflows": []
+  "sharedWorkflows": [
+    {
+      "id": "git-minimal-submission",
+      "path": "../app-domain-toolkit/references/git-minimal-submission.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-worktree-integration",
+      "path": "../app-domain-toolkit/references/reference-orchestration-worktree-integration.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-local-service-validation",
+      "path": "../app-domain-toolkit/references/reference-orchestration-local-service-validation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-game-implementation",
+      "path": "../app-domain-toolkit/references/reference-orchestration-game-implementation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-visual-quality-gate",
+      "path": "../app-domain-toolkit/references/reference-orchestration-visual-quality-gate.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-module-decomposition",
+      "path": "../app-domain-toolkit/references/reference-orchestration-module-decomposition.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-review-funnel",
+      "path": "../app-domain-toolkit/references/reference-orchestration-review-funnel.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-quality-gates",
+      "path": "../app-domain-toolkit/references/reference-orchestration-quality-gates.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-dependency-capability-profiles",
+      "path": "../app-domain-toolkit/references/reference-orchestration-dependency-capability-profiles.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-technical-orchestration",
+      "path": "../app-domain-toolkit/references/reference-orchestration-technical-orchestration.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-orchestration-delivery-artifacts",
+      "path": "../app-domain-toolkit/references/reference-orchestration-delivery-artifacts.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
+    }
+  ]
 }

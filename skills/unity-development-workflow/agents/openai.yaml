@@ -1,4 +1,0 @@
-interface:
-  display_name: "Unity 开发编排"
-  short_description: "按六阶段和 V0-V4 编排 Unity 领域交付"
-  default_prompt: "使用 $app-workflow-control 建立 Work Item，再用 $app-creator-workflow 按六阶段与 Unity 原生证据完成领域编排。"

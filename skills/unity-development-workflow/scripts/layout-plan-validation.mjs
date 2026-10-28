@@ -1,5 +1,8 @@
 import { computeTargetBounds } from "./layout-geometry.mjs";
 import { validateUiLayoutPlanShape } from "./layout-plan-shape.mjs";
+import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+
+const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const EPSILON = 1e-6;
@@ -171,6 +174,10 @@ function validatePlanSemantics(plan, errors) {
   validateContainerReasons(plan.nodes, errors);
   validateCenterGroups(plan.nodes, nodesById, errors);
   validateGeometry(plan, nodesById, errors);
+  // 未派生的输入也要检查浮层目标落位，不能等到生成 targetBounds 才发现越界。
+  if (errors.length === 0 && plan.nodes.some((node) => node.layoutBinding.uiLayout.positioning === "absolute")) {
+    validateGeometry(plan, nodesById, errors, computeTargetBounds(plan));
+  }
 }
 
 /** 仅在 STRUCTURE 额外包住 SPRITE 底板及内容时要求说明独立职责。 */
@@ -257,6 +264,24 @@ export function validateUiLayoutPlan(plan, options = {}) {
     const shapeErrors = validateUiLayoutPlanShape(plan);
     if (shapeErrors.length > 0) return shapeErrors;
     const errors = [];
+    // 相对关系从原生节点直接读取；独立浮层只放宽本体，不放宽内部节点。
+    const floatingBodies = plan.nodes.filter((node) => node.layoutBinding.uiLayout.floatingRootKind !== undefined);
+    if (plan.displayLayerId !== undefined && floatingBodies.length !== 1) errors.push("独立 displayLayerId 必须绑定唯一浮层本体节点。");
+    if (plan.displayLayerId === undefined && floatingBodies.length) errors.push("浮层本体必须属于独立 displayLayerId，不能伪装成普通场景 UI。");
+    for (const body of floatingBodies) if (!ROOT_IDS.has(body.parentElementId)) errors.push(`浮层本体 ${body.id} 必须直接挂载 viewport 或 safe-area。`);
+    const relativeNodes = plan.nodes.map((node) => {
+      const layout = node.layoutBinding.uiLayout;
+      const mode = layout.positioning ?? "relative";
+      return { id: node.id, parentId: node.parentElementId,
+        references: mode === "absolute" && layout.floatingRootKind ? [] : [positionReference(node)],
+        mode, floatingKind: layout.floatingRootKind ?? null };
+    });
+    errors.push(...validateRelativeLayoutNodes(relativeNodes, { label: "Unity UI", roots: ["viewport", "safe-area"] }));
+    for (const node of plan.nodes) {
+      if (node.layoutBinding.uiLayout.positioning !== "absolute") continue;
+      if (node.layoutBinding.centerAlignment) errors.push(`独立浮层本体 ${node.id} 不得声明居中策略。`);
+      if (plan.nodes.some((leader) => leader.layoutBinding.centerAlignment?.memberIds?.includes(node.id))) errors.push(`独立浮层本体 ${node.id} 不得加入居中成员组。`);
+    }
     validatePlanSemantics(plan, errors);
     if (errors.length === 0) validateSuppliedTargets(plan, errors, requireDerived);
     return errors;

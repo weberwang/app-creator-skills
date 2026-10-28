@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter UX UI Quality"
+  short_description: "Design and verify high-quality Flutter UX/UI."
+  default_prompt: "Use $flutter-ux-ui-quality to define one clear visual direction by default, explore alternatives only when needed, and apply independent visual review according to risk."

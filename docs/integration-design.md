@@ -2,7 +2,7 @@
 
 ## 完整专业能力迁移
 
-当前以五源仓库1608个Git跟踪文件为逐项输入，91个原正式入口均有去向。目标只保留30个根SKILL：21个领域能力、4个公共流程和5个技术栈规范。77份专业正文改为ADAPTER.md，全部脚本、模板、校验器及1个Flutter嵌套生成模板继续保留；没有旧专业入口别名。共同正文与算法继续使用完整真源，详见[入口迁移](capability-entry-migration.md)。
+当前以五源仓库1608个Git跟踪文件为逐项输入，91个原正式入口均有去向。目标只保留30个根SKILL：21个领域能力、4个公共流程和5个技术栈规范。77份源专业正文集中到五份原生手册，全部脚本、模板、校验器及1个Flutter嵌套生成模板继续保留；没有旧专业入口或ADAPTER别名。共同正文与算法继续使用完整真源，详见[入口迁移](capability-entry-migration.md)。
 
 公共流程仍只有当前控制器；旧控制目录中的纯领域合同按依赖闭包迁为各栈 domain-contracts，旧编排目录的技术资源作为无根 SKILL.md 的资源目录保留。混在 Unity 原 CLI 中的原生技术校验单独提取为只读模块，不能被通用状态机替代。全局执行器和旧全局回归逐项记录替代目标，专业测试和正式脚本依赖的夹具保留。
 
@@ -14,7 +14,7 @@
 
 以 unity-skills 为流程语义基准，统一六阶段、V0–V4、A0–A6、F0–F4、实施包、执行结果、证据及 repair/revalidate/return。新增 PAGE 表达应用页面，SCENE 与 DISPLAY_LAYER 保持独立。五套技术规范独立维护，不保留五份控制器，不兼容旧控制数据，不自动迁移旧项目。
 
-目录采用 `skills/<技能名>`。公共技能为 `app-creator-workflow`、`app-workflow-control`、`grilling`、`app-asset-workflow`；五个 `app-stack-*` 提供技术栈规范和完整专业索引。按任务读取当前栈的原名专业技能及其资源，不以栈规范摘要替代专业入口。
+目录采用 `skills/<技能名>`。公共流程技能为 `app-creator-workflow`、`app-workflow-control`、`grilling`、`app-asset-workflow`；五个 `app-stack-*` 提供技术栈规范和完整专业索引。按能力选择当前栈手册中的具体模式及其资源，不以概述替代完整专业规则。
 
 ## 控制器工作项
 
@@ -42,4 +42,4 @@
 
 ## 验证计划
 
-本轮推荐 T3：跨五库的专业能力迁移涉及脚本、模板、校验器及安装分发，执行全仓 Node 测试、专业工具回归、全部脚本语法与技能引用检查、逐源文件摘要核对、临时目录安装及打包预检。命令为 `npm test`、`npm run test:flutter-layout`、`npm run check`、`npm run check:migration -- --source-root E:/Git` 和 `npm pack --dry-run --json --silent`。不启动引擎、开发服务、真机，不生成图片或执行外部写入；实际结果见验证记录。
+本轮推荐 T3：跨五库的专业能力迁移涉及脚本、模板、校验器及安装分发，执行全仓 Node 测试、专业工具回归、全部脚本语法与技能引用检查、逐源文件摘要核对、临时目录安装及打包预检。命令为 `npm test`、`npm run test:flutter-layout`、`npm run check`、`npm run check:migration -- --source-root ..` 和 `npm pack ./packages/cli --dry-run --json`。不启动引擎、开发服务、真机，不生成图片或执行外部写入；实际结果见[验证记录](verification.md)。

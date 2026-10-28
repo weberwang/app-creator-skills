@@ -71,7 +71,7 @@ function makePlan({ uiSystem = 'UGUI', sceneId = 'menu', stateId = 'default', di
   };
 }
 
-/** 创建 V2 拆解项及其在用户确认快照中的完整 UI 注释。 */
+/** 创建 V3 拆解项及其在用户确认快照中的完整 UI 注释。 */
 function makeSplitItem(node, index, { states = ['default'], coordinateSpace } = {}) {
   const binding = structuredClone(node.layoutBinding);
   if (coordinateSpace) binding.coordinateSpace = coordinateSpace;
@@ -195,7 +195,7 @@ function chainErrors(chain, options = {}) {
   }).join('\n');
 }
 
-test('V2 到 Prefab 结构、装配的层级链允许键顺序和集合顺序变化', () => {
+test('V3 到 Prefab 结构、装配的层级链允许键顺序和集合顺序变化', () => {
   const chain = makeChain();
   const splitPanel = chain.splitPlan.items.find(({ id }) => id === 'item.panel');
   splitPanel.layoutBinding.positionReferenceId = 'safe-area';
@@ -274,7 +274,7 @@ test('装配阶段不能把合法世界节点改成 UI 形状并借用世界拆�
   assert.match(chainErrors(chain), /assembly\.prefabs.*来源拆解项必须声明屏幕 UI 坐标空间/);
 });
 
-test('V2 无装配阶段也会拒绝父级、语义、锚点和位置参照漂移', () => {
+test('V3 无装配阶段也会拒绝父级、语义、锚点和位置参照漂移', () => {
   const chain = makeChain();
   chain.structure.prefabs[0].nodes.find(({ id }) => id === 'label').parentId = 'icon';
   chain.structure.prefabs[0].nodes.find(({ id }) => id === 'label').layoutBinding.parentElementId = 'icon';
@@ -327,7 +327,7 @@ test('结构新增、删除、重复节点以及拆解目标漏项都会被拒�
     id: 'extra-ui', name: 'Extra', nodeType: 'UI', decompositionElementId: 'item.icon', parentId: 'panel',
     semanticGrouping: { kind: 'part', rationale: '额外节点。' }, layoutBinding: layoutBinding('panel'),
   });
-  assert.match(chainErrors(added), /未在 V2 布局计划中的 UI 节点/);
+  assert.match(chainErrors(added), /未在 V3 布局计划中的 UI 节点/);
 
   const removed = makeChain();
   removed.structure.prefabs[0].nodes = removed.structure.prefabs[0].nodes.filter(({ id }) => id !== 'label');
@@ -410,7 +410,7 @@ test('Prefab 版本和拆解来源版本必须完整且证据绑定一致', () =
   assert.match(errors, /subjectVersion/);
 });
 
-test('V4 UGUI 与 UI Toolkit 实测对象名称必须绑定装配节点身份', () => {
+test('V5 UGUI 与 UI Toolkit 实测对象名称必须绑定装配节点身份', () => {
   const chain = makeChain();
   const report = {
     measurements: chain.plan.nodes.map((node) => {

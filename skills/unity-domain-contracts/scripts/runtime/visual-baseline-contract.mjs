@@ -8,7 +8,10 @@ export function validateVisualBaseline(work, pkg, repo) {
   const errors = [];
   const visible = ['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType);
   const stage = work.scene?.stage ?? work.displayLayer?.stage;
-  const required = visible && stage !== 'V0' || pkg?.visualBaselineRequired === true
+  // V1 只验证功能；V2 前期可创建或复用候选，阶段通过时才要求正式基线。
+  const status = work.scene?.status ?? work.displayLayer?.status;
+  const visualReady = ['V3', 'V4', 'V5'].includes(stage) || stage === 'V2' && (status === 'PASS' || ['PASSED', 'INTEGRATING', 'COMPLETE'].includes(work.globalState));
+  const required = visible && visualReady || pkg?.visualBaselineRequired === true
     || work.stageId === 'global-baseline' && work.domain === 'visual' && ['VALIDATING', 'PASSED', 'COMPLETE'].includes(work.globalState);
   const ref = work.globalVisualBaselineSelectionRef;
   if (!ref) return required ? ['缺少 globalVisualBaselineSelectionRef 三候选人工选择证据'] : errors;

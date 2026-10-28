@@ -136,21 +136,23 @@ namespace Project.UnityWorkflow.Runtime
             }
 
             if (TryNormalizeLocaleCode(localeCode, out var languageCode)
-                && fontAssetsByLanguage.TryGetValue(languageCode, out var fontAsset))
+                && (fontAssetsByLanguage.TryGetValue(languageCode, out var fontAsset)
+                    || (TryGetDefaultFallback(languageCode, out var fallback)
+                        && fontAssetsByLanguage.TryGetValue(fallback, out fontAsset))))
             {
                 targetText.font = fontAsset;
                 lastUnmappedLocaleCode = null;
                 return;
             }
 
-            // 缺少映射或遇到繁体中文时保留已有字体，并提示配置问题，避免误套用另一语言的资产。
+            // 未配置的地区或语言保留已有字体，避免误套用另一语言的资产。
             WarnUnmappedLocale(localeCode);
         }
 
-        /// <summary>只接受支持的语言族，并转换为映射表使用的规范键。</summary>
+        /// <summary>校验语言标签并保留语言、文字与地区信息作为映射键。</summary>
         /// <param name="localeCode">待解析的 BCP-47 风格语言标签。</param>
         /// <param name="normalizedCode">输出的规范键，失败时为空字符串。</param>
-        /// <returns>标签属于支持的语言族时返回 true。</returns>
+        /// <returns>标签合法时返回 true。</returns>
         private static bool TryNormalizeLocaleCode(string localeCode, out string normalizedCode)
         {
             normalizedCode = string.Empty;
@@ -162,44 +164,34 @@ namespace Project.UnityWorkflow.Runtime
             var parts = localeCode.Trim().Replace('_', '-').Split('-');
             for (var index = 0; index < parts.Length; index++)
             {
-                if (string.IsNullOrWhiteSpace(parts[index]))
+                if (parts[index].Length == 0 || parts[index].Length > 8
+                    || (index == 0 && parts[index].Length < 2))
                 {
                     return false;
                 }
-            }
-
-            var language = parts[0];
-            if (string.Equals(language, "zh", StringComparison.OrdinalIgnoreCase))
-            {
-                // 任何显式 Hant 标签都不进入简体中文映射，避免 zh-Hant 被当作 zh-CN。
-                for (var index = 1; index < parts.Length; index++)
+                foreach (var character in parts[index])
                 {
-                    if (string.Equals(parts[index], "Hant", StringComparison.OrdinalIgnoreCase))
+                    if (!((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z')
+                        || (index > 0 && character >= '0' && character <= '9')))
                     {
                         return false;
                     }
                 }
-
-                if (parts.Length > 1
-                    && (string.Equals(parts[1], "Hans", StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(parts[1], "CN", StringComparison.OrdinalIgnoreCase)))
-                {
-                    normalizedCode = "zh-CN";
-                    return true;
-                }
-
-                return false;
             }
 
-            if (string.Equals(language, "en", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(language, "ja", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(language, "ru", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(language, "es", StringComparison.OrdinalIgnoreCase))
-            {
-                normalizedCode = language.ToLowerInvariant();
-                return true;
-            }
+            normalizedCode = string.Join("-", parts);
+            return true;
+        }
 
+        /// <summary>为已配置的英语和简体中文映射提供有限的地区或文字别名回退。</summary>
+        private static bool TryGetDefaultFallback(string code, out string fallback)
+        {
+            fallback = null;
+            if (code.StartsWith("en-", StringComparison.OrdinalIgnoreCase)) fallback = "en";
+            // 只映射无地区或中国大陆的简体标签，避免覆盖其他明确地区及繁体中文。
+            else if (code.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase)
+                || code.Equals("zh-Hans-CN", StringComparison.OrdinalIgnoreCase)) fallback = "zh-CN";
+            if (fallback != null) return true;
             return false;
         }
 

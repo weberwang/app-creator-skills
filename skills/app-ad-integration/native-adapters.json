@@ -37,6 +37,16 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "reference-ad-applovin-max-contract",
+      "path": "../app-domain-toolkit/references/reference-ad-applovin-max-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

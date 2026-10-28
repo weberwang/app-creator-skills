@@ -46,7 +46,7 @@ namespace Project.UnityWorkflow.FontPipeline
     }
 
     /// <summary>
-    /// 保存五语言 TMP 字体生成和应用所需的项目配置。
+    /// 保存项目所选语言的 TMP 字体生成和应用配置。
     /// </summary>
     [CreateAssetMenu(fileName = "TmpFontAtlasPlan", menuName = "Unity Workflow/TMP Font Atlas Plan")]
     public sealed class TmpFontAtlasPlan : ScriptableObject

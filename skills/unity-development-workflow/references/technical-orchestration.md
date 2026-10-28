@@ -2,7 +2,7 @@
 
 ---
 name: app-creator-workflow
-description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建立 Work Item 后，按六阶段项目视图和 V0-V4 场景闭环协调架构、玩法、视觉、资源、音频、QA 与发布交付。
+description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建立 Work Item 后，按六阶段项目视图和 V0-V5 场景闭环协调架构、玩法、视觉、资源、音频、QA 与发布交付。
 ---
 
 # Unity 游戏开发编排
@@ -17,7 +17,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前明确 Implementation Package 的基线、文件所有权、Unity 对象所有权、执行单元、非空 `acceptanceCommands` 和停止条件。进入 `IMPLEMENTING` 后由控制面创建 `evidenceRoot/execution-state.json`；单元结果记录真实证据并绑定计划顺序，`unit-check` 只校验结果，不运行验收命令。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。`RETURN` 由 `affectedScope` 推导恢复点并归档执行状态，不手选恢复状态。
-5. 阶段完成后回到控制面运行 `check`/`run`；场景工作项通过 `scene-stage` 相邻推进，V3→V4 还必须有 PASS Evidence 和执行闭环，推进后切回 `PROPOSAL`、重置 F2/F3/F4 并绑定新实施包。验收通过后，由主代理按[最小 Git 提交集](../../unity-domain-contracts/references/minimal-git.md)递归检查必要引用并仅在用户明确要求时创建本地阶段提交。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
+5. 阶段完成后回到控制面运行 `check`/`run`；场景工作项通过 `scene-stage` 相邻推进，V4→V5 还必须有 PASS Evidence 和执行闭环，推进后切回 `PROPOSAL`、重置 F2/F3/F4 并绑定新实施包。验收通过后，由主代理按[最小 Git 提交集](../../unity-domain-contracts/references/minimal-git.md)递归检查必要引用并仅在用户明确要求时创建本地阶段提交。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
 
 图片与动画采用[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)：阶段内技术分析、布局决策和制作参数内部维护，直接展示真实候选；已有阶段或专项交付确认后不再请求文字复述确认，同目标返修直接展示前后对照。玩家画面按[游戏内文案](./game-copy.md)维护同一可见表达，内部规格、效果图与运行数据来源分清归属。
 
@@ -31,22 +31,22 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 - 项目采用的 SDK 由 Foundation 中映射的[唯一初始化入口](./sdk-initialization.md)独立启动和追踪；不得让无关 SDK 或首帧等待整批初始化完成。
 - 研发验证优先 EditMode、PlayMode、Game View、静态预算和无设备构建。未经用户明确要求，不启动 Standalone/Player 或真机；发布动作也不因构建成功而自动获批。
 
-## 场景 V0-V4
+## 场景 V0-V5
 
-每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求常规确认；V1–V4 按[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)推进。V1 确认真实目标图；V2 先后独立确认拆解图和布局图；V3 验收正式资源生产与导入，可展示临时组合预览；V3 可生产资源级 Prefab；正式宿主 Scene/场景装配 Prefab/UI 接入及布局校准在 V4，实际运行交付经用户确认后闭合。`stageReviews` 只保存 V1–V4 的用户确认，不能用技术 PASS、初始授权或沉默替代人工确认。
+每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求常规确认；V2–V5 按[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)推进。V2 确认真实目标图；V3 先后独立确认拆解图和布局图；V4 验收正式资源生产与导入，可展示临时组合预览；V4 可生产资源级 Prefab；正式宿主 Scene/场景装配 Prefab/UI 接入及布局校准在 V5，实际运行交付经用户确认后闭合。`stageReviews` 只保存 V2–V5 的视觉用户确认，不能用技术 PASS、初始授权或沉默替代人工确认。
 
-场景按 `V0 内部分流 → V1 对象定义 → V2 拆解与布局确认 → V3 正式资源生产与导入验收 → V4 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](./visual-workflow.md)和[场景闭环](./scene-loop.md)。全局基线首次建立时生成三张同条件候选并记录五项质量结果，唯一人工选择的候选五项均须 `PASS`；有效选择证据可跨 Work 复用。动画素材制作前须先说明设计理念和动作方案、取得确认，完成后仍须验收真实素材。
+场景按 `V0 内部分流 → V1 功能验证（白盒可选）→ V2 视觉目标 → V3 拆解与布局确认 → V4 正式资源生产与导入验收 → V5 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](./visual-workflow.md)和[场景闭环](./scene-loop.md)。全局基线首次建立时生成三张同条件候选并记录五项质量结果，唯一人工选择的候选五项均须 `PASS`；有效选择证据可跨 Work 复用。动画素材制作前须先说明设计理念和动作方案、取得确认，完成后仍须验收真实素材。
 
-公共资源按[登记与使用规则](./shared-asset-usage.md)从功能/场景规划贯穿 V1-V4：早期识别共享候选，V2 先查项目资源总表再选择复用或统一生产，V3 用真实产物复核；资源交接时由指定单写者同步登记，场景/显示层记录实际消费关系，替换后只重验受影响消费者。
+公共资源按[登记与使用规则](./shared-asset-usage.md)从功能/场景规划贯穿 V1-V5：早期识别共享候选，V3 先查项目资源总表再选择复用或统一生产，V4 用真实产物复核；资源交接时由指定单写者同步登记，场景/显示层记录实际消费关系，替换后只重验受影响消费者。
 
-屏幕 UI 在 V2 拆解确认后读取[居中与机器布局包](./ui-layout-plan.md)：功能父级与位置参照分开，底板可兼任组件根，严格居中与图文联合居中从确认事实派生；先通过 `layout-plan/layout-check` 检查，再生成供用户确认的布局图。机器结果不替代阶段确认，目标内技术修复继续使用 `repair + revalidate`。
+屏幕 UI 在 V3 拆解确认后读取[居中与机器布局包](./ui-layout-plan.md)：功能父级与位置参照分开，底板可兼任组件根，严格居中与图文联合居中从确认事实派生；先通过 `layout-plan/layout-check` 检查，再生成供用户确认的布局图。机器结果不替代阶段确认，目标内技术修复继续使用 `repair + revalidate`。
 
-屏幕 UI 的 V2–V4 实施包绑定 `uiLayoutPlanRef`；V4 按[布局控制权与真实组件快照](./ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，Evidence 以 `uiLayoutMeasurementRef` 绑定当前 evidenceRoot 内正式报告。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
+屏幕 UI 的 V3–V5 实施包绑定 `uiLayoutPlanRef`；V5 按[布局控制权与真实组件快照](./ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，Evidence 以 `uiLayoutMeasurementRef` 绑定当前 evidenceRoot 内正式报告。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
 
-- V1 冻结玩法契约、Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
-- V2 按[文本与色彩拆分路线](./visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](./ui-layout-and-hierarchy.md)。
-- V3 验证正式资源生产、实际 Importer 回读、资源级序列化引用和导入结果；可生产并验证资源级 Prefab、提供临时组合预览，不在本阶段实施正式宿主 Scene/场景装配 Prefab/UXML 或校准布局。不得以灰盒或整张效果图冒充正式资源。
-- V4 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据；美术质量五项逐项通过，并按适用性验收正常游玩、重复反馈、事件峰值和同屏叠加。动态证据与人工显示确认通过 `artExperienceAcceptanceRef` 绑定当前工作项/候选/场景；机器参数不能代替视觉确认。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V4。
+- V1 实现并验证玩法契约，白盒按需使用；V2 确认视觉目标及 Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
+- V3 按[文本与色彩拆分路线](./visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](./ui-layout-and-hierarchy.md)。
+- V4 验证正式资源生产、实际 Importer 回读、资源级序列化引用和导入结果；可生产并验证资源级 Prefab、提供临时组合预览，不在本阶段实施正式宿主 Scene/场景装配 Prefab/UXML 或校准布局。不得以灰盒或整张效果图冒充正式资源。
+- V5 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据；美术质量五项逐项通过，并按适用性验收正常游玩、重复反馈、事件峰值和同屏叠加。动态证据与人工显示确认通过 `artExperienceAcceptanceRef` 绑定当前工作项/候选/场景；机器参数不能代替视觉确认。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V5。
 
 ## 领域协作
 
@@ -66,7 +66,7 @@ Unity 原生 2D 骨骼、蒙皮和角色动画交给 [`$app-character-rigging`](
 
 游戏运行时 UI 路线确定为 uGUI + TextMeshPro，使用 Canvas/RectTransform 与 Prefab，安全区复用 `SafeAreaRectTransform`；新增编辑器工具使用 UI Toolkit。按[插件能力路由](./unity-plugin-routing.md)选择对应操作技能。
 
-V3/V4 涉及正式资源或序列帧交接时，按[加载与序列帧合同](./resource-loading-and-frame-handoff.md)在唯一资源总表声明 `loading`，由 `uwt_inspect_resource_handoff` 读取实际路径、动态键、Clip/帧身份及消费者。实施包绑定 `resourceHandoff` 后，交付必须消费当前 `resourceHandoffInspectionRef`；不默认 Resources、不强制 Addressables，不把普通 address 当作加载证明。
+V4/V5 涉及正式资源或序列帧交接时，按[加载与序列帧合同](./resource-loading-and-frame-handoff.md)在唯一资源总表声明 `loading`，由 `uwt_inspect_resource_handoff` 读取实际路径、动态键、Clip/帧身份及消费者。实施包绑定 `resourceHandoff` 后，交付必须消费当前 `resourceHandoffInspectionRef`；不默认 Resources、不强制 Addressables，不把普通 address 当作加载证明。
 
 项目文档与 JSON Job 仍由最小文件工具处理；控制状态由 `app-workflow-control` 处理，Unity 事实由 [@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与随附 Toolkit 处理：
 

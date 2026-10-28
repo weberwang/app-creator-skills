@@ -17,7 +17,7 @@ import {
   validateFrameAnimationWorkflowContract,
 } from "./frame-animation-workflow-contract.mjs";
 import { checkManifestFiles, validateManifest } from "./validate_visual_manifest.mjs";
-import { imagesToAtlas } from "../../phaser4-frame-animation/scripts/images-to-atlas.mjs";
+import { imagesToAtlas } from "../../phaser-domain-contracts/resources/frame-animation/scripts/images-to-atlas.mjs";
 
 const FINGERPRINT = sha256Bytes(Buffer.from("fixture"));
 const WORK_ITEM = "work-item-image-atlas";
@@ -572,4 +572,22 @@ test("现有全局 accepted 文件门按图片 schema 路由且不要求视频�
     assert.equal(Object.hasOwn(fixture.contract, "source_video"), false);
     assert.equal(Object.hasOwn(fixture.contract, "video_prompt"), false);
   });
+});
+
+test("图片动画合同默认无需网页，显式预览必须与报告和真实文件一致", async () => {
+  const fixture = await createFixtureRoot();
+  try {
+    const preview = fixture.contract.preview;
+    delete fixture.contract.preview;
+    delete fixture.report.artifacts.preview;
+    await rewriteReport(fixture);
+    assert.deepEqual(await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root }), []);
+    fixture.contract.preview = preview;
+    assert((await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root })).some((error) => error.includes("同时声明")));
+    fixture.report.artifacts.preview = { file: preview.file };
+    await rewriteReport(fixture);
+    assert.deepEqual(await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root }), []);
+    await writeFile(join(fixture.root, preview.file), "broken html");
+    assert((await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root })).some((error) => error.includes("preview")));
+  } finally { await rm(fixture.root, { recursive: true, force: true }); }
 });

@@ -66,7 +66,9 @@ test('轻量初始化直接进入REVIEW，但没有质量门和实施包不能�
 test('轻量模式拒绝视觉、项目、集成、发布、外部动作及多单元计划', async (t) => {
   const repo = temporaryProject(t);
   for (const type of ['PROJECT', 'SCENE', 'PAGE', 'INTEGRATION', 'RELEASE']) {
-    await assert.rejects(initializeWork({ repo, args: { id: type.toLowerCase(), type, mode: 'light', stack: 'flutter', objective: '不适用轻量模式的任务' } }), /light/);
+    // 先匹配技术栈的对象类型，确保断言验证的是轻量模式限制。
+    const stack = type === 'SCENE' ? 'unity' : 'flutter';
+    await assert.rejects(initializeWork({ repo, args: { id: type.toLowerCase(), type, mode: 'light', stack, objective: '不适用轻量模式的任务' } }), /light/);
   }
   const basic = { workflowMode: 'light', workItemType: 'MODULE', visualBaselineRequired: false };
   assert.throws(() => assertWorkflowPolicy({ ...basic, action: { effects: ['external-write'] } }), /受保护/);

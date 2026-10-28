@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /** 根据迁移清单生成专业技能索引，避免手工索引与实际分发目录脱节。 */
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { readFileSync, writeFileSync } from './migration/file-io.mjs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { readSkillCatalog } from './skill-catalog.mjs';

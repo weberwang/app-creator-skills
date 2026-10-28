@@ -1,8 +1,8 @@
 # 居中与机器布局包
 
-在 V2 拆解确认后生成布局图时读取。`ui-layout-plan.schema.json` 规范布局图的机器数据，复用现有 `layoutBinding`；它不是第二份拆解清单、确认账本或新的工作流阶段。`sceneId/stateId`、UI 系统与坐标空间必须明确。每个节点的 `decompositionElementId` 对应 `splitPlan.items[].id`，节点 `id` 对应该 item 的 `targetPrefabNodeIds` 中某个真实 Prefab/Scene 节点 ID；不从几何位置猜测身份或层级。
+在 V3 拆解确认后生成布局图时读取。`ui-layout-plan.schema.json` 规范布局图的机器数据，复用现有 `layoutBinding`；它不是第二份拆解清单、确认账本或新的工作流阶段。`sceneId/stateId`、UI 系统与坐标空间必须明确。每个节点的 `decompositionElementId` 对应 `splitPlan.items[].id`，节点 `id` 对应该 item 的 `targetPrefabNodeIds` 中某个真实 Prefab/Scene 节点 ID；不从几何位置猜测身份或层级。
 
-计划可带 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef`，格式均为 `{ "path": "Artifacts/..." }`，只允许目标 Unity 工程内的项目相对路径。路径引用的是工程中真实保存的工件，不创建虚构的确认记录。纯内存几何 schema 允许不带 refs；`layout-plan`、`layout-check`、`compile-json` 和控制面 V2 要求前两个引用，V4 的 `layout-runtime-check` 与控制面 V4 还要求 `prefabAssemblyRef`。
+计划可带 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef`，格式均为 `{ "path": "Artifacts/..." }`，只允许目标 Unity 工程内的项目相对路径。路径引用的是工程中真实保存的工件，不创建虚构的确认记录。纯内存几何 schema 允许不带 refs；`layout-plan`、`layout-check`、`compile-json` 和控制面 V3 要求前两个引用，V5 的 `layout-runtime-check` 与控制面 V5 还要求 `prefabAssemblyRef`。
 
 ## 输入与派生
 
@@ -48,4 +48,4 @@ node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs layout-che
 
 具体字段以 schema 为准。生成布局图时使用派生的 targetBounds；`layout-check` 从原始 bounds 重算并核对结果，检查引用、联合循环、越界、成员与中心策略。`compile-json --kind ui-layout-plan` 使用同一检查，不把未经检查的布局计划封装为可执行 Job。文件工具的通过仅证明结构与几何事实，不证明用户已确认图或 Unity 已实现该计划。
 
-V2 先确认拆解图，再生成和单独确认布局图；V3 沿资源登记与导入验收执行；V4 使用[实际布局测量](./layout-calibration.md)核对正式组合。目标内的实现修复使用 `repair + revalidate`；只有目标、范围或上游事实变化才回到受影响阶段，不为驱动器技术调整新增审批或强制回退。
+V3 先确认拆解图，再生成和单独确认布局图；V4 沿资源登记与导入验收执行；V5 使用[实际布局测量](./layout-calibration.md)核对正式组合。目标内的实现修复使用 `repair + revalidate`；只有目标、范围或上游事实变化才回到受影响阶段，不为驱动器技术调整新增审批或强制回退。

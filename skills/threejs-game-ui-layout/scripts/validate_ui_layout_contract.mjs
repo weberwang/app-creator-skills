@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+
 import { createHash } from "node:crypto";
 import { readFile, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
@@ -15,7 +18,6 @@ import { validateUiInteractionTree, validateUiLayout } from "../../threejs-game-
 
 const ROOT_REQUIRED = ["schema_version", "contract_id", "contract_version", "scope", "fidelity", "frozen_visual_target", "logicalViewportSpace", "designResolutionPolicy", "canvasBackingPolicy", "runtimeDprPolicy", "maxRuntimeDpr", "scaleMode", "cameraViewportPolicy", "cameraZoomPolicy", "cameraOriginPolicy", "inputCoordinatePolicy", "safeAreaPolicy", "resizePolicy", "orientationPolicy", "textResolutionPolicy", "assetResolutionPolicy", "performanceBudget", "representativeViewports", "requiredRuntimeEvidence", "targets", "coordinate_spaces", "regions", "layout_nodes", "content", "platform_insets", "scrolling", "dynamic_content", "overlay_rules", "breakpoints", "invariants", "critical_alignments", "parity_cases", "evidence_matrix"];
 const REQUIRED_EVIDENCE_AXES = new Set(["breakpoint-neighbors", "width", "height", "orientation", "text-scale", "localization", "safe-area", "action-state", "dpr", "dynamic-values", "scene-lifecycle", "overlay-keyboard-scroll"]);
-const REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES = ["en", "zh-CN", "ja", "ru", "es"];
 const REQUIRED_RUNTIME_EVIDENCE_FIELDS = ["viewportRect", "canvasRect", "designTransform", "logicalSize", "backingSize", "cssDisplaySize", "rawDevicePixelRatio", "effectiveDevicePixelRatio", "logicalToCssScale", "cssToPhysicalScale", "cameraViewport", "cameraZoom", "cameraOrigin", "safeArea", "edgeGaps", "backgroundCoverage", "keyUiRects", "inputHitResults", "resizeTrajectory", "pageReloaded", "screenshot", "sceneId", "stateId", "layoutContractVersion", "visualBaselineVersion"];
 
 /** 判断值是否为合同允许的对象类型。 */
@@ -554,24 +556,59 @@ function validateSize(size, label, errors) {
 }
 
 /** 验证区域字段、参照物和专项审查标记。 */
+/** 校验真实 UI 节点；浮层本体身份必须绑定实际容器和真实顶层 UI 根。 */
+function validateRelativeWebNodes(input, errors, label, kind) {
+  if (!Array.isArray(input)) return;
+  const synthetic = (node) => node?.is_root_container === true && ["viewport", "safe-area"].includes(node.layout_node_id ?? node.layoutNodeId) && (node.parent_layout_node_id === null || node.parentLayoutNodeId === null);
+  for (const node of input.filter(synthetic)) if (node.ui_layout?.floating_root_kind !== undefined || node.ui_layout?.positioning === "absolute") errors.push(label + " 合成视口根不能声明为浮层本体");
+  const source = input.filter((node) => !synthetic(node));
+  const ids = new Set(source.map((node) => kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId)));
+  const byId = new Map(source.map((node) => [kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId), node]));
+  const regionNodes = new Map();
+  if (kind === "nodes") for (const node of source) { const group = regionNodes.get(node?.region_id) ?? []; group.push(node?.layout_node_id); regionNodes.set(node?.region_id, group); }
+  const canonical = source.map((node) => {
+    const layout = node?.ui_layout ?? node?.uiLayout ?? {};
+    const id = kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId);
+    const parentId = kind === "regions" ? node?.parent_id : kind === "elements" ? node?.parent_element_id : (node?.parent_layout_node_id ?? node?.parentLayoutNodeId ?? node?.parent_element_id ?? node?.parentElementId);
+    let reference = kind === "regions" ? node?.reference_id : kind === "elements" ? (layout.position_reference_id ?? node?.position_reference_id ?? node?.reference_id ?? parentId) : (node?.reference_id ?? node?.referenceId ?? layout.position_reference_id ?? layout.positionReferenceId ?? node?.position_reference_id ?? node?.positionReferenceId ?? parentId);
+    if (kind === "nodes" && !ids.has(reference) && !["viewport", "safe-area"].includes(reference)) { const matches = regionNodes.get(reference) ?? []; if (matches.length === 1) reference = matches[0]; }
+    const mode = kind === "regions" ? node?.positioning : Object.hasOwn(layout, "positioning") ? layout.positioning : "relative";
+    const owner = kind === "regions" ? (node ?? {}) : layout;
+    const floatingKind = Object.hasOwn(owner, "floating_root_kind") ? owner.floating_root_kind : null;
+    if (Object.hasOwn(owner, "floating_root_kind") && !["popup", "floating", "toast"].includes(floatingKind)) errors.push(label + "." + id + " floating_root_kind 必须为 popup/floating/toast");
+    if (floatingKind !== null) {
+      if (kind === "regions" && node?.semantic_role !== floatingKind) errors.push(label + "." + id + " 浮层本体类型必须与 semantic_role 一致");
+      if (kind === "regions" && node?.is_container !== true) errors.push(label + "." + id + " 浮层本体必须显式声明实际容器");
+      if (kind !== "regions" && node?.is_container !== true && node?.element_type !== "container") errors.push(label + "." + id + " 浮层本体必须是实际容器，普通叶子不能豁免");
+      const parent = byId.get(parentId);
+      const actualUiRoot = kind === "regions" ? ["ui-root", "screen-ui-root"].includes(parent?.semantic_role) : (parent?.is_container === true || parent?.element_type === "container") && [parent?.layout_role, parent?.role, parent?.semantic_role].some((role) => ["ui-root", "screen-ui-root"].includes(role));
+      if (!["viewport", "safe-area"].includes(parentId) && !actualUiRoot) errors.push(label + "." + id + " 浮层本体必须直接归属稳定根或实际 UI 根");
+    }
+    // 独立浮层本体可以没有锚点；普通节点和浮层内部仍必须提供实际参照。
+    const references = mode === "absolute" && ["popup", "floating", "toast"].includes(floatingKind) && reference === undefined ? [] : [reference];
+    return { id, parentId, references, mode, floatingKind };
+  });
+  errors.push(...validateRelativeLayoutNodes(canonical, { label, roots: ["viewport", "safe-area"] }));
+}
+
 function validateRegions(document, spaces, errors, specialized) {
   const regions = document.regions; const ids = new Set(); if (!Array.isArray(regions) || regions.length === 0) { errors.push("regions 必须是非空数组"); return ids; }
   regions.forEach((region, index) => { const label = `regions[${index}]`; if (!isObject(region)) { errors.push(`${label} 必须是对象`); return; } if (!isString(region.id)) { errors.push(`${label}.id 必须是非空字符串`); return; } if (ids.has(region.id)) errors.push(`重复区域/UI ID：${region.id}`); ids.add(region.id);
-    for (const field of ["semantic_role", "parent_space", "reference_id", "positioning", "layout_group", "layout_participation", "scroll", "input", "clip", "origin", "layout_anchor"]) if (!isString(region[field])) errors.push(`${label}.${field} 必须是非空字符串`);
+    for (const field of ["semantic_role", "parent_space", "reference_id", "positioning", "layout_group", "layout_participation", "scroll", "input", "clip", "origin", "layout_anchor"]) if (!(field === "reference_id" && region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, field)) && !isString(region[field])) errors.push(`${label}.${field} 必须是非空字符串`);
     // 纯布局节点没有资源原点；可渲染对象才执行中心默认值及非中心例外门禁。
     if (!["display-object", "layout-only"].includes(region.origin_applicability)) errors.push(`${label}.origin_applicability 必须为 display-object 或 layout-only`);
     else if (region.origin_applicability === "layout-only" && region.origin !== "not-applicable") errors.push(`${label}.origin 在 layout-only 时必须为 not-applicable`);
     else if (region.origin_applicability === "display-object" && region.origin === "not-applicable") errors.push(`${label}.origin 在 display-object 时必须声明资源原点`);
     else if (region.origin_applicability === "display-object" && isString(region.origin) && region.origin !== "center" && (!isObject(region.origin_exception) || !isString(region.origin_exception.reason) || !isString(region.origin_exception.coordinate_conversion))) errors.push(`${label}.origin 非中心时必须声明 origin_exception.reason 和 coordinate_conversion`);
     if (!isObject(region.animation_offset) || !("x" in region.animation_offset) || !("y" in region.animation_offset)) errors.push(`${label}.animation_offset 必须包含 x 和 y`); else if (!["x", "y"].every((axis) => isNumber(region.animation_offset[axis]) || isString(region.animation_offset[axis]))) errors.push(`${label}.animation_offset.x/y 必须是数值或非空表达式`);
-    if (!spaces.has(region.parent_space)) errors.push(`${label} 引用不存在的 parent_space：${region.parent_space}`); validateAnchors(region.anchors, label, errors); validateSize(region.size, label, errors); if (region.positioning === "absolute") appendUnique(specialized, `${region.id}:absolute-positioning`); if (isObject(region.size) && region.size.strategy === "fixed") appendUnique(specialized, `${region.id}:fixed-size`);
+    if (!spaces.has(region.parent_space)) errors.push(`${label} 引用不存在的 parent_space：${region.parent_space}`); if (!(region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, "anchors"))) validateAnchors(region.anchors, label, errors); validateSize(region.size, label, errors); if (region.positioning === "absolute") appendUnique(specialized, `${region.id}:absolute-positioning`); if (isObject(region.size) && region.size.strategy === "fixed") appendUnique(specialized, `${region.id}:fixed-size`);
   }); return ids;
 }
 
 /** 验证区域参照存在并检测参照环。 */
 function validateReferenceGraph(document, ids, errors) {
   if (!Array.isArray(document.regions)) return; const graph = new Map();
-  document.regions.forEach((region, index) => { if (!isObject(region) || !ids.has(region.id)) return; if (region.reference_id !== "viewport" && !ids.has(region.reference_id)) errors.push(`regions[${index}] 引用不存在的 reference_id：${region.reference_id}`); else if (ids.has(region.reference_id)) graph.set(region.id, region.reference_id); });
+  document.regions.forEach((region, index) => { if (!isObject(region) || !ids.has(region.id)) return; if (region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, "reference_id")) return; if (region.reference_id !== "viewport" && !ids.has(region.reference_id)) errors.push(`regions[${index}] 引用不存在的 reference_id：${region.reference_id}`); else if (ids.has(region.reference_id)) graph.set(region.id, region.reference_id); });
   validateGraphCycles(graph, "区域参照存在循环", errors);
 }
 
@@ -627,6 +664,7 @@ function validateLayoutNodes(document, fidelity, binding, spaces, regionIds, err
     }
   });
   if (requiresLayoutNodes) validateUiInteractionTree(nodes.map((node) => ({ element_id: node?.layout_node_id, parent_element_id: node?.parent_layout_node_id, ui_layout: node?.ui_layout })), errors, "layout_nodes");
+  if (requiresLayoutNodes) validateRelativeWebNodes(nodes, errors, "layout_nodes", "nodes");
   if (isEffectImageContract(document)) {
     // 父容器、独立参照和派生执行计划与场景入口共用规则，verified 读取同一份正式快照。
     if (document.fidelity?.status === "verified") validateLayoutRuntimeSnapshots(nodes, document, errors, "layout_runtime", {
@@ -658,9 +696,10 @@ function validateLayoutAnnotationBinding(document, binding, layoutNodes, errors)
   if (!isEffectImageContract(document)) return;
   const annotation = document.layout_annotation;
   if (!isObject(annotation)) { errors.push("effect-image 必须声明 layout_annotation；布局标注只能后置于拆解确认"); return; }
-  const required = ["layout_annotation_file", "layout_annotation_width", "layout_annotation_height", "layout_annotation_schema", "layout_annotation_layout", "layout_review_file", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id"];
+  const required = ["layout_annotation_file", "layout_annotation_width", "layout_annotation_height", "layout_annotation_schema", "layout_annotation_layout", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id"];
   for (const field of required) if (!(field in annotation)) errors.push(`layout_annotation.${field} 必须存在`);
-  for (const field of ["layout_annotation_file", "layout_review_file", "layout_nodes_file", "layout_decision_file", "decomposition_confirmation_id", "layout_decision_id", "scene_id", "state_id"]) if (!isString(annotation[field])) errors.push(`layout_annotation.${field} 必须是非空字符串`);
+  for (const field of ["layout_annotation_file", "layout_nodes_file", "layout_decision_file", "decomposition_confirmation_id", "layout_decision_id", "scene_id", "state_id"]) if (!isString(annotation[field])) errors.push(`layout_annotation.${field} 必须是非空字符串`);
+  if ((Object.hasOwn(annotation, "layout_review_file") && (!isString(annotation.layout_review_file) || !/\.html?$/i.test(annotation.layout_review_file))) || (!Object.hasOwn(annotation, "layout_review_file") && ["layout_review_sha256", "layout_review_identity_sha256"].some((key) => Object.hasOwn(annotation, key)))) errors.push("layout_annotation.layout_review_file 必须是 HTML 路径且与网页身份同时声明");
   if (annotation.layout_annotation_schema !== "layout-annotation/png/1") errors.push("layout_annotation.layout_annotation_schema 必须为 layout-annotation/png/1");
   if (annotation.layout_annotation_layout !== "image-plus-right-panel") errors.push("layout_annotation.layout_annotation_layout 必须为 image-plus-right-panel");
   for (const field of ["layout_annotation_width", "layout_annotation_height"]) if (!Number.isInteger(annotation[field]) || annotation[field] <= 0) errors.push(`layout_annotation.${field} 必须是正整数`);
@@ -685,24 +724,23 @@ function validatePlatformAndScrolling(document, ids, errors) {
   if (!isObject(scrolling.narrow_height_degradation)) errors.push("scrolling.narrow_height_degradation 必须是对象"); else for (const field of ["trigger", "strategy", "fallback"]) if (!isString(scrolling.narrow_height_degradation[field])) errors.push(`scrolling.narrow_height_degradation.${field} 必须是非空字符串`);
 }
 
-/** 验证程序化文本的五语种、逐语言行布局与短文案合同。 */
+/** 验证程序化文本的默认语言、项目选择语言及逐语言行布局。 */
 function validateProgrammaticTextLocalization(localization, errors) {
   const label = "dynamic_content.localization";
   if (typeof localization.programmatic_text !== "boolean") errors.push(`${label}.programmatic_text 必须是布尔值`);
   if (!Array.isArray(localization.required_languages) || localization.required_languages.length === 0 || !localization.required_languages.every(isString)) errors.push(`${label}.required_languages 必须是非空语言数组`);
   if (localization.programmatic_text !== true) return;
 
-  const languages = new Set(localization.required_languages ?? []);
-  const missing = REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES.filter((language) => !languages.has(language));
-  if (missing.length) errors.push(`${label}.required_languages 缺少程序化文本必需语言：${missing.join(", ")}`);
+  const languages = new Set(Array.isArray(localization.required_languages) ? localization.required_languages : []);
   if (languages.size !== (localization.required_languages?.length ?? 0)) errors.push(`${label}.required_languages 不得包含重复语言`);
+  if (!isString(localization.default_language) || !languages.has(localization.default_language)) errors.push(`${label}.default_language 必须属于所选语言`);
   if (!isObject(localization.wrap)) errors.push(`${label}.wrap 必须逐语言声明 single-line 或 wrap`);
-  else for (const language of REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES) if (!["single-line", "wrap"].includes(localization.wrap[language])) errors.push(`${label}.wrap.${language} 必须为 single-line 或 wrap`);
+  else for (const language of languages) if (!["single-line", "wrap"].includes(localization.wrap[language])) errors.push(`${label}.wrap.${language} 必须为 single-line 或 wrap`);
   if (localization.growth !== "locale-adaptive") errors.push(`${label}.growth 必须为 locale-adaptive`);
   if (localization.truncate_policy !== "forbid") errors.push(`${label}.truncate_policy 必须为 forbid，程序化文本禁止截断`);
   if (localization.copy_style !== "concise-gameplay") errors.push(`${label}.copy_style 必须为 concise-gameplay`);
   if (localization.multiplier_format !== "x{value}") errors.push(`${label}.multiplier_format 必须为 x{value}`);
-  if (!isString(localization.display_fit_evidence)) errors.push(`${label}.display_fit_evidence 必须引用五语种逐语言行布局适配证据`);
+  if (!isString(localization.display_fit_evidence)) errors.push(`${label}.display_fit_evidence 必须引用所选语言的逐语言行布局适配证据`);
 }
 
 /** 验证本地化、文字缩放、关键动作和重排事件。 */
@@ -743,7 +781,7 @@ function validateEvidenceMatrixDpr(value, path, errors, seen = new Set()) {
 /** 验证证据矩阵绑定和必需轴。 */
 function validateEvidenceMatrix(matrix, errors, mode = "usability", coverage = null) { if (!isObject(matrix)) return; for (const field of ["candidate_binding", "golden_policy", "snapshot_stability"]) if (!isString(matrix[field])) errors.push(`evidence_matrix.${field} 必须是非空字符串`); const exact = mode === "exact"; if (exact && (!Array.isArray(matrix.required_axes) || matrix.required_axes.length === 0 || !matrix.required_axes.every(isString))) errors.push("evidence_matrix.required_axes 必须是非空数组"); else if (Array.isArray(matrix.required_axes) && matrix.required_axes.some((axis) => !isString(axis))) errors.push("evidence_matrix.required_axes 只能包含非空字符串"); else if (exact) { const requiredAxes = [...REQUIRED_EVIDENCE_AXES]; if (coverage && !coverage.requiresOrientationChange) requiredAxes.splice(requiredAxes.indexOf("orientation"), 1); const missing = requiredAxes.filter((axis) => !matrix.required_axes.includes(axis)).sort(); if (missing.length) errors.push(`evidence_matrix.required_axes 缺少必需轴：${missing.join(", ")}`); } validateEvidenceMatrixDpr(matrix, "evidence_matrix", errors); }
 
-/** 程序化文本必须始终保留本地化显示轴，不能因 usability 模式跳过五语种适配。 */
+/** 程序化文本必须始终保留本地化显示轴，不能因 usability 模式跳过所选语言适配。 */
 function validateProgrammaticTextEvidence(document, errors) {
   if (document.dynamic_content?.localization?.programmatic_text !== true) return;
   if (!Array.isArray(document.evidence_matrix?.required_axes) || !document.evidence_matrix.required_axes.includes("localization")) errors.push("程序化文本的 evidence_matrix.required_axes 必须包含 localization");
@@ -753,7 +791,7 @@ function validateProgrammaticTextEvidence(document, errors) {
 export function validateContract(document) {
   const errors = []; const warnings = []; const specialized = []; validateRoot(document, errors); if (!isObject(document)) return { status: "failed", errors, warnings, specialized_review: specialized };
   const mode = resolveVisualValidationMode(document); validateVisualValidationPolicy(errors, "visual_validation", document);
-  validateScope(document.scope, errors); const fidelity = validateFidelityLifecycle(document, errors); const requiresFrozenLayout = fidelity?.applicability === "frozen-target" || isEffectImageContract(document); if (requiresFrozenLayout) validateFrozenVisualTarget(document.frozen_visual_target, errors); const binding = validateSceneReconstructionBinding(document, fidelity, errors); const coverage = resolveOrientationCoverage(document.orientationPolicy); errors.push(...coverage.errors); validateTargets(document.targets, errors, coverage); validateResponsiveContract(document, errors, coverage); const spaces = validateCoordinateSpaces(document.coordinate_spaces, errors); const ids = validateRegions(document, spaces, errors, specialized); validateScopeRegionIds(document.scope, ids, errors); validateReferenceGraph(document, ids, errors); const layoutNodes = validateLayoutNodes(document, fidelity, binding, spaces, ids, errors); validateLayoutAnnotationBinding(document, binding, layoutNodes, errors); validateContent(document.content, errors); validateBreakpoints(document.breakpoints, errors); validatePlatformAndScrolling(document, ids, errors); validateDynamicContent(document.dynamic_content, ids, errors); validateOverlays(document.overlay_rules, ids, errors, specialized); validateOverlayCoverage(document, ids, errors); validateInvariants(document.invariants, ids, errors, mode);
+  validateScope(document.scope, errors); const fidelity = validateFidelityLifecycle(document, errors); const requiresFrozenLayout = fidelity?.applicability === "frozen-target" || isEffectImageContract(document); if (requiresFrozenLayout) validateFrozenVisualTarget(document.frozen_visual_target, errors); const binding = validateSceneReconstructionBinding(document, fidelity, errors); const coverage = resolveOrientationCoverage(document.orientationPolicy); errors.push(...coverage.errors); validateTargets(document.targets, errors, coverage); validateResponsiveContract(document, errors, coverage); const spaces = validateCoordinateSpaces(document.coordinate_spaces, errors); const ids = validateRegions(document, spaces, errors, specialized); validateRelativeWebNodes(document.regions, errors, "regions", "regions"); validateScopeRegionIds(document.scope, ids, errors); validateReferenceGraph(document, ids, errors); const layoutNodes = validateLayoutNodes(document, fidelity, binding, spaces, ids, errors); validateLayoutAnnotationBinding(document, binding, layoutNodes, errors); validateContent(document.content, errors); validateBreakpoints(document.breakpoints, errors); validatePlatformAndScrolling(document, ids, errors); validateDynamicContent(document.dynamic_content, ids, errors); validateOverlays(document.overlay_rules, ids, errors, specialized); validateOverlayCoverage(document, ids, errors); validateInvariants(document.invariants, ids, errors, mode);
   if (requiresFrozenLayout) {
     validateCriticalAlignments(document.critical_alignments, ids, layoutNodes, fidelity?.status, errors, mode, document.component_snapshots);
     if (fidelity?.status === "verified") {

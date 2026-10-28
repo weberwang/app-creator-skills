@@ -1,5 +1,6 @@
 /** 统一写入正式入口、公共能力和逐文件迁移账本，不参与专业内容变换。 */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync } from 'node:fs';
+import { writeFileSync } from './file-io.mjs';
 import { join, relative, resolve, sep } from 'node:path';
 import { CAPABILITY_GROUPS, capabilityAdapters, nativeContractPath } from '../capability-map.mjs';
 

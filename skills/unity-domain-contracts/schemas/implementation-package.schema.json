@@ -43,26 +43,6 @@
         "properties": {
           "workItemType": {
             "enum": [
-              "SCENE",
-              "DISPLAY_LAYER"
-            ]
-          }
-        },
-        "required": [
-          "workItemType"
-        ]
-      },
-      "then": {
-        "required": [
-          "responsiveContractRef"
-        ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "workItemType": {
-            "enum": [
               "PROJECT",
               "FOUNDATION",
               "INTEGRATION",

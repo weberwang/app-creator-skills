@@ -163,11 +163,25 @@ test("C# 文件规模受控、具备注释且无占位符", () => {
 });
 
 test("Pipeline 命令名称、参数和主线程标记精确且唯一", () => {
-  const corpus = listFiles(resolve(PACKAGE_ROOT, "Editor/PipelineCommands")).filter((item) => item.endsWith(".cs")).map(readText).join("\n");
+  const sources = listFiles(resolve(PACKAGE_ROOT, "Editor/PipelineCommands")).filter((item) => item.endsWith(".cs")).map(readText);
+  const corpus = sources.join("\n");
   const names = [...corpus.matchAll(/\[CliCommand\(\s*"([^"]+)"/g)].map((match) => match[1]).sort();
-  const expectedNames = ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_inspect_resource_handoff", "uwt_measure_layout", "uwt_validate_2d_rigging", "uwt_validate_project"];
+  const expectedNames = ["uwt_capture_game_view", "uwt_capture_visual", "uwt_delivery_preflight", "uwt_import_image", "uwt_inspect_resource_handoff", "uwt_measure_layout", "uwt_validate_2d_rigging", "uwt_validate_font_locales", "uwt_validate_project"];
   assert.deepEqual(names, expectedNames);
   assert.equal((corpus.match(/MainThreadRequired\s*=\s*true/g) ?? []).length, expectedNames.length);
-  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, expectedNames.length);
+  assert.equal((corpus.match(/\[CliArg\(\s*"job_path"/g) ?? []).length, expectedNames.length - 1);
   assert.equal((corpus.match(/public static PipelineCommandResult Execute\(/g) ?? []).length, expectedNames.length);
+  // 字体语言命令使用三个独立参数；其他命令仍各自要求 job_path。
+  for (const source of sources) {
+    const commands = [...source.matchAll(/\[CliCommand\(\s*"([^"]+)"/g)];
+    if (!commands.length) continue;
+    assert.equal(commands.length, 1, "一个命令实现文件只能声明一个 Pipeline 命令");
+    assert.match(source, /\[CliCommand\([\s\S]*?MainThreadRequired\s*=\s*true\s*\)\]/);
+    const args = [...source.matchAll(/\[CliArg\(\s*"([^"]+)"[^\]]*?Required\s*=\s*true\s*\)\]/g)].map((match) => match[1]).sort();
+    if (commands[0][1] === "uwt_validate_font_locales") {
+      assert.deepEqual(args, ["evidence_path", "language_path", "plan_path"]);
+    } else {
+      assert.deepEqual(args, ["job_path"], commands[0][1]);
+    }
+  }
 });

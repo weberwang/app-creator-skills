@@ -39,7 +39,7 @@ export const STAGE_LABELS = Object.freeze({
   'global-integration-validation': '全局集成验证', release: '发布',
 });
 /** 视觉阶段按用户可见交付顺序推进。 */
-export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4']);
+export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
 /** 类型到领域类别映射，供技术报告区分游戏与应用验收。 */
 export function workCategory(type) {
   return type === 'PAGE' ? 'app' : ['SCENE', 'DISPLAY_LAYER'].includes(type) ? 'game' : 'project';

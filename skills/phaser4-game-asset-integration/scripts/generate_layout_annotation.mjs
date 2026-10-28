@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * V2 阶段 B 布局标注图入口。
+ * V3 阶段 B 布局标注图入口。
  *
  * 该入口只在拆解人工确认通过后运行。它读取确认过 proposal 中的
  * decomposition_elements，并消费智能视觉判断生成的显式双轴对齐决策，随后
@@ -34,7 +34,7 @@ function projectPath(projectRoot, value) {
 }
 /** 解析 CLI 参数；显式确认 ID 和 scene/state 防止从错误场景猜测上游身份。 */
 function parseArgs(argv) {
-  const args = { projectRoot: "." }; for (let index = 0; index < argv.length; index += 1) { const token = argv[index]; if (!args.manifest && !token.startsWith("-")) args.manifest = token; else if (token === "--project-root") args.projectRoot = argv[++index]; else if (token === "--scene-id") args.sceneId = argv[++index]; else if (token === "--state-id") args.stateId = argv[++index]; else if (token === "--output") args.output = argv[++index]; else if (token === "--decomposition-confirmation-id") args.decompositionConfirmationId = argv[++index]; else if (token === "--decomposition-confirmation-sha256") args.decompositionConfirmationSha256 = argv[++index]; else if (token === "--proposal-sha256") args.proposalSha256 = argv[++index]; else if (token === "--layout-decision-file") args.layoutDecisionFile = argv[++index]; else if (token === "--layout-decision-sha256") args.layoutDecisionSha256 = argv[++index]; else throw new Error(`不支持的参数：${token}`); }
+  const args = { projectRoot: "." }; for (let index = 0; index < argv.length; index += 1) { const token = argv[index]; if (!args.manifest && !token.startsWith("-")) args.manifest = token; else if (token === "--interactive-review") args.interactiveReview = true; else if (token === "--project-root") args.projectRoot = argv[++index]; else if (token === "--scene-id") args.sceneId = argv[++index]; else if (token === "--state-id") args.stateId = argv[++index]; else if (token === "--output") args.output = argv[++index]; else if (token === "--decomposition-confirmation-id") args.decompositionConfirmationId = argv[++index]; else if (token === "--decomposition-confirmation-sha256") args.decompositionConfirmationSha256 = argv[++index]; else if (token === "--proposal-sha256") args.proposalSha256 = argv[++index]; else if (token === "--layout-decision-file") args.layoutDecisionFile = argv[++index]; else if (token === "--layout-decision-sha256") args.layoutDecisionSha256 = argv[++index]; else throw new Error(`不支持的参数：${token}`); }
   for (const field of ["manifest", "sceneId", "stateId", "output", "decompositionConfirmationId", "layoutDecisionFile"]) if (!nonEmptyString(args[field])) throw new Error(`缺少参数：${field}`);
   if (!args.output.toLowerCase().endsWith(".png")) throw new Error("布局标注输出必须使用 .png"); return args;
 }
@@ -166,8 +166,8 @@ export async function main(argv = process.argv.slice(2)) {
     if (!dimensions || dimensions.width !== scene.target.viewport.width || dimensions.height !== scene.target.viewport.height) throw new Error("冻结原图 PNG 尺寸与场景 viewport 不一致");
 
     const outputPath = projectPath(projectRoot, args.output);
-    const artifactPaths = deriveLayoutReviewArtifactPaths(projectRoot, outputPath);
-    validateLayoutReviewArtifactPaths(projectRoot, artifactPaths, [args.manifest, referenceFile, upstream.confirmation.proposal_file, upstream.confirmation.annotation_file, upstream.confirmation.decision_record_file, upstream.confirmation.user_decision_receipt_file, args.layoutDecisionFile], args.layoutDecisionFile);
+    const artifactPaths = deriveLayoutReviewArtifactPaths(projectRoot, outputPath, args.interactiveReview === true);
+    validateLayoutReviewArtifactPaths(projectRoot, artifactPaths, [args.manifest, referenceFile, upstream.confirmation.proposal_file, upstream.confirmation.annotation_file, upstream.confirmation.decision_record_file, upstream.confirmation.user_decision_receipt_file, args.layoutDecisionFile], args.layoutDecisionFile, args.interactiveReview === true);
     const layoutNodes = deriveFinalLayoutNodesFromDecompositionElements(upstream.elements, scene.target.viewport, { sceneId: args.sceneId, stateId: args.stateId, alignmentDecisions, rootBounds: scene.rootBounds });
     const facts = deriveAutomaticLayoutFacts(layoutNodes, scene.target.viewport, { sceneId: args.sceneId, stateId: args.stateId, rootBounds: scene.rootBounds });
     const layoutDecisionId = automaticLayoutDecisionId(decisionInput.json);
@@ -181,18 +181,22 @@ export async function main(argv = process.argv.slice(2)) {
     const nodesDocument = buildLayoutNodesDocument(facts, commonContext);
     const nodesBytes = serializeJson(nodesDocument);
     const nodesSha256 = bundleSha256(nodesBytes);
-    const bindings = buildLayoutReviewBindings({ ...artifactPaths, annotationFile: artifactPaths.annotationFile, nodesFile: artifactPaths.nodesFile, decisionFile: artifactPaths.decisionFile }, { ...commonContext, nodesSha256 });
-    const reviewBytes = renderLayoutReviewBundle({ nodesDocument, bindings, originalBytes, annotationBytes, nodesBytes, decisionBytes: decisionInput.bytes });
-    const reviewSha256 = bundleSha256(reviewBytes);
-    const reviewIdentitySha256 = computeLayoutReviewIdentitySha256(bindings);
-    const result = { layout_annotation_file: artifactPaths.annotationFile, layout_annotation_mime: "image/png", layout_annotation_sha256: annotationSha256, layout_annotation_width: rendered.width, layout_annotation_height: rendered.height, layout_annotation_schema: rendered.metadata.schema, layout_annotation_layout: rendered.metadata.layout, layout_annotation_metadata_sha256: rendered.metadataSha256, layout_annotation_identity_sha256: identitySha256, layout_review_file: artifactPaths.reviewFile, layout_review_sha256: reviewSha256, layout_review_identity_sha256: reviewIdentitySha256, layout_nodes_file: artifactPaths.nodesFile, layout_nodes_sha256: nodesSha256, decomposition_confirmation_id: args.decompositionConfirmationId, decomposition_confirmation_sha256: args.decompositionConfirmationSha256, proposal_sha256: args.proposalSha256, layout_decision_file: artifactPaths.decisionFile, layout_decision_sha256: decisionInput.sha256, layout_decision_id: layoutDecisionId, target_sha256: scene.target.target_sha256, scene_id: args.sceneId, state_id: args.stateId, decomposition_element_ids: upstream.elementIds, layout_node_ids: finalNodes.map((node) => node.layout_node_id), layout_nodes: finalNodes, root_nodes: rootNodes, generation_method: "automatic-visual-judgement-from-confirmed-decomposition", user_editable_final: true, layout_marker_map: rendered.metadata.marker_map, layout_marker_layouts: rendered.metadata.marker_layouts };
+    // 默认 PNG 审阅不构造网页及其身份；只有需要交互对照时才生成。
+    let reviewBytes;
+    let reviewFields = {};
+    if (args.interactiveReview) {
+      const bindings = buildLayoutReviewBindings({ ...artifactPaths, annotationFile: artifactPaths.annotationFile, nodesFile: artifactPaths.nodesFile, decisionFile: artifactPaths.decisionFile }, { ...commonContext, nodesSha256 });
+      reviewBytes = renderLayoutReviewBundle({ nodesDocument, bindings, originalBytes, annotationBytes, nodesBytes, decisionBytes: decisionInput.bytes });
+      reviewFields = { layout_review_file: artifactPaths.reviewFile, layout_review_sha256: bundleSha256(reviewBytes), layout_review_identity_sha256: computeLayoutReviewIdentitySha256(bindings) };
+    }
+    const result = { layout_annotation_file: artifactPaths.annotationFile, layout_annotation_mime: "image/png", layout_annotation_sha256: annotationSha256, layout_annotation_width: rendered.width, layout_annotation_height: rendered.height, layout_annotation_schema: rendered.metadata.schema, layout_annotation_layout: rendered.metadata.layout, layout_annotation_metadata_sha256: rendered.metadataSha256, layout_annotation_identity_sha256: identitySha256, ...reviewFields, layout_nodes_file: artifactPaths.nodesFile, layout_nodes_sha256: nodesSha256, decomposition_confirmation_id: args.decompositionConfirmationId, decomposition_confirmation_sha256: args.decompositionConfirmationSha256, proposal_sha256: args.proposalSha256, layout_decision_file: artifactPaths.decisionFile, layout_decision_sha256: decisionInput.sha256, layout_decision_id: layoutDecisionId, target_sha256: scene.target.target_sha256, scene_id: args.sceneId, state_id: args.stateId, decomposition_element_ids: upstream.elementIds, layout_node_ids: finalNodes.map((node) => node.layout_node_id), layout_nodes: finalNodes, root_nodes: rootNodes, generation_method: "automatic-visual-judgement-from-confirmed-decomposition", user_editable_final: true, layout_marker_map: rendered.metadata.marker_map, layout_marker_layouts: rendered.metadata.marker_layouts };
     // 所有字节在这里已经完成校验和计算；先让旧成功清单失效，再发布旁车工件和最终清单。
     const generationResultBytes = serializeJson(result);
     const generationResultSha256 = bundleSha256(generationResultBytes);
     await mkdir(dirname(outputPath), { recursive: true });
     await writeFile(artifactPaths.generationResult, serializeJson({ schema: "phaser-layout-generation-result/1.0", status: "invalidated", reason: "regeneration-in-progress" }));
     const decisionIsExistingOutput = pathsReferToSameFile(resolve(projectRoot, args.layoutDecisionFile), artifactPaths.decision);
-    await Promise.all([writeFile(artifactPaths.annotation, annotationBytes), writeFile(artifactPaths.nodes, nodesBytes), ...(decisionIsExistingOutput ? [] : [writeFile(artifactPaths.decision, decisionInput.bytes)]), writeFile(artifactPaths.review, reviewBytes)]);
+    await Promise.all([writeFile(artifactPaths.annotation, annotationBytes), writeFile(artifactPaths.nodes, nodesBytes), ...(decisionIsExistingOutput ? [] : [writeFile(artifactPaths.decision, decisionInput.bytes)]), ...(args.interactiveReview ? [writeFile(artifactPaths.review, reviewBytes)] : [])]);
     // 生成结果最后写入，调用方只有在完整旁车工件已落盘后才能读取成功清单。
     await writeFile(artifactPaths.generationResult, generationResultBytes);
     console.log(JSON.stringify({ ...result, generation_result_file: artifactPaths.generationResultFile, generation_result_sha256: generationResultSha256 }));

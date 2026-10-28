@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 
 /** Creator 3.x Spine 接入报告使用独立 schema，拒绝旧式布尔字段替代组件实例证据。 */
 export const SPINE_RUNTIME_VALIDATION_SCHEMA = "cocos-spine-runtime-validation/2.0";

@@ -12,6 +12,9 @@ page:
 regions:
   - id: header
     role: navigation
+    parent_id: safe_area
+    flutter_key: headerKey
+    positioning: relative
     anchors:
       horizontal:
         start: {relation: aligned, reference: safe_area.start, token: page_margin}
@@ -24,6 +27,9 @@ regions:
       max: {width: content, height: 96}
   - id: content
     role: primary-content
+    parent_id: safe_area
+    flutter_key: contentKey
+    positioning: relative
     anchors:
       horizontal:
         center: {relation: centered, reference: viewport.center}
@@ -35,6 +41,87 @@ regions:
       min: {width: 0, height: 0}
       preferred: {width: content_max, height: content}
       max: {width: content_max, height: content}
+
+  - id: content_column
+    role: layout-container
+    parent_id: safe_area
+    flutter_key: contentColumnKey
+    positioning: relative
+    anchors:
+      horizontal: {center: {relation: centered, reference: viewport.center}}
+      vertical: {top: {relation: inset, reference: safe_area.top}}
+    size:
+      min: {width: 0, height: 0}
+      preferred: {width: content_max, height: content}
+      max: {width: content_max, height: content}
+  - id: primary-action
+    role: action
+    parent_id: safe_area
+    flutter_key: primaryActionKey
+    positioning: relative
+    anchors:
+      horizontal: {center: {relation: centered, reference: safe_area.center}}
+      vertical: {bottom: {relation: inset, reference: safe_area.bottom}}
+    size:
+      min: {width: 48, height: 48}
+      preferred: {width: content, height: 48}
+      max: {width: content, height: 96}
+  - id: dock_avoidance
+    role: layout-boundary
+    parent_id: safe_area
+    flutter_key: dockAvoidanceKey
+    positioning: relative
+    anchors:
+      horizontal: {center: {relation: centered, reference: safe_area.center}}
+      vertical: {bottom: {relation: before, reference: primary-action.top}}
+    size:
+      min: {width: 0, height: 0}
+      preferred: {width: content, height: content}
+      max: {width: content, height: content}
+
+  - id: frame
+    role: layout-container
+    parent_id: safe_area
+    flutter_key: pageFrameKey
+    positioning: relative
+    anchors:
+      horizontal: {center: {relation: centered, reference: safe_area.center}}
+      vertical: {top: {relation: aligned, reference: safe_area.top}}
+    size:
+      min: {width: 0, height: 0}
+      preferred: {width: content, height: content}
+      max: {width: content, height: content}
+  - id: brand
+    role: branding
+    parent_id: frame
+    flutter_key: brandKey
+    positioning: relative
+    anchors:
+      horizontal: {center: {relation: centered, reference: frame.center}}
+      vertical: {top: {relation: inset, reference: frame.top}}
+    size:
+      min: {width: 0, height: 0}
+      preferred: {width: content, height: content}
+      max: {width: content, height: content}
+
+  # 需要弹窗时，将下例作为实际 region，并在 overlays 里以相同 id/body_kind 配对。
+  # - id: dialog
+  #   role: popup
+  #   parent_id: safe_area
+  #   flutter_key: dialogKey
+  #   positioning: absolute
+  #   floating_root_kind: popup
+  #   size: {min: {width: 100, height: 80}, preferred: {width: 320, height: 240}, max: {width: 640, height: 480}}
+  # - id: dialog-action
+  #   role: action
+  #   parent_id: dialog
+  #   flutter_key: dialogActionKey
+  #   positioning: relative
+  #   anchors:
+  #     horizontal: {center: {relation: centered, reference: dialog.center}}
+  #     vertical: {top: {relation: inset, reference: dialog.top}}
+  #   size: {min: {width: 48, height: 48}, preferred: {width: 80, height: 48}, max: {width: 160, height: 64}}
+  # overlay 还需填写 behavior、occlusion、hit_target 和键盘/窄高度回退；内部节点不声明 floating_root_kind。
 
 breakpoints:
   - id: compact-to-medium
@@ -120,6 +207,7 @@ critical_alignments:
     element: brand
     flutter_key: brandKey
     reference: page frame semantic bounds
+    reference_id: frame
     reference_flutter_key: pageFrameKey
     relations:
       horizontal: {type: center, target: brand.centerX == frame.centerX, flutter: brand.centerX == frame.centerX}

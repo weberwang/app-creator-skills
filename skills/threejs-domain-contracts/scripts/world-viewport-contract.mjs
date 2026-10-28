@@ -147,7 +147,7 @@ function validateRepresentativeViewports(contract, stage, scope, errors) {
 /** 校验独立 world-3d 合同，不读取浏览器或声明运行验收结果。 */
 export function validateWorldViewportContract(value, options = {}) {
   const contract = resolveWorldViewportContract(value) ?? value;
-  const stage = String(options.stage ?? 'V1').toUpperCase();
+  const stage = String(options.stage ?? 'V2').toUpperCase();
   const scope = options.scope ?? '*';
   const errors = [];
   if (!isObject(contract)) return [error(stage, scope, 'world-3d 响应式合同必须为对象')];
@@ -345,7 +345,7 @@ function validateResizeTrajectory(record, contract, stage, scope, errors) {
 
 /** 校验单条世界视口运行观察记录；只返回结构合同错误，不输出验收结论。 */
 export function validateWorldViewportEvidenceRecord(record, contract, options = {}) {
-  const stage = String(options.stage ?? 'V4').toUpperCase();
+  const stage = String(options.stage ?? 'V5').toUpperCase();
   const scope = options.scope ?? record?.sceneId ?? '*';
   const errors = [];
   if (!isObject(record)) return [error(stage, scope, '世界视口运行证据必须为对象')];
@@ -373,7 +373,7 @@ export function validateWorldViewportEvidenceRecord(record, contract, options = 
 
 /** 校验世界证据清单中的候选绑定、场景/状态和代表视口覆盖。 */
 export function validateWorldViewportEvidenceManifest(value, contract, options = {}) {
-  const stage = String(options.stage ?? value?.currentStage ?? value?.current_stage ?? 'V4').toUpperCase();
+  const stage = String(options.stage ?? value?.currentStage ?? value?.current_stage ?? 'V5').toUpperCase();
   const errors = [];
   if (!isObject(contract)) return [error(stage, '*', '世界视口证据清单缺少 world-3d 响应式合同')];
   const contractErrors = validateWorldViewportContract(contract, { stage, scope: '*' });

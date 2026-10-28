@@ -37,6 +37,42 @@
         "cocos",
         "phaser"
       ]
+    },
+    {
+      "id": "reference-spine-progress-state",
+      "path": "../app-domain-toolkit/references/reference-spine-progress-state.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-spine-atlas-rebuild",
+      "path": "../app-domain-toolkit/references/reference-spine-atlas-rebuild.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-spine-skeleton-upgrade",
+      "path": "../app-domain-toolkit/references/reference-spine-skeleton-upgrade.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-spine-runtime-validation",
+      "path": "../app-domain-toolkit/references/reference-spine-runtime-validation.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
     }
   ]
 }

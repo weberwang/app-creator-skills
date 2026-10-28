@@ -9,8 +9,8 @@ import {
   removeBackgroundLocal,
   removeConnectedBackground,
   runRemoveBackgroundCli,
-} from "../../../../../skills/unity-game-visual-assets/scripts/remove-background-local.mjs";
-import { decodePngRgba, encodePngRgba } from "../../../../../skills/unity-game-visual-assets/scripts/png-raster.mjs";
+} from "../../../../../skills/app-asset-workflow/scripts/remove-background-local.mjs";
+import { decodePngRgba, encodePngRgba } from "../../../../../skills/app-asset-workflow/scripts/png-raster.mjs";
 
 /** 创建填满指定 RGBA 颜色的测试图像。 */
 function solidImage(width, height, color) {

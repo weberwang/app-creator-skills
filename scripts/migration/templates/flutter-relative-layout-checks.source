@@ -1,0 +1,196 @@
+/** 按真实区域身份解析语义边界，不把任意说明文字当作可用根节点。 */
+function relativeReference(value, regionIds) {
+  if (typeof value !== "string") return "";
+  const reference = value.trim();
+  const matches = [...regionIds, "viewport", "safe_area"]
+    .filter((id) => reference === id || reference.startsWith(`${id}.`))
+    .sort((left, right) => right.length - left.length);
+  const node = matches[0];
+  if (!node || node === reference) return node ?? reference;
+  // 未绑定的子节点不能伪装成已知父节点的边界；多级 bounds.left 等几何后缀仍可用。
+  const geometry = new Set(["bounds", "start", "end", "top", "bottom", "left", "right", "center", "centerX", "centerY", "center_x", "center_y", "x", "y", "width", "height", "baseline"]);
+  return reference.slice(node.length + 1).split(".").every((part) => geometry.has(part)) ? node : reference;
+}
+
+/** 解析有限关系表达式，拒绝索引、调用及其他未经声明的语法。 */
+function alignmentTokens(expression, element, reference) {
+  const tokens = [];
+  // 先识别已声明节点及完整几何属性，使节点名中的连字符与无空格减法都保持明确含义。
+  const ids = [element, reference].filter(text).sort((left, right) => right.length - left.length);
+  const names = "centerX|centerY|center_x|center_y|baseline|bounds|start|bottom|height|center|width|right|left|top|end|x|y";
+  const geometryPaths = ids.map((id) => {
+    const escaped = id.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`^\\s*${escaped}(?:\\s*\\.\\s*(?:${names}))+` + "(?![A-Za-z0-9_])");
+  });
+  const pattern = /\s*(?:([A-Za-z_][A-Za-z0-9_-]*(?:\s*\.\s*[A-Za-z_][A-Za-z0-9_-]*)*)|((?:\d+(?:\.\d+)?|\.\d+))|(==|!=|<=|>=|[()+*/\-<>]))/y;
+  let position = 0;
+  while (position < expression.length) {
+    if (!expression.slice(position).trim()) break;
+    const known = geometryPaths.map((candidate) => candidate.exec(expression.slice(position)))
+      .filter(Boolean).sort((left, right) => right[0].length - left[0].length)[0];
+    if (known) {
+      tokens.push(known[0].trim().replace(/\s*\.\s*/g, "."));
+      position += known[0].length;
+      continue;
+    }
+    pattern.lastIndex = position;
+    const match = pattern.exec(expression);
+    if (!match) return null;
+    tokens.push(match[1] ? match[1].replace(/\s*\.\s*/g, ".") : match[2] ?? match[3]);
+    position = pattern.lastIndex;
+  }
+  return tokens;
+}
+
+/** 只接受算术比较，不执行表达式或接受括号后的函数调用。 */
+function validAlignmentSyntax(tokens) {
+  let index = 0;
+  // 递归下降按运算符优先级解析，确保整个输入都属于布局关系 DSL。
+  /** 解析几何路径、标量或括号内的算术。 */
+  function primary() {
+    if (tokens[index] === "(" ) {
+      index++;
+      if (!sum() || tokens[index++] !== ")") return false;
+      return true;
+    }
+    if (/^[A-Za-z_]/.test(tokens[index] ?? "") || /^(?:\d|\.\d)/.test(tokens[index] ?? "")) {
+      index++;
+      return true;
+    }
+    return false;
+  }
+  /** 解析带符号的操作数。 */
+  function unary() {
+    if (["+", "-"].includes(tokens[index])) index++;
+    return primary();
+  }
+  /** 解析乘除表达式。 */
+  function product() {
+    if (!unary()) return false;
+    while (["*", "/"].includes(tokens[index])) { index++; if (!unary()) return false; }
+    return true;
+  }
+  /** 解析加减表达式。 */
+  function sum() {
+    if (!product()) return false;
+    while (["+", "-"].includes(tokens[index])) { index++; if (!product()) return false; }
+    return true;
+  }
+  if (!sum() || !["==", "!=", "<", ">", "<=", ">="].includes(tokens[index])) return false;
+  index++;
+  return sum() && index === tokens.length;
+}
+
+/** 检查实际关系式中的几何节点，单独的间距等标量变量不视为节点。 */
+function validateAlignmentExpression(expression, element, reference, label, errors) {
+  if (!text(expression)) return; // 原有校验器负责报告缺失表达式。
+  const tokens = alignmentTokens(expression, element, reference);
+  if (!tokens || !validAlignmentSyntax(tokens)) {
+    errors.require(false, `${label} must use supported arithmetic comparison syntax`);
+    return;
+  }
+  const identities = new Set();
+  // 只接受节点 ID 加明确几何属性；未知节点不能靠元数据伪装成声明的参照。
+  const geometry = new Set(["bounds", "start", "end", "top", "bottom", "left", "right", "center", "centerX", "centerY", "center_x", "center_y", "x", "y", "width", "height", "baseline"]);
+  for (const path of tokens.filter((token) => /^[A-Za-z_]/.test(token) && token.includes("."))) {
+    const allowed = [element, reference].filter((id) => text(id) && path.startsWith(`${id}.`))
+      .sort((left, right) => right.length - left.length);
+    const id = allowed[0];
+    const suffix = id ? path.slice(id.length + 1).split(".") : [];
+    const valid = id && suffix.length > 0 && suffix.every((part) => geometry.has(part));
+    errors.require(!!valid, `${label} contains an undeclared or invalid geometry node: ${path}`);
+    if (valid) identities.add(id);
+  }
+  errors.require(identities.has(element), `${label} must use its declared element geometry`);
+  errors.require(identities.has(reference), `${label} must use its declared reference geometry`);
+}
+
+/** 使用正式 regions 的父级、锚点和 Widget key 验证布局关系与浮层本体身份。 */
+function validateRelativeLayoutBindings(spec, errors) {
+  const regions = sequence(spec.regions).map(mapping);
+  const regionIds = new Set(regions.map((region) => region.id).filter(text));
+  const byId = new Map(regions.map((region) => [region.id, region]));
+  const keys = new Set();
+  const anchorsFor = (region) => ["horizontal", "vertical"].flatMap((axis) =>
+    Object.values(mapping(mapping(region.anchors)[axis])).map(mapping));
+  const refsFor = (region) => [...new Set(anchorsFor(region)
+    .map((anchor) => relativeReference(anchor.reference, regionIds)))];
+
+  const nodes = regions.map((region, index) => {
+    const label = `regions[${index}]`;
+    errors.require(SEMANTIC_REFERENCE.test(region.id ?? ""), `${label}.id must be a stable UI node identifier`);
+    errors.require(region.id !== "viewport" && region.id !== "safe_area", `${label}.id cannot shadow a reserved layout root`);
+    errors.require(text(region.parent_id), `${label}.parent_id is required`);
+    errors.require(text(region.flutter_key), `${label}.flutter_key is required`);
+    if (text(region.flutter_key)) {
+      errors.require(!keys.has(region.flutter_key), `duplicate region flutter_key: ${region.flutter_key}`);
+      keys.add(region.flutter_key);
+    }
+    errors.require(region.positioning === "relative" || region.positioning === "absolute", `${label}.positioning must be relative or absolute`);
+    if (region.floating_root_kind !== undefined) {
+      errors.require(["popup", "floating", "toast"].includes(region.floating_root_kind), `${label}.floating_root_kind is invalid`);
+      errors.require(region.role === region.floating_root_kind, `${label}.role must match floating_root_kind`);
+    }
+    return { id: region.id, parentId: region.parent_id, references: refsFor(region),
+      mode: region.positioning, floatingKind: region.floating_root_kind ?? null };
+  });
+  for (const error of validateRelativeLayoutNodes(nodes, { label: "Flutter regions", roots: ["viewport", "safe_area"] })) errors.items.push(error);
+
+  // overlay 类型仅作为身份交叉证据，docked 等行为不能自动豁免一个节点。
+  const overlays = sequence(spec.overlays).map(mapping);
+  const seenOverlays = new Set();
+  overlays.forEach((overlay, index) => {
+    const region = byId.get(overlay.id);
+    errors.require(!!region, `overlays[${index}].id must bind an existing region`);
+    errors.require(!seenOverlays.has(overlay.id), `duplicate overlay id: ${overlay.id}`);
+    seenOverlays.add(overlay.id);
+    if (!region) return;
+    errors.require((overlay.body_kind ?? null) === (region.floating_root_kind ?? null), `overlays[${index}].body_kind must match the actual region`);
+    if (region.positioning === "relative") {
+      const reference = relativeReference(mapping(overlay.anchor).reference, regionIds);
+      errors.require(refsFor(region).includes(reference), `overlays[${index}].anchor must match its region references`);
+    }
+  });
+  for (const region of regions) if (region.floating_root_kind !== undefined) {
+    errors.require(overlays.some((item) => item.id === region.id && item.body_kind === region.floating_root_kind),
+      `region ${region.id} floating root must bind its own overlay`);
+  }
+
+  // 每个布局实现信号关联同一实际区域，避免用任意 boundary 字符串伪造相对关系。
+  sequence(spec.implementation_signals).map(mapping).forEach((signal, index) => {
+    const region = byId.get(signal.element_id);
+    errors.require(!!region, `implementation_signals[${index}].element_id must bind an existing region`);
+    if (!region) return;
+    errors.require(signal.flutter_key === region.flutter_key, `implementation_signals[${index}].flutter_key must match its region`);
+    errors.require(signal.parent_id === region.parent_id, `implementation_signals[${index}].parent_id must match its region`);
+    if (region.positioning === "relative") {
+      errors.require(text(signal.reference_id) && refsFor(region).includes(signal.reference_id),
+        `implementation_signals[${index}].reference_id must bind a region anchor`);
+    }
+  });
+
+  // 高保真测量使用同一 Widget 与参照身份，不能另报一套未绑定的节点关系。
+  sequence(spec.critical_alignments).map(mapping).forEach((alignment, index) => {
+    const region = byId.get(alignment.element);
+    const reference = byId.get(alignment.reference_id);
+    errors.require(!!region, `critical_alignments[${index}].element must bind an existing region`);
+    if (!region) return;
+    errors.require(alignment.flutter_key === region.flutter_key, `critical_alignments[${index}].flutter_key must match its region`);
+    // 独立浮层本体可以测量其屏幕位置，不要求伪造实际相对布局锚点。
+    const referenceBound = region.positioning === "absolute"
+      ? !!reference || ["viewport", "safe_area"].includes(alignment.reference_id)
+      : refsFor(region).includes(alignment.reference_id);
+    errors.require(text(alignment.reference_id) && referenceBound,
+      `critical_alignments[${index}].reference_id must bind a region anchor or the independent body's measurement reference`);
+    if (reference) errors.require(alignment.reference_flutter_key === reference.flutter_key,
+      `critical_alignments[${index}].reference_flutter_key must match its reference region`);
+    for (const axis of ["horizontal", "vertical"]) {
+      const relation = mapping(mapping(alignment.relations)[axis]);
+      for (const side of ["target", "flutter"]) {
+        validateAlignmentExpression(relation[side], alignment.element, alignment.reference_id,
+          `critical_alignments[${index}].relations.${axis}.${side}`, errors);
+      }
+    }
+  });
+}
+

@@ -3,7 +3,7 @@
  * 图像生成 单图最小尺寸合同。
  *
  * 该模块只计算机器可确定的输出尺寸，不承载人工审阅字段；视觉方向
- * 只由 V2 唯一拆解确认冻结，V3/V4 继续执行机器证据门。尺寸按逻辑像素、最大运行缩放和
+ * 只由 V3 唯一拆解确认冻结，V4/V5 继续执行机器证据门。尺寸按逻辑像素、最大运行缩放和
  * 图片生产基线 DPR 计算，并强制画布不额外添加 padding；运行时实际 DPR
  * 由设备动态解析，不能反向改变生产尺寸合同。
  */
@@ -45,7 +45,7 @@ function resolveSceneAssetUsage(region, unit, options = {}) {
 
 /** 构造包含 annotation/region/component/state/asset 的机器错误上下文。 */
 function sizeError(context, message, details = {}) {
-  const stage = context.stage ?? "V3";
+  const stage = context.stage ?? "V4";
   const annotation = context.annotation_number ?? context.annotationNumber ?? "?";
   const region = context.region_id ?? context.regionId ?? "?";
   const component = details.component_id ?? context.component_id ?? context.componentId ?? "?";
@@ -54,7 +54,7 @@ function sizeError(context, message, details = {}) {
   const expected = details.expected === undefined ? "?" : JSON.stringify(details.expected);
   const actual = details.actual === undefined ? "?" : JSON.stringify(details.actual);
   const missing = details.missing ? ` 缺失=${details.missing}` : "";
-  const returnStage = details.returnStage ?? (stage === "V1" || stage === "V2" ? "V1/PROPOSAL" : stage);
+  const returnStage = details.returnStage ?? (stage === "V2" || stage === "V3" ? "V2/PROPOSAL" : stage);
   return `[${stage}] annotation_number=${annotation} region_id=${region} component_id=${component} state_id=${state} asset_id=${asset} expected_method=image-generation observed_method=${context.observedMethod ?? "image-generation"} 根因=${details.rootCause ?? "图像生成 单图尺寸合同问题"} expected=${expected} actual=${actual}${missing} ${message} 应退回阶段=${returnStage}`;
 }
 
@@ -193,7 +193,7 @@ export function validateImageGenerationSizeContract(asset, contract, context = {
   }
   if (options.actualAsset) {
     const actual = resolveOutputMetadata(options.actualAsset);
-    if (actual.width !== minimum.width || actual.height !== minimum.height) errors.push(sizeError(local, "V3 actual_assets 实际输出尺寸漂移，必须精确等于最小尺寸", { expected: minimum, actual: { width: actual.width, height: actual.height } }));
+    if (actual.width !== minimum.width || actual.height !== minimum.height) errors.push(sizeError(local, "V4 actual_assets 实际输出尺寸漂移，必须精确等于最小尺寸", { expected: minimum, actual: { width: actual.width, height: actual.height } }));
   }
   return errors;
 }
@@ -208,7 +208,7 @@ function sceneUsageForRegion(manifest, region, unit) {
   return { region: { ...region, ...(reconstructionRegion ?? {}) }, unit, sceneAssetUsage: unit?.scene_asset_usage ?? unit?.sceneAssetUsage };
 }
 
-/** 对完整 visual manifest 执行 V2 expected、V3 actual 的 图像生成 尺寸门。 */
+/** 对完整 visual manifest 执行 V3 expected、V4 actual 的 图像生成 尺寸门。 */
 export function validateImageGenerationSizeManifest(manifest, options = {}) {
   const errors = [];
   const regions = Array.isArray(manifest?.coverage_audit?.regions) ? manifest.coverage_audit.regions : [];
@@ -237,7 +237,7 @@ export function validateImageGenerationSizeManifest(manifest, options = {}) {
     const resolved = sceneUsageForRegion(manifest, region, unit);
     for (const expected of expectedAssets) {
       const expectedAssetId = expected?.asset_id ?? expected?.assetId;
-      const local = { stage: options.stage ?? "V3", annotation_number: region.annotation_number ?? region.annotationNumber, region_id: region.id ?? region.region_id ?? region.regionId, component_id: expected?.component_id ?? expected?.componentId, state_id: expected?.state_id ?? expected?.stateId, asset_id: expectedAssetId, observedMethod: method };
+      const local = { stage: options.stage ?? "V4", annotation_number: region.annotation_number ?? region.annotationNumber, region_id: region.id ?? region.region_id ?? region.regionId, component_id: expected?.component_id ?? expected?.componentId, state_id: expected?.state_id ?? expected?.stateId, asset_id: expectedAssetId, observedMethod: method };
       const asset = assets.get(expectedAssetId);
       errors.push(...validateImageGenerationSizeContract(asset, region, local, { expectedAsset: expected, ...resolved }));
       if (unit && Array.isArray(unit.actual_assets)) {

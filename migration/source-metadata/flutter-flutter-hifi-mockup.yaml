@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter HiFi Mockup"
+  short_description: "Generate module-time page effect images."
+  default_prompt: "Use $flutter-hifi-mockup to generate one focused page candidate by default, expand to two or three only for real design exploration, and review high-risk results before controller-led freeze."

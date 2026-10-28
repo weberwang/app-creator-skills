@@ -16,7 +16,7 @@ import {
   validateReportedRegion,
   validateSettings,
 } from "./frame-atlas-contract-core.mjs";
-import { imageFrameTimeMatches, readImageFrameSource } from "../../phaser4-frame-animation/scripts/image-frame-source.mjs";
+import { imageFrameTimeMatches, readImageFrameSource } from "../../phaser-domain-contracts/resources/frame-animation/scripts/image-frame-source.mjs";
 
 /** 图片帧动画 accepted 工作流合同版本。 */
 export const IMAGE_FRAME_ANIMATION_WORKFLOW_SCHEMA = "phaser4-image-atlas-workflow/1";
@@ -28,7 +28,6 @@ export const IMAGE_FRAME_ANIMATION_REPORT_SCHEMA = "phaser4-image-atlas/1";
 export const IMAGE_FRAME_ANIMATION_WORKFLOW_ARTIFACTS = Object.freeze([
   "source_manifest",
   "quality_report",
-  "preview",
   "spritesheet",
 ]);
 
@@ -62,6 +61,8 @@ export function validateImageFrameAnimationWorkflowContract(value, options = {})
   for (const artifact of IMAGE_FRAME_ANIMATION_WORKFLOW_ARTIFACTS) {
     validateArtifactBinding(value[artifact], label + "." + artifact, errors);
   }
+  // 播放预览是可选证据；一旦声明仍必须是真实且安全的文件绑定。
+  if (Object.hasOwn(value, "preview")) validateArtifactBinding(value.preview, label + ".preview", errors);
   if (isObject(value.spritesheet) && !isRuntimeUrl(value.spritesheet.runtime_url)) {
     errors.push(label + ".spritesheet.runtime_url 必须是非空且安全的 Phaser URL");
   }
@@ -224,10 +225,14 @@ function validateImageQualityReport(report, source, sourceFiles, sheetArtifact, 
     || !Number.isInteger(report.artifacts.sheet.height) || report.artifacts.sheet.height <= 0) {
     errors.push(label + ".artifacts.sheet 必须包含正整数 width/height");
   }
-  if (!nonEmptyString(report.artifacts?.preview?.file)) errors.push(label + ".artifacts.preview.file 必须是非空字符串");
+  // 报告与已接受合同必须同时声明同一预览，不能用单侧声明绕过文件门。
+  const hasPreview = Object.hasOwn(contract, "preview");
+  const hasReportedPreview = isObject(report.artifacts) && Object.hasOwn(report.artifacts, "preview");
+  if (hasPreview !== hasReportedPreview) errors.push(label + ".artifacts.preview 必须与合同同时声明或同时省略");
+  if (hasPreview && !nonEmptyString(report.artifacts?.preview?.file)) errors.push(label + ".artifacts.preview.file 必须是非空字符串");
   if (!nonEmptyString(report.artifacts?.report?.file)) errors.push(label + ".artifacts.report.file 必须是非空字符串");
   validateReportedArtifactPath(report.artifacts?.sheet?.file, contract.spritesheet, label + ".artifacts.sheet.file", errors);
-  validateReportedArtifactPath(report.artifacts?.preview?.file, contract.preview, label + ".artifacts.preview.file", errors);
+  if (hasPreview && hasReportedPreview) validateReportedArtifactPath(report.artifacts?.preview?.file, contract.preview, label + ".artifacts.preview.file", errors);
   validateReportedArtifactPath(report.artifacts?.report?.file, contract.quality_report, label + ".artifacts.report.file", errors);
 
   const dimensions = readPngDimensions(sheetArtifact?.bytes);
@@ -283,10 +288,14 @@ export async function checkImageFrameAnimationWorkflowFiles(asset, context = {})
   const source = await loadBoundImageSource(contract, context, label, errors);
   if (!source) return [...new Set(errors)];
   const artifacts = {};
-  for (const key of ["quality_report", "preview", "spritesheet"]) {
+  for (const key of ["quality_report", "spritesheet"]) {
     artifacts[key] = await readBoundArtifact(contract[key], label + "." + key, context, errors);
   }
+  // 明确要求播放预览时再读取并校验真实 HTML。
+  if (Object.hasOwn(contract, "preview")) {
+    artifacts.preview = await readBoundArtifact(contract.preview, label + ".preview", context, errors);
   validatePreview(artifacts.preview, artifacts.spritesheet, label + ".preview", errors);
+  }
 
   if (!artifacts.quality_report) return [...new Set(errors)];
   const reportText = decodeText(artifacts.quality_report.bytes, label + ".quality_report", errors);

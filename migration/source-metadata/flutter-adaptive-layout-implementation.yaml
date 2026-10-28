@@ -1,0 +1,4 @@
+interface:
+  display_name: "Adaptive Layout Implementation"
+  short_description: "Build adaptive layouts from validated implementation specs"
+  default_prompt: "Use $adaptive-layout-implementation to build a page from a validated adaptive layout specification."

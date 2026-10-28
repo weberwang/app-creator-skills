@@ -1,5 +1,7 @@
 /** 抽取游戏专业技能中完整等价的正文，原生接口和配套资料继续由栈入口持有。 */
 import { createHash } from 'node:crypto';
+import { adaptOptionalReviewDocument } from './optional-review-documents.mjs';
+import { unifySourceVisualStages } from './unified-stage-text.mjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -106,9 +108,31 @@ export function buildWebWorkflowBodies({ sourceRoot, repositoryRoot, excludedRep
         if (excludedReplacements.some((item) => item.stack === stack && item.sourcePath === sourcePath
           && item.sourceRange.start < block.sourceRange.end && item.sourceRange.end > block.sourceRange.start)) continue;
         if (block.original.length < 80 || /```|~~~/.test(block.original)) continue;
-        const { canonical, referenceLinks } = canonicalWorkflowBlock(block.original);
+        const normalized = canonicalWorkflowBlock(block.original);
+        const { referenceLinks } = normalized;
+        let canonical = adaptOptionalReviewDocument(normalized.canonical, { sourcePath, destination: `skills/app-domain-toolkit/references/${family.id}.md` }).text;
+        let alreadyUnified = false;
+        if (family.id === 'ui-layout') {
+          // 多语言范围由项目初始化选择，迁移旧源时不能恢复固定五语言要求。
+          canonical = canonical.replace('程序化文本必须同时交付英语、简体中文、日语、俄语和西班牙语', '程序化文本默认交付简体中文 `zh-CN`，英语 `en` 等其他语言按项目初始化时确认的清单交付');
+        }
+        if (family.id === 'asset-production') {
+          // AUTO 只消除额外产品取舍，不能替代 V1 目标图的真实用户确认。
+          canonical = canonical
+            .replace('用户在 V2 只需分别确认拆解 PNG 与布局 PNG', '`AUTO` 只表示无需额外产品取舍，V1 的真实目标图仍须用户确认；用户在 V2 分别确认拆解 PNG 与布局 PNG')
+            .replace('只有产品方向、玩法语义或结构存在实质歧义时才询问。V2 保持', '只有产品方向、玩法语义或结构存在实质歧义时才询问额外取舍；目标图仍须在 V1 由用户确认。V2 保持');
+          // 公共控制器已先验证功能；原生视觉合同编号不能冒充公共阶段。
+          const prior = canonical;
+          canonical = canonical.replace('当前场景 Work Item 按控制面定义的 V1→V2→V3→V4 阶段推进；本领域负责在 V2 依次完成拆解 PNG 和布局 PNG 两次独立人工确认后生产正式资源，在 V3 完成资源级验收，V4 直接在正式场景实现、校准并验收运行态画面。正式代码只消费当前场景或合规 `shared` 且 V3 `accepted` 的资源；公共正式资源只允许至少两个场景稳定复用或属于运行必需。场景联合验收前必须清除灰盒、占位和 fallback。',
+            '当前场景 Work Item 按 V1 功能验证、V2 视觉目标、V3 拆解与布局、V4 正式资源和 V5 运行验收推进，白盒按需使用。V3 依次完成人工确认拆解 PNG 和布局 PNG，V4 进行资源级验收，V5 在正式场景组合、校准并验收运行态画面。正式视觉装配只消费当前场景或合规 `shared` 且 V4 `accepted` 的资源；公共正式资源只允许至少两个场景稳定复用或属于运行必需。场景联合验收前清除不再使用的灰盒、占位和 fallback。');
+          alreadyUnified = canonical !== prior;
+        }
+        if (family.id === 'frame-animation-execution') {
+          canonical = canonical.replace('不得自动截图或启动真机验收', '可采集截图供用户人工检查，未经明确授权不得自动分析截图或代判；不得自动启动真机验收');
+        }
         if (family.id === 'gameplay-implementation' && /全局阶段、视觉硬门和场景前置以/.test(canonical)) continue;
         if (PUBLIC_POLICY.test(canonical) || NATIVE_RULES.test(canonical) || /\bnode\s+scripts\//.test(canonical)) continue;
+        if (!alreadyUnified) canonical = unifySourceVisualStages(canonical);
         if (!groups.has(canonical)) groups.set(canonical, []);
         groups.get(canonical).push({ ...block, canonical, referenceLinks, stack, sourcePath });
       }
@@ -125,10 +149,12 @@ export function buildWebWorkflowBodies({ sourceRoot, repositoryRoot, excludedRep
       sources.get(key).sections.push(section);
       replacements.push({ ...item, ...section, original: item.original, capabilityId: family.id, commonPath });
     }
+    const stageNote = shared.some((items) => /\bV[1-5]\b/.test(items[0].canonical))
+      ? '\n各技术栈统一使用 V0–V5，V1 验证功能且白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。\n' : '';
     documents.push({
       path: commonPath, capabilityId: family.id,
       reason: '按完整正文核对后合并专业技能规则；只归一化引用表示，原生 API、运行时与平台约束不参与相似替换。',
-      content: `# ${family.title}\n\n本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。\n\n## 完整流程\n\n${shared.map((items) => `### ${/全局控制接入|控制面与职责/.test(items[0].sourceHeading) ? '专业执行与交付' : items[0].sourceHeading}（${items.map((item) => item.stack).join('、')}）\n\n${items[0].canonical}`).join('\n\n')}\n`,
+      content: `# ${family.title}\n\n本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。\n${stageNote}\n## 完整流程\n\n${shared.map((items) => `### ${/全局控制接入|控制面与职责/.test(items[0].sourceHeading) ? '专业执行与交付' : unifySourceVisualStages(items[0].sourceHeading)}（${items.map((item) => item.stack).join('、')}）\n\n${items[0].canonical}`).join('\n\n')}\n`,
       sources: [...sources.values()],
     });
   }

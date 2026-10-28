@@ -40,10 +40,10 @@ export function readUiHierarchyFiles(plan, readJson, {
   if (splitPlan?.prefabStructureEvidence?.path !== structureRef.path
     || splitPlan?.prefabStructureEvidence?.subjectId !== structure?.id
     || splitPlan?.prefabStructureEvidence?.subjectVersion !== structure?.version) {
-    errors.push('V2 拆解的 prefabStructureEvidence 未绑定当前 Prefab 结构');
+    errors.push('V3 拆解的 prefabStructureEvidence 未绑定当前 Prefab 结构');
   }
   if (requireVerifiedAssembly && assembly?.status !== 'VERIFIED') {
-    errors.push('V4 运行交付必须使用 VERIFIED 的正式 Prefab 装配');
+    errors.push('V5 运行交付必须使用 VERIFIED 的正式 Prefab 装配');
   }
   if (errors.length) throw new Error(errors.join('；'));
   return { splitPlan, structure, assembly };

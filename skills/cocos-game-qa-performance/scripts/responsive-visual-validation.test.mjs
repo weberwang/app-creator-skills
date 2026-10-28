@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import test from "node:test";
@@ -86,6 +86,7 @@ function referencedContractFixture() {
   const sources = new Map([
     [policyPath, policy],
     [scenePath, scene],
+    [document.localization_contract_file, structuredClone(ordinaryUiTemplate)],
     [nodesPath, layoutSourceDocuments.get(nodesPath)],
   ]);
   const target = scene.target_conditions;
@@ -396,17 +397,17 @@ test("响应式合同声明允许动态有效值并拒绝非法有效声明", ()
 
 test("报告必须带合法不可变证据身份", () => { const missing = summarizeReport([], { resize: { required: false }, viewports: [] }); assert.equal(missing.responsivePass, false); assert(missing.identityErrors.length > 0); const report = summarizeReport([], { ...contract(), resize: { required: false }, viewports: [] }, { ...identity, target_sha256: `sha256:${"b".repeat(64)}` }); assert.deepEqual(report.identityErrors, []); });
 
-test("V4 响应式证据直接绑定正式候选身份", () => {
+test("V5 响应式证据直接绑定正式候选身份", () => {
   const evidenceContract = { ...contract(), resize: { required: false }, viewports: [] };
   const { candidate_sha256, ...requiredIdentity } = identity;
   // 正式证据由任务与运行候选定位，不再为独立预览携带额外身份。
-  const report = summarizeReport([], evidenceContract, { ...requiredIdentity, currentStage: "V4", target_sha256: "stale" });
+  const report = summarizeReport([], evidenceContract, { ...requiredIdentity, currentStage: "V5", target_sha256: "stale" });
   assert.deepEqual(report.identityErrors, []);
 });
 
-test("V2 响应式 QA 消费公共策略、冻结场景身份和唯一 canonical layout source", () => {
+test("V3 响应式 QA 消费公共策略、冻结场景身份和唯一 canonical layout source", () => {
   const fixture = referencedContractFixture();
-  const normalized = normalizeContract(fixture.document, { stage: "V2", layoutSourceDocuments: fixture.sources });
+  const normalized = normalizeContract(fixture.document, { stage: "V3", layoutSourceDocuments: fixture.sources });
   assert.equal(normalized.identityContract.trusted, true, normalized.identityContract.validationErrors.join("；"));
   assert.equal(normalized.identityContract.sourceKind, "scene-contract");
   assert.deepEqual(normalized.identityContract.scenes, [fixture.identity.scene_id]);
@@ -422,20 +423,25 @@ test("V2 响应式 QA 消费公共策略、冻结场景身份和唯一 canonical
   assert(mismatched.identityErrors.some((item) => item.includes("scene_contract.target_conditions.scene_id")));
 });
 
-test("V2 QA 无法解析引用或 canonical source 不可信时不得建立身份", () => {
+test("V3 QA 无法解析引用或 canonical source 不可信时不得建立身份", () => {
   const fixture = referencedContractFixture();
   const withoutReferences = normalizeContract(fixture.document);
   assert.equal(withoutReferences.identityContract.trusted, false);
   assert(withoutReferences.identityContract.validationErrors.some((item) => item.includes("显式提供 Map")));
 
   const brokenSources = new Map(fixture.sources);
+  const missingLocalization = new Map(fixture.sources);
+  missingLocalization.delete(fixture.document.localization_contract_file);
+  const missing = normalizeContract(fixture.document, { stage: "V3", layoutSourceDocuments: missingLocalization });
+  assert.equal(missing.identityContract.trusted, false);
+  assert(missing.identityContract.validationErrors.some((item) => item.includes(fixture.document.localization_contract_file)));
   brokenSources.set(fixture.nodesPath, { schema: "wrong" });
-  const broken = normalizeContract(fixture.document, { stage: "V2", layoutSourceDocuments: brokenSources });
+  const broken = normalizeContract(fixture.document, { stage: "V3", layoutSourceDocuments: brokenSources });
   assert.equal(broken.identityContract.trusted, false);
-  assert(broken.identityContract.validationErrors.some((item) => item.includes("V2 布局源 schema")));
+  assert(broken.identityContract.validationErrors.some((item) => item.includes("V3 布局源 schema")));
 });
 
-test("V2 QA 文件入口真实读取策略、场景和 canonical source，且与 Map 结构结果一致", async () => {
+test("V3 QA 文件入口真实读取策略、场景和 canonical source，且与 Map 结构结果一致", async () => {
   const fixture = referencedContractFixture();
   const root = await import("node:fs/promises").then(({ mkdtemp }) => mkdtemp(join(tmpdir(), "responsive-v2-source-")));
   for (const [relativePath, document] of fixture.sources) {
@@ -443,12 +449,14 @@ test("V2 QA 文件入口真实读取策略、场景和 canonical source，且与
     await mkdir(dirname(file), { recursive: true });
     await writeFile(file, JSON.stringify(document));
   }
-  const structural = normalizeContract(fixture.document, { stage: "V2", layoutSourceDocuments: fixture.sources });
-  const loaded = await loadResponsiveContract(fixture.document, { stage: "V2", projectRoot: root });
+  const structural = normalizeContract(fixture.document, { stage: "V3", layoutSourceDocuments: fixture.sources });
+  const loaded = await loadResponsiveContract(fixture.document, { stage: "V3", projectRoot: root });
   assert.equal(loaded.identityContract.trusted, true, loaded.identityContract.validationErrors.join("；"));
   assert.deepEqual(loaded.identityContract, structural.identityContract);
   assert.deepEqual(loaded.layoutSource, structural.layoutSource);
   await assert.rejects(loadResponsiveContract(fixture.document), /必须显式提供 projectRoot/);
+  await unlink(join(root, fixture.document.localization_contract_file));
+  await assert.rejects(loadResponsiveContract(fixture.document, { stage: "V3", projectRoot: root }), /localization_contract_file 文件不存在或无法解析/);
 });
 
 test("报告身份必须与原始 UI 合同交叉绑定", () => { for (const [field, value, message] of [["scene_id", "other", "scope.scenes"], ["state_id", "paused", "scope.states"], ["layout_contract_version", "9.0.0", "contract_version"], ["visual_baseline_version", "2.0.0", "视觉基线"]]) { const report = summarizeReport([], { ...contract(), resize: { required: false }, viewports: [] }, { ...identity, [field]: value }); assert(report.identityErrors.some((item) => item.includes(message)), field); } });

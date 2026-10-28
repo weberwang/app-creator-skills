@@ -1,6 +1,6 @@
 # Cocos Creator 坐标与布局适配
 
-本参考把已确认的 V2 布局合同与 V3 资源接入 V4 正式 Cocos Scene。Scene、Node、Component、Prefab、AssetDB 和构建相关操作都通过[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)执行；先读取 `tools/list` 提供的实时 schema，不手写 `.scene`、`.prefab` 或 `.meta` 绑定。编辑器写入的单写者和保存读回边界见[协议及集成流程](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-asset-integration)。
+本参考把已确认的 V3 布局合同与 V4 资源接入 V5 正式 Cocos Scene。Scene、Node、Component、Prefab、AssetDB 和构建相关操作都通过[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)执行；先读取 `tools/list` 提供的实时 schema，不手写 `.scene`、`.prefab` 或 `.meta` 绑定。编辑器写入的单写者和保存读回边界见[协议及集成流程](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-asset-integration)。
 
 ## 坐标空间
 
@@ -16,7 +16,7 @@
 
 ## Creator 节点职责
 
-- UI 根挂载到 `Canvas`，几何和归一化锚点由 `UITransform` 管理；使用 `Widget` 时将相对边界/尺寸约束声明在节点组件上，并按目标 Creator 版本确认其生效时机。`UITransform` 的 anchor point 默认值或 Widget 对齐结果不能替代 V2 中冻结的布局事实。
+- UI 根挂载到 `Canvas`，几何和归一化锚点由 `UITransform` 管理；使用 `Widget` 时将相对边界/尺寸约束声明在节点组件上，并按目标 Creator 版本确认其生效时机。`UITransform` 的 anchor point 默认值或 Widget 对齐结果不能替代 V3 中冻结的布局事实。
 - 2D 世界对象使用 Scene 节点树和目标 Camera。屏幕 UI 与世界 Camera 的逻辑坐标、渲染顺序和输入转换分开记录；不要将物理 backing 像素直接写成 Node.position。
 - Node 的同父级显示顺序由节点树 sibling 顺序管理；在同一父节点内确需改序时，Creator API 为 `Node.setSiblingIndex(index)`。跨 Camera/层级顺序应使用项目已配置的 Camera/排序方案并以实际画面验证，不凭局部 `z_index` 推断。
 - 可复用结构以 Prefab 表达。资源绑定使用 AssetDB 已导入并核验的 UUID/子资源身份；不要在序列化文件中自行拼 UUID。
@@ -27,7 +27,7 @@
 图片还原时必须区分 `Sprite.sizeMode`（尺寸来源）与 `Sprite.type`（渲染方式）：
 
 - 普通固定视觉图片派生 `sprite_geometry={type:'SIMPLE',size_mode:'RAW',content_size:null}`，使用 `Sprite.Type.SIMPLE` 与 `Sprite.SizeMode.RAW`。绑定正式 SpriteFrame 后，由 Sprite 使用该帧完整未裁切原尺寸；这里的原尺寸是正式运行时 SpriteFrame 尺寸，既不是父框尺寸，也不是生成器尚未归一化的 `raw_source_file` 尺寸。计划字段 `content_size` 固定为 `null`，不携带宽高，运行时不对该图片执行 `UITransform.contentSize` 写入；也不得通过 `setContentSize(...)`、双边拉伸 Widget 或 Layout 自动调整子项尺寸把图片改为自定义尺寸。该图片即使同时是底板容器、拥有图标和文字子项，也保留 RAW 图片身份与原尺寸计划。
-- 只有 V2/V3 已冻结采用九宫格的图片派生 `sprite_geometry={type:'SLICED',size_mode:'CUSTOM',content_size:{width:目标宽,height:目标高}}`，使用 `Sprite.Type.SLICED` 与 `Sprite.SizeMode.CUSTOM`，按冻结目标显示框设置 `UITransform.contentSize`，并使用已确认的 SpriteFrame 切片边界。局部 scale 保持 1，完整规则见[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)。
+- 只有 V3/V4 已冻结采用九宫格的图片派生 `sprite_geometry={type:'SLICED',size_mode:'CUSTOM',content_size:{width:目标宽,height:目标高}}`，使用 `Sprite.Type.SLICED` 与 `Sprite.SizeMode.CUSTOM`，按冻结目标显示框设置 `UITransform.contentSize`，并使用已确认的 SpriteFrame 切片边界。局部 scale 保持 1，完整规则见[九宫格 UI](../../cocos-game-asset-integration/references/nine-slice-ui.md)。
 - 纯结构容器、文字和命中区域没有 Sprite 尺寸计划；`element_type=container` 且 `render_kind=sprite` 的底板节点仍按自己的 RAW 或已冻结九宫格图片身份声明计划。父布局容器、裁切框和交互命中区域仍按各自合同设置尺寸。普通图片不接受 `STRETCH`/`FLEX` 尺寸策略。需要更大命中区域时调整交互父节点，不放大普通图片。布局 bounds、父级 bounds 和定位参照 bounds 只表达几何关系，不构成改写图片原尺寸的指令。
 
 父子分组尺寸不得传递成普通图片尺寸。`parent_target_bounds` 记录实际父框，`reference_target_bounds` 记录用于锚点/偏移的位置参照框；两者都不能覆盖 RAW SpriteFrame 原尺寸。显式定位参照可以是兄弟或祖先节点，但只影响定位计算，不改变图片 `sprite_geometry`。父 Node 的 `scale` 会作用于所有子项，所以不要通过缩放底板根来单独改底板尺寸；普通底板继续 RAW，布局父级与子项尺寸独立管理。九宫格底板通过自身 `UITransform.contentSize` 更新 CUSTOM 显示框，改变该尺寸本身不会按比例缩放其图标或文字子项，子项位置/间距由布局入口重新计算。
@@ -38,7 +38,7 @@ Widget 的 `target` 只支持当前节点的父级或祖先节点，不能直接
 
 `viewport` 与 `safe-area` 在布局合同中是合成几何根，直接参照时必须使用 `SHARED`；合成的 `root_nodes` 不代表存在同名场景 Node，不能作为 Widget target。每批 `viewport` 使用完整逻辑视口，`safe-area` 使用实际安全区小矩形；生成、中心计算、审阅和运行校验使用同一份安全区快照。合成根记录必须是保留 ID `viewport`/`safe-area`、`is_root_container: true` 且显式 `parent_layout_node_id: null`；业务节点不能标记 `is_root_container: true` 或占用保留 ID，快照中的 `false` 不构成根声明。已有实际 Canvas 父/祖先节点可直接作 Widget target。位置与尺寸可分别由 Widget 和共享布局或当前节点 Creator 原生 Layout 负责，后者先计算最终尺寸，再调用 `updateAlignment()`；自定义项目布局器由 `SHARED` 驱动并保留 `PARENT` 职责；父级原生 Layout 控制子节点位置时，Widget 不得再写该位置。实际组件核对见 [Widget 运行快照](./widget-runtime-evidence.md)。
 
-创建、资源绑定、状态换图、Scene 恢复和 resize 共用这项区分：普通图片保持 RAW，九宫格重放冻结目标尺寸。普通图片与目标显示尺寸不符时先核对绑定资源与 V3 生产规格，不改用 CUSTOM 或以静态 Node 缩放掩盖错误资源；已由视觉合同批准的变换与反馈缩放动画仍可运行，按现有几何/动画证据检查，且不改写普通 Sprite 原始 `contentSize`。已声明的背景 cover/contain 与设计空间到设备的整体缩放继续通过共享变换实现，不改写普通 Sprite 的原始内容尺寸。统一幂等布局入口还须覆盖父尺寸、动态文本、状态、成员、安全区、键盘及资源绑定完成事件；Widget 固定使用 `ON_WINDOW_RESIZE` 并在入口更新参数后显式调用 `updateAlignment()`，不用 `ALWAYS` 与其它位置写入者争抢。
+创建、资源绑定、状态换图、Scene 恢复和 resize 共用这项区分：普通图片保持 RAW，九宫格重放冻结目标尺寸。普通图片与目标显示尺寸不符时先核对绑定资源与 V4 生产规格，不改用 CUSTOM 或以静态 Node 缩放掩盖错误资源；已由视觉合同批准的变换与反馈缩放动画仍可运行，按现有几何/动画证据检查，且不改写普通 Sprite 原始 `contentSize`。已声明的背景 cover/contain 与设计空间到设备的整体缩放继续通过共享变换实现，不改写普通 Sprite 的原始内容尺寸。统一幂等布局入口还须覆盖父尺寸、动态文本、状态、成员、安全区、键盘及资源绑定完成事件；Widget 固定使用 `ON_WINDOW_RESIZE` 并在入口更新参数后显式调用 `updateAlignment()`，不用 `ALWAYS` 与其它位置写入者争抢。
 
 依据 [Cocos Creator 3.8 Sprite 组件参考](https://docs.cocos.com/creator/3.8/manual/en/ui-system/components/editor/sprite.html)：Raw 使用未裁切原图尺寸，Custom 使用自定义尺寸，Sliced 是独立的渲染类型。RAW 是本工作流要求，不能依赖编辑器或已有 Prefab 的当前默认值。
 

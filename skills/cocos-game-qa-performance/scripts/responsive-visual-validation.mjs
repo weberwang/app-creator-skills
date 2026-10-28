@@ -144,7 +144,7 @@ function collectDprErrors(value, path = "contract", errors = [], seen = new Set(
   return errors;
 }
 
-/** 把 V2 公共策略映射为响应式 QA 使用的检查面，不复制任何场景或节点布局事实。 */
+/** 把 V3 公共策略映射为响应式 QA 使用的检查面，不复制任何场景或节点布局事实。 */
 function referencedPolicySettings(policy) {
   const evidence = policy?.requiredRuntimeEvidence ?? {};
   const requiredFields = Array.isArray(evidence.requiredFields) ? evidence.requiredFields : null;
@@ -200,7 +200,7 @@ function referencedPolicySettings(policy) {
 
 /** 从冻结场景身份和唯一节点文件组装 QA 身份来源；Map 仅供结构验证显式注入。 */
 function resolveReferencedUiContext(source, options) {
-  const validation = validateUiLayoutContract(source, { ...options, stage: options.stage ?? "V2" });
+  const validation = validateUiLayoutContract(source, { ...options, stage: options.stage ?? "V3" });
   const policy = getUiLayoutSourceDocument(options.layoutSourceDocuments, source.project_policy_file, "project_policy_file");
   const scene = getUiLayoutSourceDocument(options.layoutSourceDocuments, source.scene_contract_file, "scene_contract_file");
   let layoutSource = null;
@@ -213,7 +213,7 @@ function resolveReferencedUiContext(source, options) {
         layoutNodeIds: resolved.nodes.map((node) => node.layout_node_id),
       };
     } catch (error) {
-      errors.push(`scene_contract V2 唯一布局源无效：${error.message}`);
+      errors.push(`scene_contract V3 唯一布局源无效：${error.message}`);
     }
   }
   const target = scene?.target_conditions ?? scene?.targetConditions ?? {};
@@ -691,16 +691,16 @@ async function readJsonInput(value, { allowPlain = false } = {}) {
   return JSON.parse(file);
 }
 
-/** 正式 V2 QA 从引用合同读取项目策略、场景和唯一 layout-nodes 文件。 */
+/** 正式 V3 QA 从引用合同读取项目策略、场景和唯一 layout-nodes 文件。 */
 export async function loadResponsiveContract(raw, options = {}) {
   if (raw?.schema_version !== "2.0.0") return normalizeContract(raw, options);
-  if (typeof options.projectRoot !== "string" || options.projectRoot.trim() === "") throw new Error("V2 响应式 QA 必须显式提供 projectRoot");
+  if (typeof options.projectRoot !== "string" || options.projectRoot.trim() === "") throw new Error("V3 响应式 QA 必须显式提供 projectRoot");
   const layoutSourceDocuments = await loadUiLayoutSourceDocuments(raw, options.projectRoot);
   return normalizeContract(raw, {
     ...options,
     layoutSourceDocuments,
     forceLayoutSourceFiles: true,
-    stage: options.stage ?? "V4",
+    stage: options.stage ?? "V5",
   });
 }
 
@@ -776,7 +776,7 @@ async function runBrowserValidation(options) {
   const rawContract = await readJsonInput(options.contract);
   const contract = await loadResponsiveContract(rawContract, {
     projectRoot: String(options["project-root"] ?? process.cwd()),
-    stage: "V4",
+    stage: "V5",
   });
   const identity = await readJsonInput(options.identity);
   const identityErrors = validateEvidenceIdentity(identity, { contract });

@@ -46,6 +46,6 @@ contractVersions:
   visualBaseline: visual-v1
   schema: "2.0"
 status: REVIEWING
-v4Status: NOT_RUN
+v5Status: NOT_RUN
 reviews: []
 userApprovals: []

@@ -6,17 +6,17 @@ import {
 import { dirname, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { VERSION, VISUAL_STAGES } from './constants.mjs';
-import { bindWorkSource, loadPackage, validateEvidence, validateUnitResult } from './artifacts.mjs';
+import { bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateUnitResult } from './artifacts.mjs';
 import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, validateWork } from './validation.mjs';
-import { inspectWork, loadWork, response } from './workflow.mjs';
+import { inspectPendingRegressionExecution, inspectWork, loadWork, response } from './workflow.mjs';
 import { withWorkLock } from './work-lock.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn']);
-const REPORT_FIELDS = new Set(['files', 'commandOutputs', 'evidence']);
+const REPORT_FIELDS = new Set(['files', 'commandOutputs', 'evidence', 'hostId', 'layerType']);
 const REPORT_COMMAND_FIELDS = new Set(['command', 'exitCode', 'outputFile']);
-const REPORT_EVIDENCE_FIELDS = new Set(['category', 'path']);
+const REPORT_EVIDENCE_FIELDS = new Set(['category', 'path', 'targetId']);
 const GATE_ASSESSMENT_FIELDS = new Set(['status', 'reason']);
 const GATE_KEYS = ['F0', 'F1', 'F2'];
 const UNIT_TYPES = ['SHARED', 'MODULE', 'SCENE', 'PAGE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE'];
@@ -55,6 +55,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     packagePath,
     manifestPath,
     `${evidenceRoot}/execution-state.json`,
+    ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative),
     ...plan.executionUnits.map((unit) => `${evidenceRoot}/unit-${unit.unitId}.json`),
   ];
   assertUnitPathsAvoidRecords(plan.executionUnits, protectedPaths);
@@ -151,7 +152,8 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
   if (!work.planningRef?.path) throw new WorkflowError('Work Item 缺少冻结计划来源 planningRef');
 
   const pack = loadPackage(repo, work);
-  const inspection = inspectWork(repo, work);
+  // 记录新回归时旧源码摘要可能已失效；最终阶段门仍会要求先刷新基线。
+  const inspection = ['V4', 'V5'].includes(work.visual?.stage) ? inspectPendingRegressionExecution(repo, work) : inspectWork(repo, work);
   if (inspection.blocking.length) throw new WorkflowError(`Execution State 无效：${inspection.blocking[0]}`);
   const activeBatch = inspection.activeBatch;
   if (!Array.isArray(activeBatch) || !activeBatch.length) throw new WorkflowError('当前没有可登记结果的活动执行批次');
@@ -176,6 +178,8 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
 
   const report = readJson(repo, sourcePath, 'Execution Report');
   validateReportShape(report);
+  if (work.workItemType === 'DISPLAY_LAYER' && (report.hostId !== work.visual.hostId || report.layerType !== work.visual.layerType)) throw new WorkflowError('显示层执行报告未绑定当前宿主及类型');
+  if (work.workItemType !== 'DISPLAY_LAYER' && (report.hostId !== undefined || report.layerType !== undefined)) throw new WorkflowError('仅显示层执行报告可指定宿主及类型');
   const manifest = readJson(repo, manifestPath, 'Evidence Manifest');
   const initialManifestIdentity = fileIdentity(repo, manifestPath);
   const initialManifestContent = readFileSync(repoPath(repo, manifestPath).absolute);
@@ -193,6 +197,7 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     work.implementationPackageRef.path,
     work.planningRef.path,
     `${repoPath(repo, work.evidenceRoot).relative}/execution-state.json`,
+    ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative),
     ...pack.executionUnits.map((entry) => entry.resultPath),
   ].map(pathKey));
   if (forbiddenRecords.has(pathKey(sourcePath))) throw new WorkflowError('Execution Report 不能复用 Work Item、计划、实施包、执行状态、结果或 manifest 路径');
@@ -207,7 +212,10 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     }
     requireNonEmptyRegularFile(repo, path, `evidence[${index}].path`);
     if (forbiddenRecords.has(pathKey(path))) throw new WorkflowError(`evidence[${index}] 不能引用工作流记录本身：${path}`);
-    return { category: entry.category, status: 'PASS', path };
+    if (entry.targetId && !work.visual?.targets?.some((target) => target.targetId === entry.targetId)) {
+      throw new WorkflowError(`evidence[${index}].targetId 未绑定当前场景视觉目标：${entry.targetId}`);
+    }
+    return { category: entry.category, status: 'PASS', path, ...(entry.targetId ? { targetId: entry.targetId } : {}) };
   });
   assertUniqueEvidenceItems(normalizedEvidence);
 
@@ -220,6 +228,7 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     unitId: unit.unitId,
     sequence: unit.sequence,
     exitCode: 0,
+    ...(work.workItemType === 'DISPLAY_LAYER' ? { hostId: report.hostId, layerType: report.layerType } : {}),
     files: [...report.files],
     commandOutputs: report.commandOutputs.map((entry) => ({ ...entry })),
   };
@@ -338,6 +347,8 @@ function defaultUnitType(workItemType) {
 /** 验证执行报告只包含实现者可提交的真实运行字段。 */
 function validateReportShape(report) {
   assertObjectFields(report, REPORT_FIELDS, 'Execution Report');
+  if (report.hostId !== undefined) requireSafeText(report.hostId, 'Execution Report.hostId');
+  if (report.layerType !== undefined) requireSafeText(report.layerType, 'Execution Report.layerType');
   requireStringArray(report.files, 'Execution Report.files', { nonEmpty: true });
   if (!Array.isArray(report.commandOutputs)) throw new WorkflowError('Execution Report.commandOutputs 必须为数组');
   for (const [index, entry] of report.commandOutputs.entries()) {
@@ -351,6 +362,7 @@ function validateReportShape(report) {
     assertObjectFields(entry, REPORT_EVIDENCE_FIELDS, `evidence[${index}]`);
     requireSafeText(entry.category, `evidence[${index}].category`);
     requireSafeText(entry.path, `evidence[${index}].path`);
+    if (entry.targetId !== undefined) requireSafeText(entry.targetId, `evidence[${index}].targetId`);
   }
 }
 
@@ -405,10 +417,11 @@ function assertUnitPathsAvoidRecords(units, reservedPaths) {
 
 /** 验证既有证据不会把记录文件本身充当实际材料。 */
 function validateManifestNoSelfReferences(repo, manifest, forbiddenRecords, evidenceRoot) {
-  const allowedItemFields = new Set(['category', 'status', 'path']);
+  const allowedItemFields = new Set(['category', 'status', 'path', 'targetId']);
   for (const [index, item] of manifest.items.entries()) {
     assertObjectFields(item, allowedItemFields, `Evidence Manifest.items[${index}]`);
     requireSafeText(item.category, `Evidence Manifest.items[${index}].category`);
+    if (item.targetId !== undefined) requireSafeText(item.targetId, `Evidence Manifest.items[${index}].targetId`);
     if (item.status !== 'PASS') throw new WorkflowError(`Evidence Manifest.items[${index}].status 必须为 PASS`);
     const path = repoPath(repo, item.path, `Evidence Manifest.items[${index}].path`).relative;
     if (!pathMatch(path, `${repoPath(repo, evidenceRoot).relative}/**`)) throw new WorkflowError(`Evidence Manifest 条目越出当前 evidenceRoot：${path}`);
@@ -421,14 +434,16 @@ function mergeEvidenceItems(existing, incoming) {
   const merged = [];
   const seen = new Set();
   for (const item of [...existing, ...incoming]) {
-    assertObjectFields(item, new Set(['category', 'status', 'path']), 'Evidence Manifest item');
+    assertObjectFields(item, new Set(['category', 'status', 'path', 'targetId']), 'Evidence Manifest item');
     if (typeof item.category !== 'string' || !item.category.trim() || typeof item.path !== 'string' || !item.path.trim() || item.status !== 'PASS') {
       throw new WorkflowError('Evidence Manifest 已有条目格式无效');
     }
-    const key = `${item.category}\0${pathKey(item.path)}`;
+    if (item.targetId !== undefined) requireSafeText(item.targetId, 'Evidence Manifest item.targetId');
+    // 同一证据可服务多个视图，但每个视图的绑定都必须保留。
+    const key = `${item.category}\0${pathKey(item.path)}\0${item.targetId ?? ''}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    merged.push({ category: item.category, status: 'PASS', path: item.path });
+    merged.push({ category: item.category, status: 'PASS', path: item.path, ...(item.targetId ? { targetId: item.targetId } : {}) });
   }
   return merged;
 }
@@ -437,7 +452,7 @@ function mergeEvidenceItems(existing, incoming) {
 function assertUniqueEvidenceItems(items) {
   const seen = new Set();
   for (const item of items) {
-    const key = `${item.category}\0${pathKey(item.path)}`;
+    const key = `${item.category}\0${pathKey(item.path)}\0${item.targetId ?? ''}`;
     if (seen.has(key)) throw new WorkflowError(`Execution Report.evidence 重复：${item.category} / ${item.path}`);
     seen.add(key);
   }

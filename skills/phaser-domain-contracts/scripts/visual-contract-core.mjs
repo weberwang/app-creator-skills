@@ -133,14 +133,14 @@ export const VISUAL_REMEDIATION_LABEL = Object.freeze({
 /** 处置值对应的唯一下一动作文本，保持所有视觉入口输出一致。 */
 export const VISUAL_REMEDIATION_NEXT_ACTION = Object.freeze({
   repair: "原地修复当前记录、字段、路径或可补证据后，重新运行当前门；沿工作流继续推进，不回退阶段",
-  revalidate: "候选与上游冻结身份未变（V2 拆解方案身份保持不变），仅重验当前门并生成新的机器证据；沿工作流继续推进，不回退阶段",
+  revalidate: "候选与上游冻结身份未变（V3 拆解方案身份保持不变），仅重验当前门并生成新的机器证据；沿工作流继续推进，不回退阶段",
   return: "上游方案、拆解方案、基线、任务范围或冻结候选身份已失效；记录必要回退理由和受影响范围，再回退到最早受影响阶段",
 });
 
 /** 发生这些冻结身份变化时，视觉门必须升级为 RETURN。 */
 export const VISUAL_RETURN_SNAPSHOT_KEYS = new Set([
-  "workItemId", "unitResultId", "V2PlanTargetHash", "V2PlanCandidateHash", "V2PlanDiffFingerprint", "V2PlanBaselineHash",
-  "V2DecompositionConfirmationId", "V2DecompositionConfirmationEvidenceHash",
+  "workItemId", "unitResultId", "V3PlanTargetHash", "V3PlanCandidateHash", "V3PlanDiffFingerprint", "V3PlanBaselineHash",
+  "V3DecompositionConfirmationId", "V3DecompositionConfirmationEvidenceHash",
 ]);
 
 /** 机器证据变化的稳定识别模式；普通字段缺失仍只要求原地修复。 */
@@ -154,14 +154,14 @@ export const VISUAL_IDENTITY_MISMATCH_PATTERN = /(?:不一致|不匹配|漂移|�
  */
 export function deriveVisualReturnStage(stage, { validationStages = [] } = {}) {
   const value = String(stage ?? "");
-  if (value === "V1" || value === "V2") return "V1/PROPOSAL";
+  if (value === "V2" || value === "V3") return "V2/PROPOSAL";
   if (validationStages.includes(value)) return "VALIDATING";
   return value;
 }
 
 /** 根据阶段和退回点推导标准根因，允许少数合同传入领域默认值。 */
-export function deriveVisualRootCause(stage, returnStage, { executionStages = ["V2", "V3"], acceptanceStages = ["F2", "F3", "V4", "VALIDATING"], defaultRootCause = VISUAL_ROOT_CAUSES.PLAN_MISSING } = {}) {
-  if (returnStage === "V1/PROPOSAL") return VISUAL_ROOT_CAUSES.PLAN_MISSING;
+export function deriveVisualRootCause(stage, returnStage, { executionStages = ["V3", "V4"], acceptanceStages = ["F2", "F3", "V5", "VALIDATING"], defaultRootCause = VISUAL_ROOT_CAUSES.PLAN_MISSING } = {}) {
+  if (returnStage === "V2/PROPOSAL") return VISUAL_ROOT_CAUSES.PLAN_MISSING;
   if (executionStages.includes(String(stage ?? ""))) return VISUAL_ROOT_CAUSES.EXECUTION;
   if (acceptanceStages.includes(String(stage ?? "")) || acceptanceStages.includes(returnStage)) return VISUAL_ROOT_CAUSES.ACCEPTANCE;
   return defaultRootCause;
@@ -177,7 +177,7 @@ export function deriveVisualDisposition({ changed = [], missingEvidence = [], id
 }
 
 /** 从身份变化列表中取得最早受影响视觉阶段，避免默认整条链路重做。 */
-export function earliestVisualReturnStage(changes, fallback = "V2") {
-  for (const stage of ["V2", "V3", "V4"]) if ((changes ?? []).some((item) => String(item).startsWith(stage))) return stage;
+export function earliestVisualReturnStage(changes, fallback = "V3") {
+  for (const stage of ["V3", "V4", "V5"]) if ((changes ?? []).some((item) => String(item).startsWith(stage))) return stage;
   return fallback;
 }

@@ -154,7 +154,7 @@ export function contract() {
 
 /** 构造带冻结目标与容差声明的清单测试上下文。 */
 export function manifest() {
-  return { visual_validation: { mode: "exact" }, reference_target: { target_sha256: SHA, scene_ids: ["main"], state_ids: ["default"] }, visual_baseline: { version: "1.0.0" }, coverage_audit: { regions: [{ id: "hud" }, { id: "board" }] }, scene_reconstruction_contract: { predeclared_tolerances: [{ id: "layout-tolerance", rules: { geometry: { value: 2 } } }], coverage_regions: [{ id: "hud", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }, { id: "board", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }] } };
+  return { visualStageModel: "function-first-v1", visual_validation: { mode: "exact" }, reference_target: { target_sha256: SHA, scene_ids: ["main"], state_ids: ["default"] }, visual_baseline: { version: "1.0.0" }, coverage_audit: { regions: [{ id: "hud" }, { id: "board" }] }, scene_reconstruction_contract: { predeclared_tolerances: [{ id: "layout-tolerance", rules: { geometry: { value: 2 } } }], coverage_regions: [{ id: "hud", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }, { id: "board", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }] } };
 }
 
 /** 将常驻 HUD 夹具转换为独立弹窗工作项合同，并补齐宿主场景上下文。 */
@@ -209,7 +209,7 @@ export function fidelityCase(overrides = {}) {
   return { ...base, ...overrides };
 }
 
-/** 构造带布局拆解、V4 几何证据和 V4 逐节点证据的 effect-image 合同。 */
+/** 构造带布局拆解、V5 几何证据和 V5 逐节点证据的 effect-image 合同。 */
 export function effectImageContract() {
   const value = structuredClone(contract());
   value.effect_image_reconstruction = { applicability: "effect-image" };
@@ -295,12 +295,12 @@ export function effectImageContract() {
   return value;
 }
 
-/** 构造 effect-image 清单快照；V4 必须使用完整 scene contract。 */
+/** 构造 effect-image 清单快照；V5 必须使用完整 scene contract。 */
 export function effectImageManifest(sceneContract) {
   return {
     ...manifest(),
     effect_image_reconstruction: { applicability: "effect-image" },
-    scene_reconstruction_contract: sceneContract, visualStageState: "v2-production-planning-complete",
+    scene_reconstruction_contract: sceneContract, visualStageState: "v3-production-planning-complete",
   };
 }
 

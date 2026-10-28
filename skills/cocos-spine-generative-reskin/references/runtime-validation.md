@@ -6,7 +6,7 @@
 
 `target_runtime_parse` 还必须写出实际 producer、Runtime owner/version、command 或 URL、当前验证 run 的实际原始日志路径和 `parsed=true`。这些字段须对应真实使用的 Creator Runtime 诊断来源；不得填写未实际调用的 MCP 工具名或用版本声明代替解析结果。Creator 项目资源、组件、场景与 AssetDB 操作必须经[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)和实时 `tools/list` schema 完成；不手写 `.meta`、`.scene` 或 `.prefab`。MCP 当前只打开构建面板/报告 worker ready 或不支持 Preview 启动时，不构成运行验证，必须保持 pending/blocked，直到取得真实运行证据。
 
-截图、浏览器日志、Runtime 原始日志和结构化报告都绑定同一个 `validation_run_id`，并检查实际文件、动画与运行结果；`build_binding` 和各 SHA/fingerprint 仅作可选追踪，不比较或阻断验收。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-spine-runtime-validation.md#运行态验证与最终交付)。
 
 报告还必须包含诊断页 URL、浏览器验证记录、桌面截图和约 390px 移动端截图；每个文件都须可读取。截图由用户人工检查；代理可提供截图及检查要点，未获明确授权不得自动分析图像。截图不能替代结构化字段，任意一张图片也不能直接驱动 `finalize`。只有 `runtime-validate` 通过后才允许 `finalize`，`verify` 检查实际报告内容和证据，不复算或比较验收摘要。
 

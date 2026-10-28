@@ -71,8 +71,10 @@ function validateLayoutAnnotationBinding(data, decomposition, nodeById, label, e
   const annotation = decomposition.layout_annotation;
   const confirmation = decomposition.layout_annotation_confirmation;
   if (!isObject(annotation)) { errors.push(`${label}.layout_annotation 必须存在；布局图只能在拆解确认后生成`); return; }
-  for (const field of ["layout_annotation_file", "layout_annotation_width", "layout_annotation_height", "layout_annotation_schema", "layout_annotation_layout", "layout_review_file", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id"]) if (!Object.hasOwn(annotation, field)) errors.push(`${label}.layout_annotation.${field} 必须存在`);
-  for (const field of ["layout_annotation_file", "layout_review_file", "layout_nodes_file", "layout_decision_file", "decomposition_confirmation_id", "layout_decision_id", "scene_id", "state_id"]) if (!isString(annotation[field])) errors.push(`${label}.layout_annotation.${field} 必须是非空字符串`);
+  for (const field of ["layout_annotation_file", "layout_annotation_width", "layout_annotation_height", "layout_annotation_schema", "layout_annotation_layout", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id"]) if (!Object.hasOwn(annotation, field)) errors.push(`${label}.layout_annotation.${field} 必须存在`);
+  for (const field of ["layout_annotation_file", "layout_nodes_file", "layout_decision_file", "decomposition_confirmation_id", "layout_decision_id", "scene_id", "state_id"]) if (!isString(annotation[field])) errors.push(`${label}.layout_annotation.${field} 必须是非空字符串`);
+  if ((Object.hasOwn(annotation, "layout_review_file") && (!isString(annotation.layout_review_file) || !/\.html?$/i.test(annotation.layout_review_file))) || (!Object.hasOwn(annotation, "layout_review_file") && ["layout_review_sha256", "layout_review_identity_sha256"].some((key) => Object.hasOwn(annotation, key)))) errors.push(`${label}.layout_annotation.layout_review_file 必须是 HTML 路径且与网页身份同时声明`);
+  if (isObject(confirmation) && Object.hasOwn(annotation, "layout_review_file") !== Object.hasOwn(confirmation, "layout_review_file")) errors.push(`${label}.layout_annotation_confirmation.layout_review_file 必须与布局标注同时声明`);
   if (annotation.layout_annotation_schema !== "layout-annotation/png/1" || annotation.layout_annotation_layout !== "image-plus-right-panel") errors.push(`${label}.layout_annotation schema/layout 不符合独立布局 PNG 合同`);
   for (const field of ["layout_annotation_width", "layout_annotation_height"]) if (!Number.isInteger(annotation[field]) || annotation[field] <= 0) errors.push(`${label}.layout_annotation.${field} 必须是正整数`);
   const target = data.scene_reconstruction_contract?.target_conditions;
@@ -116,7 +118,7 @@ export function validatePngLayoutMetadata(region, item, expectedPlacements, labe
  * implementation 是消费证据；三者不能各自维护一份没有交叉身份的坐标清单。
  */
 export function validateEffectImageLayoutBindings(data, errors, options = {}) {
-  const requireLayout = options.requireLayout ?? (options.stage === "V4" || data?.effect_image_reconstruction?.lifecycle === "v4-complete" || [data?.visualStageState, data?.visual_stage_state].includes("v2-production-planning-complete"));
+  const requireLayout = options.requireLayout ?? (options.stage === "V5" || data?.effect_image_reconstruction?.lifecycle === "v5-complete" || [data?.visualStageState, data?.visual_stage_state].includes("v3-production-planning-complete"));
   const coverageRegions = Array.isArray(data?.coverage_audit?.regions) ? data.coverage_audit.regions.filter(isObject) : [];
   const contract = data?.scene_reconstruction_contract;
   const decomposition = contract?.layout_decomposition;
@@ -227,12 +229,12 @@ export function validateEffectImageLayoutBindings(data, errors, options = {}) {
   return { nodeById };
 }
 
-/** V4 逐布局节点复核目标 bounds、候选 bounds、几何差异和证据。 */
-export function validateV4LayoutMeasurements(data, layoutBindings, errors, options = {}) {
+/** V5 逐布局节点复核目标 bounds、候选 bounds、几何差异和证据。 */
+export function validateV5LayoutMeasurements(data, layoutBindings, errors, options = {}) {
   const mode = resolveVisualValidationMode(options, data, data?.scene_reconstruction_contract);
   const exact = mode === "exact";
   const nodes = layoutBindings?.nodeById;
-  if (!(nodes instanceof Map) || nodes.size === 0) { errors.push("V4 缺少可用于逐节点几何验收的 layout_nodes"); return; }
+  if (!(nodes instanceof Map) || nodes.size === 0) { errors.push("V5 缺少可用于逐节点几何验收的 layout_nodes"); return; }
   const cases = Array.isArray(data?.fidelity_cases) ? data.fidelity_cases : [];
   for (const [caseIndex, item] of cases.entries()) {
     const label = `fidelity_cases[${caseIndex}]`;

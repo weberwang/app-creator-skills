@@ -34,21 +34,21 @@
 - UI evidence exists for screen changes.
 - Independent visual-QA findings for user-facing flows are resolved or explicitly accepted.
 - Page implementation order does not skip required prior interactions, states, or transitions from the module map.
-- Page-level high-fidelity target was generated only after a validated sketch spec, production Code Sketch/tests, and independent Code Sketch Review.
-- The user-frozen target was checked back against the reviewed semantic contract; scope, states, navigation, scrolling, breakpoints, accessibility or ownership changes returned to sketch review.
-- Fidelity implementation refactors the same production skeleton and does not overlay the old sketch with absolute positioning to fake pixels.
+- After V1 verifies real functionality and page semantics, the page target may be generated and confirmed by the user. Code Sketch and its independent review are required only when the sketch route is selected.
+- The user-frozen target was checked against verified functionality and semantic contracts; scope, states, navigation, scrolling, breakpoints, accessibility or ownership changes require the affected functionality to be updated and revalidated. Sketch review is repeated only when that route is selected.
+- Implementation uses the production structure and does not overlay an optional sketch with absolute positioning to fake pixels.
 - Implemented UI respects the selected mockup and page decision constraints when present.
 - A page asset manifest exists when approved mockups include required visual assets.
 - Asset source, reuse decision, generation prompt constraints, background handling, license status, output/Flutter path, loading fallback and error fallback are recorded in the manifest.
 - New bitmap assets use approved generation/reuse evidence and never derive from representative runtime data.
-- Every icon, image, illustration, logo, texture, and bitmap unit has 100%-match evidence and a separate-asset review verdict. An unmatched resource completed dedicated bitmap generation and asset fidelity review; near-match system icons, Flutter components, and existing assets are rejected.
+- Review required assets against the approved target and record their source and reuse decisions; complete asset-specific review where needed. A 100% match is required only for an explicitly selected `exact` acceptance mode.
 - Transparent or composited assets have clean alpha edges, preserved shadows/glows, and no unintended background halos.
 - Transparent-background post-processing records matte removal, alpha cleanup, edge decontamination, padding, and target-background QA when applicable.
 - New generated assets reference global visual-direction and page-design-decision constraints and explain why existing assets were not reused.
-- Icon, image, illustration, logo, texture, and bitmap fidelity matches the approved mockup 100%; only documented rasterization or scaling tolerance is allowed.
-- Implemented UI respects the reviewed semantic contract and Code Sketch for scope, structure, states, interactions, scrolling, breakpoints and ownership.
-- Critical elements have a complete target↔Flutter parity contract with stable element/reference keys, typed dual-axis relations, recomputable geometry/delta, actual Widget measurement and same-viewport screenshot evidence. Validator or “No layout problems” cannot establish actual parity.
-- Critical axes are within 1 logical px; text, Logo and irregular outlines distinguish container center from visible-content optical center. Optical offsets without cited evidence and unresolved visual facts block approval.
+- In `exact` mode, asset fidelity matches the approved target subject to documented rasterization or scaling tolerance; default `usability` checks suitability and legibility without requiring a 100% match.
+- Implemented UI respects verified functional and semantic contracts for scope, structure, states, interactions, scrolling, breakpoints and ownership; honor Code Sketch only when selected and reviewed.
+- Only explicitly selected `exact` mode requires a complete target↔Flutter parity contract for critical elements, actual Widget measurement and same-viewport screenshot evidence. Validators alone cannot establish actual parity; screenshots are checked by the user unless automatic visual verification is explicitly requested.
+- Only `exact` mode requires critical axes within 1 logical px and documented optical-center evidence. In `usability` mode assess functional layout, readability and accessibility without this pixel threshold.
 - Flutter handoff preserves semantic references and dual-axis relations. Frozen-view `x/y` is auxiliary; a `Positioned` exception names its semantic boundary, viewport scope, and responsive fallback.
 - Low-fidelity screenshots constrain function and hierarchy only; their Goldens expire or are replaced after fidelity work starts.
 - A page-level layout/adaptation contract records target ranges, structural breakpoint triggers, max width, columns/gutters, relative anchors, overflow/localization behavior, scroll ownership, docking, and system/keyboard avoidance; low fidelity and a frozen screenshot do not substitute for it.
@@ -66,7 +66,7 @@
 
 ## Visual Aesthetics And Premium Feel
 
-- Compare the implementation screenshot with the approved mockup and page-design-decision constraints before judging aesthetics.
+- Provide the implementation screenshot and approved target for user review of aesthetics; do not automatically analyze images unless the user explicitly requests it.
 - Verify hierarchy, alignment, spacing rhythm, typography, color and contrast, component consistency, and asset quality as one visual system.
 - Verify that decoration, borders, shadows, corner radii, and accent colors are purposeful and match the active expression preset and page-type budget; flag visual noise, generic treatment, competing focal points, and missing signature on full-budget or wow-required pages. Do not require austerity when the preset calls for higher signature strength.
 - Verify that the screen gives visual priority to the primary user task and uses content imagery or assets that fit the product and target audience.
@@ -117,7 +117,7 @@ Aesthetic verdict (visual lane only)
 
 Critical-alignment verdict (visual lane only)
 - approved / changes_requested / blocked
-- Geometry measurements, target/Flutter screenshots, parity-case gaps: ...
+- Mode (`usability` / `exact`), applicable measurements, user screenshot review, and exact-mode parity gaps: ...
 
 Missing evidence
 -

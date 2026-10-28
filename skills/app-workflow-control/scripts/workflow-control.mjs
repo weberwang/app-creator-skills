@@ -5,19 +5,21 @@ import { isDirectEntry } from '../../app-skill-runtime/direct-entry.mjs';
 import { GATES, STACKS, TRANSITIONS, VISUAL_STAGES } from './runtime/constants.mjs';
 import { repoPath, WorkflowError } from './runtime/io.mjs';
 import { loadProfile, requireOneOf, requireText } from './runtime/validation.mjs';
-import { advanceVisual, completeUnit, initializeWork, inspect, loadWork, response, transitionWork } from './runtime/workflow.mjs';
+import { advanceVisual, checkProtectedAction, completeUnit, initializeWork, inspect, loadWork, refreshFunctionBaseline, response, transitionWork } from './runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from './runtime/records.mjs';
 import { reuseVisualReviews } from './runtime/visual-reuse.mjs';
 import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
   plan: ['repo', 'work-item', 'spec'], record: ['repo', 'work-item', 'unit', 'report'],
   'reuse-visual': ['repo', 'work-item', 'source-work-item', 'impact', 'reason'],
+  'refresh-function-baseline': ['repo', 'work-item', 'spec'],
+  'check-action': ['repo', 'work-item', 'action-id', 'effect', 'target'],
   lint: ['repo'],
 });
 
@@ -47,6 +49,14 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'reuse-visual') {
     for (const name of ['source-work-item', 'impact', 'reason']) requireText(args[name], `--${name}`);
     return output(await reuseVisualReviews({ repo, workItem: args['work-item'], sourceWorkItem: args['source-work-item'], impact: args.impact, reason: args.reason }), true);
+  }
+  if (command === 'refresh-function-baseline') {
+    requireText(args.spec, '--spec');
+    return output(await refreshFunctionBaseline({ repo, workItem: args['work-item'], specPath: args.spec }), true);
+  }
+  if (command === 'check-action') {
+    for (const name of ['action-id', 'effect', 'target']) requireText(args[name], `--${name}`);
+    return output(checkProtectedAction({ repo, workItem: args['work-item'], actionId: args['action-id'], effect: args.effect, target: args.target }), true);
   }
   if (command === 'status' || command === 'check') return output(inspect({ repo, workItem: args['work-item'], check: command === 'check' }), command === 'check');
   if (command === 'transition') {

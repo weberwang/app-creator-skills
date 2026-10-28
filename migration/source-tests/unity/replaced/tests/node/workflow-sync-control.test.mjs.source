@@ -483,13 +483,23 @@ test('V4 PASS 缺少真实响应式证据时 fail closed，SHA 字段不再是�
   }
 });
 
-test('程序化文本精确五语言，非程序化文本允许不声明 localePolicies', () => {
+test('程序化文本覆盖简体中文和额外所选语言，非程序化文本不声明语言策略', () => {
   const valid = makeContract({ textLocalization: { programmatic: false } });
   assert.deepEqual(validateUnityResponsiveContract(valid), []);
   const invalidExtra = makeContract({ textLocalization: { programmatic: false, locales: ['en'], localePolicies: {} } });
   assert.match(validateUnityResponsiveContract(invalidExtra).join('\n'), /不得伪造/);
-  const invalidLocales = makeContract({ textLocalization: { ...makeContract().textLocalization, locales: ['en', 'zh-CN', 'ja', 'ru', 'de'] } });
-  assert.match(validateUnityResponsiveContract(invalidLocales).join('\n'), /精确/);
+  const policy = { singleLine: false, wrap: true, truncation: 'forbidden' };
+  const chinese = { programmatic: true, locales: ['zh-CN'], localePolicies: { 'zh-CN': policy } };
+  assert.deepEqual(validateUnityResponsiveContract(makeContract({ textLocalization: chinese })), []);
+  const bilingual = { programmatic: true, locales: ['zh-CN', 'en'], localePolicies: { en: policy, 'zh-CN': policy } };
+  assert.deepEqual(validateUnityResponsiveContract(makeContract({ textLocalization: bilingual })), []);
+  const extra = { ...bilingual, locales: ['fr-CA', ...bilingual.locales], localePolicies: { ...bilingual.localePolicies, 'fr-CA': policy } };
+  assert.deepEqual(validateUnityResponsiveContract(makeContract({ textLocalization: extra })), []);
+  const english = { programmatic: true, locales: ['en'], localePolicies: { en: policy } };
+  assert.deepEqual(validateUnityResponsiveContract(makeContract({ textLocalization: english })), []);
+  assert.match(validateUnityResponsiveContract(makeContract({ textLocalization: { ...bilingual, locales: [] } })).join('\n'), /必须非空/);
+  assert.match(validateUnityResponsiveContract(makeContract({ textLocalization: { ...extra, localePolicies: bilingual.localePolicies } })).join('\n'), /fr-CA/);
+  assert.match(validateUnityResponsiveContract(makeContract({ textLocalization: { ...extra, locales: [...extra.locales, 'FR-ca'] } })).join('\n'), /不重复/);
 });
 
 test('Unity UI 路线不伪造另一套原生资产，sourceScale 覆盖必须有审计引用', () => {

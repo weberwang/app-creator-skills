@@ -5,12 +5,21 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "objectId", "stage", "purpose", "decision", "userMessageRef"],
+  "allOf": [{"if": {"properties": {"stage": {"const": "BASELINE"}}, "required": ["stage"]}, "then": {"required": ["targetRef", "targetSha256"]}}],
   "properties": {
     "schemaVersion": {"const": "1.0"}, "objectId": {"type": "string"}, "candidateId": {"type": "string"},
-    "stage": {"enum": ["BASELINE", "V1", "V2", "V3", "V4"]},
+    "stage": {"enum": ["BASELINE", "V2", "V3", "V4", "V5"]},
     "purpose": {"enum": ["visual-baseline", "target", "decomposition", "layout", "imported-assets", "runtime-acceptance"]},
     "decision": {"enum": ["APPROVED", "REJECTED"]}, "userMessageRef": {"type": "string", "minLength": 1},
+    "workItemId": {"type": "string", "minLength": 1},
+    "targetId": {"type": "string", "minLength": 1},
+    "hostId": {"type": "string", "minLength": 1},
+    "layerType": {"type": "string", "minLength": 1},
+    "runtimeContextRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "targetRef": {"type": "string"},
+    "targetSha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "referenceTarget": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "decompositionReviewRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "qualityChecks": {"type": "array", "minItems": 5, "maxItems": 5, "items": {"type": "object", "additionalProperties": false, "required": ["dimension", "status", "evidenceRef"], "properties": {"dimension": {"enum": ["themeFit", "audienceFit", "taskReadability", "viewingComfort", "artCompletion"]}, "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "evidenceRef": {"type": "string"}}}}
   }
 }

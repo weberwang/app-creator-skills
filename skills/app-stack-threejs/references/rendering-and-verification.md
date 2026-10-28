@@ -4,7 +4,7 @@
 
 根据面数、实例数、灯光、粒子和目标设备校验 `renderer.info`、GPU 纹理预算、阴影绘制、透明排序和目标帧率。基准在加载前、Scene 稳定运行、动画关闭和 Scene 离开后分别采集。World scene 必须通过实际 3D renderer 检查；表格、静态 UI 和局部屏幕元素可单独测。
 
-阶段范围：V3 只核对工程类别和 Profile `evidenceRequirements.assetImport`（`asset-import`），在隔离加载检查中确认实际 GLB/GLTF、纹理、PBR/数据色彩空间及声明的 decoder/transcoder 路径可被加载；不要求建立或运行正式宿主 World Scene。V4 才执行完整 `visual` 证据，包括相机/renderer 世界画面、viewport、交互与退出后的 GPU 资源释放，并把生成的画面交给用户检查。
+阶段范围：V4 核对工程类别和 Profile `evidenceRequirements.assetImport`（`asset-import`），在隔离加载检查中确认实际 GLB/GLTF、纹理、PBR/数据色彩空间及声明的 decoder/transcoder 路径可被加载；不要求完成正式宿主 World Scene 的视觉验收。V5 执行完整 `visual` 证据，包括相机/renderer 世界画面、viewport、交互与退出后的 GPU 资源释放，并把生成的画面交给用户检查。
 
 浏览器/Three scene 捕获生成证据交给用户检查画面，不自动从截图宣称视觉验收通过。Canvas render/build 成功不能证明模型色彩、碰撞、输入映射、缓存所有权、骨骼动画或其释放真实可用。
 

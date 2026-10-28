@@ -59,6 +59,7 @@
     "changeRequestFiles"
   ],
   "properties": {
+    "visualStageModel": {"const": "function-first-v1"},
     "workItemId": {
       "type": "string",
       "minLength": 1
@@ -90,7 +91,8 @@
         "V1",
         "V2",
         "V3",
-        "V4"
+        "V4",
+        "V5"
       ]
     },
     "visualStageState": {
@@ -102,14 +104,14 @@
         "stale",
         "invalid",
         "global-static-baseline-frozen",
-        "v2-production-planning-complete",
-        "v3-formal-acceptance-complete",
-        "v4-runtime-integration-candidate"
+        "v3-production-planning-complete",
+        "v4-formal-acceptance-complete",
+        "v5-runtime-integration-candidate"
       ]
     },
     "globalStaticBaselineState": {
       "const": "global-static-baseline-frozen",
-      "description": "全局静态 visual_baseline 的冻结声明；只有三张候选效果图经过唯一人工选择确认后才能写入。该字段不等同于逐场景 V2。"
+      "description": "全局静态 visual_baseline 的冻结声明；只有三张候选效果图经过唯一人工选择确认后才能写入。该字段不等同于逐场景 V3。"
     },
     "globalVisualBaselineSelectionRef": {
       "$ref": "#/$defs/globalVisualBaselineSelectionReference",
@@ -118,13 +120,13 @@
     "visualStageEvidenceRefs": {
       "type": "object",
       "properties": {
-        "V2": {
-          "$ref": "#/$defs/visualStageEvidenceReference"
-        },
         "V3": {
           "$ref": "#/$defs/visualStageEvidenceReference"
         },
         "V4": {
+          "$ref": "#/$defs/visualStageEvidenceReference"
+        },
+        "V5": {
           "$ref": "#/$defs/visualStageEvidenceReference"
         }
       },
@@ -186,7 +188,7 @@
     },
     "sceneReconstructionContract": {
       "type": "object",
-      "description": "effect-image V1-V4 场景还原合同；缺失时不得把独立资源工件视为完整还原。",
+      "description": "effect-image V2-V5 场景还原合同；缺失时不得把独立资源工件视为完整还原。",
       "required": [
         "contract_version",
         "reference_technical_conflicts",
@@ -269,7 +271,7 @@
     },
     "scene_reconstruction_contract": {
       "type": "object",
-      "description": "effect-image V1-V4 场景还原合同；snake_case 入口同样必须显式提供完整合同。",
+      "description": "effect-image V2-V5 场景还原合同；snake_case 入口同样必须显式提供完整合同。",
       "required": [
         "contract_version",
         "reference_technical_conflicts",
@@ -389,7 +391,7 @@
     },
     "visualConfirmationPrerequisiteFiles": {
       "$ref": "#/$defs/strings",
-      "description": "V2 人工确认文件的工作项前置引用；仅用于复核文件身份，不代表额外授权。"
+      "description": "V3 人工确认文件的工作项前置引用；仅用于复核文件身份，不代表额外授权。"
     },
     "visualConfirmationPrerequisiteFilesSha256": {
       "description": "仅作为可选摘要记录，不参与验收或放行。"
@@ -748,6 +750,11 @@
     }
   },
   "allOf": [
+    {"if": {"required": ["visualStage"]}, "then": {"required": ["visualStageModel"]}},
+    {
+      "if": {"required": ["visualStage"], "properties": {"visualStage": {"enum": ["V0", "V1"]}}},
+      "then": {"required": ["visualStageState"], "not": {"required": ["globalStaticBaselineState"]}, "properties": {"visualStageState": {"enum": ["not-started", "in-progress", "pending", "failed", "stale", "invalid"]}}}
+    },
     {
       "if": {
         "required": [
@@ -755,7 +762,7 @@
         ],
         "properties": {
           "visualStage": {
-            "const": "V4"
+            "const": "V5"
           }
         }
       },
@@ -766,8 +773,8 @@
         "properties": {
           "visualStageEvidenceRefs": {
             "required": [
-              "V2",
-              "V3"
+              "V3",
+              "V4"
             ]
           }
         }
@@ -780,7 +787,7 @@
         ],
         "properties": {
           "visualStageState": {
-            "const": "v4-runtime-integration-candidate"
+            "const": "v5-runtime-integration-candidate"
           }
         }
       },
@@ -791,7 +798,7 @@
         "properties": {
           "visualStageEvidenceRefs": {
             "required": [
-              "V4"
+              "V5"
             ]
           }
         }
@@ -902,8 +909,7 @@
             "properties": {
               "visualStage": {
                 "enum": [
-                  "V0",
-                  "V1"
+                  "V2"
                 ]
               },
               "visualStageState": {
@@ -927,8 +933,7 @@
         "properties": {
           "visualStage": {
             "enum": [
-              "V0",
-              "V1"
+              "V2"
             ]
           }
         }
@@ -959,36 +964,6 @@
         ],
         "properties": {
           "visualStage": {
-            "const": "V2"
-          }
-        }
-      },
-      "then": {
-        "required": [
-          "visualStageState"
-        ],
-        "properties": {
-          "visualStageState": {
-            "enum": [
-              "not-started",
-              "in-progress",
-              "pending",
-              "failed",
-              "stale",
-              "invalid",
-              "v2-production-planning-complete"
-            ]
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "required": [
-          "visualStage"
-        ],
-        "properties": {
-          "visualStage": {
             "const": "V3"
           }
         }
@@ -1006,7 +981,7 @@
               "failed",
               "stale",
               "invalid",
-              "v3-formal-acceptance-complete"
+              "v3-production-planning-complete"
             ]
           }
         }
@@ -1036,7 +1011,37 @@
               "failed",
               "stale",
               "invalid",
-              "v4-runtime-integration-candidate"
+              "v4-formal-acceptance-complete"
+            ]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": [
+          "visualStage"
+        ],
+        "properties": {
+          "visualStage": {
+            "const": "V5"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "visualStageState"
+        ],
+        "properties": {
+          "visualStageState": {
+            "enum": [
+              "not-started",
+              "in-progress",
+              "pending",
+              "failed",
+              "stale",
+              "invalid",
+              "v5-runtime-integration-candidate"
             ]
           }
         }
@@ -1065,7 +1070,8 @@
               "V1",
               "V2",
               "V3",
-              "V4"
+              "V4",
+              "V5"
             ]
           },
           "visualStageState": {
@@ -1086,8 +1092,8 @@
             "properties": {
               "stageId": {
                 "enum": [
-                  "V3",
-                  "V4"
+                  "V4",
+                  "V5"
                 ]
               }
             }
@@ -1099,10 +1105,10 @@
             ],
             "properties": {
               "stageId": {
-                "const": "V2"
+                "const": "V3"
               },
               "visualStageState": {
-                "const": "v2-production-planning-complete"
+                "const": "v3-production-planning-complete"
               }
             }
           }
@@ -1166,7 +1172,7 @@
         ],
         "properties": {
           "stageId": {
-            "const": "V4"
+            "const": "V5"
           }
         }
       },
@@ -1207,9 +1213,9 @@
         "properties": {
           "stageId": {
             "enum": [
-              "V2",
               "V3",
-              "V4"
+              "V4",
+              "V5"
             ]
           }
         }
@@ -1276,7 +1282,7 @@
         ],
         "properties": {
           "stageId": {
-            "const": "V4"
+            "const": "V5"
           }
         }
       },
@@ -3107,7 +3113,7 @@
         },
         "layout_source": {
           "type": "object",
-          "description": "唯一确认的 V2 layout-nodes.json；下游只引用，不复制分组、父子、定位参照或布局策略。",
+          "description": "唯一确认的 V3 layout-nodes.json；下游只引用，不复制分组、父子、定位参照或布局策略。",
           "required": [
             "nodes_file"
           ],
@@ -3146,7 +3152,6 @@
         "layout_annotation_height",
         "layout_annotation_schema",
         "layout_annotation_layout",
-        "layout_review_file",
         "layout_nodes_file",
         "decomposition_confirmation_id",
         "scene_id",
@@ -3255,7 +3260,6 @@
         "layout_annotation_height",
         "layout_annotation_schema",
         "layout_annotation_layout",
-        "layout_review_file",
         "layout_nodes_file",
         "decomposition_confirmation_id",
         "scene_id",

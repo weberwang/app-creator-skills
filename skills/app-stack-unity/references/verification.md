@@ -2,7 +2,7 @@
 
 Unity 版本与证据格式以项目真实 Editor、包和平台为准。逐项核对 Unity 是否编译、导入或域重载完成，记录相关 Console 和实际环境。PlayMode、设备与 Release 构建分别计入任务计划，选择匹配的 EditMode、PlayMode、构建和性能预算检查；无设备证据时不得声称设备运行验证通过。
 
-阶段范围：V3 只核对所需工程类别及 Profile 的 `evidenceRequirements.assetImport`（`asset-import`）：实际导入路径、Importer、GUID/子资源和项目内登记引用。此阶段不要求正式宿主 Scene/Prefab/UI 运行。V4 才检查 Profile 完整 `visual` 要求，读取已集成资产在正式场景中的布局、交互与可见效果；机器导入记录不能代替用户的美术检查。
+阶段范围：V4 核对所需工程类别及 Profile 的 `evidenceRequirements.assetImport`（`asset-import`）：实际导入路径、Importer、GUID/子资源和项目内登记引用。此阶段不要求正式宿主 Scene/Prefab/UI 完整视觉验收。V5 检查 Profile 完整 `visual` 要求，读取已集成资产在正式场景中的布局、交互与可见效果；机器导入记录不能代替用户的美术检查。
 
 只读检查发现 Editor 的实际项目路径和锁定 Editor 版本。所有写入面向唯一项目 Editor；写后读回实际 Unity 对象、导入属性、GUID/引用与错误状态。未验证引擎内操作前不得用存在的资产文件或面板已打开声称编辑器接入通过。
 

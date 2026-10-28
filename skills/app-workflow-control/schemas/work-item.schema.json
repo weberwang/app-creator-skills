@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://app-creator-skills.local/app-workflow-control/work-item.schema.json",
   "title": "统一应用与游戏工作项",
-  "description": "五技术栈共用状态合同；V0-V4 视觉字段按 Work Item 单独绑定。",
+  "description": "五技术栈共用状态合同；V0-V5 视觉字段按 Work Item 单独绑定。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -137,10 +137,10 @@
       "$ref": "#/$defs/refOrNull"
     },
     "globalVisualBaselineRef": {
-      "$ref": "#/$defs/refOrNull"
+      "$ref": "#/$defs/visualReviewRef"
     },
     "assetReviewRef": {
-      "$ref": "#/$defs/refOrNull"
+      "$ref": "#/$defs/visualReviewRef"
     },
     "grillingRef": {
       "$ref": "#/$defs/refOrNull"
@@ -303,6 +303,12 @@
       ],
       "description": "准备候选与实际发布使用不同完成结果，只有RELEASE可设置。"
     },
+    "integrationPurpose": {
+      "enum": ["feature", "final"],
+      "description": "早期功能集成或正式对象组合后的最终回归。"
+    },
+    "integrationEvidenceRef": { "$ref": "#/$defs/visualFileIdentity" },
+    "integrationScopeRef": { "$ref": "#/$defs/visualFileIdentity" },
     "planningRef": {
       "$ref": "#/$defs/refOrNull"
     }
@@ -347,7 +353,7 @@
       "required": [
         "objectId",
         "stage",
-        "reviews"
+        "stageModel"
       ],
       "properties": {
         "objectId": {
@@ -364,8 +370,30 @@
             "V1",
             "V2",
             "V3",
-            "V4"
+            "V4",
+            "V5"
           ]
+        },
+        "stageModel": { "const": "function-first-v1" },
+        "functionBaselineRef": { "$ref": "#/$defs/visualFileIdentity" },
+        "domainEvidenceRef": { "$ref": "#/$defs/visualReviewRef" },
+        "functionDependencies": {
+          "type": "array",
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["workItemRef", "caseId", "evidenceRef"],
+            "properties": {
+              "workItemRef": { "$ref": "#/$defs/refOrNull" },
+              "caseId": { "type": "string", "minLength": 1 },
+              "evidenceRef": { "$ref": "#/$defs/visualFileIdentity" }
+            }
+          }
+        },
+        "coverageRef": { "$ref": "#/$defs/visualFileIdentity" },
+        "integrationEvidenceRef": { "$ref": "#/$defs/visualReviewRef" },
+        "targets": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/visualTarget" }
         },
         "hostId": {
           "type": "string",
@@ -382,20 +410,20 @@
         "reviews": {
           "type": "object",
           "properties": {
-            "V1": {
-              "$ref": "#/$defs/refOrNull"
+            "V2": {
+              "$ref": "#/$defs/visualReviewRef"
             },
-            "V2Decomposition": {
-              "$ref": "#/$defs/refOrNull"
+            "V3Decomposition": {
+              "$ref": "#/$defs/visualReviewRef"
             },
-            "V2Layout": {
-              "$ref": "#/$defs/refOrNull"
-            },
-            "V3": {
-              "$ref": "#/$defs/refOrNull"
+            "V3Layout": {
+              "$ref": "#/$defs/visualReviewRef"
             },
             "V4": {
-              "$ref": "#/$defs/refOrNull"
+              "$ref": "#/$defs/visualReviewRef"
+            },
+            "V5": {
+              "$ref": "#/$defs/visualReviewRef"
             }
           },
           "additionalProperties": false
@@ -440,9 +468,9 @@
               "uniqueItems": true,
               "items": {
                 "enum": [
-                  "V1",
-                  "V2Decomposition",
-                  "V2Layout"
+                  "V2",
+                  "V3Decomposition",
+                  "V3Layout"
                 ]
               }
             }
@@ -450,9 +478,71 @@
         }
       },
       "additionalProperties": false
+    },
+    "visualTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["targetId", "candidateId", "sceneId", "stateId", "viewport", "scope", "referenceTarget", "domainEvidenceRef", "reviews"],
+      "properties": {
+        "targetId": { "type": "string", "minLength": 1 },
+        "candidateId": { "type": "string", "minLength": 1 },
+        "sceneId": { "type": "string", "minLength": 1 },
+        "stateId": { "type": "string", "minLength": 1 },
+        "scope": { "type": "string", "minLength": 1 },
+        "viewport": {
+          "type": "object", "additionalProperties": false, "required": ["width", "height"],
+          "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } }
+        },
+        "referenceTarget": { "$ref": "#/$defs/visualFileIdentity" },
+        "domainEvidenceRef": { "$ref": "#/$defs/refOrNull" },
+        "assetReviewRef": { "$ref": "#/$defs/visualReviewRef" },
+        "reviews": {
+          "type": "object", "additionalProperties": false,
+          "properties": {
+            "V2": { "$ref": "#/$defs/visualReviewRef" },
+            "V3Decomposition": { "$ref": "#/$defs/visualReviewRef" },
+            "V3Layout": { "$ref": "#/$defs/visualReviewRef" },
+            "V4": { "$ref": "#/$defs/visualReviewRef" },
+            "V5": { "$ref": "#/$defs/visualReviewRef" }
+          }
+        }
+      }
+    },
+    "visualReviewRef": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/visualFileIdentity" }] },
+    "visualFileIdentity": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
     }
   },
   "allOf": [
+    {
+      "if": { "properties": { "workItemType": { "const": "PAGE" } }, "required": ["workItemType"] },
+      "then": { "properties": { "stack": { "const": "flutter" } } }
+    },
+    {
+      "if": { "properties": { "workItemType": { "const": "SCENE" } }, "required": ["workItemType"] },
+      "then": { "properties": { "stack": { "enum": ["unity", "cocos", "phaser", "threejs"] } } }
+    },
+    {
+      "if": { "required": ["visual"] },
+      "then": { "properties": { "visualBaselineRequired": { "const": true } } }
+    },
+    {
+      "if": { "properties": { "workItemType": { "const": "INTEGRATION" } }, "required": ["workItemType"] },
+      "then": { "required": ["integrationPurpose"] },
+      "else": { "not": { "anyOf": [{ "required": ["integrationPurpose"] }, { "required": ["integrationEvidenceRef"] }, { "required": ["integrationScopeRef"] }] } }
+    },
+    {
+      "if": { "properties": { "integrationPurpose": { "const": "feature" } }, "required": ["integrationPurpose"] },
+      "then": { "properties": { "stageId": { "const": "foundation-engineering" } }, "not": { "anyOf": [{ "required": ["integrationEvidenceRef"] }, { "required": ["integrationScopeRef"] }] } }
+    },
+    {
+      "if": { "properties": { "integrationPurpose": { "const": "final" } }, "required": ["integrationPurpose"] },
+      "then": { "properties": { "stageId": { "const": "global-integration-validation" } } }
+    },
     {
       "if": {
         "properties": {

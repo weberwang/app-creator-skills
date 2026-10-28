@@ -1,6 +1,6 @@
 # Blender MCP 生产级角色绑定流程
 
-绑定在既有 V0–V4 和当前 Work Item 内完成，不建立额外的角色资产状态、阶段或审批。模型和贴图事实以[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)为准；Unity 侧的模型导入、Avatar、SkinnedMeshRenderer、Prefab 与播放检查以[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)为准。
+绑定在既有 V0–V5 和当前 Work Item 内完成，不建立额外的角色资产状态、阶段或审批。模型和贴图事实以[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)为准；Unity 侧的模型导入、Avatar、SkinnedMeshRenderer、Prefab 与播放检查以[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)为准。
 
 ## 开始条件与能力发现
 
@@ -43,7 +43,7 @@
 - 运行时变形骨、root、必要祖先链和挂点按[Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md#导出职责与统一基准)显式保留；不可只勾“仅变形骨”后假设无权重 root、祖先或道具挂点仍会导出。明确 FBX 对象与骨骼集合，并确认控制骨未污染运行时层级。
 - 导出在派生副本执行，源 `.blend`、外链资源、烘焙结果、配方、实际路径与许可可重开并可追溯。FBX 逐个回读，不凭导出成功即判定通过。
 - 移交动画负责人骨架源版本、root/静置姿势、变形骨命名/局部轴、控制与约束烘焙关系、动作相关校正、面部通道、LOD 对应、挂点和已知限制。骨架结构变更通知动画负责人并重验已绑定/已动画资源。
-- 交 Unity 角色导入流程处理 Avatar/Generic 或 Humanoid 识别、SkinnedMeshRenderer、权重限制、Prefab 与导入播放核验。绑定自检、专业审查和 Unity 技术结果均不代替用户显示确认；V3 交付资源级 Prefab，正式场景和 gameplay 验收留在 V4。
+- 交 Unity 角色导入流程处理 Avatar/Generic 或 Humanoid 识别、SkinnedMeshRenderer、权重限制、Prefab 与导入播放核验。绑定自检、专业审查和 Unity 技术结果均不代替用户显示确认；V4 交付资源级 Prefab，正式场景和 gameplay 验收留在 V5。
 - 3D 角色不套用 2D 专用 `riggingDelivery` 或 `uwt_validate_2d_rigging`；沿用现有 Work Item、Evidence 和适用的项目 3D 验证能力，不新建状态或 Schema。
 
 交付缺少版本、源依赖、权重报告、压力姿势证据、LOD 对应或 FBX 回读之一时，明确列为 `BLOCKED`/待验，不能宣称生产 Rig 就绪。

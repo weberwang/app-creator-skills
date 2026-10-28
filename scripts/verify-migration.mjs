@@ -5,9 +5,11 @@ import { closeSync, existsSync, lstatSync, openSync, readFileSync, readSync, rea
 import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { validateSharedCapabilities } from './validate-shared-capabilities.mjs';
+import { isDirectSharedDestination, isUnifiedSharedDestination, validateSharedCapabilities } from './validate-shared-capabilities.mjs';
 import { CAPABILITY_GROUPS, capabilityAdapters, capabilityForSourceSkill, nativeContractPath } from './capability-map.mjs';
 import { validateNativeManuals } from './validate-native-manuals.mjs';
+import { authoredAssetReuseSpec, validateAuthoredAssetReuse } from './migration/authored-asset-reuse.mjs';
+import { isReferenceRedirect, referenceRedirectSpec } from './migration/reference-redirects.mjs';
 
 /** 正式入口数不包含 Flutter 项目初始化技能内嵌的 flutter-dev 模板。 */
 export const FORMAL_SKILL_COUNTS = Object.freeze({ unity: 19, cocos: 19, phaser: 18, threejs: 21, flutter: 14 });
@@ -26,6 +28,8 @@ const FLUTTER_NESTED_TEMPLATE = 'flutter-project-init/assets/flutter-dev/SKILL.m
 const HASH_PATTERN = /^[a-f\d]{64}$/i;
 const SOURCE_ONLY_REASONS = new Set(['migrated', 'kept', 'merged', 'same as above', 'see above', '迁移', '保留', '合并', '同上', '见上文', '已处理']);
 const SHARED_RUNTIME_MODULES = new Set([
+  // 仓库自有的公共 UI 校验实现随布局技能安装，不伪造为某个源仓库的文件。
+  'skills/app-ui-layout/scripts/relative-layout-policy.cjs',
   'skills/app-skill-runtime/dependencies.cjs',
   'skills/app-skill-runtime/sharp.mjs',
   'skills/app-skill-runtime/yaml.mjs',
@@ -44,6 +48,14 @@ const SHARED_RUNTIME_MODULES = new Set([
   'skills/app-workflow-control/scripts/runtime/records.mjs',
   'skills/app-workflow-control/scripts/runtime/visual-reuse.mjs',
   'skills/app-workflow-control/scripts/runtime/visual-reuse-binding.mjs',
+  'skills/app-workflow-control/scripts/runtime/multi-visual-contract.mjs',
+  'skills/app-workflow-control/scripts/runtime/domain-target-check.mjs',
+  'skills/app-workflow-control/scripts/runtime/feature-dependencies.mjs',
+  'skills/app-workflow-control/scripts/runtime/function-evidence.mjs',
+  'skills/app-workflow-control/scripts/runtime/final-integration.mjs',
+  'skills/app-workflow-control/scripts/runtime/single-domain-check.mjs',
+  'skills/app-workflow-control/scripts/runtime/visual-confirmation-domain.mjs',
+  'skills/app-workflow-control/scripts/runtime/visual-baseline-identity.mjs',
   'skills/app-asset-workflow/scripts/png-raster.mjs',
   'skills/app-asset-workflow/scripts/remove-background-local.mjs',
 ]);
@@ -416,6 +428,32 @@ function validateProfessionalReferences(root, professionalDestinations, destinat
   }
 }
 
+/** 重复目标只有在全部来源和公共能力匹配实际字节时才可视作直接共享。 */
+function hasDirectSharedDestination(root, catalog, destination, rows) {
+  if (!rows?.length) return false;
+  const target = resolve(root, ...destination.split('/'));
+  if (!existsSync(target) || !lstatSync(target).isFile()) return false;
+  return isDirectSharedDestination({ catalog, destination, rows, actualSha256: sha256(target) });
+}
+
+/** 仅允许固定来源、目标摘要和逐段来源登记均匹配的导航与生成目标重合。 */
+export function isReferenceRedirectDestination({ catalog, destination, rows, actualSha256 }) {
+  if (!Array.isArray(rows) || !rows.length || !HASH_PATTERN.test(actualSha256 ?? '')) return false;
+  const matches = (catalog.sharedCapabilities ?? []).filter((item) => item.kind === 'workflow' && item.implementation === destination);
+  if (matches.length !== 1 || !Array.isArray(matches[0].sources)) return false;
+  const identities = new Set();
+  for (const row of rows) {
+    const spec = referenceRedirectSpec(row.stack, row.sourcePath);
+    const identity = `${row.stack}:${row.sourcePath}`;
+    const sources = matches[0].sources.filter((source) => source.stack === row.stack && source.sourcePath === row.sourcePath);
+    if (identities.has(identity) || !isReferenceRedirect(row, destination) || spec?.id !== matches[0].id
+      || row.destinationSha256 !== actualSha256 || sources.length !== 1 || sources[0].sourceSha256 !== row.sourceSha256
+      || sources[0].adapterDestination !== destination || !Array.isArray(sources[0].sections) || !sources[0].sections.length) return false;
+    identities.add(identity);
+  }
+  return true;
+}
+
 /** 校验迁移器额外生成的依赖文件，允许闭包验证准确识别非源文件。 */
 function validateGeneratedFiles(root, catalog, destinationRows, errors) {
   const generatedDestinations = new Set();
@@ -433,11 +471,13 @@ function validateGeneratedFiles(root, catalog, destinationRows, errors) {
     const key = destination.toLowerCase();
     if (generatedDestinations.has(key)) errors.push(`catalog.generatedFiles 路径重复：${destination}`);
     const consolidatedNativePath = STACKS.some((stack) => nativeContractPath(stack).toLowerCase() === key);
-    if (destinationRows.has(key) && !consolidatedNativePath) errors.push(`生成文件与源文件迁移目标冲突：${destination}`);
+    const target = resolveInside(root, destination, 'catalog.generatedFiles.path', errors);
+    const targetHash = target && existsSync(target) && lstatSync(target).isFile() ? sha256(target) : null;
+    if (destinationRows.has(key) && !consolidatedNativePath && !hasDirectSharedDestination(root, catalog, destination, destinationRows.get(key)) && !isUnifiedSharedDestination({ root, catalog, destination, rows: destinationRows.get(key), actualSha256: targetHash })
+      && !isReferenceRedirectDestination({ catalog, destination, rows: destinationRows.get(key), actualSha256: targetHash })) errors.push(`生成文件与源文件迁移目标冲突：${destination}`);
     generatedDestinations.add(key);
     if (typeof entry.reason !== 'string' || entry.reason.trim().length < 8) errors.push(`生成文件必须提供具体用途：${destination}`);
     if (!HASH_PATTERN.test(entry.destinationSha256 ?? '')) errors.push(`生成文件缺少有效 destinationSha256：${destination}`);
-    const target = resolveInside(root, destination, 'catalog.generatedFiles.path', errors);
     if (!target || !existsSync(target) || !lstatSync(target).isFile()) errors.push(`生成文件不存在：${destination}`);
     else if (HASH_PATTERN.test(entry.destinationSha256 ?? '') && sha256(target).toLowerCase() !== entry.destinationSha256.toLowerCase()) errors.push(`生成文件摘要与实际文件不符：${destination}`);
   }
@@ -619,6 +659,13 @@ export function validateMigration({ root = resolve(dirname(fileURLToPath(import.
     if (['merged', 'test-replaced'].includes(disposition) && (!Array.isArray(row.transforms) || row.transforms.length === 0)) errors.push(`${stack}/${sourcePath} ${disposition} 必须记录具体整合或替代说明`);
     if (row.sourceIssues !== undefined && (!Array.isArray(row.sourceIssues) || row.sourceIssues.some((issue) => !issue || !['module', 'json-ref'].includes(issue.kind) || typeof issue.reference !== 'string' || typeof issue.target !== 'string' || typeof issue.reason !== 'string'))) errors.push(`${stack}/${sourcePath} sourceIssues 必须逐项提供 kind、原 reference、源 target 和 reason`);
     if (!HASH_PATTERN.test(row.sourceSha256 ?? '')) errors.push(`${stack}/${sourcePath} 缺少有效 sourceSha256`);
+    if (authoredAssetReuseSpec(stack, sourcePath)) {
+      try {
+        const sourceFile = sourceRoots.has(stack) ? resolve(sourceRoots.get(stack), ...sourcePath.split('/')) : null;
+        if (sourceFile && !existsSync(sourceFile)) throw new Error('公共图片工具来源文件缺失');
+        validateAuthoredAssetReuse({ root, entry: row, ...(sourceFile ? { sourceBuffer: readFileSync(sourceFile) } : {}) });
+      } catch (error) { errors.push(`${stack}/${sourcePath} 公共图片工具来源复用校验失败：${error.message}`); }
+    }
     const destination = row.destination === null ? null : safeRelative(row.destination, `${stack}/${sourcePath}.destination`, errors);
     const capabilityRef = row.capabilityRef === undefined ? null : safeRelative(row.capabilityRef, `${stack}/${sourcePath}.capabilityRef`, errors);
     if (capabilityRef) {
@@ -656,7 +703,7 @@ export function validateMigration({ root = resolve(dirname(fileURLToPath(import.
       }
       const resourceName = /^skills\/([^/]+)\//.exec(destination)?.[1];
       if (resourceName && records[stack]?.resourceDirectories?.includes(resourceName)) {
-        if (!['copied', 'adapted'].includes(disposition)) errors.push(`${stack}/${sourcePath} 原生资源文件必须逐项复制或适配：${destination}`);
+        if (!['copied', 'adapted'].includes(disposition) && !isReferenceRedirect(row)) errors.push(`${stack}/${sourcePath} 原生资源文件必须逐项复制或适配：${destination}`);
         professionalDestinations.add(destination);
       }
       if (pathIsOldWorkflowCli(sourcePath, stack, records) && !destination.startsWith('skills/app-workflow-control/')) {
@@ -687,7 +734,8 @@ export function validateMigration({ root = resolve(dirname(fileURLToPath(import.
   for (const [destination, rows] of destinationRows) {
     const dispositions = new Set(rows.map((row) => row.disposition));
     const isNativeManual = [...nativeManuals.manuals.values()].some((manual) => manual.path.toLowerCase() === destination.toLowerCase());
-    if (rows.length > 1 && !isNativeManual && (dispositions.size !== 1 || !['merged', 'test-replaced'].includes([...dispositions][0]))) errors.push(`多个源文件覆盖同一目标且未全部声明为同类整合/测试替代：${destination}`);
+    const isDirectShared = hasDirectSharedDestination(root, catalog, rows[0]?.destination, rows) || isUnifiedSharedDestination({ root, catalog, destination: rows[0]?.destination, rows, actualSha256: rows[0]?.destinationSha256 });
+    if (rows.length > 1 && !isNativeManual && !isDirectShared && (dispositions.size !== 1 || !['merged', 'test-replaced'].includes([...dispositions][0]))) errors.push(`多个源文件覆盖同一目标且未全部声明为同类整合/测试替代：${destination}`);
     if (rows.length > 1 && !isNativeManual && rows.some((row) => !row.reason || SOURCE_ONLY_REASONS.has(row.reason.trim().toLowerCase()))) errors.push(`多个源文件合并到同一目标时必须逐项说明合并理由：${destination}`);
   }
 

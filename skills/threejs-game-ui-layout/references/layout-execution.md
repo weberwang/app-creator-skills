@@ -1,6 +1,6 @@
 # 布局执行计划
 
-V4 在实例化 DOM/HUD 布局前，必须从已确认的业务节点和 `ui_layout` 推导每个属性的唯一控制者。`layout_execution` 是可重复计算的派生结果，不是第二份可手工编辑的布局合同；不得从 PNG、演示 JSON 或目标 bounds 推断运行计划。
+V5 在实例化 DOM/HUD 布局前，必须从已确认的业务节点和 `ui_layout` 推导每个属性的唯一控制者。`layout_execution` 是可重复计算的派生结果，不是第二份可手工编辑的布局合同；不得从 PNG、演示 JSON 或目标 bounds 推断运行计划。
 
 ## 驱动声明
 

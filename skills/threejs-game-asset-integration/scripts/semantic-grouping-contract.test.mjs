@@ -161,7 +161,7 @@ test("组件/placement 源显式声明进入 proposal 元素，缺失声明不�
 });
 
 
-/** 在 V2 拆解阶段拒绝视觉背景承担布局职责，避免冻结后才发现错误父级。 */
+/** 在 V3 拆解阶段拒绝视觉背景承担布局职责，避免冻结后才发现错误父级。 */
 test("拆解阶段拒绝以背景作父级与将背景放入功能容器", () => {
   const wrongParent = validElements();
   wrongParent[1].role = "background";
@@ -176,7 +176,7 @@ test("拆解阶段拒绝以背景作父级与将背景放入功能容器", () =>
   assert(layerErrors.some((message) => message.includes("不得相对背景")));
 });
 
-/** 无论背景身份来自元素还是正式区域，V2 都拒绝冻结背景容器和空容器。 */
+/** 无论背景身份来自元素还是正式区域，V3 都拒绝冻结背景容器和空容器。 */
 test("拆解阶段拒绝背景容器及空容器", () => {
   for (const empty of [false, true]) {
     for (const source of ["role", "region"]) {

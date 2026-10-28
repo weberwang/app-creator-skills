@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { auditSkeleton } from "./spine_skeleton.mjs";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { isMatchingCreatorSpineRuntimeEvidence } from "./spine_runtime.mjs";
 
 /** 判断路径是否位于指定目录内，防止升级日志通过相对路径逃出候选目录。 */

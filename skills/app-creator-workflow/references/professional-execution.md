@@ -15,7 +15,7 @@
 
 公共状态和转移以 [控制面](../../app-workflow-control/SKILL.md) 与 [六阶段及对象流程](workflow.md) 为准。六阶段为需求与范围、全局基线、基础工程、场景/页面/显示层生产、全局集成验证、发布；全局状态只能通过控制器支持的显式迁移。`run` 只自动推进满足门禁的安全早期阶段，在生产实现、发布和人工决定边界停止。
 
-可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V4 是对象视觉进度，不是第二套全局状态。V2 拆解与布局需要分别确认，V3 是正式素材和技术导入，V4 是正式组合和运行验收。阶段确认按 [Human Review Schema](../../app-workflow-control/schemas/human-review.schema.json) 记录对象、阶段/用途、决定、真实用户消息引用及适用质量项；技术通过不代替用户对显示结果的人工确认。
+可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V5 是对象进度，不是第二套全局状态。V1 验证功能，白盒按需使用；V2 确认视觉目标，V3 拆解与布局需要分别确认，V4 是正式素材和技术导入，V5 是正式组合和运行验收。阶段确认按 [Human Review Schema](../../app-workflow-control/schemas/human-review.schema.json) 记录对象、阶段/用途、决定、真实用户消息引用及适用质量项；技术通过不代替用户对显示结果的人工确认。
 
 只在需要用户对产品目标、行为、预算、视觉方向或其他实质取舍作决定时使用 [Grilling Record](../../app-workflow-control/schemas/grilling-record.schema.json)，并通过 Work Item 的 `grillingRef` 绑定。OPEN 的问题阻止其影响范围；回答、决定和 `userMessageRef` 必须来自实际用户消息。没有待决取舍时不要制造拷问或审批记录。
 
@@ -32,7 +32,7 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs status --r
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs check --repo <项目路径> --work-item <项目相对 JSON 路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs run --repo <项目路径> --work-item <项目相对 JSON 路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs transition --repo <项目路径> --work-item <项目相对 JSON 路径> --to <状态>
-node .agents/skills/app-workflow-control/scripts/workflow-control.mjs visual-stage --repo <项目路径> --work-item <项目相对 JSON 路径> --to <V1|V2|V3|V4>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs visual-stage --repo <项目路径> --work-item <项目相对 JSON 路径> --to <V1|V2|V3|V4|V5>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo <项目路径> --work-item <项目相对 JSON 路径> --result <项目相对结果 JSON 路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --repo <项目路径>
 ```
@@ -41,7 +41,7 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 
 `init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 从成功命令与非空原始输出生成单元结果并合并真实证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
 
-视觉增量在新工作项 V0、尚未冻结计划前用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V1/V2 确认；其原始用户消息和文件不改写。V3导入、V4实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
+视觉增量先完成当前 V1 功能验证，再在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
 
 全局工程门 F0–F4 分别记录范围、目标与有效决定、领域质量、真实工程结果和受保护动作的精确授权事实。A0–A6 在产品流程中描述动作风险等级，不会因为等级本身产生新的 CLI 命令或审批阶段。普通任务范围内的本地工作依据当前用户请求和 Work Item 执行；`action.approval` 只绑定真实用户明确批准的具体副作用动作及对象。控制器只记录/校验状态，不执行真机、外部写入、签名、上传、付费、破坏性操作或发布。
 

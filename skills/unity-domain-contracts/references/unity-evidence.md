@@ -22,19 +22,19 @@ Manifest 同时记录 `workItemType`、`visualStage`、`contractVersions`、`res
 
 `unit-check --result <json>` 只校验当前 `IMPLEMENTING` 单元的结果、绑定、`PASS`、证据路径和顺序，不执行其中的命令。所有单元结束后进入 `VALIDATING` 时，重新检查当前 `execution-state.units` 中全部单元的有效完成结果；Implementation Package 的 `unit.status` 是冻结计划快照，不改写，也不能替代执行结果。场景资源、布局合同及其他业务引用继续按自身 schema 校验，不要求迁入执行证据目录。
 
-V1–V4 阶段切换或 `RETURN` 时，旧执行状态须归档；下一阶段实施重新创建执行状态。全局视觉基线选择通过 `Work.globalVisualBaselineSelectionRef.path` 单独引用[视觉基线合同](../../unity-development-workflow/references/visual-workflow.md#全局视觉基线)，不要把业务引用误当作单元结果文件。
+V1–V5 阶段切换或 `RETURN` 时，旧执行状态须归档；下一阶段实施重新创建执行状态。全局视觉基线选择通过 `Work.globalVisualBaselineSelectionRef.path` 单独引用[视觉基线合同](../../unity-development-workflow/references/visual-workflow.md#全局视觉基线)，不要把业务引用误当作单元结果文件。
 
-## 可见 V4 响应式证据
+## 可见 V5 响应式证据
 
-可见 Work Item 的 V3 PASS 证明当前资源生产与导入验收；V4 PASS 还须满足 `visualStage=V4` 和全部响应式运行事实的真实测量，才能证明正式组合与运行交付。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，双方向或自动方向必须另含 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
+可见 Work Item 的 V4 PASS 证明当前资源生产与导入验收；V5 PASS 还须满足 `visualStage=V5` 和全部响应式运行事实的真实测量，才能证明正式组合与运行交付。`responsiveEvidence` 必须记录 Game View、Screen 和 backbuffer 的测量工件，实测 CanvasScaler 或 PanelSettings 之一、Camera、`Screen.safeArea`、InputSystem/EventSystem 命中结果、同一进程内的连续 resize 轨迹和截图。`supportedOrientations` 记录实际支持方向，并核对用户要求：横屏无需验证竖屏，竖屏无需验证横屏；单方向轨迹可仅含 resize，双方向或自动方向必须另含 orientation 切换事件。控制器限制工件路径在仓库内并检查实际文件存在，不要求或校验 SHA。`productionContractAudit` 记录实际完成情况满足验收要求，明确 `status=PASS`、`staticDeclarationOnly=false`、`buildOnly=false`、`singleScreenshotOnly=false`；合同版本仅作为来源记录。
 
 静态合同声明、构建成功、单张截图或单次启动尺寸都不能替代上述证据。运行时缩放以平台、Canvas、Panel 和 Camera 实测为准；Unity 图片源 `sourceScale=1` 只表示生产基线，不是运行时 DPR。
 
-## 可见 V4 美术与动态体验
+## 可见 V5 美术与动态体验
 
-V4 `PASS` 还必须提供 `candidateId`、`candidateVersion` 与项目内 JSON 路径 `artExperienceAcceptanceRef`。材料遵循[美术验收合同](../../unity-development-workflow/references/art-quality-contract.md)，绑定工作项、场景或独立显示层、项目美术 brief、五项人工质量结果及四个动态情境。五项均通过；适用情境必须有非空真实录屏、有效片段范围、实测次数/并发、视口与人工观察。不适用情境逐一说明理由，不伪造实测。
+V5 `PASS` 还必须提供 `candidateId`、`candidateVersion` 与项目内 JSON 路径 `artExperienceAcceptanceRef`。材料遵循[美术验收合同](../../unity-development-workflow/references/art-quality-contract.md)，绑定工作项、场景或独立显示层、项目美术 brief、五项人工质量结果及四个动态情境。五项均通过；适用情境必须有非空真实录屏、有效片段范围、实测次数/并发、视口与人工观察。不适用情境逐一说明理由，不伪造实测。
 
-机器检查文件边界、结构、身份和结果记录，不能证明用户已实际观看或评价画面；编排者须依据真实用户回复填写确认。既有 V4 确认可同时覆盖这些材料，不新增审批。截图采集 `PASS`、几何容差 `PASS` 和美术人工通过分别记录，缺失、失败或未验证时阻断当前完成结论。直接状态迁移也会重新读取证据，不能以静态门状态绕过。
+机器检查文件边界、结构、身份和结果记录，不能证明用户已实际观看或评价画面；编排者须依据真实用户回复填写确认。既有 V5 确认可同时覆盖这些材料，不新增审批。截图采集 `PASS`、几何容差 `PASS` 和美术人工通过分别记录，缺失、失败或未验证时阻断当前完成结论。直接状态迁移也会重新读取证据，不能以静态门状态绕过。
 
 ## 设备与发布
 

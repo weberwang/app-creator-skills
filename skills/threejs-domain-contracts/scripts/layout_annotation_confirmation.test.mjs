@@ -119,3 +119,28 @@ test("真实布局工件同批更新后仍拒绝不继承 proposal 的语义理�
   Object.assign(value.record, { decision_record_sha256: decisionRecordSha, user_decision_receipt_sha256: receiptSha }); value.record.confirmation_sha256 = computeLayoutAnnotationConfirmationSha256(value.record);
   const errors = []; validateLayoutAnnotationConfirmation(value.record, value.context, errors); assert(errors.some((message) => message.includes("未逐项继承 proposal") && message.includes("semantic_grouping")), errors.join("；"));
 });
+
+test("PNG 模式不依赖网页，但仍重算节点并绑定人工决定", async () => {
+  const value = await fileBackedConfirmation();
+  for (const field of ["layout_review_file", "layout_review_sha256", "layout_review_identity_sha256"]) delete value.record[field];
+  for (const name of [value.decisionFile, value.receiptFile]) {
+    const path = join(value.projectRoot, name);
+    const document = JSON.parse(await readFile(path, "utf8"));
+    for (const field of ["layout_review_file", "layout_review_sha256", "layout_review_identity_sha256"]) delete document[field];
+    await writeFile(path, JSON.stringify(document));
+  }
+  const errors = []; validateLayoutAnnotationConfirmation(value.record, value.context, errors); assert.deepEqual(errors, []);
+  const path = join(value.projectRoot, value.record.layout_nodes_file);
+  const nodes = JSON.parse(await readFile(path, "utf8")); nodes.layout_nodes[0].target_bounds.x += 10;
+  await writeFile(path, JSON.stringify(nodes));
+  const tampered = []; validateLayoutAnnotationConfirmation(value.record, value.context, tampered);
+  assert(tampered.some((error) => error.includes("重算") || error.includes("不一致")), tampered.join("；"));
+});
+test("可选网页拒绝空路径、半声明与决议绑定不一致", async () => {
+  const empty = []; validateLayoutAnnotationConfirmation(confirmation({ layout_review_file: "" }), context, empty); assert(empty.some((error) => error.includes("layout_review_file")));
+  const partial = confirmation(); delete partial.layout_review_file;
+  const partialErrors = []; validateLayoutAnnotationConfirmation(partial, context, partialErrors); assert(partialErrors.some((error) => error.includes("网页身份")));
+  const value = await fileBackedConfirmation();
+  const path = join(value.projectRoot, value.receiptFile); const receipt = JSON.parse(await readFile(path, "utf8")); delete receipt.layout_review_file; await writeFile(path, JSON.stringify(receipt));
+  const mismatch = []; validateLayoutAnnotationConfirmation(value.record, value.context, mismatch); assert(mismatch.some((error) => error.includes("layout_review_file")));
+});

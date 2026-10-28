@@ -14,6 +14,8 @@ Unity 6 与 URP 是此规范的默认起点；尊重项目已安装版本和配�
 
 插件执行按任务路由给可用的 Unity CLI、Unity MCP 与框架专项能力；先确认目标工程、活动 Editor 和实时可用命令。规范中列出的插件/工具能力不能视为当前已经连接或已经验证。
 
+各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。
+
 技术事实以 Profile 和 references 为准。实现调整不要求回改已确认的合同或追算哈希；工程证据证明实际运行状态，美术显示效果由用户人工检查确认。
 
 来源：`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-architecture`、`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-visual-assets`、`unity-development-workflow/references/project-discovery.md`、`unity-development-workflow/references/project-structure.md`、`unity-development-workflow/references/resource-loading-and-frame-handoff.md`、`unity-development-workflow/references/3d-asset-workflow.md`、`unity-development-workflow/references/sdk-initialization.md`。

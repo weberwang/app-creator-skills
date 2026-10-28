@@ -60,63 +60,63 @@ test("Hook 安全区开关不冒充测量，附带几何时仍严格检查", () 
   assert.match(errors.join("\n"), /冻结根无效/);
 });
 
-test("正式 V2 入口检查计划与严格中心，V3 保留资源阶段职责", () => {
+test("正式 V3 入口检查计划与严格中心，V4 保留资源阶段职责", () => {
   const contract = effectImageContract();
   delete contract.layout_decomposition.layout_nodes[0].layout_execution;
   const manifest = effectImageManifest(contract);
-  assert.match(validateSceneReconstructionContract(contract, manifest, { stage: "V2" }).join("\n"), /layout_execution/);
-  assert(!validateSceneReconstructionContract(contract, manifest, { stage: "V3" }).some((error) => error.includes("layout_execution")));
+  assert.match(validateSceneReconstructionContract(contract, manifest, { stage: "V3" }).join("\n"), /layout_execution/);
+  assert(!validateSceneReconstructionContract(contract, manifest, { stage: "V4" }).some((error) => error.includes("layout_execution")));
   const centered = effectImageContract();
   const node = centered.layout_decomposition.layout_nodes[1];
   node.axis_alignment.horizontal = "center";
   node.center_alignment = { horizontal: { mode: "strict" } };
   node.target_bounds.x += 1;
-  assert.match(validateSceneReconstructionContract(centered, effectImageManifest(centered), { stage: "V2" }).join("\n"), /必须严格居中/);
+  assert.match(validateSceneReconstructionContract(centered, effectImageManifest(centered), { stage: "V3" }).join("\n"), /必须严格居中/);
 });
 
-test("正式 V4 usability 入口不能以手写 passed 绕过采集与完整快照", () => {
+test("正式 V5 usability 入口不能以手写 passed 绕过采集与完整快照", () => {
   const contract = effectImageContract(); contract.visual_validation = { mode: "usability" };
   const manifest = effectImageManifest(contract); manifest.visual_validation = { mode: "usability" };
-  assert.deepEqual(validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest }), []);
+  assert.deepEqual(validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest }), []);
   const missing = structuredClone(contract); delete missing.combination_preacceptance.layout_geometry.runtime_capture;
-  assert.match(validateSceneCombinationPreacceptance(missing, "V4", { effectImage: true, manifest }).join("\n"), /runtime_capture/);
+  assert.match(validateSceneCombinationPreacceptance(missing, "V5", { effectImage: true, manifest }).join("\n"), /runtime_capture/);
   const incomplete = structuredClone(contract); incomplete.combination_preacceptance.layout_geometry.component_snapshots.pop();
-  assert.match(validateSceneCombinationPreacceptance(incomplete, "V4", { effectImage: true, manifest }).join("\n"), /缺少业务布局节点快照/);
+  assert.match(validateSceneCombinationPreacceptance(incomplete, "V5", { effectImage: true, manifest }).join("\n"), /缺少业务布局节点快照/);
 });
 
-test("正式 V4 两种模式均拒绝隐藏对象冒充可见目标", () => {
+test("正式 V5 两种模式均拒绝隐藏对象冒充可见目标", () => {
   for (const mode of ["usability", "exact"]) {
     const contract = effectImageContract(); contract.visual_validation = { mode };
     const manifest = effectImageManifest(contract); manifest.visual_validation = { mode };
     for (const snapshot of contract.combination_preacceptance.layout_geometry.component_snapshots) {
       snapshot.visible = false; snapshot.effective_visible = false;
     }
-    assert.match(validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest }).join("\n"), /冻结布局节点必须实际可见/, mode);
+    assert.match(validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest }).join("\n"), /冻结布局节点必须实际可见/, mode);
   }
 });
 
-test("正式 V4 不能用有缺陷的尺寸记录绕过运行快照校验", () => {
+test("正式 V5 不能用有缺陷的尺寸记录绕过运行快照校验", () => {
   for (const mode of ["usability", "exact"]) {
     const contract = effectImageContract(); contract.visual_validation = { mode };
     const manifest = effectImageManifest(contract); manifest.visual_validation = { mode };
     const snapshot = contract.combination_preacceptance.layout_geometry.component_snapshots[0];
     Object.assign(snapshot.dimensions, { width: -100, height: -200, display_width: 0, scale_x: 999 });
     snapshot.is_container = false; delete snapshot.container_layout_bounds; delete snapshot.container_layout_bounds_space;
-    assert.match(validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest }).join("\n"), /基础尺寸必须|display 尺寸|scale_x/, mode);
+    assert.match(validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest }).join("\n"), /基础尺寸必须|display 尺寸|scale_x/, mode);
   }
 });
 
-test("正式 V4 透传当前批次和候选，测量别名也必须与同批对象一致", () => {
+test("正式 V5 透传当前批次和候选，测量别名也必须与同批对象一致", () => {
   const contract = effectImageContract();
   const manifest = { ...effectImageManifest(contract), candidateVersion: "current-candidate", batchId: "current-batch" };
-  const stale = validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest });
+  const stale = validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest });
   assert.match(stale.join("\n"), /candidate_id.*不一致/);
   assert.match(stale.join("\n"), /batch_id.*不一致/);
   const geometry = contract.combination_preacceptance.layout_geometry;
   geometry.nodeMeasurements = geometry.node_measurements; delete geometry.node_measurements;
   geometry.nodeMeasurements[0].actualBounds = { ...geometry.nodeMeasurements[0].actual_bounds, y: 2 };
   delete geometry.nodeMeasurements[0].actual_bounds;
-  assert.match(validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest: effectImageManifest(contract) }).join("\n"), /actual_bounds 与同批 component_snapshot 不一致/);
+  assert.match(validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest: effectImageManifest(contract) }).join("\n"), /actual_bounds 与同批 component_snapshot 不一致/);
 });
 
 test("外层场景入口继续透传采集 ID、候选批次和真实根绑定", () => {
@@ -127,7 +127,7 @@ test("外层场景入口继续透传采集 ID、候选批次和真实根绑定",
     { capture_id: "other-capture" }, { candidate_id: "other-candidate" }, { batch_id: "other-batch" },
     { root_bindings: { ...capture.root_bindings, viewport: { ...capture.root_bindings.viewport, binding_id: "other-root" } } },
   ]) {
-    const errors = validateSceneReconstructionContract(contract, manifest, { stage: "V4", ...options });
+    const errors = validateSceneReconstructionContract(contract, manifest, { stage: "V5", ...options });
     assert(errors.some((error) => /不一致/.test(error)), JSON.stringify({ options, errors }));
   }
 });
@@ -141,10 +141,10 @@ test("冻结目标各层安全区声明不能在最终布局或运行入口丢�
   ]) {
     const contract = effectImageContract(); Object.assign(contract.target_conditions, declaration);
     const manifest = effectImageManifest(contract);
-    const errors = validateSceneCombinationPreacceptance(contract, "V4", { effectImage: true, manifest });
+    const errors = validateSceneCombinationPreacceptance(contract, "V5", { effectImage: true, manifest });
     assert.match(errors.join("\n"), /根边界不一致|冻结根无效/, JSON.stringify(declaration));
     contract.layout_decomposition.root_bounds = { "safe-area": { x: 0, y: 0, width: 390, height: 844 } };
-    assert.match(validateSceneReconstructionContract(contract, manifest, { stage: "V2" }).join("\n"), /冻结根无效|bounds 不一致/);
+    assert.match(validateSceneReconstructionContract(contract, manifest, { stage: "V3" }).join("\n"), /冻结根无效|bounds 不一致/);
   }
 });
 

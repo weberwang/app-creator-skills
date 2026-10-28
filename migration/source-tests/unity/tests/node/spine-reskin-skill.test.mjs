@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import test from "node:test";
 import { extractNativeSection } from "../../../../../scripts/capability-map.mjs";
@@ -17,14 +17,14 @@ function frontmatterKeys(text) {
 
 test("Spine 换皮 Skill 结构精简且元数据完整", () => {
   assert.ok(SKILL_TEXT.includes('id="mode-unity-game-spine-reskin"'));
-  assert.deepEqual(readdirSync(SKILL_ROOT).sort(), ["agents"]);
-  assert.equal(readdirSync(SKILL_ROOT, { recursive: true }).filter((path) => String(path).endsWith(".py")).length, 0);
+  assert.equal(existsSync(SKILL_ROOT), false);
+  assert.ok(existsSync(resolve(ROOT, "skills/app-spine-reskin/SKILL.md")));
 
-  const openai = readFileSync(resolve(SKILL_ROOT, "agents/openai.yaml"), "utf8");
+  const openai = readFileSync(resolve(ROOT, "skills/app-spine-reskin/agents/openai.yaml"), "utf8");
   for (const key of ["display_name", "short_description", "default_prompt"]) {
     assert.match(openai, new RegExp(`^  ${key}: "[^"]+"$`, "m"));
   }
-  assert.match(openai, /default_prompt: "使用 \$app-spine-reskin /);
+  assert.match(openai, /default_prompt: "使用 [$]app-spine-reskin[， ]/);
 });
 
 test("换皮边界冻结 Spine 结构、动画与玩法挂点", () => {
@@ -40,19 +40,19 @@ test("换皮边界冻结 Spine 结构、动画与玩法挂点", () => {
   assert.match(SKILL_TEXT, /必须改变任一冻结项[\s\S]*`BLOCKED`/);
 });
 
-test("换皮嵌入 V0-V4 且不复用旧视觉动作阶段", () => {
-  for (const stage of ["V0", "V1", "V2", "V3", "V4"]) assert.match(SKILL_TEXT, new RegExp(`### ${stage}`));
+test("换皮嵌入 V0-V5 且不复用旧视觉动作阶段", () => {
+  for (const stage of ["V0", "V1", "V2", "V3", "V4", "V5"]) assert.match(SKILL_TEXT, new RegExp(`### ${stage}`));
   assert.match(SKILL_TEXT, /A0-A6 只表示动作风险/);
   assert.match(SKILL_TEXT, /F2[\s\S]*独立 Spine\/视觉审查/);
   assert.match(SKILL_TEXT, /F3[\s\S]*Unity 编译、导入、PlayMode/);
-  assert.match(SKILL_TEXT, /V2[\s\S]*资产地图/);
+  assert.match(SKILL_TEXT, /V3[\s\S]*资产地图/);
   assert.match(SKILL_TEXT, /skinId → slotName → attachmentName → sourceImage → atlasRegion/);
   assert.match(SKILL_TEXT, /禁止裁切、抠取、放大或轻微修饰高保真效果图/);
 });
 
-test("V3 分批必须依赖完整 V2 地图并维护追加式 JSON 台账", () => {
-  assert.match(SKILL_TEXT, /只有完整 V2 资产地图与生产边界冻结后才可拆批/);
-  assert.match(SKILL_TEXT, /分批只是执行调度，不能替代 V0-V2 任何门禁/);
+test("V4 分批必须依赖完整 V3 地图并维护追加式 JSON 台账", () => {
+  assert.match(SKILL_TEXT, /只有完整 V3 资产地图与生产边界冻结后才可拆批/);
+  assert.match(SKILL_TEXT, /分批只是执行调度，不能替代 V0-V3 任何门禁/);
   assert.match(SKILL_TEXT, /Artifacts\/Spine\/<characterId>\/batch-ledger\.json/);
   for (const field of [
     "taskId", "skinId", "batchId", "ordinal", "assetIds", "dependsOnBatchIds",
@@ -73,7 +73,7 @@ test("V3 分批必须依赖完整 V2 地图并维护追加式 JSON 台账", () =
 });
 
 test("批次全部完成后仍需整角色全量回归", () => {
-  assert.match(SKILL_TEXT, /全部批次达到 `VALIDATED`、整批映射无遗漏且 V4 集成完成后/);
+  assert.match(SKILL_TEXT, /全部批次达到 `VALIDATED`、整批映射无遗漏且 V5 集成完成后/);
   assert.match(SKILL_TEXT, /完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射/);
   for (const token of ["Atlas/材质/PMA/Draw Call/纹理内存", "全部动画与 Attachment Timeline", "默认/新 Skin、多实例隔离", "极端姿势、Clipping 和遮挡"]) {
     assert.ok(SKILL_TEXT.includes(token), "全量回归缺少：" + token);
@@ -104,10 +104,10 @@ test("根包、安装器、README 与角色路由包含 Spine 换皮", () => {
   assert.match(extractNativeSection(readFileSync(resolve(ROOT, "skills/app-stack-unity/references/native-contracts.md"), "utf8"), "unity-game-visual-assets"), /\$app-spine-reskin/);
 });
 
-test("视觉角色使用现行 V0-V4 与 F2-F3 门禁", () => {
+test("视觉角色使用现行 V0-V5 与 F2-F3 门禁", () => {
   const visual = extractNativeSection(readFileSync(resolve(ROOT, "skills/app-stack-unity/references/native-contracts.md"), "utf8"), "unity-game-visual-assets");
   assert.doesNotMatch(visual, /\bP[0-5]\b/);
-  for (const stage of ["V0", "V1", "V2", "V3", "V4", "F2", "F3"]) {
+  for (const stage of ["V0", "V1", "V2", "V3", "V4", "V5", "F2", "F3"]) {
     assert.match(visual, new RegExp(`\\b${stage}\\b`));
   }
   assert.match(visual, /A0-A6 只表示动作风险/);

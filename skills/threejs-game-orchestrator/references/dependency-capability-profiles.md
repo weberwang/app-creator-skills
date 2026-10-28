@@ -23,9 +23,7 @@ Rapier、`three-mesh-bvh`、Recast Navigation 和 React Three Fiber 都是按具
 
 ## API 与服务边界
 
-适用时记录：契约 ID/版本、服务端所有者、认证授权、幂等键与重试/超时策略、客户端兼容范围、数据或存档迁移、回滚、服务端/客户端测试边界、部署监控、备份恢复和外部故障降级。生产或发布变化按审核漏斗触发技术与 Release 通道。
-
-如果任务不负责服务端实现，只记录外部依赖、所有者、契约与客户端边界，不扩张到服务端开发、部署或运维。密钥、令牌和个人数据不得进入仓库。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-orchestration-dependency-capability-profiles.md#api-与服务边界)。
 
 ## 官方 API 与依赖参考
 

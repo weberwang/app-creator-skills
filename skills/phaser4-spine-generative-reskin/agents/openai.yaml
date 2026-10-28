@@ -1,4 +1,0 @@
-interface:
-  display_name: "Phaser 4 Spine 生成式换皮"
-  short_description: "逐 Cell 生图并重建可恢复验证的 Spine Atlas 新纹理"
-  default_prompt: "在 $app-workflow-control 批准范围内，使用 $app-spine-reskin 生成、记录并验证 Spine Atlas 换皮。"

@@ -28,6 +28,8 @@ description: 用户要求拷问或压力测试决策，或游戏与应用开发�
 
 技术问题加载所选 `app-stack-*`，不预设所有栈使用 Unity 的目录、坐标、设备或 UI 系统。视觉问题加载 [素材工作流](../app-asset-workflow/SKILL.md)，用真实候选支持判断。
 
+Cocos、Phaser、Three.js 任务需要具体追问策略或阶段条件时，按需读取[拷问策略](../app-domain-toolkit/references/reference-orchestration-technical-grilling.md)和[编排中的用户取舍](../app-domain-toolkit/references/reference-orchestration-grilling-integration.md)，再读取当前栈的原生补充；Unity 与 Flutter 使用各自原生规范。
+
 ## 停止与恢复
 
 未决问题只阻断直接依赖它的实现或批量生产；独立调查和其他已授权工作继续。用户未回答、沉默、超时、推荐默认值、代理审查和本地 JSON 均不能当成用户批准。普通实现调整不重开决定；目标改变、用户撤回或授权越界时只重开受影响部分。

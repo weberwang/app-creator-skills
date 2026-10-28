@@ -1,5 +1,6 @@
 /** 更新仓库自有说明中的能力调用，迁移载荷只能通过源变换更新其摘要。 */
-import { existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync } from './migration/file-io.mjs';
 import { join, relative } from 'node:path';
 import { nativeAdapterPath } from './capability-map.mjs';
 import { buildNativeTargets as createNativeTargets, extractNativeSection } from '../skills/app-skill-runtime/native-contracts.mjs';

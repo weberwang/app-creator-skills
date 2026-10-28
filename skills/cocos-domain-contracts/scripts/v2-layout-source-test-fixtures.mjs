@@ -18,12 +18,12 @@ function field(value, ...names) {
 
 /** 为场景测试注册唯一布局源，并从唯一节点输入派生完整文档。 */
 export function registerFixtureV2Layout(contract, nodes) {
-  if (!Array.isArray(nodes) || nodes.length === 0) throw new Error("测试 V2 布局源需要非空节点数组");
+  if (!Array.isArray(nodes) || nodes.length === 0) throw new Error("测试 V3 布局源需要非空节点数组");
   const decomposition = contract?.layout_decomposition;
   const annotation = decomposition?.layout_annotation;
   const confirmation = decomposition?.layout_annotation_confirmation;
   const target = contract?.target_conditions;
-  if (!decomposition || !annotation || !confirmation || !target?.viewport) throw new Error("测试 V2 布局源缺少场景合同身份");
+  if (!decomposition || !annotation || !confirmation || !target?.viewport) throw new Error("测试 V3 布局源缺少场景合同身份");
 
   const sceneId = target.scene_id ?? target.sceneId;
   const stateId = target.state_id ?? target.stateId;

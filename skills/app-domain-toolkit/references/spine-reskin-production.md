@@ -2,6 +2,8 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。
 
+各技术栈统一使用 V0–V5，V1 验证功能且白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+
 ## 完整流程
 
 ### 固定流程（cocos、phaser）
@@ -22,7 +24,7 @@
 
 ### 固定流程（cocos、phaser）
 
-按 `batch prepare → mark generated → batch review → 停止 → batch accept` 执行。`batch accept` 核对当前批次 revision、实际候选、审阅图和人工确认，不要求提供或比较 SHA/fingerprint；在刚展示且由 `--batch` 明确指定的审阅上下文中，简短“确认”即可通过，也可使用当前批次对应的完整确认句（初始批次“确认第N批”、返工“确认重启版第N批”）。空白、无关或否定文本仍拒绝。回执是 V3 正式资源生产中的局部 `spine_batch_acceptance`，不是全局第二次视觉审批。返工使用 `batch reopen` 增加 revision，只影响当前批。
+按 `batch prepare → mark generated → batch review → 停止 → batch accept` 执行。`batch accept` 核对当前批次 revision、实际候选、审阅图和人工确认，不要求提供或比较 SHA/fingerprint；在刚展示且由 `--batch` 明确指定的审阅上下文中，简短“确认”即可通过，也可使用当前批次对应的完整确认句（初始批次“确认第N批”、返工“确认重启版第N批”）。空白、无关或否定文本仍拒绝。回执是 V4 正式资源生产中的局部 `spine_batch_acceptance`，不是全局第二次视觉审批。返工使用 `batch reopen` 增加 revision，只影响当前批。
 
 ### 固定流程（cocos、phaser）
 
@@ -34,4 +36,4 @@
 
 ### 全局视觉与批次确认边界（cocos、phaser）
 
-全局视觉阶段、状态和确认规则以 `app-workflow-control` 的“控制模型”（见本栈配套资料）、“状态与门”（见本栈配套资料）及 Schema 为准。Spine 换皮中的方案提议、审查或审阅、批次锁定都必须在当前用户任务的既有 Work Item 范围内完成；本 Skill 只修改自身候选工件，不自行扩展任务范围或创建全局审批。任务内范围、方案或路径变化同步更新计划并重验受影响部分；需要改变产品方向、视觉方向或接入主游戏时，回到控制面重新审查。Spine 批次确认属于 V3 正式资源生产中的局部锁定回执，不进入 Approval Ledger，也不改变场景 V2 的拆解与布局确认。
+全局视觉阶段、状态和确认规则以 `app-workflow-control` 的“控制模型”（见本栈配套资料）、“状态与门”（见本栈配套资料）及 Schema 为准。Spine 换皮中的方案提议、审查或审阅、批次锁定都必须在当前用户任务的既有 Work Item 范围内完成；本 Skill 只修改自身候选工件，不自行扩展任务范围或创建全局审批。任务内范围、方案或路径变化同步更新计划并重验受影响部分；需要改变产品方向、视觉方向或接入主游戏时，回到控制面重新审查。Spine 批次确认属于 V4 正式资源生产中的局部锁定回执，不进入 Approval Ledger，也不改变场景 V3 的拆解与布局确认。

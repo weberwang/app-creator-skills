@@ -7,6 +7,7 @@ import test from 'node:test';
 import { buildWebWorkflowBodies, readWorkflowBlocks } from '../scripts/migration/web-workflow-bodies.mjs';
 import { applySharedWorkflowSections } from '../scripts/migration/shared-workflows.mjs';
 import { auditSkillBodies } from '../scripts/audit-skill-bodies.mjs';
+import { unifySourceVisualStages } from '../scripts/migration/unified-stage-text.mjs';
 
 const STACKS = { cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' };
 const COMMON = 'V3 按已确认范围汇总独立静态部件与状态，一次编排生成各自独立位图，保留真实来源、透明度与资源身份，不用加载成功替代场景体验。批次完成后提供独立预览和失败项，资源必须在正式运行路径消费。';
@@ -32,8 +33,9 @@ test('正文和资料路由共用，专业 API 与原始附件导航保留', (t)
   const f = fixture(t, (_stack, prefix) => `${COMMON}详见[批量生产](./references/${prefix}-pipeline.md)。`);
   const plan = buildWebWorkflowBodies(f);
   const doc = plan.documents.find((item) => item.capabilityId === 'asset-production');
-  assert.ok(doc.content.includes(COMMON));
-  assert.equal(doc.content.split(COMMON).length, 2);
+  const canonical = unifySourceVisualStages(COMMON);
+  assert.ok(doc.content.includes(canonical));
+  assert.equal(doc.content.split(canonical).length, 2);
   assert.doesNotMatch(doc.content, /cocos-pipeline|phaser4-pipeline|threejs-pipeline/);
   for (const [stack, original] of f.originals) {
     const applied = applySharedWorkflowSections(original.text, { ...original, stack, destination: original.sourcePath, plan });

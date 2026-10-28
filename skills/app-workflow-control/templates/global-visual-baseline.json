@@ -19,5 +19,5 @@
     ]}
   ],
   "selectedCandidateId": "candidate-a",
-  "selectionReviewRef": {"path": "art/reviews/baseline-human-review.json"}
+  "selectionReviewRef": {"path": "art/reviews/baseline-human-review.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}
 }

@@ -21,7 +21,7 @@
 | 基础图与辅助图 | 按实际需要烘焙 Tangent-space Normal、AO 等；辅助 Curvature、Thickness、ID 记录已验证的生成方式；BaseColor 分离颜色与光照 | 烘焙对象/目标图像、参数与输出可定位，辅助图不被冒充为内建烘焙类型，关键产物已保存 |
 | 表面细化与修整 | 制作颜色、粗糙度、金属度、法线及按需的发光/透明/高度；处理投射遗漏、接缝、偏斜、表面尺度和 Mip 边缘 | 主通道独立保存，材质层/遮罩来源和修改可追溯；UV/几何缺陷退回建模，不能用涂抹掩盖 |
 | 打包与导出回读 | 在 Blender MCP 内按目标 Shader 合并通道，保存主通道与打包图，重新加载实际导出文件 | 尺寸、通道/Alpha、位深、色彩语义、像素数值和路径符合合同，打包与反算关系可核对 |
-| Unity 接入与验收 | 串行配置实际 TextureImporter、Shader、Material、槽位/LOD、资源级 Prefab 与平台设置 | 导入属性、引用和预算有技术证据；截图与显示检查单交用户确认，正式场景在 V4 接入 |
+| Unity 接入与验收 | 串行配置实际 TextureImporter、Shader、Material、槽位/LOD、资源级 Prefab 与平台设置 | 导入属性、引用和预算有技术证据；截图与显示检查单交用户确认，正式场景在 V5 接入 |
 
 表面层次由目标材质决定，不要求所有资产添加磨损、脏污或多层噪声；高低模烘焙、辅助图和额外通道按需求执行。恒定通道可按 Shader 使用明确标量或规范的默认值，不能为了凑图生成无用途的文件；需要空间变化的通道必须有真实贴图。不假定 Blender 节点能随 FBX/glTF 完整转为 Unity 材质，运行时使用实际导出的图像与显式属性映射。
 
@@ -69,7 +69,7 @@ Blender 数据图的输入和烘焙目标设为 `Non-Color`，颜色图按实际
 4. 使用批准 Shader 创建 Material，设置工作流、纹理与标量，回读材质槽和 Renderer 映射。标准 URP Lit/Complex Lit 的 Metallic 工作流使用上述打包图时，将同一纹理接入 Metallic 与 Occlusion 属性，将 Smoothness Source 设为 Metallic Alpha，并记录 Smoothness/Occlusion 等乘数；要求 Alpha 数值直接作为光滑度时 Smoothness 设为 1。Shader Graph 或其他 Shader 按其实际属性单独映射；Height/Opacity 只在目标 Shader 支持时接入。属性与乘数见 [URP Lit](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/lit-shader.html) 和 [Complex Lit](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/shader-complex-lit.html)。
 5. 避免运行时隐式 Material 实例、粉色 Shader、丢失纹理、错误透明队列和未批准 Shader。
 6. 回读 TextureImporter 的实际颜色/数据设置、压缩/Alpha/平台覆盖、Material GUID/属性、纹理引用和各 LOD 用图，按预算记录显存估算；在 Editor/PlayMode 验证必要引用和运行行为。
-7. 在中性转台、正反面、掠射光、近远景、LOD 切换和目标场景捕获证据及检查要点。截图由用户人工检查，F2/F3 技术结果与显示确认分开；不自动分析截图或判定通过。正式场景接入在 V4，未经明确要求不启动 Standalone/Player 或真机。
+7. 在中性转台、正反面、掠射光、近远景、LOD 切换和目标场景捕获证据及检查要点。截图由用户人工检查，F2/F3 技术结果与显示确认分开；不自动分析截图或判定通过。正式场景接入在 V5，未经明确要求不启动 Standalone/Player 或真机。
 
 ## 交接与失败
 

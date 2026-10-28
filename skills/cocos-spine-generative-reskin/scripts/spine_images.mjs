@@ -2,7 +2,7 @@ import { mkdir, readFile } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import sharp from "../../cocos-domain-contracts/scripts/runtime/image-runtime.mjs";
-import { ReskinError, field } from "./spine_atlas.mjs";
+import { ReskinError, field } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 
 /** 将图片解码成不预乘的 RGBA 原始缓冲区。 */
 export async function decodeRgba(path) {

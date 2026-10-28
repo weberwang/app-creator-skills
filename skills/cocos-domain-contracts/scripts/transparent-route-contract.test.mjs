@@ -37,7 +37,7 @@ async function fixture(edge = "glow", alphas = [0, 80, 200, 255]) {
     await writeFile(join(root, `${mode}.png`), preview);
     generation.transparency_preview[mode] = { file: `${mode}.png`, sha256: `sha256:${createHash("sha256").update(preview).digest("hex")}`, background_color: color };
   }
-  return { root, generation, expected, options: { checkFiles: true, projectRoot: root, stage: "V3" } };
+  return { root, generation, expected, options: { checkFiles: true, projectRoot: root, stage: "V4" } };
 }
 
 for (const edge of ["hard-edge", "semi-transparent", "glow"]) {
@@ -46,7 +46,7 @@ for (const edge of ["hard-edge", "semi-transparent", "glow"]) {
     try {
       assert.deepEqual(validateTransparencyRoute(item.generation, item.expected, item.options), []);
       assert.deepEqual(validateTransparencyPreview(item.generation, item.expected, item.options), []);
-      assert(validateTransparencyPreview(item.generation, item.expected, { ...item.options, stage: "V4" }).some((error) => error.includes("视觉验收")));
+      assert(validateTransparencyPreview(item.generation, item.expected, { ...item.options, stage: "V5" }).some((error) => error.includes("视觉验收")));
     } finally { await rm(item.root, { recursive: true, force: true }); }
   });
 }

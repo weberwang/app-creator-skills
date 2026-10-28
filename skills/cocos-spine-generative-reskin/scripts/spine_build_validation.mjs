@@ -1,6 +1,6 @@
 import { join } from "node:path";
 import sharp from "../../cocos-domain-contracts/scripts/runtime/image-runtime.mjs";
-import { parseAtlas } from "./spine_atlas.mjs";
+import { parseAtlas } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { decodeRgba, outputPageName } from "./spine_images.mjs";
 import { auditSkeleton, COCOS_SPINE_RUNTIME_DEFAULT } from "./spine_skeleton.mjs";
 

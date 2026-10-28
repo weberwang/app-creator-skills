@@ -16,7 +16,7 @@ function writeArtifact(repo, file, value) {
   return { path: file, sha256: hashBytes(bytes) };
 }
 
-/** 创建结构有效的 V4 美术体验人工验收记录，供控制流测试复用。 */
+/** 创建结构有效的 V5 美术体验人工验收记录，供控制流测试复用。 */
 function fixtureArtExperienceAcceptance(repo, workItemId, candidateId, sceneId) {
   const recordingFile = 'docs/art-experience-normal-play.test-recording';
   // 自动化夹具只检查录屏文件存在性，不读取或判断录屏的视觉内容。
@@ -39,11 +39,11 @@ function fixtureArtExperienceAcceptance(repo, workItemId, candidateId, sceneId) 
 }
 
 /**
- * 在已有 V2 场景夹具上绑定 V3 正式资源和 V4 运行证据。
- * V2/V3/V4 共享场景、候选身份和真实资源文件，不生成中间草图数据。
+ * 在已有 V3 场景夹具上绑定 V4 正式资源和 V5 运行证据。
+ * V3/V4/V5 共享场景、候选身份和真实资源文件，不生成中间草图数据。
  */
 export function bindVisualEvidenceFixture({ repo, work, pkg }) {
-  const v2File = work.visualStageEvidenceRefs.V2.path;
+  const v2File = work.visualStageEvidenceRefs.V3.path;
   const plan = JSON.parse(readFileSync(resolve(repo, v2File), 'utf8'));
   const sceneId = plan.sceneId;
   const sceneContract = JSON.parse(readFileSync(resolve(repo, plan.sceneReconstructionContract.file), 'utf8'));
@@ -57,7 +57,7 @@ export function bindVisualEvidenceFixture({ repo, work, pkg }) {
   const v2Ref = writeArtifact(repo, v2File, plan);
 
   const assetFile = 'docs/production-asset.png';
-  // 一像素 PNG 只用于证明 V3/V4 路径门读取的是实际存在的资源文件。
+  // 一像素 PNG 只用于证明 V4/V5 路径门读取的是实际存在的资源文件。
   const assetBytes = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZlS8AAAAASUVORK5CYII=', 'base64');
   writeFileSync(resolve(repo, assetFile), assetBytes);
   const assetSha = hashBytes(assetBytes);
@@ -78,6 +78,7 @@ export function bindVisualEvidenceFixture({ repo, work, pkg }) {
   };
   const manifestRef = writeArtifact(repo, 'docs/visual-manifest-v3.json', manifest);
   const common = {
+    visualStageModel: 'function-first-v1',
     workItemId: work.workItemId,
     baselineHash: work.baselineHash,
     contentHash: candidateIdentity.sha256,
@@ -89,8 +90,8 @@ export function bindVisualEvidenceFixture({ repo, work, pkg }) {
   };
   const v3Ref = writeArtifact(repo, 'docs/v3-acceptance.json', {
     ...common,
-    evidenceType: 'v3-formal-acceptance',
-    acceptanceId: 'V3-TEST',
+    evidenceType: 'v4-formal-acceptance',
+    acceptanceId: 'V4-TEST',
     targetSha256: targetSha,
     candidateVersion,
     visualManifestFile: manifestRef.path,
@@ -101,17 +102,17 @@ export function bindVisualEvidenceFixture({ repo, work, pkg }) {
 
   const sceneFile = 'docs/v4-runtime-scene.png';
   writeFileSync(resolve(repo, sceneFile), assetBytes);
-  const candidateId = 'V4-TEST';
+  const candidateId = 'V5-TEST';
   const v4Ref = writeArtifact(repo, 'docs/v4-runtime-candidate.json', {
     ...common,
     candidateId,
-    evidenceType: 'v4-runtime-integration-candidate',
+    evidenceType: 'v5-runtime-integration-candidate',
     files: [sceneFile],
     fileHashes: { [sceneFile]: assetSha },
     artExperienceAcceptance: fixtureArtExperienceAcceptance(repo, work.workItemId, candidateId, sceneId),
   });
 
-  work.visualStageEvidenceRefs = { V2: v2Ref, V3: v3Ref, V4: v4Ref };
+  work.visualStageEvidenceRefs = { V3: v2Ref, V4: v3Ref, V5: v4Ref };
   for (const unit of pkg.executionUnits ?? []) {
     if (unit.highFidelityPrerequisite) {
       Object.assign(unit.highFidelityPrerequisite, {
@@ -125,16 +126,16 @@ export function bindVisualEvidenceFixture({ repo, work, pkg }) {
   return { targetSha, plan, manifest, refs: work.visualStageEvidenceRefs };
 }
 
-/** 将替换实施包重新绑定当前 V2 来源摘要，保持其来源身份与当前场景证据一致。 */
+/** 将替换实施包重新绑定当前 V3 来源摘要，保持其来源身份与当前场景证据一致。 */
 export function bindPackageToVisualEvidenceFixture({ repo, work, pkg }) {
-  const plan = JSON.parse(readFileSync(resolve(repo, work.visualStageEvidenceRefs.V2.path), 'utf8'));
+  const plan = JSON.parse(readFileSync(resolve(repo, work.visualStageEvidenceRefs.V3.path), 'utf8'));
   for (const unit of pkg.executionUnits ?? []) {
     if (unit.highFidelityPrerequisite) {
       Object.assign(unit.highFidelityPrerequisite, {
         targetSha256: plan.targetSha256,
         candidateSha256: plan.candidateSha256,
         diffFingerprint: plan.diffFingerprint,
-        evidenceSha256: work.visualStageEvidenceRefs.V2.sha256,
+        evidenceSha256: work.visualStageEvidenceRefs.V3.sha256,
       });
     }
   }

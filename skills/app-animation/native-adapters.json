@@ -71,6 +71,105 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "frame-reference-action-timing",
+      "path": "../app-domain-toolkit/references/frame-reference-action-timing.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-animation-direction",
+      "path": "../app-domain-toolkit/references/frame-reference-animation-direction.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-character-animation",
+      "path": "../app-domain-toolkit/references/frame-reference-character-animation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-effect-animation",
+      "path": "../app-domain-toolkit/references/frame-reference-effect-animation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-image-inbetween",
+      "path": "../app-domain-toolkit/references/frame-reference-image-inbetween.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-intent-driven-design",
+      "path": "../app-domain-toolkit/references/frame-reference-intent-driven-design.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-object-animation",
+      "path": "../app-domain-toolkit/references/frame-reference-object-animation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-region-planning",
+      "path": "../app-domain-toolkit/references/frame-reference-region-planning.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-ui-frame-animation",
+      "path": "../app-domain-toolkit/references/frame-reference-ui-frame-animation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "frame-reference-workflow-integration",
+      "path": "../app-domain-toolkit/references/frame-reference-workflow-integration.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

@@ -55,6 +55,33 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "reference-architecture-production-build",
+      "path": "../app-domain-toolkit/references/reference-architecture-production-build.md",
+      "stacks": [
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-architecture-project-structure",
+      "path": "../app-domain-toolkit/references/reference-architecture-project-structure.md",
+      "stacks": [
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-architecture-sdk-initialization",
+      "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",
+      "stacks": [
+        "cocos",
+        "phaser"
+      ],
+      "onDemand": true
     }
   ]
 }

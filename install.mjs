@@ -22,6 +22,9 @@ const BOOTSTRAP_FILES = Object.freeze([
   'scripts/install-project-skills.mjs',
   'scripts/skill-catalog.mjs',
   'scripts/capability-map.mjs',
+  'scripts/migration/specialist-reference-specs.mjs',
+  'scripts/migration/orchestration-reference-specs.mjs',
+  'scripts/migration/domain-reference-specs.mjs',
   'skills/app-skill-runtime/direct-entry.mjs',
   'skills/app-skill-runtime/native-contracts.mjs',
 ]);

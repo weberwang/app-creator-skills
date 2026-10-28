@@ -1,6 +1,6 @@
 # Blender MCP 生产级建模流程
 
-模型几何由 Blender MCP 制作；Cocos Creator 负责真实资源导入核验和工作项要求的运行接入。二者按同一个 Work Item、资源 ID、Implementation Package 和 V0-V4 阶段协作，不增加单独状态机或额外确认阶段。角色边界和交接字段见[模型交接](./model-handoff.md)，阶段与登记规则见[工作流接入](./workflow-integration.md)。
+模型几何由 Blender MCP 制作；Cocos Creator 负责真实资源导入核验和工作项要求的运行接入。二者按同一个 Work Item、资源 ID、Implementation Package 和 V0-V5 阶段协作，不增加单独状态机或额外确认阶段。角色边界和交接字段见[模型交接](./model-handoff.md)，阶段与登记规则见[工作流接入](./workflow-integration.md)。
 
 ## 执行前发现
 
@@ -32,7 +32,7 @@
 | UV 与烘焙交接 | 规划接缝、展开和排布；检查拉伸、越界、重叠、密度与 Padding；区分纹理 UV 和需唯一性的烘焙/光照 UV | 报告实际 UV 通道与岛位置；适用的高低模/Cage/投射信息交由下游 |
 | LOD 与碰撞 | 按预算制作适用 LOD，并为玩法需求建立碰撞代理 | 逐级记录面数、轮廓保留、材质槽、阈值及 Collider 类型/数量；不适用项说明原因 |
 | 保存与导出 | 保存可编辑源；在派生副本处理应用修改器、变换、法线与三角化；只导出获准对象及必需依赖 | 记录源版本、对象清单、导出参数和真实输出位置；重新导入导出文件检查尺度、朝向、Pivot、网格、UV 和槽位 |
-| Cocos 资源核验 | 按实时 Creator MCP Schema 批量导入/刷新并读回 AssetDB 资源、类型、UUID 和实际存在的子资源 | V3 记录资源级结果；V4 记录正式场景实际加载和消费。详细证据边界见[工作流接入](./workflow-integration.md) |
+| Cocos 资源核验 | 按实时 Creator MCP Schema 批量导入/刷新并读回 AssetDB 资源、类型、UUID 和实际存在的子资源 | V4 记录资源级结果；V5 记录正式场景实际加载和消费。详细证据边界见[工作流接入](./workflow-integration.md) |
 
 高模、重拓扑、额外 UV 集、多个 LOD、高低模烘焙和碰撞代理按资产需求决定；不适用时记明原因，不虚造工件。任何导入格式或引擎侧设置均依据目标 Creator 项目实时可用能力与读回结果，不预设 Unity Importer 或其他引擎设置。
 

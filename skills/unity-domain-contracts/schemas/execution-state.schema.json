@@ -24,8 +24,8 @@
     "packageId": {"type": "string", "minLength": 1},
     "baselineHash": {"type": "string", "minLength": 1, "description": "创建时的 Git 身份记录；不参与计划身份和证据验收。"},
     "stageId": {"type": "string", "minLength": 1},
-    "sceneStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4"]},
-    "displayLayerStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4"]},
+    "sceneStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4", "V5"]},
+    "displayLayerStage": {"enum": [null, "V0", "V1", "V2", "V3", "V4", "V5"]},
     "planVersion": {"type": "string", "minLength": 1, "description": "固定键顺序的计划 JSON 身份串，不是文件摘要。"},
     "units": {
       "type": "array",

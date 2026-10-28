@@ -3,7 +3,7 @@ import { validateDisplayNodeRole } from "../../cocos-game-ui-layout/scripts/disp
 import { validateContainerRootReuse } from "./container-root-policy.mjs";
 
 /**
- * V2 功能语义分组合同。
+ * V3 功能语义分组合同。
  *
  * 语义归属必须由拆解阶段显式确认；这个模块只检查声明的结构、真实父级和
  * 几何事实，不根据角色、距离、资源 ID 或视觉接近度替用户猜测归属。

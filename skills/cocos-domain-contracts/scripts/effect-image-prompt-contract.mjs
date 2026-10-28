@@ -206,7 +206,7 @@ export function buildEffectImageAssetPrompt({ region, sceneReconstructionContrac
   return { prompt: lines.join("\n"), facts, missing, identity, region: resolvedRegion };
 }
 
-/** 将 V2 已确认切片事实写入实际生产提示词，避免按整块显示尺寸生成大底板。 */
+/** 将 V3 已确认切片事实写入实际生产提示词，避免按整块显示尺寸生成大底板。 */
 export function buildNineSliceProductionPrompt(decision) {
   if (decision === undefined) return "";
   const normalized = validateNineSliceContract(decision);

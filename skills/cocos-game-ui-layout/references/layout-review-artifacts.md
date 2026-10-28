@@ -1,36 +1,32 @@
 # 离线布局审阅产物
 
-本参考定义布局生成器的通用审阅页和同批产物。它服务于 V2 的“拆解图确认 → 内部生成显式布局决策 → 布局图及审阅页 → 独立布局图确认”顺序，不创建新的阶段、Work Item、审批账本或业务状态。每批唯一 `layout-nodes.json` 是分组、父子、定位参照和布局策略的事实源，scene contract 的 `layout_decomposition.layout_source.nodes_file`、annotation 与 confirmation 的 `layout_nodes_file` 必须指向同一实际文件。用户直接查看 PNG/`review.html` 并确认图片；`layout-decision.json`、节点数据和其他技术记录由代理维护，不要求先行阅读或文字确认。PNG、review 与派生快照只是只读展示投影，不能另建或修改事实，也不回写 Stage A proposal。布局图中的 bounds、父子关系和对齐用于保证 V2 方案内部一致性，不自动升级运行态的像素验收。运行态默认使用 `visual_validation.mode=usability`，允许合理的位置、尺寸和换行偏差；只有明确的 `exact` 需求才启用严格视觉差异门。需要实现或校验离线审阅页时读取本文件；字段的全局状态语义仍以控制面 Schema 为准。
+本参考定义布局生成器的通用审阅页和同批产物。它服务于 V3 的“拆解图确认 → 内部生成显式布局决策 → 布局图（需要交互对照时生成审阅页） → 独立布局图确认”顺序，不创建新的阶段、Work Item、审批账本或业务状态。每批唯一 `layout-nodes.json` 是分组、父子、定位参照和布局策略的事实源，scene contract 的 `layout_decomposition.layout_source.nodes_file`、annotation 与 confirmation 的 `layout_nodes_file` 必须指向同一实际文件。用户直接查看 PNG（需要交互对照时可使用同批 `review.html`） 并确认图片；`layout-decision.json`、节点数据和其他技术记录由代理维护，不要求先行阅读或文字确认。PNG、review 与派生快照只是只读展示投影，不能另建或修改事实，也不回写 Stage A proposal。布局图中的 bounds、父子关系和对齐用于保证 V3 方案内部一致性，不自动升级运行态的像素验收。运行态默认使用 `visual_validation.mode=usability`，允许合理的位置、尺寸和换行偏差；只有明确的 `exact` 需求才启用严格视觉差异门。需要实现或校验离线审阅页时读取本文件；字段的全局状态语义仍以控制面 Schema 为准。
 
 ## 生成目录与产物
 
-继续使用 `scripts/generate_layout_annotation.mjs` 及其现有参数。标准调用把 `--output` 指向一个新的候选目录，例如 `--output .workflow-control/evidence/<work-item>/<layout-version>/layout.png`。生成器以该 PNG 所在目录为本次候选目录，在同一批同步写入以下五份产物：
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#生成目录与产物)。
 
 | 文件 | 用途与最低内容 |
 | --- | --- |
 | `layout.png` | `layout-annotation/png/1` 标准布局标注图，继续作为机器验收和可下载的静态证据；在冻结参考图上叠加父子框、编号和右栏说明。 |
-| `layout-nodes.json` | 本批唯一 V2 布局事实文件，按已确认 `decomposition_elements` 原顺序保存元素/渲染身份、功能父级、有效定位参照、几何关系、九点停靠、适用时的规范化 `center_alignment`（含整体居中成员）、RAW/九宫格尺寸意图及其派生 `layout_execution`；文件 `doc.viewport` 定义所有节点共用的唯一逻辑坐标空间。coverage 的 `region_id` 与 `layout_node_ids` 仅建立区域消费索引；scene contract 通过 `layout_source.nodes_file` 直接引用节点文件，不另存第二份布局树。 |
+| `layout-nodes.json` | 本批唯一 V3 布局事实文件，按已确认 `decomposition_elements` 原顺序保存元素/渲染身份、功能父级、有效定位参照、几何关系、九点停靠、适用时的规范化 `center_alignment`（含整体居中成员）、RAW/九宫格尺寸意图及其派生 `layout_execution`；文件 `doc.viewport` 定义所有节点共用的唯一逻辑坐标空间。coverage 的 `region_id` 与 `layout_node_ids` 仅建立区域消费索引；scene contract 通过 `layout_source.nodes_file` 直接引用节点文件，不另存第二份布局树。 |
 | `layout-decision.json` | Stage B 本批实际消费的 `automatic-layout-decision/1.0` 决策字节及其 ID；这是生成唯一节点文件的输入，不能让页面或节点快照另行推导对齐结果。 |
-| `review.html` | 通用、自包含、可直接用本地浏览器打开的审阅页；嵌入本批冻结参考图和节点数据，并提供基于内嵌 data URL/原始字节的产物入口。 |
-| `generation-result.json` | 记录 `layout.png`、两份布局 JSON 和 `review.html` 的相对路径、真实文件 SHA，以及上游绑定摘要；自身 SHA 只由 stdout 返回，避免自引用。 |
+| `review.html`（仅交互对照时生成） | 通用、自包含、可直接用本地浏览器打开的审阅页；嵌入本批冻结参考图和节点数据，并提供基于内嵌 data URL/原始字节的产物入口。 |
+| `generation-result.json` | 记录 `layout.png`、两份布局 JSON 及按需生成的 `review.html` 的相对路径、真实文件 SHA，以及上游绑定摘要；自身 SHA 只由 stdout 返回，避免自引用。 |
 
-每个布局版本使用独立候选目录；重新生成或人工修改后必须使用新版本目录，不能把不同批次的 HTML、PNG、节点或决策拼在一起。产物路径在机器数据中使用项目根相对路径并通过项目根路径校验，审阅页的下载入口直接使用内嵌 data URL/原始字节，单独搬走 HTML 后仍可下载。参考图可以来自冻结目标的 `original_file`，但必须在生成时读取实际字节；参考项目中的专用脚本或页面不能成为通用生成器的输入或模板分支。
-
-`generation-result.json` 必须由生成器在其他产物写完后自行写入，摘要仅作可选追踪。生成器 stdout 保留原有完整 result，并额外返回 `generation_result_file` 和该文件的 `generation_result_sha256`；不要把 stdout 重定向覆盖 `generation-result.json`，如需留存 stdout，应另存为独立日志或回执文件。这样可以避免生成结果文件产生自引用，且调用方仍能核对其最终字节。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#生成目录与产物)。
 
 ## 审阅页模板
 
-`review.html` 只能由一个通用模板生成，不得按场景复制专用 HTML、专用节点 ID 或专用坐标规则。模板至少提供以下区域和行为：
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#审阅页模板)。
 
-本页保持不可编辑，供用户直观看 V2 布局 PNG、节点关系和页面内容，并据此确认布局图；完整技术节点与决策数据保留在可展开详情中供需要时查看，不构成独立文字确认门。`independent_container_reason` 的机器检查只验证字段位置和非空字符串，不声称已证明容器职责真实；人工可在本页检查理由及对应结构。V4 正式场景直接消费 V2 确认的布局目标和 V3 验收的资源；场景实现中的校准按[正式场景视觉还原与校准](../../cocos-game-asset-integration/references/visual-alignment-authoring.md)执行。不得在此页临时改框再把页面状态冒充已确认数据。
+本页保持不可编辑，供用户直观看 V3 布局 PNG、节点关系和页面内容，并据此确认布局图；完整技术节点与决策数据保留在可展开详情中供需要时查看，不构成独立文字确认门。`independent_container_reason` 的机器检查只验证字段位置和非空字符串，不声称已证明容器职责真实；人工可在本页检查理由及对应结构。V5 正式场景直接消费 V3 确认的布局目标和 V4 验收的资源；场景实现中的校准按[正式场景视觉还原与校准](../../cocos-game-asset-integration/references/visual-alignment-authoring.md)执行。不得在此页临时改框再把页面状态冒充已确认数据。
 
-- 左栏展示完整冻结参考图，保持原始宽高比，不裁切、不拉伸；右栏按 `layout-nodes.json` 的数组顺序列出全部节点。小屏幕可以改为上下排列，但不能删除左栏或把长 PNG 作为唯一审阅入口。
-- 图片和高亮框使用同一个目标 viewport 坐标映射。映射以图片实际内容框的左上角、显示宽高和目标 viewport 宽高定义；图片与覆盖框共享同一缩放比例，窗口变化或上下排列时保持该映射，不能使用另一套手工百分比或过期的 `target_css`。父框和当前框必须在同一映射下绘制，保证 `target_bounds` 在任意缩放下仍与原图对齐。
+- 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#审阅页模板)。
+
 - 节点选择同时显示当前节点、实际父节点和定位参照，当前节点与上下文节点使用不同颜色；图例明确说明颜色含义。节点卡片分别展示功能父级和位置参照、水平左/中/右与垂直上/中/下组成的九点停靠、strict/reference 中心策略、组合成员、双轴偏移、位置、尺寸及明确的溢出原因。中心策略的 schema 和计算见[居中策略与组合定位](./center-alignment.md)。另行展示图片渲染类型、Sprite 尺寸模式、`component_id`/`placement_id` 图片身份；底板 Sprite 兼任容器时只列一个节点。额外纯结构容器的 `independent_container_reason` 在卡片详情中可读。省略独立参照时，位置参照显示为实际父级；根节点明确显示“无上级”。九点停靠表示位置锚点关系，不表示纹理九宫格拉伸。
 - 节点卡片还应直接展示确认过的功能分组类别与理由，便于检查部件是否属于对应功能组件；不能仅在大区域里列出全部图标和文字就视为完成分组。底板同时作为组件根时展示 `element_type=container` 与 `render_kind=sprite` 及其图片身份；纯结构容器不伪造图片尺寸计划。语义定义见[功能语义分组约束](./functional-semantic-grouping.md)，页面不自行推测或修改归属。
-- 默认视图显示易读的中文名称和中文关系说明；技术 ID、完整原始字段、SHA 和坐标细节放在可展开的详情中。节点名称优先使用节点声明中的中文显示字段（例如 `display_name_zh`；声明的 `display_name` 本身为中文时也可使用），缺失时使用集中维护的通用语义映射（例如容器、视觉组件、运行时文字、交互热区、根视口），不得根据项目专有 ID 写分支或硬编码专有节点名称。
-- 长名称和长列表必须换行、可滚动且完整可见；详情区域不能通过固定高度、单行省略或裁切隐藏信息。无障碍名称、键盘可操作的节点选择和清晰的当前选择状态应保留。
-- 页面显式标记当前候选状态，例如“待人工布局确认”；打开页面、切换节点、下载文件或生成成功都不改变确认状态，也不写入业务、存档、Work Item 或正式确认记录。
+- 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#审阅页模板)。
 
 参考图、唯一节点 JSON 和页面脚本都内嵌在 HTML 中，页面不得引用 CDN、远程字体、网络资源、开发服务器、游戏运行环境或外部 JavaScript。下载入口直接导出内嵌 data URL/原始字节中的本次生成 JSON；不能把页面运行时重新序列化的派生对象冒充 `layout-nodes.json` 或 `layout-decision.json`。对图片及 JSON 的 `data:` 内容、链接和显示摘要应由模板安全生成。
 
@@ -40,36 +36,24 @@
 
 `root_nodes.viewport` 是完整逻辑视口；`root_nodes.safe-area` 必须是本批实际读取的安全区小矩形。所有以 `safe-area` 为父级或参照的节点，快照矩形必须和根记录逐字段一致，审阅页只展示该矩形，不从缺失字段退回全屏。根记录必须使用保留 ID、`is_root_container: true` 和显式 `parent_layout_node_id: null`；业务 `layout_nodes` 不得占用根 ID 或标记 `is_root_container: true`，输出快照中的 `false` 不构成根身份。根记录是合成几何，不能据此声称存在同名 Creator Node 或 Widget target。
 
-生成器和文件门必须读取实际文件，不要求提供或复算 SHA：
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#数据和安全边界)。
 
 - 每个实际父级和有效定位参照都必须存在于同一 scene/state；坐标空间统一由 `layout-nodes.json.doc.viewport` 定义。父边和参照边不能自引用，合并后的关系图不得成环；父框、参照目标框、相对父框的四边距离和 viewport 边界必须逐项校验。`safe-area` 根快照必须绑定本批实际安全区，所有引用该根的父框/参照框必须逐字段相同。只有明确的 `ui_layout.visual_overflow.reason` 才允许子项超出非根父框，并且不扩展父框，也不豁免 viewport、安全区、裁切与交互约束。
 - 必须读取已绑定 proposal 的实际拆解元素，核对功能分组、实际父级、定位参照及其继承；仅让 HTML、JSON 和 PNG 互相一致不够，因为三者可能共同使用了错误关系。`semantic_grouping` 的类别、理由、父级或参照漂移不得复用旧拆解确认，缺失归属不得用最小包含容器补齐，也不得为类型/几何包含增加包装层。
-- `layout-nodes.json` 的节点顺序、节点身份、编号映射、父编号、决策 ID 和 scene/state 必须与布局 PNG 和本批决策逐项一致。缺失父节点、循环关系、非法边界、元素漏绑、调序、跨场景输入或身份不一致都应以明确错误阻断，不能静默丢节点或降级为距离猜测。
-- `review.html`、节点 JSON、决策 JSON、布局 PNG 和冻结参考图都必须存在且可读取；任何路径越界或必要文件缺失都使本批失败，SHA 变化不影响验收。页面模板的布局标识、内嵌数据和下载字节也应由校验器核对。
-- 中文名称、ID、用户可见摘要和 JSON 内嵌值必须正确转义。脚本数据应使用安全的 JSON 序列化并阻断 `</script` 提前闭合；DOM 文本优先使用 `textContent`，不能把节点名称或 ID 拼入未转义的 `innerHTML`，避免名称输入改变页面结构或执行脚本。
+- 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#数据和安全边界)。
 
 ## 身份绑定与独立确认
 
-布局生成结果、V2 场景根计划、布局合同和 `layout-annotation-confirmation/1.0` 共同保存以下同批身份。字段名以机器 Schema 为准，实际路径须指向可读取文件，SHA 仅作可选记录。节点元素/渲染类型、图片资产身份、独立容器理由和九点停靠决策属于本批布局事实；它们随对应节点 JSON、PNG metadata 和拆解确认身份绑定。额外纯结构容器若包裹可用底板与内容，机器只验证 `ui_layout.independent_container_reason` 是适用位置上的非空说明，不以该字符串代替人工对职责的判断。已有确认的元素/关系不因新默认策略自动删除或改写，确需调整时沿原确认流程更新受影响工件：
+布局生成结果、V3 场景根计划、布局合同和 `layout-annotation-confirmation/1.0` 共同保存以下同批身份。字段名以机器 Schema 为准，实际路径须指向可读取文件，SHA 仅作可选记录。节点元素/渲染类型、图片资产身份、独立容器理由和九点停靠决策属于本批布局事实；它们随对应节点 JSON、PNG metadata 和拆解确认身份绑定。额外纯结构容器若包裹可用底板与内容，机器只验证 `ui_layout.independent_container_reason` 是适用位置上的非空说明，不以该字符串代替人工对职责的判断。已有确认的元素/关系不因新默认策略自动删除或改写，确需调整时沿原确认流程更新受影响工件：
 
-| 身份 | 必须绑定 |
-| --- | --- |
-| 上游参考与拆解 | 冻结参考图/`target_sha256`、`scene_id`、`state_id`、拆解确认 ID、实际 proposal 文件；页面不能显示一个参考图而绑定另一张图。 |
-| 布局决策 | `layout_decision_file`、`layout_decision_id`；`layout_decision_sha256` 可省略；决策逐元素覆盖确认元素并与节点对齐字段一致。 |
-| 标准标注图 | `layout_annotation_file`、`layout_annotation_sha256`、尺寸、metadata SHA 和 `layout_annotation_identity_sha256`。 |
-| 节点快照 | `layout_nodes_file`；页面和下载必须指向本批实际节点内容，`layout_nodes_sha256` 可省略。 |
-| 审阅页 | `layout_review_file`、`layout_review_sha256`、`layout_review_identity_sha256`；身份投影还应覆盖页面绑定的参考、决策、节点和 PNG 身份。 |
-
-上述字段必须同时进入独立布局 confirmation、decision record 和 user decision receipt，并在三份记录中逐字段一致。人工确认针对用户实际看到的 `review.html` 与同批布局 PNG 产生，用户可直接简短确认图片，也可按图号反馈修改；无需另行确认 JSON 或 decision record。旧审阅页、旧节点或旧决策不能确认新布局。页面显示候选状态不等于 `accepted`，只有控制面收到明确的人工确认消息、写入受保护 receipt/ledger 并通过真实文件门后，布局确认才成立。任何参考图、拆解 proposal、决策、节点、PNG、审阅页或其身份变化都会使旧确认失效；拆解事实变化还必须先回到拆解图确认。
-
-布局审阅页是给人检查结构和关系的可读界面，不能取代 PNG 标注图、布局合同、F2 机器校验或 V4 运行态证据。独立布局确认完成后，V2 才能继续合同回对和生产方案；V3/V4 仍必须复核当前场景 Work Item 的绑定身份与机器证据。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#身份绑定与独立确认)。
 
 ## 可复现调用
 
-以下命令保留现有入口和参数；`--output` 所在目录是本批唯一写入目录，`--layout-decision-file` 可以指向已准备的决策源文件，生成器会把实际消费的决策作为同目录 `layout-decision.json` 输出：
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#可复现调用)。
 
 ```text
 node skills/cocos-game-asset-integration/scripts/generate_layout_annotation.mjs docs/visual-assets.json --project-root . --scene-id <scene-id> --state-id <state-id> --output .workflow-control/evidence/<work-item-id>/<layout-version>/layout.png --decomposition-confirmation-id <confirmation-id> --decomposition-confirmation-sha256 sha256:<64-lowercase-hex> --proposal-sha256 sha256:<64-lowercase-hex> --layout-decision-file <decision-source.json> --layout-decision-sha256 sha256:<64-lowercase-hex>
 ```
 
-成功后同目录应有 `layout.png`、`layout-nodes.json`、`layout-decision.json`、`review.html` 和 `generation-result.json`；stdout 保留完整 result，并额外返回 `generation_result_file` 与 `generation_result_sha256`，调用方据实际路径读取最后一份文件，不核对摘要。stdout 若需保存，使用不同的日志路径，不能写回 `generation-result.json`。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md#可复现调用)。

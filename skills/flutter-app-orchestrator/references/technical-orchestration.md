@@ -39,7 +39,7 @@ description: Use when the user asks to coordinate a Flutter app task across prod
 
 ## UI 例外流程
 
-只有页面结构或视觉确实变化时才进入 UI 链：语义合同 → `phase: sketch` layout-spec → 生产骨架 Code Sketch → 风险需要的独立审阅 → 用户冻结的高保真目标 → 合同回对 → 必要资产 → 同一 spec 的 `phase: fidelity` → 测量、同视口 parity 和 Visual QA。普通复用页不强制完整链路；冻结、确认和资产生产仍由授权角色记录。
+只有页面结构或视觉确实变化时才进入 UI 链：V1 实现并验证功能和页面语义，Code Sketch 按风险选择；仅选择草图路线时才执行相应草图审阅。V2 由用户确认视觉目标并回对已验证语义，V3–V5 完成布局合同、必要资产、正式组合及运行验收。布局规格中的 `phase: sketch` 是关系数据，不要求草图画面；默认 `usability`，明确要求 `exact` 时才强制 `phase: fidelity` 和完整同视口 parity。截图由用户人工检查，普通复用页按影响范围验证。
 
 ## 权威规则
 

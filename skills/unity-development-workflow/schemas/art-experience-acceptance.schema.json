@@ -225,7 +225,18 @@
           "observations": {
             "type": "string",
             "minLength": 1
+          },
+          "targetId": {"type": "string", "minLength": 1},
+          "stateId": {"type": "string", "minLength": 1},
+          "referenceTarget": {
+            "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+            "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
           }
+        },
+        "dependentRequired": {
+          "targetId": ["stateId", "referenceTarget"],
+          "stateId": ["targetId", "referenceTarget"],
+          "referenceTarget": ["targetId", "stateId"]
         },
         "allOf": [
           {
@@ -322,6 +333,10 @@
                     "required": [
                       "observations"
                     ]
+                  },
+                  {"required": ["targetId"]},
+                  {"required": ["stateId"]},
+                  {"required": ["referenceTarget"]
                   }
                 ]
               }

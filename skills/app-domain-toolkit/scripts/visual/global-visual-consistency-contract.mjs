@@ -7,7 +7,7 @@
  * 创建新的状态机或局部风格真值。
  */
 
-/** 全局静态基线唯一允许的冻结状态。它不是 V2 方向冻结状态。 */
+/** 全局静态基线唯一允许的冻结状态。它不是 V3 方向冻结状态。 */
 export const GLOBAL_VISUAL_BASELINE_STATUS = "global-static-baseline-frozen";
 /** 全局基线正文的不可变路径。阶段证据不能替代该正文。 */
 export const GLOBAL_VISUAL_BASELINE_DOCUMENT = "docs/visual-baseline.md";
@@ -87,7 +87,7 @@ export function validateGlobalVisualBaseline(baseline, options = {}) {
   if (!isObject(baseline)) return [`${label} 必须是对象`];
   for (const field of ["id", "version", "document"]) if (!nonEmptyString(baseline[field])) errors.push(`${label}.${field} 必须是非空字符串`);
   if (nonEmptyString(baseline.document) && baseline.document !== GLOBAL_VISUAL_BASELINE_DOCUMENT) errors.push(`${label}.document 必须为 ${GLOBAL_VISUAL_BASELINE_DOCUMENT}`);
-  if (baseline.status !== GLOBAL_VISUAL_BASELINE_STATUS) errors.push(`${label}.status 必须为 ${GLOBAL_VISUAL_BASELINE_STATUS}；该状态不代表 V2`);
+  if (baseline.status !== GLOBAL_VISUAL_BASELINE_STATUS) errors.push(`${label}.status 必须为 ${GLOBAL_VISUAL_BASELINE_STATUS}；该状态不代表 V3`);
   const anchors = normalizeGlobalAnchorEvidence(baseline);
   if (anchors.length === 0 && options.requireAnchors !== false) errors.push(`${label}.anchor_evidence 必须声明全部全局视觉锚点`);
   const seen = new Set();

@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join, dirname, resolve } from "node:path";
 import test from "node:test";
 import sharp from "../../app-skill-runtime/sharp.mjs";
-import { parseAtlas } from "./spine_atlas.mjs";
+import { parseAtlas } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { validatePackedContent } from "./spine_build_validation.mjs";
 
 /** 建立实际打包文件，不以已有摘要或 PASS 文本代替文件内容。 */

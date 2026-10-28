@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 
 /** 将 JSON 值按稳定键顺序编码，保证结构指纹不受导出器字段顺序影响。 */
 export function stableJson(value) {

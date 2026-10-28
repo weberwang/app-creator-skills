@@ -146,14 +146,22 @@ test('旧控制技能入口链接当前 CLI，并保留后续专业协作章节'
   assert.match(unity.text, /Unity `\.meta` 与 GUID\/importer 配对/);
 });
 
-test('控制模型只改旧公共执行段，保留本栈事实并引用当前 RETURN 参数', () => {
+test('控制模型把全局协议路由到当前规范并保留本栈事实', () => {
   const source = [
+    '# 控制模型', '', '## A0-A6 动作等级', '', '旧动作分级说明。', '',
+    '## F0-F4 唯一语义', '', '旧公共门禁说明。', '',
+    '## 执行优先与证据收敛', '',
     '默认闭环为：最小必要事实确认 → 执行/实施 → diff-audit → evidence-check → 完成。已确认事实不重复搜索。', '',
     '`route` 应优先给出动作；`advance` 迁移状态，控制面 fail closed。', '',
     '产品、视觉、架构、预算、合规和数据边界取舍属于 `USER_DECISION`。`handoff` 后用 `approve` 确认，A6 不自动执行高风险动作。', '',
     '`route` 依据确定性规则输出 A0-A6 风险通道，外部操作须审批。', '',
     '进入 A3 `IMPLEMENTING` 时创建 execution-state.json；执行状态绑定指纹，运行 delegate-check、parallel-check、evidence-check；V2/V3 后进入 V4。普通候选身份变化不触发 `RETURN`。', '',
-    'Creator AssetDB、UUID 和 `.meta` 绑定必须按引擎事实核验。',
+    '### 按实际完成情况验收', '',
+    'Creator AssetDB、UUID 和 `.meta` 绑定必须按引擎事实核验。', '',
+    '### 前进优先与三级处置', '', '旧全局处置说明。', '',
+    '## 任务范围与显式批准', '', '旧全局批准说明。', '',
+    '视觉生产合同属于 V2、V3、V4 的领域证据，须核对真实资源与候选。', '',
+    '已完成的 A4-A6 副作用批准只覆盖其明确对象、阶段、模块、文件范围和动作等级；这些内容变化时创建新审批，旧记录只读保留。无副作用本地集成和普通任务内迭代不需要审批记录。',
   ].join('\n');
   const result = applyProfessionalRouting(source, {
     stack: 'cocos', sourcePath: 'skills/cocos-game-workflow-control/references/control-model.md',
@@ -161,11 +169,10 @@ test('控制模型只改旧公共执行段，保留本栈事实并引用当前 R
   });
   assert.equal(OLD.test(result.text), false);
   assert.match(result.text, /Creator AssetDB、UUID 和 `\.meta`/);
-  assert.match(result.text, /--affected-scope/);
-  assert.match(result.text, /execution-state\.json/);
-  assert.match(result.text, /unit-check/);
-  assert.match(result.text, /并行组和依赖/);
-  assert.match(result.text, /implementation-execution\.md/);
+  assert.match(result.text, /当前公共控制协议/);
+  assert.match(result.text, /action\.approval/);
+  assert.match(result.text, /repair\/revalidate\/return 是领域 disposition/);
+  assert.ok(result.transforms.includes('route-native-control-model-to-public-control'));
   assert.doesNotMatch(result.text, /只支持实施包声明的有序执行单元/);
 });
 
@@ -208,7 +215,9 @@ test('Flutter 自然语言工程 preflight 不被当成旧公共 CLI', () => {
     stack: 'flutter', sourcePath: 'flutter-code-sketch/SKILL.md',
     destination: 'flutter-code-sketch/SKILL.md',
   });
-  assert.deepEqual(result, { text: source, transforms: [] });
+  assert.ok(result.text.startsWith(source));
+  assert.equal(result.publicExecutionRef, undefined);
+  assert.deepEqual(result.transforms, ['route-ui-relative-layout-to-public-policy']);
 });
 
 test('共享占位链接跨编号与空行合并，保留后续原生步骤编号', () => {

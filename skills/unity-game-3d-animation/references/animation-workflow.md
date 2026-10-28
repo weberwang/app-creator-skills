@@ -1,6 +1,6 @@
 # Blender MCP 生产级角色动画流程
 
-动画生产沿用既有 V0–V4 与 Work Item，不新增资产状态或用户审批阶段。动画意图、方案确认和动作事件遵循[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)；模型/贴图/Rig 交接遵循[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)，Unity 导入与验证遵循[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)。
+动画生产沿用既有 V0–V5 与 Work Item，不新增资产状态或用户审批阶段。动画意图、方案确认和动作事件遵循[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)；模型/贴图/Rig 交接遵循[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)，Unity 导入与验证遵循[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)。
 
 ## 输入和制作前确认
 
@@ -34,7 +34,7 @@
 | NLA 与 Action 管理 | 将每个 Clip 映射到明确 Action 与 slot（当前 Blender 版本使用 slot 时），说明 source Action、活动 slot、目标帧范围、采样率和目标对象；显式确认 NLA tracks/strips 的 mute/solo/evaluate 状态，遵循[导入合同的逐 Clip 导出选择](../../unity-development-workflow/references/3d-character-unity-import.md#导出职责与统一基准) | 每个导出只包含目标 Clip 的骨骼/形态曲线，不含其他 Action 或意外叠加的 NLA 内容；命名、帧区间与表格一致 |
 | 技术回放 | 在 Blender 中逐 Clip 播放并抽样检查关键帧、根曲线、脚/手接触、挂点、循环边界、中断姿势、多 LOD 和面部通道。权重、几何问题返回绑定或建模 | 每个动作有技术检查记录及对应 LOD/姿势覆盖；显示素材由用户人工检查，不自动看图判定视觉通过 |
 | 烘焙与逐 Clip FBX | 选定导出副本与目标骨架，显式设置 Action/slot/NLA 静音、对象范围、起止帧、每帧采样、骨骼/形态曲线和 root 策略；每个 Clip 单独导出，不依赖 `All Actions` 自动打包 | 每个 FBX 只含合同中指定 Clip；逐文件回读曲线绑定、帧率/时长、循环范围、root 轨迹、事件映射输入和 BlendShape 曲线 |
-| Unity 导入 | 按[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)检查模型导入、Avatar/Generic/Humanoid、Clip 切分/循环/root 配置、Animator 接口、SkinnedMeshRenderer 和角色资源级 Prefab | Editor 实际回读各 Clip 与 Avatar/Renderer 映射、Console 和必要播放；正式场景装配留在 V4 |
+| Unity 导入 | 按[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)检查模型导入、Avatar/Generic/Humanoid、Clip 切分/循环/root 配置、Animator 接口、SkinnedMeshRenderer 和角色资源级 Prefab | Editor 实际回读各 Clip 与 Avatar/Renderer 映射、Console 和必要播放；正式场景装配留在 V5 |
 
 ### Blender 曲线烘焙规则
 
@@ -58,4 +58,4 @@
 
 保留可重开的 `.blend` 和外链依赖、确认后的方案、动作清单、Actions/slots/NLA 状态、FPS/帧范围/采样参数、曲线与 root-motion 说明、事件映射、烘焙配方、逐 Clip 导出文件、许可与 Blender/Unity 版本。导出与 Unity 技术结果、专业审查、用户显示确认分项记录。截图和播放片段只交用户人工检查并附重点，不自动分析截图或片段，也不以工具运行成功作为视觉验收。
 
-动作/FBX 属 V3 资源生产和导入，资源级 Prefab 在 V3 接入，正式场景/玩法运行验收属 V4。能力、输入、许可、曲线或回读证据缺失时标明 `BLOCKED` 或待验；不得把 2D 专用 `riggingDelivery`/`uwt_validate_2d_rigging` 用作 3D 骨架动画门禁，也不新增状态/schema。
+动作/FBX 属 V4 资源生产和导入，资源级 Prefab 在 V4 接入，正式场景/玩法运行验收属 V5。能力、输入、许可、曲线或回读证据缺失时标明 `BLOCKED` 或待验；不得把 2D 专用 `riggingDelivery`/`uwt_validate_2d_rigging` 用作 3D 骨架动画门禁，也不新增状态/schema。

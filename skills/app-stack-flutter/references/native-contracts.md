@@ -2,6 +2,8 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
+各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+
 ## 能力索引
 
 - **产品与游戏需求**
@@ -299,7 +301,7 @@ Do not approve the Release lane while any store, privacy, account, payment, cras
 #### 检查范围
 
 - F1：范围、风险、验收追踪、输入指纹和 F0 证据；只选择实际触发的 Product、QA、technical、visual、Release 通道。
-- F2：只读检查被分配的专业事实；UI 变化才检查语义合同、Code Sketch、冻结目标、资产、测量和同视口 parity。
+- F2：只读检查被分配的专业事实；UI 变化检查功能语义、已确认目标和适用资产与测量，Code Sketch 仅在选用时检查，完整同视口 parity 仅在 exact 时要求。
 - F3：确认有效通道覆盖当前 snapshot、阻塞已关闭、平台证据与集成条件满足；不重做 F2。
 
 按需复用已有设计、服务和[关键对齐门禁](../../adaptive-layout-implementation/references/critical-alignment-gate.md)。低保真截图只证明结构；[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
@@ -325,12 +327,12 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 
 1. 定义全局 UI spec、设计 token、导航语义、无障碍、内容策略与视觉方向。
 2. 对每个页面输出语义合同：范围、内容优先级、状态、交互、结果、导航、滚动 owner、断点/重排、文本增长、SafeArea/键盘/系统栏、无障碍与 data/UI/asset ownership。
-3. 依据 `flutter-code-sketch/references/code-sketch-level-standard.md` 选择 Full、Lightweight 或 Reuse 并记录理由。
-4. 调用 `adaptive-layout-implementation` 创建 `phase: sketch` 的页面 `layout-spec.yaml`；此阶段不含未来视觉 parity 字段。
-5. 由 Flutter Engineer 使用 `flutter-code-sketch` 在生产骨架实现中性草图、关系测试和风险选择的截图，再由独立 Code Sketch Reviewer 审阅。
-6. Review 通过后调用 `flutter-hifi-mockup` 生成、评审并由用户冻结高保真目标。
+3. 按风险决定是否使用 Code Sketch；可直接实现并验证已明确的页面功能。选择草图路线时依据 `flutter-code-sketch/references/code-sketch-level-standard.md` 决定 Full、Lightweight 或 Reuse 并记录理由。
+4. 需要布局合同或选择草图路线时，调用 `adaptive-layout-implementation` 创建 `phase: sketch` 的页面 `layout-spec.yaml`；此阶段不含未来视觉 parity 字段。
+5. 选择 Code Sketch 时，由 Flutter Engineer 在生产骨架实现中性草图并执行关系测试；需要截图时由用户人工检查。直接实现路线保留相应真实功能和结构验证。
+6. 公共 V1 功能行为经实际验证后，按需调用 `flutter-hifi-mockup` 生成、评审并由用户冻结高保真目标。
 7. 对冻结目标与语义合同/sketch spec 做合同回对。任何范围、状态、导航、滚动、断点、无障碍或 ownership 变化都返回更新并重审。
-8. 需要资产时调用 `flutter-asset-atlas`；随后把同一 layout-spec 升级为 `phase: fidelity`，在同一骨架还原并进入独立 Visual QA。
+8. 需要资产时调用 `flutter-asset-atlas`，在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
 
 <a id="mode-flutter-ux-ui-quality--完成条件"></a>
 #### 完成条件
@@ -347,7 +349,7 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 <a id="mode-adaptive-layout-implementation--adaptive-layout-implementation"></a>
 ### Adaptive Layout Implementation
 
-每个页面只维护一个 `docs/design/pages/<page-name>/layout-spec.yaml`。先以 `phase: sketch` 表达语义结构与关系证据；冻结高保真目标后把同一文件升级为 `phase: fidelity`。`phase` 不是运行时状态或合并信号。
+每个页面只维护一个 `docs/design/pages/<page-name>/layout-spec.yaml`。以 `phase: sketch` 表达语义结构与关系证据，不要求草图画面；仅明确要求 exact 时把同一文件升级为 `phase: fidelity`。`phase` 不是运行时状态或合并信号。
 
 <a id="mode-adaptive-layout-implementation--流程"></a>
 #### 流程
@@ -355,9 +357,9 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 1. 从已审页面语义合同复制 [sketch 模板](../../adaptive-layout-implementation/assets/layout-spec-template.yaml)，填写区域、锚点、断点、内容容器、系统避让、滚动 owner、文本增长与 `text_behavior.line_break` 角色合同、叠层、实现约束、不变量和 `evidence_matrix`。
 2. sketch 阶段禁止写 `critical_alignments` 或 `parity_cases`，避免伪造未来证据。运行 `node scripts/validate-layout-spec.js <layout-spec.yaml>` 后才实现 Code Sketch。
 3. 在生产 Flutter 骨架中实现并执行实际 Widget 关系测试。文本断行测试必须覆盖最长文案与大字号的组合，并按正文、标题/关键文案、控件标签和原子文本分别验证；结构门禁通过后才按风险生成截图，截图不能替代关系测试。
-4. 高保真目标冻结并与语义合同回对后，参考 [fidelity 模板](../../adaptive-layout-implementation/assets/layout-spec-fidelity-template.yaml) 升级同一文件，补充 target↔Flutter `critical_alignments` 与 `parity_cases`。
+4. 明确要求 exact 且目标已确认时，参考 [fidelity 模板](../../adaptive-layout-implementation/assets/layout-spec-fidelity-template.yaml) 升级同一文件，补充 target↔Flutter `critical_alignments` 与 `parity_cases`；默认可用性模式不强制完整矩阵。
 5. 每个 parity case 只绑定一个明确冻结的 viewport/state/orientation/target SHA 和 candidate code SHA；没有冻结目标的视口不得声称 parity。spec hash 由 Code Sketch Review、任务审阅或 Visual QA 外部记录，禁止写回 spec 造成自引用。
-6. 运行 validator、实际 Widget 测量测试、target/Flutter 同视口截图复核和独立 Visual QA。validator 只证明 schema、中心复算、delta、容差和证据元数据，不证明实际视觉一致。
+6. 运行适用 validator 和实际 Widget 测量测试；截图由用户检查，未经明确授权不得自动分析。仅 exact 模式要求完整同视口 parity。validator 不证明实际视觉一致。
 
 <a id="mode-adaptive-layout-implementation--资源"></a>
 #### 资源
@@ -367,6 +369,11 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 - Flutter 适配：[flutter-adapter.md](../../adaptive-layout-implementation/references/flutter-adapter.md)
 - 测试覆盖：[test-matrix.md](../../adaptive-layout-implementation/references/test-matrix.md)
 - 关键对齐门禁：[critical-alignment-gate.md](../../adaptive-layout-implementation/references/critical-alignment-gate.md)
+
+<a id="mode-adaptive-layout-implementation--ui-相对布局约束"></a>
+#### UI 相对布局约束
+
+UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
 <!-- native-source:adaptive-layout-implementation:end -->
 
 
@@ -464,7 +471,7 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 <a id="mode-flutter-code-sketch--flutter-code-sketch"></a>
 ### Flutter Code Sketch
 
-在生产 Flutter 骨架中实现中性、可测试的页面结构。此 skill 只负责草图实现、结构证据和独立审阅；`adaptive-layout-implementation` 统一定义 `layout-spec.yaml`、断点和验证规则。
+仅在按风险选择 Code Sketch 时，在生产 Flutter 骨架中实现中性、可测试的页面结构；直接实现的功能无需草图。此 skill 只负责草图实现、结构证据和独立审阅；`adaptive-layout-implementation` 统一定义 `layout-spec.yaml`、断点和验证规则。
 
 <a id="mode-flutter-code-sketch--前置条件"></a>
 #### 前置条件
@@ -493,10 +500,10 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 <a id="mode-flutter-code-sketch--高保真交接"></a>
 #### 高保真交接
 
-1. Code Sketch Review 通过后才生成、评审并由用户冻结高保真目标图。
+1. 选择草图路线时，完成 Code Sketch Review 后再交接；其他路线直接以 V1 实际功能验证和页面语义进入 V2，由用户确认视觉目标。
 2. 将冻结目标与已审语义合同及 sketch layout-spec 回对。若范围、状态、导航语义、滚动 owner、断点、无障碍或 data/UI/asset ownership 改变，回到语义/草图阶段更新并重审，不得静默继续。
-3. 完成资产拆解和确认后，把同一 `layout-spec.yaml` 升级为 `phase: fidelity`；在同一 Flutter 骨架上正常重构实现，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
-4. 最终通过 fidelity validator、实际 Widget 关系测量、target/Flutter 同视口截图 parity 和独立 Visual QA。validator 只证明规格结构与元数据，不证明实际视觉一致。
+3. 完成资产拆解和确认后在同一 Flutter 骨架上实现；仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
+4. 最终通过实际 Widget 关系和功能验证，由用户检查截图；仅明确要求 exact 时执行 fidelity validator 和完整同视口 parity。validator 只证明规格结构与元数据，不证明实际视觉一致。
 
 <a id="mode-flutter-code-sketch--输出"></a>
 #### 输出
@@ -505,6 +512,11 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 - `phase: sketch` 的同一个 `layout-spec.yaml` 及 validator 结果。
 - 生产 Flutter 骨架、Widget/关系测试与风险选择的截图证据。
 - 独立 Code Sketch Review：snapshot-id/diff、spec hash、截图 hash、结论与未决项。
+
+<a id="mode-flutter-code-sketch--ui-相对布局约束"></a>
+#### UI 相对布局约束
+
+UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
 <!-- native-source:flutter-code-sketch:end -->
 
 
@@ -543,13 +555,13 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 <a id="mode-flutter-hifi-mockup--flutter-high-fidelity-mockup"></a>
 ### Flutter High-Fidelity Mockup
 
-仅在 Code Sketch Review 通过后生成页面目标图。高保真目标是最终视觉来源，但不能静默改变已审语义合同、状态、导航、滚动、断点、无障碍或 ownership。
+V1 实际验证功能和页面语义后进入 V2 目标设计；白盒或 Code Sketch 按风险选择，仅选用草图路线时需要相应审阅。视觉目标须由用户确认，不能静默改变已验证语义、状态、导航、滚动、断点、无障碍或 ownership。
 
 <a id="mode-flutter-hifi-mockup--输入"></a>
 #### 输入
 
-- 已审页面语义合同、Code Sketch Level 与 Code Sketch Review。
-- `phase: sketch` 的 `layout-spec.yaml`、外部 spec hash、关系测试和风险需要的截图证据。
+- V1 已验证的页面功能与语义合同；仅使用草图路线时提供 Code Sketch Level 与审阅结果。
+- 适用的页面布局合同与真实关系测试；`phase: sketch` 仅表示布局关系数据，不要求草图画面。需要截图时由用户检查。
 - 全局视觉方向、产品/模块范围与页面真实内容要求。
 
 <a id="mode-flutter-hifi-mockup--流程"></a>
@@ -557,16 +569,16 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 
 1. 冻结前在对话中临时准备 brief、prompt 和候选；不要把未选方案、prompt 或评审草稿写进仓库。
 2. 方向清楚时生成一个候选；只有用户要求探索或存在实质取舍时生成两到三个。每张页面图必须精确 `780 x 1688 px`。
-3. 高风险/核心/探索页安排与 producer 不同的只读 Effect Image Reviewer，检查任务层级、状态、可读性、无障碍、系统区域和全局方向。
+3. 高风险/核心/探索页提供任务层级、状态、无障碍和系统区域的检查要点；由用户检查效果图，未经明确授权不得自动分析截图。
 4. Controller 获得用户明确选择后，把选中图持久化到 `.codex-workflow/visuals/pages/<page-name>/`，计算 SHA-256；随后才在 page design decision 写 candidate ID、hash、确认时间、约束与允许偏差。冻结前 brief/prompt/candidates 保持 transient。
-5. 将冻结目标与已审语义合同/layout-spec(sketch)逐项回对。若范围、状态、导航语义、滚动 owner、断点、无障碍或 data/UI/asset ownership 改变，返回 UX/UI 与 Code Sketch 阶段更新并独立重审。
+5. 将冻结目标与已验证语义及适用布局合同回对。范围、状态、导航、滚动 owner、断点、无障碍或 ownership 变化时更新受影响功能并重验；仅草图路线更新草图审阅。
 6. 回对通过后，调用 `flutter-asset-atlas` 完成 bitmap decomposition、覆盖审计、编号图确认和资产生产；`asset-manifest.md` 是明细唯一权威，design decision 只链接。
-7. 将同一 layout-spec 升级 `phase: fidelity` 后在同一生产 Flutter 骨架高保真还原，并执行 target/Flutter parity 与独立 Visual QA。
+7. 在同一生产 Flutter 骨架完成正式实现和可用性验收；仅明确要求 exact 时将同一 layout-spec 升级 `phase: fidelity` 并执行完整 target/Flutter parity。
 
 <a id="mode-flutter-hifi-mockup--禁止"></a>
 #### 禁止
 
-不得把低保真截图当最终几何蓝图；不得在 Code Sketch Review 前生成页面目标；不得在用户冻结前写候选记录；不得在合同回对失败时继续资产或高保真实现；不得把资产 ownership/编号/覆盖明细复制到 design decision。
+不得把低保真截图当最终几何蓝图；不得把未实际验证的功能声称为通过；不得在用户冻结前写候选记录；不得在合同回对失败时继续资产或高保真实现；不得把资产 ownership/编号/覆盖明细复制到 design decision。
 <!-- native-source:flutter-hifi-mockup:end -->
 
 

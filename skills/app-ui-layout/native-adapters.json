@@ -57,6 +57,107 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "ui-game-copy",
+      "path": "../app-domain-toolkit/references/ui-game-copy.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs",
+        "unity"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "responsive-visual-validation",
+      "path": "../app-domain-toolkit/references/responsive-visual-validation.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-layout-contract",
+      "path": "../app-domain-toolkit/references/reference-ui-layout-contract.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-layout-review-artifacts",
+      "path": "../app-domain-toolkit/references/reference-ui-layout-review-artifacts.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-layout-hierarchy",
+      "path": "../app-domain-toolkit/references/reference-ui-layout-hierarchy.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-evidence-matrix",
+      "path": "../app-domain-toolkit/references/reference-ui-evidence-matrix.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-workflow-gates",
+      "path": "../app-domain-toolkit/references/reference-ui-workflow-gates.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-layout-calibration",
+      "path": "../app-domain-toolkit/references/reference-ui-layout-calibration.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-ui-functional-semantic-grouping",
+      "path": "../app-domain-toolkit/references/reference-ui-functional-semantic-grouping.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
+    },
+    {
+      "id": "reference-domain-display-ownership",
+      "path": "../app-domain-toolkit/references/reference-domain-display-ownership.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

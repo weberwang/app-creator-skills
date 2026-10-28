@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 
+import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -12,13 +15,12 @@ import { getUiLayoutSourceDocument, getUiLayoutSourceFromMap, loadUiLayoutSource
 import { validateSceneRuntimeEvidenceFiles } from "./ui-layout-scene-file-gate.mjs";
 
 const ROOT_REQUIRED = ["schema_version", "contract_id", "contract_version", "scope", "fidelity", "frozen_visual_target", "logicalViewportSpace", "designResolutionPolicy", "canvasBackingPolicy", "runtimeDprPolicy", "maxRuntimeDpr", "scaleMode", "cameraViewportPolicy", "cameraZoomPolicy", "cameraOriginPolicy", "inputCoordinatePolicy", "safeAreaPolicy", "resizePolicy", "orientationPolicy", "textResolutionPolicy", "assetResolutionPolicy", "performanceBudget", "representativeViewports", "requiredRuntimeEvidence", "targets", "coordinate_spaces", "regions", "layout_nodes", "content", "platform_insets", "scrolling", "dynamic_content", "overlay_rules", "breakpoints", "invariants", "critical_alignments", "parity_cases", "evidence_matrix"];
-const REFERENCE_CONTRACT_FIELDS = ["schema_version", "contract_id", "contract_version", "project_policy_file", "scene_contract_file"];
+const REFERENCE_CONTRACT_FIELDS = ["schema_version", "contract_id", "contract_version", "project_policy_file", "scene_contract_file", "localization_contract_file"];
 const PROJECT_POLICY_FIELDS = ["logicalViewportSpace", "designResolutionPolicy", "canvasBackingPolicy", "runtimeDprPolicy", "maxRuntimeDpr", "scaleMode", "cameraViewportPolicy", "cameraZoomPolicy", "cameraOriginPolicy", "inputCoordinatePolicy", "safeAreaPolicy", "resizePolicy", "orientationPolicy", "textResolutionPolicy", "assetResolutionPolicy", "performanceBudget", "representativeViewports", "requiredRuntimeEvidence", "targets", "coordinate_spaces"];
 const PROJECT_POLICY_METADATA_FIELDS = ["schema_version", "policy_id", "policy_version"];
 const REFERENCE_CONTRACT_ALLOWED_FIELDS = new Set(REFERENCE_CONTRACT_FIELDS);
 const PROJECT_POLICY_ALLOWED_FIELDS = new Set([...PROJECT_POLICY_METADATA_FIELDS, ...PROJECT_POLICY_FIELDS]);
 const REQUIRED_EVIDENCE_AXES = new Set(["breakpoint-neighbors", "width", "height", "orientation", "text-scale", "localization", "safe-area", "action-state", "dpr", "dynamic-values", "scene-lifecycle", "overlay-keyboard-scroll"]);
-const REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES = ["en", "zh-CN", "ja", "ru", "es"];
 const REQUIRED_RUNTIME_EVIDENCE_FIELDS = ["viewportRect", "canvasRect", "designTransform", "logicalSize", "backingSize", "cssDisplaySize", "rawDevicePixelRatio", "effectiveDevicePixelRatio", "logicalToCssScale", "cssToPhysicalScale", "cameraViewport", "cameraZoom", "cameraOrigin", "safeArea", "edgeGaps", "backgroundCoverage", "keyUiRects", "inputHitResults", "resizeTrajectory", "pageReloaded", "screenshot", "sceneId", "stateId", "layoutContractVersion", "visualBaselineVersion"];
 
 /** 判断值是否为合同允许的对象类型。 */
@@ -363,24 +365,59 @@ function validateSize(size, label, errors) {
 }
 
 /** 验证区域字段、参照物和专项审查标记。 */
+/** 校验真实 UI 节点；浮层本体身份必须绑定实际容器和真实顶层 UI 根。 */
+function validateRelativeWebNodes(input, errors, label, kind) {
+  if (!Array.isArray(input)) return;
+  const synthetic = (node) => node?.is_root_container === true && ["viewport", "safe-area"].includes(node.layout_node_id ?? node.layoutNodeId) && (node.parent_layout_node_id === null || node.parentLayoutNodeId === null);
+  for (const node of input.filter(synthetic)) if (node.ui_layout?.floating_root_kind !== undefined || node.ui_layout?.positioning === "absolute") errors.push(label + " 合成视口根不能声明为浮层本体");
+  const source = input.filter((node) => !synthetic(node));
+  const ids = new Set(source.map((node) => kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId)));
+  const byId = new Map(source.map((node) => [kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId), node]));
+  const regionNodes = new Map();
+  if (kind === "nodes") for (const node of source) { const group = regionNodes.get(node?.region_id) ?? []; group.push(node?.layout_node_id); regionNodes.set(node?.region_id, group); }
+  const canonical = source.map((node) => {
+    const layout = node?.ui_layout ?? node?.uiLayout ?? {};
+    const id = kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId);
+    const parentId = kind === "regions" ? node?.parent_id : kind === "elements" ? node?.parent_element_id : (node?.parent_layout_node_id ?? node?.parentLayoutNodeId ?? node?.parent_element_id ?? node?.parentElementId);
+    let reference = kind === "regions" ? node?.reference_id : kind === "elements" ? (layout.position_reference_id ?? node?.position_reference_id ?? node?.reference_id ?? parentId) : (node?.reference_id ?? node?.referenceId ?? layout.position_reference_id ?? layout.positionReferenceId ?? node?.position_reference_id ?? node?.positionReferenceId ?? parentId);
+    if (kind === "nodes" && !ids.has(reference) && !["viewport", "safe-area"].includes(reference)) { const matches = regionNodes.get(reference) ?? []; if (matches.length === 1) reference = matches[0]; }
+    const mode = kind === "regions" ? node?.positioning : Object.hasOwn(layout, "positioning") ? layout.positioning : "relative";
+    const owner = kind === "regions" ? (node ?? {}) : layout;
+    const floatingKind = Object.hasOwn(owner, "floating_root_kind") ? owner.floating_root_kind : null;
+    if (Object.hasOwn(owner, "floating_root_kind") && !["popup", "floating", "toast"].includes(floatingKind)) errors.push(label + "." + id + " floating_root_kind 必须为 popup/floating/toast");
+    if (floatingKind !== null) {
+      if (kind === "regions" && node?.semantic_role !== floatingKind) errors.push(label + "." + id + " 浮层本体类型必须与 semantic_role 一致");
+      if (kind === "regions" && node?.is_container !== true) errors.push(label + "." + id + " 浮层本体必须显式声明实际容器");
+      if (kind !== "regions" && node?.is_container !== true && node?.element_type !== "container") errors.push(label + "." + id + " 浮层本体必须是实际容器，普通叶子不能豁免");
+      const parent = byId.get(parentId);
+      const actualUiRoot = kind === "regions" ? ["ui-root", "screen-ui-root"].includes(parent?.semantic_role) : (parent?.is_container === true || parent?.element_type === "container") && [parent?.layout_role, parent?.role, parent?.semantic_role].some((role) => ["ui-root", "screen-ui-root"].includes(role));
+      if (!["viewport", "safe-area"].includes(parentId) && !actualUiRoot) errors.push(label + "." + id + " 浮层本体必须直接归属稳定根或实际 UI 根");
+    }
+    // 独立浮层本体可以没有锚点；普通节点和浮层内部仍必须提供实际参照。
+    const references = mode === "absolute" && ["popup", "floating", "toast"].includes(floatingKind) && reference === undefined ? [] : [reference];
+    return { id, parentId, references, mode, floatingKind };
+  });
+  errors.push(...validateRelativeLayoutNodes(canonical, { label, roots: ["viewport", "safe-area"] }));
+}
+
 function validateRegions(document, spaces, errors, specialized) {
   const regions = document.regions; const ids = new Set(); if (!Array.isArray(regions) || regions.length === 0) { errors.push("regions 必须是非空数组"); return ids; }
   regions.forEach((region, index) => { const label = `regions[${index}]`; if (!isObject(region)) { errors.push(`${label} 必须是对象`); return; } if (!isString(region.id)) { errors.push(`${label}.id 必须是非空字符串`); return; } if (ids.has(region.id)) errors.push(`重复区域/UI ID：${region.id}`); ids.add(region.id);
-    for (const field of ["semantic_role", "parent_space", "reference_id", "positioning", "layout_group", "layout_participation", "scroll", "input", "clip", "origin", "layout_anchor"]) if (!isString(region[field])) errors.push(`${label}.${field} 必须是非空字符串`);
+    for (const field of ["semantic_role", "parent_space", "reference_id", "positioning", "layout_group", "layout_participation", "scroll", "input", "clip", "origin", "layout_anchor"]) if (!(field === "reference_id" && region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, field)) && !isString(region[field])) errors.push(`${label}.${field} 必须是非空字符串`);
     // 纯布局节点没有资源原点；可渲染对象才执行中心默认值及非中心例外门禁。
     if (!["display-object", "layout-only"].includes(region.origin_applicability)) errors.push(`${label}.origin_applicability 必须为 display-object 或 layout-only`);
     else if (region.origin_applicability === "layout-only" && region.origin !== "not-applicable") errors.push(`${label}.origin 在 layout-only 时必须为 not-applicable`);
     else if (region.origin_applicability === "display-object" && region.origin === "not-applicable") errors.push(`${label}.origin 在 display-object 时必须声明资源原点`);
     else if (region.origin_applicability === "display-object" && isString(region.origin) && region.origin !== "center" && (!isObject(region.origin_exception) || !isString(region.origin_exception.reason) || !isString(region.origin_exception.coordinate_conversion))) errors.push(`${label}.origin 非中心时必须声明 origin_exception.reason 和 coordinate_conversion`);
     if (!isObject(region.animation_offset) || !("x" in region.animation_offset) || !("y" in region.animation_offset)) errors.push(`${label}.animation_offset 必须包含 x 和 y`); else if (!["x", "y"].every((axis) => isNumber(region.animation_offset[axis]) || isString(region.animation_offset[axis]))) errors.push(`${label}.animation_offset.x/y 必须是数值或非空表达式`);
-    if (!spaces.has(region.parent_space)) errors.push(`${label} 引用不存在的 parent_space：${region.parent_space}`); validateAnchors(region.anchors, label, errors); validateSize(region.size, label, errors); if (region.positioning === "absolute") appendUnique(specialized, `${region.id}:absolute-positioning`); if (isObject(region.size) && region.size.strategy === "fixed") appendUnique(specialized, `${region.id}:fixed-size`);
+    if (!spaces.has(region.parent_space)) errors.push(`${label} 引用不存在的 parent_space：${region.parent_space}`); if (!(region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, "anchors"))) validateAnchors(region.anchors, label, errors); validateSize(region.size, label, errors); if (region.positioning === "absolute") appendUnique(specialized, `${region.id}:absolute-positioning`); if (isObject(region.size) && region.size.strategy === "fixed") appendUnique(specialized, `${region.id}:fixed-size`);
   }); return ids;
 }
 
 /** 验证区域参照存在并检测参照环。 */
 function validateReferenceGraph(document, ids, errors) {
   if (!Array.isArray(document.regions)) return; const graph = new Map();
-  document.regions.forEach((region, index) => { if (!isObject(region) || !ids.has(region.id)) return; if (region.reference_id !== "viewport" && !ids.has(region.reference_id)) errors.push(`regions[${index}] 引用不存在的 reference_id：${region.reference_id}`); else if (ids.has(region.reference_id)) graph.set(region.id, region.reference_id); });
+  document.regions.forEach((region, index) => { if (!isObject(region) || !ids.has(region.id)) return; if (region.positioning === "absolute" && ["popup", "floating", "toast"].includes(region.floating_root_kind) && !Object.hasOwn(region, "reference_id")) return; if (region.reference_id !== "viewport" && !ids.has(region.reference_id)) errors.push(`regions[${index}] 引用不存在的 reference_id：${region.reference_id}`); else if (ids.has(region.reference_id)) graph.set(region.id, region.reference_id); });
   validateGraphCycles(graph, "区域参照存在循环", errors);
 }
 
@@ -400,24 +437,23 @@ function validatePlatformAndScrolling(document, ids, errors) {
   if (!isObject(scrolling.narrow_height_degradation)) errors.push("scrolling.narrow_height_degradation 必须是对象"); else for (const field of ["trigger", "strategy", "fallback"]) if (!isString(scrolling.narrow_height_degradation[field])) errors.push(`scrolling.narrow_height_degradation.${field} 必须是非空字符串`);
 }
 
-/** 验证程序化文本的五语种、逐语言行布局与短文案合同。 */
+/** 验证程序化文本的项目语言及逐语言行布局。 */
 function validateProgrammaticTextLocalization(localization, errors) {
   const label = "dynamic_content.localization";
   if (typeof localization.programmatic_text !== "boolean") errors.push(`${label}.programmatic_text 必须是布尔值`);
   if (!Array.isArray(localization.required_languages) || localization.required_languages.length === 0 || !localization.required_languages.every(isString)) errors.push(`${label}.required_languages 必须是非空语言数组`);
   if (localization.programmatic_text !== true) return;
 
-  const languages = new Set(localization.required_languages ?? []);
-  const missing = REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES.filter((language) => !languages.has(language));
-  if (missing.length) errors.push(`${label}.required_languages 缺少程序化文本必需语言：${missing.join(", ")}`);
+  const languages = new Set(Array.isArray(localization.required_languages) ? localization.required_languages : []);
   if (languages.size !== (localization.required_languages?.length ?? 0)) errors.push(`${label}.required_languages 不得包含重复语言`);
+  if (!isString(localization.default_language) || !languages.has(localization.default_language)) errors.push(`${label}.default_language 必须属于所选语言`);
   if (!isObject(localization.wrap)) errors.push(`${label}.wrap 必须逐语言声明 single-line 或 wrap`);
-  else for (const language of REQUIRED_PROGRAMMATIC_TEXT_LANGUAGES) if (!["single-line", "wrap"].includes(localization.wrap[language])) errors.push(`${label}.wrap.${language} 必须为 single-line 或 wrap`);
+  else for (const language of languages) if (!["single-line", "wrap"].includes(localization.wrap[language])) errors.push(`${label}.wrap.${language} 必须为 single-line 或 wrap`);
   if (localization.growth !== "locale-adaptive") errors.push(`${label}.growth 必须为 locale-adaptive`);
   if (localization.truncate_policy !== "forbid") errors.push(`${label}.truncate_policy 必须为 forbid，程序化文本禁止截断`);
   if (localization.copy_style !== "concise-gameplay") errors.push(`${label}.copy_style 必须为 concise-gameplay`);
   if (localization.multiplier_format !== "x{value}") errors.push(`${label}.multiplier_format 必须为 x{value}`);
-  if (!isString(localization.display_fit_evidence)) errors.push(`${label}.display_fit_evidence 必须引用五语种逐语言行布局适配证据`);
+  if (!isString(localization.display_fit_evidence)) errors.push(`${label}.display_fit_evidence 必须引用所选语言的逐语言行布局适配证据`);
 }
 
 /** 验证本地化、文字缩放、关键动作和重排事件。 */
@@ -458,7 +494,7 @@ function validateEvidenceMatrixDpr(value, path, errors, seen = new Set()) {
 /** 验证证据矩阵绑定和必需轴。 */
 function validateEvidenceMatrix(matrix, errors, mode = "usability", coverage = null) { if (!isObject(matrix)) return; for (const field of ["candidate_binding", "golden_policy", "snapshot_stability"]) if (!isString(matrix[field])) errors.push(`evidence_matrix.${field} 必须是非空字符串`); const exact = mode === "exact"; if (exact && (!Array.isArray(matrix.required_axes) || matrix.required_axes.length === 0 || !matrix.required_axes.every(isString))) errors.push("evidence_matrix.required_axes 必须是非空数组"); else if (Array.isArray(matrix.required_axes) && matrix.required_axes.some((axis) => !isString(axis))) errors.push("evidence_matrix.required_axes 只能包含非空字符串"); else if (exact) { const requiredAxes = [...REQUIRED_EVIDENCE_AXES]; if (coverage && !coverage.requiresOrientationChange) requiredAxes.splice(requiredAxes.indexOf("orientation"), 1); const missing = requiredAxes.filter((axis) => !matrix.required_axes.includes(axis)).sort(); if (missing.length) errors.push(`evidence_matrix.required_axes 缺少必需轴：${missing.join(", ")}`); } validateEvidenceMatrixDpr(matrix, "evidence_matrix", errors); }
 
-/** 程序化文本必须始终保留本地化显示轴，不能因 usability 模式跳过五语种适配。 */
+/** 程序化文本必须始终保留本地化显示轴，不能因 usability 模式跳过所选语言适配。 */
 function validateProgrammaticTextEvidence(document, errors) {
   if (document.dynamic_content?.localization?.programmatic_text !== true) return;
   if (!Array.isArray(document.evidence_matrix?.required_axes) || !document.evidence_matrix.required_axes.includes("localization")) errors.push("程序化文本的 evidence_matrix.required_axes 必须包含 localization");
@@ -473,7 +509,7 @@ export function validateContract(document, options = {}) {
   }
   const errors = []; const warnings = []; const specialized = []; validateRoot(document, errors); if (!isObject(document)) return { status: "failed", errors, warnings, specialized_review: specialized };
   const mode = resolveVisualValidationMode(document); validateVisualValidationPolicy(errors, "visual_validation", document);
-  validateScope(document.scope, errors); validateFidelityLifecycle(document, errors); const coverage = resolveOrientationCoverage(document.orientationPolicy); errors.push(...coverage.errors); validateTargets(document.targets, errors, coverage); validateResponsiveContract(document, errors, coverage); const spaces = validateCoordinateSpaces(document.coordinate_spaces, errors); const ids = validateRegions(document, spaces, errors, specialized); validateScopeRegionIds(document.scope, ids, errors); validateReferenceGraph(document, ids, errors); validateContent(document.content, errors); validateBreakpoints(document.breakpoints, errors); validatePlatformAndScrolling(document, ids, errors); validateDynamicContent(document.dynamic_content, ids, errors); validateOverlays(document.overlay_rules, ids, errors, specialized); validateOverlayCoverage(document, ids, errors); validateInvariants(document.invariants, ids, errors, mode);
+  validateScope(document.scope, errors); validateFidelityLifecycle(document, errors); const coverage = resolveOrientationCoverage(document.orientationPolicy); errors.push(...coverage.errors); validateTargets(document.targets, errors, coverage); validateResponsiveContract(document, errors, coverage); const spaces = validateCoordinateSpaces(document.coordinate_spaces, errors); const ids = validateRegions(document, spaces, errors, specialized); validateRelativeWebNodes(document.regions, errors, "regions", "regions"); validateScopeRegionIds(document.scope, ids, errors); validateReferenceGraph(document, ids, errors); validateContent(document.content, errors); validateBreakpoints(document.breakpoints, errors); validatePlatformAndScrolling(document, ids, errors); validateDynamicContent(document.dynamic_content, ids, errors); validateOverlays(document.overlay_rules, ids, errors, specialized); validateOverlayCoverage(document, ids, errors); validateInvariants(document.invariants, ids, errors, mode);
   validateEvidenceMatrix(document.evidence_matrix, errors, mode, coverage); validateProgrammaticTextEvidence(document, errors);
   if (isObject(document.dynamic_content?.localization) && !["forbid-critical", "forbid"].includes(document.dynamic_content.localization.truncate_policy)) warnings.push("本地化截断策略未明确禁止关键文本");
   return { status: errors.length ? "failed" : "passed", errors, warnings, specialized_review: specialized };
@@ -485,7 +521,7 @@ function validateReferenceContractRoot(document, errors) {
   for (const field of REFERENCE_CONTRACT_FIELDS) if (!Object.hasOwn(document, field)) errors.push(`缺少根字段：${field}`);
   for (const field of Object.keys(document)) if (!REFERENCE_CONTRACT_ALLOWED_FIELDS.has(field)) errors.push(`schema 2.0.0 禁止重复布局事实或未定义字段：${field}`);
   if (document.schema_version !== "2.0.0") errors.push("schema_version 必须为 2.0.0");
-  for (const field of ["contract_id", "contract_version", "project_policy_file", "scene_contract_file"]) if (!isString(document[field])) errors.push(`字段 ${field} 必须是非空字符串`);
+  for (const field of ["contract_id", "contract_version", "project_policy_file", "scene_contract_file", "localization_contract_file"]) if (!isString(document[field])) errors.push(`字段 ${field} 必须是非空字符串`);
   return true;
 }
 
@@ -528,31 +564,36 @@ function validateProjectPolicyTargetCompatibility(policy, scene, errors) {
   if (!isObject(policy?.designResolutionPolicy?.[orientation])) errors.push(`project policy.designResolutionPolicy 缺少冻结目标方向 ${orientation}`);
 }
 
-/** 用相同策略验证入口检查场景与布局源，避免 V2 UI 另存一份节点树。 */
+/** 用相同策略验证入口检查场景与布局源，避免 V3 UI 另存一份节点树。 */
 function validateReferencedContract(document, options = {}) {
   const errors = [];
   validateReferenceContractRoot(document, errors);
-  const stage = String(options.stage ?? "V2").toUpperCase();
+  const stage = String(options.stage ?? "V3").toUpperCase();
   const sourceOptions = { ...options, forceLayoutSourceFiles: options.forceLayoutSourceFiles === true || options.checkFiles === true };
-  if (!["V2", "V4"].includes(stage)) errors.push("stage 只支持 V2 或 V4");
+  if (!["V3", "V5"].includes(stage)) errors.push("stage 只支持 V3 或 V5");
   let sources;
   try { sources = getUiLayoutSourceFromMap(document, options); }
   catch (error) { errors.push(error.message); }
   const policy = getUiLayoutSourceDocument(sources, document.project_policy_file, "project_policy_file");
   const scene = getUiLayoutSourceDocument(sources, document.scene_contract_file, "scene_contract_file");
+  const localization = getUiLayoutSourceDocument(sources, document.localization_contract_file, "localization_contract_file");
   if (sources && !isObject(policy)) errors.push("project_policy_file 必须解析为 JSON 对象");
   if (sources && !isObject(scene)) errors.push("scene_contract_file 必须解析为 JSON 对象");
+  // 引用式布局只消费明确绑定的本地化合同，不能从目标图单语言推断项目语言。
+  if (sources && !isObject(localization?.dynamic_content?.localization)) errors.push("localization_contract_file 缺少 dynamic_content.localization 对象");
+  else if (isObject(localization?.dynamic_content?.localization)) validateProgrammaticTextLocalization(localization.dynamic_content.localization, errors);
   if (isObject(policy)) validateProjectLayoutPolicy(policy, errors);
   if (isObject(scene)) {
     errors.push(...validateSceneReconstructionContract(scene, null, { ...sourceOptions, effectImage: true, requireFinalLayout: true, stage }));
     validateProjectPolicyTargetCompatibility(policy, scene, errors);
     try {
-      resolveSceneV2LayoutSource(scene, {
+      const relativeLayoutSource = resolveSceneV2LayoutSource(scene, {
         projectRoot: sourceOptions.projectRoot,
         layoutSourceDocuments: sourceOptions.layoutSourceDocuments,
         forceLayoutSourceFiles: sourceOptions.forceLayoutSourceFiles,
       });
-    } catch (error) { errors.push(`scene_contract V2 唯一布局源无效：${error.message}`); }
+      validateRelativeWebNodes(relativeLayoutSource.nodes, errors, "scene_contract.layout_nodes", "nodes");
+    } catch (error) { errors.push(`scene_contract V3 唯一布局源无效：${error.message}`); }
   }
   return { status: errors.length ? "failed" : "passed", errors, warnings: [], specialized_review: [] };
 }
@@ -560,7 +601,7 @@ function validateReferencedContract(document, options = {}) {
 /** 读取严格 JSON-compatible YAML 合同。 */
 export async function loadContract(path) { return JSON.parse(await readFile(path, "utf8")); }
 
-/** 校验 V2/V4 引用合同，并执行场景确认与 V4 运行证据的官方文件门。 */
+/** 校验 V3/V5 引用合同，并执行场景确认与 V5 运行证据的官方文件门。 */
 export async function checkContractFiles(document, projectRoot, options = {}) {
   const errors = [];
   if (document?.schema_version === "2.0.0") {
@@ -568,9 +609,12 @@ export async function checkContractFiles(document, projectRoot, options = {}) {
     try { sources = await loadUiLayoutSourceDocuments(document, projectRoot); }
     catch (error) { errors.push(error.message); return errors; }
     const scene = getUiLayoutSourceDocument(sources, document.scene_contract_file, "scene_contract_file");
+    const localization = getUiLayoutSourceDocument(sources, document.localization_contract_file, "localization_contract_file");
+    if (!isObject(localization?.dynamic_content?.localization)) errors.push("localization_contract_file 缺少 dynamic_content.localization 对象");
+    else validateProgrammaticTextLocalization(localization.dynamic_content.localization, errors);
     if (!isObject(scene)) errors.push("scene_contract_file 必须解析为 JSON 对象");
     else {
-      const stage = String(options.stage ?? "V2").toUpperCase();
+      const stage = String(options.stage ?? "V3").toUpperCase();
       // 使用场景合同现有确认门，确保 PNG、review、layout decision、用户 decision 与 receipt 都真实可读。
       errors.push(...validateSceneReconstructionContract(scene, null, {
         stage,
@@ -581,9 +625,9 @@ export async function checkContractFiles(document, projectRoot, options = {}) {
         checkFiles: true,
         layoutSourceDocuments: sources,
       }));
-      try { resolveSceneV2LayoutSource(scene, { projectRoot, layoutSourceDocuments: sources, forceLayoutSourceFiles: true }); }
-      catch (error) { errors.push(`scene_contract V2 唯一布局源无效：${error.message}`); }
-      if (stage === "V4") errors.push(...await validateSceneRuntimeEvidenceFiles(scene, projectRoot));
+      try { const relativeLayoutSource = resolveSceneV2LayoutSource(scene, { projectRoot, layoutSourceDocuments: sources, forceLayoutSourceFiles: true }); validateRelativeWebNodes(relativeLayoutSource.nodes, errors, "scene_contract.layout_nodes", "nodes"); }
+      catch (error) { errors.push(`scene_contract V3 唯一布局源无效：${error.message}`); }
+      if (stage === "V5") errors.push(...await validateSceneRuntimeEvidenceFiles(scene, projectRoot));
     }
     return errors;
   }
@@ -592,8 +636,8 @@ export async function checkContractFiles(document, projectRoot, options = {}) {
 
 /** 解析合同 CLI 的文件检查开关与项目根目录。 */
 function parseArgs(argv) {
-  const args = { checkFiles: false, stage: "V2" };
-  for (let index = 0; index < argv.length; index += 1) { const token = argv[index]; if (token === "--json") args.asJson = true; else if (token === "--check-files") args.checkFiles = true; else if (token === "--project-root") args.projectRoot = argv[++index]; else if (token === "--stage") { const stage = argv[++index]; if (!stage || stage.startsWith("-")) throw new Error("--stage 必须指定 V2 或 V4"); args.stage = stage; } else if (!token.startsWith("-") && !args.contract) args.contract = token; else throw new Error(`不支持的参数：${token}`); }
+  const args = { checkFiles: false, stage: "V3" };
+  for (let index = 0; index < argv.length; index += 1) { const token = argv[index]; if (token === "--json") args.asJson = true; else if (token === "--check-files") args.checkFiles = true; else if (token === "--project-root") args.projectRoot = argv[++index]; else if (token === "--stage") { const stage = argv[++index]; if (!stage || stage.startsWith("-")) throw new Error("--stage 必须指定 V3 或 V5"); args.stage = stage; } else if (!token.startsWith("-") && !args.contract) args.contract = token; else throw new Error(`不支持的参数：${token}`); }
   if (!args.contract) throw new Error("必须传入一个合同文件路径"); return args;
 }
 

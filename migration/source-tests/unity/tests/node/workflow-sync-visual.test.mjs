@@ -250,7 +250,7 @@ function prefabAssembly() {
   };
 }
 
-/** 创建尚未完成 V4 的场景 manifest，验证响应式合同在场景层可被引用。 */
+/** 创建尚未完成 V5 的场景 manifest，验证响应式合同在场景层可被引用。 */
 function sceneManifest() {
   const sceneEvidence = (type) => ({ ...evidence(type), subjectId: "menu", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1" });
   return {
@@ -299,7 +299,7 @@ test("拆解、Prefab 结构和装配可显式绑定状态与独立显示层", (
   }
 });
 
-test("V2 布局绑定要求 UI 布局策略并拒绝重复分组依据", () => {
+test("V3 布局绑定要求 UI 布局策略并拒绝重复分组依据", () => {
   const ajv = createAjv();
   const missingUiLayout = splitPlan();
   delete missingUiLayout.items[0].layoutBinding.uiLayout;
@@ -374,7 +374,7 @@ test("视觉合同拒绝整屏来源、缺父级和缺 REUSE 精确绑定", () =
   assert.equal(validate(ajv, "split-plan.schema.json", invalidReuse).valid, false);
 });
 
-test("V4/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", () => {
+test("V5/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", () => {
   const ajv = createAjv();
   const payload = {
     schemaVersion: "1.0", projectId: "demo-game", sceneId: "menu", buildVersion: "build-1", sourceRevision: "main@abc",
@@ -383,7 +383,7 @@ test("V4/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", ()
     },
     captureSource: "WINDOWS_STANDALONE",
     screenshot: { path: "Artifacts/Visual/Runtime/scene.png", width: 1920, height: 1080, capturedAtUtc: "2026-09-22T12:00:00Z" },
-    ...responsiveContracts(), runtimeMeasurement: runtimeMeasurement(), v4Status: "PASS", status: "APPROVED",
+    ...responsiveContracts(), runtimeMeasurement: runtimeMeasurement(), v5Status: "PASS", status: "APPROVED",
     candidateSnapshot: { ...evidence("grilling-subject-snapshot"), projectId: "demo-game", subjectId: "menu", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1" },
     grillingEvidence: { ...evidence("grilling-record"), projectId: "demo-game", subjectId: "menu", subjectVersion: "1", sourceRevision: "main@abc", projectStateVersion: "state-1" },
     reviews: ["VISUAL_CONSISTENCY", "UNITY_FEASIBILITY", "UX_READABILITY"].map((discipline) => ({
@@ -393,6 +393,10 @@ test("V4/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", ()
     userApprovals: [{ approvalType: "RUNTIME_VISUAL", authority: "USER", subjectId: "menu", subjectVersion: "1", approvedBy: "user", approvedAtUtc: "2026-09-22T12:00:00Z", evidencePath: "Artifacts/approval.json" }],
   };
   assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", payload).valid, true);
+  const legacyStatus = structuredClone(payload);
+  legacyStatus.v4Status = legacyStatus.v5Status;
+  delete legacyStatus.v5Status;
+  assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", legacyStatus).valid, false, "旧阶段状态不能冒充 V5 运行验收");
   const missingMeasurement = structuredClone(payload);
   delete missingMeasurement.runtimeMeasurement;
   assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", missingMeasurement).valid, false);
@@ -406,7 +410,7 @@ test("V4/PASS 必须绑定真实 Unity 运行测量，缺测量不得通过", ()
   assert.equal(validate(ajv, "runtime-visual-evidence.schema.json", missingUserApproval).valid, false);
 });
 
-test("V4/PASS 拒绝失败的 resize、输入命中和错误 Canvas 路线", () => {
+test("V5/PASS 拒绝失败的 resize、输入命中和错误 Canvas 路线", () => {
   const ajv = createAjv();
   const validateMeasurement = ajv.compile({
     type: "object",
@@ -432,7 +436,7 @@ test("七个视觉与响应式 YAML 模板均符合对应 AJV Schema", () => {
     assert.equal(result.valid, true, `${templateFile}: ${JSON.stringify(result.errors)}`);
     if (schemaFile === "runtime-visual-evidence.schema.json") {
       assert.equal(payload.status, "REVIEWING", `${templateFile} 不应伪造已批准运行证据`);
-      assert.equal(payload.v4Status, "NOT_RUN", `${templateFile} 缺少明确的 V4 NOT_RUN 状态`);
+      assert.equal(payload.v5Status, "NOT_RUN", `${templateFile} 缺少明确的 V5 NOT_RUN 状态`);
       assert.equal(payload.runtimeMeasurement, undefined, `${templateFile} 未运行时不得伪造运行测量`);
     }
   }
@@ -445,7 +449,7 @@ test("参考文档同步 Unity 响应式合同与独立显示层语义", () => {
     "references/responsive-ui-contract.md",
   ].map((file) => readFileSync(resolve(WORKFLOW, file), "utf8")).join("\n");
   for (const token of ["responsiveContractRef", "contractVersions", "sourceScale=1", "Screen.safeArea", "EventSystem/InputSystem", "DISPLAY_LAYER", "hostSceneId"]) assert.match(text, new RegExp(token.replaceAll(/[.*+?^${}()|[\]\\]/g, "\\$&")));
-  assert.doesNotMatch(text, /未就绪层登记为 deferred.*阻止宿主.*V4/);
-  assert.doesNotMatch(text, /显示层子任务.*阻断.*场景 V4/);
+  assert.doesNotMatch(text, /未就绪层登记为 deferred.*阻止宿主.*V5/);
+  assert.doesNotMatch(text, /显示层子任务.*阻断.*场景 V5/);
   // 全局选择的数量与人工结果使用实际 JSON 文件门验证，避免把固定文案当成行为测试。
 });

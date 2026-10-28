@@ -1,6 +1,6 @@
 # Phaser 布局执行与运行证据
 
-本合同把 V2 的功能归属、定位参照、居中和尺寸意图接入 V4 正式 Scene。沿用既有 V2/V3/V4 阶段、布局确认与运行验收，不增加状态机或人工审批。
+本合同把 V3 的功能归属、定位参照、居中和尺寸意图接入 V5 正式 Scene。沿用既有 V3/V4/V5 阶段、布局确认与运行验收，不增加状态机或人工审批。
 
 ## 执行计划
 
@@ -37,11 +37,11 @@ Phaser Container 与底板显示对象分别维护。普通图片继续允许已
 - 位置和尺寸 writer 来自实际运行注册或写入记录，不从 `layout_execution` 复制。基础布局与动画反馈偏移可以分属不同变换层，避免同一属性争写；两层均须按真实结构登记。
 - 全部角点和参照框先换算到统一布局逻辑空间，再计算 bounds、中心和组合 union。`getWorldTransformMatrix()` 不包含 Camera；Camera、scrollFactor、设计缩放和屏幕坐标由项目的正式坐标适配器处理，不读取 Camera 私有矩阵或把 backing 像素直接当作布局像素。非有限或奇异变换须报错。
 
-`viewport`/`safe-area` 是合成几何根，不证明存在同名 GameObject。真实对象父链须完整闭合到显式根绑定；不能跳过未登记 Container。安全区使用同次实测根矩形，与 viewport、节点参照及根绑定一致，不从 V2 目标复制。虚拟安全区参照与真实 Phaser 父对象分别检查，不伪造 safe-area 父对象。
+`viewport`/`safe-area` 是合成几何根，不证明存在同名 GameObject。真实对象父链须完整闭合到显式根绑定；不能跳过未登记 Container。安全区使用同次实测根矩形，与 viewport、节点参照及根绑定一致，不从 V3 目标复制。虚拟安全区参照与真实 Phaser 父对象分别检查，不伪造 safe-area 父对象。
 
 ## 校验与人工边界
 
-V2 的 specified 状态检查执行计划，不要求运行快照。V4 及 effect-image verified 状态消费同一次正式 Scene 采集；结构化 UI 合同使用该快照的投影，不再制作另一套手写证据。
+V3 的 specified 状态检查执行计划，不要求运行快照。V5 及 effect-image verified 状态消费同一次正式 Scene 采集；结构化 UI 合同使用该快照的投影，不再制作另一套手写证据。
 
 场景入口将当前清单的 `candidate_id`（未声明时使用明确的 `candidateVersion`）与 `batch_id`/`batchId` 绑定到采集身份；结构化 UI 可在根级声明当前 `candidate_id`、`batch_id`。它们均不能从采集文件复制来假装独立比对，也不能使用参考图的 `frozen_visual_target.candidate_id` 或可选 SHA 代替当前运行候选。UI 的 `runtime_capture`、`component_snapshots` 位于合同根级，场景合同则位于 `combination_preacceptance.layout_geometry`。
 
@@ -53,7 +53,7 @@ V2 的 specified 状态检查执行计划，不要求运行快照。V4 及 effec
 
 实际节点仍须位于冻结 viewport 与其安全区根内；非根父框溢出须有明确理由。手写 `node_measurements.actual_bounds`、UI 关键对齐运行矩形须与同批对象快照一致，不能用 `passed` 或目标矩形覆盖实测位置。
 
-Phaser 变换矩阵使用 Float32，矩阵按实际运算次序复算，实际中心比较保留固定数值量化预算；静态 V2 目标仍按双精度严格计算。该预算不接受任意像素容差，也不能掩盖实际布局漂移。镜像对象的 display 尺寸可能带负号，应保留原符号并通过实际四角计算正尺寸 bounds。
+Phaser 变换矩阵使用 Float32，矩阵按实际运算次序复算，实际中心比较保留固定数值量化预算；静态 V3 目标仍按双精度严格计算。该预算不接受任意像素容差，也不能掩盖实际布局漂移。镜像对象的 display 尺寸可能带负号，应保留原符号并通过实际四角计算正尺寸 bounds。
 
 测试模拟对象与 fixtures 只验证采集和校验逻辑，不能作为正式 Scene 运行材料。保存后的 JSON 本身不具有防伪能力；文件校验器能检查内容与身份绑定，不能凭 `runtimeMeasured`、`passed` 或某个来源字符串证明代码确实运行。项目应在正式 Scene 内调用采集器并同步校验，再保存结果。
 

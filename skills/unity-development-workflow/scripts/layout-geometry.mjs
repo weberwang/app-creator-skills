@@ -105,6 +105,13 @@ export function computeTargetBounds(plan) {
   function computeAxis(id, axis) {
     const cache = axisTargets[axis];
     if (cache.has(id)) return cache.get(id);
+    const body = nodesById.get(id);
+    // 浮层本体由其状态决定落位；子节点仍使用本体的实际派生框。
+    if (body.layoutBinding.uiLayout.positioning === "absolute") {
+      const value = body.layoutBinding.uiLayout.independentPosition[axis === "horizontal" ? "x" : "y"];
+      cache.set(id, value);
+      return value;
+    }
     const group = groupByMember.get(id);
     if (group?.node.layoutBinding.centerAlignment?.[axis]) {
       computeGroupAxis(group, axis);

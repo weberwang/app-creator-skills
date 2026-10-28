@@ -2,7 +2,7 @@
   "schemaVersion": "1.0",
   "workItemId": "replace-with-work-id",
   "stack": "flutter",
-  "visualStage": "V3",
+  "visualStage": "V4",
   "candidateId": "replace-with-selected-candidate-id",
   "technicalStatus": "NOT_RUN",
   "humanStatus": "NOT_RUN",

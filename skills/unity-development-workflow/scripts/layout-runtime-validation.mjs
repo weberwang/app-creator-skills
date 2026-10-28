@@ -579,7 +579,23 @@ function validateActualGeometry(node, actualRect, nodesById, actualRects, roots,
 }
 
 /** 按每条实际中心关系重算单节点中心或图文组的联合包围框中心。 */
+/** 沿已校验的父链识别浮层后代，本体自身不享有后代检查。 */
+function isFloatingDescendant(node, nodesById) {
+  let parent = nodesById.get(node.parentElementId);
+  while (parent) {
+    if (parent.layoutBinding.uiLayout.floatingRootKind) return true;
+    parent = nodesById.get(parent.parentElementId);
+  }
+  return false;
+}
+
+/** 与计划派生一致地读取左右或上下边缘，尺寸变化时仍保留原始间距。 */
+function edgeCoordinate(rect, axis, alignment) {
+  if (axis === "horizontal") return rect.x + (alignment === "right" ? rect.width : 0);
+  return rect.y + (alignment === "bottom" ? rect.height : 0);
+}
 function validateActualCentering(plan, measurements, actualRects, roots, errors) {
+  const nodesById = new Map(plan.nodes.map((node) => [node.id, node]));
   const groupByMemberAndAxis = new Map();
   for (const leader of plan.nodes) {
     const centerAlignment = leader.layoutBinding.centerAlignment;
@@ -626,6 +642,8 @@ function validateActualCentering(plan, measurements, actualRects, roots, errors)
   }
 
   for (const node of plan.nodes) {
+    // 绝对定位只豁免已验证的浮层本体；后代仍逐个核验实际参照。
+    if (node.layoutBinding.uiLayout.positioning === "absolute") continue;
     const measurement = measurements.get(node.id);
     const rect = actualRects.get(node.id);
     if (!measurement || !rect || measurement.componentSnapshot?.active !== true) continue;
@@ -644,6 +662,19 @@ function validateActualCentering(plan, measurements, actualRects, roots, errors)
       const owner = groupByMemberAndAxis.get(`${axis}:${node.id}`);
       if (owner) continue;
 
+      // 浮层内部非中心轴按原始锚点间距对照同批实际参照，不能依赖可空 targetRect。
+      if (!strategy && !aligned && isFloatingDescendant(node, nodesById)) {
+        const sourceReference = nodesById.get(referenceId)?.bounds ?? plan.roots[referenceId];
+        if (!observedReference || !sourceReference) {
+          errors.push(`节点 ${node.id} 的 ${axis} 相对定位缺少实际位置参照矩形。`);
+          continue;
+        }
+        const alignment = node.layoutBinding.axisAlignment[axis];
+        const gap = edgeCoordinate(node.bounds, axis, alignment) - edgeCoordinate(sourceReference, axis, alignment);
+        const actualGap = edgeCoordinate(rect, axis, alignment) - edgeCoordinate(observedReference, axis, alignment);
+        if (Math.abs(actualGap - gap) > EPSILON) errors.push(`节点 ${node.id} 的实际 ${axis} 相对锚点间距与计划不一致。`);
+        continue;
+      }
       if (!strategy && !aligned) continue;
       if (!observedReference) {
         errors.push(`节点 ${node.id} 的 ${axis} 居中缺少实际位置参照矩形。`);

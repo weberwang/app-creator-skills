@@ -8,7 +8,7 @@
 - RiggingValidation：只读核对角色 Prefab、SpriteSkin 骨骼映射、导入网格／权重、Clip／事件及部件变体，输出资产工程报告。
 - ResourceInspection：只读核对实际资源身份、Resources key/现有 Addressables 配置、序列帧 Clip 曲线与 Prefab 消费者。
 - Runtime：`Adaptive2DViewport` 为 2D 场景提供方向适配和装饰边带布局；`SafeAreaRectTransform` 与 `SafeAreaVisualElement` 为屏幕 UI 提供公共安全区根节点。
-- FontPipeline：从 Unity Localization String Tables 和完整源字体汇总字符，生成五语言静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
+- FontPipeline：从项目所选语言的 Unity Localization String Tables 和完整源字体汇总字符，生成静态 TMP 字体图集并配置 `LocalizedTmpFontBinder`；未知动态字符可使用显式配置的 Dynamic 回退字体。
 - VisualQA：固定摄像机参考 PNG、实际 UI 布局测量与 Game View 帧末异步采集；仅记录工程事实，截图由用户人工验收。
 - BuildPipeline：当前只为 Windows 分支在官方构建前检查目标、版本、场景、质量报告、视觉批准与输出保护；移动端执行各自平台工具链预检。
 - PipelineCommands：将业务服务作为 Unity Pipeline CLI 自定义命令暴露。
@@ -99,7 +99,7 @@ unity test .\tests\UnityHost --mode EditMode --report-format junit --output .\Ar
 
 ## TMP 多语言字形图集
 
-项目先导入有许可的 `.ttf/.otf` 完整源字体并建立 `en`、`zh-CN`、`ja`、`ru`、`es` String Tables。创建 `TmpFontAtlasPlan`，通常设置三组字体：`en/ru/es`、`zh-CN`、`ja`。需要随语言切换的 TMP 文本挂上 `LocalizedTmpFontBinder`；Prefab 绑定器放入计划的 `Targets`，已打开场景中的绑定器由生成器自动发现。选中计划资产执行 `Tools > Unity Workflow > Build TMP Font Atlases`；脚本从表格和可选额外字符文件生成静态图集并配置目标组件。计划中的 Dynamic 回退字体是可选项，只承接无法预知的动态文字；已知文案缺字会令生成失败。详情见工作流 `references/tmp-font-atlas-workflow.md`。
+项目先导入有许可的 `.ttf/.otf` 完整源字体并建立项目所选语言的 String Tables，默认包含 `zh-CN`，英语 `en` 等其他语言按项目选择配置。创建 `TmpFontAtlasPlan`，根据所选语言的字形覆盖和实际字体划分分组。需要随语言切换的 TMP 文本挂上 `LocalizedTmpFontBinder`；Prefab 绑定器放入计划的 `Targets`，已打开场景中的绑定器由生成器自动发现。选中计划资产执行 `Tools > Unity Workflow > Build TMP Font Atlases`；脚本从表格和可选额外字符文件生成静态图集并配置目标组件。计划中的 Dynamic 回退字体是可选项，只承接无法预知的动态文字；已知文案缺字会令生成失败。详情见工作流 `references/tmp-font-atlas-workflow.md`。
 
 ## 2D 场景适配
 

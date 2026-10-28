@@ -46,7 +46,7 @@ function output(width = 45, height = 30) { return { width, height, mime_type: "i
 /** 运行单资产尺寸合同，统一传入当前 expected asset 和区域上下文。 */
 function check(currentRegion, asset = output(), contract = currentRegion) {
   const expected = currentRegion.expected_assets[0];
-  return validateImageGenerationSizeContract(asset, contract, { stage: "V3", annotation_number: currentRegion.annotation_number, region_id: currentRegion.id, component_id: expected.component_id, state_id: expected.state_id, asset_id: expected.asset_id, region: currentRegion }, { expectedAsset: expected });
+  return validateImageGenerationSizeContract(asset, contract, { stage: "V4", annotation_number: currentRegion.annotation_number, region_id: currentRegion.id, component_id: expected.component_id, state_id: expected.state_id, asset_id: expected.asset_id, region: currentRegion }, { expectedAsset: expected });
 }
 
 test("正确的最小尺寸通过，尺寸合同不要求 human_review", () => {
@@ -125,7 +125,7 @@ test("actual output 尺寸漂移被尺寸门拒绝", () => {
   const current = region();
   const errors = check(current, output(45, 30), current);
   assert.deepEqual(errors, []);
-  const drift = validateImageGenerationSizeContract(null, current, { stage: "V3", annotation_number: 7, region_id: current.id, component_id: "hero", state_id: "default", asset_id: "hero-default" }, { expectedAsset: current.expected_assets[0], region: current, actualAsset: { width: 91, height: 60 } });
+  const drift = validateImageGenerationSizeContract(null, current, { stage: "V4", annotation_number: 7, region_id: current.id, component_id: "hero", state_id: "default", asset_id: "hero-default" }, { expectedAsset: current.expected_assets[0], region: current, actualAsset: { width: 91, height: 60 } });
   assert(drift.some((item) => item.includes("实际输出尺寸漂移")));
 });
 
@@ -140,7 +140,7 @@ test("九宫格使用冻结源尺寸且裁切归一化记录会被拒绝", () =>
   current.expected_assets[0] = { ...current.expected_assets[0], width: 96, height: 64, nine_slice: structuredClone(NINE_SLICE) };
   assert.deepEqual(check(current, output(96, 64)), []);
 
-  const actualWithCrop = validateImageGenerationSizeContract(output(96, 64), current, { stage: "V3", region_id: current.id, component_id: "hero", asset_id: "hero-default" }, {
+  const actualWithCrop = validateImageGenerationSizeContract(output(96, 64), current, { stage: "V4", region_id: current.id, component_id: "hero", asset_id: "hero-default" }, {
     expectedAsset: current.expected_assets[0], region: current, actualAsset: { ...output(96, 64), normalization_record: { operation: "crop-and-resize-to-contract" } },
   });
   assert(actualWithCrop.some((item) => item.includes("actual_assets normalization_record.operation") && item.includes("必须保留完整源帧")));
@@ -154,19 +154,19 @@ test("九宫格使用冻结源尺寸且裁切归一化记录会被拒绝", () =>
   assert(check(tooSmall, output(96, 64)).some((item) => item.includes("九宫格 placement[0] 尺寸无效")));
 });
 
-test("manifest 尺寸门核对 V3 actual_assets，且不依赖 human_review", () => {
+test("manifest 尺寸门核对 V4 actual_assets，且不依赖 human_review", () => {
   const current = region();
   const manifest = {
     coverage_audit: { regions: [current] },
     assets: [{ id: "hero-default", width: 45, height: 30 }],
     production_contract_audit: { units: [{ annotation_number: 7, region_id: "region-hero", actual_assets: [{ asset_id: "hero-default", width: 91, height: 60 }] }] },
   };
-  const errors = validateImageGenerationSizeManifest(manifest, { stage: "V3" });
-  assert(errors.some((item) => item.includes("V3 actual_assets 实际输出尺寸漂移")));
+  const errors = validateImageGenerationSizeManifest(manifest, { stage: "V4" });
+  assert(errors.some((item) => item.includes("V4 actual_assets 实际输出尺寸漂移")));
 });
 
 test("组件显示尺寸计算返回各轴最大值", () => {
   const current = region();
   current.component_inventory.components[0].placements.push({ placement_id: "hero-2", bounds: { x: 0, y: 0, width: 41, height: 7 }, interaction_required: false });
-  assert.deepEqual(calculateComponentDisplaySize(current, "hero", { stage: "V3", annotation_number: 7, region_id: current.id }).displaySize, { width: 41, height: 20 });
+  assert.deepEqual(calculateComponentDisplaySize(current, "hero", { stage: "V4", annotation_number: 7, region_id: current.id }).displaySize, { width: 41, height: 20 });
 });

@@ -12,8 +12,9 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 1. 先读项目约束、已有控制记录、技术版本与已有进程；不得擅自创建分支或 worktree。发现可复用的引擎、浏览器或开发服务后复用，不能为了验证另启实例。若项目还有旧栈总控或编排技能，明确本次只使用公共总控，不运行两套状态机，也不静默把旧批准转换为新记录。
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
 3. 明确目标、非目标、文件/对象所有权与可观察验收；先只读补事实。出现确实需要用户取舍的缺口时进入 [grilling](../grilling/SKILL.md)，继续不依赖该决定的工作，不能把正常实现变成逐步审批。
-4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V4。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
-5. 视觉任务加载 [app-asset-workflow](../app-asset-workflow/SKILL.md)，将视觉签名、三候选基线、真实素材、技术检查和人工验收接入同一工作项。同项目、技术栈和对象已有完成的 V4 工作项时，按语义影响用 `reuse-visual` 继承未变化的基线及 V1/V2 确认；当前 V3 导入和 V4 运行/人工验收仍独立完成。技术通过不等于画面通过。
+   新项目初始化时询问用户支持的界面语言：默认简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可按需追加；给出默认选项并等待用户选择，已有明确语言决定时不重复询问。将确认的语言清单和默认显示语言写入项目配置并用于各栈实现、字体与验证；默认显示语言必须在清单内。语言选择未答复时继续不依赖该选择的工作，不能把预选项当作确认。既有项目沿用其已确认的语言范围，不因局部修复重问或擅自扩展。
+4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 先验证相关功能，白盒按需选择，不等待正式视觉完成。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
+5. 视觉任务在相关功能完成 V1 验证后加载 [app-asset-workflow](../app-asset-workflow/SKILL.md)，将视觉签名、三候选基线、真实素材、技术检查和人工验收接入工作项。游戏内容或场景超出单张设计稿的可读范围时，按[多张场景设计稿](../app-asset-workflow/references/multi-image-scene-design.md)规划、生成和交接。同项目、技术栈和对象已有完成的 V5 工作项时，按语义影响用 `reuse-visual` 继承未变化的基线及 V2/V3 确认；当前功能验证、V4 导入和 V5 运行/人工验收仍独立完成。技术通过不等于画面通过。
 6. 实施后按[验证与交付](references/verification.md)先推荐 T0–T3 的理由、覆盖与命令，再自动执行；记录真实结果。失败优先 repair/revalidate，仅上游目标或范围真实失效才显式 return。
 
 | 技术栈 | 独立规范 | 识别依据 |
@@ -25,6 +26,15 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 | Flutter | `$app-stack-flutter` | pubspec.yaml、FVM 配置及 Flutter SDK 依赖 |
 
 探测文件只是线索。`package.json`、`assets/` 等通用文件不能独立证明技术栈；读取依赖和项目设置，仍无法判定时只问技术选择，不替用户重建项目。
+
+Cocos、Phaser、Three.js 的编排任务按需要读取以下公共资料，同时保留当前技术栈原生补充：
+
+- 启动验证服务前读取[服务查重与复用](../app-domain-toolkit/references/reference-orchestration-local-service-validation.md)；用户明确要求工作区隔离时读取[隔离规则](../app-domain-toolkit/references/reference-orchestration-worktree-integration.md)。
+- 实施与交接时按任务选择[专业编排与交付](../app-domain-toolkit/references/reference-orchestration-technical-orchestration.md)、[游戏实施](../app-domain-toolkit/references/reference-orchestration-game-implementation.md)、[模块拆分](../app-domain-toolkit/references/reference-orchestration-module-decomposition.md)和[依赖能力检查](../app-domain-toolkit/references/reference-orchestration-dependency-capability-profiles.md)。
+- Cocos、Phaser 任务需要归档交付文件时，读取[交付文件保留与引用](../app-domain-toolkit/references/reference-orchestration-delivery-artifacts.md)。
+- 需要专业复核时读取[视觉质量](../app-domain-toolkit/references/reference-orchestration-visual-quality-gate.md)、[复核分工](../app-domain-toolkit/references/reference-orchestration-review-funnel.md)或[游戏生产里程碑](../app-domain-toolkit/references/reference-orchestration-quality-gates.md)。
+
+任务明确包含 Git 提交时，所有技术栈先按[工作流记录与提交范围](references/workflow.md#工作流记录与提交范围)选择必要文件；Cocos、Phaser、Three.js 再读取[最小提交规则](../app-domain-toolkit/references/git-minimal-submission.md)并结合本栈补充，Unity、Flutter 使用所选技术栈的 Git 规范。Git 提交或合并须有用户明确要求；任务范围内无副作用的本地集成可按已有授权执行。
 
 ## 交接与状态
 

@@ -4,14 +4,15 @@
   "title": "Unity Evidence Manifest",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "evidenceId", "workItemId", "packageId", "workItemType", "visualStage", "contractVersions", "baselineHash", "recordedAt", "verdict", "gateResults"],
+  "required": ["schemaVersion", "evidenceId", "workItemId", "packageId", "workItemType", "visualStage", "baselineHash", "recordedAt", "verdict", "gateResults"],
   "properties": {
     "schemaVersion": {"const": "1.0"},
     "evidenceId": {"type": "string", "minLength": 1},
     "workItemId": {"type": "string", "minLength": 1},
     "packageId": {"type": "string", "minLength": 1},
     "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
-    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4"]},
+    "visualStageModel": {"const": "function-first-v1"},
+    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4", "V5"]},
     "contractVersions": {"$ref": "#/$defs/contractVersions"},
     "baselineHash": {"type": "string", "minLength": 1},
     "recordedAt": {"type": "string", "minLength": 1},
@@ -60,6 +61,10 @@
   },
   "allOf": [
   {
+    "if": {"properties": {"workItemType": {"enum": ["SCENE", "DISPLAY_LAYER"]}}, "required": ["workItemType"]},
+    "then": {"required": ["visualStageModel"]}
+  },
+  {
     "if": {
       "properties": {
         "workItemType": {
@@ -69,7 +74,7 @@
           ]
         },
         "visualStage": {
-          "const": "V4"
+          "const": "V5"
         },
         "verdict": {
           "const": "PASS"
@@ -110,6 +115,10 @@
         }
       }
     }
+  },
+  {
+    "if": {"properties": {"workItemType": {"enum": ["SCENE", "DISPLAY_LAYER"]}, "visualStage": {"enum": ["V2", "V3", "V4", "V5"]}}, "required": ["workItemType", "visualStage"]},
+    "then": {"required": ["contractVersions"], "properties": {"contractVersions": {"required": ["responsiveContract"]}}}
   }
 ],
   "$defs": {
@@ -180,7 +189,6 @@
     "contractVersions": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["responsiveContract"],
       "properties": {"responsiveContract": {"type": "string", "minLength": 1}}
     },
     "measuredArtifact": {

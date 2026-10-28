@@ -1,181 +1,261 @@
 import assert from 'node:assert/strict';
-import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { createHash } from 'node:crypto';
+import { readFile, rm, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { advanceVisual, completeUnit, initializeWork, inspect } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { advanceVisual, checkProtectedAction, completeUnit, initializeWork, inspect, refreshFunctionBaseline } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { assertOwnedPath, loadProfile, pathMatch } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { transitionWork, inferReturnState } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { WorkflowError } from '../../skills/app-workflow-control/scripts/runtime/io.mjs';
+import { minimalPng, validManifest } from '../../skills/cocos-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
+import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
+import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
+import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+
+import { createFixture, put, readWork, putJson, createQualityChecks, reviewRecord, putVisualReview, frozenReview, bindImplementation, submitPassingUnits, bindEvidence, runEngineeringStage, readyForRelease, approveRelease } from './controller-fixture.mjs';
 
 const cliPath = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
-/** 构建隔离项目并通过正式 init 接口建立类型有效的 Work Item。 */
-async function createFixture({ id = 'sample', stack = 'flutter', type = 'FOUNDATION', releaseIntent, objective = '建立一项可验证交付' } = {}) {
-  const repo = await mkdtemp(resolve(tmpdir(), 'app-workflow-'));
-  const result = await initializeWork({ repo, args: { id, stack, type, objective, ...(releaseIntent ? { 'release-intent': releaseIntent } : {}) } });
-  return { repo, workPath: result.metadata.workItemPath, result };
-}
-
-/** 在临时项目中写入合成阶段材料，供控制器验证路径与绑定关系。 */
-async function put(repo, path, content = '合成验证记录\n') {
-  const absolute = resolve(repo, ...path.split('/'));
-  await mkdir(dirname(absolute), { recursive: true });
-  await writeFile(absolute, content, 'utf8');
-  return path;
-}
-
-/** 读取当前工作项并保存更改，便于测试只验证已记录的客观事实。 */
-async function readWork(repo, workPath) {
-  return JSON.parse(await readFile(resolve(repo, ...workPath.split('/')), 'utf8'));
-}
-
-/** 写出机器可读记录，自动建立项目内父目录。 */
-async function putJson(repo, path, value) {
-  return put(repo, path, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-/** 生成五个模拟人工审阅结果及对应合成材料。 */
-async function createQualityChecks(repo, prefix, { pass = true } = {}) {
-  const checks = [];
-  for (const [index, dimension] of qualityDimensions.entries()) {
-    const evidenceRef = `${prefix}/${index}-${dimension}.md`;
-    await put(repo, evidenceRef, `${dimension} 的模拟审阅记录。\n`);
-    checks.push({ dimension, status: pass ? 'PASS' : 'NOT_RUN', ...(pass ? { evidenceRef } : {}) });
-  }
-  return checks;
-}
-
-/** 返回绑定视觉对象与模拟人工记录消息引用的阶段确认材料。 */
-function reviewRecord({ objectId, stage, purpose, userMessageRef, targetRef, candidateId, qualityChecks }) {
-  return {
-    schemaVersion: '1.0', objectId, ...(candidateId ? { candidateId } : {}), stage,
-    purpose, decision: 'APPROVED', userMessageRef,
-    ...(targetRef ? { targetRef } : {}), ...(qualityChecks ? { qualityChecks } : {}),
-  };
-}
-
-/** 建立当前阶段的唯一实施包与执行结果路径。 */
-async function bindImplementation({ repo, work, workPath, stage, commands = ['node --version'], unitPaths = ['lib/sample.dart'], resultPaths }) {
-  const packPath = `.workflow-control/implementation-packages/${work.workItemId}-${stage}.json`;
-  const units = unitPaths.map((path, index) => ({
-    unitId: `unit-${index + 1}`, sequence: index + 1,
-    type: work.workItemType === 'PAGE' ? 'PAGE' : work.workItemType === 'SCENE' ? 'SCENE' : 'MODULE',
-    owner: 'test-owner', paths: [path], resultPath: resultPaths?.[index] ?? `${work.evidenceRoot}/${stage}-unit-${index + 1}.json`,
-    acceptanceCommands: commands,
-  }));
-  await putJson(repo, packPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    workItemType: work.workItemType, ...(work.visual ? { visualStage: stage } : {}), executionUnits: units,
-  });
-  work.implementationPackageRef = { path: packPath };
-  await putJson(repo, workPath, work);
-  return { packPath, units };
-}
-
-/** 按实施计划写出非空命令输出和与计划逐项一致的结果。 */
-async function submitPassingUnits({ repo, work, workPath, packPath, units, declaredPaths }) {
-  const results = [];
-  for (const [index, unit] of units.entries()) {
-    const files = declaredPaths?.[index] ?? unit.paths;
-    for (const path of files) await put(repo, path);
-    const commandOutputs = [];
-    for (const [commandIndex, command] of unit.acceptanceCommands.entries()) {
-      const outputFile = `${work.evidenceRoot}/command-${unit.unitId}-${commandIndex + 1}.txt`;
-      await put(repo, outputFile, `exitCode=0\n${command}\n`);
-      commandOutputs.push({ command, exitCode: 0, outputFile });
-    }
-    const resultPath = unit.resultPath;
-    await putJson(repo, resultPath, {
-      schemaVersion: '1.0', status: 'PASS', workItemId: work.workItemId, stack: work.stack,
-      implementationPackageRef: packPath, unitId: unit.unitId, sequence: unit.sequence,
-      exitCode: 0, files, commandOutputs,
-    });
-    results.push(resultPath);
-  }
-  return results;
-}
-
-/** 绑定包含 profile 要求类别的合成非空证据材料。 */
-async function bindEvidence({ repo, work, workPath, packPath, stage, extraCategories = [] }) {
-  const profile = loadProfile(repo, work.stack);
-  const categories = [...new Set([
-    ...profile.evidenceRequirements.engineering,
-    ...(stage === 'V3' ? profile.evidenceRequirements.assetImport ?? [] : []),
-    ...(stage === 'V4' ? profile.evidenceRequirements.visual : []),
-    ...extraCategories,
-  ])];
-  const items = [];
-  for (const [index, category] of categories.entries()) {
-    const path = `${work.evidenceRoot}/${stage}-${category}.txt`;
-    await put(repo, path, `${category}：此固定文件只作为合同测试夹具。\n`);
-    items.push({ category, status: 'PASS', path });
-  }
-  const manifestPath = `.workflow-control/evidence/${work.workItemId}/${stage}-manifest.json`;
-  await putJson(repo, manifestPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    implementationPackageRef: packPath, ...(work.visual ? { visualStage: stage } : {}), items,
-  });
-  work.evidenceRef = { path: manifestPath };
-  work.gateStatus.F3 = 'PASS';
-  await putJson(repo, workPath, work);
-}
-
-/** 在临时项目执行一个已冻结的 Flutter 单元及 evidence 门。 */
-async function runEngineeringStage(context, stage) {
-  let work = await readWork(context.repo, context.workPath);
-  work.gateStatus.F2 = 'PASS';
-  work.gateStatus.F3 = 'NOT_RUN';
-  await putJson(context.repo, context.workPath, work);
-  if (work.globalState === 'PROPOSAL') {
-    const moved = await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'REVIEW', args: {} });
-    assert.equal(moved.status, 'PASS');
-    work = await readWork(context.repo, context.workPath);
-  }
-  await putJson(context.repo, context.workPath, work);
-  const { packPath, units } = await bindImplementation({ repo: context.repo, work, workPath: context.workPath, stage });
-  const started = await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'IMPLEMENTING', args: {} });
-  assert.ok(started.stage.endsWith('/IMPLEMENTING'));
-  work = await readWork(context.repo, context.workPath);
-  await submitPassingUnits({ repo: context.repo, work, workPath: context.workPath, packPath, units });
-  work = await readWork(context.repo, context.workPath);
-  await completeUnit({ repo: context.repo, workItem: context.workPath, resultPath: units[0].resultPath });
-  work = await readWork(context.repo, context.workPath);
-  await bindEvidence({ repo: context.repo, work, workPath: context.workPath, packPath, stage });
-  const validating = await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'VALIDATING', args: {} });
-  assert.ok(validating.stage.endsWith('/VALIDATING'));
-  const passed = await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'PASSED', args: {} });
-  assert.ok(passed.stage.endsWith('/PASSED'));
-  return await readWork(context.repo, context.workPath);
-}
-
-/** 把 RELEASE 工作项推进到批准等待态，真实发布动作仍由人工流程执行。 */
-async function readyForRelease(fixture) {
+test('V1 直接实现无需白盒与目标图，功能验证后进入 V2 并持续复验', async (t) => {
+  const fixture = await createFixture({ id: 'function-first', type: 'PAGE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   let work = await readWork(fixture.repo, fixture.workPath);
-  work.globalState = 'PROPOSAL';
+  work.globalState = 'REVIEW';
   work.gateStatus.F0 = 'PASS';
   work.gateStatus.F1 = 'PASS';
-  work.gateStatus.F4 = 'NOT_RUN';
+  work.gateStatus.F2 = 'PASS';
   await putJson(fixture.repo, fixture.workPath, work);
-  work = await runEngineeringStage(fixture, 'release');
-  work.action = { actionId: 'store-release', effects: ['publish'], target: 'production-store' };
-  work.gateStatus.F4 = 'NOT_RUN';
-  await putJson(fixture.repo, fixture.workPath, work);
-  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASE_APPROVAL_REQUIRED', args: {} });
-  return await readWork(fixture.repo, fixture.workPath);
-}
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' }), /先通过功能工程验证/);
+  await runEngineeringStage(fixture, 'V1');
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
+  work = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(work.visual.stage, 'V2');
+  assert.equal(work.globalVisualBaselineRef, null);
+  assert.ok(work.visual.functionBaselineRef.sha256);
+  const snapshot = JSON.parse(await readFile(resolve(fixture.repo, work.visual.functionBaselineRef.path), 'utf8'));
+  assert.equal(snapshot.mode, 'local');
+  assert.equal(inspect({ repo: fixture.repo, workItem: fixture.workPath }).status, 'PASS');
+  await put(fixture.repo, snapshot.files[0].path, '被改写的功能证据');
+  assert.equal(inspect({ repo: fixture.repo, workItem: fixture.workPath }).status, 'BLOCKED');
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '功能范围发生变化', 'affected-scope': 'function' } });
+  const returned = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(returned.visual.stage, 'V1');
+  assert.equal(returned.visual.functionBaselineRef, undefined);
+  assert.ok(returned.invalidatedRefs.some((ref) => ref.path === work.visual.functionBaselineRef.path));
+});
 
-/** 记录精确绑定当前发布动作与用户消息的审批材料。 */
-function approveRelease(work) {
-  work.action.approval = {
-    workItemId: work.workItemId, stack: work.stack, stageId: work.stageId,
-    actionId: work.action.actionId, effects: ['publish'], target: work.action.target,
-    userMessageRef: 'chat://release-approval',
-  };
-  work.gateStatus.F4 = 'PASS';
-}
+test('早期功能集成不等待场景视觉完成', async (t) => {
+  const fixture = await createFixture({ id: 'feature-integration', type: 'INTEGRATION' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  let work = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(work.integrationPurpose, 'feature');
+  assert.equal(work.stageId, 'foundation-engineering');
+  work.globalState = 'REVIEW';
+  work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  work = await runEngineeringStage(fixture, 'feature');
+  assert.equal(work.globalState, 'PASSED');
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} });
+
+});
+
+test('跨对象引用功能切片按行为范围验证，不依赖其他场景视觉完成', async (t) => {
+  const fixture = await createFixture({ id: 'purchase-module', type: 'MODULE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  let source = await readWork(fixture.repo, fixture.workPath);
+  source.globalState = 'REVIEW';
+  source.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' };
+  await putJson(fixture.repo, fixture.workPath, source);
+  source = await runEngineeringStage(fixture, 'feature');
+  const casePath = `${source.evidenceRoot}/purchase.json`;
+  await putJson(fixture.repo, casePath, { schemaVersion: '1.0', workItemId: source.workItemId, projectId: source.projectId, stack: source.stack, caseId: 'purchase', status: 'PASS', objectIds: ['shop', 'result', 'local-target'] });
+  const cancelPath = `${source.evidenceRoot}/cancel.json`;
+  await putJson(fixture.repo, cancelPath, { schemaVersion: '1.0', workItemId: source.workItemId, projectId: source.projectId, stack: source.stack, caseId: 'purchase-cancel', status: 'PASS', objectIds: ['shop'] });
+  const manifest = JSON.parse(await readFile(resolve(fixture.repo, source.evidenceRef.path), 'utf8'));
+  manifest.items.push({ category: 'feature-case', status: 'PASS', path: casePath }, { category: 'feature-case', status: 'PASS', path: cancelPath });
+  await putJson(fixture.repo, source.evidenceRef.path, manifest);
+  const initialized = await initializeWork({ repo: fixture.repo, args: { id: 'shop', stack: 'flutter', type: 'PAGE', objective: '商店', 'object-id': 'shop' } });
+  const targetPath = initialized.metadata.workItemPath;
+  let target = await readWork(fixture.repo, targetPath);
+  target.globalState = 'REVIEW';
+  target.gateStatus.F0 = target.gateStatus.F1 = 'PASS';
+  target.visual.functionDependencies = [{ workItemRef: { path: fixture.workPath }, caseId: 'purchase', evidenceRef: await frozenReview(fixture.repo, casePath) }, { workItemRef: { path: fixture.workPath }, caseId: 'purchase-cancel', evidenceRef: await frozenReview(fixture.repo, cancelPath) }];
+  await putJson(fixture.repo, targetPath, target);
+  await advanceVisual({ repo: fixture.repo, workItem: targetPath, to: 'V1' });
+  await advanceVisual({ repo: fixture.repo, workItem: targetPath, to: 'V2' });
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  target = await readWork(fixture.repo, targetPath);
+  // 依赖数组重排和项目内等价路径不会改变已验证的行为范围。
+  target.visual.functionDependencies.reverse();
+  for (const dependency of target.visual.functionDependencies) {
+    dependency.workItemRef.path = `./${dependency.workItemRef.path}`;
+    dependency.evidenceRef.path = dependency.evidenceRef.path.replace('/', '//');
+  }
+  await putJson(fixture.repo, targetPath, target);
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  target.visual.functionDependencies.reverse();
+  // JSON 属性顺序不是功能变化；工作项及后续重验都应认同相同文件身份。
+  target.visual.functionDependencies = target.visual.functionDependencies.map((dependency) => ({ evidenceRef: { sha256: dependency.evidenceRef.sha256, path: dependency.evidenceRef.path }, caseId: dependency.caseId, workItemRef: { path: dependency.workItemRef.path } }));
+  await putJson(fixture.repo, targetPath, target);
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  const originalDigest = target.visual.functionDependencies[1].evidenceRef.sha256;
+  target.visual.functionDependencies[1].evidenceRef.sha256 = 'f'.repeat(64);
+  await putJson(fixture.repo, targetPath, target);
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'BLOCKED');
+  target.visual.functionDependencies[1].evidenceRef.sha256 = originalDigest;
+  await putJson(fixture.repo, targetPath, target);
+  const staleSpec = 'docs/stale-feature-refresh.json';
+  await putJson(fixture.repo, staleSpec, { visualImpact: 'none', reason: '旧结果不得冒充重新验证', functionDependencies: target.visual.functionDependencies });
+  await assert.rejects(refreshFunctionBaseline({ repo: fixture.repo, workItem: targetPath, specPath: staleSpec }), /旧基线之后|新验证记录/);
+  await putJson(fixture.repo, 'docs/missing-case-refresh.json', { visualImpact: 'none', reason: '遗漏行为范围', functionDependencies: [target.visual.functionDependencies[0]] });
+  await assert.rejects(refreshFunctionBaseline({ repo: fixture.repo, workItem: targetPath, specPath: 'docs/missing-case-refresh.json' }), /不能遗漏已冻结的行为范围/);
+  const local = await initializeWork({ repo: fixture.repo, args: { id: 'local-target', stack: 'flutter', type: 'PAGE', objective: '本项功能验证' } });
+  const localFixture = { repo: fixture.repo, workPath: local.metadata.workItemPath };
+  let localWork = await readWork(fixture.repo, localFixture.workPath);
+  localWork.globalState = 'REVIEW';
+  localWork.gateStatus.F0 = localWork.gateStatus.F1 = localWork.gateStatus.F2 = 'PASS';
+  await putJson(fixture.repo, localFixture.workPath, localWork);
+  await advanceVisual({ repo: fixture.repo, workItem: localFixture.workPath, to: 'V1' });
+  await runEngineeringStage(localFixture, 'V1');
+  await advanceVisual({ repo: fixture.repo, workItem: localFixture.workPath, to: 'V2' });
+  await putJson(fixture.repo, 'docs/old-local-refresh.json', { visualImpact: 'none', reason: '旧来源不能冒充重验', functionDependencies: [target.visual.functionDependencies[0]] });
+  await assert.rejects(refreshFunctionBaseline({ repo: fixture.repo, workItem: localFixture.workPath, specPath: 'docs/old-local-refresh.json' }), /旧基线之后/);
+  // 来源仅完成生命周期不更改计划、源码或证据时，消费者不应重验。
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} });
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  const sourceBytes = await readFile(resolve(fixture.repo, 'lib/sample.dart'));
+  await writeFile(resolve(fixture.repo, 'lib/sample.dart'), '来源功能已改变');
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'BLOCKED');
+  await writeFile(resolve(fixture.repo, 'lib/sample.dart'), sourceBytes);
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  // 另一个消费者只更新购买行为，取消行为仍应保留已通过的原始来源。
+  const partialInit = await initializeWork({ repo: fixture.repo, args: { id: 'partial-shop', stack: 'flutter', type: 'PAGE', objective: '部分重验', 'object-id': 'shop' } });
+  const partialPath = partialInit.metadata.workItemPath;
+  const partial = await readWork(fixture.repo, partialPath);
+  partial.globalState = 'REVIEW';
+  partial.gateStatus.F0 = partial.gateStatus.F1 = 'PASS';
+  partial.visual.functionDependencies = target.visual.functionDependencies;
+  await putJson(fixture.repo, partialPath, partial);
+  await advanceVisual({ repo: fixture.repo, workItem: partialPath, to: 'V1' });
+  await advanceVisual({ repo: fixture.repo, workItem: partialPath, to: 'V2' });
+  // 新来源可替换同名行为，但必须完整覆盖原有范围并有新的执行结果。
+  const replacementInit = await initializeWork({ repo: fixture.repo, args: { id: 'purchase-reverified', stack: 'flutter', type: 'MODULE', objective: '重新验证购买功能' } });
+  const replacementFixture = { repo: fixture.repo, workPath: replacementInit.metadata.workItemPath };
+  let replacement = await readWork(fixture.repo, replacementFixture.workPath);
+  replacement.globalState = 'REVIEW';
+  replacement.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' };
+  await putJson(fixture.repo, replacementFixture.workPath, replacement);
+  replacement = await runEngineeringStage(replacementFixture, 'replacement');
+  const newDependencies = [];
+  const replacementManifest = JSON.parse(await readFile(resolve(fixture.repo, replacement.evidenceRef.path), 'utf8'));
+  for (const caseId of ['purchase', 'purchase-cancel']) {
+    const path = `${replacement.evidenceRoot}/${caseId}.json`;
+    await putJson(fixture.repo, path, { schemaVersion: '1.0', workItemId: replacement.workItemId, projectId: replacement.projectId, stack: replacement.stack, caseId, status: 'PASS', objectIds: ['shop'] });
+    replacementManifest.items.push({ category: 'feature-case', status: 'PASS', path });
+    newDependencies.push({ workItemRef: { path: replacementFixture.workPath }, caseId, evidenceRef: await frozenReview(fixture.repo, path) });
+  }
+  await putJson(fixture.repo, replacement.evidenceRef.path, replacementManifest);
+  const retained = target.visual.functionDependencies[1];
+  await putJson(fixture.repo, 'docs/partial-source-refresh.json', { visualImpact: 'none', reason: '仅购买行为发生变化', functionDependencies: [{ caseId: retained.caseId, workItemRef: { path: retained.workItemRef.path }, evidenceRef: { path: retained.evidenceRef.path, sha256: retained.evidenceRef.sha256 } }, newDependencies[0]] });
+  await refreshFunctionBaseline({ repo: fixture.repo, workItem: partialPath, specPath: 'docs/partial-source-refresh.json' });
+  assert.equal(inspect({ repo: fixture.repo, workItem: partialPath }).status, 'PASS');
+  const cancelBytes = await readFile(resolve(fixture.repo, cancelPath));
+  await writeFile(resolve(fixture.repo, cancelPath), '被替换的取消行为证据');
+  assert.equal(inspect({ repo: fixture.repo, workItem: partialPath }).status, 'BLOCKED');
+  await writeFile(resolve(fixture.repo, cancelPath), cancelBytes);
+  assert.equal(inspect({ repo: fixture.repo, workItem: partialPath }).status, 'PASS');
+  await putJson(fixture.repo, 'docs/new-source-refresh.json', { visualImpact: 'none', reason: '新来源重新验证原有行为', functionDependencies: newDependencies });
+  await refreshFunctionBaseline({ repo: fixture.repo, workItem: targetPath, specPath: 'docs/new-source-refresh.json' });
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+  source = await readWork(fixture.repo, fixture.workPath);
+  source.globalState = 'RETURN';
+  await putJson(fixture.repo, fixture.workPath, source);
+  assert.equal(inspect({ repo: fixture.repo, workItem: partialPath }).status, 'BLOCKED');
+  assert.equal(inspect({ repo: fixture.repo, workItem: targetPath }).status, 'PASS');
+});
+
+test('视觉复用不能绕过当前工作项的 V1 功能验证', async (t) => {
+  const fixture = await createFixture({ id: 'reuse-target', type: 'PAGE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const source = await initializeWork({ repo: fixture.repo, args: { id: 'reuse-source', stack: 'flutter', type: 'PAGE', objective: '复用来源', 'object-id': 'reuse-target' } });
+  await assert.rejects(reuseVisualReviews({ repo: fixture.repo, workItem: fixture.workPath, sourceWorkItem: source.metadata.workItemPath, impact: 'implementation', reason: '检查不能跳过功能阶段' }), /先完成 V1/);
+});
+
+test('旧阶段含义未标记时拒绝误读，SCENE 的 V1 可没有视觉目标', async (t) => {
+  const fixture = await createFixture({ id: 'scene-no-target', stack: 'cocos', type: 'SCENE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const work = await readWork(fixture.repo, fixture.workPath);
+  work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  const current = await readWork(fixture.repo, fixture.workPath);
+  assert.deepEqual(current.visual.targets, []);
+  delete current.visual.stageModel;
+  await putJson(fixture.repo, fixture.workPath, current);
+  assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /旧工作项不能按新阶段解释/);
+});
+
+test('SCENE 在 V3、V4 实现返修只撤销运行验收并保留视觉与素材确认', async (t) => {
+  for (const stage of ['V3', 'V4']) {
+    const fixture = await createFixture({ id: `scene-return-${stage}`, stack: 'cocos', type: 'SCENE' });
+    t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+    const work = await readWork(fixture.repo, fixture.workPath);
+    const ref = (path) => ({ path, sha256: 'a'.repeat(64) });
+    work.globalState = 'REVIEW';
+    work.visual.stage = stage;
+    work.visual.targets = [{ targetId: 'view', reviews: { V2: ref('reviews/target.json'), V3Decomposition: ref('reviews/decomposition.json'), V3Layout: ref('reviews/layout.json'), V4: ref('reviews/assets.json'), V5: ref('reviews/runtime.json') }, assetReviewRef: ref('reviews/asset-review.json') }];
+    work.visual.integrationEvidenceRef = ref('reviews/integration.json');
+    work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'NOT_RUN' };
+    await putJson(fixture.repo, fixture.workPath, work);
+    await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '修复内部实现', 'affected-scope': 'implementation' } });
+    const returned = await readWork(fixture.repo, fixture.workPath);
+    assert.equal(returned.visual.stage, stage);
+    assert.deepEqual(Object.keys(returned.visual.targets[0].reviews), ['V2', 'V3Decomposition', 'V3Layout', 'V4']);
+    assert.equal(returned.visual.targets[0].assetReviewRef.path, 'reviews/asset-review.json');
+    assert.equal(returned.visual.integrationEvidenceRef, undefined);
+    assert.ok(returned.invalidatedRefs.some((item) => item.path === 'reviews/runtime.json'));
+  }
+});
+
+test('功能交付变化阻断旧基线，新功能证据重验保留视觉确认', async (t) => {
+  const fixture = await createFixture({ id: 'refresh-page', type: 'PAGE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  let work = await readWork(fixture.repo, fixture.workPath);
+  work.globalState = 'REVIEW';
+  work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  await runEngineeringStage(fixture, 'V1');
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
+  work = await readWork(fixture.repo, fixture.workPath);
+  const reviewPath = '.workflow-control/reviews/frozen-target.json';
+  await putJson(fixture.repo, reviewPath, { note: '合成视觉确认，仅用于检查引用保留' });
+  work.visual.reviews.V2 = await frozenReview(fixture.repo, reviewPath);
+  await putJson(fixture.repo, fixture.workPath, work);
+  await put(fixture.repo, 'lib/sample.dart', '功能代码已改变');
+  assert.equal(inspect({ repo: fixture.repo, workItem: fixture.workPath }).status, 'BLOCKED');
+  const initialized = await initializeWork({ repo: fixture.repo, args: { id: 'reverified', stack: 'flutter', type: 'MODULE', objective: '重新验证功能' } });
+  const sourceFixture = { repo: fixture.repo, workPath: initialized.metadata.workItemPath };
+  let source = await readWork(fixture.repo, sourceFixture.workPath);
+  source.globalState = 'REVIEW';
+  source.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' };
+  await putJson(fixture.repo, sourceFixture.workPath, source);
+  source = await runEngineeringStage(sourceFixture, 'feature');
+  const casePath = `${source.evidenceRoot}/new-case.json`;
+  await putJson(fixture.repo, casePath, { schemaVersion: '1.0', workItemId: source.workItemId, projectId: source.projectId, stack: source.stack, caseId: 'case', status: 'PASS', objectIds: ['refresh-page'] });
+  const manifest = JSON.parse(await readFile(resolve(fixture.repo, source.evidenceRef.path), 'utf8'));
+  manifest.items.push({ category: 'feature-case', status: 'PASS', path: casePath });
+  await putJson(fixture.repo, source.evidenceRef.path, manifest);
+  const specPath = 'docs/function-refresh.json';
+  await putJson(fixture.repo, specPath, { visualImpact: 'none', reason: '仅改变内部功能实现', functionDependencies: [{ workItemRef: { path: sourceFixture.workPath }, caseId: 'case', evidenceRef: await frozenReview(fixture.repo, casePath) }] });
+  await refreshFunctionBaseline({ repo: fixture.repo, workItem: fixture.workPath, specPath });
+  const refreshed = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(refreshed.visual.reviews.V2.path, reviewPath);
+  assert.equal(inspect({ repo: fixture.repo, workItem: fixture.workPath }).status, 'PASS');
+});
 
 test('五栈可初始化工作项；check 严格识别 F0 阻断且不写工作项', async (t) => {
   const fixture = await createFixture();
@@ -284,35 +364,35 @@ test('视觉 RETURN 回退到最早受影响阶段并撤销下游确认', async 
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readWork(fixture.repo, fixture.workPath);
   work.globalState = 'REVIEW';
-  work.visual.stage = 'V4';
+  work.visual.stage = 'V5';
   work.visual.candidateId = 'direction-a';
   work.visual.reviews = {
-    V1: { path: 'reviews/v1.json' },
-    V2Decomposition: { path: 'reviews/v2-decomposition.json' },
-    V2Layout: { path: 'reviews/v2-layout.json' },
-    V3: { path: 'reviews/v3.json' }, V4: { path: 'reviews/v4.json' },
+    V2: { path: 'reviews/v1.json', sha256: '0'.repeat(64) },
+    V3Decomposition: { path: 'reviews/v2-decomposition.json', sha256: '0'.repeat(64) },
+    V3Layout: { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) },
+    V4: { path: 'reviews/v3.json', sha256: '0'.repeat(64) }, V5: { path: 'reviews/v4.json', sha256: '0'.repeat(64) },
   };
-  work.globalVisualBaselineRef = { path: 'reviews/global-baseline.json' };
-  work.assetReviewRef = { path: 'reviews/assets.json' };
+  await putJson(fixture.repo, 'reviews/global-baseline.json', { scope: 'synthetic' }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, 'reviews/global-baseline.json');
+  work.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' };
   await putJson(fixture.repo, fixture.workPath, work);
-  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '布局方向变更', 'affected-scope': 'visual:V2' } });
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '布局方向变更', 'affected-scope': 'visual:V3' } });
   const returned = await readWork(fixture.repo, fixture.workPath);
-  assert.equal(returned.visual.stage, 'V2');
-  assert.equal(returned.visual.reviews.V1.path, 'reviews/v1.json');
-  assert.equal(returned.visual.reviews.V2Decomposition, undefined);
-  assert.equal(returned.visual.reviews.V2Layout, undefined);
-  assert.equal(returned.visual.reviews.V3, undefined);
+  assert.equal(returned.visual.stage, 'V3');
+  assert.equal(returned.visual.reviews.V2.path, 'reviews/v1.json');
+  assert.equal(returned.visual.reviews.V3Decomposition, undefined);
+  assert.equal(returned.visual.reviews.V3Layout, undefined);
   assert.equal(returned.visual.reviews.V4, undefined);
+  assert.equal(returned.visual.reviews.V5, undefined);
   assert.equal(returned.globalVisualBaselineRef.path, 'reviews/global-baseline.json');
   assert.equal(returned.assetReviewRef, null);
   assert.equal(returned.gateStatus.F2, 'NOT_RUN');
   assert.equal(returned.gateStatus.F3, 'NOT_RUN');
-  returned.visual.reviews.V2Layout = { path: 'reviews/v2-layout.json' };
+  returned.visual.reviews.V3Layout = { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) };
   await putJson(fixture.repo, fixture.workPath, returned);
-  assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /visual\.reviews\.V2Layout 重新绑定了 RETURN 已作废引用/);
-  returned.visual.reviews.V2Layout = undefined;
-  returned.assetReviewRef = { path: 'reviews/assets.json' };
+  assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /visual\.reviews\.V3Layout 重新绑定了 RETURN 已作废引用/);
+  returned.visual.reviews.V3Layout = undefined;
+  returned.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   await putJson(fixture.repo, fixture.workPath, returned);
   assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /assetReviewRef 重新绑定了 RETURN 已作废引用/);
 });
@@ -322,42 +402,42 @@ test('全局基线 RETURN 后不能重绑旧选择记录', async (t) => {
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readWork(fixture.repo, fixture.workPath);
   work.globalState = 'REVIEW';
-  work.globalVisualBaselineRef = { path: 'reviews/global-baseline.json' };
+  await putJson(fixture.repo, 'reviews/global-baseline.json', { scope: 'synthetic' }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, 'reviews/global-baseline.json');
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' };
   await putJson(fixture.repo, fixture.workPath, work);
   await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '视觉基线变更', 'affected-scope': 'visual:V0' } });
   const returned = await readWork(fixture.repo, fixture.workPath);
   assert.equal(returned.globalVisualBaselineRef, null);
   assert.equal(returned.visual.stage, 'V0');
-  returned.globalVisualBaselineRef = { path: 'reviews/global-baseline.json' };
+  returned.globalVisualBaselineRef = await frozenReview(fixture.repo, 'reviews/global-baseline.json');
   await putJson(fixture.repo, fixture.workPath, returned);
   assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /globalVisualBaselineRef 重新绑定了 RETURN 已作废引用/);
 });
 
-test('实现返修 RETURN 保留仍有效的 V1–V3 确认与素材评审', async (t) => {
+test('实现返修 RETURN 保留仍有效的 V2–V4 确认与素材评审', async (t) => {
   const fixture = await createFixture({ id: 'implementation-return', type: 'PAGE', objective: '修复页面实现' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readWork(fixture.repo, fixture.workPath);
   work.globalState = 'REVIEW';
-  work.visual.stage = 'V4';
+  work.visual.stage = 'V5';
   work.visual.candidateId = 'direction-a';
   work.visual.reviews = {
-    V1: { path: 'reviews/v1.json' }, V2Decomposition: { path: 'reviews/v2-decomposition.json' },
-    V2Layout: { path: 'reviews/v2-layout.json' }, V3: { path: 'reviews/v3.json' }, V4: { path: 'reviews/v4.json' },
+    V2: { path: 'reviews/v1.json', sha256: '0'.repeat(64) }, V3Decomposition: { path: 'reviews/v2-decomposition.json', sha256: '0'.repeat(64) },
+    V3Layout: { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) }, V4: { path: 'reviews/v3.json', sha256: '0'.repeat(64) }, V5: { path: 'reviews/v4.json', sha256: '0'.repeat(64) },
   };
-  work.assetReviewRef = { path: 'reviews/assets.json' };
+  work.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   work.implementationPackageRef = { path: 'packages/old.json' };
   work.evidenceRef = { path: 'evidence/old.json' };
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' };
   await putJson(fixture.repo, fixture.workPath, work);
   await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RETURN', args: { reason: '修复实现问题', 'affected-scope': 'implementation' } });
   const returned = await readWork(fixture.repo, fixture.workPath);
-  assert.equal(returned.visual.stage, 'V4');
-  assert.equal(returned.visual.reviews.V1.path, 'reviews/v1.json');
-  assert.equal(returned.visual.reviews.V2Decomposition.path, 'reviews/v2-decomposition.json');
-  assert.equal(returned.visual.reviews.V2Layout.path, 'reviews/v2-layout.json');
-  assert.equal(returned.visual.reviews.V3.path, 'reviews/v3.json');
-  assert.equal(returned.visual.reviews.V4, undefined);
+  assert.equal(returned.visual.stage, 'V5');
+  assert.equal(returned.visual.reviews.V2.path, 'reviews/v1.json');
+  assert.equal(returned.visual.reviews.V3Decomposition.path, 'reviews/v2-decomposition.json');
+  assert.equal(returned.visual.reviews.V3Layout.path, 'reviews/v2-layout.json');
+  assert.equal(returned.visual.reviews.V4.path, 'reviews/v3.json');
+  assert.equal(returned.visual.reviews.V5, undefined);
   assert.equal(returned.assetReviewRef.path, 'reviews/assets.json');
   assert.equal(returned.implementationPackageRef, null);
   assert.equal(returned.evidenceRef, null);
@@ -367,16 +447,16 @@ test('RETURN 和 BLOCKED 期间不能推进视觉阶段', async (t) => {
   const fixture = await createFixture({ id: 'blocked-visual-stage', type: 'PAGE', objective: '验证视觉阶段恢复边界' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readWork(fixture.repo, fixture.workPath);
-  work.visual.stage = 'V2';
+  work.visual.stage = 'V3';
   work.globalState = 'BLOCKED';
   work.blockedRecord = { reason: '等待解决', returnState: 'REVIEW', resolvedAt: null };
   await putJson(fixture.repo, fixture.workPath, work);
-  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /未解决前不能推进视觉阶段/);
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V4' }), /未解决前不能推进视觉阶段/);
   work.globalState = 'RETURN';
   work.blockedRecord = null;
-  work.returnRecord = { reason: '等待解决', affectedScope: 'visual:V2', returnState: 'REVIEW', resolvedAt: null, invalidatedRefs: [], evidenceRoot: work.evidenceRoot };
+  work.returnRecord = { reason: '等待解决', affectedScope: 'visual:V3', returnState: 'REVIEW', resolvedAt: null, invalidatedRefs: [], evidenceRoot: work.evidenceRoot };
   await putJson(fixture.repo, fixture.workPath, work);
-  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /未解决前不能推进视觉阶段/);
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V4' }), /未解决前不能推进视觉阶段/);
 });
 
 test('BLOCKED 只能恢复原状态；IMPLEMENTING 恢复保留并重验现有执行批次', async (t) => {
@@ -409,7 +489,7 @@ test('BLOCKED 只能恢复原状态；IMPLEMENTING 恢复保留并重验现有�
   assert.deepEqual(await readFile(resolve(implementation.repo, ...executionPath.split('/'))), before);
 });
 
-test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V4 的控制器闭环', async (t) => {
+test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭环', async (t) => {
   const fixture = await createFixture({ id: 'home-page', type: 'PAGE', objective: '交付首页页面视觉及运行体验' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   let work = await readWork(fixture.repo, fixture.workPath);
@@ -426,45 +506,61 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V4 的控制器闭
     });
   }
   const baselinePath = '.workflow-control/reviews/global-selection.json';
-  await putJson(fixture.repo, baselinePath, reviewRecord({
+  const baselineTarget = await frozenReview(fixture.repo, baselineCandidates[0].path);
+  await putJson(fixture.repo, baselinePath, { ...reviewRecord({
     objectId: 'project-baseline-1', candidateId: 'direction-a', stage: 'BASELINE', purpose: 'visual-baseline',
-    userMessageRef: 'chat://baseline-selection', qualityChecks: selectedChecks,
-  }));
+    userMessageRef: 'chat://baseline-selection', qualityChecks: selectedChecks, targetRef: baselineTarget.path,
+  }), targetSha256: baselineTarget.sha256 });
   await putJson(fixture.repo, work.globalVisualBaselineRef.path, {
     schemaVersion: '1.0', baselineId: 'project-baseline-1', projectId: work.projectId,
     stack: work.stack, candidates: baselineCandidates, selectedCandidateId: 'direction-a',
-    selectionReviewRef: { path: baselinePath },
-  });
+    selectionReviewRef: await frozenReview(fixture.repo, baselinePath),
+  }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
   await putJson(fixture.repo, fixture.workPath, work);
 
+  work.globalState = 'REVIEW';
+  work.gateStatus.F2 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
   await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  await runEngineeringStage(fixture, 'V1');
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
   work = await readWork(fixture.repo, fixture.workPath);
   assert.equal(work.implementationPackageRef, null);
   assert.equal(work.evidenceRef, null);
-  assert.equal(work.globalState, 'INTAKE');
+  assert.equal(work.globalState, 'PROPOSAL');
   work.visual.candidateId = 'direction-a';
-  const target = await put(fixture.repo, 'visual/home-target.png', '合成 V1 目标材料');
+  const target = await put(fixture.repo, 'visual/home-target.png', '合成 V2 目标材料');
   const v1ReviewPath = '.workflow-control/reviews/home-target.json';
   const v1Checks = await createQualityChecks(fixture.repo, 'visual/reviews/v1');
-  await putJson(fixture.repo, v1ReviewPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V1', purpose: 'target', userMessageRef: 'chat://home-target', targetRef: target, qualityChecks: v1Checks }));
-  work.visual.reviews.V1 = { path: v1ReviewPath };
+  await putVisualReview(fixture.repo, v1ReviewPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'target', userMessageRef: 'chat://home-target', targetRef: target, qualityChecks: v1Checks }), work.workItemId, target);
+  work.visual.reviews.V2 = await frozenReview(fixture.repo, v1ReviewPath);
+  await writeSingleDomainFixture(fixture.repo, work, 'V2');
   await putJson(fixture.repo, fixture.workPath, work);
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
+  // 原地替换已选候选必须阻断旧确认；恢复原始内容后可继续。
+  const baselineBytes = await readFile(resolve(fixture.repo, baselineTarget.path));
+  await writeFile(resolve(fixture.repo, baselineTarget.path), '已更换的候选');
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /内容已变化/);
+  await writeFile(resolve(fixture.repo, baselineTarget.path), baselineBytes);
+  await putJson(fixture.repo, fixture.workPath, { ...work, visualBaselineRequired: false, globalVisualBaselineRef: null });
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /visualBaselineRequired/);
+  await putJson(fixture.repo, fixture.workPath, work);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' });
 
   work = await readWork(fixture.repo, fixture.workPath);
   const decomposition = await put(fixture.repo, 'visual/home-decomposition.png', '编号拆解图');
   const layout = await put(fixture.repo, 'visual/home-layout.png', '独立布局图');
   const decompositionPath = '.workflow-control/reviews/home-decomposition.json';
   const layoutPath = '.workflow-control/reviews/home-layout.json';
-  await putJson(fixture.repo, decompositionPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'decomposition', userMessageRef: 'chat://home-decomposition', targetRef: decomposition }));
-  await putJson(fixture.repo, layoutPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'layout', userMessageRef: 'chat://home-layout', targetRef: layout }));
-  work.visual.reviews.V2Decomposition = { path: decompositionPath };
-  work.visual.reviews.V2Layout = { path: layoutPath };
+  await putVisualReview(fixture.repo, decompositionPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V3', purpose: 'decomposition', userMessageRef: 'chat://home-decomposition', targetRef: decomposition }), work.workItemId, target);
+  await putVisualReview(fixture.repo, layoutPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V3', purpose: 'layout', userMessageRef: 'chat://home-layout', targetRef: layout }), work.workItemId, target, decompositionPath);
+  work.visual.reviews.V3Decomposition = await frozenReview(fixture.repo, decompositionPath);
+  work.visual.reviews.V3Layout = await frozenReview(fixture.repo, layoutPath);
+  await writeSingleDomainFixture(fixture.repo, work, 'V3');
   await putJson(fixture.repo, fixture.workPath, work);
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' });
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V4' });
   work = await readWork(fixture.repo, fixture.workPath);
   assert.equal(work.globalState, 'PROPOSAL');
-  assert.equal(work.visual.stage, 'V3');
+  assert.equal(work.visual.stage, 'V4');
   assert.equal(work.implementationPackageRef, null);
 
   const component = await put(fixture.repo, 'lib/features/home/home_view.dart', 'class HomeView {}\n');
@@ -472,40 +568,171 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V4 的控制器闭
   const assetReviewPath = '.workflow-control/reviews/home-assets.json';
   const assetUserMessage = 'chat://home-assets-reviewed';
   await putJson(fixture.repo, assetReviewPath, {
-    schemaVersion: '1.0', workItemId: 'home-page', stack: 'flutter', visualStage: 'V3',
+    schemaVersion: '1.0', workItemId: 'home-page', stack: 'flutter', visualStage: 'V4',
     candidateId: 'direction-a', technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef: assetUserMessage,
     qualityChecks: await createQualityChecks(fixture.repo, 'visual/reviews/asset'),
     assets: [{ assetId: 'home-native-component', assetType: 'native-component', output: component, componentEvidenceRef: componentCheck }],
   });
-  work.assetReviewRef = { path: assetReviewPath };
-  work.visual.reviews.V3 = { path: '.workflow-control/reviews/home-v3.json' };
-  await putJson(fixture.repo, work.visual.reviews.V3.path, reviewRecord({
-    objectId: 'home-page', candidateId: 'direction-a', stage: 'V3', purpose: 'imported-assets',
+  work.assetReviewRef = await frozenReview(fixture.repo, assetReviewPath);
+  work.visual.reviews.V4 = { path: '.workflow-control/reviews/home-v3.json' };
+  await putJson(fixture.repo, work.visual.reviews.V4.path, reviewRecord({
+    objectId: 'home-page', candidateId: 'direction-a', stage: 'V4', purpose: 'imported-assets',
     userMessageRef: assetUserMessage,
   }));
+  work.visual.reviews.V4 = await frozenReview(fixture.repo, work.visual.reviews.V4.path);
   work.gateStatus.F0 = 'PASS';
   work.gateStatus.F1 = 'PASS';
-  await putJson(fixture.repo, fixture.workPath, work);
-  work = await runEngineeringStage(fixture, 'V3');
-  assert.equal(work.globalState, 'PASSED');
-  assert.equal(work.visual.stage, 'V3');
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V4' });
-
-  work = await readWork(fixture.repo, fixture.workPath);
-  assert.equal(work.visual.stage, 'V4');
-  assert.equal(work.globalState, 'PROPOSAL');
-  assert.equal(work.assetReviewRef.path, assetReviewPath);
-  const runtimeReviewPath = '.workflow-control/reviews/home-runtime.json';
-  await putJson(fixture.repo, runtimeReviewPath, reviewRecord({
-    objectId: 'home-page', candidateId: 'direction-a', stage: 'V4', purpose: 'runtime-acceptance',
-    userMessageRef: 'chat://home-runtime-inspected',
-  }));
-  work.visual.reviews.V4 = { path: runtimeReviewPath };
+  await writeSingleDomainFixture(fixture.repo, work, 'V4');
   await putJson(fixture.repo, fixture.workPath, work);
   work = await runEngineeringStage(fixture, 'V4');
   assert.equal(work.globalState, 'PASSED');
+  assert.equal(work.visual.stage, 'V4');
+  const v4State = resolve(fixture.repo, work.evidenceRoot, 'execution-state.json');
+  const v4Bytes = await readFile(v4State);
+  await rm(v4State);
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V5' }), /Execution State/);
+  await writeFile(v4State, v4Bytes);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V5' });
+
+  work = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(work.visual.stage, 'V5');
+  assert.equal(work.globalState, 'PROPOSAL');
+  assert.equal(work.assetReviewRef.path, assetReviewPath);
+  const runtimeReviewPath = '.workflow-control/reviews/home-runtime.json';
+  const runtimeImage = await put(fixture.repo, 'visual/runtime.png', '合成运行画面');
+  await putVisualReview(fixture.repo, runtimeReviewPath, reviewRecord({
+    objectId: 'home-page', candidateId: 'direction-a', stage: 'V5', purpose: 'runtime-acceptance',
+    userMessageRef: 'chat://home-runtime-inspected', targetRef: runtimeImage,
+  }), work.workItemId, target);
+  work.visual.reviews.V5 = await frozenReview(fixture.repo, runtimeReviewPath);
+  await writeSingleDomainFixture(fixture.repo, work, 'V5');
+  await putJson(fixture.repo, fixture.workPath, work);
+  work = await runEngineeringStage(fixture, 'V5');
+  assert.equal(work.globalState, 'PASSED');
+  const v5State = resolve(fixture.repo, work.evidenceRoot, 'execution-state.json');
+  const v5Bytes = await readFile(v5State);
+  await rm(v5State);
+  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} }), /Execution State/);
+  await writeFile(v5State, v5Bytes);
   const complete = await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} });
   assert.ok(complete.stage.endsWith('/COMPLETE'));
+  // 真实完成的页面再参与最终集成，来源必须通过控制器严格检查。
+  const source = await readWork(fixture.repo, fixture.workPath);
+  const integration = await initializeWork({ repo: fixture.repo, args: { id: 'home-final-integration', stack: 'flutter', type: 'INTEGRATION', objective: '验证页面正式组合', 'integration-purpose': 'final' } });
+  const integrationFixture = { repo: fixture.repo, workPath: integration.metadata.workItemPath };
+  const integrationWork = await readWork(fixture.repo, integrationFixture.workPath);
+  integrationWork.globalState = 'REVIEW';
+  integrationWork.gateStatus.F0 = integrationWork.gateStatus.F1 = integrationWork.gateStatus.F2 = 'PASS';
+  const scopePath = 'docs/home-final-scope.json';
+  const scope = {
+    schemaVersion: '1.0', workItemId: integrationWork.workItemId, projectId: integrationWork.projectId, stack: integrationWork.stack,
+    objects: [{ objectId: source.visual.objectId, workItemRef: await frozenReview(fixture.repo, fixture.workPath), functionBaselineRef: source.visual.functionBaselineRef }],
+    cases: [{ caseId: 'home-navigation', objectIds: [source.visual.objectId] }],
+  };
+  await putJson(fixture.repo, scopePath, scope);
+  integrationWork.integrationScopeRef = await frozenReview(fixture.repo, scopePath);
+  await putJson(fixture.repo, integrationFixture.workPath, integrationWork);
+  await runEngineeringStage(integrationFixture, 'integration', { beforePassed: async (current) => {
+    assert.equal(current.integrationPurpose, 'final');
+    assert.equal(current.stageId, 'global-integration-validation');
+    // 已执行但未提交回归结果不能通过；范围内容与引用也不能在执行后改变。
+    await assert.rejects(transitionWork({ repo: fixture.repo, workItem: integrationFixture.workPath, to: 'PASSED', args: {} }), /最终集成回归证据/);
+    const originalScope = await readFile(resolve(fixture.repo, scopePath));
+    await putJson(fixture.repo, scopePath, { ...scope, cases: [{ caseId: 'other', objectIds: [source.visual.objectId] }] });
+    await assert.rejects(transitionWork({ repo: fixture.repo, workItem: integrationFixture.workPath, to: 'PASSED', args: {} }), /最终集成范围.*内容已变化/);
+    await writeFile(resolve(fixture.repo, scopePath), originalScope);
+    const alternative = 'docs/home-final-alternative-scope.json';
+    await putJson(fixture.repo, alternative, scope);
+    const originalRef = current.integrationScopeRef;
+    current.integrationScopeRef = await frozenReview(fixture.repo, alternative);
+    await putJson(fixture.repo, integrationFixture.workPath, current);
+    await assert.rejects(transitionWork({ repo: fixture.repo, workItem: integrationFixture.workPath, to: 'PASSED', args: {} }), /最终集成范围.*冻结/);
+    current.integrationScopeRef = originalRef;
+    await putJson(fixture.repo, integrationFixture.workPath, current);
+    const casePath = `${current.evidenceRoot}/home-navigation.json`;
+    await putJson(fixture.repo, casePath, { schemaVersion: '1.0', workItemId: current.workItemId, projectId: current.projectId, stack: current.stack, caseId: 'home-navigation', status: 'PASS', objectIds: [source.visual.objectId] });
+    const resultPath = `${current.evidenceRoot}/final-integration.json`;
+    await putJson(fixture.repo, resultPath, {
+      schemaVersion: '1.0', workItemId: current.workItemId, projectId: current.projectId, stack: current.stack, status: 'PASS',
+      objects: [{ objectId: source.visual.objectId, workItemRef: await frozenReview(fixture.repo, fixture.workPath), functionBaselineRef: source.visual.functionBaselineRef }],
+      cases: [{ caseId: 'home-navigation', objectIds: [source.visual.objectId], evidenceRef: await frozenReview(fixture.repo, casePath) }],
+    });
+    const manifest = JSON.parse(await readFile(resolve(fixture.repo, current.evidenceRef.path), 'utf8'));
+    manifest.items.push({ category: 'final-case', status: 'PASS', path: casePath }, { category: 'final-integration', status: 'PASS', path: resultPath });
+    await putJson(fixture.repo, current.evidenceRef.path, manifest);
+    current.integrationEvidenceRef = await frozenReview(fixture.repo, resultPath);
+    await putJson(fixture.repo, integrationFixture.workPath, current);
+  } });
+  assert.ok((await transitionWork({ repo: fixture.repo, workItem: integrationFixture.workPath, to: 'COMPLETE', args: {} })).stage.endsWith('/COMPLETE'));
+});
+
+test('SCENE 从目标数组开始，不允许未规划目标或使用单目标字段推进', async (t) => {
+  const fixture = await createFixture({ id: 'scene-targets', stack: 'cocos', type: 'SCENE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const work = await readWork(fixture.repo, fixture.workPath);
+  assert.deepEqual(work.visual.targets, []);
+  assert.equal(work.visual.reviews, undefined);
+  work.visual.candidateId = 'single-old-target';
+  await putJson(fixture.repo, fixture.workPath, work);
+  assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /禁止使用单目标/);
+});
+
+test('SCENE V2 推进必须逐目标验证真实领域合同及各自确认', async (t) => {
+  const fixture = await createFixture({ id: 'scene-multiview', stack: 'cocos', type: 'SCENE' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const work = await readWork(fixture.repo, fixture.workPath);
+  work.visual.objectId = 'main-gameplay';
+  work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
+  const baselineChecks = await createQualityChecks(fixture.repo, 'quality/baseline');
+  const candidates = [];
+  for (const candidateId of ['a', 'b', 'c']) {
+    const path = await put(fixture.repo, `baseline/${candidateId}.txt`, candidateId);
+    candidates.push({ candidateId, path, qualityChecks: candidateId === 'a' ? baselineChecks : qualityDimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })) });
+  }
+  const baselineReview = '.workflow-control/reviews/base.json';
+  const baselineTarget = await frozenReview(fixture.repo, candidates[0].path);
+  await putJson(fixture.repo, baselineReview, { ...reviewRecord({ objectId: 'base', candidateId: 'a', stage: 'BASELINE', purpose: 'visual-baseline', userMessageRef: 'user://base', qualityChecks: baselineChecks, targetRef: baselineTarget.path }), targetSha256: baselineTarget.sha256 });
+  work.globalVisualBaselineRef = { path: 'baseline/selection.json' };
+  await putJson(fixture.repo, work.globalVisualBaselineRef.path, { schemaVersion: '1.0', baselineId: 'base', projectId: work.projectId, stack: work.stack, candidates, selectedCandidateId: 'a', selectionReviewRef: await frozenReview(fixture.repo, baselineReview) }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
+  const imagePath = 'evidence/visual/mockup.png';
+  const image = minimalPng(390, 844);
+  await put(fixture.repo, imagePath, image);
+  const referenceTarget = { path: imagePath, sha256: createHash('sha256').update(image).digest('hex') };
+  for (const [index, targetId] of ['near', 'far'].entries()) {
+    const manifest = validManifest();
+    // 目标确认属于 V2，不能沿用夹具默认的 V5 运行验收阶段。
+    manifest.visualStageModel = 'function-first-v1';
+    manifest.visualStage = 'V2';
+    manifest.visualStageState = 'in-progress';
+    manifest.workItemId = work.workItemId;
+    manifest.candidateVersion = `candidate-${index + 1}`;
+    await putJson(fixture.repo, manifest.scene_reconstruction_contract.layout_decomposition.layout_source.nodes_file, fixtureLayoutDocument(manifest.scene_reconstruction_contract));
+    const domainPath = `docs/domain-${targetId}.json`;
+    await putJson(fixture.repo, domainPath, manifest);
+    const target = { targetId, candidateId: manifest.candidateVersion, sceneId: work.visual.objectId, stateId: 'default', viewport: { width: 390, height: 844 }, scope: targetId, referenceTarget, domainEvidenceRef: { path: domainPath }, reviews: {} };
+    const reviewPath = `.workflow-control/reviews/${targetId}.json`;
+    await putVisualReview(fixture.repo, reviewPath, reviewRecord({ objectId: work.visual.objectId, candidateId: target.candidateId, stage: 'V2', purpose: 'target', userMessageRef: `user://${targetId}`, targetRef: imagePath, qualityChecks: await createQualityChecks(fixture.repo, `quality/${targetId}`) }), work.workItemId, imagePath, null, targetId);
+    target.reviews.V2 = await frozenReview(fixture.repo, reviewPath);
+    work.visual.targets.push(target);
+  }
+  const snapshot = work.visual.targets.map(({ targetId, candidateId, sceneId, stateId, viewport, scope, referenceTarget: reference }) => ({ targetId, candidateId, sceneId, stateId, viewport, scope, referenceTarget: reference }));
+  const coveragePath = 'docs/coverage.json';
+  await putJson(fixture.repo, coveragePath, { workItemId: work.workItemId, sceneId: work.visual.objectId, status: 'CONFIRMED', userMessageRef: 'user://coverage', targetIds: ['near', 'far'], targets: snapshot });
+  work.visual.coverageRef = { path: coveragePath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, coveragePath))).digest('hex') };
+  work.globalState = 'REVIEW';
+  work.gateStatus.F2 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+  await runEngineeringStage(fixture, 'V1');
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
+  const missing = await readWork(fixture.repo, fixture.workPath);
+  delete missing.visual.targets[1].reviews.V2;
+  await putJson(fixture.repo, fixture.workPath, missing);
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /缺少 V2 确认/);
+  missing.visual.targets[1].reviews.V2 = await frozenReview(fixture.repo, '.workflow-control/reviews/far.json');
+  await putJson(fixture.repo, fixture.workPath, missing);
+  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' });
+  assert.equal((await readWork(fixture.repo, fixture.workPath)).visual.stage, 'V3');
 });
 
 test('RELEASE 在 F4 未运行时可进入批准等待态，但未批准不得进入 RELEASING', async (t) => {
@@ -523,12 +750,67 @@ test('RELEASE 在 F4 未运行时可进入批准等待态，但未批准不得�
   );
 });
 
+test('预先登记外部动作可完成本地准备，执行前按具体动作只读核对批准', async (t) => {
+  const fixture = await createFixture({ id: 'external-preparation' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  let work = await readWork(fixture.repo, fixture.workPath);
+  work.action = { actionId: 'export-report', effects: ['external-write', 'upload'], target: 'remote-report' };
+  work.gateStatus.F0 = 'PASS';
+  work.gateStatus.F1 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'BASELINE', args: {} });
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'PROPOSAL', args: {} });
+  work = await runEngineeringStage(fixture, 'external-preparation');
+  assert.equal(work.globalState, 'PASSED');
+  const action = { repo: fixture.repo, workItem: fixture.workPath, actionId: 'export-report', effect: 'external-write', target: 'remote-report' };
+  assert.throws(() => checkProtectedAction(action), { code: 'APPROVAL_REQUIRED' });
+  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} }), { code: 'APPROVAL_REQUIRED' });
+  work.action.approval = { workItemId: work.workItemId, stack: work.stack, stageId: work.stageId,
+    actionId: work.action.actionId, effects: ['external-write', 'upload'], target: work.action.target, userMessageRef: 'chat://approval' };
+  await putJson(fixture.repo, fixture.workPath, work);
+  assert.throws(() => checkProtectedAction(action), { code: 'GATE_BLOCKED' });
+  work.gateStatus.F4 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  const before = await readFile(resolve(fixture.repo, fixture.workPath));
+  assert.equal(checkProtectedAction(action).status, 'PASS');
+  assert.equal(checkProtectedAction({ ...action, effect: 'upload' }).status, 'PASS');
+  assert.throws(() => checkProtectedAction({ ...action, target: 'other-target' }), { code: 'ACTION_MISMATCH' });
+  assert.throws(() => checkProtectedAction({ ...action, actionId: 'other-action' }), { code: 'ACTION_MISMATCH' });
+  assert.throws(() => checkProtectedAction({ ...action, effect: 'device' }), { code: 'ACTION_MISMATCH' });
+  assert.throws(() => checkProtectedAction({ ...action, effect: 'local-write' }), { code: 'ACTION_MISMATCH' });
+  assert.deepEqual(await readFile(resolve(fixture.repo, fixture.workPath)), before);
+  const cli = spawnSync(process.execPath, [cliPath, 'check-action', '--repo', fixture.repo, '--work-item', fixture.workPath,
+    '--action-id', action.actionId, '--effect', action.effect, '--target', action.target], { encoding: 'utf8' });
+  assert.equal(cli.status, 0, cli.stderr);
+  assert.equal(JSON.parse(cli.stdout).changed, false);
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'BLOCKED', args: { reason: '需要处理阻断' } });
+  assert.throws(() => checkProtectedAction(action), { code: 'ACTION_NOT_READY' });
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'PASSED', args: { 'return-resolution': '阻断已处理' } });
+  work = await readWork(fixture.repo, fixture.workPath);
+  work.action.approval.effects = ['external-write'];
+  await putJson(fixture.repo, fixture.workPath, work);
+  assert.throws(() => checkProtectedAction(action), { code: 'APPROVAL_REQUIRED' });
+});
+
 test('审批后改变发布目标会拒绝进入 RELEASING', async (t) => {
   const fixture = await createFixture({ id: 'release-target-change', type: 'RELEASE', releaseIntent: 'publish' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   const work = await readyForRelease(fixture);
   approveRelease(work);
   work.action.target = 'different-store';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await assert.rejects(
+    transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }),
+    { code: 'APPROVAL_REQUIRED' },
+  );
+});
+
+test('审批后增加受保护动作会拒绝进入 RELEASING', async (t) => {
+  const fixture = await createFixture({ id: 'release-effect-change', type: 'RELEASE', releaseIntent: 'publish' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const work = await readyForRelease(fixture);
+  approveRelease(work);
+  work.action.effects.push('upload');
   await putJson(fixture.repo, fixture.workPath, work);
   await assert.rejects(
     transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }),
@@ -547,6 +829,39 @@ test('publish 即使有精确批准，F4 未通过也不能进入 RELEASING', as
     transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }),
     { code: 'GATE_BLOCKED' },
   );
+});
+
+test('发布批准后仍须在进入 RELEASING 与执行前重验 F3 和工程证据', async (t) => {
+  const fixture = await createFixture({ id: 'release-stale-preparation', type: 'RELEASE', releaseIntent: 'publish' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  let work = await readyForRelease(fixture);
+  approveRelease(work);
+  work.gateStatus.F3 = 'NOT_RUN';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }), { code: 'GATE_BLOCKED' });
+
+  work.gateStatus.F3 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  const manifest = JSON.parse(await readFile(resolve(fixture.repo, work.evidenceRef.path), 'utf8'));
+  const evidencePath = manifest.items[0].path;
+  const evidenceAbsolute = resolve(fixture.repo, evidencePath);
+  const original = await readFile(evidenceAbsolute);
+  await rm(evidenceAbsolute);
+  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} }), { code: 'NOT_FOUND' });
+  await writeFile(evidenceAbsolute, original);
+  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'RELEASING', args: {} });
+
+  work = await readWork(fixture.repo, fixture.workPath);
+  const action = { repo: fixture.repo, workItem: fixture.workPath, actionId: work.action.actionId, effect: 'publish', target: work.action.target };
+  work.gateStatus.F3 = 'NOT_RUN';
+  await putJson(fixture.repo, fixture.workPath, work);
+  assert.throws(() => checkProtectedAction(action), { code: 'GATE_BLOCKED' });
+  work.gateStatus.F3 = 'PASS';
+  await putJson(fixture.repo, fixture.workPath, work);
+  await rm(evidenceAbsolute);
+  assert.throws(() => checkProtectedAction(action), { code: 'NOT_FOUND' });
+  await writeFile(evidenceAbsolute, original);
+  assert.equal(checkProtectedAction(action).status, 'PASS');
 });
 
 test('合成发布材料验证 RELEASING 绑定和 COMPLETE 结果门，不代表实际发布', async (t) => {

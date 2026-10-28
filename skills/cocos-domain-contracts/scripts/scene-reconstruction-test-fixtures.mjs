@@ -11,7 +11,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { validateDisplayLayerPlanning, validateSceneReconstructionContract, validateStructuredFidelityCases } from "./scene-reconstruction-contract.mjs";
 import { validateSceneVisualRouteContract } from "./scene-visual-route-contract.mjs";
-import { validateSceneAssetUsageContract, validateSceneCombinationPreacceptance, validateV4ProductionGate, validateVisualImplementationPackageBinding } from "./visual-production-contract.mjs"; import { computeLayoutAnnotationConfirmationSha256, computeLayoutUserMessageSha256 } from "./layout_annotation_confirmation.mjs";
+import { validateSceneAssetUsageContract, validateSceneCombinationPreacceptance, validateV5ProductionGate, validateVisualImplementationPackageBinding } from "./visual-production-contract.mjs"; import { computeLayoutAnnotationConfirmationSha256, computeLayoutUserMessageSha256 } from "./layout_annotation_confirmation.mjs";
 
 const SHA = "sha256:" + "a".repeat(64);
 const LAYOUT_SHA = "sha256:" + "b".repeat(64);
@@ -171,7 +171,7 @@ function contract() {
 
 /** 构造共享清单身份，保持各还原合同用例的基线一致。 */
 function manifest() {
-  return { visual_validation: { mode: "exact" }, reference_target: { target_sha256: SHA, scene_ids: ["main"], state_ids: ["default"] }, visual_baseline: { version: "1.0.0" }, coverage_audit: { regions: [{ id: "hud" }, { id: "board" }] }, scene_reconstruction_contract: { predeclared_tolerances: [{ id: "layout-tolerance", rules: { geometry: { value: 2 } } }], coverage_regions: [{ id: "hud", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }, { id: "board", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }] } };
+  return { visualStageModel: "function-first-v1", visual_validation: { mode: "exact" }, reference_target: { target_sha256: SHA, scene_ids: ["main"], state_ids: ["default"] }, visual_baseline: { version: "1.0.0" }, coverage_audit: { regions: [{ id: "hud" }, { id: "board" }] }, scene_reconstruction_contract: { predeclared_tolerances: [{ id: "layout-tolerance", rules: { geometry: { value: 2 } } }], coverage_regions: [{ id: "hud", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }, { id: "board", tolerance_reference: "layout-tolerance", approved_exception_ids: [] }] } };
 }
 
 /** 将常驻 HUD 夹具转换为独立弹窗工作项合同，并补齐宿主场景上下文。 */
@@ -226,7 +226,7 @@ function fidelityCase(overrides = {}) {
   return { ...base, ...overrides };
 }
 
-/** 构造带布局拆解、V4 几何证据和 V4 逐节点证据的 effect-image 合同。 */
+/** 构造带布局拆解、V5 几何证据和 V5 逐节点证据的 effect-image 合同。 */
 function effectImageContract() {
   const value = structuredClone(contract());
   value.effect_image_reconstruction = { applicability: "effect-image" };
@@ -306,12 +306,12 @@ function effectImageContract() {
   return value;
 }
 
-/** 构造 effect-image 清单快照；V4 必须使用完整 scene contract。 */
+/** 构造 effect-image 清单快照；V5 必须使用完整 scene contract。 */
 function effectImageManifest(sceneContract) {
   return {
     ...manifest(),
     effect_image_reconstruction: { applicability: "effect-image" },
-    scene_reconstruction_contract: sceneContract, visualStageState: "v2-production-planning-complete",
+    scene_reconstruction_contract: sceneContract, visualStageState: "v3-production-planning-complete",
   };
 }
 

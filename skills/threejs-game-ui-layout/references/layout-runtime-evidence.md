@@ -28,6 +28,6 @@ HUD 由项目侧实现同样形状的 `readSnapshot()`，从实际 `Object3D`、
 
 `image.source_size` 是实际纹理/图片内容尺寸；`image.display_size` 是包含元素及祖先等比变换缩放的图片内容尺寸（cover 裁切前），`local_size` 是节点自身未变换布局尺寸，`layout_bounds` 是屏幕布局矩形，可能已经包含 transform 造成的 AABB 变化。普通图检查内容比例；只有冻结九宫格允许内容非比例扩展，并继续校验源像素尺寸。背景 frame 的 viewport 尺寸不能当作素材源尺寸；背景 cover、UV 与裁切沿用[满幅背景合同](../../threejs-game-asset-integration/references/full-bleed-background.md)。
 
-静态 JSON fixture、目标图和自动生成的合成节点只能用于单元测试，不能冒充正式运行证据。正式 V4 结果必须来自实际候选场景的同步读取，并绑定本次 scene/state/candidate 与 viewport revision。
+静态 JSON fixture、目标图和自动生成的合成节点只能用于单元测试，不能冒充正式运行证据。正式 V5 结果必须来自实际候选场景的同步读取，并绑定本次 scene/state/candidate 与 viewport revision。
 
 已有 `node_measurements.actual_bounds` 和关键对齐 `runtime_measurement` 必须逐字段等于对应活动节点的同批 `component_snapshot.layout_bounds`，不能维护两套互相矛盾的实际读数。该绑定只检查原有测量覆盖范围；`usability` 不因此变成全部节点的精确几何比较。

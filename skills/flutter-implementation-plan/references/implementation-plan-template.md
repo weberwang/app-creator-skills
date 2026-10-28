@@ -8,7 +8,7 @@
 - Do not add features outside MVP scope.
 - UI tasks require screenshot or golden evidence.
 - UI page tasks require a validated `docs/design/pages/<page-name>/layout-spec.yaml`, its validator command/result, relation invariants, and parameterized test matrix; screenshots/goldens do not replace these implementation inputs.
-- UI page tasks require the risk-selected Code Sketch evidence. Full uses a complete production skeleton, screenshots, and independent review; Lightweight uses the skeleton and relationship tests with screenshots by risk; Reuse records the approved pattern and delta, with full review only when structural facts change.
+- UI page tasks verify real functionality and semantics in V1. Code Sketch is optional and selected by risk; when selected, record the applicable Full, Lightweight, or Reuse evidence and review. Screenshots are checked by the user unless automatic visual verification is explicitly requested.
 - Module and page tasks must follow `docs/plans/module-map.md` for business-flow levels, module dependencies, cross-module contracts, and page interaction order. Finish and verify each level before starting the next. Default to the current checkout, one writer, and sequential execution; read-only work may parallelize, while branches/worktrees/commits/PRs or parallel writers require explicit user authorization.
 - Treat the cross-module task list as provisional until the current module becomes eligible. Audit existing decisions, run grilling only for material unresolved choices, then refine functions, states, acceptance paths, and task briefs.
 - Follow the global platform scope in `docs/architecture/verification-platforms.md`. Do not treat unlisted platforms as verified.
@@ -89,7 +89,7 @@
 
 ### M6.5: Final Platform Runtime Validation
 
-- Entry condition: all business-flow levels, module/page functionality, and required high-fidelity restoration are complete.
+- Entry condition: all business-flow levels and module/page functionality are verified, and visual acceptance is complete under the selected mode; full precision parity is required only for explicitly selected `exact`.
 - Platforms: `docs/architecture/verification-platforms.md`
 - Runtime evidence:
 - Blocking findings and fixes:

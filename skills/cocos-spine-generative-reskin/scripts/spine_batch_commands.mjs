@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { auditSkeleton, verifyUpgradeCandidate } from "./spine_skeleton.mjs";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { isMatchingCreatorSpineRuntimeEvidence } from "./spine_runtime.mjs";
 import { assertCurrentBatch, acceptanceFingerprint, batchCells, candidateFingerprint, createReviewBoard, createSourceBoard, currentBatch, readBatchPlan, validateBatchPlan, validateEffectSequence } from "./spine_batch.mjs";
 

@@ -9,7 +9,7 @@ const STAGE_TARGET = Object.freeze({
   'requirements-scope': 'BASELINE', 'global-baseline': 'BASELINE',
   'foundation-engineering': 'IMPLEMENTING', 'scene-production': 'PROPOSAL',
   'global-integration-validation': 'IMPLEMENTING', release: 'REVIEW',
-  V0: 'PROPOSAL', V1: 'PROPOSAL', V2: 'REVIEW', V3: 'IMPLEMENTING', V4: 'IMPLEMENTING',
+  V0: 'PROPOSAL', V1: 'IMPLEMENTING', V2: 'PROPOSAL', V3: 'REVIEW', V4: 'IMPLEMENTING', V5: 'IMPLEMENTING',
 });
 
 /** 严格解析影响范围；未知范围不能被当成可以安全继续的局部修复。 */
@@ -85,20 +85,33 @@ export function assertActiveReferences(work, { repo = '.', pkg, evidence, packag
   }
 }
 
-/** 只撤销真实受影响阶段的确认；资源修复不重开已确认的 V1/V2。 */
+/** 根据影响范围计算确认失效边界，不能以当前阶段截断失效边界。 */
+function firstAffectedVisualStage(work, record) {
+  const current = work.workItemType === 'SCENE' ? work.scene?.stage : work.workItemType === 'DISPLAY_LAYER' ? work.displayLayer?.stage : null;
+  if (!current) return null;
+  // 纯工程返修和明确的运行修复只撤销 V5，保留已有视觉决策。
+  const runtimeOnly = record.affectedScope.every((scope) => scope.startsWith('artifact:') || scope === 'stage:V5');
+  let first = runtimeOnly ? 5 : { BASELINE: 2, PROPOSAL: 2, REVIEW: 3, IMPLEMENTING: 4 }[record.returnState];
+  if (record.returnState === 'IMPLEMENTING' && current === 'V5' && !record.affectedScope.some((scope) => ['stage:V4', 'stage:foundation-engineering'].includes(scope))) first = 5;
+  // 显式影响阶段必须优先于笼统恢复状态，功能变化应回到 V1。
+  for (const scope of record.affectedScope) {
+    const match = /^stage:V([0-5])$/.exec(scope);
+    if (match) first = Math.min(first, Number(match[1]));
+  }
+  return first;
+}
+
+/** 只撤销真实受影响阶段的确认；工程返修保留 V2–V4 确认。 */
 export function invalidateStageReviews(work, record) {
-  const stage = deriveReturnVisualStage(work, record);
-  if (!stage) return work.stageReviews ?? [];
-  const first = Number(stage.slice(1));
+  const first = firstAffectedVisualStage(work, record);
+  if (first === null) return work.stageReviews ?? [];
   return (work.stageReviews ?? []).filter((review) => Number(review.stage.slice(1)) < first);
 }
 
-/** 全局恢复入口不能抹平资源与实现的职责；仅 V4 失效时保留已确认的 V3 资源。 */
+/** 退回只提前或保持当前阶段，失效边界独立于恢复后的阶段。 */
 export function deriveReturnVisualStage(work, record) {
   const current = work.workItemType === 'SCENE' ? work.scene?.stage : work.workItemType === 'DISPLAY_LAYER' ? work.displayLayer?.stage : null;
-  if (!current) return null;
-  let first = { BASELINE: 1, PROPOSAL: 1, REVIEW: 2, IMPLEMENTING: 3 }[record.returnState];
-  if (record.returnState === 'IMPLEMENTING' && current === 'V4' && !record.affectedScope.some((scope) => ['stage:V3', 'stage:foundation-engineering'].includes(scope))) first = 4;
-  // 退回只能保持或提前当前阶段，不能把尚处 V1/V2 的工作项直接送往生产阶段。
+  const first = firstAffectedVisualStage(work, record);
+  if (first === null) return null;
   return `V${Math.min(Number(current.slice(1)), first)}`;
 }

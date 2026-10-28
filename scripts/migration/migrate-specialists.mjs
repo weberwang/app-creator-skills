@@ -1,20 +1,23 @@
 #!/usr/bin/env node
 /** 按 Git 跟踪清单，将五个源仓库的专业技能与资源可复现地迁入当前仓库。 */
 import { createHash } from 'node:crypto';
+import { isStarterRuntime, planCommonJsScopes } from './module-scopes.mjs';
 import { execFileSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync } from './file-io.mjs';
 import { dirname, isAbsolute, join, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { extractUnityDomainValidation } from './unity-domain-extraction.mjs';
 import { adaptProjectInitializer } from './project-initializer-adapter.mjs';
-import { adaptUnityInstallerTest, adaptUnitySourceTest, routeControlCommands, skipLegacyControllerCliTests } from './source-test-adapter.mjs';
+import { adaptImageFrameSourceTest, adaptUnityInstallerTest, adaptUnitySourceTest, routeControlCommands, skipLegacyControllerCliTests } from './source-test-adapter.mjs';
 import { adaptFlutterValidator } from './flutter-validator-adapter.mjs';
-import { assertNoDestinationLinks, GENERATED_DOMAIN_RESOURCES, removeStaleGeneratedFiles } from './output-cleanup.mjs';
+import { adaptFlutterVisualReview } from './flutter-visual-review-adapter.mjs';
+import { assertNoDestinationLinks, AUTHORED_CONTROL_RESOURCES, GENERATED_DOMAIN_RESOURCES, removeStaleGeneratedFiles } from './output-cleanup.mjs';
 import { applyNativeManualResources } from './native-manuals.mjs';
 import { mapSourceFile, PUBLIC_SKILLS, RUNTIME_MODULES, STACK_POLICIES } from './source-policy.mjs';
-import { applySharedCapabilities, buildSharedVisualCapabilities, buildSharedWorkflowCapabilities } from './shared-modules.mjs';
+import { applySharedCapabilities, buildDirectSharedCapabilities, buildSharedFrameAtlasCapability, buildSharedFrameSourceCapability, buildSharedProjectInitCapability, buildSharedTransparencyContractCapability, buildSharedUiAlignmentCapability, buildSharedVideoAtlasCapability, buildSharedVisualCapabilities, buildSharedVisualNormalizationCapability, buildSharedWorkflowCapabilities, prepareReferenceRedirects, referenceRedirectHash } from './shared-modules.mjs';
 import { buildSharedCliPlan } from './shared-cli-modules.mjs';
-import { applySharedWorkflowSections, buildSharedWorkflowPlan } from './shared-workflows.mjs';
+import { applySharedWorkflowDocument as applySharedWorkflowSections, buildCompleteSharedWorkflowPlan as buildSharedWorkflowPlan } from './shared-workflows.mjs';
 import { writeMigrationCatalog } from './migration-catalog.mjs';
 import { parseMigrationArguments } from './migration-arguments.mjs';
 import { buildSharedProjectTemplatePlan } from './shared-project-templates.mjs';
@@ -22,6 +25,11 @@ import { applyProfessionalRouting } from './professional-routing.mjs';
 import { assertTransformablePlans } from './transform-preflight.mjs';
 import { routeCliEntry } from './cli-entry-routing.mjs';
 import { routeCapabilityPlan, routeCapabilityText } from './capability-entry-routing.mjs';
+import { validateAuthoredAssetReuse } from './authored-asset-reuse.mjs';
+import { adaptRelativeLayoutContracts } from './relative-layout-contract-adapter.mjs';
+import { adaptOptionalReviewArtifacts } from './optional-review-adapter.mjs';
+import { adaptProjectLocales, assertProjectLocaleAdaptablePlans } from './project-locale-adapter.mjs';
+import { adaptUnifiedStages, adaptUnifiedSharedCapabilities, assertUnifiedStageAdaptablePlans, loadUnifiedStagePatches } from './unified-stage-adapter.mjs';
 
 const SCRIPT_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const REPOSITORY_ROOT = resolve(SCRIPT_DIRECTORY, '../..');
@@ -29,7 +37,6 @@ const SOURCE_ROOT = resolve(REPOSITORY_ROOT, '..');
 const STACK_NAMES = Object.keys(STACK_POLICIES);
 const UTF8_TEXT_EXTENSIONS = new Set(['.cjs', '.css', '.csv', '.html', '.js', '.json', '.md', '.mjs', '.scss', '.ts', '.tsx', '.txt', '.yaml', '.yml', '.xml']);
 const PROJECT_PATH_ROOTS = new Set(['Assets', 'Artifacts', 'Packages', 'ProjectSettings', 'assets', 'build', 'coverage', 'docs', 'evidence', 'public', 'src', 'tests']);
-
 /** 执行 Git 子命令并保留二进制输出，NUL 路径因此不会被转义或按行截断。 */
 function runGit(repository, args) {
   try {
@@ -260,11 +267,6 @@ function replaceDependencyImports(text, destination, sourcePath, stack) {
   return { text: output, transforms };
 }
 
-/** starter/assets 是被使用者复制进入工程的运行时代码，不改写它们的第三方依赖语义。 */
-function isStarterRuntime(sourcePath) {
-  return sourcePath.split('/').some((part) => ['starter', 'starters', 'assets'].includes(part));
-}
-
 /** 更新旧技能的公共路由名称，但保留技术栈专属合同模块的路径名称。 */
 function routePublicNames(text, stack, sourcePath) {
   const policy = STACK_POLICIES[stack];
@@ -368,9 +370,8 @@ function readTextIfSupported(buffer, sourcePath) {
   return Buffer.from(text, 'utf8').equals(buffer) ? text : null;
 }
 
-/** 仅替换共享计划中已核对源范围的完整规则块，未入计划的专业正文原样保留。 */
+/** 抽取已核对共享块，并对没有共享块的原生参考继续执行精确适配。 */
 function transformSharedWorkflow(text, plan, entry, sharedWorkflowPlan) {
-  if (!sharedWorkflowPlan.replacements.some((item) => item.stack === plan.stack && item.sourcePath === entry.sourcePath)) return { text, sharedReferences: [], transforms: [] };
   return applySharedWorkflowSections(text, { stack: plan.stack, sourcePath: entry.sourcePath, destination: entry.destination, repositoryRoot: REPOSITORY_ROOT, plan: sharedWorkflowPlan });
 }
 
@@ -403,6 +404,7 @@ function transformText(text, entry, stack, tracked, entries) {
   const transforms = [...routed.transforms];
   if (routed.publicExecutionRef) entry.publicExecutionRef = routed.publicExecutionRef;
   const sourcePath = entry.sourcePath;
+  if (/^skills\/(?:cocos|phaser4|threejs)-frame-animation\/scripts\/image-frame-source\.test\.mjs$/.test(sourcePath)) { output = adaptImageFrameSourceTest(output); transforms.push('adapt-shared-frame-source-test'); }
   const destination = entry.destination;
   const isSkillEntry = sourcePath.endsWith('/SKILL.md') || sourcePath === 'SKILL.md';
   if (entry.transforms.includes('extract-unity-domain-validation')) {
@@ -498,18 +500,19 @@ function transformText(text, entry, stack, tracked, entries) {
   const cli = routeCliEntry(output, { sourcePath, destination, enabled: entry.cliEntry === true });
   output = cli.text;
   transforms.push(...cli.transforms);
+  // 原生路径与依赖重定位完成后，统一接入实际节点的相对布局校验。
+  const layout = adaptRelativeLayoutContracts(output, { stack, sourcePath, destination });
+  output = layout.text;
+  transforms.push(...layout.transforms);
+  // 静态布局保留 PNG 和机器事实，HTML 仅在明确需要交互或播放时生成。
+  const review = adaptOptionalReviewArtifacts(output, { stack, sourcePath, destination });
+  output = review.text;
+  transforms.push(...review.transforms);
+  if (stack === 'flutter') {
+    const adapted = adaptFlutterVisualReview(output, sourcePath);
+    if (adapted !== output) { output = adapted; transforms.push('optional-sketch-and-visual-acceptance-mode'); }
+  }
   return { text: output, transforms: [...new Set([...entry.transforms, ...transforms])] };
-}
-
-/** 计算当前文件中的 CommonJS 作用域目录，供 Flutter .js 工具继续使用 require。 */
-function commonJsPackageRoot(destination, stack) {
-  if (stack !== 'flutter') return null;
-  const parts = destination.split('/');
-  const skillIndex = parts.indexOf('skills');
-  if (skillIndex >= 0 && parts[skillIndex + 1] === 'app-skill-runtime') return null;
-  if (destination.startsWith('migration/source-tests/flutter/')) return 'migration/source-tests/flutter/package.json';
-  if (parts[0] === 'skills' && parts[1] && !['app-creator-workflow', 'app-workflow-control', 'grilling', 'app-asset-workflow'].includes(parts[1])) return `skills/${parts[1]}/package.json`;
-  return null;
 }
 
 /** 返回旧 control 目录的 sourcePath 前缀，避免误判同名普通文档。 */
@@ -661,30 +664,6 @@ function retainControlDependencyClosure(plan, packageEntries) {
   }
 }
 
-/** 为 Flutter 源工具及嵌套生成模板维持 CommonJS 局部模块语义。 */
-function planCommonJsScopes(stack, skillEntries, entries, sourceBuffers) {
-  const files = new Map();
-  if (stack !== 'flutter') return files;
-  const requiredScopes = new Set(skillEntries.filter((skill) => skill.kind === 'specialist').map((skill) => `skills/${skill.name}/package.json`));
-  requiredScopes.add('skills/flutter-domain-contracts/package.json');
-  for (const entry of entries.values()) {
-    if (!entry.destination || !entry.sourcePath.endsWith('.js') || isStarterRuntime(entry.sourcePath)) continue;
-    const original = sourceBuffers.get(entry.sourcePath)?.toString('utf8') ?? '';
-    if (!/\brequire\s*\(|\bmodule\.exports\b|\bexports\.[\w$]+\s*=/.test(original)) continue;
-    const packagePath = commonJsPackageRoot(entry.destination, stack);
-    if (packagePath) requiredScopes.add(packagePath);
-  }
-  for (const packagePath of requiredScopes) {
-    const sourcePackage = [...entries.values()].find((candidate) => candidate.destination === packagePath);
-    if (sourcePackage) {
-      sourcePackage.commonJsScope = true;
-      continue;
-    }
-    files.set(packagePath, { destination: packagePath, content: JSON.stringify({ private: true, type: 'commonjs' }, null, 2) + '\n', reason: '保留源 Flutter .js 工具的 CommonJS 语义，隔离根 ESM package。' });
-  }
-  return files;
-}
-
 /** 确认目标只能写入迁移专属技能资源或 migration 归档目录。 */
 export function assertSafeDestination(destination) {
   const absolute = assertNoDestinationLinks(REPOSITORY_ROOT, destination);
@@ -808,7 +787,7 @@ function buildStackPlan(stack, sourceRoot) {
   for (const entry of filePlans) sourceBuffers.set(entry.sourcePath, readFileSync(resolveSource(repository, entry.sourcePath)));
   const partialPlan = { stack, policy, sourceFiles, entries, sourceBuffers };
   retainControlDependencyClosure(partialPlan, packageEntries);
-  const commonJsScopes = planCommonJsScopes(stack, rootSkillEntries, entries, sourceBuffers);
+  const commonJsScopes = planCommonJsScopes(stack, entries, sourceBuffers);
   const tools = collectTools(stack, packageEntries, entries, sourceFiles);
   for (const tool of tools) {
     const entry = entries.get(tool.sourcePath);
@@ -825,31 +804,39 @@ function buildStackPlan(stack, sourceRoot) {
   }
   return routeCapabilityPlan({ stack, policy, repository, revision, sourceFiles, sourceFilesArray, discovery, entries, sourceBuffers, commonJsScopes, tools, rootSkillEntries, resourceDirectories: [...resourceDirectories].sort() });
 }
-
 /** 写出计划中的文件并记录实际源/目标哈希、处置、理由和可追踪变换。 */
-function applyStackPlan(plan, sharedWorkflowPlan) {
+function applyStackPlan(plan, sharedWorkflowPlan, stagePatches) {
   const output = [];
   const sourceRoots = plan.sourceFilesArray;
   for (const entry of plan.entries.values()) {
     const sourceBuffer = plan.sourceBuffers.get(entry.sourcePath);
     entry.sourceSha256 = sha256(sourceBuffer);
-    if (!entry.destination) {
-      output.push({ ...entry });
-      continue;
-    }
-    const text = readTextIfSupported(sourceBuffer, entry.sourcePath);
+    if (!entry.destination) { output.push({ ...entry }); continue; }
+    // 来源完整覆盖已预检；公共文件仅由共享生成器写入，源正文不得覆盖它。
+    if (entry.referenceRedirect) { entry.destinationSha256 = referenceRedirectHash(entry, sharedWorkflowPlan); output.push({ ...entry }); continue; }
+    if (entry.transforms.includes('reuse-existing-authored-asset-tool')) { entry.destinationSha256 = validateAuthoredAssetReuse({ root: REPOSITORY_ROOT, entry, sourceBuffer }); output.push({ ...entry }); continue; } // 只读取已审核的公共作者文件，禁止迁移写入。
+    const text = entry.transforms.includes('archive-legacy-agent-metadata') ? null : readTextIfSupported(sourceBuffer, entry.sourcePath);
     let destinationBuffer = sourceBuffer;
     if (text !== null) {
       const shared = transformSharedWorkflow(text, plan, entry, sharedWorkflowPlan);
       const transformed = transformText(shared.text, entry, plan.stack, plan.sourceFiles, plan.entries);
       destinationBuffer = Buffer.from(transformed.text, 'utf8');
-      entry.transforms = [...new Set([...shared.transforms, ...transformed.transforms])];
+      entry.transforms = [...new Set([...entry.transforms.filter((item) => item === 'archive-legacy-agent-metadata'), ...shared.transforms, ...transformed.transforms])];
       if (shared.sharedReferences.length) {
         entry.sharedReferences = [...new Set(sharedWorkflowPlan.replacements
           .filter((item) => item.stack === plan.stack && item.sourcePath === entry.sourcePath)
           .map((item) => item.commonPath))];
       }
     }
+    // 字体及语言合同以经审计的旧来源和作者规范生成，不能回退到旧五语约束。
+    const locale = adaptProjectLocales(destinationBuffer, { stack: plan.stack, sourcePath: entry.sourcePath, destination: entry.destination, repositoryRoot: REPOSITORY_ROOT, sourceBuffer });
+    if (locale.changed) {
+      destinationBuffer = locale.buffer;
+      entry.transforms = [...new Set([...entry.transforms, 'project-selected-locales'])];
+    }
+    // 阶段修改在语言合同之后应用，保证两种适配不相互覆盖。
+    const stage = adaptUnifiedStages(destinationBuffer, { stack: plan.stack, sourcePath: entry.sourcePath, destination: entry.destination, sourceBuffer, patches: stagePatches });
+    if (stage.changed) { destinationBuffer = stage.buffer; entry.transforms = [...new Set([...entry.transforms, 'unified-visual-stages'])]; }
     if (entry.disposition === 'copied' && !destinationBuffer.equals(sourceBuffer)) entry.disposition = 'adapted';
     if (entry.disposition === 'merged' && entry.transforms.includes('replaced-by-app-workflow-control')) {
       // 清单记录公共入口作为替代目标，但源 CLI 字节不得覆盖目标控制器。
@@ -866,7 +853,9 @@ function applyStackPlan(plan, sharedWorkflowPlan) {
       output.push({ ...entry });
       continue;
     }
-    if (existsSync(target) && !isUnmodifiedPreviousOutput(entry.destination)) throw new Error(`上一轮迁移后文件已被修改，拒绝覆盖：${entry.destination}`);
+    if (existsSync(target) && entry.sharedAdapterSha256 && destinationHash(entry.destination) === entry.sharedAdapterSha256) { entry.destinationSha256 = entry.sharedAdapterSha256; output.push({ ...entry }); continue; } // 中断恢复仅复用本轮预期字节。
+    if (sameBytes(target, destinationBuffer)) { entry.destinationSha256 = sha256(destinationBuffer); output.push({ ...entry }); continue; } // 相同字节不重复写入，减少文件监听和临时占用。
+    if (existsSync(target) && !isUnmodifiedPreviousOutput(entry.destination) && !sameBytes(target, destinationBuffer)) throw new Error(`上一轮迁移后文件已被修改，拒绝覆盖：${entry.destination}`);
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, destinationBuffer);
     entry.destinationSha256 = sha256(destinationBuffer);
@@ -954,16 +943,20 @@ export function migrateSpecialists(argv = process.argv.slice(2)) {
   }
   const plans = STACK_NAMES.map((stack) => buildStackPlan(stack, options.sourceRoot));
   const sharedWorkflowPlan = buildSharedWorkflowPlan({ sourceRoot: options.sourceRoot, repositoryRoot: REPOSITORY_ROOT });
+  prepareReferenceRedirects(plans, sharedWorkflowPlan, { readText: readTextIfSupported, transformShared: transformSharedWorkflow, transformText });
   const sharedCapabilityPlan = [
-    ...buildSharedVisualCapabilities(plans),
+    ...buildSharedVisualCapabilities(plans), ...buildDirectSharedCapabilities(plans), buildSharedFrameSourceCapability(plans), buildSharedFrameAtlasCapability(plans), buildSharedVideoAtlasCapability(plans), buildSharedUiAlignmentCapability(plans), buildSharedVisualNormalizationCapability(plans), buildSharedTransparencyContractCapability(plans), buildSharedProjectInitCapability(plans),
     ...buildSharedCliPlan({ sourceRoot: options.sourceRoot, repositoryRoot: REPOSITORY_ROOT }).capabilities,
     ...buildSharedProjectTemplatePlan({ sourceRoot: options.sourceRoot, repositoryRoot: REPOSITORY_ROOT }).capabilities,
     ...buildSharedWorkflowCapabilities(sharedWorkflowPlan, plans),
   ];
+  const stagePatches = loadUnifiedStagePatches(REPOSITORY_ROOT);
+  adaptUnifiedSharedCapabilities(sharedCapabilityPlan, plans, stagePatches, { readText: readTextIfSupported, transformShared: transformSharedWorkflow, transformText, sharedWorkflowPlan, repositoryRoot: REPOSITORY_ROOT });
   const plansByStack = new Map(plans.map((plan) => [plan.stack, plan]));
   for (const capability of sharedCapabilityPlan) for (const source of capability.sources) {
     const entry = plansByStack.get(source.stack)?.entries.get(source.sourcePath);
     if (!entry) throw new Error(`共享能力 ${capability.id} 无法关联已规划源文件：${source.stack}:${source.sourcePath}`);
+    if (capability.transforms?.includes('unified-visual-stages') && source.adapterDestination === capability.implementation) entry.sharedAdapterSha256 = sha256(capability.content);
     if (source.adapterContent !== undefined) {
       entry.sharedImplementationRef = capability.implementation;
       entry.sharedAdapterSha256 = sha256(Buffer.from(source.adapterContent, 'utf8'));
@@ -972,6 +965,8 @@ export function migrateSpecialists(argv = process.argv.slice(2)) {
   const imports = auditImports(plans, sharedWorkflowPlan);
   if (imports.length) throw new Error(`发现专业静态导入依赖未保留：\n${imports.join('\n')}`);
   assertTransformablePlans(plans, sharedWorkflowPlan, { readText: readTextIfSupported, transformShared: transformSharedWorkflow, transformText });
+  assertProjectLocaleAdaptablePlans(plans, sharedWorkflowPlan, { readText: readTextIfSupported, transformShared: transformSharedWorkflow, transformText, repositoryRoot: REPOSITORY_ROOT });
+  assertUnifiedStageAdaptablePlans(plans, sharedWorkflowPlan, { readText: readTextIfSupported, transformShared: transformSharedWorkflow, transformText, repositoryRoot: REPOSITORY_ROOT, patches: stagePatches });
   const trackedCount = plans.reduce((count, plan) => count + plan.sourceFilesArray.length, 0);
   const formalSkillCount = plans.reduce((count, plan) => count + plan.discovery.rootSkills.length, 0);
   const specialistCount = plans.reduce((count, plan) => count + plan.rootSkillEntries.filter((skill) => skill.kind === 'specialist').length, 0);
@@ -980,12 +975,14 @@ export function migrateSpecialists(argv = process.argv.slice(2)) {
     console.log(JSON.stringify({ status: 'DRY_RUN', trackedFiles: trackedCount, formalSkills: formalSkillCount, nativeAdapters: specialistCount, templateSkills: plans.reduce((count, plan) => count + plan.discovery.nestedSkills.length, 0), sharedCapabilities: sharedCapabilityPlan.length, importsChecked: true }, null, 2));
     return { status: 'DRY_RUN' };
   }
-  const files = plans.flatMap((plan) => applyStackPlan(plan, sharedWorkflowPlan));
+  const files = plans.flatMap((plan) => applyStackPlan(plan, sharedWorkflowPlan, stagePatches));
   const sharedOutputs = applySharedCapabilities({ capabilities: sharedCapabilityPlan, files, previousHashes: previousOutputs(), resolveDestination: assertSafeDestination, destinationHash, sha256 });
   const domainGeneratedFiles = applyNativeManualResources({ repositoryRoot: REPOSITORY_ROOT, previousHashes: previousOutputs(), resolveDestination: assertSafeDestination, hashDestination: destinationHash, sha256, files, plans, sharedOutputs });
   const currentDestinations = new Set(files.map((file) => file.destination).filter(Boolean));
   for (const plan of plans) for (const destination of plan.commonJsScopes.keys()) currentDestinations.add(destination);
   for (const entry of GENERATED_DOMAIN_RESOURCES) currentDestinations.add(entry.path);
+  // 即使历史清单包含这些路径，也不能将本仓库控制器误当过期迁移产物清除。
+  for (const path of AUTHORED_CONTROL_RESOURCES) currentDestinations.add(path);
   for (const generated of sharedOutputs.generatedFiles) currentDestinations.add(generated.path);
   removeStaleGeneratedFiles(previousOutputs(), currentDestinations, assertSafeDestination, destinationHash);
   const catalog = writeMigrationCatalog({ plans, files, domainGeneratedFiles, sourceRoot: options.sourceRoot, repositoryRoot: REPOSITORY_ROOT, sharedOutputs, sha256, resolveDestination: assertSafeDestination });

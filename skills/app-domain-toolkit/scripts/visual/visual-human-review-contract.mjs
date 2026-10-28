@@ -31,7 +31,7 @@ export function reviewerSummary(review) {
 /**
  * 机器/AI 审阅允许使用的结构化身份类型。
  *
- * 场景视觉流程使用 V2 拆解图确认；后续阶段的检查可以由机器或 AI
+ * 场景视觉流程使用 V3 拆解图确认；后续阶段的检查可以由机器或 AI
  * 产出，但仍必须带可追溯身份和证据，不能把裸 PASS 当作审阅记录。
  */
 export const STRUCTURED_REVIEWER_TYPES = Object.freeze([
@@ -42,7 +42,7 @@ export const STRUCTURED_REVIEWER_TYPES = Object.freeze([
   "automated",
 ]);
 
-/** 旧式 V2 审批字段不再允许参与场景视觉证据。 */
+/** 旧式 V3 审批字段不再允许参与场景视觉证据。 */
 const VISUAL_APPROVAL_REVIEWER_FIELDS = Object.freeze([
   "reviewer_type",
   "reviewerType",
@@ -54,10 +54,10 @@ const VISUAL_APPROVAL_REVIEWER_FIELDS = Object.freeze([
 ]);
 
 /**
- * V2 拆解确认后不再创建任何新的视觉复核身份或复核工件。
+ * V3 拆解确认后不再创建任何新的视觉复核身份或复核工件。
  *
- * 这些字段曾被 V3/F2 当成第二套人工/AI 审阅入口；现在它们会掩盖
- * 已冻结的 V2 拆解方案并造成重复确认，因此由共享门统一 fail closed。机器
+ * 这些字段曾被 V4/F2 当成第二套人工/AI 审阅入口；现在它们会掩盖
+ * 已冻结的 V3 拆解方案并造成重复确认，因此由共享门统一 fail closed。机器
  * 验证只能写入明确的确定性事实，例如文件 SHA、运行消费和 fidelity case。
  */
 export const VISUAL_POST_APPROVAL_REVIEW_FIELDS = Object.freeze([
@@ -74,7 +74,7 @@ export const VISUAL_POST_APPROVAL_REVIEW_FIELDS = Object.freeze([
   "humanReview",
 ]);
 
-/** V3/V4 禁止重复生成的视觉复核工件名称。 */
+/** V4/V5 禁止重复生成的视觉复核工件名称。 */
 export const VISUAL_POST_APPROVAL_REVIEW_ARTIFACTS = Object.freeze([
   "f2_review",
   "f2_reviews",
@@ -89,17 +89,17 @@ export const VISUAL_POST_APPROVAL_REVIEW_ARTIFACTS = Object.freeze([
 ]);
 
 /** 计算视觉问题最早应退回的阶段。 */
-export function earliestVisualReturnStage(stage, fallback = "V1/PROPOSAL") {
-  const normalized = String(stage ?? "V1").toUpperCase();
-  if (normalized === "V1" || normalized === "V2") return "V1/PROPOSAL";
-  if (normalized === "V3") return "V2/V3";
-  if (normalized === "F2") return "V3/F2";
+export function earliestVisualReturnStage(stage, fallback = "V2/PROPOSAL") {
+  const normalized = String(stage ?? "V2").toUpperCase();
+  if (normalized === "V2" || normalized === "V3") return "V2/PROPOSAL";
+  if (normalized === "V4") return "V3/V4";
+  if (normalized === "F2") return "V4/F2";
   return fallback;
 }
 
 /** 生成包含场景、区域、资产和人工身份的视觉审阅错误。 */
 export function humanReviewError(context = {}, message, details = {}) {
-  const stage = context.stage ?? "V1";
+  const stage = context.stage ?? "V2";
   const scene = context.scene_id ?? context.sceneId ?? "*";
   const state = context.state_id ?? context.stateId ?? "*";
   const annotation = context.annotation_number ?? context.annotationNumber ?? "*";
@@ -109,7 +109,7 @@ export function humanReviewError(context = {}, message, details = {}) {
   const expected = details.expected ?? "reviewer_type=human, reviewer_id, reviewed_at, evidence, status";
   const actual = details.actual ?? reviewerSummary(details.review ?? context.review);
   const returnStage = details.returnStage ?? context.returnStage ?? earliestVisualReturnStage(stage);
-  const rootCause = details.rootCause ?? (String(returnStage).startsWith("V1") ? "方案缺失" : "验收问题");
+  const rootCause = details.rootCause ?? (String(returnStage).startsWith("V2") ? "方案缺失" : "验收问题");
   return `[${stage}] scene/state=${scene}/${state} annotation_number=${annotation} region_id=${region} component_id=${component} asset_id=${asset} 根因=${rootCause} 预期 human reviewer=${expected} 实际 reviewer=${actual} ${message} 应退回阶段=${returnStage}`;
 }
 
@@ -147,14 +147,14 @@ export function validateStructuredReview(review, context = {}, options = {}) {
   return errors;
 }
 
-/** 已废弃的旧视觉人工审批入口；新流程只接受 V2 拆解图确认。 */
+/** 已废弃的旧视觉人工审批入口；新流程只接受 V3 拆解图确认。 */
 export function validateVisualHumanApproval(approval, binding = {}, context = {}, options = {}) {
   void binding;
-  return [humanReviewError({ ...context, review: approval }, "旧式视觉人工审批已移除；V2 必须使用拆解图、技术 JSON 与生产方案确认", {
+  return [humanReviewError({ ...context, review: approval }, "旧式视觉人工审批已移除；V3 必须使用拆解图、技术 JSON 与生产方案确认", {
     expected: "visual-decomposition-confirmation/1.0",
     actual: reviewerSummary(approval),
     review: approval,
-    returnStage: options.returnStage ?? "V2",
+    returnStage: options.returnStage ?? "V3",
     rootCause: options.rootCause,
   })];
 }
@@ -179,14 +179,14 @@ export function validateHumanReviewIdentity(review, identity = {}, context = {},
 }
 
 /**
- * 校验视觉对象没有携带 V2 通过后的重复复核字段或工件。
+ * 校验视觉对象没有携带 V3 通过后的重复复核字段或工件。
  *
  * 视觉对象只能保存确定性机器验证事实。递归检查便于同时覆盖
  * manifest、Evidence Manifest、F2 gateResult 和嵌套的 fidelity/asset 记录。
  */
 export function validateVisualPostApprovalReviewFields(value, options = {}) {
   const errors = [];
-  const stage = options.stage ?? "V3/V4";
+  const stage = options.stage ?? "V4/V5";
   const contextFor = (path) => ({ stage, region_id: path || "*" });
   const walk = (current, path = "") => {
     if (Array.isArray(current)) {
@@ -197,11 +197,11 @@ export function validateVisualPostApprovalReviewFields(value, options = {}) {
     for (const [key, child] of Object.entries(current)) {
       const childPath = path ? `${path}.${key}` : key;
       if (["visual_human_approval", "visualHumanApproval"].includes(key)) {
-        errors.push(humanReviewError(contextFor(childPath), `禁止使用旧式视觉方向审批 ${key}；场景 V2 只接受拆解图确认`, { expected: "visual-decomposition-confirmation/1.0", actual: key, returnStage: stage }));
+        errors.push(humanReviewError(contextFor(childPath), `禁止使用旧式视觉方向审批 ${key}；场景 V3 只接受拆解图确认`, { expected: "visual-decomposition-confirmation/1.0", actual: key, returnStage: stage }));
         continue;
       }
       if (VISUAL_POST_APPROVAL_REVIEW_ARTIFACTS.includes(key)) {
-        errors.push(humanReviewError(contextFor(childPath), `禁止使用重复视觉复核工件 ${key}；V2 拆解确认后只允许确定性机器验证`, { expected: "无重复复核工件", actual: key, returnStage: stage }));
+        errors.push(humanReviewError(contextFor(childPath), `禁止使用重复视觉复核工件 ${key}；V3 拆解确认后只允许确定性机器验证`, { expected: "无重复复核工件", actual: key, returnStage: stage }));
         continue;
       }
       if (VISUAL_POST_APPROVAL_REVIEW_FIELDS.includes(key)) errors.push(humanReviewError(contextFor(childPath), `禁止使用视觉复核字段 ${key}；拆解确认后不得再次复核`, { expected: "无 reviewer/review/human_review 字段", actual: key, returnStage: stage }));

@@ -1,10 +1,18 @@
 import { GATES, PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
 import { statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readFileSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, requireOneOf, requireText } from './validation.mjs';
 import { buildExecutionBatches } from './execution-batches.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
-import { assertVisualReuse } from './visual-reuse-binding.mjs';
+import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
+import { validateMultiVisualStage } from './multi-visual-contract.mjs';
+import { validateDomainTarget } from './domain-target-check.mjs';
+import { readFrozenVisualBaseline } from './visual-baseline-identity.mjs';
+import { validateSingleDomainTarget } from './single-domain-check.mjs';
+import { validateSceneReuseReview, validateSceneReuseCoverage } from './visual-reuse-binding.mjs';
+import { dependencyPath } from './feature-dependencies.mjs';
 
 const WORK_SOURCE_PATHS = new WeakMap();
 const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits']);
@@ -93,7 +101,7 @@ function assertResultPathsAvoidReservedFiles(repo, work, units) {
   const reserved = [`${evidenceRoot}/execution-state.json`];
   const workSource = WORK_SOURCE_PATHS.get(work);
   if (workSource) reserved.push(workSource);
-  for (const path of collectWorkReferencePaths(work)) reserved.push(path);
+  for (const path of collectWorkReferencePaths(work, repo)) reserved.push(path);
 
   const normalizedReserved = reserved.map((path) => ({
     path: repoPath(repo, path, 'Work Item 保留文件引用').relative,
@@ -111,15 +119,28 @@ function assertResultPathsAvoidReservedFiles(repo, work, units) {
 }
 
 /** 收集 Work Item 当前引用和失效记录中的文件路径，避免结果覆写被引用文件。 */
-function collectWorkReferencePaths(work) {
+export function collectWorkReferencePaths(work, repo) {
   const paths = [];
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
+  collect(work.visual?.coverageRef);
+  collect(work.visual?.integrationEvidenceRef);
+  collect(work.visual?.functionBaselineRef);
+  collect(work.visual?.domainEvidenceRef);
+  for (const dependency of work.visual?.functionDependencies ?? []) {
+    for (const reference of [dependency.workItemRef, dependency.evidenceRef]) if (reference?.path) paths.push(dependencyPath(repo, reference.path));
+  }
+  for (const target of work.visual?.targets ?? []) {
+    collect(target.referenceTarget);
+    collect(target.domainEvidenceRef);
+    collect(target.assetReviewRef);
+    for (const reference of Object.values(target.reviews ?? {})) collect(reference);
+  }
   for (const reference of work.invalidatedRefs ?? []) collect(reference);
   for (const reference of work.returnRecord?.invalidatedRefs ?? []) collect(reference);
   return paths;
@@ -161,7 +182,7 @@ export function validateUnitResult(repo, work, pack, unit, result) {
 }
 
 /** 校验证据文件和 profile 对应的机器证据类别是否真正存在。 */
-export function validateEvidence(repo, work, { requireEngineering = true, requireVisual = false } = {}) {
+export function validateEvidence(repo, work, { requireEngineering = true, requireVisual = false, requireAssetImport = true } = {}) {
   if (!work.evidenceRef?.path) throw new WorkflowError('尚未绑定 evidenceRef');
   const manifest = readJson(repo, work.evidenceRef.path, 'Evidence Manifest');
   const pack = loadPackage(repo, work);
@@ -180,7 +201,7 @@ export function validateEvidence(repo, work, { requireEngineering = true, requir
   if (!validItems.length) throw new WorkflowError('Evidence Manifest 必须包含真实存在的 PASS 证据文件');
   if (requireEngineering) requireKinds(profile.evidenceRequirements.engineering, validItems, 'engineering');
   if (requireVisual) requireKinds(profile.evidenceRequirements.visual, validItems, 'visual');
-  if (work.visual?.stage === 'V3' && profile.evidenceRequirements.assetImport?.length) {
+  if (requireAssetImport && work.visual?.stage === 'V4' && profile.evidenceRequirements.assetImport?.length) {
     requireKinds(profile.evidenceRequirements.assetImport, validItems, 'assetImport');
   }
   return { manifest, pack };
@@ -239,10 +260,12 @@ export function assertNoOpenGrilling(repo, work) {
 }
 
 /** 校验正式资源的技术导入和人工视觉评审都已完成。 */
-export function assertAssetReview(repo, work) {
-  if (!work.assetReviewRef?.path) throw new WorkflowError('V3/V4 需要绑定 assetReviewRef');
-  const record = readJson(repo, work.assetReviewRef.path, 'Asset Review');
-  if (record.schemaVersion !== VERSION || record.workItemId !== work.workItemId || record.stack !== work.stack || record.visualStage !== 'V3' || record.candidateId !== work.visual.candidateId) {
+export function assertAssetReview(repo, work, target = null) {
+  const reference = target ? target.assetReviewRef : work.assetReviewRef;
+  if (!reference?.path) throw new WorkflowError('V4/V5 需要绑定 assetReviewRef');
+  verifySingleVisualFile(repo, reference, 'Asset Review 确认记录');
+  const record = readJson(repo, reference.path, 'Asset Review');
+  if (record.schemaVersion !== VERSION || record.workItemId !== work.workItemId || record.stack !== work.stack || record.visualStage !== 'V4' || record.candidateId !== (target?.candidateId ?? work.visual.candidateId)) {
     throw new WorkflowError('Asset Review 版本、工作项、技术栈或视觉阶段错绑');
   }
   for (const field of ['technicalStatus', 'humanStatus']) {
@@ -276,12 +299,14 @@ export function assertAssetReview(repo, work) {
 }
 
 /** 技术成果和人的风格检查各有自己的证据，不能以生成成功推断审美通过。 */
-export function validateGlobalBaseline(repo, work) {
+export function validateGlobalBaseline(repo, work, { required = false } = {}) {
+  // V2 内先生成或复用视觉基线，离开 V2 时必须已确认。
+  if (work.visual && ['V0', 'V1', 'V2'].includes(work.visual.stage) && !required && !work.globalVisualBaselineRef?.path) return;
   if (!work.globalVisualBaselineRef?.path) {
-    if (work.visualBaselineRequired) throw new WorkflowError('当前工作项要求视觉基线但没有 globalVisualBaselineRef');
+    if (required || work.visualBaselineRequired) throw new WorkflowError('当前工作项要求视觉基线但没有 globalVisualBaselineRef');
     return;
   }
-  const record = readJson(repo, work.globalVisualBaselineRef.path, 'Global Visual Baseline');
+  const record = readFrozenVisualBaseline(repo, work.globalVisualBaselineRef);
   if (record.schemaVersion !== VERSION || record.baselineId === undefined || record.projectId !== work.projectId || record.stack !== work.stack) throw new WorkflowError('视觉基线版本、项目或技术栈错绑');
   if (!Array.isArray(record.candidates) || record.candidates.length !== 3) throw new WorkflowError('首次全局视觉基线必须有三张候选');
   if (new Set(record.candidates.map((candidate) => candidate.candidateId)).size !== 3) throw new WorkflowError('三张视觉候选必须各自有唯一身份');
@@ -295,7 +320,7 @@ export function validateGlobalBaseline(repo, work) {
   const chosen = record.candidates.filter((candidate) => candidate.candidateId === record.selectedCandidateId);
   if (chosen.length !== 1) throw new WorkflowError('视觉基线必须唯一选择候选');
   requireText(record.baselineId, 'Global Visual Baseline.baselineId');
-  validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireQuality: true });
+  validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireQuality: true, requireTarget: true });
 }
 
 /** 五项视觉质量维度均需明确 PASS 并附真实可读取的证据文件。 */
@@ -340,13 +365,19 @@ export function hasPreciseApproval(work) {
   return JSON.stringify(expectedEffects) === JSON.stringify(approvedEffects);
 }
 
+/** 工作项可先完成本地准备，执行发布或关闭受保护工作项前仍需批准。 */
+export function requiresProtectedActionApproval(work, to) {
+  if (!work.action?.effects?.some((effect) => PROTECTED_ACTIONS.has(effect))) return false;
+  return to === 'RELEASING' || to === 'COMPLETE';
+}
+
 /** 校验六阶段、对象类型、拷问、基线及审批的共同迁移边界。 */
 export function assertTransitionInputs(repo, work, to) {
   requireOneOf(to, Object.keys(TRANSITIONS).concat(['RETURN']), '目标全局状态');
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
   assertVisualReuse(repo, work);
-  if (to !== 'RELEASE_APPROVAL_REQUIRED' && work.action?.effects?.some((effect) => PROTECTED_ACTIONS.has(effect)) && !hasPreciseApproval(work)) {
+  if (requiresProtectedActionApproval(work, to) && !hasPreciseApproval(work)) {
     throw new WorkflowError('外部写入、设备、签名、上传、发布、付费或破坏性动作需要当前对象的明确用户批准引用', 'APPROVAL_REQUIRED');
   }
   if (to === 'RELEASE_APPROVAL_REQUIRED' && (!work.action?.effects?.includes('publish') || !work.action?.target)) {
@@ -362,55 +393,120 @@ export function assertGates(work, gates) {
   if (missing.length) throw new WorkflowError(`状态迁移缺少已通过的质量门：${missing.join(', ')}`, 'GATE_BLOCKED');
 }
 
-/** 视觉人工确认按唯一对象与阶段绑定，V2 拆解和布局必须分别确认。 */
+/** 视觉人工确认按唯一对象与阶段绑定，V3 拆解和布局必须分别确认。 */
 export function assertVisualReview(repo, work, stage) {
   if (!work.visual) return;
-  const reviews = work.visual.reviews ?? {};
-  if (stage === 'V1') {
-    requireText(work.visual.candidateId, 'visual.candidateId');
-    validateHumanReview(repo, reviews.V1, { objectId: work.visual.objectId, stage: 'V1', purpose: 'target', candidateId: work.visual.candidateId, requireTarget: true, requireQuality: true });
+  if (work.workItemType === 'SCENE') {
+    const manifest = ['V4', 'V5'].includes(stage)
+      ? validateEvidence(repo, work, { requireEngineering: true, requireVisual: stage === 'V5' }).manifest : undefined;
+    return validateMultiVisualStage(repo, work, stage, {
+      validateDomainTarget,
+      validateAssetReview: assertAssetReview,
+      validateReuseReview: validateSceneReuseReview,
+      validateReuseCoverage: validateSceneReuseCoverage,
+      manifest,
+      visualCategories: stage === 'V5' ? loadProfile(repo, work.stack).evidenceRequirements.visual : undefined,
+    });
   }
+  const reviews = work.visual.reviews ?? {};
+  // 页面和显示层也必须重新核对已确认目标及其派生图，不能只检查当前阶段的路径。
+  if (['V2', 'V3', 'V4', 'V5'].includes(stage)) assertSingleVisualIdentity(repo, work, stage);
+  // 单目标也执行本栈真实领域合同；公共确认不能替代宿主与布局校验。
+  validateSingleDomainTarget(repo, work, stage);
   if (stage === 'V2') {
-    validateHumanReview(repo, reviews.V2Decomposition, { objectId: work.visual.objectId, stage: 'V2', purpose: 'decomposition', candidateId: work.visual.candidateId, requireTarget: true });
-    validateHumanReview(repo, reviews.V2Layout, { objectId: work.visual.objectId, stage: 'V2', purpose: 'layout', candidateId: work.visual.candidateId, requireTarget: true });
+    requireText(work.visual.candidateId, 'visual.candidateId');
+    validateHumanReview(repo, reviews.V2, { objectId: work.visual.objectId, stage: 'V2', purpose: 'target', candidateId: work.visual.candidateId, requireTarget: true, requireQuality: true });
   }
   if (stage === 'V3') {
-    const assetRecord = assertAssetReview(repo, work);
-    validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
-    const review = validateHumanReview(repo, reviews.V3, { objectId: work.visual.objectId, stage: 'V3', purpose: 'imported-assets', candidateId: work.visual.candidateId });
-    if (review.userMessageRef !== assetRecord.userMessageRef) throw new WorkflowError('V3 阶段确认必须绑定资产评审已记录的用户消息');
+    validateHumanReview(repo, reviews.V3Decomposition, { objectId: work.visual.objectId, stage: 'V3', purpose: 'decomposition', candidateId: work.visual.candidateId, requireTarget: true });
+    validateHumanReview(repo, reviews.V3Layout, { objectId: work.visual.objectId, stage: 'V3', purpose: 'layout', candidateId: work.visual.candidateId, requireTarget: true });
   }
   if (stage === 'V4') {
-    assertAssetReview(repo, work);
-    validateEvidence(repo, work, { requireEngineering: true, requireVisual: true });
-    validateHumanReview(repo, reviews.V4, { objectId: work.visual.objectId, stage: 'V4', purpose: 'runtime-acceptance', candidateId: work.visual.candidateId });
+    const assetRecord = assertAssetReview(repo, work);
+    validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
+    verifySingleVisualFile(repo, reviews.V4, 'V4 确认记录');
+    const review = validateHumanReview(repo, reviews.V4, { objectId: work.visual.objectId, stage: 'V4', purpose: 'imported-assets', candidateId: work.visual.candidateId });
+    if (review.userMessageRef !== assetRecord.userMessageRef) throw new WorkflowError('V4 阶段确认必须绑定资产评审已记录的用户消息');
   }
+  if (stage === 'V5') {
+    const assetRecord = assertAssetReview(repo, work);
+    verifySingleVisualFile(repo, reviews.V4, 'V4 确认记录');
+    const v3 = validateHumanReview(repo, reviews.V4, { objectId: work.visual.objectId, stage: 'V4', purpose: 'imported-assets', candidateId: work.visual.candidateId });
+    if (v3.userMessageRef !== assetRecord.userMessageRef) throw new WorkflowError('V4 阶段确认必须绑定资产评审已记录的用户消息');
+    validateEvidence(repo, work, { requireEngineering: true, requireVisual: true });
+    validateHumanReview(repo, reviews.V5, { objectId: work.visual.objectId, stage: 'V5', purpose: 'runtime-acceptance', candidateId: work.visual.candidateId });
+  }
+}
+
+/** 验证单目标对象的人工确认、目标图和拆解确认链的实际文件身份。 */
+function assertSingleVisualIdentity(repo, work, stage) {
+  const names = stage === 'V2' ? ['V2'] : ['V2', 'V3Decomposition', 'V3Layout', ...(stage === 'V5' ? ['V5'] : [])];
+  const reviews = work.visual.reviews ?? {};
+  let frozenTarget = null;
+  for (const name of names) {
+    const path = reviews[name]?.path;
+    if (!path) throw new WorkflowError(`${name} 尚未记录人工验收`);
+    verifySingleVisualFile(repo, reviews[name], `${name} 确认记录`);
+    const purpose = { V2: 'target', V3Decomposition: 'decomposition', V3Layout: 'layout', V5: 'runtime-acceptance' }[name];
+    const review = validateHumanReview(repo, reviews[name], { objectId: work.visual.objectId, candidateId: work.visual.candidateId, stage: name.startsWith('V3') ? 'V3' : name, purpose, requireTarget: true, requireQuality: name === 'V2' });
+    let expectedOwner = work.workItemId;
+    if (review.workItemId !== work.workItemId && ['V2', 'V3Decomposition', 'V3Layout'].includes(name) && work.visual.reuse?.inheritedReviews?.includes(name)) {
+      expectedOwner = resolveReuseOwner(repo, work, review.workItemId, name);
+    }
+    if (review.workItemId !== expectedOwner || review.targetId !== work.visual.objectId) throw new WorkflowError(`${name} 人工记录未绑定当前对象及工作项`);
+    const currentTarget = verifySingleVisualFile(repo, review.referenceTarget, `${name} 目标图`);
+    verifySingleVisualFile(repo, { path: review.targetRef, sha256: review.targetSha256 }, `${name} 确认图`);
+    if (name === 'V2') {
+      if (repoPath(repo, review.targetRef).relative !== currentTarget) throw new WorkflowError('V2 确认图必须是冻结目标图');
+      frozenTarget = review.referenceTarget;
+    } else if (review.referenceTarget.sha256 !== frozenTarget.sha256 || currentTarget !== repoPath(repo, frozenTarget.path).relative) {
+      throw new WorkflowError(`${name} 未绑定 V2 冻结目标图`);
+    }
+    if (name === 'V3Layout') {
+      const original = review.decompositionReviewRef;
+      if (!original || repoPath(repo, original.path).relative !== repoPath(repo, reviews.V3Decomposition.path).relative) throw new WorkflowError('布局确认未绑定拆解确认');
+      verifySingleVisualFile(repo, original, '拆解确认记录');
+    }
+  }
+}
+
+/** 对人工确认所指文件检查项目路径、非空内容及冻结指纹。 */
+function verifySingleVisualFile(repo, identity, label) {
+  if (!identity || !/^[a-f0-9]{64}$/.test(identity.sha256 ?? '')) throw new WorkflowError(`${label} 必须记录 SHA-256`);
+  const path = requireNonEmptyFile(repo, identity.path, label);
+  if (createHash('sha256').update(readFileSync(repoPath(repo, path).absolute)).digest('hex') !== identity.sha256) throw new WorkflowError(`${label} 内容已变化，必须重新确认`);
+  return path;
 }
 
 /** 根据当前门禁判定产品质量和证据是否允许完成。 */
 export function assertReadyToPass(repo, work) {
   assertVisualReuse(repo, work);
-  if (work.visual && ['V0', 'V1', 'V2'].includes(work.visual.stage)) {
+  if (work.visual?.stage === 'V1') {
+    assertGates(work, ['F0', 'F1', 'F2', 'F3']);
+    validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
+    return;
+  }
+  if (work.visual && ['V0', 'V2', 'V3'].includes(work.visual.stage)) {
     assertGates(work, ['F0', 'F1']);
-    if (work.visual.stage === 'V1') assertVisualReview(repo, work, 'V1');
     if (work.visual.stage === 'V2') assertVisualReview(repo, work, 'V2');
-    validateGlobalBaseline(repo, work);
+    if (work.visual.stage === 'V3') assertVisualReview(repo, work, 'V3');
+    validateGlobalBaseline(repo, work, { required: work.visual.stage !== 'V0' });
     return;
   }
   assertGates(work, ['F0', 'F1', 'F2', 'F3']);
-  if (work.visual && work.visual.stage === 'V3') {
-    assertVisualReview(repo, work, 'V3');
+  if (work.visual && work.visual.stage === 'V4') {
+    assertVisualReview(repo, work, 'V4');
     validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
   } else {
     validateEvidence(repo, work, { requireEngineering: true, requireVisual: Boolean(work.visual) });
-    if (work.visual) assertVisualReview(repo, work, 'V4');
+    if (work.visual) assertVisualReview(repo, work, 'V5');
   }
   validateGlobalBaseline(repo, work);
 }
 
-/** 最终整项关闭必须完成所有用户可见对象的 V4 展示与人工验收。 */
+/** 最终整项关闭必须完成所有用户可见对象的 V5 展示与人工验收。 */
 export function assertFinalCompletion(repo, work) {
-  if (work.visual && work.visual.stage !== 'V4') throw new WorkflowError('最终关闭前，可见 PAGE/SCENE/DISPLAY_LAYER 必须到达 V4');
+  if (work.visual && work.visual.stage !== 'V5') throw new WorkflowError('最终关闭前，可见 PAGE/SCENE/DISPLAY_LAYER 必须到达 V5');
   assertReadyToPass(repo, work);
   if (work.workItemType === 'RELEASE') {
     if (work.releaseIntent === 'prepare') assertReleasePreparation(repo, work);
@@ -445,7 +541,7 @@ function assertReleasePreparation(repo, work) {
   const workSource = WORK_SOURCE_PATHS.get(work);
   if (workSource) reservedMaterials.add(key(repoPath(repo, workSource, 'Work Item 源文件').relative));
   reservedMaterials.add(key(repoPath(repo, `${evidenceRoot}/execution-state.json`, '执行状态文件').relative));
-  for (const path of collectWorkReferencePaths(work)) {
+  for (const path of collectWorkReferencePaths(work, repo)) {
     reservedMaterials.add(key(repoPath(repo, path, 'Work Item 保留引用').relative));
   }
   for (const unit of pack.executionUnits) {

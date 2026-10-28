@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter Code Sketch"
+  short_description: "Build and review production Flutter code sketches."
+  default_prompt: "Use $flutter-code-sketch to implement and independently review a neutral code-first sketch on the production Flutter skeleton before high-fidelity work."

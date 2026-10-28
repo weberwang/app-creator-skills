@@ -92,7 +92,7 @@ test('单栈安装中的能力说明不会引用未安装栈的文件', (t) => {
 test('图片优化继承原有显式调用策略', () => {
   const group = CAPABILITY_GROUPS.find((item) => item.name === 'app-image-optimization');
   for (const adapter of capabilityAdapters(group)) {
-    const source = YAML.parse(readFileSync(join(SOURCE_ROOT, 'skills', adapter.sourceSkill, 'agents/openai.yaml'), 'utf8'));
+    const source = YAML.parse(readFileSync(join(SOURCE_ROOT, 'migration/source-metadata', `${adapter.stack}-${adapter.sourceSkill}.yaml`), 'utf8'));
     assert.equal(source.policy.allow_implicit_invocation, false);
   }
   const merged = YAML.parse(readFileSync(join(SOURCE_ROOT, 'skills', group.name, 'agents/openai.yaml'), 'utf8'));

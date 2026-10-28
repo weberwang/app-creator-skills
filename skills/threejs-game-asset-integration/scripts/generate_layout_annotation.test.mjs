@@ -46,7 +46,7 @@ test("完整 Stage A 文件链生成五件产物且重复输入可复现", async
   /** 执行一次生成并捕获 stdout 中对 generation-result 自身的外部 SHA。 */
   async function runGeneration() {
     const logs = []; const originalLog = console.log; console.log = (...args) => logs.push(args.join(" "));
-    try { assert.equal(await main(value.args()), 0); } finally { console.log = originalLog; }
+    try { assert.equal(await main([...value.args(), "--interactive-review"]), 0); } finally { console.log = originalLog; }
     return JSON.parse(logs.at(-1));
   }
   const firstStdout = await runGeneration();
@@ -66,3 +66,13 @@ test("已确认 proposal 的实际语义内容更新后，布局按最新内容�
 test("重新确认后的元素 bounds 变化会生成不同布局结果", async () => { const value = await fixture(); assert.equal(await main(value.args()), 0); const original = await readFile(join(value.root, "evidence/v2/layout.png")); const changed = value.elements.map((element) => element.element_id === "button-element" ? { ...element, bounds: { ...element.bounds, x: element.bounds.x + 3 } } : element); await rewriteProposal(value, changed, true); assert.equal(await main(value.args()), 0); const updated = await readFile(join(value.root, "evidence/v2/layout.png")); assert.notDeepEqual(updated, original); });
 test("缺失或非法显式智能布局决策时必须关闭生成", async () => { const missing = await fixture(); assert.equal(await main(missing.args().slice(0, -4)), 1); const invalid = await fixture(); invalid.layoutDecision.elements[0].horizontal_alignment = "diagonal"; const bytes = Buffer.from(JSON.stringify(invalid.layoutDecision)); await writeFile(join(invalid.root, invalid.layoutDecisionFile), bytes); invalid.layoutDecisionSha = sha256(bytes); assert.equal(await main(invalid.args()), 1); });
 test("智能布局决策遗漏、新增或调序元素时必须关闭生成", async () => { for (const mutate of [items => items.slice(1), items => [...items, { element_id: "fake-element", horizontal_alignment: "left", vertical_alignment: "top" }], items => [items[1], items[0]]]) { const value = await fixture(); value.layoutDecision.elements = mutate(value.layoutDecision.elements); const bytes = Buffer.from(JSON.stringify(value.layoutDecision)); await writeFile(join(value.root, value.layoutDecisionFile), bytes); value.layoutDecisionSha = sha256(bytes); assert.equal(await main(value.args()), 1); } });
+
+test("默认静态布局只写 PNG 和事实，不创建审阅 HTML", async () => {
+  const value = await fixture();
+  assert.equal(await main(value.args()), 0);
+  const result = JSON.parse(await readFile(join(value.root, "evidence/v2/generation-result.json"), "utf8"));
+  assert.equal(Object.hasOwn(result, "layout_review_file"), false);
+  assert.equal(Object.hasOwn(result, "layout_review_sha256"), false);
+  await assert.rejects(readFile(join(value.root, "evidence/v2/review.html")), { code: "ENOENT" });
+  for (const field of ["layout_annotation_file", "layout_nodes_file", "layout_decision_file"]) assert.ok((await readFile(join(value.root, result[field]))).length > 0);
+});

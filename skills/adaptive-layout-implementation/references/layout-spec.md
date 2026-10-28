@@ -18,3 +18,7 @@
 结构 `evidence_matrix` 与视觉 `parity_cases` 严格分离。layout-spec 自身 SHA 由外部审阅记录绑定，不能写进自身。
 
 真实叠层仍须登记语义边界、适用视口、遮挡策略和响应式回退。绝对坐标只能辅助诊断，不能替代关系。
+
+## 相对布局节点
+
+每个 region 必须声明真实 `parent_id`、唯一 `flutter_key` 和 `positioning: relative|absolute`，锚点必须引用已声明的 region 或固定根 `viewport`/`safe_area`。仅弹窗、浮窗、Toast 本体可声明对应的 `floating_root_kind` 并使用 absolute；本体须绑定同 ID、同 `body_kind` 的 overlay，内部节点保持相对并引用本体子树内的节点。实现信号和高保真测量须绑定相同的节点、父级、参照及 Widget key；详见[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。

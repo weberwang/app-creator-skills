@@ -21,12 +21,12 @@ import {
 const WORK_ITEM_SCHEMA = JSON.parse(readFileSync(new URL('../references/work-item.schema.json', import.meta.url), 'utf8'));
 const IMPLEMENTATION_PACKAGE_SCHEMA = JSON.parse(readFileSync(new URL('../references/implementation-package.schema.json', import.meta.url), 'utf8'));
 
-/** 正式运行阶段收敛到 V4，避免数字范围继续把旧 V5 当成合法响应式工作项。 */
-test('响应式工作项范围仅包含 V1-V4', () => {
-  for (const visualStage of ['V1', 'V2', 'V3', 'V4', 'v4']) {
+/** 正式运行阶段收敛到 V5，避免数字范围继续把旧 V6 当成合法响应式工作项。 */
+test('响应式工作项范围仅包含 V2-V5', () => {
+  for (const visualStage of ['V2', 'V3', 'V4', 'V5', 'v4']) {
     assert.equal(isResponsiveWorkItem({ visualStage, visibleVisualProductionIntegration: true }), true);
   }
-  for (const visualStage of ['V0', 'V5', 'V6']) {
+  for (const visualStage of ['V0', 'V6', 'V6']) {
     assert.equal(isResponsiveWorkItem({ visualStage, visibleVisualProductionIntegration: true }), false);
   }
 });
@@ -154,7 +154,7 @@ function makeSingleOrientationMeasurements(orientation) {
   }));
 }
 
-test('单方向合同与 V4 证据无需另一方向设计、视口或切换轨迹', () => {
+test('单方向合同与 V5 证据无需另一方向设计、视口或切换轨迹', () => {
   for (const orientation of ['portrait', 'landscape']) {
     const contract = makeSingleOrientationContract(orientation);
     assert.deepEqual(validateResponsiveContract(contract), [], orientation);
@@ -186,13 +186,13 @@ test('双方向声明继续要求另一方向和同页方向切换，非法方�
 test('响应式合同覆盖 18 个字段、运行时 DPR 和 1:1 图片生产分离', () => {
   const contract = makeContract();
   assert.equal(RESPONSIVE_CONTRACT_FIELDS.length, 18);
-  assert.deepEqual(validateResponsiveContract(contract, { stage: 'V1' }), []);
-  assert.deepEqual(validateResponsiveContract({ ...contract, responsiveViewportContract: contract }, { stage: 'V1' }), []);
+  assert.deepEqual(validateResponsiveContract(contract, { stage: 'V2' }), []);
+  assert.deepEqual(validateResponsiveContract({ ...contract, responsiveViewportContract: contract }, { stage: 'V2' }), []);
   const orientationConflict = { ...contract, orientationPolicy: { allowed: ['portrait'] }, responsiveViewportContract: contract };
   assert.match(validateResponsiveContract(orientationConflict).join('\n'), /根级与嵌套 orientationPolicy.allowed 必须一致/);
   const conflicting = { ...contract, designResolutionPolicy: structuredClone(contract.designResolutionPolicy), responsiveViewportContract: contract };
   conflicting.designResolutionPolicy.backgroundFit.targetPoint.x = 0.25;
-  assert.match(validateResponsiveContract(conflicting, { stage: 'V1' }).join('\n'), /根级与嵌套 designResolutionPolicy 必须一致/);
+  assert.match(validateResponsiveContract(conflicting, { stage: 'V2' }).join('\n'), /根级与嵌套 designResolutionPolicy 必须一致/);
   assert.equal(normalizeRuntimeDpr(undefined), 1);
   assert.equal(normalizeRuntimeDpr('2'), 1);
   assert.equal(normalizeRuntimeDpr(0), 1);
@@ -269,7 +269,7 @@ test('合同拒绝缺失矩阵、DPR 上限和生产 DPR 混写', () => {
   }
 });
 
-test('V4 证据验证 CSS/backing、动态 DPR 和实测矩阵', () => {
+test('V5 证据验证 CSS/backing、动态 DPR 和实测矩阵', () => {
   const contract = makeContract();
   const evidence = makeEvidence();
   assert.deepEqual(validateResponsiveEvidenceRecord(evidence, contract), []);

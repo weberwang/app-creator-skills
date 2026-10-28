@@ -17,14 +17,14 @@ export function validateNineSliceDecision(decision, targetSize = null) {
   return errors;
 }
 
-/** 核对 V2、图片任务、实际导入登记和组合绑定使用同一份切片事实。 */
+/** 核对 V3、图片任务、实际导入登记和组合绑定使用同一份切片事实。 */
 export function validateNineSliceProduction(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input)) return ['九宫格验证材料必须是对象'];
   const { item, task, registration, binding, placements } = input;
   const errors = validateNineSliceDecision(item?.nineSlice);
   if (errors.length) return errors;
   if (!task || !registration || !binding) return ['九宫格生产缺少任务、导入登记或组合绑定'];
-  for (const [name, object, keys] of [['V2', item, ['id', 'resourceId']], ['任务', task, ['id', 'resourceId', 'sourceVersion']], ['登记', registration, ['taskId', 'resourceId', 'sourceVersion', 'assetGuid', 'assetPath']], ['组合', binding, ['itemId', 'resourceId', 'assetGuid', 'assetPath']]]) {
+  for (const [name, object, keys] of [['V3', item, ['id', 'resourceId']], ['任务', task, ['id', 'resourceId', 'sourceVersion']], ['登记', registration, ['taskId', 'resourceId', 'sourceVersion', 'assetGuid', 'assetPath']], ['组合', binding, ['itemId', 'resourceId', 'assetGuid', 'assetPath']]]) {
     if (typeof object !== 'object' || Array.isArray(object) || keys.some((key) => typeof object[key] !== 'string' || !object[key].trim())) errors.push(`${name}缺少非空资源身份或路径`);
   }
   if (errors.length) return errors;
@@ -32,7 +32,7 @@ export function validateNineSliceProduction(input) {
   if (!registration.assetGuid || binding.assetGuid !== registration.assetGuid || binding.assetPath !== registration.assetPath || registration.unityValidation !== 'PASS') errors.push('九宫格组合必须绑定已回读的实际 GUID 和路径');
   for (const [name, decision] of [['图片任务', task.nineSlice], ['组合', binding.nineSlice]]) {
     errors.push(...validateNineSliceDecision(decision));
-    if (decision?.mode !== item.nineSlice.mode || (decision?.mode === 'stretch' && (JSON.stringify(decision.border) !== JSON.stringify(item.nineSlice.border) || decision.sourceSize?.width !== item.nineSlice.sourceSize.width || decision.sourceSize?.height !== item.nineSlice.sourceSize.height))) errors.push(`${name}切片事实与 V2 不一致`);
+    if (decision?.mode !== item.nineSlice.mode || (decision?.mode === 'stretch' && (JSON.stringify(decision.border) !== JSON.stringify(item.nineSlice.border) || decision.sourceSize?.width !== item.nineSlice.sourceSize.width || decision.sourceSize?.height !== item.nineSlice.sourceSize.height))) errors.push(`${name}切片事实与 V3 不一致`);
   }
   const expected = item.nineSlice.mode === 'stretch' ? item.nineSlice.border : [0, 0, 0, 0];
   for (const [name, importer] of [['任务', task.unityImport], ['导入登记', registration.importer]]) {

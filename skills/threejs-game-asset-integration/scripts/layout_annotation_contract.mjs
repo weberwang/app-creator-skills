@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * V2 后置布局标注图合同与确定性渲染器。
+ * V3 后置布局标注图合同与确定性渲染器。
  *
  * 布局图只接受已确认拆解中的 decomposition_elements，并由此推导 layout_nodes；
  * 这里不做图像识别，也不从未确认的 manifest 草案推导元素。PNG 元数据和右侧说明栏共同承担可复核性。
@@ -182,8 +182,8 @@ export function deriveAutomaticLayoutFacts(layoutNodes, canvas, context = {}) {
     if (uiErrors.length > 0) throw new Error(uiErrors[0]);
     const roleDecisionRequired = requiresNineSliceDecision({ owner_type: node.owner_type, element_type: field(node, "element_type", "elementType"), render_kind: node.render_kind, role: field(node, "layout_role", "layoutRole", "role"), region_layer: node.region_layer, safe_area_policy: node.ui_layout?.safe_area_policy, visual_route_element_type: node.visual_route_element_type });
     if (node.nine_slice_decision_required !== undefined && node.nine_slice_decision_required !== true) throw new TypeError(`推导布局节点 ${id}.nine_slice_decision_required 是派生必评估标记，不接受 false 覆盖`);
-    if (roleDecisionRequired && node.nine_slice_decision_required !== true) throw new TypeError(`推导布局节点 ${id} 属于固定生产 UI 皮肤，缺少 V2 派生必评估标记`);
-    if ((roleDecisionRequired || node.nine_slice_decision_required === true) && node.nine_slice === undefined) throw new TypeError(`推导布局节点 ${id} 必须沿用 V2 冻结的 nine_slice 决策`);
+    if (roleDecisionRequired && node.nine_slice_decision_required !== true) throw new TypeError(`推导布局节点 ${id} 属于固定生产 UI 皮肤，缺少 V3 派生必评估标记`);
+    if ((roleDecisionRequired || node.nine_slice_decision_required === true) && node.nine_slice === undefined) throw new TypeError(`推导布局节点 ${id} 必须沿用 V3 冻结的 nine_slice 决策`);
     if (source.has(id)) throw new Error(`已确认拆解存在重复 layout_node_id：${id}`);
     if (node.nine_slice !== undefined) validateNineSliceTargetBounds(node.nine_slice, bounds, `布局节点 ${id}.target_bounds`);
     source.set(id, { node, id, parentId, bounds }); const list = children.get(parentId) ?? []; list.push(id); children.set(parentId, list);

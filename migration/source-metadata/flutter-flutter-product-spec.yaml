@@ -1,0 +1,4 @@
+interface:
+  display_name: "Flutter Product Spec"
+  short_description: "Define MVP scope and product requirements."
+  default_prompt: "Use $flutter-product-spec to turn an app idea into an MVP spec."

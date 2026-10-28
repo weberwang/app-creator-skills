@@ -6,7 +6,7 @@ import test from 'node:test';
 import { assertFinalCompletion } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { assertReleaseTransition } from '../../skills/app-workflow-control/scripts/runtime/release-policy.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
-import { initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { completeUnit, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 
 /** 为 RELEASE 合同测试建立真实临时项目和必要的工程证据。 */
 async function createReleaseFixture({ id, intent = 'prepare', includePreparation = true, resultOverrides = {}, materialOverrides = {} }) {
@@ -95,11 +95,35 @@ async function putJson(repo, path, value) {
   return put(repo, path, `${JSON.stringify(value, null, 2)}\n`);
 }
 
+/** 通过真实执行状态和单元结果完成合成发布准备，不执行发布动作。 */
+async function completePreflight(fixture) {
+  const { repo, workPath } = fixture;
+  const work = JSON.parse(await readFile(resolve(repo, workPath), 'utf8'));
+  work.globalState = 'REVIEW';
+  await putJson(repo, workPath, work);
+  await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
+  const pack = JSON.parse(await readFile(resolve(repo, work.implementationPackageRef.path), 'utf8'));
+  const unit = pack.executionUnits[0];
+  const outputFile = `${work.evidenceRoot}/preflight-command.log`;
+  await put(repo, unit.paths[0], '合成发布准备文件\n');
+  await put(repo, outputFile, 'node --version: 合成测试输出\n');
+  await putJson(repo, unit.resultPath, {
+    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
+    implementationPackageRef: work.implementationPackageRef.path, unitId: unit.unitId,
+    sequence: unit.sequence, status: 'PASS', exitCode: 0, files: [unit.paths[0]],
+    commandOutputs: [{ command: unit.acceptanceCommands[0], exitCode: 0, outputFile }],
+  });
+  await completeUnit({ repo, workItem: workPath, resultPath: unit.resultPath });
+  await transitionWork({ repo, workItem: workPath, to: 'VALIDATING', args: {} });
+  await transitionWork({ repo, workItem: workPath, to: 'PASSED', args: {} });
+}
+
 test('prepare 无 publish 动作时可从 PASSED 完成', async (t) => {
   const fixture = await createReleaseFixture({ id: 'prepare-ready' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
   assert.equal(fixture.work.releaseIntent, 'prepare');
   assert.equal(assertReleaseTransition(fixture.work, { from: 'PASSED', to: 'COMPLETE' }), 'COMPLETE');
+  await completePreflight(fixture);
   const result = await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} });
   assert.equal(result.status, 'PASS');
   assert.equal(result.stage, 'release/COMPLETE');

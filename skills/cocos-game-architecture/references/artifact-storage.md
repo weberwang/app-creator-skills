@@ -22,13 +22,13 @@
 
 Evidence Manifest、自身文件列表、命令 `outputFile` 及任何明确受 `evidenceRoot` 约束的字段，只能使用该 Work Item `evidenceRoot` 内路径。根级 `evidence/`、`docs/confirmed/`、`assets-source/` 或其他外部位置不得填入受限字段；仅在对应业务 Schema/控制命令明确允许外部引用时才通过该类字段关联产物。不为满足字段约束复制或改写已冻结记录，也不把根级审阅目录伪装成机器证据根。
 
-Cocos Creator 正式运行资源必须安装到最终计划的 `assets/` 路径，源文件及 Creator 生成的 `.meta` 一并维护。遵循[交付资源流程](../../cocos-game-orchestrator/references/delivery-artifacts.md)：候选安装到计划路径后，先核验 AssetDB 导入、类型、UUID/子资源、脚本编译及隔离验证结果，再记录 V3 accepted；未 accepted 时不得绑定到正式场景或进入正式场景构建/发布候选的有效资源引用。正式场景消费在 accepted 后进入相应 V4 集成与重验。通过后不搬迁正式资源。Creator 构建可能收集的资源也要检查最终包，不能只靠目录名假定排除。目录、`.meta` 或导入成功都不替代人工确认与控制面记录。
+Cocos Creator 正式运行资源必须安装到最终计划的 `assets/` 路径，源文件及 Creator 生成的 `.meta` 一并维护。遵循[交付资源流程](../../cocos-game-orchestrator/references/delivery-artifacts.md)：候选安装到计划路径后，先核验 AssetDB 导入、类型、UUID/子资源、脚本编译及隔离验证结果，再记录 V4 accepted；未 accepted 时不得绑定到正式场景或进入正式场景构建/发布候选的有效资源引用。正式场景消费在 accepted 后进入相应 V5 集成与重验。通过后不搬迁正式资源。Creator 构建可能收集的资源也要检查最终包，不能只靠目录名假定排除。目录、`.meta` 或导入成功都不替代人工确认与控制面记录。
 
 ## 从生产到确认
 
 1. 开始生产前，在 TDD 与当前实施包中确定临时、源文件、审阅、确认成果、正式资源和机器记录的位置及所有者。工具支持输出参数时传入明确目录；工具固定输出先按原接口生成。`output/` 不是所有任务的统一根目录，按上述用途选择子目录。
-2. 未送审探索使用 `output/candidates/`，可再生成中间文件使用 `output/intermediate/`。向用户展示或写入合同、清单、生成记录、确认回执前，将候选及其实际依赖保存至 `evidence/.../reviews/` 或对应保留目录；用户原始输入和不可重建生成原件不能只存在临时路径。布局图、节点 JSON、决策 JSON、审阅页与生成记录等同批依赖保持完整。
-3. 用户确认且工程检查满足后，非运行设计成果归档到 `docs/confirmed/`。运行资源按资源清单提前安装到最终计划的 `assets/` 路径，Creator AssetDB 就绪并完成不进入正式场景/发布候选的隔离验证后才记录 V3 accepted；正式场景消费在 accepted 后按 V4 验证，通过后不移动。可编辑源文件与再生产输入归档至 `assets-source/`。
+2. 未送审探索使用 `output/candidates/`，可再生成中间文件使用 `output/intermediate/`。向用户展示或写入合同、清单、生成记录、确认回执前，将候选及其实际依赖保存至 `evidence/.../reviews/` 或对应保留目录；用户原始输入和不可重建生成原件不能只存在临时路径。布局图、节点 JSON、决策 JSON、生成记录以及按需生成的审阅页等同批依赖保持完整。
+3. 用户确认且工程检查满足后，非运行设计成果归档到 `docs/confirmed/`。运行资源按资源清单提前安装到最终计划的 `assets/` 路径，Creator AssetDB 就绪并完成不进入正式场景/发布候选的隔离验证后才记录 V4 accepted；正式场景消费在 accepted 后按 V5 验证，通过后不移动。可编辑源文件与再生产输入归档至 `assets-source/`。
 4. 归档使用独立版本目录，不覆盖已有确认成果。已被冻结的证据、账本/回执、执行状态绑定的路径和文件保持原样；新产物使用本规范路径。旧路径仍被有效记录引用时继续保留，不批量搬迁文件，不自动改写引用或确认记录。
 5. 运行代码只从 Creator 工程已导入并由资源清单登记的正式 `assets/` 资源加载，不从 `output/`、`docs/confirmed/`、`assets-source/` 或根级审阅/验证目录加载。候选不得因复制到 `assets/` 就成为通过；加工、压缩、切片、改尺寸或 Creator 导入转换后须复核受影响的文件和人工验收。
 6. 工作流记录只引用真实文件路径。领域文档与清单按其 Schema 关联审阅成果和正式资源；机器 Evidence Manifest 及受 `evidenceRoot` 约束的文件字段仍只绑定机器证据根内实际文件。收尾检查资源清单无临时路径、同批依赖可读、发布包不含审阅产物；清理仅处理当前任务中无引用且可再生成的临时文件，并遵守[产物清理规则](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-artifact-cleanup)。

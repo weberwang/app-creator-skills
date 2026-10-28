@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, stat, writeFile } from "node:fs/promises";
 import { dirname, extname, isAbsolute, relative, resolve } from "node:path";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 
 /** 递归稳定编码，确保 Runtime 绑定不受 JSON 字段顺序影响。 */
 function stableJson(value) {

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * V2 阶段 B 独立布局确认合同。
+ * V3 阶段 B 独立布局确认合同。
  *
  * 拆解确认、布局候选和人工布局确认是三个串行身份。确认门会把实际
  * review.html、layout-nodes.json、布局决策副本、PNG、参考图和 proposal
@@ -20,12 +20,12 @@ export const LAYOUT_ANNOTATION_CONFIRMATION_SCHEMA = "layout-annotation-confirma
 const REQUIRED_FIELDS = [
   "confirmation_schema", "confirmation_id", "status", "confirmation_mode",
   "layout_annotation_file", "layout_annotation_width", "layout_annotation_height",
-  "layout_annotation_schema", "layout_annotation_layout", "layout_review_file", "layout_nodes_file",
+  "layout_annotation_schema", "layout_annotation_layout", "layout_nodes_file",
   "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id",
   "user_original_text", "decision_record_file", "user_decision_receipt_file", "accepted_at",
 ];
 const DECISION_BINDING_FIELDS = [
-  "layout_annotation_file", "layout_review_file", "layout_nodes_file",
+  "layout_annotation_file", "layout_nodes_file",
   "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id", "user_statement", "accepted_at",
 ];
 
@@ -80,6 +80,9 @@ function validateLayoutDecisionDocument(document, record, label, errors, receipt
   if (document.author_role !== "user" || document.resolution_status !== "resolved" || document.resolved_from !== "USER_INPUT_REQUIRED") errors.push(`${label} 必须是 user 解除 USER_INPUT_REQUIRED 的 resolved 记录`);
   if (!receipt && (document.status !== "accepted" || document.confirmation_mode !== "manual")) errors.push(`${label} 必须是 accepted/manual 布局决定`);
   for (const [field, expected] of DECISION_BINDING_FIELDS.map((field) => [field, field === "user_statement" ? record.user_original_text : record[field]])) if (expected !== undefined && document[field] !== expected) errors.push(`${label}.${field} 未绑定布局确认记录`);
+  // 决定与回执必须同时省略网页或绑定同一网页，不能只在一端声明。
+  if (Object.hasOwn(document, "layout_review_file") !== Object.hasOwn(record, "layout_review_file") || document.layout_review_file !== record.layout_review_file) errors.push(`${label}.layout_review_file 未绑定布局确认记录`);
+  if (["layout_review_sha256", "layout_review_identity_sha256"].some((field) => Object.hasOwn(document, field)) && !Object.hasOwn(document, "layout_review_file")) errors.push(`${label} 网页身份字段必须绑定审阅页文件`);
   if (!receipt && document.confirmation_id !== record.confirmation_id) errors.push(`${label}.confirmation_id 未绑定当前布局确认`);
   if (nonEmptyString(document.user_statement) && document.user_statement !== record.user_original_text) errors.push(`${label}.user_statement 与 user_original_text 不一致`);
   if (nonEmptyString(document.accepted_at) && Number.isNaN(Date.parse(document.accepted_at))) errors.push(`${label}.accepted_at 必须是合法时间`);
@@ -171,39 +174,55 @@ function validateLayoutNodesAgainstProposal(proposal, nodesDocument, expectedLay
   }
 }
 
-/** 校验 review.html、layout-nodes.json 及其引用文件的真实内容和归属。 */
-function validateLayoutReviewFiles(record, context, files, image, errors, label) {
+/** 校验 PNG、真实 proposal、决策和节点文档；HTML 不是重算布局的前提。 */
+function validateLayoutCandidateFiles(record, context, files, image, errors, label) {
   const { review, nodes, layoutDecision } = files;
-  if (!review || !nodes) return;
-  const expectedBindings = { projectRoot: context.projectRoot, sceneId: record.scene_id, stateId: record.state_id, decompositionConfirmationId: record.decomposition_confirmation_id, layoutDecisionId: record.layout_decision_id, referenceFile: context.referenceFile ?? context.reference_file, proposalFile: context.proposalFile ?? context.proposal_file };
-  const payload = readAndValidateLayoutReviewPayload(review.bytes, nodes.bytes, expectedBindings, errors, label);
-  if (!payload) return;
-  const proposalBinding = payload.bindings.proposal;
-  const proposalPath = readBoundFile(context.projectRoot, proposalBinding.file, `${label}.proposal`, errors, true);
-  const proposal = proposalPath?.json;
-  const rebuilt = expectedLayout(proposal, layoutDecision?.json, record, payload.externalNodes, errors, label);
-  const expectedFacts = rebuilt?.facts ?? null;
-  if (proposal && rebuilt) validateLayoutNodesAgainstProposal(proposal, payload.externalNodes, rebuilt.layoutNodes, context, errors, label);
+  if (!nodes || !image || !layoutDecision) return;
+  const expected = { projectRoot: context.projectRoot, sceneId: record.scene_id, stateId: record.state_id, decompositionConfirmationId: record.decomposition_confirmation_id, layoutDecisionId: record.layout_decision_id, referenceFile: context.referenceFile ?? context.reference_file, proposalFile: context.proposalFile ?? context.proposal_file };
+  // 来源必须由上游人工拆解确认提供，不能由可选网页自行指定。
+  const proposal = readBoundFile(context.projectRoot, expected.proposalFile, label + ".proposal", errors, true);
+  readBoundFile(context.projectRoot, expected.referenceFile, label + ".reference", errors);
+  let nodesDocument;
+  try { nodesDocument = JSON.parse(nodes.bytes.toString("utf8")); }
+  catch (error) { errors.push(label + ".layout_nodes 不是合法 JSON：" + error.message); return; }
+  let expectedFacts = null;
+  if (proposal?.json && layoutDecision?.json) {
+    const rebuilt = expectedLayout(proposal.json, layoutDecision.json, record, nodesDocument, errors, label);
+    if (rebuilt) {
+      validateLayoutNodesAgainstProposal(proposal.json, nodesDocument, rebuilt.layoutNodes, context, errors, label);
+      expectedFacts = rebuilt.facts;
+    }
+  } else {
+    errors.push(label + " 缺少可用 proposal 或 layout decision，无法复算最终布局几何");
+  }
   const nodeErrors = [];
-  validateLayoutNodesDocument(payload.externalNodes, { ...expectedBindings, layoutNodes: expectedFacts?.filter((node) => node.is_root_container !== true), rootNodes: expectedFacts?.filter((node) => node.is_root_container === true) }, nodeErrors, `${label}.layout_nodes`);
+  validateLayoutNodesDocument(nodesDocument, { ...expected, layoutNodes: expectedFacts?.filter((node) => node.is_root_container !== true), rootNodes: expectedFacts?.filter((node) => node.is_root_container === true) }, nodeErrors, label + ".layout_nodes");
   errors.push(...nodeErrors);
-  // 即使调用方没有提供 context.layoutNodes，也必须把节点 JSON 与 PNG 内的实际 facts 逐项绑定。
+  // 不依赖调用方提供节点，直接核对 PNG 内的实际事实与同批文档。
   try {
     const annotationMetadata = decodePngRgba(image.bytes).metadata;
-    const documentFacts = [...payload.externalNodes.layout_nodes, ...payload.externalNodes.root_nodes];
-    if (!Array.isArray(annotationMetadata?.nodes) || canonicalJson(annotationMetadata.nodes) !== canonicalJson(documentFacts)) errors.push(`${label} layout-nodes.json 与标准 PNG 的实际布局 facts 不一致`);
-  } catch (error) { errors.push(`${label} 无法读取标准 PNG 布局 facts：${error.message}`); }
-  const bindings = payload.bindings;
-  const bindingPairs = [["layout_annotation_file", bindings.annotation?.file], ["layout_review_file", record.layout_review_file], ["layout_nodes_file", bindings.nodes?.file], ["layout_decision_file", bindings.decision?.file]];
-  for (const [field, actual] of bindingPairs) if (actual !== record[field]) errors.push(`${label}.${field} 未绑定确认记录`);
-  if (isObject(bindings.reference)) readBoundFile(context.projectRoot, bindings.reference.file, `${label}.reference`, errors);
+    const documentFacts = [...nodesDocument.layout_nodes, ...nodesDocument.root_nodes];
+    if (!Array.isArray(annotationMetadata?.nodes) || canonicalJson(annotationMetadata.nodes) !== canonicalJson(documentFacts)) errors.push(label + " layout-nodes.json 与标准 PNG 的实际布局 facts 不一致");
+  } catch (error) { errors.push(label + " 无法读取标准 PNG 布局 facts：" + error.message); }
+  if (review) {
+    const payload = readAndValidateLayoutReviewPayload(review.bytes, nodes.bytes, expected, errors, label);
+    if (!payload) return;
+    const bindings = payload.bindings;
+    for (const [field, actual] of [["layout_annotation_file", bindings.annotation?.file], ["layout_nodes_file", bindings.nodes?.file], ["layout_decision_file", bindings.decision?.file]]) {
+      if (actual !== record[field]) errors.push(label + "." + field + " 未绑定确认记录");
+    }
+  }
 }
 
 /** 校验独立布局确认；布局阶段必须提供上游拆解和完整审阅页上下文。 */
 export function validateLayoutAnnotationConfirmation(record, context = {}, errors = [], label = "layout_annotation_confirmation") {
-  if (!isObject(record)) { errors.push(`${label} 必须是对象；V2 最终门缺少独立布局确认`); return null; }
+  if (!isObject(record)) { errors.push(`${label} 必须是对象；V3 最终门缺少独立布局确认`); return null; }
   for (const field of REQUIRED_FIELDS) if (!Object.hasOwn(record, field)) errors.push(`${label}.${field} 必须存在`);
-  for (const field of ["confirmation_id", "confirmation_mode", "layout_annotation_file", "layout_annotation_schema", "layout_annotation_layout", "layout_review_file", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id", "user_original_text", "decision_record_file", "user_decision_receipt_file", "accepted_at"]) if (!nonEmptyString(record[field])) errors.push(`${label}.${field} 必须是非空字符串`);
+  for (const field of ["confirmation_id", "confirmation_mode", "layout_annotation_file", "layout_annotation_schema", "layout_annotation_layout", "layout_nodes_file", "decomposition_confirmation_id", "layout_decision_file", "layout_decision_id", "scene_id", "state_id", "user_original_text", "decision_record_file", "user_decision_receipt_file", "accepted_at"]) if (!nonEmptyString(record[field])) errors.push(`${label}.${field} 必须是非空字符串`);
+  // 只允许完整省略网页，部分声明或空路径均视为错误。
+  const hasReview = Object.hasOwn(record, "layout_review_file");
+  if (hasReview && (!nonEmptyString(record.layout_review_file) || !/\.html?$/i.test(record.layout_review_file))) errors.push(`${label}.layout_review_file 必须是有效 HTML 路径`);
+  if (!hasReview && ["layout_review_sha256", "layout_review_identity_sha256"].some((field) => Object.hasOwn(record, field))) errors.push(`${label} 网页身份字段必须绑定审阅页文件`);
   if (record.confirmation_schema !== LAYOUT_ANNOTATION_CONFIRMATION_SCHEMA) errors.push(`${label}.confirmation_schema 必须为 ${LAYOUT_ANNOTATION_CONFIRMATION_SCHEMA}`);
   if (record.layout_annotation_schema !== "layout-annotation/png/1") errors.push(`${label}.layout_annotation_schema 必须为 layout-annotation/png/1`);
   if (record.layout_annotation_layout !== "image-plus-right-panel") errors.push(`${label}.layout_annotation_layout 必须为 image-plus-right-panel`);
@@ -214,7 +233,7 @@ export function validateLayoutAnnotationConfirmation(record, context = {}, error
   if (nonEmptyString(context.decompositionConfirmationId) && record.confirmation_id === context.decompositionConfirmationId) errors.push(`${label}.confirmation_id 必须独立于拆解确认 ID`);
   if (context.checkFiles === true && nonEmptyString(context.projectRoot)) {
     const image = readBoundFile(context.projectRoot, record.layout_annotation_file, `${label}.layout_annotation`, errors);
-    const review = readBoundFile(context.projectRoot, record.layout_review_file, `${label}.layout_review`, errors);
+    const review = hasReview ? readBoundFile(context.projectRoot, record.layout_review_file, `${label}.layout_review`, errors) : null;
     const nodes = readBoundFile(context.projectRoot, record.layout_nodes_file, `${label}.layout_nodes`, errors);
     const layoutDecision = readBoundFile(context.projectRoot, record.layout_decision_file, `${label}.layout_decision`, errors, true);
     const decision = readBoundFile(context.projectRoot, record.decision_record_file, `${label}.decision_record`, errors, true);
@@ -233,7 +252,7 @@ export function validateLayoutAnnotationConfirmation(record, context = {}, error
     if (layoutDecision) {
       if (layoutDecision.json?.decision_id !== record.layout_decision_id) errors.push(`${label}.layout_decision.decision_id 未绑定确认记录`);
     }
-    if (review && nodes && image && layoutDecision) validateLayoutReviewFiles(record, context, { review, nodes, layoutDecision }, image, errors, `${label}.layout_review`);
+    if (nodes && image && layoutDecision) validateLayoutCandidateFiles(record, context, { review, nodes, layoutDecision }, image, errors, `${label}.layout_candidate`);
     if (decision) validateLayoutDecisionDocument(decision.json, record, `${label}.decision_record`, errors);
     if (receipt) validateLayoutDecisionDocument(receipt.json, record, `${label}.user_decision_receipt`, errors, true);
   }

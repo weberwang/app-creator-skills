@@ -31,7 +31,7 @@ function planning({ inventory = [], persistentLayerIds = [] } = {}) {
   };
 }
 
-/** 构造带宿主上下文图和 V4 运行轨迹的完整瞬态显示层。 */
+/** 构造带宿主上下文图和 V5 运行轨迹的完整瞬态显示层。 */
 function completeTransientLayer(overrides = {}) {
   return {
     layer_id: "pause-modal",
@@ -169,7 +169,7 @@ function hashFile(path) {
   return `sha256:${createHash("sha256").update(readFileSync(path)).digest("hex")}`;
 }
 
-/** 构造高保真前置所需的最小场景 V2 证据及临时仓库。 */
+/** 构造高保真前置所需的最小场景 V3 证据及临时仓库。 */
 function highFidelityFixture(unitType, displayLayerIds) {
   const repo = mkdtempSync(join(tmpdir(), "phaser-deferred-display-layer-"));
   const docs = join(repo, "docs");
@@ -195,10 +195,11 @@ function highFidelityFixture(unitType, displayLayerIds) {
     },
   });
   const evidence = {
+    visualStageModel: "function-first-v1",
     schemaVersion: "phaser4-scene-v2-reconstruction-plan/1.0",
     workItemId: "WI-DEFERRED",
     status: "COMPLETE",
-    stage: "V2",
+    stage: "V3",
     frozen: true,
     sceneId: "main",
     targetSha256: SHA,
@@ -209,7 +210,7 @@ function highFidelityFixture(unitType, displayLayerIds) {
     decompositionAnnotation: relativeArtifact(files.annotation),
     technicalDecomposition: relativeArtifact(files.technical),
     visualDecompositionConfirmation: {
-      confirmationId: "V2-CONFIRM",
+      confirmationId: "V3-CONFIRM",
       confirmationMode: "manual",
       status: "PASS",
       targetSha256: SHA,
@@ -235,9 +236,10 @@ function highFidelityFixture(unitType, displayLayerIds) {
     displayLayerId: expected.displayLayerId,
     hostSceneId: expected.hostSceneId,
     highFidelityPrerequisite: {
+      visualStageModel: "function-first-v1",
       workItemId: "WI-DEFERRED",
       status: "COMPLETE",
-      stage: "V2",
+      stage: "V3",
       frozen: true,
       ...expected,
       targetSha256: SHA,
@@ -249,7 +251,7 @@ function highFidelityFixture(unitType, displayLayerIds) {
   };
   const work = {
     workItemId: "WI-DEFERRED",
-    visualStageEvidenceRefs: { V2: { path: "docs/v2-plan.json", sha256: evidenceSha, workItemId: "WI-DEFERRED" } },
+    visualStageEvidenceRefs: { V3: { path: "docs/v2-plan.json", sha256: evidenceSha, workItemId: "WI-DEFERRED" } },
   };
   return {
     repo,
@@ -262,39 +264,39 @@ function highFidelityFixture(unitType, displayLayerIds) {
 
 test("场景规划拒绝 deferred_layers，弹窗必须拆为独立工作项", () => {
   const value = { ...planning(), deferred_layers: [{ layer_id: "pause-popup" }] };
-  const errors = validateDisplayLayerPlanning(value, targetInfo(), { stage: "V1" });
+  const errors = validateDisplayLayerPlanning(value, targetInfo(), { stage: "V2" });
   assert.ok(errors.some((item) => item.includes("deferred_layers 已移除")), errors.join(" | "));
 });
 
-test("独立弹窗工作项仍校验完整上下文与自身 V4 轨迹", () => {
+test("独立弹窗工作项仍校验完整上下文与自身 V5 轨迹", () => {
   const complete = completeTransientLayer();
   delete complete.states[0].contextual_effect_image;
-  const missingContext = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V1" });
+  const missingContext = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V2" });
   assert.ok(missingContext.some((item) => item.includes("缺少宿主场景上下文效果图")));
 
   const withoutReplay = completeTransientLayer();
   delete withoutReplay.runtime_replay;
-  const v4Errors = validateDisplayLayerPlanning(planning({ inventory: [withoutReplay] }), targetInfo(), { stage: "V4" });
+  const v4Errors = validateDisplayLayerPlanning(planning({ inventory: [withoutReplay] }), targetInfo(), { stage: "V5" });
   assert.ok(v4Errors.some((item) => item.includes("runtime_replay")));
 
-  assert.deepEqual(validateDisplayLayerPlanning(planning({ inventory: [completeTransientLayer()] }), targetInfo(), { stage: "V4" }), []);
+  assert.deepEqual(validateDisplayLayerPlanning(planning({ inventory: [completeTransientLayer()] }), targetInfo(), { stage: "V5" }), []);
 });
 
 test("独立弹窗可以引用其他工作项的 HUD 或弹窗关系", () => {
   const complete = completeTransientLayer({ relations: { mutually_exclusive_layer_ids: ["settings-popup"], coexists_with_layer_ids: ["main-hud"] } });
-  const errors = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V1" });
+  const errors = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V2" });
   assert.deepEqual(errors, []);
 
   complete.relations.mutually_exclusive_layer_ids = [complete.layer_id];
-  const selfErrors = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V1" });
+  const selfErrors = validateDisplayLayerPlanning(planning({ inventory: [complete] }), targetInfo(), { stage: "V2" });
   assert.ok(selfErrors.some((item) => item.includes("不得引用自身")));
 });
 
 test("场景合同不包含弹窗时可独立通过显示层门", () => {
-  const errors = validateSceneReconstructionContract(sceneContract(planning()), sceneManifest(), { stage: "V1" });
+  const errors = validateSceneReconstructionContract(sceneContract(planning()), sceneManifest(), { stage: "V2" });
   assert.ok(!errors.some((item) => item.includes("display_layer")), errors.join(" | "));
 
-  const misplaced = validateSceneReconstructionContract(sceneContract(planning({ inventory: [completeTransientLayer()] })), sceneManifest(), { stage: "V1" });
+  const misplaced = validateSceneReconstructionContract(sceneContract(planning({ inventory: [completeTransientLayer()] })), sceneManifest(), { stage: "V2" });
   assert.ok(misplaced.some((item) => item.includes("瞬态显示层不属于场景工作项")), misplaced.join(" | "));
 });
 
@@ -302,6 +304,9 @@ test("SCENE 的宿主上下文数组可以为空，但 DISPLAY_LAYER 必须有�
   const scene = highFidelityFixture("SCENE", []);
   t.after(() => rmSync(scene.repo, { recursive: true, force: true }));
   assert.doesNotThrow(() => assertHighFidelityPrerequisite(scene.unit, scene.work, scene.pkg, scene.repo, scene.io));
+  const missingModel = structuredClone(scene.unit);
+  delete missingModel.highFidelityPrerequisite.visualStageModel;
+  assert.throws(() => assertHighFidelityPrerequisite(missingModel, scene.work, scene.pkg, scene.repo, scene.io), /visualStageModel/);
 
   const display = highFidelityFixture("DISPLAY_LAYER", ["settings"]);
   t.after(() => rmSync(display.repo, { recursive: true, force: true }));

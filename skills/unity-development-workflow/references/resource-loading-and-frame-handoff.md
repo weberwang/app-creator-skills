@@ -1,6 +1,6 @@
 # 资源加载与序列帧交接
 
-在 V3 正式资源导入交接、V4 消费者接入或资源路径/动画变更时读取。沿用资源总表、Implementation Package 和 Evidence Manifest，不新增阶段、确认账本或动画生产岗位。
+在 V4 正式资源导入交接、V5 消费者接入或资源路径/动画变更时读取。沿用资源总表、Implementation Package 和 Evidence Manifest，不新增阶段、确认账本或动画生产岗位。
 
 ## 加载方式与实际路径
 
@@ -26,7 +26,7 @@ Pivot 使用 `Sprite.pivot / Sprite.rect.size` 的比例，允许画外枢轴；
 
 合同绑定正式独立 `.anim` 主资产的路径/GUID/localId、`m_Sprite` 曲线的 bindingPath 与 SpriteRenderer/Image 类型，以及真实 Prefab 上的 Animator/Animation 消费入口。帧率和时长必须为正值；不遍历任意自定义资产容器加载 Clip 子资产。可选 SpriteAtlas 核对实际身份和每帧 CanBindTo；这只能证明可绑定成员，不表示平台图集打包或播放表现已验收。工具不接管抽帧、动画制作，也不扩展 2D 骨骼 TA 的岗位职责。
 
-消费类型必须匹配：Animation 使用 Legacy Clip，Animator 使用非 Legacy Clip。检查器直接读取 Prefab 资产层级，不实例化 Prefab 内容，以免触发用户脚本的编辑器生命周期；实际播放仍在既有 V4 验收中验证。
+消费类型必须匹配：Animation 使用 Legacy Clip，Animator 使用非 Legacy Clip。检查器直接读取 Prefab 资产层级，不实例化 Prefab 内容，以免触发用户脚本的编辑器生命周期；实际播放仍在既有 V5 验收中验证。
 
 ## 真实读回与同源校验
 
@@ -63,4 +63,4 @@ node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs frame-anim
 
 两项按需至少声明一项；没有序列帧的工作不虚构动画合同。进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 时，Evidence Manifest 绑定 `resourceHandoffInspectionRef: {path}`。报告位于当前 evidenceRoot，taskId 对应 Work Item ID，outputPath 与实际引用一致；`inspect/check/status/run` 和直接交付都重读材料与报告。无资源交接的工作项不扩大范围。
 
-V3 核对正式导入与资源事实，V4 再核对正式消费者及运行表现。失败按实际所有权修复并重新读回，不自动退回 V2，不改历史确认，不要求 SHA。工具夹具与工程通过不能替代正式游戏播放、独立 QA 或用户对显示效果的人工验收。
+V4 核对正式导入与资源事实，V5 再核对正式消费者及运行表现。失败按实际所有权修复并重新读回，不自动退回 V3，不改历史确认，不要求 SHA。工具夹具与工程通过不能替代正式游戏播放、独立 QA 或用户对显示效果的人工验收。

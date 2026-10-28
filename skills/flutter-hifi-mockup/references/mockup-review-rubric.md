@@ -1,6 +1,6 @@
 # Mockup Review Rubric
 
-Review the image as a product artifact, not artwork.
+The user checks image appearance. Automated image inspection requires explicit user authorization; technical checks cannot replace the user's visual assessment.
 
 ## Verdict
 
@@ -14,7 +14,7 @@ Review the image as a product artifact, not artwork.
 - Visual direction: 1 / 2 / 3
 - Review-only interactive prototype: N/A / path or URL
 - UX/UI confirmed: Yes / No
-- Page-level generated after independent Code Sketch Review: Yes / No
+- V1 function and semantic verification completed: Yes / No; Code Sketch review if used: Pass / N/A
 - Decoded dimensions verified as `780 x 1688 px`: Yes / No
 - Reason:
 

@@ -12,4 +12,6 @@ description: 为浏览器中的 three.js 3D 应用或游戏设计世界场景、
 
 Three.js 技能区分真实三维世界与固定 HUD/页面，不能套用二维游戏的缩放坐标合同。WebGL 2 Renderer 是新项目默认；只有实际运行浏览器、材质与目标部署验证后才使用 WebGPU。Capacitor 和原生平台插件按实际需求启用。
 
+各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。
+
 来源：`skills/threejs-game-architecture/references/project-structure.md`、`skills/app-stack-threejs/references/native-contracts.md#mode-threejs-game-model-pipeline`、`skills/app-stack-threejs/references/native-contracts.md#mode-threejs-game-asset-integration`、`skills/threejs-game-architecture/references/production-build.md`。

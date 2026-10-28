@@ -2,9 +2,21 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { buildWebWorkflowBodies } from './web-workflow-bodies.mjs';
+import { buildWebWorkflowBodies, readWorkflowBlocks } from './web-workflow-bodies.mjs';
 import { buildGameWorkflowFamilies } from './game-workflow-families.mjs';
 import { buildModelingWorkflowFamily } from './modeling-workflow-family.mjs';
+import { compactReferenceWorkflowLinks } from './reference-workflow-common.mjs';
+import { buildSharedFrameReferences } from './shared-frame-references.mjs';
+import { buildSharedUiCopyReferences } from './shared-ui-copy-references.mjs';
+import { adaptResponsiveReference, buildSharedResponsiveReferences } from './shared-responsive-references.mjs';
+import { buildSharedSpecialistReferences } from './shared-specialist-references.mjs';
+import { buildSharedUnityPrinciples } from './shared-unity-principles.mjs';
+import { adaptNativeReference } from './native-reference-adapters.mjs';
+import { buildSharedGitReference } from './shared-git-reference.mjs';
+import { buildSharedOrchestrationReferences } from './shared-orchestration-references.mjs';
+import { consolidateRoleOwnership } from './shared-role-ownership.mjs';
+import { buildSharedDomainReferences } from './shared-domain-references.mjs';
+import { adaptOptionalReviewDocument } from './optional-review-documents.mjs';
 
 const STACKS = Object.freeze({
   cocos: Object.freeze({
@@ -284,7 +296,7 @@ function buildExactWorkflowPlan({ sourceRoot, repositoryRoot }) {
       }
       for (const block of extractMarkdownBlocks(sourceText)) {
         if (!isEligibleSharedBlock(block)) continue;
-        const canonical = canonicalizeStackName(block.original, stack);
+        const canonical = adaptOptionalReviewDocument(canonicalizeStackName(block.original, stack), { sourcePath }).text;
         const canonicalHeading = canonicalizeStackName(block.heading, stack);
         const identityHash = createHash('sha256').update(canonicalHeading + '\n' + canonical).digest('hex');
         const canonicalContent = canonical.replace(/\s*\[\[STACK\]\]\s*/g, '当前技术栈');
@@ -380,6 +392,30 @@ export function buildSharedWorkflowPlan(options) {
     replacements: [...replacements, ...bodies.replacements.filter((item) => !modelingIds.has(item.capabilityId)), ...modeling.replacements] };
 }
 
+/** 迁移入口同时收集技能正文与参考正文；参考源缺失必须中止，不能静默漏迁。 */
+export function buildCompleteSharedWorkflowPlan(options) {
+  const principles = buildSharedUnityPrinciples(options);
+  const plans = [buildSharedWorkflowPlan(options), buildSharedFrameReferences(options),
+    buildSharedUiCopyReferences(options), buildSharedResponsiveReferences(options), principles,
+    buildSharedSpecialistReferences({ ...options, excludedReplacements: principles.replacements }), buildSharedGitReference(options),
+    buildSharedOrchestrationReferences(options), buildSharedDomainReferences(options)];
+  return consolidateRoleOwnership({ repositoryRoot: plans[0].repositoryRoot,
+    documents: plans.flatMap((plan) => plan.documents), replacements: plans.flatMap((plan) => plan.replacements) });
+}
+
+/** 在抽取之后修正原生响应式参考，保留源坐标审计并让后续迁移统一重定位链接。 */
+export function applySharedWorkflowDocument(text, options) {
+  const result = applySharedWorkflowSections(text, options);
+  const native = adaptNativeReference(result.text, options);
+  if (native !== result.text) result.transforms.push(options.stack === 'unity' ? 'correct-git-commit-authorization' : 'correct-native-audio-reference');
+  result.text = native;
+  if (/^skills\/(?:cocos|phaser4|threejs)-game-qa-performance\/references\/responsive-visual-validation\.md$/.test(options.sourcePath)) {
+    result.text = adaptResponsiveReference(result.text, options);
+    result.transforms.push('correct-responsive-contract-example');
+  }
+  return result;
+}
+
 /** 在迁移前验证源规则仍与审计计划逐字一致，再替换成公共规范链接。 */
 export function applySharedWorkflowSections(text, { stack, sourcePath, destination, repositoryRoot, plan }) {
   if (typeof text !== 'string') throw new TypeError('待迁移 Skill 必须是字符串');
@@ -393,6 +429,7 @@ export function applySharedWorkflowSections(text, { stack, sourcePath, destinati
 
   const root = repositoryRoot ? path.resolve(repositoryRoot) : path.resolve(plan.repositoryRoot ?? process.cwd());
   const occurrences = [];
+  const sourceBlocks = readWorkflowBlocks(text);
   const byOriginal = new Map();
   for (const item of matches) {
     if (!byOriginal.has(item.original)) byOriginal.set(item.original, []);
@@ -413,7 +450,9 @@ export function applySharedWorkflowSections(text, { stack, sourcePath, destinati
     items.sort((a, b) => a.sourceRange.start - b.sourceRange.start);
     for (let index = 0; index < found.length; index += 1) {
       const item = items[index];
-      const actualHeading = [...text.slice(0, found[index]).matchAll(/^#{1,6}\s+(.+?)\s*#*\s*$/gm)].at(-1)?.[1]?.trim() ?? '文档正文';
+      // 示例里的 Markdown 标题不改变真实章节；复用源块解析边界而非扫描任意井号行。
+      const actualHeading = sourceBlocks.find((block) => block.sourceRange.start <= found[index]
+        && block.sourceRange.end >= found[index] + original.length)?.sourceHeading ?? '文档正文';
       if (actualHeading !== item.sourceHeading) {
         throw new Error('公共工作流章节漂移：' + normalizedSourcePath + '，预期标题“' + item.sourceHeading + '”，实际“' + actualHeading + '”');
       }
@@ -448,6 +487,12 @@ export function applySharedWorkflowSections(text, { stack, sourcePath, destinati
     for (const link of item.referenceLinks ?? []) referenceLinks.set(`${link.label}:${link.target}`, link);
   }
   // 链接仍按原技能目录解释；公共正文只约定资料名称，不反向依赖其他栈的安装目录。
+  if (matches.some((item) => item.referenceWorkflow)) output = compactReferenceWorkflowLinks(output);
+  if (stack === 'unity' && normalizedSourcePath === 'unity-development-workflow/references/game-copy.md') {
+    // 保留 Unity 文案原生差异，同时用项目语言清单替换旧源的固定五语要求。
+    output = output.replace('逐项验证五种语言 `en`、`zh-CN`、`ja`、`ru`、`es`：', '逐项验证项目选择的语言：默认 `zh-CN`，英语 `en` 等其他语言按初始化决定追加：');
+    transforms.push('project-selected-locales');
+  }
   if (referenceLinks.size) output = `${output.trimEnd()}\n\n## 本栈配套资料\n\n${[...referenceLinks.values()].map((link) => `- [${link.label}](${link.target})`).join('\n')}\n`;
   return {
     text: output,

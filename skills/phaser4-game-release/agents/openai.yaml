@@ -1,4 +1,0 @@
-interface:
-  display_name: "Phaser 4 发布合规"
-  short_description: "准备多渠道构建商店资料合规核验和人工提审放行证据清单"
-  default_prompt: "在 $app-workflow-control 的独立发布工作项内，使用 $app-release 准备多渠道交付。"

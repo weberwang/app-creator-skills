@@ -182,7 +182,7 @@ function validateStageContext(stage, path, plan, errors, { requireId: requireSta
 
 /** 校验拆解批准的身份和必需的用户确认字段。 */
 function validateSplitApproval(splitPlan, errors) {
-  if (splitPlan.status !== "APPROVED") addError(errors, "splitPlan.status", "必须为 APPROVED 才能作为已确认的 V2 来源");
+  if (splitPlan.status !== "APPROVED") addError(errors, "splitPlan.status", "必须为 APPROVED 才能作为已确认的 V3 来源");
   const approval = splitPlan.userApproval;
   if (!requireRecord(approval, "splitPlan.userApproval", errors)) return;
   if (approval.authority !== "USER") addError(errors, "splitPlan.userApproval.authority", "必须为 USER");
@@ -497,7 +497,7 @@ function collectRelevantStructureNodeIds(structureData, planNodes, allItemsById,
     if (activeTargetIds.has(id)) relevant.add(id);
   }
 
-  // 业务容器祖先也必须来自 V2，避免装配阶段静默添加包装层。
+  // 业务容器祖先也必须来自 V3，避免装配阶段静默添加包装层。
   const pending = [...relevant];
   const visited = new Set();
   while (pending.length > 0) {
@@ -520,7 +520,7 @@ function collectRelevantStructureNodeIds(structureData, planNodes, allItemsById,
     if (!structureData.nodesById.has(id)) addError(errors, "structure.prefabs[].nodes", `缺少布局计划 UI 节点「${id}」`);
   }
   for (const id of relevant) {
-    if (!planNodes.has(id)) addError(errors, `${stagePath}.prefabs[].nodes`, `存在未在 V2 布局计划中的 UI 节点或容器「${id}」`);
+    if (!planNodes.has(id)) addError(errors, `${stagePath}.prefabs[].nodes`, `存在未在 V3 布局计划中的 UI 节点或容器「${id}」`);
   }
   return relevant;
 }
@@ -561,7 +561,7 @@ function comparePrefabStages(structureData, assemblyData, planNodes, splitById, 
     if (!planNode) continue;
     const splitItem = splitById.get(planNode.decompositionElementId);
     if (!splitItem || structureNode.decompositionElementId !== splitItem.id || assemblyNode.decompositionElementId !== splitItem.id) {
-      addError(errors, `assembly.nodes.${id}.decompositionElementId`, "与 V2 拆解项身份不一致");
+      addError(errors, `assembly.nodes.${id}.decompositionElementId`, "与 V3 拆解项身份不一致");
     }
     if (structureNode.parentId !== planNode.parentElementId || assemblyNode.parentId !== planNode.parentElementId) {
       addError(errors, `assembly.nodes.${id}.parentId`, "与布局计划中的实际父节点不一致");
@@ -701,7 +701,7 @@ function validateCurrentUiRootInstances(instanceStage, currentPrefabIds, stageDa
   }
 }
 
-/** 对账当前计划及 V2、Prefab 结构、Prefab 装配之间的 UI 层级事实。 */
+/** 对账当前计划及 V3、Prefab 结构、Prefab 装配之间的 UI 层级事实。 */
 export function validateUiHierarchyChain(plan, options = {}) {
   const errors = [];
   try {
@@ -766,7 +766,7 @@ export function validateUiHierarchyChain(plan, options = {}) {
       const structureEntry = structureData.nodesById.get(nodeId);
       if (!structureEntry) continue;
       if (structureEntry.node.decompositionElementId !== node.decompositionElementId) {
-        addError(errors, `structure.nodes.${nodeId}.decompositionElementId`, "必须与布局计划和 V2 拆解身份一致");
+        addError(errors, `structure.nodes.${nodeId}.decompositionElementId`, "必须与布局计划和 V3 拆解身份一致");
       }
       if (structureEntry.node.parentId !== node.parentElementId) {
         addError(errors, `structure.nodes.${nodeId}.parentId`, "必须与布局计划的实际父节点一致");
@@ -857,7 +857,7 @@ function collectAssemblyNodes(assembly, errors) {
   return nodesById;
 }
 
-/** 将 V4 实测对象名称绑定到对应装配节点，防止仅复用布局节点 ID。 */
+/** 将 V5 实测对象名称绑定到对应装配节点，防止仅复用布局节点 ID。 */
 export function validateUiAssemblyMeasurement(plan, assembly, report) {
   const errors = [];
   try {
@@ -893,7 +893,7 @@ export function validateUiAssemblyMeasurement(plan, assembly, report) {
       }
       const measurement = measurementsById.get(nodeId);
       if (!measurement) {
-        addError(errors, "report.measurements", `缺少布局节点「${nodeId}」的 V4 实测`);
+        addError(errors, "report.measurements", `缺少布局节点「${nodeId}」的 V5 实测`);
         continue;
       }
       if (plan.uiSystem === "UGUI") {

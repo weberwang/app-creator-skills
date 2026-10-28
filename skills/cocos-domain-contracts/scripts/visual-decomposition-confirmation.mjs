@@ -77,7 +77,7 @@ export function requiresManualVisualDecomposition(region = {}) {
 }
 /** 生成阶段、编号、区域和方法均齐全的错误，便于阻断定位。 */
 function confirmationError(context = {}, message, details = {}) {
-  const stage = context.stage ?? "V3";
+  const stage = context.stage ?? "V4";
   const annotation = context.annotation_number ?? context.annotationNumber ?? "?";
   const region = context.region_id ?? context.regionId ?? "?";
   const component = details.component_id ?? details.componentId ?? context.component_id;
@@ -392,7 +392,7 @@ export function validateVisualDecompositionConfirmations(manifest = {}, options 
   const errors = [];
   const regions = manualDecompositionRegions(manifest);
   const authorityByRegion = options.authorityByRegion;
-  if (regions.length && !authorityByRegion) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: "*", region_id: "*", observedMethod: "untrusted-authority" }, "decision gap：V2/V3/V4 必须由 workflow preflight 提供逐区域 authority map", { missing: "authorityByRegion/authority.sceneId" }));
+  if (regions.length && !authorityByRegion) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: "*", region_id: "*", observedMethod: "untrusted-authority" }, "decision gap：V3/V4/V5 必须由 workflow preflight 提供逐区域 authority map", { missing: "authorityByRegion/authority.sceneId" }));
   const identity = {
     projectRoot: options.projectRoot,
     checkFiles: options.checkFiles,
@@ -406,23 +406,23 @@ export function validateVisualDecompositionConfirmations(manifest = {}, options 
     let shared = null;
     for (const region of groupRegions) {
       const key = `${region.annotation_number}\0${regionIdOf(region)}`;
-      if (seen.has(key)) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "确认区域编号重复"));
+      if (seen.has(key)) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "确认区域编号重复"));
       seen.add(key);
       const record = region.confirmation;
       if (isObject(record)) {
         const currentShared = [record.confirmation_id, record.proposal_id, record.proposal_file, record.annotation_file, record.annotation_width, record.annotation_height, record.annotation_schema, record.annotation_layout, record.decision_record_file, record.user_decision_receipt_file];
-        if (shared && JSON.stringify(shared) !== JSON.stringify(currentShared)) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "同一 scene/state 组必须冻结同一 annotation/proposal/decision/receipt 身份"));
+        if (shared && JSON.stringify(shared) !== JSON.stringify(currentShared)) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "同一 scene/state 组必须冻结同一 annotation/proposal/decision/receipt 身份"));
         shared ??= currentShared;
         const sharedKey = JSON.stringify(currentShared); const previousGroup = sharedAcrossGroups.get(sharedKey);
-        if (previousGroup && previousGroup !== groupKey) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "不同 scene/state 组不得共享 annotation/proposal/decision/receipt 文件身份"));
+        if (previousGroup && previousGroup !== groupKey) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, "不同 scene/state 组不得共享 annotation/proposal/decision/receipt 文件身份"));
         sharedAcrossGroups.set(sharedKey, groupKey);
       }
       const authority = authorityByRegion?.[key] ?? options.authority;
-      if (isObject(authority)) for (const [field, expected] of [["sceneId", region.scene_id], ["stateId", region.state_id], ["annotationNumber", region.annotation_number], ["regionId", regionIdOf(region)]]) if (authority[field] !== expected) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, `authority.${field} 未绑定当前区域定义`));
-      errors.push(...validateVisualDecompositionConfirmationRecord(region.confirmation, region, { stage: options.stage ?? "V3" }, { ...options, authority, allRegions: groupRegions }));
+      if (isObject(authority)) for (const [field, expected] of [["sceneId", region.scene_id], ["stateId", region.state_id], ["annotationNumber", region.annotation_number], ["regionId", regionIdOf(region)]]) if (authority[field] !== expected) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: region.annotation_number, region_id: regionIdOf(region), observedMethod: methodOf(region) }, `authority.${field} 未绑定当前区域定义`));
+      errors.push(...validateVisualDecompositionConfirmationRecord(region.confirmation, region, { stage: options.stage ?? "V4" }, { ...options, authority, allRegions: groupRegions }));
     }
   }
-  if (options.requireManualConfirmation !== false && regions.length === 0 && options.requireVisual === true) errors.push(confirmationError({ stage: options.stage ?? "V3" }, "效果图不存在可进入实施的人工拆解确认区域", { missing: "coverage_audit.regions" }));
+  if (options.requireManualConfirmation !== false && regions.length === 0 && options.requireVisual === true) errors.push(confirmationError({ stage: options.stage ?? "V4" }, "效果图不存在可进入实施的人工拆解确认区域", { missing: "coverage_audit.regions" }));
   return errors;
 }
 /** 校验实施包携带的确认身份与当前清单所有区域逐项一致。 */
@@ -430,10 +430,10 @@ export function validateVisualDecompositionConfirmationBinding(pkg = {}, manifes
   const errors = [];
   const regions = manualDecompositionRegions(manifest);
   if (!regions.length) return errors;
-  if (!isTrustedVisualConfirmationAuthority(options.authority)) errors.push(confirmationError({ stage: options.stage ?? "V3", annotation_number: "*", region_id: "*", observedMethod: "untrusted-authority" }, "decision gap：Implementation Package 绑定必须使用 user-resolution-ledger loader authority", { missing: "trusted authority" }));
+  if (!isTrustedVisualConfirmationAuthority(options.authority)) errors.push(confirmationError({ stage: options.stage ?? "V4", annotation_number: "*", region_id: "*", observedMethod: "untrusted-authority" }, "decision gap：Implementation Package 绑定必须使用 user-resolution-ledger loader authority", { missing: "trusted authority" }));
   const groups = manualDecompositionGroups(manifest);
   const identities = pkg.visualDecompositionConfirmations;
-  const context = { stage: options.stage ?? "V3", annotation_number: "*", region_id: "*", observedMethod: "manual-confirmation" };
+  const context = { stage: options.stage ?? "V4", annotation_number: "*", region_id: "*", observedMethod: "manual-confirmation" };
   if (!Array.isArray(identities) || identities.length === 0) {
     errors.push(confirmationError(context, "Implementation Package 缺少按 scene/state 分组的 visualDecompositionConfirmations，不能进入实施", { missing: "visualDecompositionConfirmations" }));
     return errors;

@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
-import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, readdirSync, rmdirSync, unlinkSync } from 'node:fs';
+import { readFileSync, writeFileSync } from './file-io.mjs';
 import { dirname, join, resolve } from 'node:path';
 import { CAPABILITY_GROUPS, capabilityAdapters, extractNativeSection, nativeAdapterPath, nativeContractPath, nativeSectionId } from '../capability-map.mjs';
 import { applyGeneratedDomainResources } from './output-cleanup.mjs';
 import { promoteNativeRules } from './native-rule-promotions.mjs';
-import { buildNativeTargets, collectNativeHeadingAnchors, indentNativeHeadings, rebaseNativeCodePathReferences, rebaseNativeMarkdownLinks, renderNativeManual } from './native-manual-renderer.mjs';
+import { adaptNativeFunctionFirst, buildNativeTargets, collectNativeHeadingAnchors, indentNativeHeadings, rebaseNativeCodePathReferences, rebaseNativeMarkdownLinks, renderNativeManual } from './native-manual-renderer.mjs';
 
 /** 计算稳定的 SHA-256，用于逐来源章节和整本手册的独立完整性校验。 */
 function hashBytes(bytes) {
@@ -17,6 +18,15 @@ function stripNativePreamble(text) {
   output = output.replace(/^> 原生适配规范：[^\n]*(?:\n\n)?/, '');
   output = output.replace(/^> (?:本文件是 app-creator-skills 仓库新增|本规范为 app-creator-skills 仓库新增)[^\n]*(?:\n\n)?/, '');
   return output.trimStart().trimEnd();
+}
+
+/** 将 Unity 来源中的旧固定五语言规则改为项目初始化时确定的范围。 */
+function applyUnityLocaleSelection(text, stack) {
+  if (stack !== 'unity') return text;
+  return text
+    .replace('程序化文本同时实现 `en`、`zh-CN`、`ja`、`ru`、`es`', '程序化文本默认实现 `zh-CN`，英语 `en` 等其他语言按项目选择实现')
+    .replace('程序化文本对 `en`、`zh-CN`、`ja`、`ru`、`es` 分别验证', '程序化文本对项目所选语言（默认 `zh-CN`，英语 `en` 可选）分别验证')
+    .replace('程序化文本必须覆盖 `en`、`zh-CN`、`ja`、`ru`、`es`', '程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目选择覆盖');
 }
 
 /** 汇集来源、重用和仓库作者模式的目录信息，保证同一真实文档只迁入一次。 */
@@ -76,7 +86,7 @@ function readPreparedSections({ sourceRecords, authored, files, repositoryRoot, 
     record.sourceSha256 = ledgerRow.sourceSha256;
     const promoted = promoteRules(stagedBytes.toString('utf8'), { stack: record.stack, sourceSkill: record.sourceSkill, repositoryRoot });
     if (!promoted || typeof promoted.text !== 'string') throw new Error(`原生公共规则提升器未返回正文：${record.stack}/${record.sourceSkill}`);
-    const body = stripNativePreamble(promoted.text);
+    const body = adaptNativeFunctionFirst(applyUnityLocaleSelection(stripNativePreamble(promoted.text), record.stack), { stack: record.stack });
     sections.push({
       ...record,
       body,
@@ -90,7 +100,7 @@ function readPreparedSections({ sourceRecords, authored, files, repositoryRoot, 
     const templateBytes = readFileSync(resolve(repositoryRoot, ...template.split('/')));
     const promoted = promoteRules(templateBytes.toString('utf8'), { stack: adapter.stack, sourceSkill: adapter.sourceSkill, repositoryRoot });
     if (!promoted || typeof promoted.text !== 'string') throw new Error(`原生公共规则提升器未返回作者模式正文：${adapter.stack}/${adapter.sourceSkill}`);
-    const body = stripNativePreamble(promoted.text);
+    const body = adaptNativeFunctionFirst(applyUnityLocaleSelection(stripNativePreamble(promoted.text), adapter.stack), { stack: adapter.stack });
     sections.push({
       stack: adapter.stack,
       sourceSkill: adapter.sourceSkill,
@@ -196,6 +206,8 @@ function assertManualWritable({ path, content, previousHashes, resolveDestinatio
   if (!existsSync(target)) return target;
   const expectedHash = previousHashes.get(path);
   const actualHash = hashDestination(path);
+  // 中断可能发生在整本手册已写完而账本尚未提交时；只有完整预期字节才允许复用。
+  if (actualHash === sha256(Buffer.from(content, 'utf8'))) return target;
   if (expectedHash && actualHash !== expectedHash) throw new Error(`原生手册已被手动修改，拒绝覆盖：${path}`);
   if (!expectedHash && actualHash !== sha256(Buffer.from(content, 'utf8'))) throw new Error(`原生手册目标已存在且内容不属于本次预期，拒绝覆盖：${path}`);
   return target;
@@ -269,6 +281,8 @@ export function applyNativeManualResources({ repositoryRoot, previousHashes, res
   for (const [stack, path] of manuals) {
     const content = manualContents.get(stack);
     const target = manualTargets.get(stack);
+    // 写入权限已统一预检；未变手册不再次触发文件监听或占用。
+    if (existsSync(target) && hashDestination(path) === sha256(Buffer.from(content, 'utf8'))) continue;
     mkdirSync(dirname(target), { recursive: true });
     writeFileSync(target, content, 'utf8');
   }

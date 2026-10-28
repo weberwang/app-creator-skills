@@ -12,16 +12,16 @@ import { makeArtFixture } from './helpers/art-experience-fixture.mjs';
 /** 为行为验证创建隔离的证据目录，自动清理测试产物。 */
 function fixture(callback) {
   const repo = mkdtempSync(join(tmpdir(), 'unity-art-'));
-  const work = { projectId: 'test-project', workItemId: 'WI-ART', workItemType: 'SCENE', scene: { sceneId: 'scene-test', stage: 'V4' } };
+  const work = { projectId: 'test-project', workItemId: 'WI-ART', workItemType: 'SCENE', visualStageModel: 'function-first-v1', scene: { sceneId: 'scene-test', stage: 'V5' } };
   const art = makeArtFixture(repo, work);
-  const evidence = { visualStage: 'V4', verdict: 'PASS', ...art.evidenceFields };
+  const evidence = { visualStageModel: 'function-first-v1', visualStage: 'V5', verdict: 'PASS', ...art.evidenceFields };
   try { callback({ repo, work, evidence, ...art }); } finally { rmSync(repo, { recursive: true, force: true }); }
 }
 
 /** 保存当前测试人工记录。 */
 function save(repo, acceptance) { writeFileSync(join(repo, 'art-acceptance.json'), JSON.stringify(acceptance)); }
 
-test('V4 人工质量与录屏记录有效时通过结构验证，非可见工作项不扩围', () => fixture(({ repo, work, evidence }) => {
+test('V5 人工质量与录屏记录有效时通过结构验证，非可见工作项不扩围', () => fixture(({ repo, work, evidence }) => {
   assert.deepEqual(validateArtExperienceAcceptance(evidence, work, repo), []);
   assert.deepEqual(validateArtExperienceAcceptance({}, { workItemType: 'FOUNDATION' }, repo), []);
 }));

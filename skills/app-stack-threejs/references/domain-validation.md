@@ -18,9 +18,9 @@ import { validateWorldViewportContract, validateWorldViewportEvidenceManifest }
   from './.agents/skills/threejs-domain-contracts/scripts/world-viewport-contract.mjs';
 
 const errors = [
-  ...validateWorldViewportContract(contract, { stage: 'V4' }),
+  ...validateWorldViewportContract(contract, { stage: 'V5' }),
   ...validateWorldViewportEvidenceManifest(observations, contract,
-    { stage: 'V4', sceneId, stateId, requiredUnits }),
+    { stage: 'V5', sceneId, stateId, requiredUnits }),
 ];
 if (errors.length) throw new Error(errors.join('\n'));
 ```

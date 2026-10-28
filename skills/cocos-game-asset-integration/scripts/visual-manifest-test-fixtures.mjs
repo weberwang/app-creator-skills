@@ -106,17 +106,17 @@ function validManifest() {
     schema_version: "1.5",
     visual_validation: { mode: "exact" },
     visual_contract_version: "1.0",
-    visualStage: "V4",
-    visualStageState: "v4-runtime-integration-candidate",
+    visualStageModel: 'function-first-v1', visualStage: "V5",
+    visualStageState: "v5-runtime-integration-candidate",
     workItemId: "work-item-1",
     candidateVersion: "candidate-1",
     baseline_sha256: EMPTY_DOCUMENT_FINGERPRINT,
-    effect_image_reconstruction: { applicability: "effect-image", lifecycle: "v4-complete" },
+    effect_image_reconstruction: { applicability: "effect-image", lifecycle: "v5-complete" },
     visual_baseline: { id: "fox-world", version: "1.0.0", style_fingerprint: EMPTY_DOCUMENT_FINGERPRINT, document: "docs/visual-baseline.md", status: "global-static-baseline-frozen", anchor_evidence: [{ path: "evidence/visual/main-anchor.png", sha256: EMPTY_DOCUMENT_FINGERPRINT }] },
     reference_target: { candidate_id: "mockup-a", original_file: "evidence/visual/mockup.png", target_sha256: targetSha, frozen_at: "2026-08-15T00:00:00Z", status: "reference-target-frozen", scene_ids: ["main-gameplay"], state_ids: ["default"], origin: "provided" },
     candidate_identity: { kind: "git", sha256: candidateSha, diff_fingerprint: "diff-1" },
     contract_reconciliation: {
-      decision_id: "reconcile-1", reconciled_at: "2026-08-15T00:10:00Z", target_sha256: targetSha, candidate_sha256: candidateSha, status: "passed", rollback: "V1/module-audit",
+      decision_id: "reconcile-1", reconciled_at: "2026-08-15T00:10:00Z", target_sha256: targetSha, candidate_sha256: candidateSha, status: "passed", rollback: "V2/module-audit",
       bindings: { gdd: "docs/GDD.md#v1", tdd: "docs/TDD.md#v1", gameplay_visual_contract: "visual-contract:v1", gameplay_function_contract: "function-contract:v1", layout_contract: "layout:v1", module_scene_ownership: "ownership:v1", budget_baseline: "budget:v1" },
       checks: ["scope", "state-machine", "input", "collision", "module-scene-ownership", "coordinate-space", "layout", "budget"].map((domain) => ({ domain, status: "passed", evidence: `evidence/reconcile/${domain}.md` })),
     },
@@ -131,8 +131,8 @@ function validManifest() {
   const heroRegion = manifest.coverage_audit.regions[1];
   const heroExpected = heroRegion.expected_assets[0];
   manifest.production_contract_audit = { status: "passed", candidate_version: manifest.candidateVersion, target_sha256: targetSha, audited_at: "2026-08-15T00:30:00Z", units: [{ annotation_number: 2, region_id: "region-hero", observed_method: "authored-raster", observed_delivery_kind: "raster-image", status: "passed", expected_assets: [{ ...heroExpected }], atomic_image_requirements: heroRegion.atomic_image_requirements, actual_assets: [{ asset_id: "hero-idle", file: "public/assets/hero.png", component_id: "hero-component", state_id: "default", asset_scope: "atomic-component", atomic_visual_key: heroExpected.atomic_visual_key, mime_type: "image/png", width: 64, height: 96, alpha: true, sha256: heroPngSha }], runtime_consumption: { status: "passed", evidence: "evidence/runtime/hero.json", ...evidenceIdentity, component_usages: componentUsage } }] };
-  // V2 人工确认后，F2 只记录可重算的机器验证事实，不再嵌套任何 reviewer 或二次复核工件。
-  manifest.visual_production_gate = { status: "passed", v2_status: "passed", v3_status: "passed", implementation_package_status: "passed", v4_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", evidence: "evidence/f2/machine.json", baselineHash: EMPTY_DOCUMENT_FINGERPRINT, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "evidence/f3/replay.json", ...evidenceIdentity }, fidelity_cases: [{ candidate_sha256: candidateSha, created_at: "2026-08-15T00:31:00Z", freshness_bound: true, evidence: "evidence/fidelity/main.json", ...evidenceIdentity }], candidate_sha256: candidateSha, target_sha256: targetSha, runtime_consumption: { status: "passed", evidence: "evidence/runtime/hero.json", ...evidenceIdentity, component_usages: componentUsage }, unapproved_substitution: false };
+  // V3 人工确认后，F2 只记录可重算的机器验证事实，不再嵌套任何 reviewer 或二次复核工件。
+  manifest.visual_production_gate = { status: "passed", v3_status: "passed", v4_status: "passed", implementation_package_status: "passed", v5_status: "passed", f2_status: "passed", f2_machine_validation: { status: "passed", validationMode: "MACHINE", evidence: "evidence/f2/machine.json", baselineHash: EMPTY_DOCUMENT_FINGERPRINT, diffFingerprint: "diff-1" }, f3_status: "passed", runtime_replay: { status: "passed", evidence: "evidence/f3/replay.json", ...evidenceIdentity }, fidelity_cases: [{ candidate_sha256: candidateSha, created_at: "2026-08-15T00:31:00Z", freshness_bound: true, evidence: "evidence/fidelity/main.json", ...evidenceIdentity }], candidate_sha256: candidateSha, target_sha256: targetSha, runtime_consumption: { status: "passed", evidence: "evidence/runtime/hero.json", ...evidenceIdentity, component_usages: componentUsage }, unapproved_substitution: false };
   manifest.coverage_audit.regions.forEach((region, index) => { region.annotation_number = index + 1; region.ownership_evidence = `evidence/coverage/${region.id}.md`; region.implementation_plan = region.owner_type === "fixed-production-visual" ? { mode: "generate-now", summary: `生成区域 ${region.id}` } : { mode: "runtime-program", summary: `程序实现区域 ${region.id}` }; if (region.owner_type !== "fixed-production-visual") region.runtime_implementation = { kind: "runtime-program", integration_files: [`src/${region.id}.mjs`], layout_node_ids: region.layout_node_ids }; });
   addManualConfirmationRecords(manifest);
   manifest.coverage_audit.regions[1].confirmation.region_definition_sha256 = computeRegionDefinitionSha256(manifest.coverage_audit.regions[1]);

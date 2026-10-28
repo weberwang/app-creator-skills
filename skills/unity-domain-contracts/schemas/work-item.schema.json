@@ -20,6 +20,9 @@
     "schemaVersion": {
       "const": "1.0"
     },
+    "visualStageModel": {
+      "const": "function-first-v1"
+    },
     "workItemId": {
       "type": "string",
       "minLength": 1
@@ -96,7 +99,8 @@
             "V1",
             "V2",
             "V3",
-            "V4"
+            "V4",
+            "V5"
           ]
         },
         "status": {
@@ -122,21 +126,6 @@
         "$ref": "#/$defs/stageReview"
       },
       "allOf": [
-        {
-          "not": {
-            "contains": {
-              "properties": {
-                "stage": {
-                  "const": "V1"
-                }
-              },
-              "required": [
-                "stage"
-              ]
-            },
-            "minContains": 2
-          }
-        },
         {
           "not": {
             "contains": {
@@ -173,6 +162,21 @@
               "properties": {
                 "stage": {
                   "const": "V4"
+                }
+              },
+              "required": [
+                "stage"
+              ]
+            },
+            "minContains": 2
+          }
+        },
+        {
+          "not": {
+            "contains": {
+              "properties": {
+                "stage": {
+                  "const": "V5"
                 }
               },
               "required": [
@@ -482,6 +486,10 @@
   },
   "allOf": [
     {
+      "if": {"properties": {"workItemType": {"enum": ["SCENE", "DISPLAY_LAYER"]}}, "required": ["workItemType"]},
+      "then": {"required": ["visualStageModel"]}
+    },
+    {
       "if": {
         "properties": {
           "domain": {
@@ -555,8 +563,7 @@
       },
       "then": {
         "required": [
-          "scene",
-          "responsiveContract"
+          "scene"
         ],
         "properties": {
           "stageId": {
@@ -567,7 +574,38 @@
           "required": [
             "displayLayer"
           ]
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "scene": {
+                  "properties": {
+                    "stage": {
+                      "enum": [
+                        "V2",
+                        "V3",
+                        "V4",
+                        "V5"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "stage"
+                  ]
+                }
+              },
+              "required": [
+                "scene"
+              ]
+            },
+            "then": {
+              "required": [
+                "responsiveContract"
+              ]
+            }
+          }
+        ]
       }
     },
     {
@@ -583,8 +621,7 @@
       },
       "then": {
         "required": [
-          "displayLayer",
-          "responsiveContract"
+          "displayLayer"
         ],
         "properties": {
           "stageId": {
@@ -595,7 +632,38 @@
           "required": [
             "scene"
           ]
-        }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "displayLayer": {
+                  "properties": {
+                    "stage": {
+                      "enum": [
+                        "V2",
+                        "V3",
+                        "V4",
+                        "V5"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "stage"
+                  ]
+                }
+              },
+              "required": [
+                "displayLayer"
+              ]
+            },
+            "then": {
+              "required": [
+                "responsiveContract"
+              ]
+            }
+          }
+        ]
       }
     },
     {
@@ -758,10 +826,10 @@
       "properties": {
         "stage": {
           "enum": [
-            "V1",
             "V2",
             "V3",
-            "V4"
+            "V4",
+            "V5"
           ]
         },
         "confirmation": {
@@ -779,7 +847,7 @@
           "if": {
             "properties": {
               "stage": {
-                "const": "V2"
+                "const": "V3"
               }
             }
           },
@@ -793,14 +861,14 @@
               "decompositionConfirmation": {
                 "properties": {
                   "stage": {
-                    "const": "V2"
+                    "const": "V3"
                   }
                 }
               },
               "layoutConfirmation": {
                 "properties": {
                   "stage": {
-                    "const": "V2"
+                    "const": "V3"
                   }
                 }
               }
@@ -827,7 +895,7 @@
           "if": {
             "properties": {
               "stage": {
-                "const": "V1"
+                "const": "V2"
               }
             }
           },
@@ -836,27 +904,7 @@
               "confirmation": {
                 "properties": {
                   "stage": {
-                    "const": "V1"
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "stage": {
-                "const": "V3"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "confirmation": {
-                "properties": {
-                  "stage": {
-                    "const": "V3"
+                    "const": "V2"
                   }
                 }
               }
@@ -882,6 +930,26 @@
               }
             }
           }
+        },
+        {
+          "if": {
+            "properties": {
+              "stage": {
+                "const": "V5"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "confirmation": {
+                "properties": {
+                  "stage": {
+                    "const": "V5"
+                  }
+                }
+              }
+            }
+          }
         }
       ]
     },
@@ -902,10 +970,10 @@
         },
         "stage": {
           "enum": [
-            "V1",
             "V2",
             "V3",
-            "V4"
+            "V4",
+            "V5"
           ]
         },
         "confirmedBy": {
@@ -955,7 +1023,8 @@
             "V1",
             "V2",
             "V3",
-            "V4"
+            "V4",
+            "V5"
           ]
         },
         "status": {
@@ -1553,54 +1622,20 @@
         },
         "locales": {
           "type": "array",
-          "minItems": 5,
-          "maxItems": 5,
+          "minItems": 1,
           "uniqueItems": true,
-          "prefixItems": [
-            {
-              "const": "en"
-            },
-            {
-              "const": "zh-CN"
-            },
-            {
-              "const": "ja"
-            },
-            {
-              "const": "ru"
-            },
-            {
-              "const": "es"
-            }
-          ],
-          "items": false
+          "items": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$"
+          }
         },
         "localePolicies": {
           "type": "object",
-          "additionalProperties": false,
-          "required": [
-            "en",
-            "zh-CN",
-            "ja",
-            "ru",
-            "es"
-          ],
-          "properties": {
-            "en": {
-              "$ref": "#/$defs/localePolicy"
-            },
-            "zh-CN": {
-              "$ref": "#/$defs/localePolicy"
-            },
-            "ja": {
-              "$ref": "#/$defs/localePolicy"
-            },
-            "ru": {
-              "$ref": "#/$defs/localePolicy"
-            },
-            "es": {
-              "$ref": "#/$defs/localePolicy"
-            }
+          "additionalProperties": {
+            "$ref": "#/$defs/localePolicy"
+          },
+          "propertyNames": {
+            "pattern": "^[A-Za-z]{2,8}(-[A-Za-z0-9]{1,8})*$"
           }
         }
       },
@@ -1994,18 +2029,56 @@
         },
         "priorInvalidatedReferences": {
           "type": "array",
-          "items": { "$ref": "#/$defs/returnRecord/properties/invalidatedReferences" }
+          "items": {
+            "$ref": "#/$defs/returnRecord/properties/invalidatedReferences"
+          }
         },
         "invalidatedReferences": {
           "type": "object",
           "additionalProperties": false,
-          "required": ["implementationPackagePath", "evidenceManifestPath", "packageId", "evidenceId", "planVersion"],
+          "required": [
+            "implementationPackagePath",
+            "evidenceManifestPath",
+            "packageId",
+            "evidenceId",
+            "planVersion"
+          ],
           "properties": {
-            "implementationPackagePath": { "type": ["string", "null"], "minLength": 1 },
-            "evidenceManifestPath": { "type": ["string", "null"], "minLength": 1 },
-            "packageId": { "type": ["string", "null"], "minLength": 1 },
-            "evidenceId": { "type": ["string", "null"], "minLength": 1 },
-            "planVersion": { "type": ["string", "null"], "minLength": 1 }
+            "implementationPackagePath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "evidenceManifestPath": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "packageId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "evidenceId": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            },
+            "planVersion": {
+              "type": [
+                "string",
+                "null"
+              ],
+              "minLength": 1
+            }
           }
         },
         "invalidatedArtifacts": {

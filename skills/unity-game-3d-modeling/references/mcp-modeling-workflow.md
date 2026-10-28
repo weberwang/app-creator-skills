@@ -1,6 +1,6 @@
 # Blender MCP 生产级建模流程
 
-模型几何与 PBR 贴图生产统一由 Blender MCP 执行；Unity 插件只负责导入器、Material/Renderer、资源级 Prefab 装配和运行验证。模型与贴图按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图生产步骤见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。流程嵌入既有 V0-V4，不新增状态机或额外用户审批阶段。
+模型几何与 PBR 贴图生产统一由 Blender MCP 执行；Unity 插件只负责导入器、Material/Renderer、资源级 Prefab 装配和运行验证。模型与贴图按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图生产步骤见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。流程嵌入既有 V0-V5，不新增状态机或额外用户审批阶段。
 
 角色资产还须按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)提供关节拓扑、形状目标几何和明确的 UV/法线/槽位/LOD 基准，交由 Blender MCP 绑定和动画技能制作。建模导出静态网格源；绑定导出带骨架/蒙皮的正式角色，动画只导出匹配骨架的 Clips，不由建模技能包办动作。绑定/动画提出几何缺陷时，建模修复后按实际依赖复验蒙皮、烘焙和受影响动作。
 
@@ -35,7 +35,7 @@
 | UV 与烘焙交接 | 规划接缝，展开、统一密度、排布并检查拉伸、越界和 Padding；区分可重叠纹理 UV 与需要唯一性的烘焙/光照 UV | UV 报告记录通道、允许重叠区域与实际位置；需要烘焙时按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交付高低模、Cage/射线方案、匹配命名、法线/切线和三角化策略 |
 | LOD 与碰撞 | 按预算制作并检查各级轮廓、细节与材质槽；碰撞代理按玩法体积和物理要求创建 | 各级面数、顶点数、阈值、Collider 数量/类型有记录；简化不破坏关键孔洞、薄件、交互边界或变形 |
 | 保存与导出 | 保存可编辑 `.blend`，在派生副本处理修改器、变换、法线与三角化；只导出批准对象及其所需依赖，排除参考、灯光、相机、灰模与高模源 | 记录版本、对象列表、导出参数、实际输出位置；以隔离 Collection 或临时文件重新导入检查尺度、朝向、Pivot、网格、UV 和材质槽，无意外依赖 |
-| Unity 技术验证 | 通过 @Unity/AssetDatabase 或已发现 Pipeline 导入，回读 Importer、Mesh、资源级 Prefab、LODGroup、Collider 与引用 | 技术检查和 Editor/PlayMode 结果可追溯；正式场景接入留在 V4，显示效果独立等待用户验收 |
+| Unity 技术验证 | 通过 @Unity/AssetDatabase 或已发现 Pipeline 导入，回读 Importer、Mesh、资源级 Prefab、LODGroup、Collider 与引用 | 技术检查和 Editor/PlayMode 结果可追溯；正式场景接入留在 V5，显示效果独立等待用户验收 |
 
 高模、重拓扑、额外 UV 集和 LOD 等按资产需求与预算适用；不适用项须说明原因，不能用“低模”跳过结构、拓扑清理、法线、主 UV 和导出验证。贴图角色通过 Blender MCP 执行生产级材质节点、图像绘制、烘焙、通道打包与贴图导出，具体工序遵循[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。贴图使用版本化派生 `.blend`，只读核对模型并向既有槽位赋材质；禁止暗改网格、UV、槽位结构/顺序/面分配，或从派生网格覆盖运行时模型。各 LOD 需明确共用 UV/图集或独立用图策略。输入缺陷退回建模修复，不在纹理阶段补救几何。
 

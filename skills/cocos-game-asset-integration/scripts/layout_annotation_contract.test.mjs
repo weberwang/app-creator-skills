@@ -109,8 +109,8 @@ test("严格居中按意图更新目标框，边缘停靠保留原测量位置",
   assert.equal(centered.self_anchor, "center-center");
 });
 
-/** V2 九宫格正反决策穿过拆解、布局节点和人工可见旁栏事实。 */
-test("V2九宫格正反决策在确认旁栏显示源尺寸与四边切片值", () => {
+/** V3 九宫格正反决策穿过拆解、布局节点和人工可见旁栏事实。 */
+test("V3九宫格正反决策在确认旁栏显示源尺寸与四边切片值", () => {
   const panelNineSlice = { mode: "stretch", reason: "底板四角和描边保持固定尺寸", source_size: { width: 96, height: 64 }, borders: { left: 12, right: 12, top: 10, bottom: 10 } };
   const iconNineSlice = { mode: "not-applicable", reason: "图标为固定尺寸，不需要拉伸" };
   const region = {
@@ -153,7 +153,7 @@ test("V2九宫格正反决策在确认旁栏显示源尺寸与四边切片值", 
   const routeOverrideRegion = structuredClone(region);
   routeOverrideRegion.component_inventory.components[0].role = "background";
   const routeOverrideElements = buildDecompositionElements([routeOverrideRegion]);
-  assert.equal(routeOverrideElements[0].nine_slice_decision_required, true, "显式 panel route 应保持 V2 必评估");
+  assert.equal(routeOverrideElements[0].nine_slice_decision_required, true, "显式 panel route 应保持 V3 必评估");
   const routeOverrideErrors = [];
   validateDecompositionElements(routeOverrideElements, [routeOverrideRegion], canvas, "decomposition_elements", routeOverrideErrors);
   assert.equal(routeOverrideErrors.some((message) => message.includes("九宫格 stretch")), false, "UI 路线应覆盖元素自报 background role");
@@ -163,8 +163,8 @@ test("V2九宫格正反决策在确认旁栏显示源尺寸与四边切片值", 
   assert.throws(() => buildDecompositionElements([containerRegion]), /纯结构容器/);
 });
 
-/** 固定生产 UI 皮肤必须在 V2 决策，后续 false/缺失不能伪造“无需评估”。 */
-test("V2从显式角色派生必评估标记，缺少决策或手填 false 均拒绝", () => {
+/** 固定生产 UI 皮肤必须在 V3 决策，后续 false/缺失不能伪造“无需评估”。 */
+test("V3从显式角色派生必评估标记，缺少决策或手填 false 均拒绝", () => {
   const contract = { mode: "not-applicable", reason: "该按钮装饰为固定尺寸，不拉伸" };
   const region = {
     id: "button-region", scene_id: "main", state_id: "default", owner_type: "fixed-production-visual", visual_route_analysis: { element_type: "button" },
@@ -175,9 +175,9 @@ test("V2从显式角色派生必评估标记，缺少决策或手填 false 均�
   assert.equal(elements[0].nine_slice_decision_required, true);
   assert.deepEqual(elements[0].nine_slice, contract);
   const missing = structuredClone(region); delete missing.component_inventory.components[0].nine_slice;
-  assert.throws(() => buildDecompositionElements([missing]), /V2 必须确认 nine_slice/);
+  assert.throws(() => buildDecompositionElements([missing]), /V3 必须确认 nine_slice/);
   const bypassed = structuredClone(elements); bypassed[0].nine_slice_decision_required = false;
-  // 显式 region owner/route 仍能重算要求，false 不能关闭 V2 的必评估判断。
+  // 显式 region owner/route 仍能重算要求，false 不能关闭 V3 的必评估判断。
   const errors = [];
   validateDecompositionElements(bypassed, [region], { width: 48, height: 32 }, "decomposition_elements", errors);
   assert(errors.some((message) => message.includes("不接受 false 覆盖")));

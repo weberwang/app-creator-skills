@@ -17,7 +17,7 @@ const ENUMS = Object.freeze({
   safe_area_policy: new Set(["FULL_BLEED", "INSIDE_SAFE_AREA"]),
   interaction_policy: new Set(["HIT_TARGET", "DELEGATE_TO_PARENT", "NONE"]),
 });
-const FIELDS = new Set(["grouping_basis", ...Object.keys(ENUMS), "minimum_size", "position_reference_id", "visual_overflow", "independent_container_reason", "position_driver", "size_driver", "widget_stretch_axes"]);
+const FIELDS = new Set(["positioning", "floating_root_kind", "grouping_basis", ...Object.keys(ENUMS), "minimum_size", "position_reference_id", "visual_overflow", "independent_container_reason", "position_driver", "size_driver", "widget_stretch_axes"]);
 
 /** 判断普通对象。 */
 function isObject(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
@@ -61,6 +61,9 @@ export function allowsVisualOverflow(uiLayout) {
 export function validateUiLayout(value, options = {}, errors = [], label = "ui_layout") {
   if (!isObject(value)) { errors.push(`${label} 必须显式声明节点布局职责`); return; }
   for (const key of Object.keys(value)) if (!FIELDS.has(key)) errors.push(`${label}.${key} 不是定义的布局职责字段`);
+  // 这两个声明会进入节点身份投影；只能由实际浮层本体使用独立定位。
+  if (Object.hasOwn(value, "positioning") && !["relative", "absolute"].includes(value.positioning)) errors.push(label + ".positioning 只允许 relative 或 absolute");
+  if (Object.hasOwn(value, "floating_root_kind") && !["popup", "floating", "toast"].includes(value.floating_root_kind)) errors.push(label + ".floating_root_kind 必须为 popup/floating/toast");
   const bases = value.grouping_basis;
   if (!Array.isArray(bases) || bases.some((basis) => !BASES.has(basis)) || new Set(bases).size !== bases.length) errors.push(`${label}.grouping_basis 必须是不重复的 POSITION/LAYOUT/INTERACTION/STATE/CLIP/REUSE 数组`);
   else {

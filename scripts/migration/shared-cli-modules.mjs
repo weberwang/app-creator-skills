@@ -2,6 +2,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
+import { frameResourceTarget } from './source-policy.mjs';
 
 const STACKS = Object.freeze({
   cocos: Object.freeze({
@@ -413,7 +414,7 @@ function buildImageInbetweenCapability(sourceRoot) {
     if (canonicalTemplate === undefined) canonicalTemplate = candidate;
     else if (candidate !== canonicalTemplate) throw new Error(`image-inbetween-plan 规范化后仍存在差异：${stack}`);
 
-    const adapterDestination = sourcePath;
+    const adapterDestination = frameResourceTarget(stack, sourcePath);
     const specifier = relativeModuleSpecifier(adapterDestination, implementation);
     const entrySpecifier = relativeModuleSpecifier(adapterDestination, 'skills/app-skill-runtime/direct-entry.mjs');
     const adapter = buildPlannerAdapter(specifier, entrySpecifier, STACKS[stack].schema, localized.names);

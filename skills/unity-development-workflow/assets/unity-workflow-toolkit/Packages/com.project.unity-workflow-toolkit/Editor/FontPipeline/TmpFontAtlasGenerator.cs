@@ -16,12 +16,10 @@ using UnityEngine.Localization.Tables;
 namespace Project.UnityWorkflow.FontPipeline
 {
     /// <summary>
-    /// 从项目 String Tables 汇总五语言字形，生成静态 TMP 图集并配置文本绑定器。
+    /// 从项目所选语言的 String Tables 汇总字形，生成静态 TMP 图集并配置文本绑定器。
     /// </summary>
     public static class TmpFontAtlasGenerator
     {
-        private static readonly string[] RequiredLocales = { "en", "zh-CN", "ja", "ru", "es" };
-
         /// <summary>使用项目窗口选中的计划执行生成和应用。</summary>
         [MenuItem("Tools/Unity Workflow/Build TMP Font Atlases")]
         public static void BuildSelectedPlan()
@@ -62,7 +60,7 @@ namespace Project.UnityWorkflow.FontPipeline
                 var characters = new SortedSet<uint>();
                 foreach (string localeCode in group.LocaleCodes)
                 {
-                    if (!tableCharacters.TryGetValue(localeCode, out SortedSet<uint> localeCharacters)
+                    if (!TryGetLocaleCharacters(tableCharacters, localeCode, out SortedSet<uint> localeCharacters)
                         || localeCharacters.Count == 0)
                     {
                         throw new InvalidOperationException($"{localeCode} 没有 String Table 文案，不能生成可验证的字体图集。");
@@ -125,7 +123,7 @@ namespace Project.UnityWorkflow.FontPipeline
                 throw new InvalidOperationException("字体输出目录必须是 Assets/ 下的规范项目路径。");
             }
 
-            var seenLocales = new HashSet<string>(StringComparer.Ordinal);
+            var seenLocales = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var seenNames = new HashSet<string>(StringComparer.Ordinal);
             foreach (TmpFontAtlasGroup group in plan.Groups)
             {
@@ -155,23 +153,24 @@ namespace Project.UnityWorkflow.FontPipeline
 
                 foreach (string code in group.LocaleCodes)
                 {
-                    if (!RequiredLocales.Contains(code) || !seenLocales.Add(code))
+                    string normalized = CanonicalLocale(code);
+                    if (normalized == null || !seenLocales.Add(normalized))
                     {
                         throw new InvalidOperationException($"字体计划出现重复或不支持的语言：{code}。");
                     }
                 }
             }
 
-            if (!seenLocales.SetEquals(RequiredLocales) || plan.Targets.Any(target => target == null))
+            if (seenLocales.Count == 0 || plan.Targets.Any(target => target == null))
             {
-                throw new InvalidOperationException("字体计划必须且只能覆盖 en、zh-CN、ja、ru、es，目标不能缺失。");
+                throw new InvalidOperationException("字体计划必须包含项目所选语言，目标不能缺失。");
             }
         }
 
         /// <summary>汇总所有 String Table 中的可见文字，Smart String 占位符交由额外字符文件覆盖。</summary>
         private static Dictionary<string, SortedSet<uint>> CollectStringTableCharacters()
         {
-            var result = new Dictionary<string, SortedSet<uint>>(StringComparer.Ordinal);
+            var result = new Dictionary<string, SortedSet<uint>>(StringComparer.OrdinalIgnoreCase);
             foreach (StringTableCollection collection in LocalizationEditorSettings.GetStringTableCollections())
             {
                 foreach (StringTable table in collection.StringTables)
@@ -195,7 +194,26 @@ namespace Project.UnityWorkflow.FontPipeline
             return result;
         }
 
-        /// <summary>将 Unity Locale 代码映射到本工作流要求的五种语言。</summary>
+        /// <summary>精确读取所选语言；缺少对应语言表时对英语和简体中文使用明确别名。</summary>
+        private static bool TryGetLocaleCharacters(Dictionary<string, SortedSet<uint>> tables, string localeCode, out SortedSet<uint> characters)
+        {
+            string code = CanonicalLocale(localeCode);
+            if (code != null && tables.TryGetValue(code, out characters)) return true;
+            characters = new SortedSet<uint>();
+            foreach (var pair in tables)
+            {
+                // 不把明确选择的地区合并为其他地区；别名只服务英语和简体中文。
+                bool alias = string.Equals(code, "en", StringComparison.OrdinalIgnoreCase)
+                    && pair.Key.StartsWith("en-", StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(code, "zh-CN", StringComparison.OrdinalIgnoreCase)
+                    && (pair.Key.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase)
+                        || pair.Key.Equals("zh-Hans-CN", StringComparison.OrdinalIgnoreCase));
+                if (alias) characters.UnionWith(pair.Value);
+            }
+            return characters.Count > 0;
+        }
+
+        /// <summary>规范化并验证语言标签，保留文字和地区以区分不同语言资产。</summary>
         private static string CanonicalLocale(string code)
         {
             if (string.IsNullOrWhiteSpace(code))
@@ -203,29 +221,20 @@ namespace Project.UnityWorkflow.FontPipeline
                 return null;
             }
 
-            if (code.Equals("zh-CN", StringComparison.OrdinalIgnoreCase)
-                || code.StartsWith("zh-CN-", StringComparison.OrdinalIgnoreCase)
-                || code.Equals("zh-Hans", StringComparison.OrdinalIgnoreCase)
-                || code.StartsWith("zh-Hans-", StringComparison.OrdinalIgnoreCase))
+            string[] parts = code.Trim().Replace('_', '-').Split('-');
+            for (int index = 0; index < parts.Length; index++)
             {
-                return "zh-CN";
-            }
-
-            foreach (string locale in RequiredLocales)
-            {
-                if (locale == "zh-CN")
+                if (parts[index].Length == 0 || parts[index].Length > 8 || (index == 0 && parts[index].Length < 2))
                 {
-                    continue;
+                    return null;
                 }
-
-                if (code.Equals(locale, StringComparison.OrdinalIgnoreCase)
-                    || code.StartsWith(locale + "-", StringComparison.OrdinalIgnoreCase))
+                foreach (char character in parts[index])
                 {
-                    return locale;
+                    if (!((character >= 'A' && character <= 'Z') || (character >= 'a' && character <= 'z')
+                        || (index > 0 && character >= '0' && character <= '9'))) return null;
                 }
             }
-
-            return null;
+            return string.Join("-", parts);
         }
 
         /// <summary>按 Unicode 码点去重，保留非 BMP 字符并略过控制字符。</summary>

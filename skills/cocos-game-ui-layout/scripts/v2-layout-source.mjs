@@ -1,5 +1,5 @@
 /**
- * V2 布局事实来源解析器。
+ * V3 布局事实来源解析器。
  *
  * 场景合同只引用一份 layout-nodes.json；解析时校验文件边界和布局身份，
  * 并复用正式节点文档校验，避免下游从合同副本读取分组或布局策略。
@@ -49,7 +49,7 @@ function readLayoutSourceDocument(relativePath, options) {
     return { document: injected.get(relativePath), file: options.projectRoot ? resolve(options.projectRoot, relativePath) : relativePath };
   }
 
-  if (typeof options.projectRoot !== "string" || options.projectRoot.trim().length === 0) throw new Error("读取真实 V2 布局源必须提供 projectRoot");
+  if (typeof options.projectRoot !== "string" || options.projectRoot.trim().length === 0) throw new Error("读取真实 V3 布局源必须提供 projectRoot");
   const root = resolve(options.projectRoot);
   const file = resolve(root, relativePath);
   if (!isWithin(root, file)) throw new Error("layout_source.nodes_file 词法路径越界");
@@ -59,20 +59,20 @@ function readLayoutSourceDocument(relativePath, options) {
     realRoot = realpathSync(root);
     realFile = realpathSync(file);
   } catch (error) {
-    throw new Error(`V2 布局源文件不存在或无法解析：${relativePath}（${error.message}）`);
+    throw new Error(`V3 布局源文件不存在或无法解析：${relativePath}（${error.message}）`);
   }
   if (!isWithin(realRoot, realFile)) throw new Error("layout_source.nodes_file 真实路径越界");
-  if (!statSync(realFile).isFile()) throw new Error("V2 布局源必须是文件");
+  if (!statSync(realFile).isFile()) throw new Error("V3 布局源必须是文件");
   let document;
   try {
     document = JSON.parse(readFileSync(realFile, "utf8"));
   } catch (error) {
-    throw new Error(`V2 布局源 JSON 无效：${error.message}`);
+    throw new Error(`V3 布局源 JSON 无效：${error.message}`);
   }
   return { document, file: realFile };
 }
 
-/** 解析 V2 唯一布局事实文件，并核对其与冻结场景和确认身份一致。 */
+/** 解析 V3 唯一布局事实文件，并核对其与冻结场景和确认身份一致。 */
 export function resolveV2LayoutSource(source, options = {}, expected = {}) {
   if (!isObject(source)) throw new Error("layout_decomposition.layout_source 必须是对象");
   const sourceFields = Object.keys(source);
@@ -80,10 +80,10 @@ export function resolveV2LayoutSource(source, options = {}, expected = {}) {
 
   const relativePath = normalizeProjectRelativePath(source.nodes_file);
   const { document, file } = readLayoutSourceDocument(relativePath, options);
-  if (!isObject(document) || document.schema !== LAYOUT_NODES_SCHEMA) throw new Error(`V2 布局源 schema 必须为 ${LAYOUT_NODES_SCHEMA}`);
+  if (!isObject(document) || document.schema !== LAYOUT_NODES_SCHEMA) throw new Error(`V3 布局源 schema 必须为 ${LAYOUT_NODES_SCHEMA}`);
 
   const validationErrors = [];
-  validateLayoutNodesDocument(document, {}, validationErrors, "V2 layout source");
+  validateLayoutNodesDocument(document, {}, validationErrors, "V3 layout source");
   if (validationErrors.length > 0) throw new Error(validationErrors[0]);
 
   const expectedFields = [
@@ -95,12 +95,12 @@ export function resolveV2LayoutSource(source, options = {}, expected = {}) {
   for (const [camel, snake] of expectedFields) {
     const expectedValue = expected[camel] ?? expected[snake];
     if (expectedValue !== undefined && document[snake] !== expectedValue) {
-      throw new Error(`V2 layout source.${snake} 与冻结身份不一致`);
+      throw new Error(`V3 layout source.${snake} 与冻结身份不一致`);
     }
   }
   const expectedViewport = expected.viewport ?? expected.targetViewport ?? expected.target_viewport;
   if (expectedViewport !== undefined && canonicalJson(document.viewport) !== canonicalJson(expectedViewport)) {
-    throw new Error("V2 layout source.viewport 与冻结目标不一致");
+    throw new Error("V3 layout source.viewport 与冻结目标不一致");
   }
 
   return {

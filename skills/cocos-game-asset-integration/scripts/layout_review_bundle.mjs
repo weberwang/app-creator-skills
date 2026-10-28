@@ -76,26 +76,26 @@ function realPathOrNearest(path) {
 }
 
 /** 计算布局审阅页的四个默认旁车工件路径。 */
-export function deriveLayoutReviewArtifactPaths(projectRoot, annotationPath) {
+export function deriveLayoutReviewArtifactPaths(projectRoot, annotationPath, includeReview = true) {
   const output = resolve(annotationPath);
   const directory = resolve(join(output, ".."));
   return {
     annotation: output,
     nodes: join(directory, "layout-nodes.json"),
     decision: join(directory, "layout-decision.json"),
-    review: join(directory, "review.html"),
+    ...(includeReview ? { review: join(directory, "review.html") } : {}),
     generationResult: join(directory, "generation-result.json"),
     annotationFile: projectRelativePath(projectRoot, output),
     nodesFile: projectRelativePath(projectRoot, join(directory, "layout-nodes.json")),
     decisionFile: projectRelativePath(projectRoot, join(directory, "layout-decision.json")),
-    reviewFile: projectRelativePath(projectRoot, join(directory, "review.html")),
+    ...(includeReview ? { reviewFile: projectRelativePath(projectRoot, join(directory, "review.html")) } : {}),
     generationResultFile: projectRelativePath(projectRoot, join(directory, "generation-result.json")),
   };
 }
 
 /** 检查旁车工件不会覆盖上游确认文件或彼此互撞。 */
-export function validateLayoutReviewArtifactPaths(projectRoot, paths, protectedFiles = [], decisionInputFile = null) {
-  const outputPaths = [paths.annotation, paths.nodes, paths.decision, paths.review, paths.generationResult];
+export function validateLayoutReviewArtifactPaths(projectRoot, paths, protectedFiles = [], decisionInputFile = null, includeReview = true) {
+  const outputPaths = [paths.annotation, paths.nodes, paths.decision, ...(includeReview ? [paths.review] : []), paths.generationResult];
   const seen = new Map();
   for (const path of outputPaths) {
     const key = (realPathOrNearest(resolve(path)) ?? resolve(path)).toLowerCase();

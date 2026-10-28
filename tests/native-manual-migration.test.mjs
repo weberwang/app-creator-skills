@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 import { CAPABILITY_GROUPS, extractNativeSection, nativeAdapterPath } from '../scripts/capability-map.mjs';
 import { applyNativeManualResources } from '../scripts/migration/native-manuals.mjs';
+import { GENERATED_DOMAIN_RESOURCES } from '../scripts/migration/output-cleanup.mjs';
 
 const REPOSITORY_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'flutter'];
@@ -70,11 +71,8 @@ function createFixture() {
     mkdirSync(path.dirname(destination), { recursive: true });
     writeFileSync(destination, source);
   }
-  for (const entry of [
-    'scripts/migration/templates/unity-resource-handoff-evidence.source',
-    'scripts/migration/templates/unity-ui-layout-evidence.source',
-    'scripts/migration/templates/unity-rigging-delivery-contract.source',
-  ]) {
+  // 夹具沿用真实生成清单，新增专业模板时不能遗漏其作者源文件。
+  for (const entry of GENERATED_DOMAIN_RESOURCES.map((resource) => resource.template)) {
     const source = readFileSync(path.join(REPOSITORY_ROOT, ...entry.split('/')));
     const destination = path.join(root, ...entry.split('/'));
     mkdirSync(path.dirname(destination), { recursive: true });
@@ -306,4 +304,21 @@ test('旧仓库作者适配只在旧清单哈希吻合时移除', (t) => {
   mkdirSync(path.dirname(target), { recursive: true });
   writeFileSync(target, Buffer.concat([source, Buffer.from('\nmanual edit\n')]));
   assert.throws(() => applyFixture(fixture, previousHashes, fixture.sharedOutputs), /旧作者模式已被手动修改/);
+});
+
+test('账本未更新的完整本轮手册可恢复，但不同字节的人工改动仍拒绝', (t) => {
+  const fixture = createFixture();
+  t.after(() => rmSync(fixture.root, { recursive: true, force: true }));
+  const generated = applyFixture(fixture, new Map(), fixture.sharedOutputs);
+  const manual = generated.find((item) => item.kind === 'native-manual' && item.stack === 'cocos');
+  const target = path.join(fixture.root, ...manual.path.split('/'));
+  const bytes = readFileSync(target);
+  const staleHashes = new Map([[manual.path, hash(Buffer.from('上一轮手册'))]]);
+  restoreStageFiles(fixture);
+  const restored = applyFixture(fixture, staleHashes, fixture.sharedOutputs);
+  assert.equal(restored.find((item) => item.path === manual.path).destinationSha256, hash(bytes));
+  assert.deepEqual(readFileSync(target), bytes);
+  writeFileSync(target, Buffer.concat([bytes, Buffer.from('\n人工补充\n')]));
+  restoreStageFiles(fixture);
+  assert.throws(() => applyFixture(fixture, staleHashes, fixture.sharedOutputs), /原生手册已被手动修改/);
 });

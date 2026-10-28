@@ -67,6 +67,16 @@
         "phaser",
         "threejs"
       ]
+    },
+    {
+      "id": "git-minimal-submission",
+      "path": "../app-domain-toolkit/references/git-minimal-submission.md",
+      "stacks": [
+        "cocos",
+        "phaser",
+        "threejs"
+      ],
+      "onDemand": true
     }
   ]
 }

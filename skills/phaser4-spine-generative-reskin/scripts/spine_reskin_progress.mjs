@@ -6,16 +6,16 @@ import { access, mkdir, mkdtemp, open, readFile, realpath, rename, rm, stat, wri
 import { basename, dirname, extname, isAbsolute, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import sharp from "../../app-skill-runtime/sharp.mjs";
-import { atlasText, parseAtlas, ReskinError } from "./spine_atlas.mjs";
+import { atlasText, parseAtlas, ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 import { blankRgba, cropRgba, decodeRgba, encodePng, extractReferences, hasVisibleAlpha, normalizeCellImage, outputPageName, pasteRgba, prepareCellImage, validateCellImageDimensions } from "./spine_images.mjs";
 import { auditSkeleton } from "./spine_skeleton.mjs";
 import { acceptanceFingerprint, assertCurrentBatch, batchCells, validateEffectSequence } from "./spine_batch.mjs";
 import { buildRuntimeBinding, readRuntimeReport, validateRuntimeReport, validateVerification, writeFinalReport } from "./spine_runtime.mjs";
 import { assertProductionReady, createBatchCommands } from "./spine_batch_commands.mjs";
-import { prepareSpineAsset } from "./spine_assets.mjs";
-import { assertSpineControlBinding, readSpineControlBinding } from "./spine_control.mjs";
+import { prepareSpineAsset } from "../../app-domain-toolkit/scripts/spine/spine_assets.mjs";
+import { assertSpineControlBinding, readSpineControlBinding } from "../../app-domain-toolkit/scripts/spine/spine_control.mjs";
 import { createSkeletonAuditIntegrity } from "./spine_integrity.mjs";
-import { createAlphaContract } from "./spine_alpha.mjs";
+import { createAlphaContract } from "../../app-domain-toolkit/scripts/spine/spine_alpha.mjs";
 import { validatePackedContent } from "./spine_build_validation.mjs";
 
 const SCHEMA_VERSION = 3;
@@ -379,7 +379,7 @@ async function assertSourceIntegrity(document, manifestPath) {
 /** 初始化清单并默认导出候选目录下的源 Cell 结构参考。 */
 async function commandInit(args) {
   if ((!args.atlas && !args.assetDir) || !args.output) throw new ReskinError("init 需要 --atlas 或 --asset-dir，以及 --output");
-  if (!args.controlManifest) throw new ReskinError("init 需要 --control-manifest，以绑定 Work Item、production contract 和 V2 approval");
+  if (!args.controlManifest) throw new ReskinError("init 需要 --control-manifest，以绑定 Work Item、production contract 和 V3 approval");
   const output = resolve(args.output);
   const assetInput = args.assetDir ? await prepareSpineAsset(args.assetDir, args.normalizedDir ?? join(dirname(output), "normalized-source")) : { format: "independent", source_dir: dirname(resolve(args.atlas)), atlas_path: resolve(args.atlas), skeleton_path: resolve(args.skeleton?.[0] ?? "") };
   const atlas = resolve(assetInput.atlas_path);
@@ -946,5 +946,5 @@ export async function main(argv = process.argv.slice(2)) {
   }
 }
 
-export { parseAtlas } from "./spine_atlas.mjs";
+export { parseAtlas } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exitCode = await main();

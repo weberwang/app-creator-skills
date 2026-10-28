@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { readFile } from "node:fs/promises";
-import { ReskinError } from "./spine_atlas.mjs";
+import { ReskinError } from "../../app-domain-toolkit/scripts/spine/spine_atlas.mjs";
 
 /** 3.8 仅是默认审计目标；实际 Spine 分支必须由当前 Creator Runtime 证据确认。 */
 export const COCOS_SPINE_RUNTIME_DEFAULT = "3.8";

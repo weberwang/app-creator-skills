@@ -4,7 +4,7 @@ import { deriveVisualReturnStage, deriveVisualRootCause, isPlainObject, nonEmpty
 
 /** 把运行和生产证据格式化为可定位的视觉合同错误。 */
 export function productionContractError(context = {}, message, details = {}) {
-  const stage = context.stage ?? 'V2';
+  const stage = context.stage ?? 'V3';
   const annotation = context.annotation_number ?? context.annotationNumber ?? '?';
   const region = context.region_id ?? context.regionId ?? '?';
   const expected = details.expectedMethod ?? context.expectedMethod ?? '?';
@@ -14,8 +14,8 @@ export function productionContractError(context = {}, message, details = {}) {
   const state = details.state_id ?? details.stateId ?? context.state_id ?? context.stateId;
   const componentLabel = component !== undefined || state !== undefined ? ` component_id=${component ?? '?'} state_id=${state ?? '?'}` : '';
   const suffix = missing ? ` 缺失=${missing}` : '';
-  const returnStage = details.returnStage ?? context.returnStage ?? deriveVisualReturnStage(stage, { validationStages: ['F2', 'F3', 'V4'] });
-  const rootCause = details.rootCause ?? context.rootCause ?? deriveVisualRootCause(stage, returnStage, { acceptanceStages: ['F2', 'F3', 'V4'], defaultRootCause: VISUAL_ROOT_CAUSES.ACCEPTANCE });
+  const returnStage = details.returnStage ?? context.returnStage ?? deriveVisualReturnStage(stage, { validationStages: ['F2', 'F3', 'V5'] });
+  const rootCause = details.rootCause ?? context.rootCause ?? deriveVisualRootCause(stage, returnStage, { acceptanceStages: ['F2', 'F3', 'V5'], defaultRootCause: VISUAL_ROOT_CAUSES.ACCEPTANCE });
   return `[${stage}] annotation_number=${annotation} region_id=${region}${componentLabel} expected_method=${expected} observed_method=${observed} 根因=${rootCause}${suffix} ${message} 应退回阶段=${returnStage}`;
 }
 
@@ -57,7 +57,7 @@ export function manifestEvidenceIdentity(manifest) {
   };
 }
 
-/** 只在 V4 要求图像生成资源提交真实运行消费证据并核验其身份。 */
+/** 只在 V5 要求图像生成资源提交真实运行消费证据并核验其身份。 */
 export function validateImageGenerationRuntimeConsumption(asset, context, options = {}) {
   if (options.requireRuntimeConsumption !== true) return [];
   const evidence = asset?.runtime_consumption;

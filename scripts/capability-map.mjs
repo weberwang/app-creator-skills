@@ -1,3 +1,19 @@
+import { SPECIALIST_REFERENCE_FAMILIES } from './migration/specialist-reference-specs.mjs';
+import { ORCHESTRATION_REFERENCE_FAMILIES } from './migration/orchestration-reference-specs.mjs';
+import { DOMAIN_REFERENCE_FAMILIES } from './migration/domain-reference-specs.mjs';
+
+/** 从正文主题清单推导能力入口，避免引用列表与实际公共真源分别维护。 */
+function attachReferenceWorkflows(group) {
+  const principles = ['app-asset-workflow', 'app-quality-review', 'app-feedback'].includes(group.name)
+    ? ['art-quality-principles'] : [];
+  const git = ['app-creator-workflow', 'app-artifact-cleanup', 'app-release'].includes(group.name)
+    ? ['git-minimal-submission'] : [];
+  const ids = [...new Set([...(group.referenceWorkflows ?? []), ...principles, ...git,
+    ...[...SPECIALIST_REFERENCE_FAMILIES, ...ORCHESTRATION_REFERENCE_FAMILIES, ...DOMAIN_REFERENCE_FAMILIES]
+      .filter((family) => family.capability === group.name).map((family) => family.id)])];
+  return ids.length ? { ...group, referenceWorkflows: ids } : group;
+}
+
 /** 能力入口是唯一可发现技能；源栈目录只承载完整原生适配与工具载荷。 */
 export const CORE_SKILLS = Object.freeze(['app-creator-workflow', 'app-workflow-control', 'grilling', 'app-asset-workflow']);
 
@@ -10,13 +26,13 @@ export const CAPABILITY_GROUPS = Object.freeze([
   { name: 'app-game-balance', title: '游戏数值与经济', members: { unity: ['unity-game-balance'], cocos: ['cocos-game-balance'], phaser: ['phaser4-game-balance'], threejs: ['threejs-game-balance'] }, workflows: ['balance'] },
   { name: 'app-feedback', title: '游戏与应用汁水设计', members: { unity: ['unity-game-juice'], cocos: ['cocos-game-juice'], phaser: ['phaser4-game-juice'], threejs: ['threejs-game-juice'] }, authoredAdapters: [{ stack: 'flutter', sourceSkill: 'flutter-feedback', mode: 'Flutter 应用交互反馈', when: '为 Flutter 应用设计或实现按钮、表单、导航、手势、异步操作、状态过渡或触觉反馈时使用；先采用公共设计，再按 Widget 与路由生命周期实现。' }], workflows: ['juice', 'feedback-lifecycle'] },
   { name: 'app-release', title: '候选交付与发布准备', members: { unity: ['unity-game-release'], cocos: ['cocos-game-release'], phaser: ['phaser4-game-release'], threejs: ['threejs-game-release'], flutter: ['flutter-release-readiness'] }, workflows: ['release'] },
-  { name: 'app-quality-review', title: '质量审核与性能验证', members: { unity: ['unity-game-qa-performance'], cocos: ['cocos-game-qa-performance'], phaser: ['phaser4-game-qa-performance'], threejs: ['threejs-game-qa-performance'], flutter: ['flutter-quality-review', 'flutter-ux-ui-quality'] }, workflows: ['quality-verification'] },
-  { name: 'app-animation', title: '动画制作与接入', members: { unity: ['unity-game-2d-animation-ta', 'unity-game-3d-animation'], cocos: ['cocos-frame-animation'], phaser: ['phaser4-frame-animation'], threejs: ['threejs-frame-animation'] }, reuses: [{ stack: 'unity', sourceSkill: 'unity-game-2d-rigging', mode: '2D 角色动作生产', when: '需要制作或修订 Unity 2D 角色的 AnimationClip、AnimatorController、动作变体及真实角色播放时读取；骨架绑定本身仍由角色绑定能力维护。' }], workflows: ['frame-animation', 'frame-animation-execution'] },
+  { name: 'app-quality-review', title: '质量审核与性能验证', members: { unity: ['unity-game-qa-performance'], cocos: ['cocos-game-qa-performance'], phaser: ['phaser4-game-qa-performance'], threejs: ['threejs-game-qa-performance'], flutter: ['flutter-quality-review', 'flutter-ux-ui-quality'] }, workflows: ['quality-verification'], referenceWorkflows: ['responsive-visual-validation'] },
+  { name: 'app-animation', title: '动画制作与接入', members: { unity: ['unity-game-2d-animation-ta', 'unity-game-3d-animation'], cocos: ['cocos-frame-animation'], phaser: ['phaser4-frame-animation'], threejs: ['threejs-frame-animation'] }, reuses: [{ stack: 'unity', sourceSkill: 'unity-game-2d-rigging', mode: '2D 角色动作生产', when: '需要制作或修订 Unity 2D 角色的 AnimationClip、AnimatorController、动作变体及真实角色播放时读取；骨架绑定本身仍由角色绑定能力维护。' }], workflows: ['frame-animation', 'frame-animation-execution'], referenceWorkflows: ['action-timing', 'animation-direction', 'character-animation', 'effect-animation', 'image-inbetween', 'intent-driven-design', 'object-animation', 'region-planning', 'ui-frame-animation', 'workflow-integration'].map((name) => `frame-reference-${name}`) },
   { name: 'app-character-rigging', title: '角色骨架与绑定', members: { unity: ['unity-game-2d-rigging', 'unity-game-3d-rigging'] }, workflows: [] },
   { name: 'app-3d-modeling', title: '三维几何建模', members: { unity: ['unity-game-3d-modeling'], cocos: ['cocos-game-3d-modeling'], threejs: ['threejs-game-3d-modeling'] }, workflows: ['modeling-production'] },
   { name: 'app-3d-texturing', title: '三维材质与贴图生产', members: { unity: ['unity-game-3d-texturing'] }, workflows: [] },
   { name: 'app-spine-reskin', title: 'Spine 生成式换皮', members: { unity: ['unity-game-spine-reskin'], cocos: ['cocos-spine-generative-reskin'], phaser: ['phaser4-spine-generative-reskin'] }, workflows: ['spine-reskin-production'] },
-  { name: 'app-ui-layout', title: '界面布局与自适应', members: { cocos: ['cocos-game-ui-layout'], phaser: ['phaser4-game-ui-layout'], threejs: ['threejs-game-ui-layout'], flutter: ['adaptive-layout-implementation'] }, reuses: [{ stack: 'unity', sourceSkill: 'unity-game-visual-assets', mode: 'Unity UI 结构与布局接入', when: '需要 Unity Canvas、Prefab、UXML、UI Toolkit/uGUI 的结构、锚点、安全区、布局和正式界面接入时读取，并按原生规范调用 unity:ui 路由。' }], workflows: ['ui-layout'] },
+  { name: 'app-ui-layout', title: '界面布局与自适应', members: { cocos: ['cocos-game-ui-layout'], phaser: ['phaser4-game-ui-layout'], threejs: ['threejs-game-ui-layout'], flutter: ['adaptive-layout-implementation'] }, reuses: [{ stack: 'unity', sourceSkill: 'unity-game-visual-assets', mode: 'Unity UI 结构与布局接入', when: '需要 Unity Canvas、Prefab、UXML、UI Toolkit/uGUI 的结构、锚点、安全区、布局和正式界面接入时读取，并按原生规范调用 unity:ui 路由。' }], workflows: ['ui-layout'], referenceWorkflows: ['ui-game-copy', 'responsive-visual-validation'] },
   { name: 'app-artifact-cleanup', title: '项目整理与产物清理', members: { cocos: ['cocos-game-artifact-cleanup'], phaser: ['phaser4-game-artifact-cleanup'], threejs: ['threejs-game-artifact-cleanup'] }, authoredAdapters: [
     { stack: 'unity', sourceSkill: 'unity-artifact-cleanup', mode: 'Unity 项目整理与清理', when: '整理 Unity 项目目录、移动或重命名资源、判定并清理中间产物时使用；遵循公共流程及 Unity 资源身份、导入器和序列化引用规则。' },
     { stack: 'flutter', sourceSkill: 'flutter-artifact-cleanup', mode: 'Flutter 项目整理与清理', when: '整理 Flutter 项目目录、移动或重命名资源、判定并清理中间产物时使用；遵循公共流程及 Dart 导入、pubspec、生成代码和资源清单规则。' },
@@ -27,9 +43,9 @@ export const CAPABILITY_GROUPS = Object.freeze([
   { name: 'app-runtime-plugins', title: '运行时插件与扩展', members: { threejs: ['threejs-game-plugins'] }, workflows: [] },
   { name: 'app-project-foundation', title: '项目初始化与基础运行时', members: { threejs: ['threejs-game-runtime'], flutter: ['flutter-project-init'] }, workflows: [] },
   { name: 'app-ui-code-sketch', title: '界面代码草图', members: { flutter: ['flutter-code-sketch'] }, workflows: [] },
-  { name: 'app-asset-workflow', title: '视觉素材生产', core: true, members: { unity: ['unity-game-visual-assets'], cocos: ['cocos-game-asset-integration'], phaser: ['phaser4-game-asset-integration'], threejs: ['threejs-game-asset-integration'], flutter: ['flutter-asset-atlas', 'flutter-hifi-mockup'] }, workflows: ['asset-production'] },
+  { name: 'app-asset-workflow', title: '视觉素材生产', core: true, members: { unity: ['unity-game-visual-assets'], cocos: ['cocos-game-asset-integration'], phaser: ['phaser4-game-asset-integration'], threejs: ['threejs-game-asset-integration'], flutter: ['flutter-asset-atlas', 'flutter-hifi-mockup'] }, workflows: ['asset-production'], referenceWorkflows: ['ui-game-copy'] },
   { name: 'app-creator-workflow', title: '开发编排与实施交接', core: true, members: { flutter: ['flutter-implementation-plan', 'flutter-subagent-delivery'] }, workflows: [] },
-]);
+].map(attachReferenceWorkflows));
 
 /** 按实际源技能身份查找唯一能力入口，不保留同职责的技术栈别名。 */
 export function capabilityForSourceSkill(stack, sourceSkill) {

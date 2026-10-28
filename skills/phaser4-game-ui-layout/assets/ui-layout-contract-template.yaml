@@ -166,6 +166,7 @@
   "regions": [
     {
       "id": "safe-area",
+      "parent_id": "viewport",
       "semantic_role": "platform-inset-boundary",
       "parent_space": "screen-space",
       "reference_id": "viewport",
@@ -188,6 +189,7 @@
     },
     {
       "id": "ui-root",
+      "parent_id": "safe-area",
       "semantic_role": "screen-ui-root",
       "parent_space": "ui-space",
       "reference_id": "safe-area",
@@ -210,6 +212,7 @@
     },
     {
       "id": "title",
+      "parent_id": "ui-root",
       "semantic_role": "page-title",
       "parent_space": "ui-space",
       "reference_id": "ui-root",
@@ -232,6 +235,7 @@
     },
     {
       "id": "content-panel",
+      "parent_id": "ui-root",
       "semantic_role": "primary-content",
       "parent_space": "ui-space",
       "reference_id": "title",
@@ -254,6 +258,7 @@
     },
     {
       "id": "scroll-content",
+      "parent_id": "content-panel",
       "semantic_role": "scrollable-content",
       "parent_space": "scroll-space",
       "reference_id": "content-panel",
@@ -276,6 +281,7 @@
     },
     {
       "id": "primary-action",
+      "parent_id": "ui-root",
       "semantic_role": "critical-action",
       "parent_space": "ui-space",
       "reference_id": "safe-area",
@@ -317,6 +323,7 @@
     "target_bounds": {"x": 115, "y": 32, "width": 160, "height": 48},
     "size_policy": "fixed-at-target",
     "ui_layout": {
+      "positioning": "relative",
       "grouping_basis": ["POSITION"],
       "layout_owner": "SELF",
       "size_policy": "CONTENT",
@@ -351,7 +358,7 @@
     "narrow_height_degradation": {"trigger": "content-height-exceeds-safe-height", "strategy": "vertical-scroll", "fallback": "collapse-secondary-content"}
   },
   "dynamic_content": {
-    "localization": {"default_language": "zh-CN", "longest_copy": "fixtures/longest-copy.json", "programmatic_text": true, "required_languages": ["en", "zh-CN", "ja", "ru", "es"], "wrap": {"en": "single-line", "zh-CN": "single-line", "ja": "single-line", "ru": "wrap", "es": "wrap"}, "growth": "locale-adaptive", "truncate_policy": "forbid", "copy_style": "concise-gameplay", "multiplier_format": "x{value}", "display_fit_evidence": "fixtures/programmatic-text-fit.json"},
+    "localization": {"default_language": "zh-CN", "longest_copy": "fixtures/longest-copy.json", "programmatic_text": true, "required_languages": ["zh-CN"], "wrap": {"zh-CN": "single-line"}, "growth": "locale-adaptive", "truncate_policy": "forbid", "copy_style": "concise-gameplay", "multiplier_format": "x{value}", "display_fit_evidence": "fixtures/programmatic-text-fit.json"},
     "text_scaling": {"default": 1.0, "maximum": 2.0, "strategy": "fit-per-locale-with-readable-minimum"},
     "key_actions": [{"id": "primary-action", "states": ["default", "disabled", "pressed", "submitting", "completed", "error"], "text_truncation": "forbid"}],
     "dynamic_values": ["member-count", "timer"],

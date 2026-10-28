@@ -1,5 +1,7 @@
+import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 /**
- * V2 阶段 A 的拆解元素清单。
+ * V3 阶段 A 的拆解元素清单。
  *
  * 拆解元素是人工确认的事实；布局节点只是阶段 B 根据这些元素重新推导的
  * 几何结果。该模块不读取 layout_decomposition，避免两个阶段共享旧节点。
@@ -10,6 +12,41 @@ import { normalizeUiLayout, positionReferenceId, validateUiInteractionTree, vali
 import { equalNineSliceContracts, isNineSliceStretch, isNineSliceStretchTargetAllowed, requiresNineSliceDecision, validateNineSliceContract, validateNineSliceTargetBounds } from "../../cocos-game-ui-layout/scripts/nine-slice-contract.mjs";
 import { deriveSpriteGeometry } from "../../cocos-game-ui-layout/scripts/sprite-layout-sizing.mjs";
 import { hasSpriteRendering, isBackgroundDisplayNode, isSpriteContainer, validateDisplayNodeRole } from "../../cocos-game-ui-layout/scripts/display-node-role.mjs";
+
+/** 校验真实 UI 节点；浮层本体身份必须绑定实际容器和真实顶层 UI 根。 */
+function validateRelativeWebNodes(input, errors, label, kind) {
+  if (!Array.isArray(input)) return;
+  const synthetic = (node) => node?.is_root_container === true && ["viewport", "safe-area"].includes(node.layout_node_id ?? node.layoutNodeId) && (node.parent_layout_node_id === null || node.parentLayoutNodeId === null);
+  for (const node of input.filter(synthetic)) if (node.ui_layout?.floating_root_kind !== undefined || node.ui_layout?.positioning === "absolute") errors.push(label + " 合成视口根不能声明为浮层本体");
+  const source = input.filter((node) => !synthetic(node));
+  const ids = new Set(source.map((node) => kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId)));
+  const byId = new Map(source.map((node) => [kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId), node]));
+  const regionNodes = new Map();
+  if (kind === "nodes") for (const node of source) { const group = regionNodes.get(node?.region_id) ?? []; group.push(node?.layout_node_id); regionNodes.set(node?.region_id, group); }
+  const canonical = source.map((node) => {
+    const layout = node?.ui_layout ?? node?.uiLayout ?? {};
+    const id = kind === "regions" ? node?.id : kind === "elements" ? node?.element_id : (node?.layout_node_id ?? node?.layoutNodeId);
+    const parentId = kind === "regions" ? node?.parent_id : kind === "elements" ? node?.parent_element_id : (node?.parent_layout_node_id ?? node?.parentLayoutNodeId ?? node?.parent_element_id ?? node?.parentElementId);
+    let reference = kind === "regions" ? node?.reference_id : kind === "elements" ? (layout.position_reference_id ?? node?.position_reference_id ?? node?.reference_id ?? parentId) : (node?.reference_id ?? node?.referenceId ?? layout.position_reference_id ?? layout.positionReferenceId ?? node?.position_reference_id ?? node?.positionReferenceId ?? parentId);
+    if (kind === "nodes" && !ids.has(reference) && !["viewport", "safe-area"].includes(reference)) { const matches = regionNodes.get(reference) ?? []; if (matches.length === 1) reference = matches[0]; }
+    const mode = kind === "regions" ? node?.positioning : Object.hasOwn(layout, "positioning") ? layout.positioning : "relative";
+    const owner = kind === "regions" ? (node ?? {}) : layout;
+    const floatingKind = Object.hasOwn(owner, "floating_root_kind") ? owner.floating_root_kind : null;
+    if (Object.hasOwn(owner, "floating_root_kind") && !["popup", "floating", "toast"].includes(floatingKind)) errors.push(label + "." + id + " floating_root_kind 必须为 popup/floating/toast");
+    if (floatingKind !== null) {
+      if (kind === "regions" && node?.semantic_role !== floatingKind) errors.push(label + "." + id + " 浮层本体类型必须与 semantic_role 一致");
+      if (kind === "regions" && node?.is_container !== true) errors.push(label + "." + id + " 浮层本体必须显式声明实际容器");
+      if (kind !== "regions" && node?.is_container !== true && node?.element_type !== "container") errors.push(label + "." + id + " 浮层本体必须是实际容器，普通叶子不能豁免");
+      const parent = byId.get(parentId);
+      const actualUiRoot = kind === "regions" ? ["ui-root", "screen-ui-root"].includes(parent?.semantic_role) : (parent?.is_container === true || parent?.element_type === "container") && [parent?.layout_role, parent?.role, parent?.semantic_role].some((role) => ["ui-root", "screen-ui-root"].includes(role));
+      if (!["viewport", "safe-area"].includes(parentId) && !actualUiRoot) errors.push(label + "." + id + " 浮层本体必须直接归属稳定根或实际 UI 根");
+    }
+    // 独立浮层本体可以没有锚点；普通节点和浮层内部仍必须提供实际参照。
+    const references = mode === "absolute" && ["popup", "floating", "toast"].includes(floatingKind) && reference === undefined ? [] : [reference];
+    return { id, parentId, references, mode, floatingKind };
+  });
+  errors.push(...validateRelativeLayoutNodes(canonical, { label, roots: ["viewport", "safe-area"] }));
+}
 
 const CONTAINER_ROLES = new Set(["container", "parent", "group", "layout-container", "empty-container"]);
 
@@ -49,7 +86,7 @@ function normalizeElement(element, region, index = 0) {
   const nineSlice = field(element, "nine_slice", "nineSlice");
   const normalizedNineSlice = nineSlice === undefined ? undefined : validateNineSliceContract(nineSlice, `decomposition_elements.${field(element, "element_id", "elementId") ?? index}.nine_slice`);
   if (isNineSliceStretch(normalizedNineSlice) && !isNineSliceStretchTargetAllowed({ element_type: elementType, render_kind: element.render_kind, role, layer: region?.layer, visual_route_element_type: routeElementType })) throw new TypeError("九宫格 stretch 只能用于图片节点或显式 Sprite 底板容器，不能用于纯结构容器");
-  if (routeDecisionRequired && normalizedNineSlice === undefined) throw new TypeError(`decomposition_elements.${field(element, "element_id", "elementId") ?? index} 属于固定生产 UI 皮肤，V2 必须确认 nine_slice 或 not-applicable`);
+  if (routeDecisionRequired && normalizedNineSlice === undefined) throw new TypeError(`decomposition_elements.${field(element, "element_id", "elementId") ?? index} 属于固定生产 UI 皮肤，V3 必须确认 nine_slice 或 not-applicable`);
   return { element_id: field(element, "element_id", "elementId") ?? `${region.id}-element-${index + 1}`, element_type: elementType, ...(element.render_kind !== undefined ? { render_kind: element.render_kind } : {}), role, bounds: validBounds(bounds) ? copyBounds(bounds) : bounds, scene_id: region.scene_id, state_id: region.state_id, region_id: region.id, component_id: componentId, placement_id: placementId, ...(nonEmptyString(parentElementId(element)) ? { parent_element_id: parentElementId(element) } : {}), ...(semanticGrouping !== undefined ? { semantic_grouping: normalizeSemanticGrouping(semanticGrouping) } : {}), ...(uiLayout !== undefined ? { ui_layout: normalizeUiLayout(uiLayout) } : {}), ...(normalizedNineSlice !== undefined ? { nine_slice: normalizedNineSlice } : {}), ...(routeDecisionRequired ? { nine_slice_decision_required: true } : {}), ...(typeof region?.owner_type === "string" ? { owner_type: region.owner_type } : typeof region?.ownerType === "string" ? { owner_type: region.ownerType } : {}), ...(typeof region?.layer === "string" ? { region_layer: region.layer } : {}), ...(nonEmptyString(routeElementType) ? { visual_route_element_type: routeElementType } : {}), empty_container: field(element, "empty_container", "emptyContainer") === true };
 }
 
@@ -115,11 +152,11 @@ export function validateDecompositionElements(elements, regions = [], canvas = n
     if (regionOwnerType !== undefined && element.owner_type !== regionOwnerType) errors.push(`${itemLabel}.owner_type 必须继承所属区域的权威归属，不得遗漏或覆盖`);
     if (regionLayer !== undefined && element.region_layer !== regionLayer) errors.push(`${itemLabel}.region_layer 必须继承所属区域的权威 layer，不得遗漏或覆盖`);
     if (regionRouteType !== undefined && element.visual_route_element_type !== regionRouteType) errors.push(`${itemLabel}.visual_route_element_type 必须继承所属区域的权威视觉路线，不得遗漏或覆盖`);
-    // V2 原始区域是权威来源；布局重算缺少 region 时才依赖元素已冻结的派生上下文。
+    // V3 原始区域是权威来源；布局重算缺少 region 时才依赖元素已冻结的派生上下文。
     validateDisplayNodeRole({ ...element, owner_type: regionOwnerType ?? element.owner_type, region_layer: regionLayer ?? element.region_layer }, errors, itemLabel);
     const roleDecisionRequired = requiresNineSliceDecision({ owner_type: regionOwnerType ?? element.owner_type, element_type: element.element_type, render_kind: element.render_kind, role: element.role, region_layer: regionLayer ?? element.region_layer, visual_route_element_type: regionRouteType || element.visual_route_element_type });
     if (element.nine_slice_decision_required !== undefined && element.nine_slice_decision_required !== true) errors.push(`${itemLabel}.nine_slice_decision_required 是派生必评估标记，不接受 false 覆盖`);
-    if (roleDecisionRequired && element.nine_slice_decision_required !== true) errors.push(`${itemLabel}.nine_slice_decision_required 缺少 V2 派生必评估标记`);
+    if (roleDecisionRequired && element.nine_slice_decision_required !== true) errors.push(`${itemLabel}.nine_slice_decision_required 缺少 V3 派生必评估标记`);
     if ((roleDecisionRequired || element.nine_slice_decision_required === true) && element.nine_slice === undefined) errors.push(`${itemLabel} 固定生产 UI 皮肤必须冻结 nine_slice 或 not-applicable`);
     if (element.nine_slice !== undefined) {
       try {
@@ -156,7 +193,7 @@ export function validateDecompositionElements(elements, regions = [], canvas = n
     if (backgrounds.has(element.parent_element_id)) errors.push(`${label} 元素 ${element.element_id} 不得相对背景 ${element.parent_element_id} 布局，请改用视口、安全区或功能容器`);
     const referenceId = positionReferenceId(element, element.parent_element_id);
     if (backgrounds.has(referenceId)) errors.push(`${label} 元素 ${element.element_id}.ui_layout.position_reference_id 不得引用背景 ${referenceId}`);
-    // 背景的叶子职责与是否已有子元素无关，空容器同样不得冻结进入 V2。
+    // 背景的叶子职责与是否已有子元素无关，空容器同样不得冻结进入 V3。
     if (backgrounds.has(element.element_id) && (explicitlyContainer(element) || element.empty_container === true)) errors.push(`${label} 背景 ${element.element_id} 不能声明为容器（含空容器）`);
     if (backgrounds.has(element.element_id) && element.parent_element_id !== "viewport") errors.push(`${label} 背景 ${element.element_id} 必须独立归属 viewport`);
     if (isNineSliceStretch(element.nine_slice) && elements.some((child) => child?.parent_element_id === element.element_id) && !isSpriteContainer(element)) {
@@ -174,6 +211,7 @@ export function validateDecompositionElements(elements, regions = [], canvas = n
   }
   validateSemanticGrouping(elements, { canvas }, errors, label);
   validateUiInteractionTree(elements, errors, label);
+  validateRelativeWebNodes(elements, errors, label, "elements");
   const expectedRegionIds = [...regionById.keys()].filter(nonEmptyString).sort(); const actualRegionIds = [...regionIds].sort(); if (JSON.stringify(actualRegionIds) !== JSON.stringify(expectedRegionIds)) errors.push(`${label} 未完整覆盖当前 scene/state 区域`);
   return elementById;
 }

@@ -1,4 +1,8 @@
 import path from 'node:path';
+import { routeRelativeLayout } from './relative-layout-routing.mjs';
+import { routeUnityFeedback } from './shared-unity-principles.mjs';
+import { routeOrchestrationImplementation } from './shared-orchestration-references.mjs';
+import { routeNativeControlReferences } from './shared-domain-references.mjs';
 
 const PUBLIC_EXECUTION_PATH = 'skills/app-creator-workflow/references/professional-execution.md';
 const PREFIXES = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -274,6 +278,11 @@ export function applyProfessionalRouting(text, { stack, sourcePath, destination 
   let output = text;
   const transforms = [];
   let publicExecutionRef;
+  const prefix = PREFIXES[stack];
+  if (prefix && String(sourcePath ?? '').replaceAll('\\', '/') === `skills/${prefix}-game-orchestrator/references/game-implementation.md`) {
+    output = routeOrchestrationImplementation(output, { destination });
+    transforms.push('route-orchestration-ownership-and-atomic-rules');
+  }
   if (role) {
     const href = publicHref(destination);
     publicExecutionRef = PUBLIC_EXECUTION_PATH;
@@ -282,6 +291,21 @@ export function applyProfessionalRouting(text, { stack, sourcePath, destination 
       : routeReference(output, role, href, destination);
     if (output !== text) transforms.push(`route-${role}-to-public-execution`);
   }
+
+  // Unity 保留时间源与对象池细节，重复/叠加和打断的通用原则直接引用现有公共真源。
+  if (stack === 'unity' && String(sourcePath ?? '').replaceAll('\\', '/') === 'unity-game-juice/SKILL.md') {
+    output = routeUnityFeedback(output, { destination });
+    transforms.push('route-unity-feedback-to-public-lifecycle');
+  }
+
+  // 原生领域适配最后执行，避免提前移除旧协议路由用于确认源身份的边界。
+  const nativeControl = routeNativeControlReferences(output, { stack, sourcePath, destination });
+  output = nativeControl.text;
+  transforms.push(...nativeControl.transforms);
+
+  const relativeUi = routeRelativeLayout(output, { stack, sourcePath, destination });
+  if (relativeUi !== output) transforms.push('route-ui-relative-layout-to-public-policy');
+  output = relativeUi;
 
   // 公共抽取对所有 Markdown 都会运行，因此精确折叠其占位，不受专业角色白名单限制。
   const isMarkdown = [sourcePath, destination]

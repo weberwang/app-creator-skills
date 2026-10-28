@@ -18,8 +18,8 @@ import { validateResponsiveContract, validateResponsiveEvidenceManifest }
   from './.agents/skills/cocos-domain-contracts/scripts/responsive-viewport-contract.mjs';
 
 const errors = [
-  ...validateResponsiveContract(contract, { stage: 'V4' }),
-  ...validateResponsiveEvidenceManifest(observations, contract, { stage: 'V4', requiredUnits }),
+  ...validateResponsiveContract(contract, { stage: 'V5' }),
+  ...validateResponsiveEvidenceManifest(observations, contract, { stage: 'V5', requiredUnits }),
 ];
 if (errors.length) throw new Error(errors.join('\n'));
 ```
@@ -29,7 +29,7 @@ if (errors.length) throw new Error(errors.join('\n'));
 ## 生产工具
 
 - 文档模板保留于 [project_doc_templates.mjs](../../cocos-game-orchestrator/scripts/project_doc_templates.mjs)，初始化器 [initialize_project_docs.mjs](../../cocos-game-orchestrator/scripts/initialize_project_docs.mjs) 接受当前公共工作项和项目相对路径；实际写入前必须通过范围与门禁检查。
-- [validate_visual_manifest.mjs](../../cocos-game-asset-integration/scripts/validate_visual_manifest.mjs) 保留 V2/V3/V4 独立阶段、文件核实及视觉路线校验；按该技能给出的参数使用，不能以文件存在替代正式 UUID/SpriteFrame 回读。
+- [validate_visual_manifest.mjs](../../cocos-game-asset-integration/scripts/validate_visual_manifest.mjs) 在 V3/V4/V5 分别校验拆解、资源与运行文件及视觉路线；按该技能给出的参数使用，不能以文件存在替代正式 UUID/SpriteFrame 回读。
 - 帧动画、Spine、图片处理及布局工具见专业索引，保持原 CLI 输入和对应模板。
 
 ## 公共证据接线

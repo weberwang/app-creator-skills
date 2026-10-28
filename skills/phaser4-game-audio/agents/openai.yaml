@@ -1,4 +1,0 @@
-interface:
-  display_name: "Phaser 4 音频设计"
-  short_description: "设计移动端音频体验并管理资源版权格式性能和接入验证流程"
-  default_prompt: "在 $app-workflow-control 批准范围内使用 $app-audio 设计、审查并接入音频。"

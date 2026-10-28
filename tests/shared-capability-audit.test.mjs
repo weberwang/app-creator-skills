@@ -99,6 +99,59 @@ test('公共规范必须保留实际源规则，概述不能替代抽取的具�
   assert.ok(inspect(input).errors.some((message) => message.includes('抽取段落不属于实际源技能')));
 });
 
+test('含内部空行的完整示例必须逐字保留，不能拆成若干片段冒充完整来源', (t) => {
+  const input = fixture(t);
+  const example = '```markdown\n# 代码内标题\n\n登记所有来源。\n\n记录实际结果。\n```';
+  const implementation = 'skills/app-domain-toolkit/references/complete-example.md';
+  put(join(input.root, implementation), `# 完整示例\n\n${example}\n`);
+  const sources = input.fileRows.map((row) => {
+    row.sourcePath = `skills/${row.stack}-example/references/guide.md`;
+    row.destination = row.sourcePath;
+    delete row.sharedImplementationRef;
+    row.sharedReferences = [implementation];
+    const original = `# 原生资料\n\n${example}\n`;
+    const start = original.indexOf(example);
+    row.sourceSha256 = hash(original);
+    put(join(input.sourceRoot, `${row.stack}-skills`, row.sourcePath), original);
+    put(join(input.root, row.destination), '读取[公共示例](../../app-domain-toolkit/references/complete-example.md)。\n');
+    return { stack: row.stack, sourcePath: row.sourcePath, sourceSha256: row.sourceSha256,
+      adapterDestination: row.destination, sections: [{ sourceHash: hash(example), canonicalHash: hash(example),
+        sourceRange: { start, end: start + example.length }, heading: '完整示例' }] };
+  });
+  input.catalog.generatedFiles = [{ path: implementation }];
+  input.catalog.sharedCapabilities = [{ id: 'complete-example', kind: 'workflow', implementation,
+    stacks: ['cocos', 'phaser'], sources, dependencies: [] }];
+  assert.deepEqual(inspect(input).errors, []);
+  put(join(input.root, input.fileRows[0].destination), `读取[公共示例](../../app-domain-toolkit/references/complete-example.md)。\n\n${example}\n`);
+  assert.ok(inspect(input).errors.some((message) => message.includes('仍在专业入口重复维护')));
+  put(join(input.root, implementation), `# 完整示例\n\n${example.replace('登记所有来源。', '仅描述大意。')}\n`);
+  assert.ok(inspect(input).errors.some((message) => message.includes('公共规范遗漏具体规则段落')));
+});
+
+test('原生配套资料可以保留真实链接，不被误判为复制执行正文', (t) => {
+  const input = fixture(t);
+  const link = '- [SDK 官方资料](https://example.com/sdk)';
+  const canonical = '“SDK 官方资料”（见本栈配套资料）';
+  const implementation = 'skills/app-domain-toolkit/references/sdk.md';
+  put(join(input.root, implementation), `# 参考入口\n\n${canonical}\n`);
+  const sources = input.fileRows.map((row) => {
+    row.sourcePath = `skills/${row.stack}-sdk/references/guide.md`;
+    row.destination = row.sourcePath;
+    delete row.sharedImplementationRef;
+    row.sharedReferences = [implementation];
+    const original = `# 官方资料\n\n${link}\n`;
+    row.sourceSha256 = hash(original);
+    put(join(input.sourceRoot, `${row.stack}-skills`, row.sourcePath), original);
+    put(join(input.root, row.destination), `读取[公共规范](../../app-domain-toolkit/references/sdk.md)。\n\n## 本栈配套资料\n\n${link}\n`);
+    return { stack: row.stack, sourcePath: row.sourcePath, sourceSha256: row.sourceSha256,
+      adapterDestination: row.destination, sections: [{ sourceHash: hash(link), canonicalHash: hash(canonical), heading: '参考入口' }] };
+  });
+  input.catalog.generatedFiles = [{ path: implementation }];
+  input.catalog.sharedCapabilities = [{ id: 'sdk-reference', kind: 'workflow', implementation,
+    stacks: ['cocos', 'phaser'], sources, dependencies: [] }];
+  assert.deepEqual(inspect(input).errors, []);
+});
+
 test('公共规范引用必须位于对应来源章节，不能由同手册其他模式代替', (t) => {
   const input = fixture(t);
   const commonRule = '先记录来源、目标与失败条件，再在独立候选目录处理；失败时保留原文件和完整诊断。';

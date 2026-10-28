@@ -40,7 +40,7 @@ const EXPECTED = {
   layoutDecisionId: "layout-decision-1",
 };
 
-test("V2 布局源返回同一份业务节点与显式根节点", () => {
+test("V3 布局源返回同一份业务节点与显式根节点", () => {
   const document = layoutDocument();
   const resolved = resolveV2LayoutSource(SOURCE, { layoutSourceDocuments: new Map([[SOURCE.nodes_file, document]]) }, EXPECTED);
 
