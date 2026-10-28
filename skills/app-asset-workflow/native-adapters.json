@@ -56,6 +56,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "ui-copy-principles",
+      "path": "../app-domain-toolkit/references/ui-copy-principles.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+    },
+    {
       "id": "asset-production",
       "path": "../app-domain-toolkit/references/asset-production.md",
       "stacks": [

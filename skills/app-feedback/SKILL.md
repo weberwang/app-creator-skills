@@ -9,6 +9,8 @@ description: "统一设计游戏与应用的交互汁水和动态反馈，让输
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
+涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再设计反馈中的动作与状态表达。
+
 ## 输入
 
 - 交互流程和事件列表；目标端及无障碍要求；现有动画/音效/震动资源；输入频率、性能和显示预算。

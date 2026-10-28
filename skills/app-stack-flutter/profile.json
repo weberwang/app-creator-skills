@@ -79,7 +79,9 @@
     "flutter-tech-design",
     "flutter-ux-ui-quality"
   ],
-  "sharedCapabilities": [],
+  "sharedCapabilities": [
+    "ui-copy-principles"
+  ],
   "capabilitySkills": [
     "app-product-planning",
     "app-architecture",

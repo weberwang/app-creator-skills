@@ -9,6 +9,8 @@ description: "在真实生产骨架上制作低保真Flutter代码草图，校�
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
+涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再组织草图中的真实内容。
+
 ## 输入
 
 - 接受的用户流程和页面目标；Flutter工程结构与设计令牌；真实文案/样例数据；需要验证的布局疑问。

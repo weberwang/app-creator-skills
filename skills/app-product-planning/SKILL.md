@@ -9,6 +9,8 @@ description: "为新游戏或应用制定产品范围，或为既有 GDD 与功�
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
+涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
+
 ## 输入
 
 - 用户目标与任务范围；现有GDD、设计基准、实现状态和已作出的产品决定；证据或明确标出的假设；平台和团队约束。只有任务包含市场验证时再提供目标人群假设、渠道和实验限制。

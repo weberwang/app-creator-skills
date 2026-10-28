@@ -81,6 +81,7 @@
     "threejs-game-ui-layout"
   ],
   "sharedCapabilities": [
+    "ui-copy-principles",
     "visual-atomic-contract",
     "visual-imagegen-format",
     "visual-human-review-contract",

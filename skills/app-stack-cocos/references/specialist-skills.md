@@ -23,6 +23,8 @@
 | 游戏广告接入 | [app-ad-integration](../../app-ad-integration/SKILL.md) |
 | 有设计约束的素材生产 | [app-asset-workflow](../../app-asset-workflow/SKILL.md) |
 
+界面文案统一读取[通用文案原则](../../app-domain-toolkit/references/ui-copy-principles.md)，本栈资料仅补充原生实现与流程差异。
+
 ## 原生适配模式
 
 | 原专业能力 | 公共入口 | 完整原生规范 |

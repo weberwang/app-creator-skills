@@ -7,10 +7,6 @@
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-game-copy.md#游戏内文案)。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-game-copy.md#表达选择)。
 
-- 资源、状态与交互对象必须对应正确；按钮文字描述玩家动作，结果反馈描述已发生的状态，避免把动作和结果混为一谈。
-- 同一表达在 HUD、弹窗、Toast 和奖励浮字中保持一致；只有显示状态、数据或语气确有区别时才采用不同文案。
-- 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-game-copy.md#表达选择)。
-
 Unity 按项目实际可用的无障碍组件或平台接入；不得声称未在当前工程验证的默认行为。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-game-copy.md#表达选择)。

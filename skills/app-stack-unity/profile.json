@@ -65,6 +65,7 @@
     "unity-game-3d-texturing"
   ],
   "sharedCapabilities": [
+    "ui-copy-principles",
     "audio",
     "balance",
     "modeling-production",

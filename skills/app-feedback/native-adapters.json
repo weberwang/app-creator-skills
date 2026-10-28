@@ -50,6 +50,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "ui-copy-principles",
+      "path": "../app-domain-toolkit/references/ui-copy-principles.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+    },
+    {
       "id": "juice",
       "path": "../app-domain-toolkit/references/juice.md",
       "stacks": [
