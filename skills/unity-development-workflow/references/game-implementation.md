@@ -13,6 +13,8 @@
 
 ## Unity 完成事实
 
+普通增量、复用素材和程序生成同样遵循[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)：新增的世界对象、UI 与反馈须交付编辑器可查看和调整的正式结构。Scene/Prefab 使用序列化的 GameObject、uGUI/TMP 组件与资源绑定；UI Toolkit 保留 UXML/USS、PanelSettings 和 UIDocument 宿主绑定。动态对象继续按运行需要实例化，但需交付同源可编辑模板或生成配置及代表性编辑态预览，不固化用户数据或运行实例；预览不得触发真实 SDK、网络或业务操作。
+
 玩家可见的 uGUI/TMP、UI Toolkit 文本及奖励反馈按[游戏内文案](./game-copy.md)消费当前确认的可见表达、状态、本地化键和真实数据，V4 资源预览与 V5 正式组合/运行保持同一来源。图标、数字与符号优先，必要语义完整；不得把 GDD/brief 的规则说明、设计理由或验收字段直接绑定到画面。
 
 场景和显示层沿用 V3 的[文本与色彩拆分路线](./visual-decomposition-routes.md)，按独立编号接入系统文本、原生填充与图片部件；原功能组件统一管理热区、显隐、本地化、进度和状态。实际 renderer 必须保留已确认效果，不以默认字体或纯色近似静默替换，文字、填充与装饰共用实际布局和裁切边界。

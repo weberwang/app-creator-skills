@@ -8,6 +8,10 @@ V5 在正式 Cocos Scene 中完成视觉还原、布局校准和运行验收，�
 
 ## 正式场景实现
 
+普通增量新增的显示元素、复用素材、原生组件和代码生成内容也遵循[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)，不限定于 V3 已有节点或 `effect-image`：正式 Scene/Prefab 中保留可查看、调整的真实 Node/Component 结构和 AssetDB 资源 UUID 绑定。动态列表、弹窗、池化与特效可继续运行时生成，但须提供与运行共用的可编辑模板或生成配置及代表性编辑态预览；预览不固化用户数据，不触发真实 SDK、网络或业务操作。
+
+Creator 按现有 MCP/AssetDB 流程保存并重新读取 Scene/Prefab 的节点、组件和资源绑定，不手写序列化文件；缺少编辑器、保存或回读时标记未验证。截图供用户人工确认显示效果，构建和截图本身不能证明编辑器资产已持久化或视觉通过。
+
 1. 将 V3 的节点与布局关系映射到正式 Cocos Scene 的 Node、Component、Prefab、显示层和布局配置。Creator 编辑器操作经[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)执行；不手写 `.scene`、`.prefab` 或 `.meta` 绑定。保留结构化场景，不用整屏截图、隐藏覆盖层或绝对叠层伪造目标画面。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-alignment-authoring.md#正式场景实现)。
 

@@ -2,6 +2,8 @@
 
 ## 适用范围
 
+普通增量新增的 UI、复用组件和代码生成显示元素同样按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)交付：uGUI/TMP 的序列化 Scene/Prefab 组件，或 UXML/USS、PanelSettings 和 UIDocument 宿主绑定须可在编辑器查看与调整。动态列表、弹窗和池化内容保留运行实例化，并提供与运行共用的可编辑模板或生成配置及代表性编辑态预览；不保存用户数据或用另一套预览布局替代真实实现。
+
 在 V1 定义屏幕 UI 结构、V3 冻结拆解与布局合同、V4 验收正式资源、V5 实现并校准正式组合时使用。适用于 uGUI 的 Canvas/RectTransform 和 UI Toolkit 的 UIDocument/UXML；World Space Canvas 按世界尺寸、相机距离和像素密度另行设计。
 
 当前游戏运行时 UI 采用 uGUI + TextMeshPro，以 Canvas/RectTransform 和 Prefab 实现；新增编辑器工具采用 UI Toolkit。以下布局语义与机器合同仍按实际 UI 系统读取，运行时实施按已确定的 uGUI 路线执行。

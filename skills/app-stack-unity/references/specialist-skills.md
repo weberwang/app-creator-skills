@@ -27,6 +27,8 @@
 
 第三方 SDK 统一遵循[独立管理与初始化规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)，各 SDK 的实现文件与装配入口按本栈路径映射。
 
+新增显示内容统一遵循[显示元素的编辑器还原](../../app-domain-toolkit/references/editor-display-authoring.md)，本栈资料补充原生保存与回读方式。
+
 ## 原生适配模式
 
 | 原专业能力 | 公共入口 | 完整原生规范 |

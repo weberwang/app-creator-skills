@@ -55,6 +55,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "editor-display-authoring",
+      "path": "../app-domain-toolkit/references/editor-display-authoring.md",
+      "stacks": ["unity", "cocos"]
+    },
+    {
       "id": "frame-animation",
       "path": "../app-domain-toolkit/references/frame-animation.md",
       "stacks": [

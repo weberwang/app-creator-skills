@@ -20,6 +20,8 @@
 
 ## 路线选择规则
 
+采用 `runtime-program`、粒子或 Shader 路线新增显示元素时，仍按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)交付与运行共用的可编辑模板或生成配置及代表性编辑态预览；运行时可继续动态生成实例。编辑器模板与配置不因此记为生成式位图 asset，也不改变视觉清单的既有字段和路线合同。
+
 ### effect-image 全元素视觉路线
 
 `effect-image` 的忠实还原以冻结参考中的可观察视觉事实为准，由 Cocos 装配、布局、交互和状态行为；它不把普通游戏 UI 一律图片化，也不改变非效果图工作流的默认路线。每个 `scene_reconstruction_contract.coverage_regions[]` 必须填写唯一的 `visual_route_analysis`，在 V2/V3/V4+ 逐阶段回对元素类别、观察到的材质/轮廓/光影/装饰特征、是否具有明显美术特征、动态要求、原生适用性证据、复用适用性证据、最终 owner、`implementation_plan.mode`、生产方式和交付类型。路线结论必须能从冻结图中的可观察事实和 Cocos 实际支持的绘制能力复核；“按钮”“面板”等语义名称，以及单独的静态/动态标记，均不能决定路线。

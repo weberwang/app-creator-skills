@@ -90,6 +90,8 @@ V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 ## V5 正式实现与运行验收
 
+新增显示元素，包括普通增量、复用素材、原生组件与程序生成内容，均按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)保存并回读其正式结构、资源和绑定；动态内容使用同源可编辑模板或生成配置及代表性编辑态预览。编辑态预览不得触发真实 SDK、网络或业务操作；缺少编辑器、保存或回读证据时标记未验证，用户人工确认显示效果。
+
 单写者完成正式 Scene/Prefab/UI/玩法接入，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用。随后在编译、导入和域重载稳定后运行 EditMode/PlayMode、Game View 多分辨率、交互轨迹、性能和资源消费验证；真实记录 Screen/GameView/backbuffer 或 RenderTexture、Camera pixelRect/orthographicSize/projection、CanvasScaler 或 PanelSettings、Screen.safeArea、方向/resize、EventSystem/InputSystem 命中、截图和状态轨迹。截图交由用户检查显示效果；除非用户明确要求自动视觉验证，代理不分析截图或判定视觉通过。
 
 modal、popup、drawer、toast 等显示层在自己的 `DISPLAY_LAYER` Work Item 中验证打开、交互、关闭，以及焦点、输入、时间缩放和底层状态恢复；`hostSceneId` 只作上下文，显示层不阻断场景 V5。研发期不自动启动 Standalone/Player 或真机；设备证据仅在独立发布 Work Item 获明确授权后产生。

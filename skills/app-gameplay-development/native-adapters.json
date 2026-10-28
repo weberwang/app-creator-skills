@@ -40,6 +40,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "editor-display-authoring",
+      "path": "../app-domain-toolkit/references/editor-display-authoring.md",
+      "stacks": ["unity", "cocos"]
+    },
+    {
       "id": "gameplay-implementation",
       "path": "../app-domain-toolkit/references/gameplay-implementation.md",
       "stacks": [

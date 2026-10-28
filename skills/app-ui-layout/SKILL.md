@@ -24,6 +24,8 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 5. 在目标运行环境测量真实可用视口并核对触控/鼠标/键盘导航，修复每种布局约束的源头而非对单张截图加偏移。
 6. 交付布局规则、断点/内容矩阵、导航顺序、运行验证矩阵和需用户人工判断的视觉点。
 
+Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
+
 ## 关键边界
 
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。

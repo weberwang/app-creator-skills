@@ -103,7 +103,7 @@
 
 - 以目标项目实际安装的 Cocos Creator 3.x 版本为准，先读取项目 `package.json`、Creator 编辑器版本、`settings/` 和 `profiles/`。目录约定见[游戏项目目录规范](../../cocos-game-architecture/references/project-structure.md)；其中规定普通 UUID 引用资源与 `resources.load/loadDir` 动态资源的存放边界，按 Creator 项目实际结构确定工程入口和依赖。
 - Creator 项目运行时资产通常位于 `assets/`：场景、预制体、脚本、纹理、音频和数据配置由项目约定分层。Creator 导入的资源由 AssetDB 管理，并通过 `.meta` 中的 UUID 建立稳定引用；引用前核验导入结果和所需子资源。不要手工伪造 UUID 或只凭文件路径存在判断资源已就绪。
-- 运行时结构由 `Scene`、`Node`、`Component`、`Prefab` 和资源引用组成。职责放在组件和模块中，场景保留清晰节点树；复用时使用预制体或共享服务。
+- 运行时结构由 `Scene`、`Node`、`Component`、`Prefab` 和资源引用组成。职责放在组件和模块中，场景保留清晰节点树；新增显示元素及动态模板按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)交付并保存回读。
 - [公共架构模块契约](../../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)Scene 之间通过已声明的服务或数据契约协作，不直接依赖其他 Scene 的私有节点和状态。
 - 实际采用的第三方 SDK 初始化统一遵循[SDK 统一初始化](../../cocos-game-architecture/references/sdk-initialization.md)：唯一应用装配入口调用 `assets/scripts/platform/initialize-sdks.ts` 独立投递任务；启动场景/最小 Boot 组件只做应用装配，不承载场景玩法初始化，也不等待 SDK 完成。Creator 引擎和 AssetDB 保持自身生命周期，不放进第三方 SDK 初始化模块。
 - 资源候选、确认成果、Creator 正式资源、审阅证据和机器记录按[产物存放与证据边界](../../cocos-game-architecture/references/artifact-storage.md)归档。新建或调整发布构建、准备发布候选时按[生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核对 Creator 版本对应的有效配置与最终包。

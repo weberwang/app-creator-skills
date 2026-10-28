@@ -56,6 +56,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "editor-display-authoring",
+      "path": "../app-domain-toolkit/references/editor-display-authoring.md",
+      "stacks": ["unity", "cocos"]
+    },
+    {
       "id": "ui-copy-principles",
       "path": "../app-domain-toolkit/references/ui-copy-principles.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]

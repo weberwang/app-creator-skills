@@ -65,6 +65,7 @@
     "unity-game-3d-texturing"
   ],
   "sharedCapabilities": [
+    "editor-display-authoring",
     "reference-architecture-sdk-initialization",
     "ui-copy-principles",
     "audio",

@@ -128,7 +128,7 @@
 <a id="mode-unity-gameplay-development--实现与交接"></a>
 #### 实现与交接
 
-Editor/Scene/Prefab 操作交给 `unity:unity-cli`；未指定 UI 技术时先用 `unity:ui`；NavMesh、3D 碰撞、多人和 LiveOps 分别路由到 `unity:initialize-ai-navigation`、`unity:physics-3d-collision`、`unity:setup-multiplayer-services`、`unity:build-live-game`。本角色保留玩法规则、状态所有权、接口和场景增量，不复制插件专项实现指南。
+Editor/Scene/Prefab 操作交给 `unity:unity-cli`；新增显示元素和动态模板按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)保存回读。未指定 UI 技术时先用 `unity:ui`；NavMesh、3D 碰撞、多人和 LiveOps 分别路由到 `unity:initialize-ai-navigation`、`unity:physics-3d-collision`、`unity:setup-multiplayer-services`、`unity:build-live-game`。本角色保留玩法规则、状态所有权、接口和场景增量，不复制插件专项实现指南。
 
 按[公共资源登记与使用](../../unity-development-workflow/references/shared-asset-usage.md)从总表解析资源身份与实际引用，在当前场景/显示层合同维护消费节点和变更影响；只控制本地实例、文案和动态状态，不修改共享源或为每个消费者复制公共资产。
 
@@ -777,7 +777,7 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 2. **V2 对象定义**：为新建且包含可见画面的 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，确认后作为 V3–V5 的持续视觉目标；独立生产不等于重新设计，后续生成图不得静默替代 V2，具体见[持续目标规则](../../unity-development-workflow/references/visual-workflow.md#v2-场景定义)。同时冻结主题、受众、核心循环、体验目标和观看情境，并与 `$app-feedback` 定义关键反馈意图。按需提交草图或灰盒，并记录 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图不注册为正式资源。
 3. **V3 拆解确认**：先按[文本与色彩拆分路线](../../unity-development-workflow/references/visual-decomposition-routes.md)覆盖 V2 的实际可见特征及空间结构，逐项绑定稳定编号、生产归属、消费节点和组件×状态，不能仅列功能名称；系统文本、原生绘制及原子资源内含特征同样登记。按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。适用的九宫格资源冻结源图尺寸、Unity border 与内容内边距；动作资产冻结独立时间轴、关键事件、资源生产者与消费接口。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。
 4. **V4 资源生产与验收**：按编号独立生产、创作或复用正式资源，在 Unity 中验证 TextureImporter、SpriteAtlas、字体、材质、模型、VFX、GUID 和 Addressables，并检查资源在宿主场景中的组合预览。九宫格导入后回读实际 Border 并检查组件呈现；V4 可生产并验证资产自身的资源级 Prefab，不负责正式宿主 Scene/场景装配 Prefab/UI 实现或布局校准。资源与 `.meta` 同属一个所有权单元。
-5. **V5 正式接入与校准**：由单写者按冻结结构实现并拼装 Scene、Prefab 或 UXML/USS，校准正式组合，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
+5. **V5 正式接入与校准**：由单写者按冻结结构实现并拼装 Scene、Prefab 或 UXML/USS，新增显示元素及动态模板依[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)保存回读；校准正式组合，删除灰盒、占位 Mesh/Sprite/Material、临时对象和残留引用；在编译/域重载稳定后提交 Game View、EditMode/PlayMode、交互、布局、Console 与性能证据。动态美术体验按[美术质量合同](../../unity-development-workflow/references/art-quality-contract.md)覆盖适用情境，截图和真实片段由用户人工检查确认。
 
 <a id="mode-unity-game-visual-assets--生产规则"></a>
 #### 生产规则
