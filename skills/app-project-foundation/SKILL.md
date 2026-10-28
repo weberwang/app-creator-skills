@@ -24,6 +24,7 @@ description: "为Three.js或Flutter新建最小运行基线，或在既有工程
 
 ## 关键边界
 
+- 涉及第三方 SDK 时读取[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)，再装配当前技术栈的各 SDK 管理模块。
 - Three.js与Flutter采用不同脚手架、构建与平台设置；只加载已确认栈的原生适配。Three.js既有固定步长、输入、资源泄漏或后台恢复问题按迭代排错处理，不触发基础工程重建。
 - 安装依赖可能触发网络与锁文件变化；依照任务范围记录，不额外升级全量依赖。
 

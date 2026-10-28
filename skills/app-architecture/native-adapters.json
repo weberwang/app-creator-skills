@@ -79,9 +79,11 @@
       "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",
       "stacks": [
         "cocos",
-        "phaser"
-      ],
-      "onDemand": true
+        "phaser",
+        "threejs",
+        "unity",
+        "flutter"
+      ]
     }
   ]
 }

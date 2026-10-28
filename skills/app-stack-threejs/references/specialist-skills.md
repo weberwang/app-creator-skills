@@ -27,6 +27,8 @@
 
 界面文案统一读取[通用文案原则](../../app-domain-toolkit/references/ui-copy-principles.md)，本栈资料仅补充原生实现与流程差异。
 
+第三方 SDK 统一遵循[独立管理与初始化规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)，各 SDK 的实现文件与装配入口按本栈路径映射。
+
 ## 原生适配模式
 
 | 原专业能力 | 公共入口 | 完整原生规范 |

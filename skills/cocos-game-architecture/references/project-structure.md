@@ -12,7 +12,7 @@ project/
 │   ├── scenes/                   # Scene 资产
 │   ├── prefabs/                  # 可复用 Prefab
 │   ├── scripts/                  # Component 与领域脚本
-│   │   ├── platform/             # 平台适配；initialize-sdks.ts 统一编排第三方 SDK
+│   │   ├── platform/             # 平台适配；initialize-sdks.ts 编排，sdks/ 按 SDK 分文件管理
 │   │   ├── scenes/<scene-id>/     # 场景功能聚合与场景专属逻辑
 │   │   ├── display-layers/<id>/   # 独立弹窗等显示层逻辑
 │   │   └── shared/               # 稳定共享的运行代码（按需）
@@ -58,7 +58,7 @@ Creator 项目实际还可能包含 `library/`、`temp/`、`local/`、`build/` �
 - modal/popup 等瞬态显示层按需进入 `assets/scripts/display-layers/<id>/`，与宿主 Scene 的私有 `ui/` 独立；宿主通过公开接口和上下文协作。共享实现进入 `assets/scripts/shared/` 仅限至少两个已确认场景稳定复用的能力，或运行启动必需的能力；模块不得反向依赖 Scene/显示层。
 - 可复用 UI 或玩法对象优先形成职责明确的 Prefab；Prefab 与场景引用仍以 Creator 资源数据库中确认的 UUID 为准。
 - `extensions/`、`native/` 仅在确有编辑器扩展、构建扩展或原生插件时启用。按项目 Creator 版本记录宿主工程、平台权限与插件构建边界。
-- 第三方 SDK 唯一初始化编排位于 `assets/scripts/platform/initialize-sdks.ts`，由唯一应用装配/最小 Boot 启动点调用；Scene、Component、构造函数和平台适配器不另行初始化 SDK。编辑器/引擎及 AssetDB 生命周期不迁入该文件，细则见[SDK 统一初始化](./sdk-initialization.md)。
+- 唯一应用装配/最小 Boot 启动点调用 `assets/scripts/platform/initialize-sdks.ts`；每个 SDK 的实际初始化与状态由 `assets/scripts/platform/sdks/<sdk>-sdk.ts` 分别管理。Scene、Component、构造函数和平台适配器不另行初始化 SDK。编辑器/引擎及 AssetDB 生命周期不迁入该文件，细则见[SDK 统一初始化](./sdk-initialization.md)。
 - 测试脚本、服务启动配置和生成资源不混入 Creator 运行时 `assets/`，除非项目明确需要将其作为游戏资源。
 
 ## 产物与生产构建

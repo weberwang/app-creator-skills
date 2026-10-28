@@ -10,6 +10,8 @@
 
 ## 状态与页面路由
 
+第三方 SDK 按[独立管理与初始化规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)接入；独立文件放在实际拥有该能力的 feature，确属跨功能基础能力时可使用 `lib/core/integrations/<sdk>/<sdk>_manager.dart`。应用装配入口通过既有依赖注入方式调用，不把具体 SDK 实现放进 `main.dart` 或页面 Widget。
+
 一项用户任务只选一个实际状态所有者，说明一次状态更新怎样触发界面更新与失败处理。简单局部状态可以使用 StatefulWidget 等现有机制；只有跨 Widget 共享、可测试注入或恢复生命周期的需求才选状态管理。按已选功能档选择 DI、HTTP/JSON 和代码生成；每个依赖说明替代方案与平台/构建风险。
 
 每个 PAGE 工作项对应产品页面或独立公共导航框架的语义身份，按适用范围关联真实路由、导航上下文、表单/列表输入、延迟加载/保存、退出/恢复、可见状态以及系统边界；公共框架可以只承载已有路由，不需要新增专属路由。主页和跨页面常驻框架在确需独立交付时分别管理；局部导航控件保留在所属 PAGE。modal、popup、drawer、toast 使用独立 DISPLAY_LAYER 和单一 `visual.hostId`，不机械为每个 Widget 建立工作项。

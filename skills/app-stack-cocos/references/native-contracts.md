@@ -849,7 +849,7 @@ Creator 资源导入/刷新、AssetDB 查询、场景引用核验和编辑器构
 <a id="mode-cocos-game-ad-integration--接入流程"></a>
 #### 接入流程
 
-1. 读取 Work Item、Creator 版本、TDD、依赖能力档和原生目标配置；确认目标原生插件/SDK 与 Android/iOS 构建环境的版本、许可、权限、生命周期和失败语义。先查项目已有实现，避免重复引入 SDK。初始化任务需登记到统一的 `assets/scripts/platform/initialize-sdks.ts`，广告服务只管理 SDK 就绪后的广告位状态和加载恢复。
+1. 读取 Work Item、Creator 版本、TDD、依赖能力档和原生目标配置；确认目标原生插件/SDK 与 Android/iOS 构建环境的版本、许可、权限、生命周期和失败语义。先查项目已有实现，避免重复引入 SDK。统一入口 `assets/scripts/platform/initialize-sdks.ts` 只投递各 SDK 的独立管理文件，MAX 初始化及恢复归 `assets/scripts/platform/sdks/max-sdk.ts`，广告服务只管理 SDK 就绪后的广告位状态和加载恢复。
 2. 先阅读[唯一运行合同](../../cocos-game-ad-integration/references/applovin-max-contract.md)，冻结公开业务门面、广告位状态所有权、自然中断点、广告展示时序、隐私边界和奖励幂等规则。广告属于可选商业能力，不得成为 Cocos Web 核心循环前置。
 3. 按目标 Creator 版本的[原生插件文档](https://docs.cocos.com/creator/3.8/manual/en/native-development/native-plugin/)与[JSB 桥接文档](https://docs.cocos.com/creator/3.8/manual/en/advanced-topics/js-oc-bridge.html)实现平台适配。Creator 编辑器和项目资源操作按上面的 MCP 协议执行。
 4. MAX 原生 API 按平台官方集成文档核对，不把其他引擎或跨平台框架的同名 API 当作 Cocos API。Android 官方示例使用 `AppLovinSdkInitializationConfiguration`、`AppLovinSdk.getInstance(context).initialize(...)`；初始化由唯一初始化模块调用。插页 `MaxInterstitialAd` 与激励 `MaxRewardedAd` 通过 `loadAd()`、`isReady()`、相应 `showAd(...)` 和官方 listener 管理，奖励以 `onUserRewarded(...)` 为准。Banner 使用 `MaxAdView`、listener 和原生 View 层级。iOS 使用对应官方原生 SDK API，并按当前 SDK 版本验证；不要凭类名推导桥接接口。

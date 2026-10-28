@@ -31,6 +31,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "reference-architecture-sdk-initialization",
+      "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",
+      "stacks": ["cocos", "phaser", "threejs"]
+    },
+    {
       "id": "advertising-integration",
       "path": "../app-domain-toolkit/references/advertising-integration.md",
       "stacks": [

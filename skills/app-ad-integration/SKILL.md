@@ -24,6 +24,7 @@ description: "规划广告展示位置、频次、同意与失败回退，并在
 
 ## 关键边界
 
+- 广告 SDK 的实现归属遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)，广告业务状态与 SDK 初始化状态分别管理。
 - 不自行创建/修改广告账户、部署线上ID或执行外部写入；测试配置不得进入正式发行包。
 - 浏览器政策、移动SDK/API与审核条件由当前栈适配和当前平台事实确认。
 

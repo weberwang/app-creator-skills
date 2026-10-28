@@ -8,7 +8,7 @@
 - iOS 与 Android 仅通过 AppLovin 官方 `cordova-plugin-applovin-max` 调用 MAX；Capacitor 使用其 Cordova 兼容层加载插件。Phaser 场景只能调用共享 TypeScript 门面，不能直接触碰官方插件全局对象、Activity、ViewController、MAX 原生对象或任何网络 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#不变量与平台边界)。
 
-- 任何平台只允许一个广告服务实例和一个官方插件接入实例。SDK 初始化状态与初始化恢复由共享的 `src/platform/initialize-sdks.ts` 按 MAX 单独持有；每个广告位持有独立业务状态和至多一个加载重试 timer，格式匹配的 MAX 原生对象由官方插件内部管理。所有广告位只共用激励视频结束后的插页保护截止时间等服务级状态，不设置跨广告位全屏互斥，不共用加载重试 timer。重复初始化、预加载、展示请求或插件回调不能造成同广告位并发 load、递归回调或多套退避机制。
+- 任何平台只允许一个广告服务实例和一个官方插件接入实例。SDK 初始化状态与初始化恢复由 `src/platform/sdks/max-sdk.ts` 独立持有；每个广告位持有独立业务状态和至多一个加载重试 timer，格式匹配的 MAX 原生对象由官方插件内部管理。所有广告位只共用激励视频结束后的插页保护截止时间等服务级状态，不设置跨广告位全屏互斥，不共用加载重试 timer。重复初始化、预加载、展示请求或插件回调不能造成同广告位并发 load、递归回调或多套退避机制。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#不变量与平台边界)。
 
 ## 固定聚合网络与别名
@@ -58,7 +58,7 @@ SDK key 与 MAX ad unit ID 是官方插件 API 所需的客户端配置，由生
 
 ```ts
 initialize(config: InitConfig): Promise<InitResult> // 初始化请求，仅等待本地受理/拒绝
-retryInitialize(): Promise<InitResult>        // 转发至共享初始化文件中的 MAX 任务，不绕过退避或配置阻断
+retryInitialize(): Promise<InitResult>        // 转发至MAX 管理文件中的 MAX 任务，不绕过退避或配置阻断
 preload(slotId: AdSlotId): Promise<PreloadResult> // 仅插页/激励后台加载；Banner 返回 format-mismatch
 isReady(slotId: AdSlotId): ReadyResult        // 全屏读取实例就绪属性；Banner 读取加载状态，不创建或加载
 tryShow(context: ShowContext): Promise<ShowResult> // 复核当前实例就绪属性后展示或立即拒绝
@@ -175,18 +175,18 @@ Phaser 场景只提供 `slotId` 与自然中断点上下文并消费结构化结
 ### 初始化失败分类与独立自动重试
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#初始化失败分类与独立自动重试)。
-- 网络超时、网络服务暂不可用和明确的原生服务瞬时错误，由共享初始化文件中独立的 MAX 初始化任务自动重试。该任务独立保存初始化连续失败计数、单调时钟 deadline、timer 引用和 in-flight 标记；沿用合同规定的 2/4/8/16/32/64 秒公式及抖动规则，最高 64 秒、无次数上限，直到成功、MAX 被禁用或该任务销毁。失败回调只登记任务，不同步递归初始化。
+- 网络超时、网络服务暂不可用和明确的原生服务瞬时错误，由MAX 管理文件中独立的 MAX 初始化任务自动重试。该任务独立保存初始化连续失败计数、单调时钟 deadline、timer 引用和 in-flight 标记；沿用合同规定的 2/4/8/16/32/64 秒公式及抖动规则，最高 64 秒、无次数上限，直到成功、MAX 被禁用或该任务销毁。失败回调只登记任务，不同步递归初始化。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#初始化失败分类与独立自动重试)。
-- 缺失 SDK/adapter、无效配置、平台不支持或明确策略阻断不自动重试：共享初始化文件取消该 MAX 恢复任务并报告对应原因。修正受控配置或依赖、解除策略阻断后由调用方显式 `retryInitialize()`；该公开入口只转发至 MAX 任务，未修正时返回原阻断；前台、网络、宿主或隐私恢复事件不能解除该阻断或自动发起初始化。初始化及其重试不受 privacy gate 约束：隐私未决、拒绝同意或 ATT 未授权都不暂停、不取消初始化任务；隐私结果只用于配置真实隐私标志与广告请求/展示策略。无法归类的错误先诊断，不凭自由文本默认无限重试，只有确认瞬时故障后才纳入自动退避。
+- 缺失 SDK/adapter、无效配置、平台不支持或明确策略阻断不自动重试：MAX 管理文件取消该 MAX 恢复任务并报告对应原因。修正受控配置或依赖、解除策略阻断后由调用方显式 `retryInitialize()`；该公开入口只转发至 MAX 任务，未修正时返回原阻断；前台、网络、宿主或隐私恢复事件不能解除该阻断或自动发起初始化。初始化及其重试不受 privacy gate 约束：隐私未决、拒绝同意或 ATT 未授权都不暂停、不取消初始化任务；隐私结果只用于配置真实隐私标志与广告请求/展示策略。无法归类的错误先诊断，不凭自由文本默认无限重试，只有确认瞬时故障后才纳入自动退避。
 - SDK 初始化和隐私任务分别维护状态、操作标识与失败处理。隐私弹窗未结束、出错或被拒绝，不得使 SDK 保持 `initializing`、转为 `failed`、暂停初始化重试或再次 initialize；SDK 状态只由当前初始化请求的真实回调更新。SDK 回调未到时仍保持同一个 in-flight 请求，不伪造完成，也不因重复点击并发初始化；当前请求明确失败时，按初始化错误分类恢复，与隐私任务进度无关。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#初始化失败分类与独立自动重试)。
 
-- 初始化成功立即清零 MAX 初始化失败计数，取消该任务 timer、清空 deadline 和恢复意图，再通过各广告位入口去重投递全部启用的插页/激励预加载意图；实际广告请求隐私门未满足时保留待加载意图，条件恢复后去重执行，不重新初始化 SDK；Banner 仍不创建、不预加载。MAX 被禁用、配置替换或应用级初始化任务销毁时，共享初始化文件只取消并失效对应 MAX 操作；配置替换后的初始化由新配置入口重新登记。
-- SDK 初始化恢复与广告位 load/create 恢复是不同任务，状态所有者也不同。初始化成功前不创建广告位加载任务；SDK 初始化恢复不得共享、重置或触发广告位的重试 timer 与计数。Banner 离开展示场景只取消该 Banner 恢复任务，不取消共享文件中的 MAX 初始化恢复；任何恢复任务均不得持有已销毁场景引用。
+- 初始化成功立即清零 MAX 初始化失败计数，取消该任务 timer、清空 deadline 和恢复意图，再通过各广告位入口去重投递全部启用的插页/激励预加载意图；实际广告请求隐私门未满足时保留待加载意图，条件恢复后去重执行，不重新初始化 SDK；Banner 仍不创建、不预加载。MAX 被禁用、配置替换或应用级初始化任务销毁时，MAX 管理文件只取消并失效对应 MAX 操作；配置替换后的初始化由新配置入口重新登记。
+- SDK 初始化恢复与广告位 load/create 恢复是不同任务，状态所有者也不同。初始化成功前不创建广告位加载任务；SDK 初始化恢复不得共享、重置或触发广告位的重试 timer 与计数。Banner 离开展示场景只取消该 Banner 恢复任务，不取消MAX 管理文件中的 MAX 初始化恢复；任何恢复任务均不得持有已销毁场景引用。
 
 ## 初始化与隐私独立推进
 
-应用层所有 SDK 初始化统一由 `src/platform/initialize-sdks.ts` 独立投递，MAX 与隐私任务分别进入自己的分支；具体规则见[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)。共享文件持有 MAX 的真实完成回调、幂等状态和初始化恢复任务；广告服务只持有广告位加载/展示与其运行期恢复。官方插件适配器封装原生 API，下述真实完成条件、隐私门与能力冲突继续有效，不因集中编排而改变官方前置或推断成功。
+应用层所有 SDK 初始化统一由 `src/platform/initialize-sdks.ts` 独立投递，MAX 与隐私任务分别进入自己的分支；具体规则见[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)。`src/platform/sdks/max-sdk.ts` 持有 MAX 的真实完成回调、幂等状态和初始化恢复任务；广告服务只持有广告位加载/展示与其运行期恢复。官方插件适配器封装原生 API，下述真实完成条件、隐私门与能力冲突继续有效，不因统一投递而改变官方前置或推断成功。
 
 1. 启动时读取受控平台配置，检查平台、当前 Activity/ViewController、环境开关与插件配置；Web/小游戏直接 no-op。支持的原生平台服务启用且具备有效配置时，先手动调用官方插件 `setHasUserConsent(false)`，保持 MAX 内建流程关闭，再调用 MAX initialize；不以用户同意、CMP 完成或 ATT 授权作为本合同目标初始化的前置。该值不作为加载、展示或加载重试的阻断条件；平台/网络本身的实际要求仍按对应能力证据判断。
 2. 初始化任务只处理 MAX 的调用、真实完成回调及失败恢复；隐私收集另建独立任务，通过项目采用的原生 CMP/Google UMP 与 ATT 入口执行，不作为初始化任务的前置依赖或验收条件。工作流要求两者可独立完成：SDK 回调先到时立即确认初始化成功，即使 privacy 仍为 pending/blocked；隐私结果先到时只更新真实隐私状态，不推断 SDK 已初始化，也不再次 initialize。初始化调用只确认本地受理并快速返回，不等待隐私流程或广告事件。上述是目标行为，具体插件是否支持须按下一条核实，不能视为现有 MAX 接入能力已经满足。
@@ -198,7 +198,7 @@ Google AdMob 的同意收集由独立隐私任务使用符合项目要求的 Goo
 
 ### 初始化前设置 hasUserConsent=false
 
-MAX 适配器由统一初始化文件调用，在新 MAX 实例首次真正发起 SDK 初始化之前，先手动调用官方 `setHasUserConsent(false)`，再调用 `initialize`；同配置重复入口复用现有请求，不重复发起原生初始化。内建隐私流程必须在 initialize 前完成关闭配置；SDK key 从受控环境配置传入，成功状态只由真实初始化完成回调推进。
+MAX 管理文件调用官方适配器，在新 MAX 实例首次真正发起 SDK 初始化之前，先手动调用官方 `setHasUserConsent(false)`，再调用 `initialize`；同配置重复入口复用现有请求，不重复发起原生初始化。内建隐私流程必须在 initialize 前完成关闭配置；SDK key 从受控环境配置传入，成功状态只由真实初始化完成回调推进。
 
 同实例的自动或手动初始化重试复用已确定的配置，不再次调用 false 覆盖后续真实隐私更新；只有新建原生实例时重新落实首次配置。设置或桥接真实失败时不能跳过必要配置。下面的 `AppLovinMAX` 表示已取得的官方插件对象，示意新实例首次请求内的先后顺序：
 
@@ -228,13 +228,13 @@ Android 实际 app module 的 `src/main/res/raw/applovin_settings.json`（常规
 
 iOS 实际 App target 打包的 `AppLovin-Settings.plist` 中，`ConsentFlowInfo` 字典的布尔项 `ConsentFlowEnabled` 为 `NO`（plist 表示为 `<false/>`）。TDD 记录实际文件位置与 target 资源归属，不能只创建一个未被打包的同名文件。Android 同样核对当前构建变体和资源覆盖，Capacitor 同步后重新检查最终值，避免生成配置或初始化前的插件调用重新开启流程。
 
-关闭流程后，广告功能开关、SDK key、广告位配置和 MAX 插件保持正常接入；注册初始化结果处理后仍通过官方插件发起一次有效初始化，以真实完成回调推进 SDK 状态。不能删除 initialize、提前 return、伪造完成回调、把广告服务设为 disabled 或调用隐私结果代替 SDK 完成来实现“关闭”。初始化瞬时失败由共享初始化文件中的 MAX 独立任务恢复，关闭流程不清除或复用广告位加载 timer。
+关闭流程后，广告功能开关、SDK key、广告位配置和 MAX 插件保持正常接入；注册初始化结果处理后仍通过官方插件发起一次有效初始化，以真实完成回调推进 SDK 状态。不能删除 initialize、提前 return、伪造完成回调、把广告服务设为 disabled 或调用隐私结果代替 SDK 完成来实现“关闭”。初始化瞬时失败由MAX 管理文件中的 MAX 独立任务恢复，关闭流程不清除或复用广告位加载 timer。
 
 初始化成功后仍按已有规则投递全屏广告位预加载意图；已手动设置 `hasUserConsent=false` 且其他实际请求条件满足时，实际 load/show 正常执行，不能仅因该值暂停请求。关闭 MAX 内建流程不等于伪造同意收集完成；独立 CMP/UMP/ATT 仍处理实际适用的职责，上述版本能力冲突仍需证据关闭。
 
 ### 与 AppsFlyer 独立推进
 
-若项目采用 AppsFlyer，统一初始化文件分别启动 MAX 和 AppsFlyer 分支，不建立相互等待边。AppsFlyer 不挂在 MAX 初始化成功、失败、内建隐私流程结束或广告 ready 回调后；MAX 不等待 AppsFlyer 初始化/启动、归因结果或其错误恢复。每个分支仅消费自身真实前置与隐私要求，各自维护幂等、状态、失败及恢复；一个分支失败不能提前终止另一个分支。AppsFlyer 的具体插件 API 和证据按[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md#max-与-appsflyer)交付，不在广告模块中建立第二个归因 SDK 所有者。
+若项目采用 AppsFlyer，统一装配入口分别启动 MAX 和 AppsFlyer 独立管理文件中的任务，不建立相互等待边。AppsFlyer 不挂在 MAX 初始化成功、失败、内建隐私流程结束或广告 ready 回调后；MAX 不等待 AppsFlyer 初始化/启动、归因结果或其错误恢复。每个分支仅消费自身真实前置与隐私要求，各自维护幂等、状态、失败及恢复；一个分支失败不能提前终止另一个分支。AppsFlyer 的具体插件 API 和证据按[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md#max-与-appsflyer)交付，不在广告模块中建立第二个归因 SDK 所有者。
 
 验证必须分别覆盖 MAX 先完成、AppsFlyer 先完成、任一失败/超时与隐私未决，证明关闭内建流程后 MAX 初始化调用和真实回调仍存在，AppsFlyer 启动不受其结果影响。仅修改配置或通过 TypeScript 编译不能证明实际广告初始化、归因或加载展示已通过；真机与外部配置继续按明确授权执行。
 
@@ -319,8 +319,8 @@ iOS 实际 App target 打包的 `AppLovin-Settings.plist` 中，`ConsentFlowInfo
 - 核验 Android/iOS 有效构建配置已关闭 MAX 自动隐私流程；初始化与隐私任务不共用完成条件、失败计数或 timer。覆盖隐私先完成和 SDK 先完成两种顺序，真实隐私结果只更新隐私标志与广告 gates，不再次初始化，不重置 SDK phase，不重复注册 CMP/UMP 或 ATT 监听、不重复弹窗，也不伪造同意。
 - 其他实际适用请求条件导致 privacy pending/blocked 时仍按目标合同调用 MAX initialize，临时初始化失败仍自动重试；SDK 的初始化完成回调到达前不得假装成功。初始化成功但存在这些真实阻断时仅保留预加载意图，条件满足后恢复请求、不重新初始化。单独设置 `hasUserConsent=false`、未显示 MAX 内建弹窗或尚未得到用户同意为 true，不得用来制造该阻断；实际适用 CMP/TCF 或网络条件仍按具体原因验证。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
-- 初始化退避中重复 initialize/retryInitialize、重复生命周期或网络恢复事件最多复用一次请求；后台、离线、宿主门关闭暂停且保留 deadline，隐私未决或拒绝不暂停初始化重试，恢复不抢跑、不重置计数。成功后共享初始化文件取消 MAX timer 并只投递一次全屏预加载意图，实际 load 继续检查广告请求隐私门，Banner 不创建；禁用、销毁、配置替换和旧/重复尝试回调不能重新启动旧 MAX 任务。
-- Banner 离开展示场景不影响共享文件中的 MAX 初始化恢复；MAX 初始化恢复也不能重建该 Banner 的已取消任务。
+- 初始化退避中重复 initialize/retryInitialize、重复生命周期或网络恢复事件最多复用一次请求；后台、离线、宿主门关闭暂停且保留 deadline，隐私未决或拒绝不暂停初始化重试，恢复不抢跑、不重置计数。成功后MAX 管理文件取消 MAX timer 并只投递一次全屏预加载意图，实际 load 继续检查广告请求隐私门，Banner 不创建；禁用、销毁、配置替换和旧/重复尝试回调不能重新启动旧 MAX 任务。
+- Banner 离开展示场景不影响MAX 管理文件中的 MAX 初始化恢复；MAX 初始化恢复也不能重建该 Banner 的已取消任务。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
 - 实际 Banner 尺寸超出预留区域或布局未就绪时保持隐藏，不在广告回调中重排游戏 UI；方向/窗口/safe-area 变化先隐藏并由布局模块重新提交，旧回调不污染新布局；主要按钮和手势区不遮挡，内容 inset 不修改 Phaser DPR。

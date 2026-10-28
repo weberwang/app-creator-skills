@@ -114,7 +114,7 @@
 - three.js `Scene` 是 `Object3D` 树，负责组织可见对象，不充当游戏状态容器。独立的场景控制器拥有玩法状态与生命周期，并提供 `enter`、`update`、`exit`、`dispose`；渲染循环按固定步长推进玩法/物理，再用渲染插值显示当前状态。
 - 浏览器是默认平台。仅当目标渠道确实要求原生宿主时才采用 Capacitor 或对应宿主；平台插件按能力逐项选择并封装在适配层，不预装非必需插件。
 - 小游戏必须单独验证；可选商业能力须有显式接口和已批准开关。
-- 项目采用的 SDK 按[SDK 单文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)统一在 `src/platform/initialize-sdks.ts` 实现启动、回调、幂等和初始化重试。各 SDK 独立发起，不互相等待，也不等待隐私流程、场景或全局就绪；原生真实条件按各 SDK 单独检查，业务使用仍遵守相应能力门。
+- 项目采用的 SDK 按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 独立投递，各 SDK 在 `src/platform/sdks/<sdk>-sdk.ts` 分别实现启动、回调、幂等和初始化重试。各 SDK 独立发起，不互相等待，也不等待隐私流程、场景或全局就绪；原生真实条件按各 SDK 单独检查，业务使用仍遵守相应能力门。
 - 基础模块按[音频生命周期约束](#mode-threejs-game-audio--后台暂停与恢复约束)处理浏览器页面可见性和音频上下文受限；只有采用原生宿主时才添加对应平台生命周期适配。
 - 基础模块按[基础显示约束](../../threejs-game-orchestrator/references/game-implementation.md#基础显示约束)让 Canvas 适配实际 CSS 视口并保持 Camera、HUD 和输入坐标一致。原生窗口主题、沉浸式全屏和平台安全区只在对应宿主被选用时实现。
 
@@ -735,10 +735,10 @@ Git 的[最小提交集](../../threejs-game-architecture/references/artifact-sto
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 视频广告位在用户触发展示但当前不可用，或官方插件接受展示后回调 `displayFailed` 时，通过统一 UI 层弹出一次“视频广告暂不可用，请稍后再试”Toast；不得由插件适配层直接操作 ThreeJS UI，也不得因重复回调重复提示。
 - 必须在 MAX 初始化前明确关闭内建 Terms and Privacy Policy Flow，并核对最终 Android/iOS 构建配置不会重新启用；不能仅删除弹窗调用或未经核对就假定默认关闭。官方 Cordova 接口未暴露该流程开关时，通过官方支持的宿主配置取消其 opt-in 启用项，不编造 JS 方法。关闭后仍正常调用 MAX initialize，以真实初始化完成回调确认成功，不以隐私弹窗、CMP、ATT 或 AppsFlyer 的完成作为初始化/重试前置；SDK/所选 CMP 的实际能力限制按合同核对，不能绕过官方必需条件。隐私状态仅控制广告加载与展示，其未完成、失败或用户拒绝不得覆盖已经确认的 MAX 初始化成功；独立隐私方案和真实授权状态仍单独配置。关闭方式与最终配置核对见[接入合同](../../threejs-game-ad-integration/references/applovin-max-contract.md#初始化与隐私独立编排)。
-- MAX 与项目其他已采用 SDK 的初始化、完成回调、幂等和初始化重试统一写在 `src/platform/initialize-sdks.ts`，遵循[SDK 单文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)。MAX 不等待其他 SDK，也不在成功回调里启动其他 SDK；广告服务只消费其初始化结果并管理广告位，不再持有第二套初始化请求或重试状态。
+- MAX 与项目其他已采用 SDK 的初始化、完成回调、幂等和初始化重试分别写在 `src/platform/sdks/<sdk>-sdk.ts`，由 `src/platform/initialize-sdks.ts` 投递，遵循[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)。MAX 不等待其他 SDK，也不在成功回调里启动其他 SDK；广告服务只消费其初始化结果并管理广告位，不再持有第二套初始化请求或重试状态。
 - 每次创建新的 MAX SDK 实例时，在该实例首次实际 initialize 前手动调用官方 `AppLovinMAX.setHasUserConsent(false)`，不能只写本地变量或依赖默认值。该值是 SDK 隐私配置，不是广告开关；不得因 `false` 把 privacy gate 置为 pending/blocked、跳过插页/激励预加载、阻止 Banner 按需加载、暂停加载重试或拒绝展示。SDK 已就绪且其他实际条件满足时照常请求广告，由 SDK/adapter 按该配置处理；不承诺填充，也不把值改成 true 来绕过真实失败。设置 false 与关闭内建流程分别执行，不能互相代替。
 - 本 Skill 中有效初始化配置必须包含已核实的独立时序资格：“隐私未决仍初始化”和相关重试规则仅适用于官方支持的 SDK/CMP 组合。官方要求自有 CMP 前置而当前组合不满足独立时序时，MAX 返回配置阻断，不调用 initialize、不安排自动重试，也不等待 CMP 或 AppsFlyer；记录具体限制后按当前任务解决，其他 SDK 与游戏继续。该配置阻断不能从用户拒绝同意或 ATT 状态本身推断。
-- 项目启用 AppsFlyer 时，其初始化与实际启动使用统一文件中的独立任务；不能挂在 MAX 初始化、内建隐私流程或广告加载回调下，MAX 失败或不回调不影响 AppsFlyer 启动，AppsFlyer 失败或不回调也不阻止 MAX。该规则不要求未采用 AppsFlyer 的项目额外安装 SDK。
+- 项目启用 AppsFlyer 时，其初始化与实际启动使用 `src/platform/sdks/appsflyer-sdk.ts` 的独立任务；不能挂在 MAX 初始化、内建隐私流程或广告加载回调下，MAX 失败或不回调不影响 AppsFlyer 启动，AppsFlyer 失败或不回调也不阻止 MAX。该规则不要求未采用 AppsFlyer 的项目额外安装 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 
 <a id="mode-threejs-game-ad-integration--全局控制接入"></a>
@@ -753,7 +753,7 @@ Git 的[最小提交集](../../threejs-game-architecture/references/artifact-sto
 
 1. 读取当前 Work Item、项目 TDD/依赖能力档、Capacitor 平台状态及官方插件安装状态；按 [AppLovin MAX 接入合同](../../threejs-game-ad-integration/references/applovin-max-contract.md)登记范围、非目标、公开接口、状态所有权、生命周期和失败边界。广告属于可选商业能力，不能把它作为 ThreeJS Web 核心循环的运行前置。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-3. 冻结插件适配契约：`initialize`、`preload(slotId)`、`tryShow(context)`、`setBannerVisibility(slotId, visible)`、`isReady(slotId)` 均为非阻塞调用并返回结构化结果；适配器把官方插件的 callback/event API 归一化为该契约。MAX 初始化与初始化重试实际实现归入 `src/platform/initialize-sdks.ts`，广告门面只转发到该文件中的 MAX 私有任务。初始化失败进入 `failed`：明确的瞬时故障由该任务按 2/4/8/16/32/64 秒持续退避；后台、离线或宿主条件未满足时暂停，恢复后继续；配置或依赖错误修正后显式重试，不重启其他 SDK。初始化重试与广告服务的广告位加载重试隔离，不混用 timer 或计数。MAX 初始化幂等；支持平台且服务启用、插件配置有效时，必须发起 MAX 初始化，不以其他 SDK、隐私同意、CMP 完成或 ATT 授权作为调用前置。每个广告位只有一个业务状态所有者，原生格式对象由官方插件内部管理。广告服务收到初始化成功结果后立即投递全部启用的插页与激励视频预加载意图，实际加载经过广告请求隐私门；所有已发起的加载失败都由各广告位自己的重试 timer 持续调度，不按错误类别终止、不设次数上限，直到成功；禁用、移除或服务销毁终止重试，运行 gates 关闭仅暂停。各广告位独立保存计数与 deadline，并应用同一套 `2/4/8/16/32/64 秒`退避、抖动、去重、后台/离线暂停和恢复规则。一个广告位取消、重排或触发重试不得改变其他广告位的 timer。
+3. 冻结插件适配契约：`initialize`、`preload(slotId)`、`tryShow(context)`、`setBannerVisibility(slotId, visible)`、`isReady(slotId)` 均为非阻塞调用并返回结构化结果；适配器把官方插件的 callback/event API 归一化为该契约。MAX 初始化与初始化重试实际实现归入 `src/platform/sdks/max-sdk.ts`，广告门面只转发到该文件中的 MAX 独立任务。初始化失败进入 `failed`：明确的瞬时故障由该任务按 2/4/8/16/32/64 秒持续退避；后台、离线或宿主条件未满足时暂停，恢复后继续；配置或依赖错误修正后显式重试，不重启其他 SDK。初始化重试与广告服务的广告位加载重试隔离，不混用 timer 或计数。MAX 初始化幂等；支持平台且服务启用、插件配置有效时，必须发起 MAX 初始化，不以其他 SDK、隐私同意、CMP 完成或 ATT 授权作为调用前置。每个广告位只有一个业务状态所有者，原生格式对象由官方插件内部管理。广告服务收到初始化成功结果后立即投递全部启用的插页与激励视频预加载意图，实际加载经过广告请求隐私门；所有已发起的加载失败都由各广告位自己的重试 timer 持续调度，不按错误类别终止、不设次数上限，直到成功；禁用、移除或服务销毁终止重试，运行 gates 关闭仅暂停。各广告位独立保存计数与 deadline，并应用同一套 `2/4/8/16/32/64 秒`退避、抖动、去重、后台/离线暂停和恢复规则。一个广告位取消、重排或触发重试不得改变其他广告位的 timer。
 4. 将 MAX 控制台、官方插件及其原生依赖、Capacitor Cordova 兼容配置、独立隐私流程/Google UMP/ATT、广告位配置和遥测分别登记责任人。固定聚合渠道为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve（PubNative/HyBid）；插件、MAX SDK 与 adapter 的版本组合以官方插件和官方渠道文档当前声明的兼容范围为准，不在 Skill 或业务代码中写死版本号，也不绕过插件重复引入 MAX SDK。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 8. 将候选 diff、接口契约、平台日志（脱敏）、失败重试轨迹和验证结果提交给 `$app-workflow-control`；把未执行的外部配置、真机、实时广告和发布步骤列为明确未覆盖项。
@@ -780,7 +780,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 原生门：Activity/ViewController provider、前台状态、网络连通性属于初始化与广告请求依赖；privacy readiness 表示实际请求配置及 SDK/平台条件是否满足，不等于 `hasUserConsent=true`。`false` 已正确配置且没有其他独立阻断时应允许请求，不能把 false 或其读取结果当作隐私拒绝码。确有独立的 SDK/平台限制时按实际原因处理；门不控制初始化完成。`phase` 只表示广告资源/展示阶段，门状态独立计算，不混入 ThreeJS 场景状态。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-- 初始化恢复：统一初始化文件中的 MAX 私有任务最多持有一个初始化请求和一个待执行重试 timer，广告服务不另建；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该初始化恢复任务，成功结果交给广告服务只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。单独重试 MAX 不重新初始化其他 SDK。
+- 初始化恢复：MAX 管理文件中的独立任务最多持有一个初始化请求和一个待执行重试 timer，广告服务不另建；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该初始化恢复任务，成功结果交给广告服务只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。单独重试 MAX 不重新初始化其他 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；页面首帧前按平台 Banner 尺寸规则和安全区预留区域，加载、失败、重试与显隐回调不改变内容 inset；实际尺寸只用于验证能否安全放入预留区域，布局不遮挡游戏交互；刷新只有一个所有者，禁止 JS/ThreeJS 自建刷新 timer。
 - 合规与安全：独立隐私流程及其 Google UMP/TCF 配置、MAX 隐私标志、iOS ATT、SKAdNetwork、Google 要求和目标地区规则均有责任人和证据；核验 MAX 内建隐私流程在实际初始化配置与最终 Android/iOS 产物中均已关闭，真实初始化回调仍能完成；AppsFlyer 按独立任务启动，不把关闭 MAX 流程等同于同意授权。SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
@@ -851,7 +851,7 @@ V5 为人工视觉验收提供相同相机、光照、时间与游戏状态的�
 
 先读 [能力与接入表](../../threejs-game-plugins/references/plugin-plan.md)，按玩法选择最小集合。three/addons 与 three 必须来自同一锁定版本；开发工具不进入运行包。每项采用的能力记录用途、精确版本/锁文件、适用 renderer、自身资源创建条件、销毁责任、包体/内存预算和验证命令。
 
-项目采用的 SDK 按[SDK 单文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)统一在 `src/platform/initialize-sdks.ts` 实现初始化、回调与初始化恢复，各 SDK 之间不建立串行前置。物理世界、解码器等对象自身所需的真实就绪条件仍由对应能力管理，不把它们扩张成所有 SDK 或游戏首帧的启动门。
+项目采用的 SDK 按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 投递，各 SDK 的初始化、回调与初始化恢复分别由 `src/platform/sdks/<sdk>-sdk.ts` 实现，各 SDK 之间不建立串行前置。物理世界、解码器等对象自身所需的真实就绪条件仍由对应能力管理，不把它们扩张成所有 SDK 或游戏首帧的启动门。
 
 涉及 Android/iOS 原生宿主或平台能力时，遵循架构 Skill 的[原生平台插件选型](#mode-threejs-game-architecture--原生平台插件选型)：复用现有插件 → 官方插件 → 社区插件 → 有明确能力缺口的最小自建。版本、权限、许可、生命周期、平台适配层与必要宿主配置以该规则为准。
 
@@ -873,7 +873,7 @@ V5 为人工视觉验收提供相同相机、光照、时间与游戏状态的�
 
 three.js 提供渲染与场景图；玩法循环、输入状态、物理世界、资源生命周期和游戏状态由项目负责。先复用项目服务；新工程以 TypeScript、Vite、three 为核心。
 
-项目实际采用 SDK 时，按[SDK 单文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)在 `src/platform/initialize-sdks.ts` 集中实现，各 SDK 独立发起与恢复。应用装配调用后继续启动渲染与 Boot，不等待 SDK 批次完成；能力入口自行处理目标 SDK 未就绪，不在主循环或场景间串接 SDK 初始化。无 SDK 的工程模板不增加占位文件。
+项目实际采用 SDK 时，按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 装配并投递，各 SDK 的初始化与恢复分别由 `src/platform/sdks/<sdk>-sdk.ts` 管理。应用装配调用后继续启动渲染与 Boot，不等待 SDK 批次完成；能力入口自行处理目标 SDK 未就绪，不在主循环或场景间串接 SDK 初始化。无 SDK 的工程模板不增加占位文件。
 
 1. 把渲染 Scene 与玩法 scene controller 分离。控制器负责 enter、fixedUpdate、renderUpdate、exit、dispose，入口只装配服务。规则与数值模块不依赖 WebGL、DOM 或材质。
 2. 使用 [固定步与输入辅助模块](../../threejs-game-runtime/scripts/game-runtime.mjs)：物理和规则用固定 dt，渲染用 accumulator/step 插值。后台暂停、失焦与 Pointer Lock 解除清空按键；恢复时重置时间戳和积累量，禁止补算整段后台时间。最多追赶有限步数，记录丢弃时间；输入边沿每模拟步只消费一次。

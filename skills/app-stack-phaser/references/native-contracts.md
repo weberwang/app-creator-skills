@@ -108,7 +108,7 @@
 - 用 Phaser 4、TypeScript、Vite 实现 Web 核心；新项目优先采用官方当前的 create-phaser-game 流程。
 - 新建或调整 Vite 生产构建时，按[生产构建压缩与发布检查](../../phaser4-game-architecture/references/production-build.md)落实 Terser 两轮压缩、标识符缩短、注释移除与生产 Source Map 默认关闭；评估 Phaser Compressor 按需裁剪引擎，并交接实际配置入口、构建命令和验证证据。
 - 仅在移动平台档被实际需求触发时用 Capacitor 承载 iOS 与 Android，并将每个已采用插件封装在平台适配层；初始化不得默认安装非必需插件。
-- 项目所有已采用 SDK 的初始化由 `src/platform/initialize-sdks.ts` 单文件统一编排，`src/main.ts` 调用后 Phaser 首帧不等待初始化批次；设计和实施时读取[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)，在 TDD 明确每个 SDK 的官方真实前置、就绪判据和失败/重试所有权，禁止跨 SDK 建启动屏障或在场景、构造函数、业务服务和导入副作用中分散初始化。
+- 项目所有已采用 SDK 由 `src/platform/initialize-sdks.ts` 装配并独立投递，各 SDK 的初始化、状态和恢复由各自的 `src/platform/sdks/<sdk>-sdk.ts` 管理，`src/main.ts` 调用后 Phaser 首帧不等待初始化批次；设计和实施时读取[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)，在 TDD 明确每个 SDK 的官方真实前置、就绪判据和失败/重试所有权，禁止跨 SDK 建启动屏障或在场景、构造函数、业务服务和导入副作用中分散初始化。
 - Android/iOS 原生平台功能优先使用现有插件，按下述[原生平台插件选型](#mode-phaser4-game-architecture--原生平台插件选型)执行，避免重复实现原生能力。
 - 小游戏必须单独验证；可选商业能力须有显式接口和已批准开关。
 - 基础模块阶段建立统一音频服务与生命周期适配，按[后台暂停与恢复约束](#mode-phaser4-game-audio--后台暂停与恢复约束)实现后台暂停、前台原位置续播；保留手动暂停和静音状态，防止重复恢复、过期音效补播及已销毁实例复活，纳入基础包和 TDD。
@@ -785,13 +785,13 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-phaser4-game-ad-integration--交付流程"></a>
 #### 交付流程
 
-广告 SDK 初始化及独立隐私任务的应用层启动统一接入 `src/platform/initialize-sdks.ts`，按[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)分别投递；MAX 初始化调用、真实完成回调、幂等状态与初始化恢复任务由该文件持有，官方插件适配器只封装原生 API 细节。广告服务继续持有各广告位的加载/展示状态和运行期恢复任务。不得在 Scene、Boot/Preload 或构造函数再建启动入口，也不因单文件集中而让隐私任务成为 MAX 初始化前置。
+广告 SDK 初始化及独立隐私任务的应用层启动统一接入 `src/platform/initialize-sdks.ts`，按[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)分别投递；MAX 初始化调用、真实完成回调、幂等状态与初始化恢复任务由 `src/platform/sdks/max-sdk.ts` 持有，官方插件适配器只封装原生 API 细节。广告服务继续持有各广告位的加载/展示状态和运行期恢复任务。不得在 Scene、Boot/Preload 或构造函数再建启动入口，也不因统一投递而让隐私任务成为 MAX 初始化前置。
 
-项目采用 AppsFlyer 时，它在同一统一文件中独立初始化和启动，不等待 MAX、MAX 内建隐私流程或广告加载，也不在 MAX 回调中启动；MAX 同样不等待 AppsFlyer 或归因结果。两者的失败、超时与恢复分别处理，不相互取消，不重复安装或初始化插件已管理的传递依赖。
+项目采用 AppsFlyer 时，它在自己的 `src/platform/sdks/appsflyer-sdk.ts` 中独立初始化和启动，不等待 MAX、MAX 内建隐私流程或广告加载，也不在 MAX 回调中启动；MAX 同样不等待 AppsFlyer 或归因结果。两者的失败、超时与恢复分别处理，不相互取消，不重复安装或初始化插件已管理的传递依赖。
 
 1. 读取当前 Work Item、项目 TDD/依赖能力档、Capacitor 平台状态及官方插件安装状态；按 [AppLovin MAX 接入合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md)登记范围、非目标、公开接口、状态所有权、生命周期和失败边界。广告属于可选商业能力，不能把它作为 Phaser Web 核心循环的运行前置。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-3. 冻结插件适配契约：`initialize`、`preload(slotId)`、`tryShow(context)`、`setBannerVisibility(slotId, visible)`、`isReady(slotId)` 均为非阻塞调用并返回结构化结果；统一初始化文件负责注册并处理 MAX 初始化回调，适配层只封装必要的原生 API 调用细节。MAX 初始化失败进入 `failed`：明确的瞬时故障由 `src/platform/initialize-sdks.ts` 中 MAX 独立任务按 2/4/8/16/32/64 秒持续退避；后台、离线或宿主条件未满足时暂停，恢复后继续；配置或依赖错误修正后通过注入的 MAX 单 SDK 重试入口显式恢复。SDK 初始化恢复与广告位加载恢复隔离，不混用 timer 或计数。支持平台且服务启用、插件配置有效时，必须发起 MAX 初始化，不以隐私同意、CMP 完成或 ATT 授权作为调用前置。每个广告位只有一个业务状态所有者，原生格式对象由官方插件内部管理。初始化成功后立即投递全部启用的插页与激励视频预加载意图，实际加载经过广告请求隐私门；所有已发起的加载失败都由各广告位自己的重试 timer 持续调度，不按错误类别终止、不设次数上限，直到成功；禁用、移除或服务销毁终止对应广告位重试，运行 gates 关闭仅暂停。各广告位独立保存计数与 deadline，并应用同一套 `2/4/8/16/32/64 秒`退避、抖动、去重、后台/离线暂停和恢复规则。一个广告位取消、重排或触发重试不得改变其他广告位的 timer。
+3. 冻结插件适配契约：`initialize`、`preload(slotId)`、`tryShow(context)`、`setBannerVisibility(slotId, visible)`、`isReady(slotId)` 均为非阻塞调用并返回结构化结果；MAX 管理文件负责注册并处理 MAX 初始化回调，适配层只封装必要的原生 API 调用细节。MAX 初始化失败进入 `failed`：明确的瞬时故障由 `src/platform/sdks/max-sdk.ts` 中 MAX 独立任务按 2/4/8/16/32/64 秒持续退避；后台、离线或宿主条件未满足时暂停，恢复后继续；配置或依赖错误修正后通过注入的 MAX 单 SDK 重试入口显式恢复。SDK 初始化恢复与广告位加载恢复隔离，不混用 timer 或计数。支持平台且服务启用、插件配置有效时，必须发起 MAX 初始化，不以隐私同意、CMP 完成或 ATT 授权作为调用前置。每个广告位只有一个业务状态所有者，原生格式对象由官方插件内部管理。初始化成功后立即投递全部启用的插页与激励视频预加载意图，实际加载经过广告请求隐私门；所有已发起的加载失败都由各广告位自己的重试 timer 持续调度，不按错误类别终止、不设次数上限，直到成功；禁用、移除或服务销毁终止对应广告位重试，运行 gates 关闭仅暂停。各广告位独立保存计数与 deadline，并应用同一套 `2/4/8/16/32/64 秒`退避、抖动、去重、后台/离线暂停和恢复规则。一个广告位取消、重排或触发重试不得改变其他广告位的 timer。
 4. 将 MAX 控制台、官方插件及其原生依赖、Capacitor Cordova 兼容配置、独立隐私任务（CMP/Google UMP/ATT）、广告位配置和遥测分别登记责任人。隐私任务不作为 SDK 初始化任务的前置依赖或完成条件。固定聚合渠道为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve（PubNative/HyBid）；插件、MAX SDK 与 adapter 的版本组合以官方插件和官方渠道文档当前声明的兼容范围为准，不在 Skill 或业务代码中写死版本号，也不绕过插件重复引入 MAX SDK。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 8. 将候选 diff、接口契约、平台日志（脱敏）、失败重试轨迹和验证结果提交给 `$app-workflow-control`；把未执行的外部配置、真机、实时广告和发布步骤列为明确未覆盖项。
@@ -803,7 +803,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 
 ```ts
 initialize(config): Promise<InitResult> // 只确认桥接请求受理/初始化状态，不等待广告加载
-retryInitialize(): Promise<InitResult>  // 转发至共享初始化文件中的 MAX 任务，不绕过退避或配置阻断
+retryInitialize(): Promise<InitResult>  // 转发至MAX 管理文件中的 MAX 任务，不绕过退避或配置阻断
 preload(slotId): Promise<PreloadResult> // 仅插页/激励后台加载；Banner 返回 format-mismatch
 isReady(slotId): ReadyResult            // 全屏读取实例就绪属性；Banner 读取加载状态，不创建或加载
 tryShow(context): Promise<ShowResult>   // 复核实例就绪属性和业务门，通过后才展示
@@ -818,7 +818,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 原生门：Activity/ViewController provider、前台状态和网络连通性参与初始化调度；privacy readiness 仅参与广告加载与展示，不参与初始化调用、完成判定或重试，也不等于 `hasUserConsent`。必须覆盖 `false` 已设置且无其他阻断时正常加载的路径。`phase` 只表示广告资源/展示阶段，门状态独立计算，不混入 Phaser 场景状态。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-- 初始化恢复：共享初始化文件中的 MAX 独立任务最多持有一个初始化请求和一个待执行重试 timer；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该 SDK 的恢复任务，成功后只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。
+- 初始化恢复：MAX 管理文件中的 MAX 独立任务最多持有一个初始化请求和一个待执行重试 timer；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该 SDK 的恢复任务，成功后只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；页面首帧前按平台 Banner 尺寸规则和安全区预留区域，加载、失败、重试与显隐回调不改变内容 inset；实际尺寸只用于验证能否安全放入预留区域，布局不遮挡游戏交互；刷新只有一个所有者，禁止 JS/Phaser 自建刷新 timer。
 - 合规与安全：独立隐私任务的 CMP/Google UMP/TCF 配置、MAX 隐私标志、iOS ATT、SKAdNetwork、Google 要求和目标地区规则均有责任人和证据；初始化链路未启用自动隐私弹窗，隐私事件不改写 SDK 初始化状态；SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。

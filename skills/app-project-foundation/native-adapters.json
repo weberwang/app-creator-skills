@@ -20,5 +20,11 @@
       }
     ]
   },
-  "sharedWorkflows": []
+  "sharedWorkflows": [
+    {
+      "id": "reference-architecture-sdk-initialization",
+      "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",
+      "stacks": ["threejs", "flutter"]
+    }
+  ]
 }

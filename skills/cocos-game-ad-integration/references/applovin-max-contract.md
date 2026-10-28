@@ -194,7 +194,7 @@ MAX 初始化成功后，广告服务去重投递启用的插页与激励视频�
 
 ### MAX 初始化失败分类与独立自动重试
 
-以下所有初始化状态和恢复规则均由 `assets/scripts/platform/initialize-sdks.ts` 内 MAX 独立任务持有，原生插件/JSB 只返回请求受理结果和带操作身份的 SDK 回调；广告服务只投影状态并管理广告位 load/create 恢复，不得复制初始化计数、deadline、timer 或重试逻辑。
+以下所有初始化状态和恢复规则均由 `assets/scripts/platform/sdks/max-sdk.ts` 内 MAX 独立任务持有，原生插件/JSB 只返回请求受理结果和带操作身份的 SDK 回调；广告服务只投影状态并管理广告位 load/create 恢复，不得复制初始化计数、deadline、timer 或重试逻辑。
 
 - MAX 的真实初始化错误进入 `failed`，返回稳定错误类别和 `retryScheduled`，不阻塞游戏。相同配置的重复 `initialize` 复用 in-flight 请求或失败/恢复快照，不递归初始化，也不重置退避。
 - 网络超时、网络服务暂不可用和明确的原生瞬时错误按 2/4/8/16/32/64 秒公式独立退避，使用与广告合同一致的 `0.8–1.2` 抖动并将最终延迟封顶在 64 秒；无次数上限，持续到成功、MAX 被禁用或该任务销毁。初始化连续失败次数、单调时钟 deadline、timer 和 in-flight 状态只由 MAX 任务保存；失败回调只登记任务，不同步递归初始化。

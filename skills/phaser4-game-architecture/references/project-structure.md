@@ -20,7 +20,7 @@ game-project/
 ├── src/
 │   ├── main.ts                      # 应用装配：选择平台适配器、创建服务、启动游戏
 │   ├── platform/
-│   │   ├── initialize-sdks.ts       # 所有已采用 SDK 的唯一初始化、回调与恢复入口，按需创建
+│   │   ├── initialize-sdks.ts       # SDK 装配入口；sdks/<sdk>-sdk.ts 分别管理各 SDK
 │   │   ├── web/                     # 浏览器可见性、存储等适配
 │   │   ├── android/                 # Android 宿主生命周期与平台能力适配
 │   │   └── ios/                     # 实际采用 iOS 时创建
@@ -86,7 +86,7 @@ game-project/
 ## 代码归属与依赖
 
 - `src/main.ts` 只负责应用装配；`src/game/main.ts` 只负责 Phaser 启动和注册。业务规则不进入入口文件，避免所有场景和服务集中在一个控制器中。
-- 所有 SDK 初始化集中在 `src/platform/initialize-sdks.ts`，由 `src/main.ts` 调用唯一入口；每个 SDK 独立投递，Phaser 首帧不等待 SDK 批次，回调、幂等状态和 SDK 初始化重试遵循[SDK 统一初始化](./sdk-initialization.md)。平台适配器封装原生 API 细节，广告位等 SDK 就绪后的业务恢复仍归所属服务；Scene、Boot/Preload 和业务构造函数不另行初始化 SDK。没有采用 SDK 时不预建空文件。
+- 每个 SDK 的初始化、回调与恢复由 `src/platform/sdks/<sdk>-sdk.ts` 分别管理，`src/main.ts` 调用 `src/platform/initialize-sdks.ts` 唯一装配入口独立投递，Phaser 首帧不等待 SDK 批次，回调、幂等状态和 SDK 初始化重试遵循[SDK 统一初始化](./sdk-initialization.md)。平台适配器封装原生 API 细节，广告位等 SDK 就绪后的业务恢复仍归所属服务；Scene、Boot/Preload 和业务构造函数不另行初始化 SDK。没有采用 SDK 时不预建空文件。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 - `modules/<module-id>/` 归属场景无关的基础服务；场景通过其公开接口调用。模块不得导入具体场景、显示层或其私有实现，场景之间也不得直接访问对方内部状态。纯规则与数据校验优先保持独立于 Phaser 显示对象，方便定向测试。
 - `platform/` 提供平台接口的实现，`game/contracts/` 定义接口，`src/main.ts` 完成注入。游戏业务不得直接导入 Capacitor 或具体平台适配器；平台实现不得依赖具体场景。Android 原生主题、Manifest 和 Activity 修改归属根级 `android/` 工程，不能放入 TypeScript 适配目录代替原生配置。

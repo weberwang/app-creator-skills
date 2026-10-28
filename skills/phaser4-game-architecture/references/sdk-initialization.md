@@ -1,11 +1,11 @@
 # SDK 统一初始化
 
-项目实际采用的 SDK 统一由 `src/platform/initialize-sdks.ts` 初始化。`src/main.ts` 在装配阶段调用唯一入口；SDK 初始化、完成回调、幂等状态和初始化重试由该文件集中维护。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK 或依赖。
+项目实际采用的 SDK 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)分文件管理：每个 SDK 使用 `src/platform/sdks/<sdk>-sdk.ts`。`src/main.ts` 在装配阶段调用 `src/platform/initialize-sdks.ts`，该入口只装配并独立投递各管理器任务。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK 或依赖。
 
 ## 唯一入口与职责
 
 - 入口只投递各 SDK 的独立任务并立即返回，不等待整批初始化。Phaser 首帧、Boot 和场景启动不等待任何 SDK 的批次完成；不得用 `await initializeSdks(...)`、全局 `allSdksReady` 或其他 SDK 启动屏障延迟游戏启动。
-- 所有实际采用 SDK 的配置校验、平台分流、初始化调用、真实完成回调处理、幂等状态、操作身份和初始化重试实现集中在本文件。按 SDK 定义私有函数与独立状态；不得只维护注册表、再把实际初始化和恢复逻辑散落到广告服务、隐私模块、Scene 或平台入口。
+- 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)划分装配入口与各 SDK 管理文件；广告服务、隐私模块、Scene 和平台入口不另建初始化状态或恢复逻辑。
 - 公共类型、纯配置、原生插件安装与必要宿主配置继续归属原有文件。平台适配器可封装原生 API 调用细节，但不在构造函数、模块导入或场景生命周期中启动 SDK，也不持有另一份初始化状态或重试器。
 - 广告加载/展示、支付、登录界面、埋点业务和隐私交互仍归各自业务模块。广告位加载恢复等 SDK 就绪后的运行期任务由所属服务持有；业务模块通过已注入的能力接口查询结果或请求单个 SDK 重试，不直接导入第三方 SDK。
 - SDK 导入不得在模块顶层产生初始化副作用。可选 SDK 的动态加载或调用失败必须在该 SDK 自己的任务中捕获，不得令共享入口或其他 SDK 任务失效。
@@ -28,11 +28,11 @@
 
 ## MAX 与 AppsFlyer
 
-MAX 初始化任务与独立隐私任务均由本文件分别投递，互不等待。MAX 真实调用及其完成回调属于 MAX 自己的初始化分支；CMP/Google UMP/ATT 的交互与授权状态由独立隐私模块处理。
+MAX 初始化任务与独立隐私任务均由统一入口分别投递，互不等待。MAX 真实调用及其完成回调属于 MAX 自己的初始化分支；CMP/Google UMP/ATT 的交互与授权状态由独立隐私模块处理。
 
 - 新 MAX 实例首次实际初始化前必须先按[广告合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md#初始化前设置-hasuserconsentfalse)调用官方插件 `setHasUserConsent(false)`，再调用 `initialize`。同实例初始化重试复用已确定配置，不再次回写 false 覆盖后续真实隐私更新；必要配置未完成时不能跳过。MAX 内建 Terms and Privacy Policy Flow 需在初始化前通过受支持的宿主配置显式关闭并核验有效原生配置；关闭流程不等于禁用广告或跳过初始化。
 - `hasUserConsent=false` 是 MAX 初始化配置，不是用户同意/拒绝回执，也不代表广告不可用。它本身不阻断 MAX 初始化、广告请求或加载重试；广告业务仍按其他真实适用的 CMP/TCF、地区、宿主和网络条件处理。
-- 项目采用 AppsFlyer 时，在同一文件登记它独立的初始化与启动任务。按锁定插件官方语义处理其自身 session-ready 条件；不得等待 MAX、MAX 隐私流程、广告加载或归因回调，MAX 也不得等待 AppsFlyer。其配置、状态和失败恢复只影响 AppsFlyer。
+- 项目采用 AppsFlyer 时，在 AppsFlyer 自己的管理文件实现独立初始化与启动任务，并由统一入口投递。按锁定插件官方语义处理其自身 session-ready 条件；不得等待 MAX、MAX 隐私流程、广告加载或归因回调，MAX 也不得等待 AppsFlyer。其配置、状态和失败恢复只影响 AppsFlyer。
 - 官方真实前置若与独立初始化目标冲突，按本文件“独立启动与真实前置”仅报告并阻断对应 SDK；不得谎报 CMP/ATT 结果、套用其他框架 API 或扩展为全局等待。
 
 ## 交付与验证

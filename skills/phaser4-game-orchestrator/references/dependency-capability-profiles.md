@@ -17,7 +17,7 @@
 
 ## SDK 初始化归属
 
-所有实际采用 SDK 的初始化调用、回调、幂等状态和初始化恢复统一放在 `src/platform/initialize-sdks.ts`，由应用装配入口一次投递；各 SDK 独立发起，不等待其他 SDK 或形成核心启动屏障。自身官方必需前置仍须核实，能力冲突只报告对应 SDK，不阻断其他分支或游戏首帧。业务能力接口及广告位运行期恢复保持模块所有权，详见[SDK 单文件独立初始化](../../phaser4-game-architecture/references/sdk-initialization.md)。
+实际采用 SDK 各自使用独立管理文件，应用装配入口 `src/platform/initialize-sdks.ts` 只分别投递各管理器任务；各 SDK 独立发起，不等待其他 SDK 或形成核心启动屏障。自身官方必需前置仍须核实，能力冲突只报告对应 SDK，不阻断其他分支或游戏首帧。业务能力接口及广告位运行期恢复保持模块所有权，详见[SDK 分文件独立初始化](../../phaser4-game-architecture/references/sdk-initialization.md)。
 
 ## API 与服务边界
 

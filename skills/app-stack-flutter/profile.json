@@ -80,6 +80,7 @@
     "flutter-ux-ui-quality"
   ],
   "sharedCapabilities": [
+    "reference-architecture-sdk-initialization",
     "ui-copy-principles"
   ],
   "capabilitySkills": [

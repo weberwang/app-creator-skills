@@ -177,10 +177,10 @@ ThreeJS 场景只提供 `slotId` 与自然中断点上下文并消费结构化�
 
 ### 初始化失败分类与独立自动重试
 
-初始化调用、完成回调、幂等、失败计数、deadline、in-flight 请求和初始化 timer 的唯一所有者是 `src/platform/initialize-sdks.ts` 中的 MAX 私有任务，按[SDK 单文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)落地；以下初始化恢复规则均由该任务执行。公开 `initialize`/`retryInitialize` 的 SDK 调用归入该文件，广告门面只转发应用装配层按公开契约注入的 MAX 任务入口，不反向导入平台文件，不初始化整个 SDK 列表，也不在广告服务内复制恢复实现。广告位 phase 只消费 SDK 初始化结果，独立的广告位加载/创建恢复仍归广告服务。
+初始化调用、完成回调、幂等、失败计数、deadline、in-flight 请求和初始化 timer 的唯一所有者是 `src/platform/sdks/max-sdk.ts` 中的 MAX 独立任务，按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)落地；以下初始化恢复规则均由该任务执行。公开 `initialize`/`retryInitialize` 的 SDK 调用归入该文件，广告门面只转发应用装配层按公开契约注入的 MAX 任务入口，不反向导入平台文件，不初始化整个 SDK 列表，也不在广告服务内复制恢复实现。广告位 phase 只消费 SDK 初始化结果，独立的广告位加载/创建恢复仍归广告服务。
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#初始化失败分类与独立自动重试)。
-- 网络超时、网络服务暂不可用和明确的原生服务瞬时错误，由统一初始化文件中 MAX 唯一的恢复任务自动重试。独立保存初始化连续失败计数、单调时钟 deadline、timer 引用和 in-flight 标记；沿用加载重试的 2/4/8/16/32/64 秒公式及抖动规则，最高 64 秒、无次数上限，直到成功、服务禁用或销毁。失败回调只登记任务，不同步递归初始化，不重新初始化其他 SDK。
+- 网络超时、网络服务暂不可用和明确的原生服务瞬时错误，由 MAX 管理文件中唯一的恢复任务自动重试。独立保存初始化连续失败计数、单调时钟 deadline、timer 引用和 in-flight 标记；沿用加载重试的 2/4/8/16/32/64 秒公式及抖动规则，最高 64 秒、无次数上限，直到成功、服务禁用或销毁。失败回调只登记任务，不同步递归初始化，不重新初始化其他 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#初始化失败分类与独立自动重试)。
 - 缺失 SDK/adapter、无效配置、平台不支持或明确策略阻断不自动重试：取消初始化恢复任务并报告原因。修正受控配置或依赖、解除策略阻断后由调用方显式 `retryInitialize()`；未修正时返回原阻断；前台、网络、宿主或隐私恢复事件不能解除该阻断或自动发起初始化。对已核实支持独立时序的 SDK/CMP 组合，初始化及其重试不受广告请求 privacy gate 约束：隐私未决、拒绝同意或 ATT 未授权都不暂停、不取消初始化任务；隐私结果只用于配置真实隐私标志与广告请求/展示策略。不满足独立时序的组合维持配置阻断，不按隐私状态变化抢跑。无法归类的错误先诊断，不凭自由文本默认无限重试，只有确认瞬时故障后才纳入自动退避。
 - SDK 初始化请求进行中才保持 `initializing` 和同一个 in-flight 请求；隐私弹窗状态不参与该判定。SDK 完成回调到达即确认成功，即使隐私流程仍在进行；隐私失败不增加初始化失败计数、不创建初始化重试 timer。只有当前 SDK 初始化请求明确失败时才按失败分类恢复，重复点击或隐私状态变化不再次 initialize。
@@ -191,18 +191,18 @@ ThreeJS 场景只提供 `slotId` 与自然中断点上下文并消费结构化�
 
 ## 初始化与隐私独立编排
 
-MAX 的实际初始化和完成/恢复处理集中在 `src/platform/initialize-sdks.ts`，与项目其他 SDK 分别独立投递；初始化入口、幂等状态和 timer 不分散到广告服务、隐私模块或场景中。游戏和其他 SDK 不等待 MAX 完成，MAX 也不等待它们；已启用聚合网络由 MAX 官方插件/adapter 自身管理，不绕过插件为每个网络另行直接初始化原生 SDK。
+MAX 的实际初始化和完成/恢复处理由 `src/platform/sdks/max-sdk.ts` 独立持有，与项目其他 SDK 分别独立投递；初始化入口、幂等状态和 timer 不分散到广告服务、隐私模块或场景中。游戏和其他 SDK 不等待 MAX 完成，MAX 也不等待它们；已启用聚合网络由 MAX 官方插件/adapter 自身管理，不绕过插件为每个网络另行直接初始化原生 SDK。
 
 1. 启动时读取受控平台配置，检查平台、当前 Activity/ViewController、环境开关、插件配置与独立时序资格；Web/小游戏直接 no-op。原生服务启用、配置有效且官方已确认当前 SDK/CMP 组合支持独立时序时，正常调用 MAX initialize，不额外添加同意隐私、CMP 完成、ATT 或 AppsFlyer 完成等等待；不得把拒绝同意本身转换为禁用 MAX。组合不支持独立时序时按上述配置阻断处理，不能绕过官方初始化前提。
 2. SDK 初始化与隐私流程是两条独立任务，不通过 Promise 串联，也不相互等待完成事件。SDK 初始化成功只由实际完成回调确认；隐私弹窗、CMP、UMP 或 ATT 的进行中、拒绝、失败、取消及重新授权如实更新对应信号，不修改已确认的初始化结果或触发初始化重试。广告请求门根据独立实际请求条件判断，不把 hasUserConsent=false 或用户拒绝直接映射为业务 blocked；只有确有其他独立限制时才保留预加载意图并暂停 load/show，限制解除后恢复广告请求。
 3. 必须在 MAX initialize 之前完成内建 Terms and Privacy Policy Flow 的关闭配置，不能仅删除弹窗调用或未经核对就假设默认关闭。[Android 官方流程](https://developers.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow/)和[iOS 官方流程](https://developers.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow/)说明：该流程需 opt-in 启用，启用后 SDK 在用户完成流程后才调用初始化完成回调。关闭只作用于 MAX 内建流程，MAX SDK 与广告服务仍保持启用，继续正常调用 initialize，并由真实完成回调确认成功。实际关闭方式按下一节核对，不套用其他框架 API、自建广告桥或伪造成功。独立隐私模块继续维护真实授权状态，关闭 MAX 内建流程不代表隐私已完成；官方页面还要求自有 CMP 组合先满足其规定的隐私前提，因此不能宣称任意 CMP 组合都可独立初始化。若锁定插件/SDK 或所选 CMP 不支持要求的独立时序，记录具体限制与官方证据并在当前任务范围解决接入组合，不擅自恢复内建流程、改成跨 SDK 串行等待或把未满足要求的配置标为通过；AppsFlyer 等其他独立 SDK 继续启动。
 4. iOS `Info.plist` 按当前 AppLovin SKAdNetwork 页面和已实际启用的每个 mediated network 生成/维护 `SKAdNetworkItems`，不能复制过期的固定清单。Android/iOS 的隐私 manifest、数据安全声明、商店隐私资料和目标地区限制同样由发布责任人核对。
 5. 初始化成功后立即通过每个启用的插页与激励视频广告位自己的服务入口投递静默预加载意图；实际 load 仍检查广告请求隐私门，未满足时保留意图，恢复后各广告位去重执行一次。初始化失败立即返回结构化错误；瞬时故障由独立任务自动退避，宿主/前台/网络条件未满足时暂停，隐私状态不阻断初始化重试，配置错误修正后显式重试，不在初始化回调里递归重试或阻塞 ThreeJS。
-6. 项目启用 AppsFlyer 时，其初始化及实际启动由统一文件中的 AppsFlyer 私有任务独立发起，不在 MAX initialize、MAX 内建隐私流程、广告 load/show 或 MAX 重试回调中执行，也不等待这些动作完成。按[官方 Cordova 指南](https://github.com/AppsFlyerSDK/appsflyer-cordova-plugin/blob/master/docs/Guides.md#init-sdk)核对锁定插件：当前 API 的 `init()` 不自动启动，在 AppsFlyer 自己的 `registerSessionReadyListener` 回调调用 `start()`，自身真实 ATT/授权条件仍遵守官方要求。MAX 失败或永久不回调时不阻断 AppsFlyer 自己的启动流程，AppsFlyer 失败或不回调时不阻断 MAX 初始化。两个 SDK 不共享启动标志、请求或重试 timer，不能以 MAX 成功代替 AppsFlyer 已启动；未采用 AppsFlyer 的项目不额外安装它。
+6. 项目启用 AppsFlyer 时，其初始化及实际启动由 AppsFlyer 独立管理文件中的任务发起，不在 MAX initialize、MAX 内建隐私流程、广告 load/show 或 MAX 重试回调中执行，也不等待这些动作完成。按[官方 Cordova 指南](https://github.com/AppsFlyerSDK/appsflyer-cordova-plugin/blob/master/docs/Guides.md#init-sdk)核对锁定插件：当前 API 的 `init()` 不自动启动，在 AppsFlyer 自己的 `registerSessionReadyListener` 回调调用 `start()`，自身真实 ATT/授权条件仍遵守官方要求。MAX 失败或永久不回调时不阻断 AppsFlyer 自己的启动流程，AppsFlyer 失败或不回调时不阻断 MAX 初始化。两个 SDK 不共享启动标志、请求或重试 timer，不能以 MAX 成功代替 AppsFlyer 已启动；未采用 AppsFlyer 的项目不额外安装它。
 
 ### 初始化前设置 hasUserConsent=false 与广告请求资格
 
-- 在 `src/platform/initialize-sdks.ts` 中，每个新 MAX 实例首次实际 initialize 前手动调用官方 `AppLovinMAX.setHasUserConsent(false)`；不是给门面、场景或 `InitConfig` 增加一个本地同名字段。设置的是布尔 `false`，不能传字符串、假设 SDK 默认已为 false，或等初始化完成才设置。调用顺序和原生实际接收状态应在目标项目验证。
+- 在 `src/platform/sdks/max-sdk.ts` 中，每个新 MAX 实例首次实际 initialize 前手动调用官方 `AppLovinMAX.setHasUserConsent(false)`；不是给门面、场景或 `InitConfig` 增加一个本地同名字段。设置的是布尔 `false`，不能传字符串、假设 SDK 默认已为 false，或等初始化完成才设置。调用顺序和原生实际接收状态应在目标项目验证。
 - [官方 Cordova 隐私说明](https://support.applovin.com/en/max/cordova/overview/privacy)明确提供“设置 false → 初始化 SDK → 请求广告”的调用方式；[官方 JS 实现](https://github.com/AppLovin/AppLovin-MAX-Cordova/blob/master/plugin/www/applovinmax.js)的 setter 不返回完成 Promise，也不接收完成回调。不能用 `await setHasUserConsent(...)` 假装等待原生配置生效；按插件真实调用语义在 initialize 前设置，并在目标项目通过初始化日志的 Privacy States / Has User Consent 或 Mediation Debugger 核对实际值为 false。
 - 同一实例的重复启动入口复用已有初始化请求/结果，不重复执行 SDK 列表或覆盖后续真实隐私更新；同一实例瞬时失败后的恢复复用已确定的配置，未完成的必要配置不能跳过。只有创建新原生实例并首次初始化时，才重新落实本工作流要求的初始 false；同实例的自动/手动重试、状态查询和回调重放不再次回写 false 覆盖后续真实更新。
 - `hasUserConsent` 与广告请求资格分开保存：`false` 不表示 SDK 未就绪、广告禁用、无填充或必须等待同意。在 SDK 初始化成功、宿主/网络/前台、广告位与格式等条件满足，且没有其他独立实际限制时，privacy gate 为 ready，全屏预加载、Banner 按需加载、加载重试和就绪后的展示照常执行。禁止通过 `if (!hasUserConsent) return`、将 false 映射为 pending/blocked、等待该值变 true 或取消既有恢复任务来间接阻止广告请求。
@@ -292,7 +292,7 @@ Google AdMob 的 Google UMP/CMP 消息配置、IAB TCF 与实际聚合网络覆�
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
-- 核对 MAX 实际初始化、完成回调和初始化恢复只在 `src/platform/initialize-sdks.ts` 实现；广告门面的 initialize/retryInitialize 仅转发 MAX 私有任务，广告服务不持有第二套初始化请求、计数或 timer。该文件同时启用另一个测试 SDK 时，任一任务同步抛错、初始化失败或永不回调，都不阻止另一个发起/完成或游戏首帧；单独重试 MAX 不重新启动其他 SDK。
+- 核对 MAX 实际初始化、完成回调和初始化恢复只在 `src/platform/sdks/max-sdk.ts` 实现；广告门面的 initialize/retryInitialize 仅转发 MAX 私有任务，广告服务不持有第二套初始化请求、计数或 timer。统一入口同时投递另一个测试 SDK 的管理任务时，任一任务同步抛错、初始化失败或永不回调，都不阻止另一个发起/完成或游戏首帧；单独重试 MAX 不重新启动其他 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
 - 使用假的官方插件记录调用顺序：新 MAX 实例首次 initialize 之前必须先收到布尔 `false` 的 setHasUserConsent 调用；SDK 真正完成前不能 load。完成后保持 false，其他实际条件满足且没有独立阻断时，privacy 为 ready，全部启用全屏广告位各发起一次预加载，Banner 仍只在展示请求时创建并加载；模拟加载失败后仍按原任务重试，实例就绪后允许展示，不等待值变 true，也不返回仅由 false 产生的 privacy 错误或 Toast。

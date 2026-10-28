@@ -81,6 +81,7 @@
     "threejs-game-ui-layout"
   ],
   "sharedCapabilities": [
+    "reference-architecture-sdk-initialization",
     "ui-copy-principles",
     "visual-atomic-contract",
     "visual-imagegen-format",

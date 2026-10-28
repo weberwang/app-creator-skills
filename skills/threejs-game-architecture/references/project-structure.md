@@ -46,7 +46,7 @@ game-project/
 │   │   │   └── pause-menu/          # 弹窗自身控制、UI、布局和生命周期
 │   │   └── shared/                  # 已满足共享条件的实体、UI 或纯函数
 │   └── platform/
-│       ├── initialize-sdks.ts        # 已采用 SDK 的唯一初始化文件，各 SDK 独立启动与恢复
+│       ├── initialize-sdks.ts        # SDK 装配入口；sdks/<sdk>-sdk.ts 分别管理各 SDK
 │       ├── web/                     # 浏览器可见性、存储等适配
 │       ├── android/                 # 仅采用 Android 原生宿主时创建
 │       └── ios/                     # 仅采用 iOS 原生宿主时创建
@@ -84,7 +84,7 @@ game-project/
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 - `modules/<module-id>/` 归属场景无关的基础服务；场景通过其公开接口调用。模块不得导入具体场景、显示层或其私有实现，场景之间也不得直接访问对方内部状态。纯规则与数据校验优先保持独立于 ThreeJS 显示对象，方便定向测试。
 - `platform/` 默认只实现浏览器能力，`game/contracts/` 定义需要的平台接口，`src/main.ts` 完成注入。只有目标渠道明确需要原生宿主时才创建 Capacitor、Android 或 iOS 工程及适配器；业务不得直接导入原生插件或平台适配器。原生主题、Manifest 和 Activity 修改归属对应宿主工程。
-- 已采用 SDK 的全部初始化调用、完成处理、幂等和初始化重试集中在 `src/platform/initialize-sdks.ts`，按[SDK 单文件独立初始化](./sdk-initialization.md)由装配入口一次投递，各 SDK 之间无前置依赖；无 SDK 时不创建空文件。各平台与业务适配器不得另建 SDK 初始化实现，游戏不等待 SDK 批次完成。
+- 已采用 SDK 的初始化调用、完成处理、幂等和重试由 `src/platform/sdks/<sdk>-sdk.ts` 分别管理，按[SDK 分文件独立初始化](./sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 装配入口分别投递，各 SDK 之间无前置依赖；无 SDK 时不创建空文件。各业务适配器不得另建 SDK 初始化实现，游戏不等待 SDK 批次完成。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 
 ## 资源、命名与产物

@@ -1,11 +1,11 @@
 # SDK 统一初始化
 
-项目实际采用的第三方 SDK 统一由 `assets/scripts/platform/initialize-sdks.ts` 管理。唯一应用装配入口调用该模块并分别投递 SDK 任务；应用装配组件可以由启动场景承载，但启动场景不负责具体场景业务初始化。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK 或依赖。
+项目实际采用的第三方 SDK 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)分文件管理：每个 SDK 使用 `assets/scripts/platform/sdks/<sdk>-sdk.ts`，`assets/scripts/platform/initialize-sdks.ts` 只负责装配并独立投递各管理器任务。唯一应用装配入口调用该模块；应用装配组件可以由启动场景承载，但启动场景不负责具体场景业务初始化。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK 或依赖。
 
 ## 唯一入口与职责
 
 - 入口只投递各 SDK 的独立任务并立即返回，不等待整批初始化。Creator 首帧、Boot 和场景启动不等待 SDK 初始化批次；不得使用等待全部 SDK 的 Promise 门、全局 `allSdksReady` 或其他启动屏障。
-- 所有已采用 SDK 的配置校验、平台分流、初始化调用、真实完成回调、幂等状态、操作身份与初始化重试由该文件集中维护。每个 SDK 使用独立状态和私有任务；不得只放注册表，再把初始化或恢复逻辑散落到广告服务、隐私模块、Scene、Component 或平台入口。
+- 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)划分装配入口与各 SDK 管理文件；广告服务、隐私模块、Scene、Component 和平台入口不另建初始化状态或恢复逻辑。
 - 公共类型、纯配置、原生插件安装和必要宿主配置继续归属原有文件。平台适配器可以封装原生 API 调用细节，但不得在构造函数、模块导入或场景生命周期中自行启动 SDK，也不得持有第二份初始化状态或重试器。
 - 广告加载/展示、支付、登录界面、埋点业务和隐私交互仍由各自业务模块管理。SDK 就绪后的广告位加载恢复等运行任务由广告服务持有；业务模块通过已注入的能力接口读取结果或请求对应 SDK 的单独重试。
 - SDK 导入不得在模块顶层产生初始化副作用。可选 SDK 的动态加载或调用失败必须在该 SDK 自己的任务中捕获，不得影响共享入口或其他 SDK 任务。
@@ -32,7 +32,7 @@ MAX 初始化任务和真实隐私状态处理由不同模块分别投递，互�
 
 - 新 MAX 实例首次实际初始化前，按[广告合同](../../cocos-game-ad-integration/references/applovin-max-contract.md#max-隐私配置与初始化时序)调用锁定插件所支持的 `setHasUserConsent(false)`；同实例的初始化重试复用已确定配置，不再次写回 `false` 覆盖后续真实隐私更新。MAX 内建 Terms and Privacy Policy Flow 必须通过已支持的宿主或原生配置在初始化前显式关闭，并核验最终生效配置。
 - `hasUserConsent=false` 是 MAX 初始化配置，不是用户同意或拒绝回执，也不代表广告不可用。它本身不阻断 MAX 初始化、广告请求或加载恢复；广告业务仍按其他真实适用的 CMP/TCF、地区、宿主和网络条件处理。
-- 项目采用 AppsFlyer 时，在同一文件登记独立初始化任务。按锁定插件官方语义处理 AppsFlyer 自身的 session-ready 条件；不得等待 MAX、广告加载或归因回调，MAX 也不得等待 AppsFlyer。配置、状态和失败恢复只影响 AppsFlyer。
+- 项目采用 AppsFlyer 时，在 AppsFlyer 自己的管理文件实现独立初始化任务，并由统一入口投递。按锁定插件官方语义处理 AppsFlyer 自身的 session-ready 条件；不得等待 MAX、广告加载或归因回调，MAX 也不得等待 AppsFlyer。配置、状态和失败恢复只影响 AppsFlyer。
 - 官方真实前置若与独立初始化目标冲突，按“独立启动与真实前置”仅报告并阻断对应 SDK；不得谎报 CMP/ATT 结果、套用其他框架 API或扩展为全局等待。
 
 ## 交付与验证
