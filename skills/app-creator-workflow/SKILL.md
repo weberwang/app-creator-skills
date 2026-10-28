@@ -9,6 +9,8 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 ## 进入任务
 
+技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
+
 Unity、Cocos 新增显示内容时，读取[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)并同步更新正式可编辑源，普通增量任务同样适用。
 
 1. 先读项目约束、已有控制记录、技术版本与已有进程；不得擅自创建分支或 worktree。发现可复用的引擎、浏览器或开发服务后复用，不能为了验证另启实例。若项目还有旧栈总控或编排技能，明确本次只使用公共总控，不运行两套状态机，也不静默把旧批准转换为新记录。
