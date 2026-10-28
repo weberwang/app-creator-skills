@@ -2,6 +2,27 @@
 
 本规则适用于正式 Cocos Scene、世界对象、Canvas UI、常驻 HUD 和独立 `DISPLAY_LAYER`。V2 冻结分层和布局锚点语义，V3 将它们写入合同，V4 按合同验收资源，V5 在正式场景验证遮挡与输入。Scene/Node/Component/Prefab 操作遵循[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)。
 
+## Scene 与 Prefab 显示结构
+
+先按[公共显示结构约定](../../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)确定宿主、内容与共享实现，再建立真实 Scene/Node 树。以下为职责示例，按项目已有 Camera/Canvas 路线取用，不要求固定根名或创建空层：
+
+```text
+实际 Scene
+├── 世界根 → 地图／角色／世界特效（有世界内容时）
+├── Canvas／UI 根
+│   ├── 装饰背景
+│   └── 安全区与内容根
+│       ├── 场景自有页面／HUD → 区域 → 功能组件
+│       └── 导航组件实例（实际需要时）
+└── 瞬态层挂载入口 → 独立 DISPLAY_LAYER 的 Prefab 实例
+```
+
+瞬态层入口须位于适用的实际 Canvas/UI 渲染空间；示例的职责分支不要求它脱离 Canvas，也不自动保证其绘制顺序。Prefab 是组件或显示层的可复用实现，实例实际挂载在宿主下，交付与状态所有权仍按工作项划分。面板内部由功能组件协调底板、文本、图标与命中，不按素材类型平铺。
+
+Camera、世界分支与 Canvas 分别说明坐标、可见范围和输入命中；父级变换、Widget、Layout 及脚本对同一布局属性只能有一个权威驱动者。跨场景常驻节点仅在确需持续生命周期时使用，记录创建、重入、防重复和退出责任，不能把主页私有节点整体常驻以复用导航。共享路由通过公开接口驱动实际场景与显示层，不直接操作其他场景私有节点。
+
+V1 用实际 Node/Prefab 或可选白盒验证进入、切换、弹窗打开关闭和适用的输入恢复；V3 将稳定节点身份、真实父级和布局参照落实在现有材料中，V5 从正式 Scene 读回并验证重入、层序和命中。编辑器管理的结构仍通过已连接工具创建、保存和读回，不手写序列化资产。
+
 ## 布局锚点与 Creator 锚点
 
 布局合同中的 `origin`、`layout_anchor`、`self_anchor`、`reference_anchor` 是工作流字段，不是 Creator API。对具有 `UITransform` 的渲染 Node，实际锚点由 `UITransform.anchorPoint` 或 `setAnchorPoint(...)` 表达；其 X/Y 是归一化值，Y 从底边向上计。左上原点布局坐标先经过[Cocos 坐标与布局适配](./cocos-adapter.md)转换，再写入 Node 局部位置。

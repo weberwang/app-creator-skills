@@ -2,6 +2,8 @@
 
 ## Creator 原生 UI
 
+代码结构之外，正式 Scene/Prefab 还须按[显示结构与层级](../../cocos-game-ui-layout/references/display-object-layering.md#scene-与-prefab-显示结构)组织世界、Canvas、页面/HUD、导航和瞬态层的实际挂载、输入及生命周期；在已有技术设计与 V3 材料中落实，不另建结构审批链。
+
 根据目标引擎验证 `Canvas`、`Widget`、`UITransform`、节点/组件布局与坐标行为。构建布局合同需记录锚点、偏移、父容器、Widget 对齐、设备可用区、显示方向、逻辑尺寸和点击目标所有者。Widget、Creator Layout 与代码控制器可能竞争同一节点的位置/尺寸；每个属性只指定一个权威驱动者。
 
 普通图片默认使用已导入 SpriteFrame 的真实原始尺寸，并读回 ContentSize。切片类型与 UI 九点锚定无关；只在源图结构支持时使用九宫格，记录源尺寸和四边切片值，不用 `STRETCH` 或 Widget 静默拉伸单图主体。布局、资源导入和实际运行外观分别验证。

@@ -17,6 +17,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 
 1. 先读取现有工程结构、版本、构建入口和已有约定，画出现有模块、持久化、外部服务及关键运行时之间的依赖。
 2. 按[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)将需求分配到唯一所有者模块，并写明职责、输入输出、状态所有者、公开接口和依赖边界。
+   涉及可见内容时，同时按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)规划实际显示树，明确导航宿主、内容槽、页面/世界、常驻 UI、瞬态层及组件的挂载、输入和生命周期；分别交付代码组织与显示组织，沿用当前栈原生结构和已有合同。
 3. 沿主要用户流程或游戏事件追踪数据产生、校验、存储、观察、生命周期与恢复责任；具体数据流约定见[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)。
 4. 按[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)比较复杂度、性能、测试性、迁移成本和平台限制，记录决策依据、被拒方案、风险与复审条件。
 5. 按[协作与交接](../app-creator-workflow/references/handoffs.md)为并行实施拆出有序交接包，明确文件/对象所有权、接口冻结点、先决任务、可独立验证的结果及集成责任。

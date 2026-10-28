@@ -14,6 +14,8 @@
 
 ## 世界空间 vs HUD
 
+按[世界树与 HUD 显示结构](../../threejs-game-ui-layout/references/display-object-layering.md#世界树与-hud-显示结构)分别交付 Object3D 世界树和实际 HUD/DOM 树，说明挂载、组合、输入及资源释放责任，不能以代码目录或单一场景图代替全部显示结构。
+
 真实游戏世界用 `Scene`、`Object3D`、Camera、单位、轴向、层级和世界碰撞描述。记录视野角/正交视口、near/far、相机阻尼、viewport 尺寸、render size、Canvas CSS size、设备像素比、移动端最大 DPR 策略、阴影、景深和透明排序。
 
 屏幕 UI 是 Camera 的 overlay/单独 Scene、DOM 页面、仿世界 UI 的一个真实画面目标选择。固定大小 HUD 和世界空间交互物不能复用同一条坐标或缩放合同。避免在屏幕尺寸或 DPR 变化时再次乘 DPR 把逻辑尺寸放大；屏幕输入只有经真实事件映射到 Viewport、Raycaster 或具体 World Position 后才成立。

@@ -2,6 +2,8 @@
 
 ## 游戏显示空间
 
+按[Scene 与容器显示结构](../../phaser4-game-ui-layout/references/display-object-layering.md#scene-与容器显示结构)同时规范实际 Display List/Container、Camera 与 DOM 分支，明确导航、内容、HUD、独立瞬态层和功能组件的组织；代码目录不能代替显示树。
+
 分别记录 Phaser `gameSize`、Renderer size、Camera viewport/world view、CSS 宿主尺寸和 Canvas backing size。DOM 的 CSS 盒、WebGL framebuffer 和 Phaser 世界坐标不是同一单位。根据真实 resize 行为更新 scale manager、场景相机、布局根和缓存的输入边界。DPR 是设备和窗口运行事实，不是页面静态坐标合同。
 
 把 Camera 视口、zoom、scroll、世界原点、画布留边模式和游戏交互区域统一规划。选择 FIT/EXPAND/RESIZE、横纵比和圆角裁切策略时，用实际目标尺寸、屏幕方向、动态拉伸与文本要求说明取舍。不能假设不同布局策略能同时满足固定画面和完整世界可见。
