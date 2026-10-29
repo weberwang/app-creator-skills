@@ -4,6 +4,7 @@
 
 ## 当前控制记录
 
+- 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：标题、按钮等单行自动缩放，长描述自动换行，各样式设置具体最小可读字号；更新已有布局规格与正式配置，并在当前验证中覆盖内容极值及字体放大。
 - 新增显示元素时，执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，先明确父级、定位参照和尺寸策略，再在正式源中实现并验证；局部功能实施不豁免既有布局及视觉阶段要求。
 - 项目采用可视化编辑器时，遵守[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)：无明确功能需要，程序不得覆盖正式源已设定的位置与布局关系；功能性修改须明确依据、作用范围和结束策略。
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。

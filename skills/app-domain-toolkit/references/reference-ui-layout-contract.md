@@ -147,7 +147,11 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`dynamic_content.localization` 记录默认语言、最长文案、程序化文本开关、必需语言、增长、换行与截断策略。`programmatic_text=true` 时，`required_languages` 与项目已确认的语言清单一致；新项目默认简体中文 `zh-CN`，英语 `en` 等其他语言可选，既有项目沿用已确认的语言范围；`wrap` 必须为每种必需语言独立声明 `single-line` 或 `wrap`，允许部分语言单行、部分语言换行；`truncate_policy=forbid`、`growth=locale-adaptive`，并通过 `display_fit_evidence` 绑定全部所选语言的真实字形宽度、字体回退、基线、断行和容器适配证据。`copy_style=concise-gameplay` 要求文案在语义准确、玩家可理解的前提下保持短促、游戏化；倍率使用 `multiplier_format=x{value}`，如三倍奖励直接显示 `x3`，数值变化优先使用 `+10`、图标+数值等熟悉表达，不使用可由符号代替的解释性长句。空间不足时应遵守该语言的行布局策略，改短文案、调整字距/字号、扩展容器或合理换行，不能靠截断通过。`text_scaling` 记录默认和最大字号及 `strategy`。无关键动作的静态 HUD 允许 `key_actions: []`；一旦声明关键动作，其 ID 必须引用区域，状态至少包含 `default`、`disabled`、`submitting` 和 `completed`，并声明 `text_truncation`。关键动作不能使用不可恢复的单行省略。`reflow_events` 至少覆盖 `text-change`、`state-change`、`resize` 和 `safe-area-change`；合同还应覆盖动态数字、成员数量、创建/隐藏/销毁后的重排，以及按下、错误等扩展状态。
+`dynamic_content.localization` 记录默认语言、最长文案、程序化文本开关、必需语言、增长、换行与截断策略。`programmatic_text=true` 时，`required_languages` 与项目已确认的语言清单一致；新项目默认简体中文 `zh-CN`，英语 `en` 等其他语言可选，既有项目沿用已确认的语言范围；`wrap` 为每种必需语言记录 `single-line` 或 `wrap`，按[文本宽度、缩放与换行](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)根据用途确定，标题/按钮等保持单行自动缩放，长描述自动换行，各语言沿用同一用途；`truncate_policy=forbid`、`growth=locale-adaptive`，后者不授权文本随内容撑宽，并通过 `display_fit_evidence` 绑定全部所选语言的真实字形宽度、字体回退、基线、断行和容器适配证据。
+
+固定文本宽度在现有区域/节点布局中声明，设计字号、具体最小可读字号及排版模式在已有文本规格和正式组件配置中记录。沿用 `text_scaling` 的默认/最大字号和 `strategy` 记录，并将最小字号依据与实际测量纳入现有规格及 `display_fit_evidence`，不向未支持字段的机器合同臆加属性。单行超宽只在字号下限内缩小，达到下限仍放不下时调整文案或正式布局并重验；长描述固定宽度换行并增高或滚动，不以持续缩小或裁切塞入固定高度。`copy_style=concise-gameplay` 要求文案在语义准确、玩家可理解的前提下保持短促、游戏化；倍率使用 `multiplier_format=x{value}`，如三倍奖励直接显示 `x3`，数值变化优先使用 `+10`、图标+数值等熟悉表达，不使用可由符号代替的解释性长句。
+
+无关键动作的静态 HUD 允许 `key_actions: []`；一旦声明关键动作，其 ID 必须引用区域，状态至少包含 `default`、`disabled`、`submitting` 和 `completed`，并声明 `text_truncation`。关键动作不能使用不可恢复的单行省略。`reflow_events` 至少覆盖 `text-change`、`state-change`、`resize` 和 `safe-area-change`；合同还应覆盖动态数字、成员数量、创建/隐藏/销毁后的重排，以及按下、错误等扩展状态。
 
 > 适用技术栈：cocos、phaser、threejs。
 
