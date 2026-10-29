@@ -29,6 +29,8 @@ Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑�
 
 ## 关键边界
 
+- 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
+- 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。
 - Unity/Creator/Web UI 与 Flutter Widget 的布局系统并不相同；只使用当前栈匹配的原生适配模式。
 - 效果图供目标确认，不能把按钮、动态文案和交互状态烘焙成不可访问的背景图。
