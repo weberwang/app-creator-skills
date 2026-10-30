@@ -349,6 +349,8 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 <a id="mode-adaptive-layout-implementation--adaptive-layout-implementation"></a>
 ### Adaptive Layout Implementation
 
+文本任务必须读取[Flutter 文本属性与配置](text-layout.md)，落实真实宽度约束、Text 行模式、TextScaler、有界字号能力缺口及正文行数继承检查。
+
 每个页面只维护一个 `docs/design/pages/<page-name>/layout-spec.yaml`。以 `phase: sketch` 表达语义结构与关系证据，不要求草图画面；仅明确要求 exact 时把同一文件升级为 `phase: fidelity`。`phase` 不是运行时状态或合并信号。
 
 <a id="mode-adaptive-layout-implementation--流程"></a>

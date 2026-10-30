@@ -615,6 +615,8 @@ pending → generating → generated → validating → packing → packed → r
 <a id="mode-cocos-game-ui-layout--cocos-creator-3x-游戏-ui-布局"></a>
 ### Cocos Creator 3.x 游戏 UI 布局
 
+文本任务必须读取[Label 组件属性与配置](text-layout.md)，落实固定宽度、单行 SHRINK、正文增高、实际字号检查及原生最小字号缺口；不能仅以节点已显示作为完成依据。
+
 正式渲染 Node、Canvas UI 与独立显示层统一遵守[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)：具有 `UITransform` 的节点默认使用中心 `anchorPoint=(0.5, 0.5)`；例外逐对象记录原因并换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。
 
 UI 布局参照按[场景与弹窗尺寸参照](../../cocos-game-ui-layout/references/layout-hierarchy.md#场景与弹窗尺寸参照)统一确定：全屏 UI 的父级是场景，按场景逻辑尺寸相对布局；弹窗有底板时，内容按底板对应功能容器的宽高相对布局；弹窗没有底板时，按宿主场景逻辑尺寸相对布局。弹窗底板容器本身相对场景定位，简单结构中底板 Sprite 节点可直接兼任容器根；全屏装饰背景仍是独立显示层。安全区约束关键内容的可见范围，不替换这三种尺寸参照。

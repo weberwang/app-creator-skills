@@ -563,6 +563,8 @@ pending → generating → generated → validating → packing → packed → r
 <a id="mode-phaser4-game-ui-layout--phaser-4-游戏-ui-布局"></a>
 ### Phaser 4 游戏 UI 布局
 
+文本任务必须读取[Phaser 文本属性与配置](text-layout.md)，区分 Text 与 BitmapText，明确固定盒宽和换行宽度、字号适配缺口、中文断行及完整字形测量。
+
 正式显示对象、UI 与独立显示层统一遵守[显示对象锚点与显示层分层](../../phaser4-game-ui-layout/references/display-object-layering.md)：可设置原点的对象默认显式使用中心 `(0.5, 0.5)`；例外逐对象记录原因与换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。

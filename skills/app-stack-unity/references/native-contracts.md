@@ -747,6 +747,8 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 <a id="mode-unity-game-visual-assets--unity-视觉与资源接入"></a>
 ### Unity 视觉与资源接入
 
+文本任务必须读取[Unity 文本组件属性与配置](text-layout.md)，按实际 TMP 包或 UI Toolkit/Unity 版本设置单行自动字号、上下限、正文换行与尺寸所有权，并检查真实字形而非只看溢出模式。
+
 本角色消费 `$app-workflow-control` 的 Work Item 和 `$app-creator-workflow` 的场景计划。视觉生产使用 V0-V5；A0-A6 只表示动作风险，F2 记录领域质量，F3 记录 Unity 工程验证。
 
 <a id="mode-unity-game-visual-assets--输入与边界"></a>

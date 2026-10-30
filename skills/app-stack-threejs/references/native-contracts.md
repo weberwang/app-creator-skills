@@ -537,6 +537,8 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 <a id="mode-threejs-game-ui-layout--threejs-游戏-ui-布局"></a>
 ### three.js 游戏 UI 布局
 
+文本任务必须读取[Three.js 文本属性与配置](text-layout.md)，区分 DOM 屏幕 UI、CSS2D 与世界字形，明确 CSS 固定宽度、有界字号适配缺口和字体加载后的真实测量。
+
 正式 `Object3D`、UI 与独立显示层统一遵守[显示对象锚点与显示层分层](../../threejs-game-ui-layout/references/display-object-layering.md)：three.js 没有通用二维 `origin` 属性；`Sprite.center` 可显式使用中心 `(0.5, 0.5)`，模型枢轴由几何局部坐标或父级 `Group` 表达，例外逐对象记录原因与换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
