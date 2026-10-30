@@ -10,6 +10,8 @@
 
 ## 状态与页面路由
 
+涉及技术设计、新增或替换插件时，按[插件与技术方案选型](plugin-selection.md)和[依赖能力档](../../flutter-project-init/references/dependency-profiles.md)执行；版本、平台准入、替代方案与验证结论写入同一技术设计记录。
+
 第三方 SDK 按[独立管理与初始化规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)接入；独立文件放在实际拥有该能力的 feature，确属跨功能基础能力时可使用 `lib/core/integrations/<sdk>/<sdk>_manager.dart`。应用装配入口通过既有依赖注入方式调用，不把具体 SDK 实现放进 `main.dart` 或页面 Widget。
 
 一项用户任务只选一个实际状态所有者，说明一次状态更新怎样触发界面更新与失败处理。简单局部状态可以使用 StatefulWidget 等现有机制；只有跨 Widget 共享、可测试注入或恢复生命周期的需求才选状态管理。按已选功能档选择 DI、HTTP/JSON 和代码生成；每个依赖说明替代方案与平台/构建风险。

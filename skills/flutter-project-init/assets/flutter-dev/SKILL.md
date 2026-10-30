@@ -7,7 +7,7 @@ description: Use for implementation, refactoring, or debugging Flutter code afte
 
 ## Overview
 
-Use this project-local skill for Flutter implementation. Prefer SDK features, existing dependencies and project primitives, and the smallest state surface that satisfies the task.
+本技能用于 Flutter 代码实现。命中项目选型规范的插件触发边界后，优先复用已有插件或采用通过准入的成熟插件，直接使用其 API 与生成机制；未触发的简单局部逻辑使用 SDK，业务状态保持最小范围。
 
 ## FVM Environment Rule
 
@@ -21,19 +21,24 @@ Replace this section during project initialization with only the profiles and pa
 - Data/API profile: optional JSON annotations and generation for API DTOs or persisted data.
 - Complex-domain profile: optional immutable/union generation and typed failure composition.
 - UI-token profile: optional named size-token mapping, never structural responsive layout.
+- 路由、网络、存储、平台与服务档：仅保留技术设计实际采用的包和 owner，初始化时删去未启用项。
 
 Unlisted packages and profiles are not implementation requirements.
+
+新增或替换依赖前，从项目根目录读取 `.agents/skills/app-stack-flutter/references/plugin-selection.md` 及 `.agents/skills/flutter-project-init/references/dependency-profiles.md`；技能安装位置不同则按实际路径定位。版本、平台矩阵、原生配置、权限、SDK 生命周期、安全与服务费用风险统一记录到技术设计；常规选型记录不要求新增人工批准流程。
 
 ## Dependency Approval Rule
 
 Do not add a new dependency until the task records:
 
 1. Which existing package or project primitive was checked first.
-2. Why the SDK, existing dependencies, and active profiles cannot solve the requirement.
+2. 命中的能力触发条件、采用插件的收益与准入结论；不要求先证明 SDK 无法手写实现。
 3. The approved artifact path in `docs/architecture/technical-design.md` or the task brief.
 4. The package's runtime, size, maintenance, and platform risk.
 
 ## Implementation Rules
+
+- 每次实现先判断插件触发边界；命中后使用对应插件能力，只编写产品规则和必要适配，不重建通用基础设施。选择自研时先在技术设计或任务中记录候选不可用的证据、最小实现范围、维护 owner 和验证方式。
 
 - When the core profile is active, follow its selected state/lifecycle package conventions; otherwise use the simplest SDK or existing-project state boundary.
 - When the data/API profile is active, generate serialization for the DTOs and persisted formats explicitly covered by the design.
@@ -55,7 +60,7 @@ When an approved profile uses generated Dart code, use its annotations and `buil
 
 Before creating or changing state, answer:
 
-1. Is this local visual state? Use hooks.
+1. 局部视觉状态优先 SDK；只有已采用 hooks 且有生命周期组合需求时使用 hooks。
 2. Is this shared app or async state? Use the active core-profile state solution, if any.
 3. Is this derived from existing state? Use selectors, computed providers, or local variables.
 4. Can this rebuild less? Use `select`, smaller providers, or smaller widgets.

@@ -118,8 +118,8 @@ Create the smallest practical technical design that supports the approved produc
 <a id="mode-flutter-tech-design--dependency-capability-bias"></a>
 #### Dependency Capability Bias
 
-- Prefer SDK features, existing packages, and boring well-supported dependencies.
-- Use [dependency-profiles.md](../../flutter-project-init/references/dependency-profiles.md) to enable only needed core, data/API, complex-domain, and UI-token profiles.
+- 代码实现命中[插件优先触发边界](plugin-selection.md#插件优先的实现触发边界)后，优先复用已有插件或使用通过准入的成熟插件，不以 SDK 可以手写为由重复实现；未触发的简单局部逻辑使用 SDK，自研先记录例外证据。
+- 技术设计、新增依赖和替换插件按[插件与技术方案选型](plugin-selection.md)执行；从[依赖能力档](../../flutter-project-init/references/dependency-profiles.md)选择实际需要的状态、路由、网络、数据、存储、平台和服务能力，不默认安装整套。
 - Record why each package/profile is enabled and which lighter option was rejected.
 - Require annotations and generation only for actually adopted generated-model/serialization profiles.
 - Do not add offline sync, plugin abstraction, multi-backend support, or a custom design engine unless the MVP requires it.
@@ -302,6 +302,7 @@ Do not approve the Release lane while any store, privacy, account, payment, cras
 
 - F1：范围、风险、验收追踪、输入指纹和 F0 证据；只选择实际触发的 Product、QA、technical、visual、Release 通道。
 - F2：只读检查被分配的专业事实；UI 变化检查功能语义、已确认目标和适用资产与测量，Code Sketch 仅在选用时检查，完整同视口 parity 仅在 exact 时要求。
+- 依赖或插件变更触发 technical/QA 通道时，按[选型规范](plugin-selection.md)检查版本来源、平台准入、SDK owner、安全边界和真实验证范围；不为无关变更启动全插件审计。
 - F3：确认有效通道覆盖当前 snapshot、阻塞已关闭、平台证据与集成条件满足；不重做 F2。
 
 按需复用已有设计、服务和[关键对齐门禁](../../adaptive-layout-implementation/references/critical-alignment-gate.md)。低保真截图只证明结构；[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
@@ -425,12 +426,7 @@ Use FVM as the only Flutter and Dart execution environment. Run commands through
 <a id="mode-flutter-project-init--dependency-profiles"></a>
 #### Dependency Profiles
 
-Read [references/dependency-profiles.md](../../flutter-project-init/references/dependency-profiles.md). Select only the profiles justified in `docs/architecture/technical-design.md`:
-
-- Core: shared/async state, dependency injection, and optional hook-managed lifecycle.
-- Data/API: API DTOs or persisted JSON and their generation tooling.
-- Complex domain: generated immutable/union models or typed failure composition.
-- UI token: optional named size-token mapping; never structural responsive layout.
+按[插件与技术方案选型](plugin-selection.md)核对已接受的技术设计，再从[依赖能力档](../../flutter-project-init/references/dependency-profiles.md)安装实际需要的项。能力档涵盖核心、路由、网络、数据/API、复杂领域、UI token、存储、平台和服务；逐项记录版本来源、平台配置、实现 owner 与未覆盖证据。候选清单只在能力档维护。
 
 Do not install Riverpod, hooks, Freezed, fpdart, JSON generators, or ScreenUtil merely because initialization runs. Record each enabled item, reason, rejected lighter option, and package risk.
 

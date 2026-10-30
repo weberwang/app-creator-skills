@@ -18,7 +18,7 @@
     "核验 SafeArea/system padding、键盘插入和 focus、textScaler 本地化长文案、滚动 owner 和不可截断的关键动作文案。",
     "布局规格同时声明宽度/高度断点、同宽不同高、方向变化、默认与放大文字、安全区和关键交互 Widget test，比较元素间语义关系而非只匹配截图绝对坐标。",
     "页面先实现并验证功能和语义，草图按风险选择，再确认视觉目标。页面截图由用户人工检查；图像源不替代可访问、真实可滚动或可响应式的 Widget 树。",
-    "依赖按所需能力组合；简单局部状态优先 Flutter 内置机制，不为少数模型、一个 API 或一个错误分支添加整套依赖。",
+    "代码实现按 references/plugin-selection.md 的触发边界优先采用通过准入的插件；未触发的简单局部逻辑使用 SDK，自研须记录例外证据；依赖按能力组合，不因一个 API 或模型安装整套。",
     "运行 `fvm flutter analyze`、`fvm flutter test` 和最小受影响验证；只有构建平台或打包问题时再运行对应版本 Flutter build。"
   ],
   "evidenceRequirements": {

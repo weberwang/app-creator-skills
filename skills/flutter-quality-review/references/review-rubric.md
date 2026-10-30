@@ -22,7 +22,9 @@
 - Widgets are focused and not oversized.
 - Shared UI primitives are reused.
 - Existing plugins and primitives are preferred before new dependencies.
+- 代码实现命中插件触发边界时，检查是否实际采用插件 API/生成机制；若自研，须有候选不可用的具体证据、最小范围与验证记录，不接受仅以“SDK 也能写”为理由重复建设通用能力。
 - Only dependency profiles actually enabled by the technical design are required, and each adopted package has an explicit capability reason.
+- 依赖或插件变更时按[选型规范](../../app-stack-flutter/references/plugin-selection.md)检查替代方案、来源日期、锁定版本、平台配置、SDK owner、安全与费用边界；mock、构建与实际平台运行证据分别标注，不用单平台或 `pub get` 推断全部可用。
 - Annotation-based generation and `build_runner` are checked only when the adopted data/API or complex-domain profile uses them.
 - State changes are minimal and rebuild scope is controlled.
 - Async work handles loading, error, retry, and cancellation where relevant.
