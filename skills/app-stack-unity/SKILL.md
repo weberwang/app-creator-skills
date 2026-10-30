@@ -12,6 +12,8 @@ description: 在已选用 Unity 的游戏或交互项目中制定与实现 Unity
 
 Unity 6 与 URP 是此规范的默认起点；尊重项目已安装版本和配置。运行时 UI 默认 uGUI 与 TextMeshPro，编辑器新工具默认 UI Toolkit。不能把 Unity 目录或序列化语义用于其他技术栈。
 
+Sprite 的 Pixels Per Unit 默认 `100`，uGUI 新建 Canvas 的参考像素单位默认 `100`；覆盖条件与导入回读要求见[默认像素单位](references/assets-and-ui.md#默认像素单位)。
+
 插件执行按任务路由给可用的 Unity CLI、Unity MCP 与框架专项能力；先确认目标工程、活动 Editor 和实时可用命令。规范中列出的插件/工具能力不能视为当前已经连接或已经验证。
 
 各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。

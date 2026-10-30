@@ -12,6 +12,7 @@
     "第三方依赖优先通过 UPM 管理。"
   ],
   "nativeRules": [
+    "Sprite 导入默认 Pixels Per Unit（TextureImporter.spritePixelsPerUnit）=100；uGUI 新建 Canvas 的 CanvasScaler.referencePixelsPerUnit 默认=100。仅用户或项目技术设计明确的尺度约定可覆盖；配置后回读实际值，不将 PPU 等同于屏幕像素或 sourceScale。",
     "Assets 内导入资源与其 .meta 是同一所有权单元；通过 AssetDatabase 移动、导入、保存并读回真实 GUID 和引用。",
     "不得手写或猜测 Unity Scene、Prefab、ScriptableObject 的序列化结构和 GUID。",
     "每个项目同一时段只有一个 Unity Editor 写入者；ProjectSettings、Packages、Build Settings、跨场景入口及共享程序集变更串行实施。",

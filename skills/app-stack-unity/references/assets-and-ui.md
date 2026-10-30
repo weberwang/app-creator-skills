@@ -2,6 +2,12 @@
 
 图片还原与运行展示遵循[图片尺寸规则](../../app-ui-layout/references/relative-layout.md#图片尺寸)：普通图片以最终源帧和导入密度确定逻辑尺寸，保持自身及祖先有效变换不改变该尺寸；只有明确配置合法九宫格的皮肤可改变显示框。布局与容器可按原有响应式规则调整，文字和图标不随皮肤整体拉伸。生成素材交付前仍可归一化到约定尺寸，实际显示尺寸需在对应 UI 坐标空间验证，不能把相机投影或屏幕物理像素直接当成源纹理尺寸。
 
+## 默认像素单位
+
+Unity Sprite 导入默认采用 `Pixels Per Unit（PPU）=100`，对应 `TextureImporter.spritePixelsPerUnit=100`。新建或重新配置 Sprite 导入规则时显式设置并回读该值；只有用户或项目技术设计明确约定其他尺度时才覆盖，并记录资源范围与原因。同一组合资源的部件使用一致的 PPU，不能靠修改 PPU 掩盖源图尺寸或布局问题。
+
+uGUI 新建 Canvas 的参考像素单位默认采用 `CanvasScaler.referencePixelsPerUnit=100`；Sprite PPU 与 Canvas 参考像素单位分别记录，验证时读取实际值。此默认不改变 `sourceScale=1` 的源图规划规则，也不表示 100 个屏幕像素或全局放大 100 倍；不批量重写已有明确尺度约定的资源和 Canvas。
+
 ## 运行时显示结构
 
 V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)复用实际 Scene/Prefab、功能接口与项目已选 UI 路线，用简单几何、文本和可操作组件区分对象、状态及反馈；体验画面保持可理解，碰撞框或对象 ID 等调试信息按需显示。临时素材、模拟数据和占位通路只证明实际验证范围，不等待 V2 正式美术，也不代替 V4 资源验收。
