@@ -25,7 +25,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 
 ## 关键边界
 
-- 第三方 SDK 的文件职责遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)，技术栈资料仅补充入口路径和原生要求。
+- 第三方 SDK 的文件职责遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)及其中的隐私流程解耦约束，技术栈资料仅补充入口路径和原生要求。
 - 架构图必须反映真实仓库和目标栈，不凭空引入框架、服务或新依赖。
 - 平台/API细节和资源生命周期由当前栈原生适配补齐；未经授权不得修改公共配置或执行迁移写入。
 

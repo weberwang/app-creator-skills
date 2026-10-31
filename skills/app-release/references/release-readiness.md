@@ -4,6 +4,8 @@
 
 仅做检查或候选打包时，使用默认 `RELEASE.releaseIntent=prepare`：完成当前工程验证后，以 `release-preparation` 结果引用真实检查/交付材料即可关闭，结论为“准备完成”。只有实际执行发布才选择 `publish`，并继续核对 F4、精确用户批准和实际 `release-result`。完整收尾规则见[公共流程](../../app-creator-workflow/references/workflow.md#发布准备与实际上线)，准备结果不得描述成已上线。
 
+发布候选中的所有 SDK 同时遵守[隐私流程与 SDK 解耦](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)：核对用途策略、未授权及撤回路径和最终包自动启动配置，缺少实际行为证据时明确标记未验证。
+
 ## 盘点第三方服务和生效参数
 
 1. 先冻结候选的提交/快照、平台、渠道、构建 flavor/profile、目标环境和内容版本。记录实际构建的命令、构建机/工具版本、环境名与最终产物身份。

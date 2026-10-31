@@ -7,6 +7,8 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。既有项目的局部任务从最早受影响点开始，不重走所有阶段。
 
+涉及隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。
+
 ## 进入任务
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
