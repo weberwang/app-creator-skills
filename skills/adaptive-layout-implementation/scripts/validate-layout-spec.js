@@ -628,7 +628,9 @@ function validateAlignments(spec, errors) {
     validateGeometry(geometry, `${path}.geometry`, errors);
     const delta = mapping(item.delta);
     const tolerance = item.tolerance_logical_px;
-    errors.require(number(tolerance) && tolerance >= 0 && tolerance <= 1, `${path}.tolerance_logical_px must be between 0 and 1`);
+    // 容差由具体属性和参考条件决定，机器只检查数值及依据存在，不能判断依据是否合理。
+    errors.require(number(tolerance) && tolerance >= 0, `${path}.tolerance_logical_px must be finite and non-negative`);
+    errors.require(text(item.tolerance_basis), `${path}.tolerance_basis is required`);
     const target = mapping(geometry.target);
     const flutter = mapping(geometry.flutter);
     for (const [axis, center, reference] of [["horizontal", "center_x", "reference_center_x"], ["vertical", "center_y", "reference_center_y"]]) {

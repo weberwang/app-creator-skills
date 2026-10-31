@@ -158,7 +158,7 @@ UI 底板、按钮皮肤和框体在当前拆解里完成“九宫格适用决�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-V3 使用仍适用的 V2 `AUTO` 或 `USER_DECISION` 记录、视觉可交付与全局基线；还原任务必须绑定冻结视觉目标、必要的区域关系证据和 `visual_validation.mode`。`exact` 才要求严格忠实度矩阵与精确例外；默认 `usability` 允许小幅位置、尺寸、边距和换行差异。
+V3 使用仍适用的 V2 `AUTO` 或 `USER_DECISION` 记录、视觉可交付与全局基线；还原任务必须绑定冻结视觉目标、必要的区域关系证据和 `visual_validation.mode`。`exact` 才要求严格忠实度矩阵与精确例外；默认 `usability` 只接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -304,7 +304,7 @@ V5 直接在正式场景中实现并校准 V3 布局和 V4 正式资源。V5 要
 
 > 适用技术栈：cocos、phaser、threejs。
 
-默认 `visual_validation.mode=usability` 记录实际 viewport/DPR、可读完整画面、关键关系、可见性和交互证据，允许合理位置/尺寸差异以及已声明的背景出血、滚动裁切。只有 `exact` 才要求 `normalization_equivalence`、非空 `difference_evidence`、完整逐 region 的 target/candidate、delta、预声明 `tolerance_reference`、result、evidence 和 `exception_ids`，并按严格容差判定。局部临时 tolerance 不具备精确合同效力。普通问题先原地修复和定向重验；仅上游目标、设计或任务范围真实变化才回退。
+默认 `visual_validation.mode=usability` 记录实际 viewport/DPR、可读完整画面、关键关系、可见性和交互证据，只接受已声明适配或已确认目标容差内的位置/尺寸变化，以及已声明的背景出血、滚动裁切。在现有机器合同中，只有 `exact` 才强制 `normalization_equivalence`、非空 `difference_evidence`、完整逐 region 的 target/candidate、delta、预声明 `tolerance_reference`、result、evidence 和 `exception_ids`，并按严格容差判定。其他模式仍按工作流记录基准对照条件；该要求不表示机器已强制等价证明。局部临时 tolerance 不具备精确合同效力。普通问题先原地修复和定向重验；仅上游目标、设计或任务范围真实变化才回退。
 
 > 适用技术栈：cocos、phaser、threejs。
 

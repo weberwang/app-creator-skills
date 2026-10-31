@@ -80,7 +80,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-2. 公共 V1 定义并实际验证状态、输入、规则和反馈；可以直接实现正式功能，也可按需使用低保真草图或白盒，不以白盒为必经门。指定效果图还原时，公共 V2 生成或接收并确认 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认允许合理位置、尺寸、边距和换行差异；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
+2. 公共 V1 定义并实际验证状态、输入、规则和反馈；可以直接实现正式功能，也可按需使用低保真草图或白盒，不以白盒为必经门。指定效果图还原时，公共 V2 生成或接收并确认 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认仅接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
 
 > 适用技术栈：cocos、phaser、threejs。
 

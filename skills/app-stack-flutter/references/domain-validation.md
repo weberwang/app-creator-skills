@@ -6,8 +6,8 @@
 
 | 工具 | 输入及用途 |
 | --- | --- |
-| [run-fixtures.js](../../adaptive-layout-implementation/scripts/run-fixtures.js) | 执行保留的 48 个自适应布局夹具；从真实 JSON 输入计算布局，再与期望矩形/约束比较 |
-| [adaptive-layout-implementation](native-contracts.md#mode-adaptive-layout-implementation) | 包含布局计算、校验、约束、错误信息及脚本；真实项目仍需对应 Flutter 实现和布局测量 |
+| [run-fixtures.js](../../adaptive-layout-implementation/scripts/run-fixtures.js) | 从现有 YAML 模板及夹具变更生成输入，检查规格是否按预期通过或失败；复算声明几何的关系，不运行 Flutter 或求解真实页面布局 |
+| [adaptive-layout-implementation](native-contracts.md#mode-adaptive-layout-implementation) | 包含规格结构、约束和关系复算校验、错误信息及脚本；真实项目仍需对应 Flutter 实现和布局测量 |
 | [validate-workflow.js](../../flutter-domain-contracts/tools/scripts/validate-workflow.js) | 维护时核对本栈完整技能、路由、引用及可复算风险场景；不证明 Flutter 工程通过 |
 | [flutter-project-init](native-contracts.md#mode-flutter-project-init) | 保留初始化脚本及生成到工程的完整 flutter-dev 技能模板，不把模板计为独立根入口 |
 
@@ -17,7 +17,7 @@
 node .agents/skills/adaptive-layout-implementation/scripts/run-fixtures.js
 ```
 
-Node 专业工具需要依赖时，按仓库安装说明为 `.agents/skills/app-skill-runtime` 安装一次共享依赖。布局夹具通过仅说明纯计算合同，无需启动 Flutter 服务，不证明设备显示效果。
+Node 专业工具需要依赖时，按仓库安装说明为 `.agents/skills/app-skill-runtime` 安装一次共享依赖。布局夹具通过仅说明规格校验符合夹具预期，无需启动 Flutter 服务，不证明工程或设备显示效果。
 
 ## 接入真实工程与公共证据
 

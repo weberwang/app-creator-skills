@@ -18,6 +18,6 @@ Sprite 的 Pixels Per Unit 默认 `100`，uGUI 新建 Canvas 的参考像素单�
 
 各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。
 
-技术事实以 Profile 和 references 为准。实现调整不要求回改已确认的合同或追算哈希；工程证据证明实际运行状态，美术显示效果由用户人工检查确认。
+技术事实以 Profile 和 references 为准。目标内的普通实现修复无需重复确认未受影响的决定；设计目标、布局依据或受影响合同发生变化时更新实际材料。已冻结的目标、人工确认及相关证据引用按公共控制器核对内容身份与摘要，摘要不证明用户身份；工程证据和用户人工视觉确认分别报告。
 
 来源：`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-architecture`、`skills/app-stack-unity/references/native-contracts.md#mode-unity-game-visual-assets`、`unity-development-workflow/references/project-discovery.md`、`unity-development-workflow/references/project-structure.md`、`unity-development-workflow/references/resource-loading-and-frame-handoff.md`、`unity-development-workflow/references/3d-asset-workflow.md`、`unity-development-workflow/references/sdk-initialization.md`。

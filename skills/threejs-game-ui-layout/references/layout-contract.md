@@ -32,7 +32,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 效果图还原节点必须分别建立真实父级图与定位参照：`parent_layout_node_id` 只能引用另一个已声明的 `layout_node_id`，或稳定根 `viewport`/`safe-area`；`reference_id` 等于已确认的 `ui_layout.position_reference_id`，未声明时等于真实父级。独立定位参照只能指向同级、祖先或稳定根；父级边与参照边联合后不得自引用或成环。`parent_target_bounds` 必须逐字段等于真实父节点 `target_bounds`；`viewport` 根固定为 `{x:0,y:0,width:target_viewport.width,height:target_viewport.height}`，`safe-area` 根使用同批实际测量的唯一 bounds，所有根引用必须一致且位于 viewport 内。普通子节点应落在父框内；仅当 `ui_layout.visual_overflow.reason` 非空时允许视觉边界越出普通父框，父框自身不扩展，且节点仍必须位于稳定根安全区内。`relative_position` 必须按 `left=child.x-parent.x`、`right=parent.x+parent.width-child.x-child.width`、`top=child.y-parent.y`、`bottom=parent.y+parent.height-child.y-child.height` 相对真实父框逐项测量，允许有理由的负值；不接受手填近似，浮点误差不超过 `1e-6`。
 
-`axis_alignment.horizontal` 由智能视觉判断显式选择 `left/center/right`，`vertical` 显式选择 `top/center/bottom`。判断主要依据原图构图、视觉重心和元素语义，不按最近边或测量阈值自动推断。四边距离只记录几何事实；运行时 `offset` 按选定对齐轴计算，其中 `center` 使用子中心相对父中心的有符号偏移。`self_anchor` 与 `reference_anchor` 必须是 `${vertical}-${horizontal}`（例如 `top-center` 或 `center-center`）。视觉决策文件、父子关系、相对距离、对齐、偏移和锚点都属于布局身份，任一变化都必须让旧确认失效。
+`axis_alignment.horizontal` 依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果显式选择 `left/center/right`，`vertical` 显式选择 `top/center/bottom`。判断依据应明确来源；未经明确授权不得分析截图，事实不足时标记待定并集中澄清，不按最近边或测量阈值自动推断。四边距离只记录几何事实；运行时 `offset` 按选定对齐轴计算，其中 `center` 使用子中心相对父中心的有符号偏移。`self_anchor` 与 `reference_anchor` 必须是 `${vertical}-${horizontal}`（例如 `top-center` 或 `center-center`）。视觉决策文件、父子关系、相对距离、对齐、偏移和锚点都属于布局身份，任一变化都必须让旧确认失效。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-contract.md#v3-串行拆解与布局标注)。
 

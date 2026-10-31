@@ -574,7 +574,7 @@ V3 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 正式场景的布局校准与关键几何验收读取[布局校准与参考还原](../../threejs-game-ui-layout/references/layout-calibration.md)。V5 直接消费冻结 V3 布局与 V4 正式资源，在实际 ThreeJS Scene 中调整并复验受影响范围；布局矩形与素材可见边界分别检查，不能用可用性通过代替参考还原。
 
 1. 读取项目的 GDD/TDD、当前候选、总控审核漏斗和适用视觉阶段；确定稳定 UI ID、坐标空间、参照物、状态与平台输入。
-2. 复制 schema 1.3.0 [合同模板](../../threejs-game-ui-layout/assets/ui-layout-contract-template.yaml)。普通布局使用 `not-applicable` 并保持 `layout_nodes: []`；冻结视觉目标先用 `frozen-target/specified`。同时冻结上述根级视口/DPR/Camera/Input/性能字段，禁止使用旧 `targets.scale` 字段绕过新门禁。V3 先确认真实功能父级、独立定位参照与共同信息分组，代理内部维护完整技术 JSON 和 `decomposition_elements`，直接展示编号拆解图供人工确认；屏幕 UI 的 `ui_layout` 职责字段也保留在技术合同中。拆解图确认后由智能视觉判断生成逐元素 `left/center/right × top/center/bottom` 决策，再由同一入口同步生成布局 PNG、`layout-nodes.json`、`layout-decision.json` 和 `generation-result.json`，需要交互对照时通过 `--interactive-review` 生成同批离线 `review.html`，用户直接检查最终布局图（需要交互对照时可使用同批审阅页）并独立确认。无需先后确认文字提案或技术记录。随后登记由已确认元素和视觉决策共同推导的非空 `layout_nodes` 与关键对齐合同。
+2. 复制 schema 1.3.0 [合同模板](../../threejs-game-ui-layout/assets/ui-layout-contract-template.yaml)。普通布局使用 `not-applicable` 并保持 `layout_nodes: []`；冻结视觉目标先用 `frozen-target/specified`。同时冻结上述根级视口/DPR/Camera/Input/性能字段，禁止使用旧 `targets.scale` 字段绕过新门禁。V3 先确认真实功能父级、独立定位参照与共同信息分组，代理内部维护完整技术 JSON 和 `decomposition_elements`，直接展示编号拆解图供人工确认；屏幕 UI 的 `ui_layout` 职责字段也保留在技术合同中。拆解图确认后依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果生成逐元素 `left/center/right × top/center/bottom` 决策；未经明确授权不得分析截图，事实不足时标记待定并集中澄清，不得按几何距离猜测。再由同一入口同步生成布局 PNG、`layout-nodes.json`、`layout-decision.json` 和 `generation-result.json`，需要交互对照时通过 `--interactive-review` 生成同批离线 `review.html`，用户直接检查最终布局图（需要交互对照时可使用同批审阅页）并独立确认。无需先后确认文字提案或技术记录。随后登记由已确认元素和视觉决策共同推导的非空 `layout_nodes` 与关键对齐合同。
 3. V4 正式资源验收后直接进入 V5：按[正式场景视觉还原与校准](../../threejs-game-asset-integration/references/visual-alignment-authoring.md)在正式 Scene 中消费 V3 节点与布局合同、V4 验收资源，接入实际交互、动态数据和 required state。坐标、尺寸和响应式调整写入正式布局配置；冻结的 V3 节点结构仍按上游合同管理。具体 ThreeJS 视口、Camera、输入与幂等重排规则见[ThreeJS 适配参考](../../threejs-game-ui-layout/references/threejs-adapter.md)。
 4. specified 阶段运行结构检查 `node scripts/validate_ui_layout_contract.mjs <contract>`；verified 正式验收必须运行 `node scripts/validate_ui_layout_contract.mjs <contract> --check-files --project-root .`，读取冻结原图并检查目标/运行/parity 证据文件。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
@@ -588,7 +588,7 @@ V3 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-效果图节点还必须声明真实 `parent_layout_node_id`、`parent_target_bounds`、`relative_position` 和 `axis_alignment`。拆解确认后，智能布局结合原图构图、视觉重心和元素语义，为每个元素显式判断水平 `left/center/right` 与垂直 `top/center/bottom`；该判断不能由四边距离自动反推。`relative_position` 按真实父级 bounds 测量；可选 `ui_layout.position_reference_id` 单独决定停靠参照，未声明时使用真实父级。`offset`、`self_anchor`、`reference_anchor` 按已选轴向和定位参照计算。普通父框外的视觉溢出须有 `visual_overflow.reason`，但不得越过 viewport/safe-area。父级和定位参照只能使用已确认节点或稳定根，联合依赖不得成环。视觉决策文件及其 ID 会进入布局图和确认记录，缺失决策必须阻断布局生成。
+效果图节点还必须声明真实 `parent_layout_node_id`、`parent_target_bounds`、`relative_position` 和 `axis_alignment`。拆解确认后，依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果，为每个元素显式判断水平 `left/center/right` 与垂直 `top/center/bottom`；未经明确授权不得分析截图，事实不足时标记待定并集中澄清；该判断不能由四边距离自动反推。`relative_position` 按真实父级 bounds 测量；可选 `ui_layout.position_reference_id` 单独决定停靠参照，未声明时使用真实父级。`offset`、`self_anchor`、`reference_anchor` 按已选轴向和定位参照计算。普通父框外的视觉溢出须有 `visual_overflow.reason`，但不得越过 viewport/safe-area。父级和定位参照只能使用已确认节点或稳定根，联合依赖不得成环。视觉决策文件及其 ID 会进入布局图和确认记录，缺失决策必须阻断布局生成。
 
 <a id="mode-threejs-game-ui-layout--资源导航"></a>
 #### 资源导航

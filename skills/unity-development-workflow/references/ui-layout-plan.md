@@ -42,8 +42,8 @@
 在目标项目中将布局图使用的节点、根几何和决策保存为 JSON，再调用随 Skill 安装的文件工具：
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs layout-plan --project-root . --source docs/layout-input.json --output docs/layout-plan.json
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs layout-check --project-root . --source docs/layout-plan.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layout-plan --project-root . --source docs/layout-input.json --output docs/layout-plan.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layout-check --project-root . --source docs/layout-plan.json
 ```
 
 具体字段以 schema 为准。生成布局图时使用派生的 targetBounds；`layout-check` 从原始 bounds 重算并核对结果，检查引用、联合循环、越界、成员与中心策略。`compile-json --kind ui-layout-plan` 使用同一检查，不把未经检查的布局计划封装为可执行 Job。文件工具的通过仅证明结构与几何事实，不证明用户已确认图或 Unity 已实现该计划。

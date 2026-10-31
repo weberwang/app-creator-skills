@@ -10,7 +10,7 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-reconstruction.md#v3-拆解确认与生产方案)。
 
-V3 布局标注在拆解图确认之后串行产出：阶段 A 从冻结事实生成按确认顺序排列的拆解 PNG、技术 JSON 和 `decomposition_elements`；用户直接看图确认，若需修改则按编号/区域更新 Stage A proposal、重出 PNG 并重新确认。已确认 proposal 是布局阶段的历史输入。阶段 B 由智能视觉判断结合原图构图、视觉重心与元素语义，按同一顺序生成唯一 `automatic-layout-decision/1.0`；生成器只读取该确认 proposal 与本次 decision，从其推导唯一的 `layout-nodes.json` 并生成布局 PNG 和结果记录；需要交互对照时使用 `--interactive-review` 生成同批 `review.html`，不能读取预存的第二份节点树、按距离猜测对齐、生成新的视觉参考图或提供多个布局候选。scene contract 通过 `layout_decomposition.layout_source.nodes_file` 引用此同批节点文件；`layout_binding`、annotation 和 confirmation 只记录身份/证据，annotation/confirmation 的 `layout_nodes_file` 必须与 source 路径一致。布局图、review 和派生快照是只读展示投影，不是新的手工事实，也不回写 Stage A proposal。只有布局关系变化时更新 Stage B decision 并重生成全部布局产物；分组或父子关系变化时按原规则更新并重新确认 Stage A。用户直接检查最终布局图（需要交互对照时可使用同批审阅页）并独立确认。
+V3 布局标注在拆解图确认之后串行产出：阶段 A 从冻结事实生成按确认顺序排列的拆解 PNG、技术 JSON 和 `decomposition_elements`；用户直接看图确认，若需修改则按编号/区域更新 Stage A proposal、重出 PNG 并重新确认。已确认 proposal 是布局阶段的历史输入。阶段 B 依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果，按同一顺序生成唯一 `automatic-layout-decision/1.0`；未经明确授权不得分析截图，事实不足时标记待定并集中澄清，不得按几何距离猜测。生成器只读取该确认 proposal 与本次 decision，从其推导唯一的 `layout-nodes.json` 并生成布局 PNG 和结果记录；需要交互对照时使用 `--interactive-review` 生成同批 `review.html`，不能读取预存的第二份节点树、按距离猜测对齐、生成新的视觉参考图或提供多个布局候选。scene contract 通过 `layout_decomposition.layout_source.nodes_file` 引用此同批节点文件；`layout_binding`、annotation 和 confirmation 只记录身份/证据，annotation/confirmation 的 `layout_nodes_file` 必须与 source 路径一致。布局图、review 和派生快照是只读展示投影，不是新的手工事实，也不回写 Stage A proposal。只有布局关系变化时更新 Stage B decision 并重生成全部布局产物；分组或父子关系变化时按原规则更新并重新确认 Stage A。用户直接检查最终布局图（需要交互对照时可使用同批审阅页）并独立确认。
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-reconstruction.md#v3-拆解确认与生产方案)。
 
@@ -38,7 +38,7 @@ V3 布局标注在拆解图确认之后串行产出：阶段 A 从冻结事实�
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-reconstruction.md#布局与文本拆解)。
 
-父子几何必须可复核：先确定 `parent_layout_node_id`，再冻结 `parent_target_bounds`，测量 child 到父内容框四边的 `relative_position.left/right/top/bottom`。水平 `left/center/right` 与垂直 `top/center/bottom` 由智能布局结合原图构图、视觉重心和元素语义写入显式 `axis_alignment`，不能由距离自动反推。中心轴的严格/允许偏移策略、组合居中及最终 bounds/offset 派生按[居中策略与组合定位](../../cocos-game-ui-layout/references/center-alignment.md)执行；测量只用于校验与偏移复算，不能把原始中心差自动当作视觉补偿。`offset`、`self_anchor`、`reference_anchor` 必须与该视觉决策一致。
+父子几何必须可复核：先确定 `parent_layout_node_id`，再冻结 `parent_target_bounds`，测量 child 到父内容框四边的 `relative_position.left/right/top/bottom`。水平 `left/center/right` 与垂直 `top/center/bottom` 依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果写入显式 `axis_alignment`，不能由距离自动反推；未经明确授权不得分析截图，事实不足时标记待定并集中澄清。中心轴的严格/允许偏移策略、组合居中及最终 bounds/offset 派生按[居中策略与组合定位](../../cocos-game-ui-layout/references/center-alignment.md)执行；测量只用于校验与偏移复算，不能把原始中心差自动当作视觉补偿。`offset`、`self_anchor`、`reference_anchor` 必须与该视觉决策一致。
 
 ## V4 正式资源验收
 

@@ -16,7 +16,7 @@
 
 ### 专业执行与交付（cocos、phaser、threejs）
 
-视觉任务核对 V0 分流及 V2/V3 条件门。Work Item 指定效果图为还原目标时，QA 按“视觉还原”（见本栈配套资料）核对冻结视觉目标、对比条件和必要的区域关系；`visual_validation.mode` 默认是 `usability`，允许合理的位置、尺寸、边距和换行差异，重点检查越界、裁切、关键遮挡、不可读和交互失效。effect-image 不自动启用 `exact`；只有用户明确要求精确还原时才使用 `exact` 并核对严格容差与差异证据。
+视觉任务核对 V0 分流及 V2/V3 条件门。Work Item 指定效果图为还原目标时，QA 按“视觉还原”（见本栈配套资料）核对冻结视觉目标、对比条件和必要的区域关系；`visual_validation.mode` 默认是 `usability`，只接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化，重点检查越界、裁切、关键遮挡、不可读和交互失效。effect-image 不自动启用 `exact`；已声明的关键容差在 `usability` 下仍须核对；只有用户明确要求精确还原时才使用 `exact` 并核对完整精确矩阵与差异证据。
 
 ### 专业执行与交付（cocos、phaser、threejs）
 

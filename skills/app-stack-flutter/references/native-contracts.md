@@ -305,7 +305,7 @@ Do not approve the Release lane while any store, privacy, account, payment, cras
 - 依赖或插件变更触发 technical/QA 通道时，按[选型规范](plugin-selection.md)检查版本来源、平台准入、SDK owner、安全边界和真实验证范围；不为无关变更启动全插件审计。
 - F3：确认有效通道覆盖当前 snapshot、阻塞已关闭、平台证据与集成条件满足；不重做 F2。
 
-按需复用已有设计、服务和[关键对齐门禁](../../adaptive-layout-implementation/references/critical-alignment-gate.md)。低保真截图只证明结构；[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
+按需复用已有设计、服务和[关键对齐门禁](../../adaptive-layout-implementation/references/critical-alignment-gate.md)。结构结论依赖正式源和关系验证，低保真截图仅供用户查看，不能单独证明结构或视觉通过；[公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
 
 <a id="mode-flutter-quality-review--输出"></a>
 #### 输出
@@ -338,7 +338,7 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 <a id="mode-flutter-ux-ui-quality--完成条件"></a>
 #### 完成条件
 
-页面只有在风险选择的结构证据、高保真目标、资产证据（或 N/A）、fidelity validator、实际 Widget 关系测量、target/Flutter 同视口截图和独立 Visual QA 全部满足时完成。低保真截图只约束功能与层级，进入高保真后其 Golden 失效或被替换。
+页面按实际范围提交结构、功能、已确认目标及适用资产证据，分别报告[三类验收结论](../../app-creator-workflow/references/verification.md#三类验收结论)。V5 在同阶段核对受影响关键元素的基准目标、正式源配置与实际 Widget 运行值，再检查已声明适配；仅明确要求 `exact` 时才强制 fidelity validator 和完整同视口 parity。独立 Visual QA、Golden、静态合同或截图采集均不能替代用户对实际组合画面的人工确认；没有人工确认时记录视觉待确认。低保真几何不能覆盖已冻结的正式目标。
 <!-- native-source:flutter-ux-ui-quality:end -->
 
 
@@ -362,7 +362,7 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 3. 在生产 Flutter 骨架中实现并执行实际 Widget 关系测试。文本断行测试必须覆盖最长文案与大字号的组合，并按正文、标题/关键文案、控件标签和原子文本分别验证；结构门禁通过后才按风险生成截图，截图不能替代关系测试。
 4. 明确要求 exact 且目标已确认时，参考 [fidelity 模板](../../adaptive-layout-implementation/assets/layout-spec-fidelity-template.yaml) 升级同一文件，补充 target↔Flutter `critical_alignments` 与 `parity_cases`；默认可用性模式不强制完整矩阵。
 5. 每个 parity case 只绑定一个明确冻结的 viewport/state/orientation/target SHA 和 candidate code SHA；没有冻结目标的视口不得声称 parity。spec hash 由 Code Sketch Review、任务审阅或 Visual QA 外部记录，禁止写回 spec 造成自引用。
-6. 运行适用 validator 和实际 Widget 测量测试；截图由用户检查，未经明确授权不得自动分析。仅 exact 模式要求完整同视口 parity。validator 不证明实际视觉一致。
+6. 运行适用 validator 和实际 Widget 测量测试；截图由用户检查，未经明确授权不得自动分析。仅 exact 模式要求完整同视口 parity。validator 检查输入规格的字段、关系复算与证据元数据，不运行 Flutter、不证明实际测量或测试发生，也不证明视觉一致；完整执行边界见[布局规格](../../adaptive-layout-implementation/references/layout-spec.md)。
 
 <a id="mode-adaptive-layout-implementation--资源"></a>
 #### 资源
@@ -526,7 +526,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-asset-atlas--flutter-asset-atlas"></a>
 ### Flutter Asset Atlas
 
-高保真目标冻结并通过合同回对后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 完成 ownership、覆盖审计、编号确认和生产。`docs/design/pages/<page-name>/asset-manifest.md` 是 ownership、覆盖审计、编号映射与资产结论的唯一权威；design decision 只链接它。
+高保真目标冻结并通过合同回对后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 完成 ownership、覆盖审计、编号确认和生产。`docs/design/pages/<page-name>/asset-manifest.md` 是 ownership、覆盖审计、编号映射与资产结论的唯一权威；design decision 只链接它。拆解采用已有明确规格、用户确认的图上标注或明确授权的自动分析结果；未经授权不自动分析截图，缺少关键边界时记录待定并集中澄清，不将估计标为已确认目标。
 
 <a id="mode-flutter-asset-atlas--流程"></a>
 #### 流程

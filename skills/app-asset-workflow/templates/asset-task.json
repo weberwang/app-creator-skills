@@ -1,5 +1,5 @@
 {
-  "purpose": "单素材生产规格，最终验收使用控制器 asset-review 模板",
+  "purpose": "单素材生产规格，最终验收使用控制器 asset-review 模板；下列还原依据仅补受影响且适用项，未知值保留 null，不将估计视为确认，也不表示已有自动校验",
   "assetId": "",
   "objectId": "",
   "featureIds": [],
@@ -11,6 +11,16 @@
   "runtimePath": "",
   "generationSize": { "width": 0, "height": 0 },
   "displaySize": { "width": 0, "height": 0 },
+  "designBasis": {
+    "sourceAndVersion": "",
+    "valueKind": "estimated",
+    "referenceConditions": "",
+    "sourceFrame": null,
+    "effectiveContentBounds": null,
+    "transparentInsets": null,
+    "importDensityAndUnit": null,
+    "allowedAdaptation": ""
+  },
   "background": "transparent-or-retained",
   "edgePolicy": "",
   "pivotSliceOrFrames": "",

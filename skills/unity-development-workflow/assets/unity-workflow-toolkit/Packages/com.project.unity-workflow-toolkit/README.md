@@ -42,7 +42,7 @@ unity command uwt_validate_project --project-path D:\Projects\my-game --job_path
 参考工作流 `templates/rigging-validation.yaml` 填写当前 Prefab、动作、事件和变体真实身份，再按 `schemas/rigging-validation.schema.json` 保存为 JSON 输入；`compile-json` 只读取 JSON，不直接解析 YAML。`variants[].spriteName` 用于精确定位图片中的 Sprite 子资源，`rendererPath` 相对于角色根节点，空字符串表示根；不以文件名猜测映射。
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs compile-json --project-root D:\Projects\my-game --kind rigging-validation --source docs\hero-rigging.json --output Artifacts\Jobs\hero-rigging.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs compile-json --project-root D:\Projects\my-game --kind rigging-validation --source docs\hero-rigging.json --output Artifacts\Jobs\hero-rigging.json
 unity command uwt_validate_2d_rigging --project-path D:\Projects\my-game --caller plugin --skill unity-game-2d-animation-ta --job_path Artifacts/Jobs/hero-rigging.json --format json
 ```
 
@@ -60,7 +60,7 @@ unity command uwt_validate_2d_rigging --project-path D:\Projects\my-game --calle
 
 资源导入交接时在唯一总表声明实际 `loading`，不要把一般 address 当作动态加载成功。按工作流[资源加载与序列帧交接](../../../../references/resource-loading-and-frame-handoff.md)调用 `uwt_inspect_resource_handoff`，再运行 `resource-loading-check` / `frame-animation-check`；没有 Addressables 配置时明确未配置，不安装包。序列帧按 Sprite GUID+localId 对齐实际曲线与消费入口，图集 CanBindTo 不代表平台打包或视觉通过。
 
-源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有该对象的用户批准记录。按实际图片质量、资源身份与授权验收，不校验 SHA，实现调整无需回改合同。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
+源文件必须位于 `ArtSource/Generated/<task-id>/processed/`，具有该对象的用户批准记录。按实际图片质量、资源身份与授权验收；目标内普通实现修复不重复确认未受影响决定，目标或布局依据变化时更新受影响合同。公共冻结目标与确认引用仍按控制器合同核对摘要，摘要不证明用户身份。目标仅允许进入项目契约规定的 `Assets/Art/Runtime/`，已有资源或 `.meta` 一律不会被覆盖。
 
 正式资源不会直接从源目录复制到 `Assets`：管线先写入 `Library/UnityWorkflow/Staging/Images/<transaction-id>/`，检查实际图片格式、尺寸与透明要求，再获取 `Library/UnityWorkflow/Locks/AssetTargets/` 下的确定性跨进程目标锁，最后以同卷无覆盖移动原子落位。锁内会再次检查目标和 `.meta`，因此并行 Unity 实例不能同时创建同一正式路径。失败只清理当前事务创建的暂存文件、正式资源、对应新 `.meta` 和登记记录，不删除 processed 源文件或调用前已存在的目标。
 

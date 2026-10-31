@@ -285,7 +285,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 
 读取 Work Item、验收、相关实现、测试、项目配置、GDD/TDD、当前候选包及已创建的数值、资源、音频与发行文档。性能预算、验收阈值、严重度、风险豁免或放行存在实质取舍时交给 `$grilling`；未定义阈值时只报告实测结果，不自定 PASS。
 
-按总控规则以用户要求和实际完成情况验收；合同提供目标与边界，中途实现调整无需回改合同，不校验 SHA。实际行为变化只重验受影响部分，并保留真实证据与用户人工确认。
+按总控规则以用户要求和实际完成情况验收；目标内普通实现修复只重验受影响部分，设计目标或布局依据变化时更新受影响合同。公共控制器按实际引用核对已冻结目标、人工确认与相关证据的内容身份和摘要；摘要不证明用户身份。保留真实证据与用户人工确认。
 
 <a id="mode-unity-game-qa-performance--执行与交接"></a>
 #### 执行与交接
@@ -528,7 +528,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--交付"></a>
 #### 交付
 
-交付版本化 `.blend` 源文件、运行时模型、资源级 Prefab、模型配方、许可、拓扑与法线报告、实际 UV 位置与报告、按需的高低模/烘焙交接、导入设置、LOD/Collider 指标、Unity 技术证据和用户显示确认状态。以实际模型满足用户要求为验收依据，中途调整无需回改合同，不校验 SHA。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。
+交付版本化 `.blend` 源文件、运行时模型、资源级 Prefab、模型配方、许可、拓扑与法线报告、实际 UV 位置与报告、按需的高低模/烘焙交接、导入设置、LOD/Collider 指标、Unity 技术证据和用户显示确认状态。以实际模型满足用户要求为验收依据；目标内普通实现修复不重复确认未受影响决定，目标或布局依据变化时更新受影响合同。中间模型不因此一律要求计算 SHA，公共冻结目标与确认引用仍按控制器合同核对内容摘要。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。
 <!-- native-source:unity-game-3d-modeling:end -->
 
 
@@ -589,7 +589,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-texturing--交付"></a>
 #### 交付
 
-交付版本化纹理 `.blend`、可编辑节点/蒙版/绘制图与依赖、按需烘焙中间图、独立主通道、URP 打包图、Material、TextureImporter 记录、实际模型/UV 来源及槽位/LOD 映射、配方、许可、技术结果与用户视觉确认状态。验收以实际贴图及材质满足用户要求为准，中途调整无需回改合同，不校验 SHA。缺模型交接、Blender 能力、烘焙方法、Unity 环境或必要证据时逐项记录 `BLOCKED`，不得推断 `PASS`；模型调整后的返修按[交接与变更范围](../../unity-game-3d-texturing/references/model-texture-handoff.md)执行。
+交付版本化纹理 `.blend`、可编辑节点/蒙版/绘制图与依赖、按需烘焙中间图、独立主通道、URP 打包图、Material、TextureImporter 记录、实际模型/UV 来源及槽位/LOD 映射、配方、许可、技术结果与用户视觉确认状态。验收以实际贴图及材质满足用户要求为准；目标内普通实现修复不重复确认未受影响决定，目标或布局依据变化时更新受影响合同。中间贴图不因此一律要求计算 SHA，公共冻结目标与确认引用仍按控制器合同核对内容摘要。缺模型交接、Blender 能力、烘焙方法、Unity 环境或必要证据时逐项记录 `BLOCKED`，不得推断 `PASS`；模型调整后的返修按[交接与变更范围](../../unity-game-3d-texturing/references/model-texture-handoff.md)执行。
 <!-- native-source:unity-game-3d-texturing:end -->
 
 
@@ -677,7 +677,7 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 3. 每个批次至少记录：`taskId`、`skinId`、`batchId`、从 1 开始且不重复的 `ordinal`、唯一 `assetIds`、`dependsOnBatchIds`、`inputVersion` 与实际输入位置、`outputVersion` 与实际输出位置、`owner`、`singleWriter`、`status`、创建/开工/更新时间、验证/审核/用户决定证据、失败与阻塞原因、`recoveryPoint`、`unityVersion`、`spineEditorVersion`、`spineRuntimeVersion`、`exportFormat`、`supersedes` 和 `supersededBy`。
 4. 每个 V3 `assetId` 必须在且只能在一个当前有效批次中出现；建批时校验集合与 V3 地图完全相等，禁止遗漏、重复、空批次或依赖循环。失败批次仍保留原资产归属，修订时建立新 `batchId` 并记录 supersedes 关系。
 5. 状态只能按 `PLANNED → READY → IN_PROGRESS → PRODUCED → REVIEWED → INTEGRATED → VALIDATED` 推进；异常进入 `FAILED` 或 `BLOCKED`，不得写 `PASS` 或伪造完成。建批、开工、每次产物生成、审核、Unity 集成和验证完成后立即向 `events` 追加事件，事件记录时间、执行者、状态、实际输入/输出位置和证据路径；禁止覆盖旧事件、旧证据或用聊天记录补写历史。
-6. 恢复批次前读取实际输入/输出、依赖批次状态、Spine/Unity 导出版本和单写者，判断是否满足已确认要求；实际资源错误或依赖未完成时修复对应批次，不因合同、版本或文件内容变化自动作废批次，不校验 SHA，不得凭对话记忆续做。
+6. 恢复批次前读取实际输入/输出、依赖批次状态、Spine/Unity 导出版本和单写者，判断是否满足已确认要求；实际资源错误或依赖未完成时修复对应批次，不仅凭版本变化自动作废无关批次；公共冻结目标和确认引用仍按控制器合同核对内容摘要，受影响时按范围重新验证，不得凭对话记忆续做。
 7. 全部批次达到 `VALIDATED`、整批映射无遗漏且 V5 集成完成后，仍必须做一次整角色全量回归：完整 `assetId → skinId → slotName → attachmentName → atlasRegion` 映射、Atlas/材质/PMA/Draw Call/纹理内存、全部动画与 Attachment Timeline、默认/新 Skin、多实例隔离、极端姿势、Clipping 和遮挡。只有全量回归实际 `PASS`，才可写整体 `COMPLETE`；任何失败或阻塞都保留台账并回到对应批次。
 
 <a id="mode-unity-game-spine-reskin--v5-spine-源工程与-unity-接入"></a>
@@ -793,9 +793,9 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 - 参考图和高保真图用于保留目标内容、构图、轮廓、配色、材质、光影及视觉层级；禁止裁切、抠取、放大或轻微修饰后充当 Sprite/纹理，也禁止整图铺底冒充结构化实现。该限制只约束资产取得方式，不要求放弃目标特征。
 - 图片生成或编辑委派给图片子代理；V2 确认后的部件生产、编辑与返修，任务包必须包含可读取的原始 V2 目标图、稳定编号、相关部件区域说明、所含特征及状态。按实际部件明确构图、主要轮廓与比例、关键颜色、材质、层次、透明/不透明区域和文本留白；还原任务不能只写“风格参考”并放弃构图或外形约束，不得无依据改色、删去装饰或把目标特征写进禁止项。返修仍携带 V2，旧生成图仅作辅助，注明其中须保留与纠正的内容；完整实际提示词随生产记录保存。首次 V2 效果图生成沿用上方方向图与文案规则。
 - 生成后及透明处理、尺寸归一化后，核对独立源素材的主体、轮廓、颜色、完整性、有效内容边界及透明/不透明区域是否满足任务；已有确认 V2 的部件生产与返修还须对照该图，并记录证据与缺陷。文件存在、尺寸正确、有 Alpha、成功导入只证明工程事实，不能据此宣告资源合格；例如目标不透明内板被生成为透明开口，即使 PNG 技术检查通过也属于生产失败。缺陷交回相应生产环节修复，不能靠缩放、移动节点或提高容差掩盖。此检查遵守[源素材与运行截图边界](../../unity-development-workflow/references/art-quality-contract.md#追溯与检查边界)，不代替人工阶段验收。
-- 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用 `scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景；显式记录背景色、容差、源/输出位置、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。工具自行生成的 SHA 不参与验收。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
+- 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用公共 `app-asset-workflow/scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景，调用方式见[素材技术处理](../../app-asset-workflow/references/technical-processing.md)；显式记录背景色、容差、源/输出位置、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。工具自行生成的 SHA 不参与验收。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
 - 文字与填充先按[视觉显著性](../../unity-development-workflow/references/visual-decomposition-routes.md#完整拆解与视觉显著性)判断：低显著性文字优先系统文本，简单填充/规则边框优先原生绘制；明显字形、材质、纹理和光影保留独立资产，有风格的重复表面优先复用贴图。拆开来源仍由原组件统一管理交互、布局、本地化和动态状态，不静默简化已确认效果。
-- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V2 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内实现调整无需回改合同，不校验 SHA。
+- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V2 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内普通实现修复无需重复确认未受影响的决定；目标或布局依据变化时更新受影响合同，冻结目标及人工确认引用按公共控制器核对内容身份与摘要，摘要不证明用户身份。
 - UI/2D 位图默认以目标最大显示尺寸的 `sourceScale=1` 规划源像素密度，像素美术或已批准平台预算可明确覆盖。它不是浏览器 DPR；运行时缩放必须读取 CanvasScaler、PanelSettings、Camera、Screen、动态分辨率和 Importer 的真实配置。SpriteAtlas、压缩、MipMap、Read/Write、色彩空间和 Addressables 仍由 Unity 平台预算决定。
 - 程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目选择覆盖，逐语言声明 `single-line` 或 `wrap`，验证 TMP/UI Toolkit 字体回退、真实字形宽度、基线和容器；禁止截断。
 - 独立 DISPLAY_LAYER 在宿主上下文中验证打开、交互、关闭和焦点/输入/底层状态恢复；其失败或延期不回写为宿主场景未完成。

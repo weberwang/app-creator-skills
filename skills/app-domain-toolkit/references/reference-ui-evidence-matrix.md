@@ -14,7 +14,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-默认 `visual_validation.mode=usability` 使用代表性视口和关键状态的实际证据，核对关键内容可见、可读、可交互。只有 `exact` 才强制完整 parity case、目标/候选精确测量、预定义容差和全视口/全状态矩阵。已提供的案例保留目标 SHA、当前候选 SHA、scene/state、实际 DPR、视觉基线与证据身份，不能用旧结果冒充当前结果；仅重验受影响部分。
+默认 `visual_validation.mode=usability` 使用代表性视口和关键状态的实际证据，核对关键内容可见、可读、可交互。已确认的受影响关键目标仍须按可获得的证据核对；项目显式声明的关键几何容差即使在 `usability` 下也须按现有校验入口核对。只有 `exact` 才要求完整 parity case、逐区域精确测量及全视口/全状态矩阵。已提供的案例保留目标 SHA、当前候选 SHA、scene/state、实际 DPR、视觉基线与证据身份，不能用旧结果冒充当前结果；仅重验受影响部分。
 
 > 适用技术栈：phaser、threejs。
 

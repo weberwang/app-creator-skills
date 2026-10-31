@@ -9,7 +9,7 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 界面美术应让用户在不阅读文字时，也能理解主要目标、可操作对象及反馈意图；按[无文字意图可读性规范](references/interface-intent.md)设计，并纳入现有候选和组合的人工审阅。正式页面保留必要文案与无障碍标签。
 
-涉及 UI 的拆解、布局图和正式组合时，按[UI 相对布局与定位](../app-ui-layout/references/relative-layout.md)维护布局关系与浮层本体的适用边界。
+涉及 UI 的拆解、布局图和正式组合时，按[UI 相对布局与定位](../app-ui-layout/references/relative-layout.md)维护布局关系与浮层本体的适用边界，按[还原依据与变更边界](../app-ui-layout/references/relative-layout.md#还原依据与变更边界)区分已确认目标、测量、估计和适配；素材制作不能静默改变已确认的视觉目标。
 
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 

@@ -13,6 +13,8 @@ Data 包括文本、数值、日期、图表值、进度、用户内容、运行
 
 ## 覆盖审计
 
+依据已有明确规格、用户确认的图上标注或明确授权的自动分析结果组织覆盖审计；未经授权不自动分析截图。缺少影响拆解的边界或身份时记录待定并集中澄清，不把估计作为已确认要求；仅补受影响项，不增加现有编号确认之外的审批。
+
 从后到前、从左上到右下扫描冻结图，覆盖页面/分区/边角/裁切背景、纹理、噪点、光晕、overlay、水印、mask、固定阴影、全部导航/动作/状态/装饰图标、Logo、分隔符和遮挡后的视觉。低透明度、裁切或纯装饰不是遗漏理由。
 
 manifest 必须记录 region、layer order、visible element、owner、runtime variability、classification、asset identity 与 evidence。通过条件：零无 owner 元素、零 data-derived bitmap、每个背景和图标 placement/state 被覆盖、每个 bitmap candidate 只有一个生产 verdict、重复资产关联全部位置/状态。无导出资产时记录 `N/A: no bitmap or exported visual assets`。

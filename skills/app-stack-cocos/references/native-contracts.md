@@ -674,7 +674,7 @@ Creator 编辑器、AssetDB、Scene/Node/Component、Prefab 和构建操作按[C
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/ui-layout.md#完整流程)。
 
-效果图布局源按其正式格式保存父子、定位参照、父框相对关系、锚点、双轴停靠、目标几何和偏移；不在 UI 引用合同或 scene contract 再写一份字段清单。文件的 `doc.viewport` 定义唯一逻辑坐标空间。拆解确认后，智能布局结合原图构图、视觉重心和元素语义，为每个元素显式判断水平 `left/center/right` 与垂直 `top/center/bottom`；中心轴按[严格居中、中心参照与组合居中](../../cocos-game-ui-layout/references/center-alignment.md)决定是否保留偏移。该判断不能由四边距离自动反推。相对位置始终按实际父框测量；只有 `ui_layout.visual_overflow.reason` 明确声明时，子项才可超出非根父框，父框尺寸不扩大。定位偏移与锚点按有效定位参照和轴向决策计算。省略 `position_reference_id` 时使用真实父级；显式参照可指向同 scene/state 的兄弟节点（可为叶子）、祖先节点或稳定根 `viewport`/`safe-area`，不允许跨分支引用任意叶子。父框和参照框由同一节点源的目标几何确定。父边和定位参照边合并后不得有环，viewport、安全区、裁切和交互约束继续有效。视觉决策文件及其 ID 会进入布局图和确认记录，缺失决策必须阻断布局生成。
+效果图布局源按其正式格式保存父子、定位参照、父框相对关系、锚点、双轴停靠、目标几何和偏移；不在 UI 引用合同或 scene contract 再写一份字段清单。文件的 `doc.viewport` 定义唯一逻辑坐标空间。拆解确认后，依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果，为每个元素显式判断水平 `left/center/right` 与垂直 `top/center/bottom`；未经明确授权不得分析截图，事实不足时标记待定并集中澄清；中心轴按[严格居中、中心参照与组合居中](../../cocos-game-ui-layout/references/center-alignment.md)决定是否保留偏移。该判断不能由四边距离自动反推。相对位置始终按实际父框测量；只有 `ui_layout.visual_overflow.reason` 明确声明时，子项才可超出非根父框，父框尺寸不扩大。定位偏移与锚点按有效定位参照和轴向决策计算。省略 `position_reference_id` 时使用真实父级；显式参照可指向同 scene/state 的兄弟节点（可为叶子）、祖先节点或稳定根 `viewport`/`safe-area`，不允许跨分支引用任意叶子。父框和参照框由同一节点源的目标几何确定。父边和定位参照边合并后不得有环，viewport、安全区、裁切和交互约束继续有效。视觉决策文件及其 ID 会进入布局图和确认记录，缺失决策必须阻断布局生成。
 
 <a id="mode-cocos-game-ui-layout--资源导航"></a>
 #### 资源导航

@@ -8,4 +8,6 @@
 6. 仅明确选择 `exact` 时，将相关 layout-spec 升级为 `phase: fidelity`，在同一骨架中正常重构并执行 fidelity validator、实际 Widget 几何测量及 target/Flutter 同视口截图 parity；禁止用绝对叠层覆盖旧草图凑像素。默认按 usability 目标验证，不强制完整 fidelity/parity。
 7. 执行适用的实际结构、运行和视觉质量验证，并保留用户视觉确认；需要截图时提供给用户人工检查，代理不得自动分析截图或替用户判定视觉验收通过。
 
+V3 在现有 layout-spec 或正式 Widget 配置中按[还原依据与变更边界](../../app-ui-layout/references/relative-layout.md#还原依据与变更边界)补齐受影响目标与适配规则，不另建重复布局源。V5 在同一阶段分别进行基准还原与适配检查：按参考画布、语言、真实文案、内容状态及安全区核对关键元素的设计目标、正式源配置与实际 Widget 运行值，再验证适用的视口、长文案、动态状态和重入；缺少可信目标或运行值时标记未验证。`usability` 仍不强制完整 fidelity/parity，但已确认的受影响关键目标应按可获取证据核对。按[三类验收结论](../../app-creator-workflow/references/verification.md#三类验收结论)分别交付，测试与截图采集不替代用户确认实际组合画面。
+
 仅导航、键盘、SafeArea、系统栏或插件行为需要时复用健康 runtime 实例。真机验收必须用户明确授权。

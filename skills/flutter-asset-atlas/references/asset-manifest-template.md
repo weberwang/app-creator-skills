@@ -35,5 +35,6 @@ Rules:
 - Use different numbers for distinct states or visually different outputs.
 - Keep production details internal even when the user excludes or revises a number.
 - Record only the selected source, required prompt hash, failure reason, license, output, fallback, and fidelity result.
+- 按受影响资产在现有映射或说明中补齐源帧、有效内容边界、透明留白、资源 scale、切片及目标逻辑显示尺寸；区分确认目标、测量、估计与适配规则，不新建重复素材清单。这些是交接要求，编号图脚本不验证真实 Flutter 导入或运行显示。
 - A material change to membership, numbered bounds, placement/state coverage, crop, source, background handling, size, or production verdict invalidates the affected number and requires a new overlay version.
 - Keep unselected candidates, repeated prompts, and intermediate exports transient.

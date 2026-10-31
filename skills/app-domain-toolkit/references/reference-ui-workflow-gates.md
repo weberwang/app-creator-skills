@@ -36,7 +36,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-effect-image 例外：V2–V4 必须先验证 `scene_reconstruction_contract`、必填 `display_layer_planning` 和 target-bound layout binding；scene master 只包含基础场景与常驻 HUD，瞬态层必须按 required state 提供宿主场景上下文效果图。V5 直接消费 V3 布局和 V4 正式资源，在正式场景中提交与 `visual_validation.mode` 匹配的 fidelity 证据，并重放显示层打开→交互→关闭/恢复轨迹。默认 `usability` 检查关系、可读性和交互，不因小幅位置/尺寸差异失败；只有 `exact` 或明确精确需求时才要求逐区域严格 delta。旧通用布局或“资源 loaded/used”工程证据只能作为子门，不能单独产生视觉 PASS 或 COMPLETE。
+effect-image 例外：V2–V4 必须先验证 `scene_reconstruction_contract`、必填 `display_layer_planning` 和 target-bound layout binding；scene master 只包含基础场景与常驻 HUD，瞬态层必须按 required state 提供宿主场景上下文效果图。V5 直接消费 V3 布局和 V4 正式资源，在正式场景中提交与 `visual_validation.mode` 匹配的 fidelity 证据，并重放显示层打开→交互→关闭/恢复轨迹。默认 `usability` 检查关系、可读性和交互，已确认关键目标、已声明容差及适配规则仍必须满足；只有 `exact` 或明确精确需求时才要求逐区域严格 delta。旧通用布局或“资源 loaded/used”工程证据只能作为子门，不能单独产生视觉 PASS 或 COMPLETE。
 
 ## 高分屏与响应式阶段门
 
@@ -66,4 +66,4 @@ effect-image 例外：V2–V4 必须先验证 `scene_reconstruction_contract`、
 
 > 适用技术栈：phaser、threejs。
 
-- V2/V3 处于 `PROPOSAL`、`REVIEW`；V3 固定先生成并人工确认拆解图和技术 JSON，再由智能视觉判断生成逐元素双轴对齐决策，最后消费已确认元素与该决策在同一候选目录生成布局标注 PNG、节点 JSON、决策 JSON 和生成结果；需要交互对照时通过 `--interactive-review` 生成同批离线 `review.html`。布局决策或任一布局产物人工修改后必须重新生成并通过独立 `layout-annotation-confirmation/1.0`；缺失视觉决策时不得按距离兜底。审阅页合同见“离线布局审阅产物”（见本栈配套资料）。
+- V2/V3 处于 `PROPOSAL`、`REVIEW`；V3 固定先生成并人工确认拆解图和技术 JSON，再依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果生成逐元素双轴对齐决策；未经明确授权不得分析截图，事实不足时标记待定并集中澄清，不得按几何距离猜测。最后消费已确认元素与该决策在同一候选目录生成布局标注 PNG、节点 JSON、决策 JSON 和生成结果；需要交互对照时通过 `--interactive-review` 生成同批离线 `review.html`。布局决策或任一布局产物人工修改后必须重新生成并通过独立 `layout-annotation-confirmation/1.0`；缺失视觉决策时不得按距离兜底。审阅页合同见“离线布局审阅产物”（见本栈配套资料）。

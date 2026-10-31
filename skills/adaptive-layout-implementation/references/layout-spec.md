@@ -12,10 +12,12 @@
 
 `phase: fidelity` 是 sketch 超集。保留已审语义合同字段，增加：
 
-- `critical_alignments`：合同 id、element、稳定 `flutter_key`、reference 语义边界、稳定 `reference_flutter_key`、typed 双轴 target/Flutter relation、双方 `x/y/width/height/center_x/center_y/reference_center_x/reference_center_y`、可复算双轴 delta、`tolerance_logical_px <= 1`、光学信息、双方截图、实际 measurement output、已执行 test id、parity case id。
+- `critical_alignments`：合同 id、element、稳定 `flutter_key`、reference 语义边界、稳定 `reference_flutter_key`、typed 双轴 target/Flutter relation、双方 `x/y/width/height/center_x/center_y/reference_center_x/reference_center_y`、可复算双轴 delta、有限非负 `tolerance_logical_px`、非空 `tolerance_basis`、光学信息、双方截图、实际 measurement output、已执行 test id、parity case id。容差依据说明被检属性、逻辑单位、参考条件及目标/测量精度；校验器只检查依据非空，不判断是否合理。
 - `parity_cases`：每条只绑定单个冻结 viewport/state/orientation/target SHA、candidate code SHA 和同视口 target/Flutter 截图。多视口 parity 必须有多张分别冻结的目标图。
 
 结构 `evidence_matrix` 与视觉 `parity_cases` 严格分离。layout-spec 自身 SHA 由外部审阅记录绑定，不能写进自身。
+
+校验器只检查输入规格、所声明几何的算术关系及证据路径/标识字段，不连接 Flutter、不执行 test id，也不读取测量文件来证明其中数据与真实 Widget 一致。公共领域门在 fidelity 模式另核对目标身份及截图/测量文件存在且非空；这些检查仍不证明采集或测试真实发生。执行者须提供实际命令、原始输出和测量来源，用户人工确认实际组合画面。
 
 真实叠层仍须登记语义边界、适用视口、遮挡策略和响应式回退。绝对坐标只能辅助诊断，不能替代关系。
 

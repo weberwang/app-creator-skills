@@ -2,7 +2,7 @@
 
 ## 何时读取
 
-在场景 V1 明确目标视口、相机和 UI 结构时创建；在 V3 用于规划拆解 item、Prefab/Scene 节点和独立 `DISPLAY_LAYER`；在 V5 按实际实现和用户要求取证。`responsiveContractRef` 和 `contractVersions` 只记录来源；中途调整无需回改合同或逐字段对齐，不校验 SHA。运行证据须能证明当前实际行为。
+在场景 V1 明确目标视口、相机和 UI 结构时创建；在 V3 用于规划拆解 item、Prefab/Scene 节点和独立 `DISPLAY_LAYER`；在 V5 按实际实现和用户要求取证。`responsiveContractRef` 和 `contractVersions` 记录 Unity 原生来源；目标内普通实现修复不重复确认未受影响决定，目标或适配依据改变时更新受影响合同。公共控制器对冻结目标和确认引用按实际合同核对内容摘要，摘要不证明用户身份。运行证据须能证明当前实际行为。
 
 ## 实现边界
 

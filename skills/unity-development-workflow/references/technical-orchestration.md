@@ -9,7 +9,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 以 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 为唯一全局状态、风险门、任务范围和证据权威。本 Skill 负责 Unity 领域拆分、交接物冻结、Editor 写入编排和证据收敛；不维护第二套状态机，不代替用户批准有副作用的操作。
 
-验收以用户要求和实际完成情况为准，合同作为目标与实施边界的参考。已授权范围内的方案、结构或资源调整无需为了验收回改合同；在实际交付记录或验收报告说明调整及其验证即可。不要求、不计算、不比对 SHA，也不因合同版本或内容差异重开已完成阶段。实际需求变化、质量问题、证据缺失和外部授权仍按对应规则处理。
+验收以用户要求和实际完成情况为准，合同记录目标与实施边界。目标内普通实现修复记录实际调整及验证，不重复确认未受影响决定；设计目标、布局依据或范围发生变化时更新受影响材料。公共控制器按实际引用核对已冻结目标、人工确认和相关证据的内容身份及摘要；摘要不证明用户身份，内容失效按受影响范围重验或重新确认。
 
 ## 最短流程
 
@@ -17,7 +17,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前明确 Implementation Package 的基线、文件所有权、Unity 对象所有权、执行单元、非空 `acceptanceCommands` 和停止条件。进入 `IMPLEMENTING` 后由控制面创建 `evidenceRoot/execution-state.json`；单元结果记录真实证据并绑定计划顺序，`unit-check` 只校验结果，不运行验收命令。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。`RETURN` 由 `affectedScope` 推导恢复点并归档执行状态，不手选恢复状态。
-5. 阶段完成后回到控制面运行 `check`/`run`；场景工作项通过 `scene-stage` 相邻推进，V4→V5 还必须有 PASS Evidence 和执行闭环，推进后切回 `PROPOSAL`、重置 F2/F3/F4 并绑定新实施包。验收通过后，由主代理按[最小 Git 提交集](../../unity-domain-contracts/references/minimal-git.md)递归检查必要引用并仅在用户明确要求时创建本地阶段提交。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
+5. 阶段完成后回到控制面运行 `check`/`run`；场景工作项按公共控制器的 `visual-stage` 命令及实际阶段门相邻推进，V4→V5 前核对当前证据与执行闭环。验收通过后，由主代理按[最小 Git 提交集](../../unity-domain-contracts/references/minimal-git.md)递归检查必要引用并仅在用户明确要求时创建本地阶段提交。外部写入、付费、真机、破坏性删除、签名、上传和发布必须由控制面建立精确对象审批。
 
 图片与动画采用[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)：阶段内技术分析、布局决策和制作参数内部维护，直接展示真实候选；已有阶段或专项交付确认后不再请求文字复述确认，同目标返修直接展示前后对照。玩家画面按[游戏内文案](./game-copy.md)维护同一可见表达，内部规格、效果图与运行数据来源分清归属。
 
@@ -41,7 +41,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 屏幕 UI 在 V3 拆解确认后读取[居中与机器布局包](./ui-layout-plan.md)：功能父级与位置参照分开，底板可兼任组件根，严格居中与图文联合居中从确认事实派生；先通过 `layout-plan/layout-check` 检查，再生成供用户确认的布局图。机器结果不替代阶段确认，目标内技术修复继续使用 `repair + revalidate`。
 
-屏幕 UI 的 V3–V5 实施包绑定 `uiLayoutPlanRef`；V5 按[布局控制权与真实组件快照](./ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，Evidence 以 `uiLayoutMeasurementRef` 绑定当前 evidenceRoot 内正式报告。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
+屏幕 UI 的 V3–V5 沿用原生布局计划；V5 按[布局控制权与真实组件快照](./ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，并显式运行原生布局报告检查。Unity 原生合同可用 `uiLayoutPlanRef` 与 `uiLayoutMeasurementRef` 引用计划和报告，但公共控制器当前不自动执行该布局引用链检查。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
 
 - V1 实现并验证玩法契约，白盒按需使用；V2 确认视觉目标及 Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
 - V3 按[文本与色彩拆分路线](./visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](./ui-layout-and-hierarchy.md)。
@@ -71,7 +71,7 @@ V4/V5 涉及正式资源或序列帧交接时，按[加载与序列帧合同](./
 项目文档与 JSON Job 仍由最小文件工具处理；控制状态由 `app-workflow-control` 处理，Unity 事实由 [@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与随附 Toolkit 处理：
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs init-docs --project-root D:\Projects\my-game --project-id my-game
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs init-docs --project-root D:\Projects\my-game --project-id my-game
 node .\.agents\skills\app-workflow-control\scripts\workflow-control.mjs status --repo D:\Projects\my-game --work-item D:\Projects\my-game\.workflow-control\work-items\current.json
 ```
 

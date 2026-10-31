@@ -16,7 +16,7 @@ V0 仅作内部识别与分流，不请求常规确认。V2 真实目标图、V3
 
 新建且包含可见画面的 `SCENE` 或 `DISPLAY_LAYER` Work Item 必须生成自身的完整 V2 目标图，即使已有有效品牌/视觉规范；按已确认基线制作单个真实目标方案并等待用户确认。只有建立或替换全局基线时采用三张同条件候选的规则。已有有效基线直接复用，不重复选图。
 
-Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并记录来源版本与位置。验收按实际画面和已确认要求判断，目标内的实现调整无需回改合同；这不授权改变视觉目标，方向真正变化时按既有确认规则处理受影响部分。
+Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并记录来源版本与位置。验收按实际画面和已确认要求判断；目标内普通实现修复无需重复确认未受影响决定，目标或布局依据变化时更新受影响合同并按既有规则处理。
 
 V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标和主要观看情境，并与玩法角色及 [`unity-game-juice`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-juice) 确认关键事件的反馈意图。五项美术质量判断和 V5 证据按[美术质量合同](./art-quality-contract.md)逐项记录；方向候选数量仍遵循现有规则。
 
@@ -50,7 +50,7 @@ V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 ### 内部拆解合同
 
-结构化合同用于规划生产目标与边界，内部保存且与标注图使用相同编号，不作为用户侧文本拆解输出。目标内的实际生产调整在交付或验收记录说明，无需回改合同或校验内容摘要；规格与 V2 矛盾属于缺陷，不能据此改变目标。只分析冻结的场景或显示层目标图与结构。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
+结构化合同用于规划生产目标与边界，内部保存且与标注图使用相同编号，不作为用户侧文本拆解输出。目标内的实际生产修复在交付或验收记录说明；目标、布局依据或范围变化时更新受影响合同，规格与 V2 矛盾属于缺陷。冻结目标、人工确认及相关证据引用由公共控制器按合同核对内容身份和摘要，摘要不证明用户身份。仅依据已确认设计参数、人工标注或明确授权的自动图像分析结果记录结构；截图默认由用户检查。对可见元素建立稳定 `componentId` 和状态矩阵，选择 Unity 视觉来源 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL` 或 `VFX`，并记录 `semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`：
 
 每个布局计划分别用 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef` 的 `{path}` 指向目标工程的真实工件；路径不替代确认事实，也不得为填字段而新造人工审批。已有 `APPROVED` 拆解及 `USER`/`ASSET_MAP` 确认沿用原记录；Prefab 结构按同一 V3 事实核对，不增加确认门；装配引用从 V5 起纳入检查。`hierarchyRelation` 仅使用 `PARENT_CHILD`，同级节点共享同一实际父节点 ID；`semanticGrouping` 只记录语义归属，整体组合关系使用 `centerAlignment.memberIds`，不因此创建层级。根几何 `viewport`/`safe-area` 是既有逻辑根参照，不假定存在同名 GameObject；除此之外的业务 `parentElementId` 必须是真实直接父节点 ID。
 
@@ -80,7 +80,7 @@ V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 公共资源在本阶段交接时按[登记同步](./shared-asset-usage.md#v3-登记同步)由指定单写者合并独立事实到 `docs/asset-register.yaml`，核对许可、实际 GUID/Importer 与场景装配绑定后交给后续消费者；生产者不能并发覆盖总表，也不能把导入技术通过当作可复用或人工视觉通过。
 
-生成式透明位图可采用“生成不透明单一纯色背景 PNG → `unity-game-visual-assets/scripts/remove-background-local.mjs` → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。工具自行生成的 SHA 不参与验收。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
+生成式透明位图可采用“生成不透明单一纯色背景 PNG → `app-asset-workflow/scripts/remove-background-local.mjs`（调用方式见[素材技术处理](../../app-asset-workflow/references/technical-processing.md)） → 尺寸归一化 → Unity 导入”。必须显式指定背景色和容差，推荐启用 `--require-solid-background`，保留原图、输出图、背景色、容差、删除像素和深浅底预览；只有去背景记录为 `PASS` 的输出才可成为图片任务候选。工具自行生成的 SHA 不参与验收。该路线不适用于参考图裁切/抠取，也不能处理复杂背景、毛发、玻璃、发光或半透明边缘。
 
 完成正式资源生产、导入与资源级验证，核对来源、许可、GUID、Importer 和资源本身的质量。可生产并验证资产自身的资源级 Prefab，用临时预览检查资源关系，但不得在 V4 完成正式宿主 Scene/场景装配 Prefab/UI 接入或布局校准；资源级验证与临时预览不代表场景实现完成。
 

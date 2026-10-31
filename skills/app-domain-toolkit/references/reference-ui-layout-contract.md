@@ -52,7 +52,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：phaser、threejs。
 
-阶段 B 先由智能视觉判断读取原图与确认后的 `proposal.decomposition_elements`，按该列表逐项产出唯一的 `automatic-layout-decision/1.0` JSON：每个元素必须显式给出 `horizontal_alignment=left|center|right` 和 `vertical_alignment=top|center|bottom`。随后使用 `scripts/generate_layout_annotation.mjs` 生成布局 PNG；命令必须显式传入 manifest、project root、scene/state、输出路径、拆解确认 ID 和 `--layout-decision-file`；摘要参数不再必填。生成器拒绝缺失决策、非法枚举、元素漏绑、新增伪造、调序、越界或跨场景输入，不会按测量结果兜底猜测对齐，也不会生成多个布局候选或新的视觉参考图。
+阶段 B 先依据明确设计参数、用户已确认标注或经明确授权的自动截图分析结果，结合确认后的 `proposal.decomposition_elements`，按该列表逐项产出唯一的 `automatic-layout-decision/1.0` JSON：每个元素必须显式给出 `horizontal_alignment=left|center|right` 和 `vertical_alignment=top|center|bottom`。未经明确授权不得分析截图；事实不足时标记待定并集中澄清，不得按几何距离猜测。随后使用 `scripts/generate_layout_annotation.mjs` 生成布局 PNG；命令必须显式传入 manifest、project root、scene/state、输出路径、拆解确认 ID 和 `--layout-decision-file`；摘要参数不再必填。生成器拒绝缺失决策、非法枚举、元素漏绑、新增伪造、调序、越界或跨场景输入，不会按测量结果兜底猜测对齐，也不会生成多个布局候选或新的视觉参考图。
 
 > 适用技术栈：phaser、threejs。
 
@@ -189,7 +189,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：phaser、threejs。
 
-`critical_alignments` 用于冻结目标中的关键 UI/HUD：通过 `layout_node_id` 绑定布局节点，`element_id` 等于对应 `region_id`。`reference_id` 可指向稳定 region、`viewport` 或具体节点；多节点 region 必须指定具体节点。两种模式均保留唯一 ID、双轴关系、目标证据、双方身份和测试计划；verified 需要真实运行测量、运行证据与通过结果。默认 `usability` 不强制整屏精确测量或全矩阵；但项目显式提供 `tolerance` 时，该项必须绑定真实目标矩形，verified 按同空间 x/y/width/height 实测差值校验容差，不能用手写通过或伪造 delta 放行。支持 `px/logical-px/css-px/css-logical-px`，不能用未经换算的比例单位。未声明容差的普通项允许合理的位置和尺寸差异；`exact` 仍强制完整几何与四轴 delta 等材料。目标或布局结构实质变化才重新确认，普通运行态微调原地验证。正式场景的校准、边距和素材可见边界口径见“布局校准”（见本栈配套资料）。
+`critical_alignments` 用于冻结目标中的关键 UI/HUD：通过 `layout_node_id` 绑定布局节点，`element_id` 等于对应 `region_id`。`reference_id` 可指向稳定 region、`viewport` 或具体节点；多节点 region 必须指定具体节点。两种模式均保留唯一 ID、双轴关系、目标证据、双方身份和测试计划；verified 需要真实运行测量、运行证据与通过结果。默认 `usability` 不强制整屏精确测量或全矩阵，已确认关键目标和适配规则仍须核对；项目显式提供 `tolerance` 时，该项必须绑定真实目标矩形，verified 按同空间 x/y/width/height 实测差值校验容差，校验器拒绝不一致的 delta 和超出已声明容差的差值；它不能证明所提供数值、测量或测试状态真实，仍须核对原始证据。支持 `px/logical-px/css-px/css-logical-px`，不能用未经换算的比例单位。未声明容差时如实记录差异和目标依据，不以默认模式自动接受偏差；`exact` 仍强制完整几何与四轴 delta 等材料。目标或布局结构实质变化才重新确认，普通运行态微调原地验证。正式场景的校准、边距和素材可见边界口径见“布局校准”（见本栈配套资料）。
 
 > 适用技术栈：phaser、threejs。
 
@@ -211,4 +211,4 @@ V3→V4 合同回对必须校验该绑定；`legacy_layout_reused`、`uses_gener
 
 > 适用技术栈：phaser、threejs。
 
-目标 viewport 在 `usability` 下用于确认整体关系、可读性和可操作性，其他代表性 viewport 验证关系不变量；只有 `exact` 或明确精确需求时才要求目标 viewport 的严格还原。布局区域仍须与正式 Scene 结构绑定；整屏截图不能作为交互 Scene、隐藏覆盖层或绝对叠图不能作为布局实现。
+目标 viewport 在 `usability` 下用于确认整体关系、可读性和可操作性，其他代表性 viewport 验证关系不变量；已确认关键目标及已声明容差在基准 viewport 仍须核对；只有 `exact` 或明确精确需求时才要求完整精确对照矩阵。布局区域仍须与正式 Scene 结构绑定；整屏截图不能作为交互 Scene、隐藏覆盖层或绝对叠图不能作为布局实现。

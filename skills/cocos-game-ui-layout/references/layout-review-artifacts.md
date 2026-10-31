@@ -1,6 +1,6 @@
 # 离线布局审阅产物
 
-本参考定义布局生成器的通用审阅页和同批产物。它服务于 V3 的“拆解图确认 → 内部生成显式布局决策 → 布局图（需要交互对照时生成审阅页） → 独立布局图确认”顺序，不创建新的阶段、Work Item、审批账本或业务状态。每批唯一 `layout-nodes.json` 是分组、父子、定位参照和布局策略的事实源，scene contract 的 `layout_decomposition.layout_source.nodes_file`、annotation 与 confirmation 的 `layout_nodes_file` 必须指向同一实际文件。用户直接查看 PNG（需要交互对照时可使用同批 `review.html`） 并确认图片；`layout-decision.json`、节点数据和其他技术记录由代理维护，不要求先行阅读或文字确认。PNG、review 与派生快照只是只读展示投影，不能另建或修改事实，也不回写 Stage A proposal。布局图中的 bounds、父子关系和对齐用于保证 V3 方案内部一致性，不自动升级运行态的像素验收。运行态默认使用 `visual_validation.mode=usability`，允许合理的位置、尺寸和换行偏差；只有明确的 `exact` 需求才启用严格视觉差异门。需要实现或校验离线审阅页时读取本文件；字段的全局状态语义仍以控制面 Schema 为准。
+本参考定义布局生成器的通用审阅页和同批产物。它服务于 V3 的“拆解图确认 → 内部生成显式布局决策 → 布局图（需要交互对照时生成审阅页） → 独立布局图确认”顺序，不创建新的阶段、Work Item、审批账本或业务状态。每批唯一 `layout-nodes.json` 是分组、父子、定位参照和布局策略的事实源，scene contract 的 `layout_decomposition.layout_source.nodes_file`、annotation 与 confirmation 的 `layout_nodes_file` 必须指向同一实际文件。用户直接查看 PNG（需要交互对照时可使用同批 `review.html`） 并确认图片；`layout-decision.json`、节点数据和其他技术记录由代理维护，不要求先行阅读或文字确认。PNG、review 与派生快照只是只读展示投影，不能另建或修改事实，也不回写 Stage A proposal。布局图中的 bounds、父子关系和对齐用于保证 V3 方案内部一致性，不自动升级运行态的像素验收。运行态默认使用 `visual_validation.mode=usability`，位置、尺寸和换行须符合已声明适配或已确认目标容差；只有明确的 `exact` 需求才启用严格视觉差异门。需要实现或校验离线审阅页时读取本文件；字段的全局状态语义仍以控制面 Schema 为准。
 
 ## 生成目录与产物
 

@@ -51,12 +51,12 @@ UI Toolkit 的外部尺寸交接按实际 Flex 控制轴和明确 inline 固定�
 ## 校验与控制面
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs layout-runtime-check --project-root . --plan docs/layout-plan.json --source .workflow-control/evidence/current/layout-run-1.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layout-runtime-check --project-root . --plan docs/layout-plan.json --source .workflow-control/evidence/current/layout-run-1.json
 ```
 
-文件工具和控制面调用同一校验器：核对当前 scene/state/candidate、同批根、完整节点覆盖、实际父/参照绑定、属性控制权、原生尺寸，以及实际严格/偏移/图文联合中心。V5 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。V5 控制面重读同一当前状态的拆解、布局、Prefab 结构、装配引用和最新报告，逐项核对 `decompositionElementId`、节点 ID、父级、语义分组与完整 `layoutBinding`；身份必须保持同一 project/scene/state/displayLayer。几何直接读取正式对象，不能仅靠 anchor/flag 或计划中的零偏移自证居中。报告或节点为 FAIL 时阻断交付。声明 targetRect/tolerance 的节点必须以派生 targetBounds 为目标，从实际矩形重新计算 delta 并检查 maxAbsDelta；未声明像素容差的节点仍按当前结构、边界、中心与尺寸意图检查，不把默认 usability 升级为整屏 exact。
+显式运行上述文件工具：它读取传入的布局计划和报告，检查同批根、节点覆盖、父/参照绑定、属性控制权、原生尺寸和中心关系，并读取计划引用的拆解、Prefab 结构与 VERIFIED 装配材料进行对账。V5 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。声明 targetRect/tolerance 的节点从报告矩形重新计算 delta 并检查 maxAbsDelta；未声明容差时仍按适用结构、边界、中心与尺寸规则检查，不将默认 usability 升级为整屏 exact。报告或节点为 FAIL 时修复后重验。工具只核对提交的数据，不能证明报告确由 Unity 采集，也不读取运行中的正式对象；采集来源和 scene/state/candidate 等身份须由执行者与当前工作项另行核对。
 
-屏幕 UI 从 V3 起在 Implementation Package 绑定 `uiLayoutPlanRef: {path}`，布局计划内的 `splitPlanRef` 与 `prefabStructureRef` 必填；V5 还必须绑定 `prefabAssemblyRef` 和 Evidence Manifest 的 `uiLayoutMeasurementRef: {path}`。报告须位于当前 evidenceRoot，且 outputPath、候选、场景与状态相符。独立 DISPLAY_LAYER 的计划同时绑定自己的 displayLayerId 和 hostSceneId 对应的 sceneId。`check/status/run` 和直接完成迁移都重新读取完整引用链和最新报告；技术修复完成后 `repair + revalidate`，不自动回退到 V3、不改历史确认、不要求 SHA。已有关联的装配引用在任何阶段都要检查。
+Unity 原生实施包可用 `uiLayoutPlanRef: {path}` 引用布局计划，计划引用 `splitPlanRef` 与 `prefabStructureRef`；V5 原生测量材料可用 `uiLayoutMeasurementRef: {path}` 引用报告，计划还须引用 `prefabAssemblyRef`。这些是 Unity 原生合同字段，公共 Evidence Manifest 不提供此字段，公共控制器的 `check/status/run` 和状态迁移目前不会自动调用布局引用链校验。执行者须在 V5 显式运行 `layout-runtime-check` 并保存实际命令、结果和当前证据根内报告；另核对候选、对象、scene/state/displayLayer 和宿主身份。已有关联的装配引用须检查；技术修复后 `repair + revalidate`，不改写历史确认。公共控制器对冻结目标和确认引用仍按其合同核对摘要。
 
 V5 先将装配节点 `name` 与 uGUI 实测 `objectPath` 的末段或 UI Toolkit 的 `elementName` 对应，再核对实测父路径和定位参照。本检查验证节点身份、层级与布局事实；当前测量器没有采集 Prefab 实例来源 GUID，资产来源验收仍需相应资源证据。
 

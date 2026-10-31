@@ -1,3 +1,7 @@
+# 仅明确要求 exact 时使用完整 fidelity；按影响复用现有规格，不新增审批或第二套布局源。
+# 补齐设计稿版本、参考画布、语言、真实文案状态和安全区，逐项区分确认目标、测量值、估计值与适配规则。
+# 以下几何、哈希和容差均为示例，必须替换为真实依据；容差按属性与逻辑单位论证，不作为统一像素阈值。
+# V5 分别记录基准目标/正式源/运行值与适配结果；截图由用户人工检查，结构或工程通过不代表视觉通过。
 phase: fidelity
 
 page:
@@ -217,6 +221,7 @@ critical_alignments:
       flutter: {x: 135, y: 52, width: 120, height: 40, center_x: 195, center_y: 72, reference_center_x: 195, reference_center_y: 422}
     delta: {horizontal: 0, vertical: 0}
     tolerance_logical_px: 1
+    tolerance_basis: 示例：390×844 逻辑像素画布下品牌相对页面框的水平中心及顶部偏移；按该设计目标与测量精度约定 1 逻辑像素，项目须按实际条件重新确定。
     optical:
       offset_x: 0
       offset_y: 0

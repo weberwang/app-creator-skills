@@ -4,16 +4,18 @@
 
 布局取舍与差异归因内部记录，按[组合对照交付](./visual-workflow.md#v5-正式实现与运行验收)展示 V2 与实际 Unity 组合及已知未还原项，供 V5 阶段确认，不增加文字调整方案确认；同目标返修补充前后对照。组合文本沿用[游戏内文案](./game-copy.md)的玩家可见表达与当前文本节点，不能把布局注释或业务说明填进正式 Label/TMP 文本。
 
+V3 在已有布局规格中按[还原依据与变更边界](../../app-ui-layout/references/relative-layout.md#还原依据与变更边界)补齐受影响目标与适配规则。V5 同阶段分别检查基准还原与适配：在设计稿参考画布、语言、内容状态和安全区下核对设计目标、正式源回读值及运行值，再按已声明规则验证其他视口、内容极值、动态状态和重入；缺少可靠参数或运行值时如实标记未验证。分别记录[三类验收结论](../../app-creator-workflow/references/verification.md#三类验收结论)，测量、采集与工程通过均不能代替用户确认实际组合画面。
+
 ## 校准方法
 
 1. 使用现有 Inspector、Rect 工具、UI Builder 和 Unity Undo 调整锚点、父子布局、边距与尺寸。保持已确认的场景/底板/屏幕参照和安全区，不新增 Web 编辑器。
-2. 在同一个实际视口和布局参照下测量目标与交付的矩形、边距、间距及差值。Toolkit 命令 `uwt_measure_layout` 负责读取实际几何并输出测量结果，不自动改动布局，也不从截图推测矩形。
+2. 在同一个实际视口和布局参照下核对可客观测量的目标、正式源与运行矩形、边距、间距及差值，记录来源和修复复验；容差按属性、逻辑单位及参考条件确定。Toolkit 命令 `uwt_measure_layout` 负责读取实际几何并输出测量结果，不自动改动布局，也不从截图推测矩形。
 3. 如需给用户查看组合效果，使用 `uwt_capture_game_view` 采集 Unity Editor Game View。截图由用户人工检查；代理不自动分析截图或据此判定显示正确。
 4. 保存 Unity 编辑结果并回读实际对象/布局值，然后提交 V5 实现交付及差值、采用的验收模式和未解决项，等待阶段确认。
 
 `uwt_capture_game_view` 采用同一 Job 的请求与回查：首次返回 `PENDING` 只表示已登记请求，帧末真实图片与报告写入后才返回采集 `PASS`。仅在已有 Editor PlayMode、非 batch 且 Game View 可用时采集；不自动进入 PlayMode。退出 PlayMode、域重载或超时会取消当前请求。采集成功也不表示视觉验收通过。
 
-屏幕 UI 按[布局控制权与真实组件快照](./ui-layout-runtime.md)启用 `uwt_measure_layout` 的组件采集：位置、宽度和高度分别核验写入者，同批读取真实父框、独立位置参照、安全区、图片与原生布局配置。V5 的 Evidence Manifest 通过 `uiLayoutMeasurementRef` 引用当前 evidenceRoot 内这份实际报告；不维护另一份手写组件快照。
+屏幕 UI 按[布局控制权与真实组件快照](./ui-layout-runtime.md)启用 `uwt_measure_layout` 的组件采集：位置、宽度和高度分别核验写入者，同批读取真实父框、独立位置参照、安全区、图片与原生布局配置。V5 在现有原生材料中记录实际报告路径及采集条件，按[原生布局检查](./ui-layout-runtime.md#校验与控制面)显式执行校验并保留结果；`uiLayoutMeasurementRef` 是 Unity 原生合同字段，不是公共 Evidence Manifest 的自动门禁。不维护另一份手写组件快照。
 
 ## 差异归因
 

@@ -33,7 +33,7 @@ Pivot 使用 `Sprite.pivot / Sprite.rect.size` 的比例，允许画外枢轴；
 按[读回请求模板](../templates/resource-handoff-inspection.json)填入本次总表正式条目和动画，编译后调用 Toolkit：
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs compile-json --project-root . --kind resource-handoff-inspection --source docs/resource-inspection.json --output Artifacts/Jobs/resource-inspection-1.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs compile-json --project-root . --kind resource-handoff-inspection --source docs/resource-inspection.json --output Artifacts/Jobs/resource-inspection-1.json
 unity command uwt_inspect_resource_handoff --caller plugin --skill unity-cli --project-path <当前工程> --job_path Artifacts/Jobs/resource-inspection-1.json
 ```
 
@@ -42,11 +42,11 @@ unity command uwt_inspect_resource_handoff --caller plugin --skill unity-cli --p
 采集器从 AssetDatabase 读取实际路径/GUID、项目全局 Resources 同 key 主资产、已有 Addressables 配置、Clip 的帧率/时长/循环和指定 Sprite 曲线、每帧 Sprite 身份/Pivot/PPU，以及 Prefab 实际引用与绑定。缺失资产、空曲线、未接入 Clip 或绑定不成立时不得当作有效交接；不能把预期数据复制成读回报告。
 
 ```powershell
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs resource-loading-check --project-root . --register Artifacts/Jobs/asset-register-current.json --source .workflow-control/evidence/WI-ASSET/resource-readback-1.json
-node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs frame-animation-check --project-root . --plan docs/frame-animation.json --source .workflow-control/evidence/WI-ASSET/resource-readback-1.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs resource-loading-check --project-root . --register Artifacts/Jobs/asset-register-current.json --source .workflow-control/evidence/WI-ASSET/resource-readback-1.json
+node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs frame-animation-check --project-root . --plan docs/frame-animation.json --source .workflow-control/evidence/WI-ASSET/resource-readback-1.json
 ```
 
-文件工具和控制面调用相同纯函数，核对完整覆盖、来源元数据、实际身份与加载键、Clip 与消费者。报告 `FAIL`、缺失、未知或重复条目均不能被静态 `PASS` 覆盖。数值误差仅处理实际 float 序列化，不是视觉容差。
+显式运行文件工具，读取传入的登记或帧动画合同与资源报告，核对输入中声明的覆盖、来源元数据、身份与加载键、Clip 和消费者关系。报告 `FAIL`、缺失、未知或重复条目均不能被静态 `PASS` 覆盖；工具不能证明报告确由 Unity 采集，执行者须核实来源。数值误差仅处理实际 float 序列化，不是视觉容差。
 
 ## 融入现有交接
 
@@ -61,6 +61,6 @@ node .\.agents\skills\app-creator-workflow\scripts\workflow-files.mjs frame-anim
 }
 ```
 
-两项按需至少声明一项；没有序列帧的工作不虚构动画合同。进入 VALIDATING/PASSED/INTEGRATING/COMPLETE 时，Evidence Manifest 绑定 `resourceHandoffInspectionRef: {path}`。报告位于当前 evidenceRoot，taskId 对应 Work Item ID，outputPath 与实际引用一致；`inspect/check/status/run` 和直接交付都重读材料与报告。无资源交接的工作项不扩大范围。
+两项按需至少声明一项；没有序列帧的工作不虚构动画合同。Unity 原生证据可用 `resourceHandoffInspectionRef: {path}` 引用当前 evidenceRoot 中的报告；执行者应核对 taskId 对应当前 Work Item、outputPath 与实际路径一致，并显式运行上述适用的文件检查命令、保留结果。公共 Evidence Manifest 不提供该字段，公共控制器 `check/status/run` 和状态迁移目前不会自动读取并验证这条原生资源交接链；原生引用字段形状通过也不能证明实际报告已检查。无资源交接的工作项不扩大范围。
 
-V4 核对正式导入与资源事实，V5 再核对正式消费者及运行表现。失败按实际所有权修复并重新读回，不自动退回 V3，不改历史确认，不要求 SHA。工具夹具与工程通过不能替代正式游戏播放、独立 QA 或用户对显示效果的人工验收。
+V4 核对正式导入与资源事实，V5 再核对正式消费者及运行表现。失败按实际所有权修复并重新读回，不自动退回 V3 或改写历史确认；公共控制器对受影响的冻结目标和确认引用仍按合同核对内容摘要。工具夹具与工程通过不能替代正式游戏播放、独立 QA 或用户对显示效果的人工验收。
