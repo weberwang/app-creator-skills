@@ -11,6 +11,8 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 涉及错误反馈时统一遵循[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)：普通业务错误使用 Toast，需要用户确认的使用弹窗，后台加载和重试失败保持静默；功能增量同样适用。
 
+涉及弹窗时统一遵循[弹窗按需加载与全局加载状态](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗按需加载与全局加载状态)：触发时加载并创建实例，前台加载由全局蒙层覆盖并阻断下层输入，任务结束按独立令牌释放。
+
 ## 进入任务
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。

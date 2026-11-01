@@ -25,7 +25,7 @@
 - **体验视图**：默认呈现可辨对象、任务、控件状态与操作反馈；不依赖开发者讲解内部变量才能完成关键路径。
 - **调试视图**：按需显示对象 ID、碰撞框、触发区域、状态、路由或日志；通过已有调试开关、隐藏标签或局部面板查看即可，不强制构建两套独立界面。开启调试信息不能改变被验证的业务行为、命中或计时结论。
 
-层序沿用[显示结构规范](../../app-domain-toolkit/references/reference-domain-display-ownership.md#游戏层内容层hud浮窗与弹窗)：游戏层／内容层 → HUD → 弹窗层 → 浮窗层。Toast 位于最上层，默认不抢焦点、不吞输入；工具面板、模态弹窗与附属下拉的输入边界仍按实际职责处理，不用调试面板替代功能弹窗验收。
+层序沿用[显示结构规范](../../app-domain-toolkit/references/reference-domain-display-ownership.md#游戏层内容层hud浮窗与弹窗)：游戏层／内容层 → HUD → 弹窗层 → 浮窗层。Toast 位于常规提示最上层，前台阻塞加载时由[全局加载蒙层](../../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗按需加载与全局加载状态)覆盖并隔离下层输入；Toast 默认不抢焦点、不吞输入；工具面板、模态弹窗与附属下拉的输入边界仍按实际职责处理，不用调试面板替代功能弹窗验收。
 
 ## 复用机制与替换表现
 
