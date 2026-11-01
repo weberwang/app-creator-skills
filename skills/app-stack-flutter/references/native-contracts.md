@@ -149,6 +149,8 @@ Do not move to implementation planning until decisions, rejected alternatives, d
 
 先遵守[公共执行协议](../../app-creator-workflow/references/professional-execution.md)，再将[游戏与应用共用的交互反馈规范](../../app-feedback/references/interaction-feedback.md)应用到 Flutter 项目。本文件只规定 Flutter 的实现映射；产品语义、事件矩阵、通道预算与异步真实性原则以共用规范为准。
 
+按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择控件、状态过渡等适用特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走页面生产全链或重新生图。常规 Widget 动画不强制升级为图片生产；适用阶段确认与人工体验验收仍保留。
+
 <a id="mode-flutter-feedback--flutter-中的实现边界"></a>
 #### Flutter 中的实现边界
 

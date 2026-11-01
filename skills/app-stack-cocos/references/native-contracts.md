@@ -272,6 +272,8 @@ Creator Scene/Node/Component、`AudioSource`、Prefab、AssetDB 和构建操作�
 <a id="mode-cocos-game-juice--cocos-creator-3x-游戏汁水感"></a>
 ### Cocos Creator 3.x 游戏汁水感
 
+先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Creator 原生工具约束和适用阶段确认仍保留。
+
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/feedback-lifecycle.md#完整流程)。
 
 <a id="mode-cocos-game-juice--控制面与职责"></a>

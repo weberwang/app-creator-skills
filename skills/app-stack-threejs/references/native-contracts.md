@@ -274,6 +274,8 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 <a id="mode-threejs-game-juice--threejs-游戏汁水感"></a>
 ### three.js 游戏汁水感
 
+先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Three.js 二维/三维资产路线和适用阶段确认仍保留。
+
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/feedback-lifecycle.md#完整流程)。
 
 <a id="mode-threejs-game-juice--控制面与职责"></a>
