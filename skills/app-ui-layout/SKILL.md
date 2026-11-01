@@ -29,7 +29,7 @@ Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑�
 
 ## 关键边界
 
-- 所有弹窗遵循[弹窗按需加载与全局加载状态](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗按需加载与全局加载状态)，触发时加载；全局加载蒙层覆盖 Toast 和弹窗、阻断下层输入，并纳入真实宿主的层序、安全区及焦点恢复设计。
+- 所有弹窗遵循[弹窗按需加载与全局加载状态](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗按需加载与全局加载状态)，首次触发时加载并缓存预制体/模板和图片等资源，关闭销毁实例并停止定时、动画及异步任务，保留资源缓存供重开创建新实例，不重复订阅；全局加载蒙层覆盖 Toast 和弹窗、阻断下层输入，并纳入真实宿主的层序、安全区及焦点恢复设计。
 
 - 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
