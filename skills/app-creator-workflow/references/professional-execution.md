@@ -5,7 +5,7 @@
 ## 当前控制记录
 
 - 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：标题、按钮等单行自动缩放，长描述自动换行，各样式设置具体最小可读字号；更新已有布局规格与正式配置，并在当前验证中覆盖内容极值及字体放大。
-- 新增显示元素时，执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，先明确父级、定位参照和尺寸策略，再在正式源中实现并验证；局部功能实施不豁免既有布局及视觉阶段要求。
+- 新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素的设计或可见表现，就统一执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，从本次增量 V0 开始，再验证 V1 并完成适用 V2–V5；复用素材、组件、动态生成、局部特效参数或时序调整均不豁免 V0。先明确变化范围、所属对象、父级、定位参照和尺寸策略，再在正式源实现并验证，不重做无关宿主。
 - 项目采用可视化编辑器时，遵守[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)：无明确功能需要，程序不得覆盖正式源已设定的位置与布局关系；功能性修改须明确依据、作用范围和结束策略。
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。
 - 每项任务使用当前项目中的一个 Work Item；机器字段以 [Work Item Schema](../../app-workflow-control/schemas/work-item.schema.json) 和 [模板](../../app-workflow-control/templates/work-item.json) 为准。Work Item 绑定目标、技术栈、工作类型、阶段、允许/禁止路径、工程门状态、证据根和可选视觉/拷问引用。小型事实查询、文案或注释修正不必为了形式创建 Work Item。
@@ -45,7 +45,7 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 
 `init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 从成功命令与非空原始输出生成单元结果并合并真实证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
 
-视觉增量先完成当前 V1 功能验证，再在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
+涉及显示设计或可见表现的新增与修改，先完成当前 V0 范围定义，再完成当前 V1 功能验证，随后在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。复用只覆盖仍有效的事实，变化部分不能冒用旧确认；V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
 
 全局工程门 F0–F4 分别记录范围、目标与有效决定、领域质量、真实工程结果和受保护动作的精确授权事实。A0–A6 在产品流程中描述动作风险等级，不会因为等级本身产生新的 CLI 命令或审批阶段。普通任务范围内的本地工作依据当前用户请求和 Work Item 执行；`action.approval` 只绑定真实用户明确批准的具体副作用动作及对象。控制器只记录/校验状态，不执行真机、外部写入、签名、上传、付费、破坏性操作或发布。
 

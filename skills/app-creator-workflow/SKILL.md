@@ -5,7 +5,7 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 # 游戏与应用统一编排
 
-以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。既有项目的局部任务从最早受影响点开始，不重走所有阶段。
+以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素设计或可见表现，就从本次增量的 V0 开始；纯非视觉修改按实际影响处理，不重做无关宿主或全项目阶段。
 
 默认不编排隐私弹窗、隐私中心及同意管理等业务，仅在用户明确要求或已确认项目需求包含时实施；不擅自删除已有业务。涉及明确纳入范围的隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。
 
@@ -19,7 +19,7 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 Unity、Cocos 新增显示内容时，读取[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)并同步更新正式可编辑源，普通增量任务同样适用。
 
-五个技术栈新增显示元素时，均按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)补齐位置、真实父子关系、尺寸、层序及输入等约定，并更新受影响的工作流材料与验证；局部新增和动态生成同样适用。
+五个技术栈涉及显示元素设计或可见表现的新增与修改，均从 V0 开始，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)确定增量范围，补齐位置、真实父子关系、尺寸、层序及输入等约定，再推进 V1–V5；场景、页面和显示层统一适用，复用组件、素材和程序化显示不以无需生图为由跳过 V0。
 
 1. 先读项目约束、已有控制记录、技术版本与已有进程；不得擅自创建分支或 worktree。发现可复用的引擎、浏览器或开发服务后复用，不能为了验证另启实例。若项目还有旧栈总控或编排技能，明确本次只使用公共总控，不运行两套状态机，也不静默把旧批准转换为新记录。
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
