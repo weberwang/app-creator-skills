@@ -36,7 +36,7 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 - 测试报告不能把未运行或受环境限制的项目标为通过；视觉显示由用户人工检查，除非用户明确授权自动分析。
 - 跨端检查的工具、统计指标和布局断点由当前栈及设备配置决定。
 
-- 涉及隐私或 SDK 时，按[隐私流程与 SDK 解耦](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)审查状态唯一所有者、模块依赖、自动初始化副作用、各用途授权及撤回后的行为；核对真实验证证据，不能只检查隐私弹窗或广告模块。
+- 涉及隐私或 SDK 时，按[隐私流程与 SDK 解耦](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)审查模块依赖、自动初始化副作用和实际用途授权约束；确认隐私弹窗及同意管理等业务未被默认扩展，仅对明确范围内或已有业务检查状态所有者与撤回行为；核对真实验证证据，不能只检查隐私弹窗或广告模块。
 
 ## 交付
 
