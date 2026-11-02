@@ -153,9 +153,17 @@ text_behavior:
     control_label: {breaking: forbidden, fallback: expand-parent-or-reflow}
     atomic_text: {breaking: forbidden}
     dynamic_container: {fixed_height: forbidden, truncation: forbidden}
-    anti_hacks: {manual_line_breaks: forbidden, fitted_box: forbidden, font_shrink: forbidden}
+    anti_hacks: {manual_line_breaks: undeclared-forbidden, fitted_box: forbidden, font_shrink: unbounded-or-undeclared-forbidden}
     fallback_order: [widen-container, reflow-parent, grow-height, semantic-wrap]
     test_ids: [text_wrap_semantics]
+  # 示例字号必须替换为项目正式样式及可读下限；基准保持已确认目标。
+  font_sizing:
+    baseline: preserve-confirmed
+    respect_text_scaler: true
+    styles:
+      - {style_id: header-title, region_id: header, role: heading, mode: wrap, strategy: fixed, design_font_size: 24, min_font_size: 20, unit: logical-px, test_ids: [text_wrap_semantics]}
+      - {style_id: content-body, region_id: content, role: body, mode: wrap, strategy: fixed, design_font_size: 16, min_font_size: 14, unit: logical-px, test_ids: [text_wrap_semantics]}
+      - {style_id: action-label, region_id: primary-action, role: control-label, mode: single-line, strategy: bounded-shrink, design_font_size: 16, min_font_size: 14, unit: logical-px, trigger: content-or-width-change, failure: revise-layout-or-copy, test_ids: [text_wrap_semantics]}
   growth: container-grows-with-content
   critical_actions_allow_truncation: false
 
@@ -181,7 +189,7 @@ invariants:
     relation: 关键动作在所有矩阵场景可见、可达且不被键盘或停靠层遮挡
     test_ids: [primary_action_reachable]
   - id: text-wrap-is-semantic
-    relation: 文本在父级有限宽度内按语言规则换行，不含为视觉塑形插入的手工换行，且不可拆分词元保持完整
+    relation: 文本在父级有限宽度内按已声明规则排版，保持确认的断行和基准字号，受限单行适配不得突破下限或抵消系统放大
     test_ids: [text_wrap_semantics]
 
 implementation_signals: []

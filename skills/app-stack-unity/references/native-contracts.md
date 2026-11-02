@@ -749,7 +749,7 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 <a id="mode-unity-game-visual-assets--unity-视觉与资源接入"></a>
 ### Unity 视觉与资源接入
 
-文本任务必须读取[Unity 文本组件属性与配置](text-layout.md)，按实际 TMP 包或 UI Toolkit/Unity 版本设置单行自动字号、上下限、正文换行与尺寸所有权，并检查真实字形而非只看溢出模式。
+文本任务必须读取[Unity 文本组件属性与配置](text-layout.md)，按实际 TMP 包或 UI Toolkit/Unity 版本保持确认基准，配置固定字号或已声明的单行有界缩小、上下限、正文换行与尺寸所有权，并检查真实字形而非只看溢出模式。
 
 Sprite 导入与 uGUI Canvas 按[默认像素单位](assets-and-ui.md#默认像素单位)执行：Sprite PPU 默认 `100`，新建 Canvas 的参考像素单位默认 `100`；明确覆盖时记录尺度约定，导入后回读实际配置。
 

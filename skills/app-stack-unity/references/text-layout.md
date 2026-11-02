@@ -2,6 +2,8 @@
 
 遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。先记录 Unity、TMP 包及 UI 系统实际版本，不更换已有 UI 路线。以下宽度和字号为示例，使用 Canvas/Panel 的逻辑单位，不是设备物理像素；配置保存到正式 Prefab/Scene 或 UXML/USS。
 
+先回读确认目标的字号与断行；以下 Auto Size 示例仅用于正式声明有界缩小的单行样式。固定字号的 TMP 设置 `enableAutoSizing=false`，UI Toolkit 使用 `-unity-text-auto-size: none`；多行标题按确认目标配置换行，不套用单行示例。基准画面仍须匹配确认字号、字重、行高与行数，Auto Size 的范围不是基准差异容差。
+
 ## uGUI 与 TextMeshPro
 
 下表代码属性按 TMP 3.0 API 核实；包版本不同时读取该版本 API，不能据此保留旧接口兼容层。
@@ -32,7 +34,7 @@ title.overflowMode = TextOverflowModes.Overflow;
 
 关闭横向 ContentSizeFitter：`horizontalFit = ContentSizeFitter.FitMode.Unconstrained`；正文可按项目布局使用 `verticalFit = ContentSizeFitter.FitMode.PreferredSize`，但不要与父 LayoutGroup 争抢同一尺寸属性。禁用自动字宽压缩和行距缩减等额外适配（`characterWidthAdjustment = 0`、`lineSpacingAdjustment = 0`），只在授权的字号范围内适配。
 
-`Overflow` 不裁切也不保证适配，最小字号仍可能超框。拒绝标题显式换行；字体与布局稳定后 `ForceMeshUpdate()`，核对 `textInfo.lineCount == 1`、实际 `fontSize >= 20`、`renderedWidth`/字形边界与可用框宽、垂直边界；不能用单个溢出标志替代完整检查。正文检查实际完整行数与内容区/滚动范围，不能用 Ellipsis、Truncate 或 Masking 掩盖失败。
+`Overflow` 不裁切也不保证适配，最小字号仍可能超框。已声明单行的输入拒绝显式换行；字体与布局稳定后 `ForceMeshUpdate()`，核对 `textInfo.lineCount == 1`、实际 `fontSize >= 20`、`renderedWidth`/字形边界与可用框宽、垂直边界；不能用单个溢出标志替代完整检查。已确认多行标题保留其断行。正文检查实际完整行数与内容区/滚动范围，不能用 Ellipsis、Truncate 或 Masking 掩盖失败。
 
 ## UI Toolkit：按 Unity 版本与文字生成器设置
 

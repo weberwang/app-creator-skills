@@ -58,7 +58,9 @@ Canvas 必须填满真实 CSS 视口，布局合同的 `scaleMode` 固定为项�
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ui-layout-contract.md#动态内容与文字)。
 
-效果图还原的可见文字由场景合同中的 `text_decomposition` 独立管理：有文本时使用 `applicability=has-text` 并逐项登记稳定 `text_node_id`、`region_id`、`layout_node_id`、文案来源、语义角色、动态/本地化标记、目标 bounds 和完整 typography facts；确实没有文本时使用 `not-applicable` 并填写 reason。V4 必须为每个文本节点选择 `phaser-text`、`bitmap-text`、`image-text` 或 `hybrid`，说明路线理由、所有权和实际资源依赖。动态或本地化文字不能烘焙为 `image-text`；图片字标仍要保留可访问语义。原字体未知时保留 `observable_facts`，不能猜填 family，并明确替代字体或位图方案。V5 逐节点记录实际 renderer、字体加载与 fallback、actual/glyph bounds、baseline、测试 ID 和证据，并把 target/candidate 差异绑定预声明 tolerance 或精确例外。
+效果图还原的可见文字由场景合同中的 `text_decomposition` 独立管理：有文本时使用 `applicability=has-text` 并逐项登记稳定 `text_node_id`、`region_id`、`layout_node_id`、文案来源、语义角色、动态/本地化标记、目标 bounds 和完整 typography facts；确实没有文本时使用 `not-applicable` 并填写 reason。V4 必须为每个文本节点选择 `phaser-text`、`bitmap-text`、`image-text` 或 `hybrid`，说明路线理由、所有权和实际资源依赖。动态或本地化文字不能烘焙为 `image-text`；图片字标仍要保留可访问语义。原字体未知时保留 `observable_facts`，不能猜填 family，并明确替代字体或位图方案。V5 按所选路线逐节点记录实际 renderer、actual bounds、适用的字体加载/fallback、glyph bounds/baseline、测试 ID 和证据，并把 target/candidate 差异绑定预声明 tolerance 或精确例外。
+
+V5 的实际文案、字体与完整排版快照、动态输入用例、图片语义/消费路径及逐属性容差执行[文本运行验收](../../app-domain-toolkit/references/reference-ui-layout-contract.md#文本运行验收)。目标值只读取冻结节点，运行报告不得覆盖目标或更换容差；图片字标不要求伪造字体与基线事实。
 
 ### 文字路线判定
 

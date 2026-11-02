@@ -587,7 +587,7 @@ test("bitmap-text 和 image-text 成功路径分别绑定所需资源与语义�
       { kind: "bitmap-font-descriptor", path: "assets/fonts/game.fnt", sha256: SHA },
       { kind: "bitmap-font-texture", path: "assets/fonts/game.png", sha256: SHA },
     ],
-    runtime_verification: { ...textNode().runtime_verification, renderer: "bitmap-text" },
+    runtime_verification: { ...textNode().runtime_verification, renderer: "bitmap-text", actual_font_resources: ["assets/fonts/game.fnt", "assets/fonts/game.png"] },
   });
   assert.deepEqual(validateSceneReconstructionContract(bitmap, effectImageManifest(bitmap), { stage: "V5" }), []);
 
@@ -610,6 +610,10 @@ test("bitmap-text 和 image-text 成功路径分别绑定所需资源与语义�
       evidence: ["evidence/text/hud-title-image.json"],
       passed: true,
       asset_consumed: true,
+      actual_geometry_unit: "logical-px",
+      actual_coordinate_space: "viewport-logical",
+      actual_image_path: "assets/text/start.png",
+      actual_semantic: { text: "开始游戏", role: "button" },
       semantic_evidence: ["evidence/text/hud-title-semantic.json"],
     },
   });

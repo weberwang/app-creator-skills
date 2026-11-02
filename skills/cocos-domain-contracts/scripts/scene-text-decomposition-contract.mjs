@@ -8,6 +8,7 @@
  */
 
 import { isWorkflowDpr } from "./workflow-dpr-contract.mjs";
+import { validateTextContentCases, validateTextFidelity, validateTextGeometrySpace } from "../../app-domain-toolkit/scripts/visual/text-fidelity-contract.mjs";
 
 const TEXT_ROUTES = new Set(["cocos-text", "bitmap-text", "image-text", "hybrid"]);
 const PASS_VALUES = new Set(["passed", "pass", "true"]);
@@ -161,45 +162,6 @@ function toleranceIndex(contract, definitions) {
   return result;
 }
 
-/** 从预声明容差中提取可执行的最大数值规则。 */
-function toleranceLimit(definition) {
-  if (!isObject(definition)) return null;
-  const values = [];
-  const visit = (value) => {
-    if (isObject(value)) for (const [key, nested] of Object.entries(value)) {
-      if (key === "value" && typeof nested === "number" && Number.isFinite(nested) && nested >= 0) values.push(nested);
-      else visit(nested);
-    }
-  };
-  visit(definition);
-  return values.length > 0 ? Math.max(...values) : null;
-}
-
-/** 递归收集数值差异；数字使用绝对值后再和项目容差比较。 */
-function numericDeltas(value, result = []) {
-  if (typeof value === "number" && Number.isFinite(value)) result.push(Math.abs(value));
-  else if (Array.isArray(value)) for (const nested of value) numericDeltas(nested, result);
-  else if (isObject(value)) for (const nested of Object.values(value)) numericDeltas(nested, result);
-  return result;
-}
-
-/** 根据 target/candidate 事实推导差异，防止伪造 delta=0 隐藏真实字形偏移。 */
-function numericFactDeltas(target, candidate, result = []) {
-  if (typeof target === "number" && typeof candidate === "number" && Number.isFinite(target) && Number.isFinite(candidate)) result.push(Math.abs(candidate - target));
-  else if (Array.isArray(target) && Array.isArray(candidate)) for (let index = 0; index < Math.max(target.length, candidate.length); index += 1) numericFactDeltas(target[index], candidate[index], result);
-  else if (isObject(target) && isObject(candidate)) for (const key of new Set([...Object.keys(target), ...Object.keys(candidate)])) numericFactDeltas(target[key], candidate[key], result);
-  return result;
-}
-
-/** 只识别非数值事实差异；数值差异由预声明 tolerance 处理。 */
-function nonNumericFactsDiffer(target, candidate) {
-  if (typeof target === "number" && typeof candidate === "number") return false;
-  if (typeof target === "number" || typeof candidate === "number") return typeof target !== typeof candidate;
-  if (Array.isArray(target) && Array.isArray(candidate)) return target.length !== candidate.length || target.some((value, index) => nonNumericFactsDiffer(value, candidate[index]));
-  if (isObject(target) && isObject(candidate)) return [...new Set([...Object.keys(target), ...Object.keys(candidate)])].some((key) => nonNumericFactsDiffer(target[key], candidate[key]));
-  return JSON.stringify(target) !== JSON.stringify(candidate);
-}
-
 /** 读取资源对象中统一的 kind/path 视图；内容摘要只作可选追踪信息。 */
 function resourceFact(resource) {
   if (!isObject(resource)) return { kind: "", path: undefined };
@@ -271,14 +233,14 @@ function rendererValues(value) {
 function rendererMatches(route, renderer) {
   const values = rendererValues(renderer);
   if (route === "hybrid") {
-    const text = new Set(["cocos-text", "text", "cocos.gameobjects.text", "gameobjects.text", "bitmap-text", "bitmaptext", "cocos.bitmaptext", "cocos.gameobjects.bitmaptext"]);
-    const visual = new Set(["image-text", "image", "sprite", "cocos.image", "cocos.gameobjects.image", "visual-effect", "effect", "shader"]);
+    const text = new Set(["cocos-text", "text", "cc.label", "label", "bitmap-text", "bitmaptext", "cc.bitmapfont", "bitmapfont"]);
+    const visual = new Set(["image-text", "image", "sprite", "cc.sprite", "visual-effect", "effect", "shader"]);
     return values.includes("hybrid") || (values.some((value) => text.has(value)) && values.some((value) => visual.has(value)));
   }
   const accepts = {
-    "cocos-text": new Set(["cocos-text", "text", "cocos.gameobjects.text", "gameobjects.text"]),
-    "bitmap-text": new Set(["bitmap-text", "bitmaptext", "cocos.bitmaptext", "cocos.gameobjects.bitmaptext"]),
-    "image-text": new Set(["image-text", "image", "sprite", "cocos.image", "cocos.gameobjects.image"]),
+    "cocos-text": new Set(["cocos-text", "text", "cc.label", "label"]),
+    "bitmap-text": new Set(["bitmap-text", "bitmaptext", "cc.bitmapfont", "bitmapfont", "cc.label", "label"]),
+    "image-text": new Set(["image-text", "image", "sprite", "cc.sprite"]),
   }[route];
   return Boolean(accepts && values.length > 0 && values.every((value) => accepts.has(value)));
 }
@@ -391,6 +353,7 @@ function validateImplementationRoute(node, contract, stage, errors, { typography
     const strategy = isObject(resolution) ? field(resolution, "strategy", "mode", "route", "plan") : undefined;
     if (!hasStructuredValue(resolution)) pushPlanError(errors, stage, contract, node, "unresolved 字体必须声明明确的替代字体或位图方案", { missing: "font_resolution.strategy" });
     if (!nonEmptyString(strategy)) pushPlanError(errors, stage, contract, node, "字体替代方案必须声明 strategy", { missing: "font_resolution.strategy" });
+    if (route !== "image-text" && !nonEmptyString(resolution?.family)) pushPlanError(errors, stage, contract, node, "字体替代方案必须冻结实际使用的 family", { missing: "font_resolution.family" });
   }
   return route;
 }
@@ -414,8 +377,8 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
   const actualGlyphBounds = read("glyph_bounds", "glyphBounds", "actual_glyph_bounds", "actualGlyphBounds");
   const actualBaseline = read("baseline", "actual_baseline", "actualBaseline");
   if (!validBounds(actualBounds)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少有效 actual_bounds", { missing: "runtime_verification.actual_bounds" });
-  if (!validBounds(actualGlyphBounds)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少有效 glyph_bounds", { missing: "runtime_verification.glyph_bounds" });
-  if (!validFact(actualBaseline)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少有效 baseline", { missing: "runtime_verification.baseline" });
+  if ((route !== "image-text" || actualGlyphBounds !== undefined) && !validBounds(actualGlyphBounds)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少有效 glyph_bounds", { missing: "runtime_verification.glyph_bounds" });
+  if (route !== "image-text" && !validFact(actualBaseline)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少有效 baseline", { missing: "runtime_verification.baseline" });
   const plannedTestId = field(node, "planned_test_id", "plannedTestId");
   const actualTestId = read("actual_test_id", "actualTestId", "test_id", "testId");
   if (!nonEmptyString(actualTestId)) pushRuntimeError(errors, stage, contract, node, "runtime_verification 缺少 actual_test_id", { missing: "runtime_verification.actual_test_id" });
@@ -430,48 +393,10 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
   }
 
   if (!isV4Runtime) return;
-  const comparison = field(raw, "comparison", "fidelity", "fidelity_measurement", "fidelityMeasurement") ?? {};
-  const compare = (...names) => read(...names) ?? field(comparison, ...names);
-  const targetBounds = compare("target_bounds", "targetBounds");
-  const candidateBounds = compare("candidate_bounds", "candidateBounds");
-  const delta = compare("delta", "delta_measurement", "deltaMeasurement");
-  const nodeTolerance = field(node, "tolerance_reference", "toleranceReference", "tolerance_id", "toleranceId")
-    ?? field(region, "tolerance_reference", "toleranceReference", "tolerance_id", "toleranceId");
-  const toleranceReference = compare("tolerance_reference", "toleranceReference", "tolerance_id", "toleranceId") ?? nodeTolerance;
-  if (!validBounds(targetBounds)) pushRuntimeError(errors, stage, contract, node, "V5 文本验证缺少 target_bounds", { missing: "runtime_verification.target_bounds" });
-  if (!validBounds(candidateBounds)) pushRuntimeError(errors, stage, contract, node, "V5 文本验证缺少 candidate_bounds", { missing: "runtime_verification.candidate_bounds" });
-  const frozenBounds = field(node, "target_bounds", "targetBounds", "bounds");
-  if (validBounds(targetBounds) && !sameBounds(targetBounds, frozenBounds)) pushRuntimeError(errors, stage, contract, node, "V5 文本 target_bounds 未绑定冻结节点", { expected: JSON.stringify(frozenBounds), actual: JSON.stringify(targetBounds) });
-  if (validBounds(candidateBounds) && validBounds(actualBounds) && !sameBounds(candidateBounds, actualBounds)) pushRuntimeError(errors, stage, contract, node, "V5 文本 candidate_bounds 与 actual_bounds 不一致", { expected: JSON.stringify(actualBounds), actual: JSON.stringify(candidateBounds) });
-  if (!hasStructuredValue(delta)) pushRuntimeError(errors, stage, contract, node, "V5 文本验证缺少 delta", { missing: "runtime_verification.delta" });
-  if (!nonEmptyString(toleranceReference) || !toleranceDefinitions.has(toleranceReference)) pushRuntimeError(errors, stage, contract, node, "V5 文本验证必须引用预声明 tolerance", { missing: "runtime_verification.tolerance_reference", actual: String(toleranceReference ?? "missing") });
-
-  const typography = typographyOf(node);
-  const targetGlyphBounds = compare("target_glyph_bounds", "targetGlyphBounds") ?? textFact(node, typography, ["target_glyph_bounds", "targetGlyphBounds", "glyph_bounds", "glyphBounds"]);
-  const candidateGlyphBounds = compare("candidate_glyph_bounds", "candidateGlyphBounds") ?? actualGlyphBounds;
-  const targetBaseline = compare("target_baseline", "targetBaseline") ?? textFact(node, typography, ["baseline", "baseline_mode", "baselineMode"]);
-  const candidateBaseline = compare("candidate_baseline", "candidateBaseline") ?? actualBaseline;
-  const targetFacts = compare("target_measurement", "targetMeasurement", "target_fact", "targetFact") ?? { bounds: targetBounds, glyph_bounds: targetGlyphBounds, baseline: targetBaseline };
-  const candidateFacts = compare("candidate_measurement", "candidateMeasurement", "candidate_fact", "candidateFact") ?? { bounds: candidateBounds, glyph_bounds: candidateGlyphBounds, baseline: candidateBaseline };
-  const limit = toleranceLimit(toleranceDefinitions.get(toleranceReference));
-  if (limit === null) pushPlanError(errors, stage, contract, node, "V5 文本验证引用的 tolerance 缺少可执行数值规则", { missing: `${toleranceReference}.rules.value` });
-  const declaredDelta = numericDeltas(delta);
-  const computedDelta = numericFactDeltas(targetFacts, candidateFacts);
-  const exceeds = limit !== null && [...declaredDelta, ...computedDelta].some((value) => value > limit);
-  const factsDiffer = nonNumericFactsDiffer(targetFacts, candidateFacts);
-  const exceptionValue = compare("exception_ids", "exceptionIds", "approved_exception_ids", "approvedExceptionIds");
-  const exceptionIds = Array.isArray(exceptionValue) ? exceptionValue.filter(nonEmptyString) : nonEmptyString(exceptionValue) ? [exceptionValue] : [];
-  const regionExceptions = field(region, "approved_exception_ids", "approvedExceptionIds", "exception_ids", "exceptionIds");
-  const nodeExceptions = field(node, "approved_exception_ids", "approvedExceptionIds", "exception_ids", "exceptionIds");
-  const approved = new Set([
-    ...(Array.isArray(regionExceptions) ? regionExceptions : nonEmptyString(regionExceptions) ? [regionExceptions] : []),
-    ...(Array.isArray(nodeExceptions) ? nodeExceptions : nonEmptyString(nodeExceptions) ? [nodeExceptions] : []),
-  ].filter(nonEmptyString));
-  if (exceptionIds.some((id) => !approved.has(id))) pushRuntimeError(errors, stage, contract, node, "V5 文本验证 exception ID 未被合同批准", { expected: [...approved].join(",") || "approved_exception_ids", actual: exceptionIds.join(",") });
-  const hasApprovedException = exceptionIds.length > 0 && exceptionIds.every((id) => approved.has(id));
-  if (exceeds && !hasApprovedException) pushRuntimeError(errors, stage, contract, node, "V5 文本 target/candidate 差异超出预声明 tolerance", { expected: `<=${limit}`, actual: JSON.stringify({ delta, computedDelta }) });
-  if (factsDiffer && !hasApprovedException) pushRuntimeError(errors, stage, contract, node, "V5 文本存在未解释的非数值事实差异", { missing: "approved exception_id" });
-  if (passed && (exceeds || factsDiffer) && !hasApprovedException) pushRuntimeError(errors, stage, contract, node, "V5 文本 PASS 不能掩盖超容差或未批准差异", { expected: "差异在 tolerance 内或有精确批准例外" });
+  // 目标与候选只取冻结节点和实际测量；报告不能通过副本或通用容差替换事实。
+  for (const message of validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline })) {
+    pushRuntimeError(errors, stage, contract, node, message);
+  }
 }
 
 /** 验证单个 text_node 的稳定身份、目标事实、引用完整性和 V4/V4/V5 规则。 */
@@ -520,6 +445,9 @@ export function validateTextNode(node, context = {}) {
     const valid = ["dynamic", "localizable"].includes(label) ? typeof value === "boolean" : nonEmptyString(value);
     if (!valid) pushPlanError(errors, stage, contract, node, `text_node 缺少或无效 ${label}`, { missing: label, actual: String(value ?? "missing") });
   }
+
+  for (const message of validateTextContentCases(node)) pushPlanError(errors, stage, contract, node, message);
+  for (const message of validateTextGeometrySpace(node)) pushPlanError(errors, stage, contract, node, message);
 
   const typographyResult = validateTypography(node, contract, stage, errors);
   let route;

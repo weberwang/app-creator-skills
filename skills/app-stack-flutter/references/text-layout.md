@@ -2,12 +2,14 @@
 
 以项目 FVM/锁定 SDK 为准，使用支持 `TextScaler` 的当前项目 API，遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。下面宽度为逻辑像素，字号示例 `32/24`、下限示例 `20`；实际数值写入现有设计 token 和组件参数。
 
+先保持确认的基准字号与断行，在同一 `layout-spec` 的 `text_behavior.font_sizing` 中声明策略；没有布局合同时写入正式组件配置。`fixed` 保留设计字号，`bounded-shrink` 仅供声明了触发条件的单行样式使用，下文的候选字号测量仅适用于后者。多行标题按确认目标使用 `wrap + fixed`，操作标签保持单行；正文保持 `wrap + fixed`。基准与适配分别验证，不能因字号仍在范围内就接受基准偏差。
+
 ## Text 属性与单行能力缺口
 
 | Widget／属性 | 标题与按钮 | 长描述 |
 | --- | --- | --- |
 | 外层宽度约束 | `SizedBox(width: 280)` 或等价紧约束 | `SizedBox(width: 320)` 或等价紧约束 |
-| `style.fontSize` | 有界适配后的实际字号，设计 `32`、最低 `20` | `24`，不持续缩小正文 |
+| `style.fontSize` | 固定设计字号 `32`，或声明有界适配后的实际字号，最低 `20` | `24`，不持续缩小正文 |
 | `maxLines` | `1` | `null`，并核对继承的 DefaultTextStyle 无行数上限 |
 | `softWrap` | `false` | `true` |
 | `textWidthBasis` | `TextWidthBasis.parent` | 同左 |
@@ -18,7 +20,7 @@
 
 先评估项目现有或社区文本组件的真实版本、许可、维护状态、非线性 TextScaler 与溢出行为；不因包名包含 AutoSize 就判定符合要求，也不默认新增依赖。没有满足要求的组件时，才基于官方 `TextPainter` 补最小有界适配：
 
-1. 从既有组件配置读取设计 `32`、最低 `20`、实际内容区宽度，拒绝标题显式换行。保持父级宽度、位置及命中框由原布局控制。
+1. 从既有组件配置读取已声明的有界缩小策略、设计 `32`、最低 `20`、实际内容区宽度，单行输入拒绝显式换行；已确认多行标题不走本流程。保持父级宽度、位置及命中框由原布局控制。
 2. 使用与实际 Text 相同的 TextSpan 样式、locale、TextDirection、TextScaler、字距、StrutStyle 等逐候选测量；无主动 ellipsis。以完整单行字形宽度和实际高度判断适配，不能只看 `didExceedMaxLines`，也不能用受约束的 `TextPainter.width` 冒充自然字形宽度。必要时在无限行宽下测量自然宽度，再在目标框复核。
 3. 选择 `[20,32]` 内能完整适配的最大字号；最低字号仍不适配时显式失败并调整文案或正式布局。系统放大后不得选小字号把阅读设置抵消；必要时调整布局。文本、样式、locale、字体、TextScaler 或可用宽度变化后重测，TextPainter 使用完 `dispose()`。
 

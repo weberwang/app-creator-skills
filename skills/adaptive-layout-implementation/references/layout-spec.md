@@ -4,7 +4,13 @@
 
 ## Sketch
 
-`phase: sketch` 必须包含 page、regions、anchors、breakpoints、content、system avoidance、scroll、text behavior、overlays、implementation、invariants、implementation signals 和 evidence matrix。`text_behavior.line_break` 必须结构化声明父级有限宽度、正文自然软换行、标题/关键文案短语与孤行控制、控件标签和原子文本整体性、动态容器禁止固定高度和截断、反规避规则、完整 fallback 顺序及对应 Widget test id；旧 `wrap` 字段无效。不得出现 `critical_alignments` 或 `parity_cases`，也不得填写尚未产生的目标图、实现截图或测量证据。
+`phase: sketch` 必须包含 page、regions、anchors、breakpoints、content、system avoidance、scroll、text behavior、overlays、implementation、invariants、implementation signals 和 evidence matrix。`text_behavior.line_break` 必须结构化声明父级有限宽度、正文自然软换行、已选换行用途的标题/关键文案短语与孤行控制、控件标签和原子文本整体性、动态容器禁止固定高度和截断、反规避规则、完整 fallback 顺序及对应 Widget test id；旧 `wrap` 字段无效。不得出现 `critical_alignments` 或 `parity_cases`，也不得填写尚未产生的目标图、实现截图或测量证据。
+
+`text_behavior.font_sizing` 与同一份正式样式配置对应，不另建文本节点树：`baseline: preserve-confirmed`、`respect_text_scaler: true`，`styles` 为非空数组。每项包含唯一 `style_id`、现有 `region_id`、`role`、`mode: single-line|wrap`、`strategy: fixed|bounded-shrink`、正数 `design_font_size`/`min_font_size`、`unit: logical-px` 和非空 `test_ids`；最小字号不得超过设计字号。角色为 `heading`、`control-label`、`body`、`critical-copy` 或 `atomic-text`。正文只允许 `wrap + fixed`，标题可保留已确认多行，控件标签与原子文本保持单行。
+
+`bounded-shrink` 只允许单行，并声明 `trigger: content-or-width-change`、`failure: revise-layout-or-copy`；`fixed` 不声明缩小触发和失败字段。设计稿确认前配置初始字号，确认后按相同参考条件核对基准，不能将适配范围当作基准容差。系统文字放大不被字号适配抵消。样式 `test_ids` 必须同时出现在 invariant 和实际执行的 evidence matrix 中；这里只检查关联，真实 Widget 仍须按[原生文本指南](../../app-stack-flutter/references/text-layout.md)采集。
+
+反规避字段采用 `anti_hacks.manual_line_breaks: undeclared-forbidden`、`fitted_box: forbidden`、`font_shrink: unbounded-or-undeclared-forbidden`，允许确认目标中的显式断行和正式声明的有界缩小。固定字号放不下或缩小触底后才进入扩宽→父级重排→增高→语义换行的 fallback；各步受冻结目标和用途约束，单行标签不因此获得换行许可，必要文案变更须先更新受影响目标依据。
 
 `page.orientations` 按初始化选择填写 `portrait`、`landscape` 或二者，不能留空、重复或添加其他方向。`evidence_matrix` 只描述结构场景与实际执行的 test id：每个断点覆盖 b-1/b/b+1，并覆盖同宽不同高、项目声明的方向、默认/大字号、默认/最长文案、零/非零安全区和关键动作状态；方向标签须与宽高一致。
 

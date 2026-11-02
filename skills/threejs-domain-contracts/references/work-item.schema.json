@@ -981,6 +981,7 @@
         "localizable": {"type": "boolean"},
         "content": {"type": "string", "minLength": 1},
         "content_source": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
+        "content_cases": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["case_id", "locale", "inputs", "content_source", "expected_content"], "properties": {"case_id": {"type": "string", "minLength": 1}, "locale": {"type": "string", "minLength": 1}, "inputs": {"type": "object"}, "content_source": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]}, "expected_content": {"type": "string", "minLength": 1}}}},
         "target_bounds": {"$ref": "#/$defs/textBounds"},
         "typography_target": {"$ref": "#/$defs/textTypographyTarget"},
         "implementation_route": {"enum": ["threejs-text", "bitmap-text", "image-text", "hybrid"]},
@@ -995,6 +996,10 @@
       },
       "anyOf": [{"required": ["content"]}, {"required": ["content_source"]}],
       "allOf": [
+        {"if": {"required": ["typography_target", "implementation_route"], "properties": {"typography_target": {"required": ["font_identity"], "properties": {"font_identity": {"required": ["status"], "properties": {"status": {"const": "unresolved"}}}}}, "implementation_route": {"not": {"const": "image-text"}}}}, "then": {"required": ["font_resolution"], "properties": {"font_resolution": {"required": ["strategy", "family"], "properties": {"strategy": {"type": "string", "minLength": 1}, "family": {"type": "string", "minLength": 1}}}}}},
+        {"if": {"anyOf": [{"required": ["dynamic"], "properties": {"dynamic": {"const": true}}}, {"required": ["localizable"], "properties": {"localizable": {"const": true}}}, {"not": {"required": ["content"]}}]}, "then": {"required": ["content_source", "content_cases"], "properties": {"runtime_verification": {"required": ["content_case_id", "actual_locale", "actual_inputs", "actual_content_source"]}}}},
+        {"if": {"required": ["implementation_route"], "properties": {"implementation_route": {"const": "image-text"}}}, "then": {"properties": {"runtime_verification": {"required": ["actual_image_path", "actual_semantic", "asset_consumed", "semantic_evidence"]}}}, "else": {"properties": {"runtime_verification": {"required": ["glyph_bounds", "baseline", "font_loaded", "fallback_detected", "actual_content", "actual_typography", "actual_font_resources"]}}}},
+        {"if": {"required": ["implementation_route"], "properties": {"implementation_route": {"const": "hybrid"}}}, "then": {"properties": {"runtime_verification": {"required": ["actual_image_path"]}}}},
         {"if": {"required": ["implementation_route"], "properties": {"implementation_route": {"const": "image-text"}}}, "then": {"required": ["accessible_semantic"]}},
         {"if": {"required": ["dynamic", "implementation_route"], "properties": {"dynamic": {"const": true}, "implementation_route": {"const": "image-text"}}}, "then": {"properties": {"implementation_route": {"enum": ["threejs-text", "bitmap-text", "hybrid"]}}}},
         {"if": {"required": ["localizable", "implementation_route"], "properties": {"localizable": {"const": true}, "implementation_route": {"const": "image-text"}}}, "then": {"properties": {"implementation_route": {"enum": ["threejs-text", "bitmap-text", "hybrid"]}}}},
@@ -1008,14 +1013,14 @@
     "textBounds": {"type": "object", "required": ["x", "y", "width", "height"], "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}, "additionalProperties": true},
     "textTypographyTarget": {
       "type": "object",
-      "required": ["font_identity", "font_size", "font_size_unit", "font_weight", "font_style", "line_height", "letter_spacing", "alignment", "baseline", "fill", "stroke", "shadow", "wrap", "expected_line_count", "reference_pixel_bounds", "target_glyph_bounds", "reference_dpr", "logical_coordinate_space"],
+      "required": ["font_identity", "font_size", "font_size_unit", "font_weight", "font_style", "line_height", "letter_spacing", "alignment", "baseline", "fill", "stroke", "shadow", "wrap", "expected_line_count", "reference_pixel_bounds", "target_glyph_bounds", "reference_dpr", "logical_coordinate_space", "geometry_unit"],
       "properties": {
         "font_identity": {"$ref": "#/$defs/textFontIdentity"},
         "font_size": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "object", "required": ["value"], "properties": {"value": {"type": "number", "exclusiveMinimum": 0}, "unit": {"type": "string", "minLength": 1}}, "additionalProperties": true}]},
-        "font_size_unit": {"enum": ["logical-px", "logical", "game-px"]},
+        "font_size_unit": {"enum": ["logical-px", "logical", "game-px", "css-px", "world-unit"]},
         "font_weight": {"type": ["number", "string"], "minLength": 1},
         "font_style": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
-        "line_height": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
+        "line_height": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "object", "required": ["value"], "properties": {"value": {"type": "number", "exclusiveMinimum": 0}, "unit": {"enum": ["logical-px","logical","game-px","css-px","world-unit"]}}, "additionalProperties": true}]},
         "letter_spacing": {"oneOf": [{"type": "number"}, {"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
         "alignment": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
         "baseline": {"oneOf": [{"type": "number"}, {"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
@@ -1027,8 +1032,11 @@
         "reference_pixel_bounds": {"$ref": "#/$defs/textBounds"},
         "target_glyph_bounds": {"$ref": "#/$defs/textBounds"},
         "reference_dpr": {"$ref": "#/$defs/workflowDpr"},
-        "logical_coordinate_space": {"type": "string", "minLength": 1}
+        "logical_coordinate_space": {"type": "string", "minLength": 1},
+        "geometry_unit": {"enum": ["logical-px", "css-px", "world-unit"]},
+        "geometry_mapping": {"type":"object","required":["coordinate_space","unit","basis","evidence"],"properties":{"coordinate_space":{"type":"string","minLength":1},"unit":{"enum":["logical-px","css-px","world-unit"]},"basis":{"type":"string","minLength":1},"evidence":{"oneOf":[{"type":"string","minLength":1},{"type":"array","minItems":1,"items":{"type":"string","minLength":1}}]}}}
       },
+      "allOf": [{"if":{"properties":{"logical_coordinate_space":{"const":"viewport-logical"}}},"then":{"properties":{"geometry_unit":{"const":"logical-px"}}}},{"if":{"properties":{"logical_coordinate_space":{"const":"css-px"}}},"then":{"properties":{"geometry_unit":{"const":"css-px"}}}},{"if":{"properties":{"logical_coordinate_space":{"const":"world"}}},"then":{"properties":{"geometry_unit":{"const":"world-unit"}}}},{"if":{"properties":{"font_size_unit":{"enum":["logical-px","logical","game-px"]},"geometry_unit":{"not":{"const":"logical-px"}}}},"then":{"required":["geometry_mapping"]}},{"if":{"properties":{"font_size_unit":{"enum":["css-px"]},"geometry_unit":{"not":{"const":"css-px"}}}},"then":{"required":["geometry_mapping"]}},{"if":{"properties":{"font_size_unit":{"enum":["world-unit"]},"geometry_unit":{"not":{"const":"world-unit"}}}},"then":{"required":["geometry_mapping"]}},{"if":{"properties":{"logical_coordinate_space":{"not":{"enum":["viewport-logical","css-px","world"]}}}},"then":{"required":["geometry_mapping"]}}],
       "additionalProperties": true
     },
     "textFontIdentity": {
@@ -1045,9 +1053,20 @@
     "textResource": {"type": "object", "required": ["kind","path"], "properties": {"kind": {"type": "string", "minLength": 1}, "path": {"type": "string", "minLength": 1}, "sha256": {"description":"仅作为可选摘要记录，不参与验收或放行。"}}, "additionalProperties": true},
     "textRuntimeVerification": {
       "type": "object",
-      "required": ["renderer", "actual_bounds", "glyph_bounds", "baseline", "actual_test_id", "evidence", "passed"],
+      "required": ["renderer", "actual_bounds", "actual_geometry_unit", "actual_coordinate_space", "actual_test_id", "evidence", "passed"],
       "properties": {
         "renderer": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "array", "minItems": 1}, {"type": "object", "minProperties": 1}]},
+        "actual_content": {"type": "string", "minLength": 1},
+        "actual_geometry_unit": {"enum": ["logical-px", "css-px", "world-unit"]},
+        "actual_coordinate_space": {"type": "string", "minLength": 1},
+        "actual_font_resources": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+        "content_case_id": {"type": "string", "minLength": 1},
+        "actual_locale": {"type": "string", "minLength": 1},
+        "actual_inputs": {"type": "object"},
+        "actual_content_source": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]},
+        "actual_image_path": {"type": "string", "minLength": 1},
+        "actual_semantic": {"$ref": "#/$defs/evidenceValue"},
+        "actual_typography": {"type": "object", "required": ["font_family", "font_size", "font_size_unit", "font_weight", "font_style", "line_height", "letter_spacing", "alignment", "fill", "stroke", "shadow", "wrap", "line_count"], "properties": {"font_family": {"type": "string", "minLength": 1}, "font_size": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "object", "required": ["value"], "properties": {"value": {"type": "number", "exclusiveMinimum": 0}, "unit": {"enum": ["logical-px","logical","game-px","css-px","world-unit"]}}, "additionalProperties": true}]}, "font_size_unit": {"enum": ["logical-px","logical","game-px","css-px","world-unit"]}, "font_weight": {"type": ["number", "string"]}, "font_style": {"oneOf": [{"type": "string", "minLength": 1}, {"type": "object", "minProperties": 1}]}, "line_height": {"oneOf": [{"type": "number", "exclusiveMinimum": 0}, {"type": "object", "required": ["value"], "properties": {"value": {"type": "number", "exclusiveMinimum": 0}, "unit": {"enum": ["logical-px","logical","game-px","css-px","world-unit"]}}, "additionalProperties": true}]}, "letter_spacing": {"type": ["number", "string", "object"]}, "alignment": {"type": ["string", "object"]}, "fill": {"type": ["string", "object"]}, "stroke": {"type": ["string", "object"]}, "shadow": {"type": ["string", "object"]}, "wrap": {"type": ["string", "object"]}, "line_count": {"type": "integer", "minimum": 1}}},
         "font_loaded": {"type": "boolean"},
         "fallback_detected": {"type": "boolean"},
         "actual_bounds": {"$ref": "#/$defs/textBounds"},
@@ -1067,9 +1086,10 @@
         "candidate_glyph_bounds": {"$ref": "#/$defs/textBounds"},
         "target_baseline": {"type": ["number", "string", "object"]},
         "candidate_baseline": {"type": ["number", "string", "object"]},
-        "measurement": {"type": "object", "minProperties": 1},
-        "comparison": {"type": "object", "minProperties": 1}
+        "measurement": {"type": "object", "minProperties": 1, "not": {"anyOf": [{"required": ["target_measurement"]}, {"required": ["targetMeasurement"]}, {"required": ["candidate_measurement"]}, {"required": ["candidateMeasurement"]}, {"required": ["target_fact"]}, {"required": ["targetFact"]}, {"required": ["candidate_fact"]}, {"required": ["candidateFact"]}]}},
+        "comparison": {"type": "object", "minProperties": 1, "not": {"anyOf": [{"required": ["target_measurement"]}, {"required": ["targetMeasurement"]}, {"required": ["candidate_measurement"]}, {"required": ["candidateMeasurement"]}, {"required": ["target_fact"]}, {"required": ["targetFact"]}, {"required": ["candidate_fact"]}, {"required": ["candidateFact"]}]}}
       },
+      "not": {"anyOf": [{"required": ["target_measurement"]}, {"required": ["targetMeasurement"]}, {"required": ["candidate_measurement"]}, {"required": ["candidateMeasurement"]}, {"required": ["target_fact"]}, {"required": ["targetFact"]}, {"required": ["candidate_fact"]}, {"required": ["candidateFact"]}]},
       "additionalProperties": true
     },
     "sceneCoverageRegion": {

@@ -1,9 +1,9 @@
 # Flutter Adapter
 
 - 使用 `LayoutBuilder`、`MediaQuery`、`SafeArea`、`ConstrainedBox`、`Flexible`、`Wrap` 或 Sliver 把语义关系翻译为生产布局。
-- `Text` 必须先获得父级有限宽度再换行：在 `Row` 中用 `Flexible`/`Expanded`，在普通流中用约束容器；动态文本容器禁止固定高度，也不得用 `FittedBox`、缩字号或插入 `\n` 掩盖约束缺陷。
-- 正文保留自然 `softWrap`；标题与关键文案按短语组织并避免孤行。需要控制语义断点时拆分 `TextSpan` 或组件，让布局选择组合方式，不得修改展示字符串来塑造行宽。
-- 按钮、标签和数字+单位、快捷键、标识符等原子文本保持整体；空间不足时按扩宽容器→父级重排→增高→语义换行处理，控件标签优先扩展父级或让控件组重排。
+- `Text` 必须先获得父级有限宽度再换行：在 `Row` 中用 `Flexible`/`Expanded`，在普通流中用约束容器；动态文本容器禁止固定高度，也不得用 `FittedBox`、未声明缩字号或临时插入 `\n` 掩盖约束缺陷。确认目标中的显式断行须保留。
+- 正文保留自然 `softWrap` 和固定字号；已选换行用途的标题与关键文案按短语组织并避免孤行，单行标题保持单行。需要控制语义断点时拆分 `TextSpan` 或组件，让布局选择组合方式，不得修改展示字符串来塑造行宽。
+- 按钮、标签和数字+单位、快捷键、标识符等原子文本保持单行整体。声明 `bounded-shrink` 时才在具体上下限内测量字号，保持实际 `TextScaler`，不使用 `FittedBox`；原生 `Text` 没有自动字号下限，实施见[Flutter 文本指南](../../app-stack-flutter/references/text-layout.md)。固定字号放不下或缩小触底后按扩宽容器→父级重排→增高→语义换行处理，单行控件只采用符合其用途的步骤，不以最后一步强行换行。
 - 固定高度区域不得截断动态文本；只有合同明确允许且提供完整语义替代时，非关键文本才可使用 `maxLines`/`overflow`。
 - Widget 测试使用 `TextPainter.computeLineMetrics` 或 `RenderParagraph` 在最长文案与大字号组合下核对实际行数、断点和边界；截图只能补充视觉证据。
 - 页面只保留一个明确滚动 owner；键盘、SafeArea、系统栏、折叠与分屏边界不得重复应用 inset。

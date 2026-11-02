@@ -147,9 +147,9 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`dynamic_content.localization` 记录默认语言、最长文案、程序化文本开关、必需语言、增长、换行与截断策略。`programmatic_text=true` 时，`required_languages` 与项目已确认的语言清单一致；新项目默认简体中文 `zh-CN`，英语 `en` 等其他语言可选，既有项目沿用已确认的语言范围；`wrap` 为每种必需语言记录 `single-line` 或 `wrap`，按[文本宽度、缩放与换行](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)根据用途确定，标题/按钮等保持单行自动缩放，长描述自动换行，各语言沿用同一用途；`truncate_policy=forbid`、`growth=locale-adaptive`，后者不授权文本随内容撑宽，并通过 `display_fit_evidence` 绑定全部所选语言的真实字形宽度、字体回退、基线、断行和容器适配证据。
+`dynamic_content.localization` 记录默认语言、最长文案、程序化文本开关、必需语言、增长、换行与截断策略。`programmatic_text=true` 时，`required_languages` 与项目已确认的语言清单一致；新项目默认简体中文 `zh-CN`，英语 `en` 等其他语言可选，既有项目沿用已确认的语言范围；`wrap` 为每种必需语言记录 `single-line` 或 `wrap`，按[文本宽度、缩放与换行](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)保持确认的基准排版，再声明单行固定字号或有界缩小，长描述自动换行，各语言沿用同一用途；`truncate_policy=forbid`、`growth=locale-adaptive`，后者不授权文本随内容撑宽，并通过 `display_fit_evidence` 绑定全部所选语言的真实字形宽度、字体回退、基线、断行和容器适配证据。
 
-固定文本宽度在现有区域/节点布局中声明，设计字号、具体最小可读字号及排版模式在已有文本规格和正式组件配置中记录。沿用 `text_scaling` 的默认/最大字号和 `strategy` 记录，并将最小字号依据与实际测量纳入现有规格及 `display_fit_evidence`，不向未支持字段的机器合同臆加属性。单行超宽只在字号下限内缩小，达到下限仍放不下时调整文案或正式布局并重验；长描述固定宽度换行并增高或滚动，不以持续缩小或裁切塞入固定高度。`copy_style=concise-gameplay` 要求文案在语义准确、玩家可理解的前提下保持短促、游戏化；倍率使用 `multiplier_format=x{value}`，如三倍奖励直接显示 `x3`，数值变化优先使用 `+10`、图标+数值等熟悉表达，不使用可由符号代替的解释性长句。
+固定文本宽度在现有区域/节点布局中声明，设计字号、具体最小可读字号、排版模式和适配触发条件在已有文本规格和正式组件配置中记录。沿用 `text_scaling` 的默认/最大字号和 `strategy` 记录，并将最小字号依据与实际测量纳入现有规格及 `display_fit_evidence`，不向未支持字段的机器合同臆加属性。仅已声明有界缩小的单行样式可在超宽时缩小，不能用容差或运行报告改写基准字号；固定字号放不下或达到下限时按既定规则调整文案或正式布局，更新受影响目标依据后重验。长描述固定宽度换行并增高或滚动，不以持续缩小或裁切塞入固定高度。`copy_style=concise-gameplay` 要求文案在语义准确、玩家可理解的前提下保持短促、游戏化；倍率使用 `multiplier_format=x{value}`，如三倍奖励直接显示 `x3`，数值变化优先使用 `+10`、图标+数值等熟悉表达，不使用可由符号代替的解释性长句。
 
 无关键动作的静态 HUD 允许 `key_actions: []`；一旦声明关键动作，其 ID 必须引用区域，状态至少包含 `default`、`disabled`、`submitting` 和 `completed`，并声明 `text_truncation`。关键动作不能使用不可恢复的单行省略。`reflow_events` 至少覆盖 `text-change`、`state-change`、`resize` 和 `safe-area-change`；合同还应覆盖动态数字、成员数量、创建/隐藏/销毁后的重排，以及按下、错误等扩展状态。
 
@@ -174,6 +174,24 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 > 适用技术栈：cocos、phaser、threejs。
 
 例如战斗失败弹窗：顶部「战斗失败」的金属立体字、破损裂纹、厚描边与跨字火光共同构成情绪字标，整段拆为一个独立位图，与边框、徽章分开；下方失败提示的倾斜字形、粗字重、描边/阴影形成统一提示风格，固定文案可整段用图片，需更换文案或复用风格时用覆盖所需字符的位图字体；按钮「返回」主要表达操作，字形没有同等显著的定制材质，可用系统文本，并把蓝色发光按钮底板作为独立图片部件。三类文字分别登记节点、语义与资源依赖，按钮文字和底板仍由同一功能组件统一处理交互与状态，不能把按钮或整屏烘焙为不可交互的图片。
+
+## 文本运行验收
+
+> 适用技术栈：cocos、phaser、threejs；由场景 `text_decomposition` 的 V5 验收入口调用共享文本比较器，不将本协议套到 Unity 或 Flutter 的原生记录。
+
+目标只读取冻结文本节点的 `target_bounds`、`typography_target`、文案/来源和资源；候选只读取 `runtime_verification` 的实际值。可选的 `target_*`/`candidate_*` 副本必须分别与冻结目标/实际测量一致，禁止通过 `target_measurement`、`candidate_measurement` 或空对象替换比较事实。基准条件应与目标一致；适配所需的目标变化先更新受影响规格与证据，不能把运行结果反写为目标。
+
+程序文本、位图字体和混合路线必须提交 `actual_content`、`actual_font_resources` 和 `actual_typography`。后者包括 `font_family`、`font_size`、`font_size_unit`、`font_weight`、`font_style`、`line_height`、`letter_spacing`、`alignment`、`fill`、`stroke`、`shadow`、`wrap`、`line_count`，分别核对冻结事实；字体资源消费路径绑定同一节点的 `required_resources`。原字体未识别时保留观察事实，程序文字的明确替代字体写入 `font_resolution.family`，不能冒充原字体。实际字形框、基线、字体加载状态、渲染器、测试身份与证据仍按对应路线核对；`actual_geometry_unit` 与 `actual_coordinate_space` 必须绑定冻结的几何单位与空间，不能只给出无单位矩形。
+
+动态、本地化或只声明来源的文字在节点冻结 `content_source` 和非空 `content_cases`，每项包含唯一 `case_id`、`locale`、`inputs`、同一 `content_source` 及 `expected_content`。运行报告以 `content_case_id`、`actual_locale`、`actual_inputs`、`actual_content_source` 绑定已冻结用例，再比对 `actual_content`；预期内容不能由当前候选自行提供。单个快照只证明所绑定用例已检查，项目所选语言和其他动态状态仍按现有测试范围分别覆盖。
+
+图片字标提交 `actual_image_path` 与 `actual_semantic`，分别绑定冻结图片资源和 `accessible_semantic`，不伪造字体、字号或 baseline 测量；如实际采集了字形可见框，仍须核对目标。混合路线同时验证实际文字及 `actual_image_path` 所绑定的效果资源。图片语义匹配不证明图内像素文案正确，图片实际显示效果仍由用户检查。
+
+`tolerance_reference` 只能沿用冻结节点或其区域的有效引用。`typography_target.geometry_unit` 独立声明文本框、字形框和基线的测量单位，并与 `logical_coordinate_space` 及坐标映射一致；字体的 `font_size_unit` 不能代替几何单位，例如世界字号与投影后的视口字形框使用不同单位。`rules.geometry: {unit, value}` 只用于该几何空间；`rules.typography.<属性>: {unit, value}` 仅作用于对应数值属性，字号/行高/字距使用声明的字体度量单位，字重使用 `weight`，行数使用 `count`。未声明的属性精确比较，字体身份、文案和效果等非数值事实不使用几何阈值；增加字重容差不能放宽位置容差。字号与行高以标量或 `{value, unit}` 记录时均须为有效正数，单位必须与冻结声明一致。批准例外只处理已明确接受的差异，不能豁免目标/资源/输入绑定、字段有效性或单位错误。
+
+预定义几何空间与单位为 `viewport-logical → logical-px`、`css-px → css-px`、`world → world-unit`，不能交叉填写。字体单位与几何单位不同或使用其他空间时，须在 `typography_target.geometry_mapping` 冻结 `coordinate_space`、`unit`、非空 `basis` 和 `evidence`，空间/单位与目标一致；证据为非空路径字符串或字符串列表。映射依据说明实际相机投影、DOM/画布换算等来源，不用“已转换”代替依据；校验器核对声明关系，不代替执行实际坐标转换。
+
+采集必须保留栈内实际含义：Cocos 区分 `Label.fontSize` 与 `actualFontSize`、Label 与 BitmapFont；Phaser Text 的 Canvas 字体测量与 BitmapText 的描述/纹理及边界分别取值；Three.js DOM/CSS2D 的计算样式、CSS 像素及世界字形按各自单位和明确坐标映射提交，世界字形不能直接套屏幕逻辑像素。共用校验器仅检查已提交事实及关系，不连接引擎、不执行 test id，也不把自报路径或布尔值当作实际采集已经发生。
 
 ## UI 布局合同
 

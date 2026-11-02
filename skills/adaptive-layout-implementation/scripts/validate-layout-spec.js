@@ -143,9 +143,9 @@ function validateTextLineBreak(textBehavior, errors) {
     ["atomic_text.breaking", mapping(contract.atomic_text).breaking, "forbidden"],
     ["dynamic_container.fixed_height", mapping(contract.dynamic_container).fixed_height, "forbidden"],
     ["dynamic_container.truncation", mapping(contract.dynamic_container).truncation, "forbidden"],
-    ["anti_hacks.manual_line_breaks", mapping(contract.anti_hacks).manual_line_breaks, "forbidden"],
+    ["anti_hacks.manual_line_breaks", mapping(contract.anti_hacks).manual_line_breaks, "undeclared-forbidden"],
     ["anti_hacks.fitted_box", mapping(contract.anti_hacks).fitted_box, "forbidden"],
-    ["anti_hacks.font_shrink", mapping(contract.anti_hacks).font_shrink, "forbidden"],
+    ["anti_hacks.font_shrink", mapping(contract.anti_hacks).font_shrink, "unbounded-or-undeclared-forbidden"],
   ];
   for (const [path, actual, expected] of checks) {
     errors.require(actual === expected, `text_behavior.line_break.${path} must be ${expected}`);
@@ -159,6 +159,52 @@ function validateTextLineBreak(textBehavior, errors) {
   const testIds = sequence(contract.test_ids);
   errors.require(testIds.length > 0 && testIds.every(text), "text_behavior.line_break.test_ids must be a non-empty string list");
   return new Set(testIds.filter(text));
+}
+
+/** 验证每种文字样式的基准、字号适配边界及其与真实区域的绑定。 */
+function validateTextSizing(textBehavior, regions, errors) {
+  const sizing = mapping(textBehavior.font_sizing);
+  errors.require(sizing.baseline === "preserve-confirmed", "text_behavior.font_sizing.baseline must preserve-confirmed");
+  errors.require(sizing.respect_text_scaler === true, "text_behavior.font_sizing.respect_text_scaler must be true");
+  const styles = sequence(sizing.styles);
+  errors.require(styles.length > 0, "text_behavior.font_sizing.styles must be non-empty");
+  const regionIds = new Set(sequence(regions).map(mapping).map((region) => region.id).filter(text));
+  const styleIds = new Set();
+  const testIds = new Set();
+  styles.forEach((raw, index) => {
+    const style = mapping(raw);
+    const path = `text_behavior.font_sizing.styles[${index}]`;
+    errors.require(text(style.style_id), `${path}.style_id is required`);
+    if (text(style.style_id)) {
+      errors.require(!styleIds.has(style.style_id), `${path}.style_id must be unique`);
+      styleIds.add(style.style_id);
+    }
+    errors.require(text(style.region_id) && regionIds.has(style.region_id), `${path}.region_id must bind an existing region`);
+    errors.require(["heading", "control-label", "body", "critical-copy", "atomic-text"].includes(style.role), `${path}.role is invalid`);
+    errors.require(["single-line", "wrap"].includes(style.mode), `${path}.mode must be single-line or wrap`);
+    errors.require(["fixed", "bounded-shrink"].includes(style.strategy), `${path}.strategy must be fixed or bounded-shrink`);
+    errors.require(style.unit === "logical-px", `${path}.unit must be logical-px`);
+    for (const field of ["design_font_size", "min_font_size"]) {
+      errors.require(number(style[field]) && style[field] > 0, `${path}.${field} must be finite and positive`);
+    }
+    if (number(style.design_font_size) && number(style.min_font_size)) {
+      errors.require(style.min_font_size <= style.design_font_size, `${path}.min_font_size must not exceed design_font_size`);
+    }
+    if (style.role === "body") errors.require(style.mode === "wrap" && style.strategy === "fixed", `${path} body must use wrap and fixed`);
+    if (["control-label", "atomic-text"].includes(style.role)) errors.require(style.mode === "single-line", `${path} control and atomic text must be single-line`);
+    if (style.strategy === "bounded-shrink") {
+      // 只允许声明了触发和失败处理的单行样式缩小，不能用无界缩放抵消系统文字放大。
+      errors.require(style.mode === "single-line", `${path} bounded-shrink requires single-line`);
+      errors.require(style.trigger === "content-or-width-change", `${path}.trigger must be content-or-width-change`);
+      errors.require(style.failure === "revise-layout-or-copy", `${path}.failure must be revise-layout-or-copy`);
+    } else if (style.strategy === "fixed") {
+      errors.require(style.trigger === undefined && style.failure === undefined, `${path} fixed cannot declare shrink trigger or failure`);
+    }
+    const tests = sequence(style.test_ids);
+    errors.require(tests.length > 0 && tests.every(text), `${path}.test_ids must be a non-empty string list`);
+    tests.filter(text).forEach((id) => testIds.add(id));
+  });
+  return testIds;
 }
 
 /** 按真实区域身份解析语义边界，不把任意说明文字当作可用根节点。 */
@@ -439,6 +485,7 @@ function validateCommon(spec, errors) {
     errors.require(text(textBehavior[field]), `text_behavior.${field} is required`);
   }
   const declaredLineBreakTests = validateTextLineBreak(textBehavior, errors);
+  const declaredSizingTests = validateTextSizing(textBehavior, spec.regions, errors);
   const textScale = mapping(textBehavior.text_scale);
   const defaultScale = textScale.default;
   const largeScale = textScale.large;
@@ -542,6 +589,9 @@ function validateCommon(spec, errors) {
   errors.require(isSubset(invariantTests, executed), "every invariant test_id must execute in evidence_matrix");
   errors.require(isSubset(declaredLineBreakTests, invariantTests), "every text line-break test_id must be declared by invariants");
   errors.require(isSubset(declaredLineBreakTests, lineBreakStressTests), "every text line-break test_id must execute with longest_copy and large text scale");
+  errors.require(isSubset(declaredSizingTests, invariantTests), "every text sizing test_id must be declared by invariants");
+  errors.require(isSubset(declaredSizingTests, executed), "every text sizing test_id must execute in evidence_matrix");
+  errors.require(isSubset(declaredSizingTests, lineBreakStressTests), "every text sizing test_id must execute with longest_copy and large text scale");
   errors.require(isSubset(pageOrientations, matrixValues.get("orientation")), "evidence_matrix must cover declared orientations");
   errors.require(isSubset(new Set(["default", "longest_copy"]), matrixValues.get("locale")), "evidence_matrix must cover default and longest_copy");
   errors.require(isSubset(new Set(["zero", "nonzero"]), matrixValues.get("safe_area")), "evidence_matrix must cover zero and nonzero safe areas");
