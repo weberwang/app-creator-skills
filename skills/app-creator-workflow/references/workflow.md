@@ -10,7 +10,7 @@
 | global-baseline | 确定全局约束 | 技术方案、模块依赖、目标视口和质量预算；风格偏好可记录，正式视觉选择延后 |
 | foundation-engineering | 建立必要基础能力 | 启动、数据、服务、资源加载与有序实施证据 |
 | scene-production | 按功能切片分对象生产 | 功能验证与 SCENE、PAGE 或 DISPLAY_LAYER 各自的 V0–V5 |
-| global-integration-validation | 验证整体体验 | 导航、生命周期、状态、跨模块交互、资源和性能回归 |
+| global-integration-validation | 验证整体体验 | 导航、生命周期、状态、跨模块交互、资源、性能及[跨场景背景音乐回归](../../app-workflow-control/references/function-dependencies.md#最终集成验收) |
 | release | 准备并按授权交付 | 可复现构建、依赖/素材来源、剩余问题与精确放行范围 |
 
 阶段不是强制铺满的目录模板或全项目同步关卡。按可验证的功能切片分批推进，具备条件的对象可先进入视觉设计；现有工程局部修复只覆盖受影响工作，不创建空文档、空模块或占位审批。

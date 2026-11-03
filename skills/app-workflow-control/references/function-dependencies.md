@@ -24,9 +24,13 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 当前功能证据在推进后仍须可追溯并重验。来源状态、覆盖对象、证据内容或已确认功能行为变化时，先阻断受影响对象并检查影响；涉及功能规则则回到 V1，视觉变化按实际影响处理。最终跨场景用户路径仍在集成验证中使用正式组合重跑，不能以单对象视觉验收代替。
 
+## 最终集成验收
+
 `INTEGRATION` 以 `integrationPurpose` 区分用途：`feature` 是早期功能验证，可以作为 V1 共享来源，不等待场景 V5；`final` 是正式组合后的跨对象回归，不能反向作为 V1 来源。初始化最终集成时使用 `--integration-purpose final`，默认用途为 `feature`。
 
 最终集成在开始实施前通过 `integrationScopeRef: {path,sha256}` 固定预期范围：范围文件包含 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`objects: [{objectId,workItemRef:{path,sha256},functionBaselineRef:{path,sha256}}]` 和 `cases: [{caseId,objectIds}]`，对象与行为覆盖均非空且唯一。每个来源必须是当前项目和技术栈已完成 V5 的实际对象，功能基线引用与来源一致。执行状态冻结范围引用，实施后不能静默缩小范围或换绑其他对象版本。
+
+- **跨场景背景音乐**。项目有跨场景共用的背景音乐时，必须将本项纳入全局集成验收，并在 `integrationScopeRef` 的 `cases` 中登记。在同一正式运行候选中覆盖跨场景切换、返回原场景和重开场景。对每条路径记录前后的曲目、播放进度及播放实例，确认同一首背景音乐从原进度继续，期间始终只有一个背景音乐实例发声。缺少任一路径的运行证据时，本项不得记为通过。
 
 最终集成通过 `integrationEvidenceRef: {path,sha256}` 绑定本工作项 PASS 清单中的回归总记录。总记录包含 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`status: "PASS"`、`objects` 和 `cases`，对象及各行为覆盖必须与预先冻结的范围一致。每个对象记录 `objectId`、已完成 V5 的 `workItemRef: {path,sha256}` 和当前 `functionBaselineRef: {path,sha256}`；每个行为记录 `caseId`、`objectIds`、独立实际验证文件 `evidenceRef: {path,sha256}`。行为文件也必须列入本工作项 PASS 清单，并绑定同一工作项、项目、技术栈、行为及对象范围。完成前严格重验每个参与对象及其已冻结功能范围；对象、功能基线或回归证据改变时重新验证受影响范围。
 
