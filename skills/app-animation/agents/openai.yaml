@@ -1,6 +1,6 @@
 interface:
-  display_name: "动画制作与接入"
-  short_description: "区分动画资产制作与Unity 2D技术管线支持，规划动作、资源序列、导入约束和运行验证。"
-  default_prompt: "使用 $app-animation，按已确认的技术栈完成当前动画制作与接入任务并交付可验证结果。"
+  display_name: "动作设计、动画制作与接入"
+  short_description: "设计游戏动作与时间轴，按需交付独立方案、接入动画资产或维护 Unity 2D 动画管线。"
+  default_prompt: "使用 $app-animation，按当前任务范围交付动作方案、动画资产与接入证据或技术管线支持。"
 policy:
   allow_implicit_invocation: true

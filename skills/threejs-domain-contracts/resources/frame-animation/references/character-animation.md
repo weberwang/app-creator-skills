@@ -12,6 +12,8 @@
 
 > 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-character-animation.md#衔接与循环设计)。
 
+收势视频的参考与验收，通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-character-animation.md#收势视频的参考与验收)。
+
 ## 制作与优化判断
 
 - **设计关键姿态与轮廓。** 先明确初态、主要动作姿态、受力极值、玩法事件姿态和收势/循环姿态。每个关键姿态应从目标视角读出动作方向与身体朝向；手脚、武器或道具不能与躯干合成难辨的轮廓。关键姿态之间的过渡要说明如何连接，不能只列姿态名称。

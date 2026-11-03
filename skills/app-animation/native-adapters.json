@@ -49,7 +49,7 @@
         "path": "../app-stack-threejs/references/native-contracts.md",
         "section": "mode-threejs-frame-animation",
         "mode": "threejs-frame-animation",
-        "when": "仅当项目技术栈为 Three.js，且任务属于“动画制作与接入”时使用此原生专项能力。"
+        "when": "仅用于 Three.js 的二维逐帧位图动画制作与接入，包括 HUD 和 billboard 序列。三维骨骼模型的动画片段由 app-3d-asset-pipeline 的 threejs-game-model-pipeline 模式接入。"
       }
     ]
   },

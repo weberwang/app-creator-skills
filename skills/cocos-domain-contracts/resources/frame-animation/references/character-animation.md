@@ -14,6 +14,8 @@
 
 > 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-character-animation.md#衔接与循环设计)。
 
+收势视频的参考与验收，通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-character-animation.md#收势视频的参考与验收)。
+
 ## 制作与优化判断
 
 - 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-character-animation.md#制作与优化判断)。

@@ -13,6 +13,7 @@
 ## 动作分组
 
 - 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-action-timing.md#动作分组)。
+- 多段攻击的输入窗口与分岔，通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-action-timing.md#多段攻击的输入窗口与分岔)。
 
 ## 游戏时间先于来源
 
