@@ -17,7 +17,7 @@ description: 开发或迭代 Unity、Cocos Creator、Phaser、Three.js 游戏及
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
 
-Unity、Cocos 新增显示内容时，读取[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)并同步更新正式可编辑源，普通增量任务同样适用。
+五栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。
 
 五个技术栈涉及显示元素设计或可见表现的新增与修改，均从 V0 开始，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)确定增量范围，补齐位置、真实父子关系、尺寸、层序及输入等约定，再推进 V1–V5；场景、页面和显示层统一适用，复用组件、素材和程序化显示不以无需生图为由跳过 V0。
 

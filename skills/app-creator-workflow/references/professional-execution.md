@@ -8,7 +8,7 @@
 - 新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素的设计或可见表现，就统一执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，从本次增量 V0 开始，再验证 V1 并完成适用 V2–V5；复用素材、组件、动态生成、局部特效参数或时序调整均不豁免 V0。先明确变化范围、所属对象、父级、定位参照和尺寸策略，再在正式源实现并验证，不重做无关宿主。
 - 场景、页面和显示层统一执行[节点最小化](../../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)。V3 拆解和布局优先复用已有节点，只保留有实际职责的节点。V5 按确认后的最简层级还原并核对正式源与实际运行结构。
 - 交互组件统一执行[可交互组件结构、命中与输入职责](../../app-domain-toolkit/references/ui-interaction.md)，每个操作绑定唯一语义控件，并按实际平台验证命中、焦点和事件竞争。
-- 项目采用可视化编辑器时，遵守[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)：无明确功能需要，程序不得覆盖正式源已设定的位置与布局关系；功能性修改须明确依据、作用范围和结束策略。
+- 五栈项目采用可视化编辑器时统一遵守[编辑器优先](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)。能配置的功能优先在正式场景、Prefab 或原生 UI 源中实现并保存。代码负责业务规则与运行时行为，读取正式配置，启动时不重建已配置节点或覆盖布局。功能性位置调整按[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)限定范围与结束策略。
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。
 - 每项任务使用当前项目中的一个 Work Item；机器字段以 [Work Item Schema](../../app-workflow-control/schemas/work-item.schema.json) 和 [模板](../../app-workflow-control/templates/work-item.json) 为准。Work Item 绑定目标、技术栈、工作类型、阶段、允许/禁止路径、工程门状态、证据根和可选视觉/拷问引用。小型事实查询、文案或注释修正不必为了形式创建 Work Item。
 - 实施前以 [Implementation Package Schema](../../app-workflow-control/schemas/implementation-package.schema.json) 冻结实施单元顺序、并行组与依赖、所有者、写入路径、结果文件路径和实际验收命令。并行组与依赖组的激活规则以[控制器实施执行参考](../../app-workflow-control/references/implementation-execution.md)为准。实施单元路径必须在 Work Item 允许范围内，并避开禁止范围；不要从 profile 的建议目录扩大工作项授权。
