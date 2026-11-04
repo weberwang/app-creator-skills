@@ -565,6 +565,8 @@ pending → generating → generated → validating → packing → packed → r
 <a id="mode-phaser4-game-ui-layout--phaser-4-游戏-ui-布局"></a>
 ### Phaser 4 游戏 UI 布局
 
+**交互与命中**。已有可交互 Game Object 的默认范围合适时直接使用 `setInteractive()`。需要扩大或改形时，在该对象上用 `setInteractive(shape, callback)` 指定局部命中形状。纯展示对象无需启用交互。主操作与独立按钮使用同一布局容器下的不同 `HIT_TARGET`，按实际输入顺序核对 `topOnly`、事件传播与拖拽取消，避免对象回调与 Scene 回调执行同一动作。项目支持的键盘或手柄激活接入同一操作入口。[Phaser Input](https://docs.phaser.io/phaser/concepts/input)
+
 文本任务必须读取[Phaser 文本属性与配置](text-layout.md)，区分 Text 与 BitmapText，明确固定盒宽和换行宽度、字号适配缺口、中文断行及完整字形测量。
 
 正式显示对象、UI 与独立显示层统一遵守[显示对象锚点与显示层分层](../../phaser4-game-ui-layout/references/display-object-layering.md)：可设置原点的对象默认显式使用中心 `(0.5, 0.5)`；例外逐对象记录原因与换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。

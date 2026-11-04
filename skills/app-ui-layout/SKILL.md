@@ -9,6 +9,8 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
+涉及交互组件时，按[可交互组件结构、命中与输入职责](../app-domain-toolkit/references/ui-interaction.md)确定语义控件、有效命中范围、输入竞争与验收。具体 API 使用当前栈的原生章节。
+
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 
 开始设计前执行[内容与装饰筛选](../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)，并在输出草图、页面或组件前复核。单独实现原生组件和局部布局也适用。
@@ -21,7 +23,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 
 1. 列出页面状态、主要任务、紧急提示和真实内容；为每个控件写明语义、优先级、尺寸下限、交互状态与可访问标签。按[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)安排层级、形态与位置关系，使主要目标和操作意图无需先读文字也能辨认。
 2. 按[还原依据与变更边界](references/relative-layout.md#还原依据与变更边界)复用有效设计稿与现有布局规格，区分已确认目标、测量值、估计值及适配规则；按影响补齐，不另建布局源或逐项审批。按[UI 相对布局与定位](references/relative-layout.md)建立布局树和约束：标明容器层级、参照、对齐、间距、可伸缩/固定尺寸、滚动范围、遮挡关系、键盘/手柄焦点顺序。
-   按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)把布局树落实到本栈实际节点、Widget 或 DOM，区分显示挂载、功能归属与渲染顺序；不以代码目录或设计稿图层替代运行结构。
+   按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)把布局树落实到本栈实际节点、Widget 或 DOM，区分显示挂载、功能归属与渲染顺序。V3 按[随动与父子关系](../app-domain-toolkit/references/reference-domain-display-ownership.md#随动与父子关系)先识别必须一起移动的元素，再选择同组较低的显示对象为父级。V5 按确认关系还原并验证移动后的相对位置。
 3. 按[文本宽度、缩放与换行](references/relative-layout.md#文本宽度缩放与换行)固定文本宽度，先保持已确认的基准字号与断行，再声明单行/换行及固定字号/有界缩小策略、触发条件和具体最小可读字号；长描述保持字号并换行。读取当前栈原生模式引用的 `references/text-layout.md`，落实真实组件属性和值，明确原生能力与待补适配，再确定断点、安全区、多语言、系统字体放大和最小交互尺寸。
 4. 用最短、最长、空、错误和加载内容填充布局，检查截断、换行、溢出、按钮遮挡和视觉优先级退化。
 5. 在目标运行环境先核对同条件的设计目标、正式源值与运行值，再检查适用视口和内容适配及触控/鼠标/键盘导航；两类结果分别记录，修复偏差来源，不对单张截图加偏移或隐式改变设计目标。

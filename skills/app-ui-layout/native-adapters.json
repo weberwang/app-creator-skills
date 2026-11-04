@@ -50,6 +50,11 @@
   },
   "sharedWorkflows": [
     {
+      "id": "ui-interaction",
+      "path": "../app-domain-toolkit/references/ui-interaction.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+    },
+    {
       "id": "editor-display-authoring",
       "path": "../app-domain-toolkit/references/editor-display-authoring.md",
       "stacks": ["unity", "cocos"]

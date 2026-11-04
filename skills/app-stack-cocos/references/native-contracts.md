@@ -617,6 +617,8 @@ pending → generating → generated → validating → packing → packed → r
 <a id="mode-cocos-game-ui-layout--cocos-creator-3x-游戏-ui-布局"></a>
 ### Cocos Creator 3.x 游戏 UI 布局
 
+**交互与命中**。使用 `Button`、`Toggle` 等组件管理对应操作，在控件根的 `UITransform` 上定义二维命中尺寸。图标保持设计尺寸，按钮状态可通过 `Button.target` 作用于视觉子节点。一个业务操作只从一条激活绑定进入，避免同时在 `clickEvents` 与触摸结束处理器中执行。卡片主操作与独立按钮使用同一布局容器下的不同 `HIT_TARGET`。`BlockInputEvents` 用于确实需要拦截的遮罩等节点，按实际触摸捕获、冒泡与取消结果验证。[Button API](https://docs.cocos.com/creator/3.8/api/en/class/Button) · [节点事件](https://docs.cocos.com/creator/3.8/manual/en/engine/event/event-node.html)
+
 文本任务必须读取[Label 组件属性与配置](text-layout.md)，落实固定宽度、单行 SHRINK、正文增高、实际字号检查及原生最小字号缺口；不能仅以节点已显示作为完成依据。
 
 正式渲染 Node、Canvas UI 与独立显示层统一遵守[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)：具有 `UITransform` 的节点默认使用中心 `anchorPoint=(0.5, 0.5)`；例外逐对象记录原因并换算。场景须声明背景、世界、特效、HUD、瞬态层的实际层序、输入和生命周期归属，并在 V5 正式 Scene 中验证运行遮挡。

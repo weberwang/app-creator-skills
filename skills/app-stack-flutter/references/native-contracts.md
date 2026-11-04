@@ -352,6 +352,8 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 <a id="mode-adaptive-layout-implementation--adaptive-layout-implementation"></a>
 ### Adaptive Layout Implementation
 
+**交互与命中**。优先使用 `IconButton`、按钮或表单 Widget，将激活、禁用、焦点与反馈留给该控件。图标尺寸与按钮约束分别配置，按当前 Material 版本和实际布局测量触控范围。卡片或列表项有独立操作时，可用 `Row` 组织主内容入口与独立 `IconButton`，保持区域和语义分离。自定义手势按 `GestureDetector` 的布局尺寸、`behavior` 和手势竞争处理。改变 `behavior` 不会扩大布局边界，也不能解决父子识别器竞争。滚动接管后应取消点击反馈。[IconButton](https://api.flutter.dev/flutter/material/IconButton-class.html) · [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html)
+
 文本任务必须读取[Flutter 文本属性与配置](text-layout.md)，落实真实宽度约束、Text 行模式、TextScaler、有界字号能力缺口及正文行数继承检查。
 
 每个页面只维护一个 `docs/design/pages/<page-name>/layout-spec.yaml`。以 `phase: sketch` 表达语义结构与关系证据，不要求草图画面；仅明确要求 exact 时把同一文件升级为 `phase: fidelity`。`phase` 不是运行时状态或合并信号。

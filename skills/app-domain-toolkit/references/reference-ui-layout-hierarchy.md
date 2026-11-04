@@ -57,13 +57,15 @@ UIRoot
 
 ## V3 组织事实
 
+拆解和布局按[五栈公共随动规则](reference-domain-display-ownership.md#随动与父子关系)判断父级。先确认同一组件内必须跟随移动的元素，再由组内显示层较低的移动对象承载子级。仅有显示层序或静态定位依赖时，分别记录渲染顺序或位置参照。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 每个屏幕 UI 节点在确认的 `decomposition_elements` 中使用 snake_case 的 `ui_layout` 字段，至少记录：
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`DELEGATE_TO_PARENT` 必须沿父链找到唯一的 `HIT_TARGET`，命中目标不得嵌套另一命中目标。`SCROLL` 只能由承担 `LAYOUT` 职责的容器管理。`minimum_size` 在 V3 校验声明值，在 V5 以真实视口测量确认可读和可点击尺寸。
+按[公共交互组件规则](ui-interaction.md)划分操作。`DELEGATE_TO_PARENT` 必须沿父链找到唯一的 `HIT_TARGET`，命中目标不得嵌套另一命中目标。可点击卡片含独立子操作时，使用不激活的卡片容器，将主操作与独立按钮组织为不同分支，主操作的有效命中排除独立按钮区域。`SCROLL` 只能由承担 `LAYOUT` 职责的容器管理。`minimum_size` 在 V3 校验声明值，在 V5 以真实视口测量确认可读和可点击尺寸。
 
 > 适用技术栈：cocos、phaser、threejs。
 
