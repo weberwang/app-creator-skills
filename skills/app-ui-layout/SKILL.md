@@ -11,6 +11,8 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 
+开始设计前执行[内容与装饰筛选](../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)，并在输出草图、页面或组件前复核。单独实现原生组件和局部布局也适用。
+
 ## 输入
 
 - 页面流程和真实文案；目标屏幕尺寸/方向/输入方式；安全区与系统缩放要求；已有组件、设计稿及内容极值。

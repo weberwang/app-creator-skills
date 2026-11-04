@@ -13,6 +13,8 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 
+首次候选、单素材及后续批次在调用生图工具前都要落实[生成前约束](references/style-and-production.md#生成前约束)。涉及界面的效果图先完成[内容与装饰筛选](references/interface-intent.md#在设计与输出前筛选内容)，并把允许出现的文案和图形写进提示词。
+
 Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
 
 ## 生产闭环

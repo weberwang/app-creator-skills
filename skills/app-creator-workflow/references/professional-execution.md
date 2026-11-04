@@ -17,6 +17,8 @@
 
 ## 状态、视觉与决定
 
+涉及可见内容设计时，在草图、效果图、生图提示词或组件实现之前按[内容与装饰筛选](../../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)确定应保留的元素。生成图片前同时应用[图片制作约束](../../app-asset-workflow/references/style-and-production.md#生成前约束)，在现有规格和提示词中明确可见内容、视觉签名和排除项。
+
 公共状态和转移以 [控制面](../../app-workflow-control/SKILL.md) 与 [六阶段及对象流程](workflow.md) 为准。六阶段为需求与范围、全局基线、基础工程、场景/页面/显示层生产、全局集成验证、发布；全局状态只能通过控制器支持的显式迁移。`run` 只自动推进满足门禁的安全早期阶段，在生产实现、发布和人工决定边界停止。
 
 可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V5 是对象进度，不是第二套全局状态。V1 验证功能，白盒按需使用；V2 确认视觉目标，V3 拆解与布局需要分别确认，V4 是正式素材和技术导入，V5 是正式组合和运行验收。阶段确认按 [Human Review Schema](../../app-workflow-control/schemas/human-review.schema.json) 记录对象、阶段/用途、决定、真实用户消息引用及适用质量项；技术通过不代替用户对显示结果的人工确认。
