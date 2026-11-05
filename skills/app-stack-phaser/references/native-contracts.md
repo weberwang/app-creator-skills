@@ -777,7 +777,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 - Phaser Web、浏览器预览和小游戏不直接调用 MAX，也不加载原生广告 SDK；广告能力在这些运行目标上必须是明确的 `unsupported`/no-op，调用后立即返回并继续游戏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 视频广告位在用户触发展示但当前不可用，或官方插件接受展示后回调 `displayFailed` 时，通过统一 UI 层弹出一次“视频广告暂不可用，请稍后再试”Toast；不得由插件适配层直接操作 Phaser UI，也不得因重复回调重复提示。
-- SDK 初始化与隐私流程独立推进：初始化调用、完成状态和失败重试均不等待隐私弹窗、CMP 或 ATT；隐私未决、失败或拒绝不阻塞 SDK 初始化。MAX 内建 Terms and Privacy Policy Flow 必须在初始化前显式关闭并核验同步后的有效原生配置；广告服务仍启用且继续调用 MAX initialize，不能通过禁用广告或跳过初始化实现关闭流程。隐私收集由独立任务通过项目采用的原生 CMP/Google UMP 与 ATT 入口处理，广告服务只消费真实隐私状态，并仅对广告加载与展示检查 privacy gate。SDK 初始化成功仍以官方插件真实完成回调为准，不能用请求受理或隐私结果代替。具体配置和能力边界以细则合同为准。
+- SDK 初始化与隐私流程独立推进：初始化调用、完成状态和失败重试均不等待隐私弹窗、CMP 或 ATT；隐私未决、失败或拒绝不阻塞 SDK 初始化。MAX 内建 Terms and Privacy Policy Flow 必须在初始化前显式关闭并核验同步后的有效原生配置；广告服务仍启用且继续调用 MAX initialize，不能通过禁用广告或跳过初始化实现关闭流程。已有隐私收集由独立模块处理。广告不引入或等待 Google UMP，仅对确实受限的渠道或请求检查实际授权状态。SDK 初始化成功仍以官方插件真实完成回调为准，不能用请求受理或隐私结果代替。具体配置和能力边界以细则合同为准。
 - 新 MAX 实例首次实际初始化前，适配器按统一入口的初始化请求先手动调用官方插件 `setHasUserConsent(false)`，再调用 `initialize`；同配置重复调用复用现有任务。`hasUserConsent=false` 不等于禁止广告，不得据此返回 `privacy-pending`/`privacy-blocked`、跳过 load/show、停止预加载或暂停加载重试。privacy gate 只表达尚未满足的其他实际适用请求条件，不以 `hasUserConsent === true` 作为广告准入条件；不得把该 MAX 配置当作用户已完成选择的回执或 AppsFlyer 的同意状态。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 
@@ -798,7 +798,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 1. 读取当前 Work Item、项目 TDD/依赖能力档、Capacitor 平台状态及官方插件安装状态；按 [AppLovin MAX 接入合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md)登记范围、非目标、公开接口、状态所有权、生命周期和失败边界。广告属于可选商业能力，不能把它作为 Phaser Web 核心循环的运行前置。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 3. 冻结插件适配契约：`initialize`、`preload(slotId)`、`tryShow(context)`、`setBannerVisibility(slotId, visible)`、`isReady(slotId)` 均为非阻塞调用并返回结构化结果；MAX 管理文件负责注册并处理 MAX 初始化回调，适配层只封装必要的原生 API 调用细节。MAX 初始化失败进入 `failed`：明确的瞬时故障由 `src/platform/sdks/max-sdk.ts` 中 MAX 独立任务按 2/4/8/16/32/64 秒持续退避；后台、离线或宿主条件未满足时暂停，恢复后继续；配置或依赖错误修正后通过注入的 MAX 单 SDK 重试入口显式恢复。SDK 初始化恢复与广告位加载恢复隔离，不混用 timer 或计数。支持平台且服务启用、插件配置有效时，必须发起 MAX 初始化，不以隐私同意、CMP 完成或 ATT 授权作为调用前置。每个广告位只有一个业务状态所有者，原生格式对象由官方插件内部管理。初始化成功后立即投递全部启用的插页与激励视频预加载意图，实际加载经过广告请求隐私门；所有已发起的加载失败都由各广告位自己的重试 timer 持续调度，不按错误类别终止、不设次数上限，直到成功；禁用、移除或服务销毁终止对应广告位重试，运行 gates 关闭仅暂停。各广告位独立保存计数与 deadline，并应用同一套 `2/4/8/16/32/64 秒`退避、抖动、去重、后台/离线暂停和恢复规则。一个广告位取消、重排或触发重试不得改变其他广告位的 timer。
-4. 将 MAX 控制台、官方插件及其原生依赖、Capacitor Cordova 兼容配置、独立隐私任务（CMP/Google UMP/ATT）、广告位配置和遥测分别登记责任人。隐私任务不作为 SDK 初始化任务的前置依赖或完成条件。固定聚合渠道为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve（PubNative/HyBid）；插件、MAX SDK 与 adapter 的版本组合以官方插件和官方渠道文档当前声明的兼容范围为准，不在 Skill 或业务代码中写死版本号，也不绕过插件重复引入 MAX SDK。
+4. 将 MAX 控制台、官方插件及其原生依赖、Capacitor Cordova 兼容配置、实际采用的独立隐私能力（如有）、广告位配置和遥测分别登记责任人。隐私任务不作为 SDK 初始化任务的前置依赖或完成条件。固定聚合渠道为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve（PubNative/HyBid）；插件、MAX SDK 与 adapter 的版本组合以官方插件和官方渠道文档当前声明的兼容范围为准，不在 Skill 或业务代码中写死版本号，也不绕过插件重复引入 MAX SDK。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 8. 将候选 diff、接口契约、平台日志（脱敏）、失败重试轨迹和验证结果提交给 `$app-workflow-control`；把未执行的外部配置、真机、实时广告和发布步骤列为明确未覆盖项。
 
@@ -827,7 +827,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 - 初始化恢复：MAX 管理文件中的 MAX 独立任务最多持有一个初始化请求和一个待执行重试 timer；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该 SDK 的恢复任务，成功后只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；页面首帧前按平台 Banner 尺寸规则和安全区预留区域，加载、失败、重试与显隐回调不改变内容 inset；实际尺寸只用于验证能否安全放入预留区域，布局不遮挡游戏交互；刷新只有一个所有者，禁止 JS/Phaser 自建刷新 timer。
-- 合规与安全：独立隐私任务的 CMP/Google UMP/TCF 配置、MAX 隐私标志、iOS ATT、SKAdNetwork、Google 要求和目标地区规则均有责任人和证据；初始化链路未启用自动隐私弹窗，隐私事件不改写 SDK 初始化状态；SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
+- 合规与安全：实际适用的渠道授权配置、MAX 隐私标志、iOS ATT、SKAdNetwork 及目标地区要求均有责任人和证据；初始化链路未启用自动隐私弹窗，隐私事件不改写 SDK 初始化状态；SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 
 本仓库本次只交付 Skill 指导文件，不新增运行时代码、脚本、SDK 依赖或外部配置。

@@ -205,7 +205,7 @@ MAX 初始化成功后，广告服务去重投递启用的插页与激励视频�
 - 只有 MAX 真实初始化完成回调能确认成功。当前有效请求出现可观测的真实失败信号（同步调用异常、本地受理拒绝或 SDK 官方提供的失败回调）时，才按错误类别处理；单纯等待超时或没有任何回调时保留同一 in-flight 状态，不伪造失败或启动重试。
 - 初始化成功立即清零 MAX 初始化失败计数、取消 timer、清空 deadline/恢复意图，并只向广告服务投递一次全部启用插页与激励视频的预加载意图；广告位继续检查真实广告请求隐私条件并分别恢复。Banner 不创建、不预加载。MAX 初始化任务与每个广告位 RetryState 完全隔离，任一侧的重试不共享或改写另一侧 timer、计数、deadline。
 
-MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX 初始化回调不得等待该弹窗。项目的 CMP/Google UMP/TCF 与 ATT 各自维护真实状态及用户界面，不与 MAX 初始化任务共用完成条件、失败计数或 timer；CMP/ATT 尚无结果、失败或用户拒绝都不能替代 MAX 的真实初始化回调，不能把 MAX 任务标为成功/失败或自动再次初始化。真实且有官方依据的前置只影响它明确约束的任务/广告请求，不伪造隐私结果。
+MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX 初始化回调不得等待该弹窗。仅项目实际采用的独立隐私能力维护真实状态及用户界面，其完成条件、失败计数或 timer 与 MAX 初始化任务分离。广告不依赖 Google UMP；CMP/ATT 尚无结果、失败或用户拒绝都不能替代 MAX 的真实初始化回调，不能把 MAX 任务标为成功/失败或自动再次初始化。真实且有官方依据的前置只影响它明确约束的任务/广告请求，不伪造隐私结果。
 
 ## MAX 隐私配置与初始化时序
 
@@ -214,7 +214,7 @@ MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX �
 3. 官方也支持原生资源配置 `consent_flow_enabled=false`（Android）和 `ConsentFlowEnabled=NO`（iOS）。如项目采用资源配置，应合并保留其他有效值，并检查打包后的有效配置；不能因官方页面演示启用示例而保留 `true`。关闭流程不等于关闭 SDK、跳过 MAX 初始化或完成用户同意收集。
 4. 首次设置的 `hasUserConsent=false` 是 MAX 配置，不是用户已同意或拒绝的回执，不得据此伪造 CMP/TCF/ATT 结果或阻断初始化、广告请求和 load 重试。后续真实用户选择到达时按锁定插件官方接口同步，不由同实例初始化重试再次写入初始 `false` 覆盖。真实适用的 CMP/TCF、地区、网络及 ATT 条件继续由各自流程处理；确有官方前置时不得伪造完成，只阻断对应 SDK/广告动作并记录来源。
 5. iOS `Info.plist` 按当前 AppLovin SKAdNetwork 页面与实际启用的 mediated networks 生成/维护 `SKAdNetworkItems`，不能复制过期固定清单。Android/iOS 隐私 manifest、数据安全声明、商店隐私资料和目标地区限制由发布责任人核对；ATT 描述和请求时序按平台官方流程及项目决策处理，不重复弹窗，也不把未授权结果说成已授权。
-6. 若使用 Google UMP/CMP，核对实际消息配置、IAB TCF 与聚合网络覆盖；任何外部控制台配置由责任人在授权范围内完成。隐私状态由适配层按官方 API 如实读取/传递；广告请求门只表达确有适用的阻断条件，不能仅因 `hasUserConsent=false` 返回 `privacy-pending` 或 `privacy-blocked`。儿童数据、年龄限制和地区义务不能自行假设或绕过。
+6. 广告模块不接入或等待 Google UMP。对实际适用的渠道核对真实授权配置及网络覆盖。任何外部控制台配置由责任人在授权范围内完成。隐私状态由适配层按官方 API 如实读取/传递；广告请求门只表达确有适用的阻断条件，不能仅因 `hasUserConsent=false` 返回 `privacy-pending` 或 `privacy-blocked`。儿童数据、年龄限制和地区义务不能自行假设或绕过。
 
 官方参考：[Android MAX Privacy](https://support.applovin.com/en/max/android/overview/privacy)、[iOS MAX Privacy](https://support.applovin.com/en/max/ios/overview/privacy)、[Android Terms and Privacy Policy Flow](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow) 和 [iOS Terms and Privacy Policy Flow](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 

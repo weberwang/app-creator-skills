@@ -216,7 +216,7 @@ MAX 的实际初始化和完成/恢复处理由 `src/platform/sdks/max-sdk.ts` �
 - 核对关闭配置先于实际 SDK initialize 生效，但初始化任务照常发起；以官方插件回传的 SDK 初始化完成信号检查真实成功，随后由广告服务投递预加载意图，实际 load/show 仍检查业务与隐私门。保留配置、初始化完成和广告请求各自的验证结果，不以无弹窗、请求受理、AppsFlyer 成功或源码检查代替 MAX 运行验证。
 - AppsFlyer 的自身配置、监听、session-ready 和 start 都留在独立任务；MAX 的开关配置失败或初始化异常只影响 MAX，不跳过 AppsFlyer 的任务投递。其自身官方启动前提与 MAX 无关，不把关闭 MAX 流程误写为用户已同意 AppsFlyer 跟踪。
 
-Google AdMob 的 Google UMP/CMP 消息配置、IAB TCF 与实际聚合网络覆盖由隐私模块独立核实，不固定为 MAX 初始化内置流程；外部控制台配置仍由责任人在授权范围内完成。本工作流明确要求 MAX 初始化前手动传入 false，该初始配置不能冒充用户交互结果，也不能被业务层用作阻止广告加载的条件。其余真实隐私信号按锁定插件支持的接口传递，不从初始化成功推断用户已同意，不为获得填充把 false 改为 true。具体方案须核对[官方 Cordova 隐私说明](https://support.applovin.com/en/max/cordova/overview/privacy)，不能假设所有 SDK/CMP 组合都支持独立时序；儿童数据、年龄限制和地区义务不能由广告模块自行假设或绕过。
+核实 Google AdMob 实际适用的授权配置与聚合网络覆盖。广告链路不引入或等待 Google UMP。外部控制台配置仍由责任人在授权范围内完成。本工作流明确要求 MAX 初始化前手动传入 false，该初始配置不能冒充用户交互结果，也不能被业务层用作阻止广告加载的条件。其余真实隐私信号按锁定插件支持的接口传递，不从初始化成功推断用户已同意，不为获得填充把 false 改为 true。具体方案须核对[官方 Cordova 隐私说明](https://support.applovin.com/en/max/cordova/overview/privacy)，不能假设所有 SDK/CMP 组合都支持独立时序；儿童数据、年龄限制和地区义务不能由广告模块自行假设或绕过。
 
 ## 全屏广告静默预加载与独立持续重试
 
@@ -297,7 +297,7 @@ Google AdMob 的 Google UMP/CMP 消息配置、IAB TCF 与实际聚合网络覆�
 
 - 使用假的官方插件记录调用顺序：新 MAX 实例首次 initialize 之前必须先收到布尔 `false` 的 setHasUserConsent 调用；SDK 真正完成前不能 load。完成后保持 false，其他实际条件满足且没有独立阻断时，privacy 为 ready，全部启用全屏广告位各发起一次预加载，Banner 仍只在展示请求时创建并加载；模拟加载失败后仍按原任务重试，实例就绪后允许展示，不等待值变 true，也不返回仅由 false 产生的 privacy 错误或 Toast。
 - 在上项基础上另设一项明确的、与 hasUserConsent 值无关的 SDK/平台请求限制，才验证 privacy pending/blocked 时 load/show 为零；解除该限制后 false 仍不变，恢复广告请求而不重新初始化 MAX。独立隐私任务的成功、拒绝、失败、取消均不得覆盖已确认的 SDK 初始化状态；SDK 尚未完成时也不能用隐私任务完成代替实际 SDK 回调。
-- 核验 MAX 内建流程启用项已从实际配置取消，关闭状态先于 initialize 生效，构建脚本及最终 Android/iOS 产物不会重新启用；没有弹窗、入口返回或仅检查源码均不能代替真实 MAX 初始化完成回调。只在已确认支持独立初始化的 SDK/CMP 组合中，用不结束的独立隐私任务验证 MAX 仍能完成，成功后只投递一次全屏预加载意图，实际 load/show 仍经过隐私门。按独立隐私模块同步真实结果，已有状态时不重复弹窗；初始化重试不重复注册隐私监听或请求 CMP/UMP/ATT。锁定依赖无法满足独立时序时记录能力限制，不伪造验收通过。
+- 核验 MAX 内建流程启用项已从实际配置取消，关闭状态先于 initialize 生效，构建脚本及最终 Android/iOS 产物不会重新启用；没有弹窗、入口返回或仅检查源码均不能代替真实 MAX 初始化完成回调。只在已确认支持独立初始化的 SDK/CMP 组合中，用不结束的独立隐私任务验证 MAX 仍能完成，成功后只投递一次全屏预加载意图，实际 load/show 只检查当前请求适用的授权限制，并覆盖 UMP 缺失时可用渠道仍正常请求。按独立隐私模块同步真实结果，已有状态时不重复弹窗；初始化重试不重复注册隐私监听或请求 CMP/UMP/ATT。锁定依赖无法满足独立时序时记录能力限制，不伪造验收通过。
 - 同时启用 MAX 与 AppsFlyer，分别模拟任一 SDK 的同步异常、失败、永久不回调和重试：另一个仍独立发起并按自身真实完成/启动信号推进，游戏首帧继续；AppsFlyer 在自身 session-ready 和实际采用的官方条件满足后执行 start，不遗漏或重复启动。检查两者不共享初始化状态和重试 timer，AppsFlyer 不挂在 MAX 初始化或广告回调下；关闭 MAX 内建流程不误设 AppsFlyer 授权状态。
 - 对已核实支持独立时序的 SDK/CMP 组合，在隐私任务未完成、拒绝同意及 ATT 未决/拒绝时仍调用 MAX initialize，临时初始化失败仍自动重试；SDK 的初始化完成回调到达前不得假装成功。是否阻断广告请求仅按独立的真实请求限制判断，不能因初始化配置 false 或用户拒绝就把业务 privacy gate 置为 blocked。另测官方要求自有 CMP 前置而不满足独立时序的组合：MAX 返回具体配置阻断，不调用 initialize 或创建初始化重试任务，但不能从 false 本身推断该阻断，AppsFlyer 仍独立启动。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。

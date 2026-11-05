@@ -8,7 +8,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-- 所有已启用的插页与激励视频广告位都在初始化成功后立即投递后台静默预加载意图，实际 load 经过广告请求隐私门，未满足时保留意图待恢复；初始化不主动创建广告对象或视图，Banner 不预加载，只在展示请求时创建并加载；加载、重试和展示回调均走后台/事件驱动路径。游戏主循环、输入、场景切换和结算不得等待广告加载、网络响应、CMP、展示或隐藏；全屏展示触发只读取当前状态并快速返回，不能在触发路径临时 load；Banner 展示触发允许按需创建并加载，但同样立即返回。
+- 所有已启用的插页与激励视频广告位都在初始化成功后立即投递后台静默预加载意图，适配器仅对有实际授权限制的请求保留意图待恢复，其他请求照常加载，Google UMP 状态不参与判定；初始化不主动创建广告对象或视图，Banner 不预加载，只在展示请求时创建并加载；加载、重试和展示回调均走后台/事件驱动路径。游戏主循环、输入、场景切换和结算不得等待广告加载、网络响应、CMP、展示或隐藏；全屏展示触发只读取当前状态并快速返回，不能在触发路径临时 load；Banner 展示触发允许按需创建并加载，但同样立即返回。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -26,11 +26,19 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-以下七项是本合同的固定集合。`canonical` 用于代码和遥测的稳定分类；控制台显示名、adapter 名称和区域要求必须按 AppLovin 当前页面核对。
+本合同固定聚合 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。`canonical` 用于代码和遥测的稳定分类；控制台显示名、adapter 名称和区域要求必须按 AppLovin 当前页面核对。
 
 > 适用技术栈：cocos、phaser、threejs。
 
 固定集合不代表每个平台、国家或广告格式都一定有填充。适配器在 Android 与 iOS 的可用性、支持的竞价方式、SDK 要求和区域限制必须分别从官方当前文档核对并记录；缺少支持证据时，将该平台/网络标为 `not-supported`，不能用自定义网络假装已接入。
+
+## 非个性化广告请求
+
+所有广告加载统一请求非个性化广告。范围包括 Banner 首次加载与刷新、插页和激励视频预加载、重新加载及失败重试。首次请求前由适配器落实非个性化配置。展示只使用按此配置加载的广告，切换配置后废弃旧模式缓存及迟到的加载结果。
+
+对固定七家聚合渠道，按锁定的 SDK、adapter 与目标平台核对各自支持的非个性化配置和信号传递方式。MAX 的 `hasUserConsent=false` 仍按现有初始化合同配置。验收逐渠道核对实际请求模式，不能单凭该值、SDK 初始化成功或广告有填充判定已使用非个性化广告。
+
+某渠道或格式无法配置或确认非个性化模式时，标记具体渠道、平台与格式的限制，停用对应加载路径，其他可用路径照常请求。无填充和重试沿用现有回退，始终保持非个性化模式。广告链路不接入或等待 Google UMP。
 
 ## MAX 控制台
 
@@ -460,7 +468,7 @@ n = consecutiveLoadFailures（本次失败递增后的值，n >= 1）
 | --- | --- | --- |
 | `unsupported` | Web/小游戏或未实现的平台 | 立即 no-op，不初始化、不重试。 |
 | `configuration` | 无效 ad unit、缺失 SDK/adapter、包名不匹配；例如 `-5603` | 初始化配置错误修正后显式重试；加载失败持续退避重试并报告配置问题。 |
-| `privacy` | `privacy-pending`、同意被拒、ATT/CMP/SKAN 前置未完成 | 不请求广告；监听隐私状态变化后重新评估 gates。 |
+| `privacy` | 特定请求存在已核实的授权限制 | 仅限制受影响的渠道或请求。其他适用请求照常发起，UMP 状态不参与判定。 |
 | `lifecycle` | 无有效 Activity/ViewController、后台、宿主已销毁 | 快速返回并暂停调度；前台/宿主恢复后最多恢复一次。 |
 | `connectivity` | 无网络、超时、网络错误；例如 `-1009`、`-1001`、`-1000` | 初始化瞬时失败独立自动退避，离线暂停，gates open 后按原 deadline 恢复；load 失败使用广告位独立退避。 |
 | `no-fill` | 当前设备/地区无可用填充；例如 `204` | 视为瞬时 load failure，使用统一指数退避。 |
@@ -588,7 +596,7 @@ n = consecutiveLoadFailures（本次失败递增后的值，n >= 1）
 | 渠道 | 必验别名 | 最低证据 |
 | --- | --- | --- |
 | AppLovin | `applovin` | MAX 初始化；Banner load/显隐/刷新；插页与激励视频 load/display/hidden/reward；测试模式和 waterfall 可见。 |
-| Google AdMob | `admob` / Google Bidding and Google AdMob | adapter/SDK 状态、当前支持格式的测试广告、自适应 Banner、Google CMP/TCF 配置。 |
+| Google AdMob | `admob` / Google Bidding and Google AdMob | adapter/SDK 状态、当前支持格式的测试广告、自适应 Banner、该渠道实际适用的授权配置。 |
 | Mintegral | `mintegral` | Android/iOS adapter 状态、当前支持格式的测试广告、隐私传递。 |
 | Pangle | `pangle` | adapter 状态、当前支持格式的测试广告、目标国家/地区配置和 SKAdNetwork/隐私要求。 |
 | Unity Ads | `unity` | MAX Unity Ads adapter 状态、当前支持格式的测试广告和展示/奖励回调。 |
@@ -597,7 +605,7 @@ n = consecutiveLoadFailures（本次失败递增后的值，n >= 1）
 
 > 适用技术栈：cocos、phaser、threejs。
 
-发布前还要绑定 `app-ads.txt`、iOS SKAdNetwork IDs、ATT、隐私 manifest、商店数据安全/隐私声明和 Google CMP 证据。不要以“MAX SDK 初始化成功”或“AppLovin 单渠道有填充”代替七项渠道验证。真实广告流量、生产 waterfall、商店上传、真机验收和外部渠道修改属于受保护动作，须由 `$app-workflow-control` 逐对象处理。
+发布前还要绑定 `app-ads.txt`、iOS SKAdNetwork IDs、ATT、隐私 manifest、商店数据安全/隐私声明和实际适用的渠道授权证据。不要以“MAX SDK 初始化成功”或“AppLovin 单渠道有填充”代替七项渠道验证。真实广告流量、生产 waterfall、商店上传、真机验收和外部渠道修改属于受保护动作，须由 `$app-workflow-control` 逐对象处理。
 
 ## 官方 AppLovin 资料
 

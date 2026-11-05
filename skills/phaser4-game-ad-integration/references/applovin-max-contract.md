@@ -189,12 +189,12 @@ Phaser 场景只提供 `slotId` 与自然中断点上下文并消费结构化结
 应用层所有 SDK 初始化统一由 `src/platform/initialize-sdks.ts` 独立投递，MAX 与隐私任务分别进入自己的分支；具体规则见[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)。`src/platform/sdks/max-sdk.ts` 持有 MAX 的真实完成回调、幂等状态和初始化恢复任务；广告服务只持有广告位加载/展示与其运行期恢复。官方插件适配器封装原生 API，下述真实完成条件、隐私门与能力冲突继续有效，不因统一投递而改变官方前置或推断成功。
 
 1. 启动时读取受控平台配置，检查平台、当前 Activity/ViewController、环境开关与插件配置；Web/小游戏直接 no-op。支持的原生平台服务启用且具备有效配置时，先手动调用官方插件 `setHasUserConsent(false)`，保持 MAX 内建流程关闭，再调用 MAX initialize；不以用户同意、CMP 完成或 ATT 授权作为本合同目标初始化的前置。该值不作为加载、展示或加载重试的阻断条件；平台/网络本身的实际要求仍按对应能力证据判断。
-2. 初始化任务只处理 MAX 的调用、真实完成回调及失败恢复；隐私收集另建独立任务，通过项目采用的原生 CMP/Google UMP 与 ATT 入口执行，不作为初始化任务的前置依赖或验收条件。工作流要求两者可独立完成：SDK 回调先到时立即确认初始化成功，即使 privacy 仍为 pending/blocked；隐私结果先到时只更新真实隐私状态，不推断 SDK 已初始化，也不再次 initialize。初始化调用只确认本地受理并快速返回，不等待隐私流程或广告事件。上述是目标行为，具体插件是否支持须按下一条核实，不能视为现有 MAX 接入能力已经满足。
+2. 初始化任务只处理 MAX 的调用、真实完成回调及失败恢复；仅在项目已有或明确要求隐私业务时单独处理隐私收集。广告不引入或等待 Google UMP。隐私任务不作为初始化前置或验收条件。工作流要求两者可独立完成：SDK 回调先到时立即确认初始化成功，即使 privacy 仍为 pending/blocked；隐私结果先到时只更新真实隐私状态，不推断 SDK 已初始化，也不再次 initialize。初始化调用只确认本地受理并快速返回，不等待隐私流程或广告事件。上述是目标行为，具体插件是否支持须按下一条核实，不能视为现有 MAX 接入能力已经满足。
 3. 不启用 MAX 自动 Terms and Privacy Policy Flow。[Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与[iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)说明该模式会在用户结束流程后才发送初始化完成回调。按锁定插件/SDK 支持的入口关闭该模式；使用原生资源配置时，Android `res/raw/applovin_settings.json` 的 `consent_flow_settings.consent_flow_enabled` 为 `false`，iOS `AppLovin-Settings.plist` 的 `ConsentFlowInfo.ConsentFlowEnabled` 为 `NO`，并核验同步后的有效配置。项目实际采用自行集成 CMP 时，官方要求该流程在 MAX 初始化前完成；这项额外真实前置与独立初始化目标的关系须按锁定 SDK/CMP 版本单独核实，不因本合同手动 `hasUserConsent=false` 就虚构 CMP 已完成，也不把这个布尔值本身标为能力未满足或禁止请求。存在实际顺序冲突时记录具体未满足项，不牵连游戏核心流程；没有该额外前置时按官方手动标志路径初始化并请求广告。不得套用其他框架的同名 API、创建新的原生广告桥，或提前伪造初始化完成来掩盖真实冲突。
 4. iOS `Info.plist` 按当前 AppLovin SKAdNetwork 页面和已实际启用的每个 mediated network 生成/维护 `SKAdNetworkItems`，不能复制过期的固定清单。Android/iOS 的隐私 manifest、数据安全声明、商店隐私资料和目标地区限制同样由发布责任人核对。
 5. 初始化成功后立即通过每个启用的插页与激励视频广告位自己的服务入口投递静默预加载意图；实际 load 仍检查广告请求隐私门，未满足时保留意图，恢复后各广告位去重执行一次。初始化失败立即返回结构化错误；MAX 独立任务自动退避，宿主/前台/网络条件未满足时暂停，隐私状态不阻断初始化重试，配置错误修正后通过单 SDK 重试入口显式恢复；广告位加载重试由广告服务分别持有，两种重试不得混用。
 
-Google AdMob 的同意收集由独立隐私任务使用符合项目要求的 Google UMP/CMP，核实相应消息配置、IAB TCF 与实际聚合网络覆盖；外部控制台配置仍由责任人在授权范围内完成。MAX 初始化前按本合同手动配置 `hasUserConsent=false`，它是 SDK 配置，不是用户已完成选择或明确拒绝的回执，不能据此伪造 CMP/TCF/ATT 结果。后续实际用户选择到达时按锁定插件官方接口同步更新，但不重新初始化 MAX；privacy gate 只根据其他实际适用条件重算，不能因为该标志仍为 `false` 而阻止加载。各聚合网络的标志传递能力必须逐项核实，不能仅更新业务 gate 就宣称传递成功；有真实请求阻断时保留意图，条件满足后恢复。iOS ATT/NSUserTrackingUsageDescription 由隐私任务统一管理，避免重复请求，不等待 ATT 才初始化 SDK。儿童数据、年龄限制和地区义务不能由广告模块自行假设或绕过。
+按各渠道实际要求核实授权配置和覆盖范围。广告不为 Google AdMob 新增或等待 Google UMP。外部控制台配置仍由责任人在授权范围内完成。MAX 初始化前按本合同手动配置 `hasUserConsent=false`，它是 SDK 配置，不是用户已完成选择或明确拒绝的回执，不能据此伪造 CMP/TCF/ATT 结果。后续实际用户选择到达时按锁定插件官方接口同步更新，但不重新初始化 MAX；privacy gate 只根据其他实际适用条件重算，不能因为该标志仍为 `false` 而阻止加载。各聚合网络的标志传递能力必须逐项核实，不能仅更新业务 gate 就宣称传递成功；有真实请求阻断时保留意图，条件满足后恢复。iOS ATT/NSUserTrackingUsageDescription 由隐私任务统一管理，避免重复请求，不等待 ATT 才初始化 SDK。儿童数据、年龄限制和地区义务不能由广告模块自行假设或绕过。
 
 ### 初始化前设置 hasUserConsent=false
 
@@ -230,7 +230,7 @@ iOS 实际 App target 打包的 `AppLovin-Settings.plist` 中，`ConsentFlowInfo
 
 关闭流程后，广告功能开关、SDK key、广告位配置和 MAX 插件保持正常接入；注册初始化结果处理后仍通过官方插件发起一次有效初始化，以真实完成回调推进 SDK 状态。不能删除 initialize、提前 return、伪造完成回调、把广告服务设为 disabled 或调用隐私结果代替 SDK 完成来实现“关闭”。初始化瞬时失败由MAX 管理文件中的 MAX 独立任务恢复，关闭流程不清除或复用广告位加载 timer。
 
-初始化成功后仍按已有规则投递全屏广告位预加载意图；已手动设置 `hasUserConsent=false` 且其他实际请求条件满足时，实际 load/show 正常执行，不能仅因该值暂停请求。关闭 MAX 内建流程不等于伪造同意收集完成；独立 CMP/UMP/ATT 仍处理实际适用的职责，上述版本能力冲突仍需证据关闭。
+初始化成功后仍按已有规则投递全屏广告位预加载意图；已手动设置 `hasUserConsent=false` 且其他实际请求条件满足时，实际 load/show 正常执行，不能仅因该值暂停请求。关闭 MAX 内建流程不等于伪造同意收集完成；已有独立隐私能力仍处理其实际职责，上述版本能力冲突仍需证据关闭。
 
 ### 与 AppsFlyer 独立推进
 

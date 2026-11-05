@@ -2,6 +2,10 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。广告调用遵循[归因与广告直接启动和调用](reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。广告服务中的状态检查仅反映实际 SDK、平台和广告位条件，不新增应用前置流程。公共状态与授权仍由 app-workflow-control 管理。
 
+广告链路不直接引入、初始化或调用 Google UMP，也不以 UMP 是否安装、就绪、完成或返回同意作为初始化、预加载、展示或重试的条件。SDK 及各渠道的实际请求限制由对应适配器处理，仅限制受影响的渠道或请求。厂商插件自身管理的传递依赖按锁定版本核实。
+
+所有广告加载采用非个性化模式，预加载、刷新和重试使用同一配置。各渠道的请求约束和验收见[非个性化广告请求](reference-ad-applovin-max-contract.md#非个性化广告请求)。
+
 ## 完整流程
 
 ### 适用范围与硬边界（phaser、threejs）
@@ -38,7 +42,7 @@
 
 ### 交付流程（phaser、threejs）
 
-先完成静态审查、TypeScript/原生编译和状态机单测，再在已授权的目标环境运行平台集成测试。使用 MAX Test Mode 与 Mediation Debugger 按渠道和格式分别核验，检查 `app-ads.txt`、iOS SKAdNetwork、Google CMP/TCF 及 ATT；不以单一网络或单一格式成功冒充全部通过。
+先完成静态审查、TypeScript/原生编译和状态机单测，再在已授权的目标环境运行平台集成测试。使用 MAX Test Mode 与 Mediation Debugger 按渠道和格式分别核验，检查 `app-ads.txt`、iOS SKAdNetwork、实际适用的渠道授权要求及 ATT，并验证未接入 UMP 时广告链路仍可运行；不以单一网络或单一格式成功冒充全部通过。
 
 ### 最低公开契约（phaser、threejs）
 

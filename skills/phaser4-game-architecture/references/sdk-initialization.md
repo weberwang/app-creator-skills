@@ -28,7 +28,7 @@
 
 ## MAX 与 AppsFlyer
 
-MAX 初始化任务与独立隐私任务均由统一入口分别投递，互不等待。MAX 真实调用及其完成回调属于 MAX 自己的初始化分支；CMP/Google UMP/ATT 的交互与授权状态由独立隐私模块处理。
+统一入口独立投递 MAX 初始化。仅在项目已有或明确要求隐私业务时另行编排其任务。MAX 真实调用及其完成回调属于 MAX 自己的初始化分支；项目已有的隐私交互与授权状态由独立隐私模块处理。广告链路不引入或等待 Google UMP。
 
 - 新 MAX 实例首次实际初始化前必须先按[广告合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md#初始化前设置-hasuserconsentfalse)调用官方插件 `setHasUserConsent(false)`，再调用 `initialize`。同实例初始化重试复用已确定配置，不再次回写 false 覆盖后续真实隐私更新；必要配置未完成时不能跳过。MAX 内建 Terms and Privacy Policy Flow 需在初始化前通过受支持的宿主配置显式关闭并核验有效原生配置；关闭流程不等于禁用广告或跳过初始化。
 - `hasUserConsent=false` 是 MAX 初始化配置，不是用户同意/拒绝回执，也不代表广告不可用。它本身不阻断 MAX 初始化、广告请求或加载重试；广告业务仍按其他真实适用的 CMP/TCF、地区、宿主和网络条件处理。

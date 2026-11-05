@@ -31,7 +31,7 @@
 
 ## 归因与广告
 
-归因与广告在应用启动时分别投递初始化，业务触发时直接调用对应能力。禁止应用自行设置跨 SDK 等待、隐私流程等待或登录门槛。适配器处理真实就绪状态及适用的数据授权限制。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
+广告聚合使用 AppLovin MAX，归因使用 AppsFlyer。两者在应用启动时分别投递初始化，业务触发时直接调用对应能力。禁止应用自行设置跨 SDK 等待、隐私流程等待或登录门槛。广告链路不接入或等待 Google UMP。广告预加载、刷新和重试均采用非个性化模式。[非个性化广告请求](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)适配器处理真实就绪状态及适用的数据授权限制。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
 
 ## 隐私流程约束
 
