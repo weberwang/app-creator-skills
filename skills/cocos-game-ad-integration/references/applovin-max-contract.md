@@ -245,7 +245,7 @@ MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX �
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#原生视图和安全布局)。
 
-- Banner 位于原生视图层并遵守系统 safe area。内容 inset 在页面布局阶段按当前平台支持的尺寸规则预先确定，MAX 回调中的实际/自适应尺寸仅用于核对预留区域；不得把固定 50px/50dp 当作所有设备的真实高度，也不得把 Banner 尺寸乘入 Cocos 渲染 DPR。
+- Banner 位于完整游戏区域内的原生覆盖层，遵守系统 safe area，仅覆盖背景留白等无有效内容的位置。不得为广告缩小 Cocos 渲染区域、改变画面比例、增加内容 inset 或空白占位。实际/自适应尺寸用于核对覆盖矩形和遮挡，不能遮挡角色、目标、路径、HUD、文字或交互区域。无法容纳时隐藏广告，动态内容进入覆盖位置时立即隐藏。不得把固定 50px/50dp 当作所有设备的真实高度，也不得把 Banner 尺寸乘入渲染 DPR。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#原生视图和安全布局)。
 
 ### 显隐快速返回
@@ -328,7 +328,7 @@ MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX �
 - 覆盖后台、离线、宿主条件恢复与初始化配置修正：只恢复 MAX 自己的待办/退避，不重跑其他 SDK；初始化事件不改变广告位 load 失败计数，不因 MAX 内建流程显示/隐藏而转换状态。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
-- 实际 Banner 尺寸超出预留区域或布局未就绪时保持隐藏，不在广告回调中重排游戏 UI；方向/窗口/safe-area 变化先隐藏并由布局模块重新提交，旧回调不污染新布局；主要按钮和手势区不遮挡，内容 inset 不修改 Cocos DPR。
+- 实际 Banner 尺寸超出游戏内安全覆盖矩形、布局未就绪或遮挡任何有效内容时保持隐藏。方向/窗口/safe-area 和玩法内容变化先重新检查覆盖关系，旧回调不污染新布局。验证游戏渲染尺寸、画面比例、输入坐标和原有系统安全区不因 Banner 改变，隐藏时无空白占位。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
 - 使用永不返回广告事件的 fake 原生适配器：结算调用 `void ad.tryShow(context)` 后仍立即推进下一场景；断言适配器调用只等待本地受理/拒绝，不等待 `loaded`、`displayed`、`hidden` 或任何广告回调。

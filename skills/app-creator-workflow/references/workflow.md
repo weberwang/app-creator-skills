@@ -29,6 +29,10 @@
 
 所有技术栈统一遵循[错误提示形式](../../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)。普通业务错误使用 Toast，需要用户确认的使用弹窗，后台加载和重试失败保持静默。功能方案明确事件分类、文案与确认动作，实现时复用统一提示组件，集成时检查 Toast 每次有效触发独占实例、相同提示不去重且不排队，空闲实例复用与旧回调隔离；按[Toast 上飘与淡出动画](../../app-domain-toolkit/references/ui-copy-principles.md#toast-上飘与淡出动画)实施向上移动 200 个逻辑单位并同步淡出消失的缓动，并核对后台重试不重复打扰；沿用现有功能规格与验证记录，不新增状态机或审批。
 
+## Banner 显示区域
+
+Banner 在完整游戏区域内叠加显示。禁止缩小游戏渲染区域、改变画面比例或为广告添加内容 inset 与空白占位。覆盖位置只能是背景留白等无有效内容的区域，角色、目标、路径、HUD、文字及操作区域均须避让。动态内容进入覆盖位置时立即隐藏广告，安全位置恢复后再检查显示。具体要求见[Banner 布局、显隐与刷新](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#提前规划-ui-布局)。
+
 ## 归因与广告
 
 广告聚合使用 AppLovin MAX，归因使用 AppsFlyer。两者在应用启动时分别投递初始化，业务触发时直接调用对应能力。禁止应用自行设置跨 SDK 等待、隐私流程等待或登录门槛。广告链路不接入或等待 Google UMP。广告预加载、刷新和重试均采用非个性化模式。[非个性化广告请求](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)适配器处理真实就绪状态及适用的数据授权限制。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。

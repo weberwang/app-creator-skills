@@ -772,7 +772,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-phaser4-game-ad-integration--适用范围与硬边界"></a>
 #### 适用范围与硬边界
 
-本 Skill 只处理 Phaser 4 + TypeScript/Vite + Capacitor 移动项目的 Banner、插页与激励视频广告能力，聚合层固定使用 AppLovin MAX，接入实现固定使用 AppLovin 官方维护的 `cordova-plugin-applovin-max`，由 Capacitor 的 Cordova 兼容层加载。项目只在 TypeScript 侧建立业务门面和官方插件 API 适配，不自建 Android/iOS 广告插件，也不直接集成 MAX 原生 SDK。所有已配置广告位独立维护状态；插页与激励视频只在后台静默预加载，不在初始化阶段主动创建广告对象或视图，插件内部按需管理加载资源。插页与激励视频预加载成功以当前广告实例对象的就绪属性为准，loaded 回调和业务 phase 不能单独证明成功。全屏展示读取实例就绪属性与现有业务状态并立即返回；Banner 不预加载，只在业务请求展示时创建并加载；支持 Banner 且广告位启用、页面允许展示时，在页面首帧前先预留广告区域并完成 UI 布局，不等广告加载或展示。每个广告位独立维护加载失败计数、retry deadline 和至多一个重试 timer，但使用相同分类、退避、暂停和恢复规则。开始任何设计、实施或审查前，必须先读取唯一细则合同 [AppLovin MAX 接入合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md)，并以其中的状态、时序、失败和合规规则为准。
+本 Skill 只处理 Phaser 4 + TypeScript/Vite + Capacitor 移动项目的 Banner、插页与激励视频广告能力，聚合层固定使用 AppLovin MAX，接入实现固定使用 AppLovin 官方维护的 `cordova-plugin-applovin-max`，由 Capacitor 的 Cordova 兼容层加载。项目只在 TypeScript 侧建立业务门面和官方插件 API 适配，不自建 Android/iOS 广告插件，也不直接集成 MAX 原生 SDK。所有已配置广告位独立维护状态；插页与激励视频只在后台静默预加载，不在初始化阶段主动创建广告对象或视图，插件内部按需管理加载资源。插页与激励视频预加载成功以当前广告实例对象的就绪属性为准，loaded 回调和业务 phase 不能单独证明成功。全屏展示读取实例就绪属性与现有业务状态并立即返回；Banner 不预加载，只在业务请求展示时创建并加载；Banner 显示在完整游戏区域内，提前规划不遮挡有效内容的覆盖位置。角色、目标、路径、HUD 或交互区域与其相交时隐藏广告，不缩小渲染区域、不增设广告 inset 或空白占位。每个广告位独立维护加载失败计数、retry deadline 和至多一个重试 timer，但使用相同分类、退避、暂停和恢复规则。开始任何设计、实施或审查前，必须先读取唯一细则合同 [AppLovin MAX 接入合同](../../phaser4-game-ad-integration/references/applovin-max-contract.md)，并以其中的状态、时序、失败和合规规则为准。
 
 - Phaser Web、浏览器预览和小游戏不直接调用 MAX，也不加载原生广告 SDK；广告能力在这些运行目标上必须是明确的 `unsupported`/no-op，调用后立即返回并继续游戏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
@@ -826,7 +826,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 初始化恢复：MAX 管理文件中的 MAX 独立任务最多持有一个初始化请求和一个待执行重试 timer；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该 SDK 的恢复任务，成功后只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-- Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；页面首帧前按平台 Banner 尺寸规则和安全区预留区域，加载、失败、重试与显隐回调不改变内容 inset；实际尺寸只用于验证能否安全放入预留区域，布局不遮挡游戏交互；刷新只有一个所有者，禁止 JS/Phaser 自建刷新 timer。
+- Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；按平台尺寸规则和系统安全区验证游戏内覆盖位置，不遮挡任何有效内容，冲突时立即隐藏；加载、失败、重试与显隐均不缩小渲染区域、不改变画面比例、不增加内容 inset 或空白占位；刷新只有一个所有者，禁止 JS/Phaser 自建刷新 timer。
 - 合规与安全：实际适用的渠道授权配置、MAX 隐私标志、iOS ATT、SKAdNetwork 及目标地区要求均有责任人和证据；初始化链路未启用自动隐私弹窗，隐私事件不改写 SDK 初始化状态；SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 
