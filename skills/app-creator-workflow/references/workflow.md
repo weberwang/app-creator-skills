@@ -7,7 +7,7 @@
 | 阶段 ID | 目标 | 交付 |
 | --- | --- | --- |
 | requirements-scope | 确定用户结果和边界 | 目标、非目标、验收、事实与实质待决项 |
-| global-baseline | 确定全局约束 | 技术方案、模块依赖、目标视口和质量预算；风格偏好可记录，正式视觉选择延后 |
+| global-baseline | 确定全局约束 | 产品市场调研与定位依据、技术方案、模块依赖、目标视口和质量预算；正式视觉选择延后 |
 | foundation-engineering | 建立必要基础能力 | 启动、数据、服务、资源加载与有序实施证据 |
 | scene-production | 按功能切片分对象生产 | 功能验证与 SCENE、PAGE 或 DISPLAY_LAYER 各自的 V0–V5 |
 | global-integration-validation | 验证整体体验 | 导航、生命周期、状态、跨模块交互、资源、性能及[跨场景背景音乐回归](../../app-workflow-control/references/function-dependencies.md#最终集成验收) |
@@ -20,6 +20,10 @@
 布局合同、翻译、字体、资源及验证按该清单执行，逐语言覆盖；项目范围变更时更新清单及受影响交付。集成时对每个实际本地化合同运行 `node .agents/skills/app-domain-toolkit/scripts/localization/check-project-locales.mjs <项目清单.json> <合同1> [合同2...]`，检查各合同与项目清单的语言集合一致；Cocos 引用式合同使用 `--project-root <项目根> <项目清单> --bind <引用式布局合同> <实际本地化合同>`，后者必须与合同中的 `localization_contract_file` 一致。Unity 项目既有初始化代码取得尚未完成的 Localization 初始化操作后，显式调用 `StartupLocaleObservation.Observe(initialization)`，观察器不主动启动初始化；再使用 `unity command uwt_validate_font_locales --project-path <工程> --plan_path <资产路径> --language_path <项目清单路径> --evidence_path <项目内新报告路径>` 读取真实字体计划，并核对当前运行中 Localization 初始化后的首个语言。未接线、初始化已完成、未运行或未捕获时标记未验证，不把 Editor 当前语言冒充启动结果。该报告不证明后续业务切换语言的行为。先检查并复用已有 Editor；没有用户授权时不自动发起真机验收。记录真实命令、结果和未覆盖对象；单个合同通过不能替代全项目核对。
 
 初始化同时确认并记录 `orientationPolicy.allowed`：Flutter 可选 `["portrait"]`、`["landscape"]` 或 `["portrait","landscape"]`；Unity、Cocos、Phaser、Three.js 游戏只能选择一个方向。已有明确选择直接沿用，未选择时先确认，不能用模板默认值代替用户选择。方向配置须落实到原生工程与实际视口策略；桌面/Web 无法锁定窗口比例时保留所选设计方向，提供方向提示或限制入口，不把跨方向窗口变化自动当作第二套适配。方向政策传入页面/场景布局、背景、资源和测试矩阵；Flutter 双方向需分别制作和冻结视觉目标。
+
+## 产品市场调研与视觉设计衔接
+
+首次定义全局视觉方向或生成方向候选前，必须按[产品市场调研](professional-conventions.md#product-market-research)完成来源核实、竞品对比和设计依据交接，覆盖五个技术栈及仅制作设计稿的任务。总控核对调研结论已进入当前视觉 brief 后，才按本栈规则安排方向定义与候选制作；已有有效调研和基线按实际变化补查与复用。
 
 ## 弹窗与全局加载约束
 

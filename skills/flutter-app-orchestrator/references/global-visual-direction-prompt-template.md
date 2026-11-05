@@ -1,5 +1,7 @@
 # 全局视觉方向定位模板
 
+定义方向前，先按[产品市场调研](../../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或复核产品简报的 Market evidence，核对来源、竞品对比和设计依据；缺失时由产品策划补齐后再填写本模板。
+
 在全局设计阶段使用本模板按需定位一至三套视觉方向。已有明确品牌或参考时只定义一套；用户要求探索或存在实质取舍时定义两至三套。此阶段只定义和冻结跨页面视觉语言，不生成页面、模块或代表页面效果图，也不创建 `.codex-workflow/visuals/global/` 图片。
 
 冻结前将本模板保留在当前对话。用户明确选定并冻结方向后，只将选定方向、精简提示词哈希和冻结结果写入 `docs/design/global-design-freeze.md`。

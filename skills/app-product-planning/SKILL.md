@@ -11,6 +11,8 @@ description: "为新游戏或应用制定产品范围，或为既有 GDD 与功�
 
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 
+首次全局视觉设计前，按[产品市场调研](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成竞品、受众与差异化分析，并交接设计依据；仅制作设计稿时也须完成。市场实验仍按用户明确范围执行。
+
 ## 输入
 
 - 用户目标与任务范围；现有GDD、设计基准、实现状态和已作出的产品决定；证据或明确标出的假设；平台和团队约束。只有任务包含市场验证时再提供目标人群假设、渠道和实验限制。

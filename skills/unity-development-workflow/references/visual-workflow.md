@@ -8,6 +8,8 @@ V0 仅作内部识别与分流，不请求常规确认。V2 真实目标图、V3
 
 ## 全局视觉基线
 
+生成方向候选前，先按[产品市场调研](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对来源、竞品对比及其与当前视觉 brief 的设计依据；缺失时由产品策划补齐后再生成。
+
 首次建立全局视觉基线时，恰好生成三张 `generated` 候选，且使用相同提示条件、目标内容和示例数值。每张候选都记录五项美术质量结果：主题贴合、受众适配、玩法可读、观看舒适、美术完成度；选择必须是用户对已展示候选作出的唯一人工选择，且所选候选五项均为 `PASS`。每张候选的 root generation 记录中，`workItemId` 必须与根证据的 `producerWorkItemId` 匹配。将选择证据写入 `Work.globalVisualBaselineSelectionRef`，对象形如 `{path: "..."}`，路径和内容遵循[视觉基线合同](../../unity-domain-contracts/scripts/runtime/visual-baseline-contract.mjs)。有效选择证据可被其他 Work 复用，不要求重复生成或重新选择。
 
 全局三候选规则用于建立或替换全局基线，不代替场景 V2 的真实目标图，也不要求每个 Work 都重新生成三张。纯工程 `FOUNDATION` 没有视觉依赖时无需等待选图；只有实施包声明 `visualBaselineRequired=true` 时才要求引用有效的全局选择。
