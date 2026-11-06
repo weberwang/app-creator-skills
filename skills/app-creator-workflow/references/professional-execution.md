@@ -4,7 +4,7 @@
 
 ## 当前控制记录
 
-- 所有静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片，以目标显示效果确定路线，并同步本地化资源和可访问语义。
+- Unity、Cocos、Phaser、Three.js 的静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片，以目标显示效果确定路线。Flutter 使用本栈原生文本规范。各栈同步本地化资源和可访问语义。
 - 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：保持已确认基准字号与断行，按用途声明单行/换行及固定字号/有界缩小策略、触发条件和具体最小可读字号；正文不持续缩小。更新已有布局规格与正式配置，并在当前验证中分别核对基准还原、内容极值及字体放大。
 - 新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素的设计或可见表现，就统一执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，从本次增量 V0 开始，再验证 V1 并完成适用 V2–V5；复用素材、组件、动态生成、局部特效参数或时序调整均不豁免 V0。先明确变化范围、所属对象、父级、定位参照和尺寸策略，再在正式源实现并验证，不重做无关宿主。
 - 场景、页面和显示层统一执行[节点最小化](../../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)。V3 拆解和布局优先复用已有节点，只保留有实际职责的节点。V5 按确认后的最简层级还原并核对正式源与实际运行结构。
