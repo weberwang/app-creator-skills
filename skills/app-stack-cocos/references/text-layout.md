@@ -1,5 +1,7 @@
 # Cocos 文本组件配置
 
+静态文案先按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)选择 BitmapFont 路线或独立文字图片，并在正式 Scene/Prefab 中绑定。核对实际字体资源、字形覆盖和组件效果，位图字体按其真实能力排版。下文普通 Label 配置用于动态内容等适用场景，不能把启用字形缓存当作静态位图字体交付。图片文案保留控件语义和输入。
+
 适用基线：Cocos Creator 3.8、`Label` + `UITransform`，以项目实际版本复核。行为遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。以下宽度、字号为可替换示例，不是全项目默认值；源配置保存在正式 Scene/Prefab 中，业务刷新通常只改 `Label.string`。
 
 先保持确认的基准字号与断行；以下 SHRINK 示例仅用于正式声明有界缩小的单行样式。固定字号不启用 SHRINK；固定框使用 CLAMP 时必须独立测量完整字形并拒绝任何裁切，不能把画布内没有溢出当作适配通过。多行标题按确认目标保留排版，不套用单行示例。`fontSize` 是配置值，SHRINK 后的验收值须读取 `actualFontSize`，不能用前者冒充最终字号。

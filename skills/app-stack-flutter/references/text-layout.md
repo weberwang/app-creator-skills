@@ -1,5 +1,7 @@
 # Flutter 文本组件配置
 
+静态文案先按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)选择项目已验证的位图字体组件或独立文字图片。下文普通 Text 配置用于动态内容等适用场景，位图路线按实际组件核对尺寸、排版和阅读尺寸适配，图片按语言/状态绑定。控件保留对应语义、焦点与输入，验证可见资源与语义语言一致。
+
 以项目 FVM/锁定 SDK 为准，使用支持 `TextScaler` 的当前项目 API，遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。下面宽度为逻辑像素，字号示例 `32/24`、下限示例 `20`；实际数值写入现有设计 token 和组件参数。
 
 先保持确认的基准字号与断行，在同一 `layout-spec` 的 `text_behavior.font_sizing` 中声明策略；没有布局合同时写入正式组件配置。`fixed` 保留设计字号，`bounded-shrink` 仅供声明了触发条件的单行样式使用，下文的候选字号测量仅适用于后者。多行标题按确认目标使用 `wrap + fixed`，操作标签保持单行；正文保持 `wrap + fixed`。基准与适配分别验证，不能因字号仍在范围内就接受基准偏差。

@@ -1,5 +1,7 @@
 # Unity 文本组件配置
 
+静态文案先按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)选择已验证的位图字体路线或独立文字图片，并在正式 Scene/Prefab 或 UXML 源中绑定。普通 TMP/SDF 与 UI Toolkit 字体示例用于动态内容等适用场景，不能直接作为静态位图路线的交付。选定字形组件后核实其真实排版能力，文字图片保留对应控件的语义和输入。
+
 遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。先记录 Unity、TMP 包及 UI 系统实际版本，不更换已有 UI 路线。以下宽度和字号为示例，使用 Canvas/Panel 的逻辑单位，不是设备物理像素；配置保存到正式 Prefab/Scene 或 UXML/USS。
 
 先回读确认目标的字号与断行；以下 Auto Size 示例仅用于正式声明有界缩小的单行样式。固定字号的 TMP 设置 `enableAutoSizing=false`，UI Toolkit 使用 `-unity-text-auto-size: none`；多行标题按确认目标配置换行，不套用单行示例。基准画面仍须匹配确认字号、字重、行高与行数，Auto Size 的范围不是基准差异容差。

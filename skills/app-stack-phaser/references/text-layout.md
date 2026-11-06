@@ -1,5 +1,7 @@
 # Phaser 文本组件配置
 
+静态文案先按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)选择 BitmapText 或独立文字图片。下文 Text 的 Canvas 字体配置用于动态内容等适用场景，位图字体按本文 BitmapText 段落单独测量，图片按正式逻辑尺寸和语言/状态变体加载，并保留控件语义和输入。
+
 适用基线：Phaser 4.0.0 的 `Phaser.GameObjects.Text`；执行前按 package.json、锁文件和实际类型定义核对版本。遵循[公共文本规则](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)，以下数值仅为项目可替换示例，使用游戏布局逻辑单位。
 
 先保持确认的基准字号与断行。下文有界适配仅在正式样式声明缩小策略及触发条件时启用；固定字号直接保留 `fontSize`，多行标题按目标设置换行，不套用单行示例。基准字号与实际排版逐项核对，不能以“在最小与最大之间”替代基准还原。
