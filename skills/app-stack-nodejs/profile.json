@@ -1,0 +1,150 @@
+{
+  "id": "nodejs",
+  "displayName": "Node.js 服务器",
+  "detectAny": [
+    "package.json",
+    "src/main.ts",
+    "src/server.ts",
+    "src/app.ts",
+    "server.js"
+  ],
+  "frameworkPolicy": [
+    "以实际服务入口、服务端依赖和部署脚本判断Node.js服务器，只有package.json或使用Node作为前端构建工具不能证明本栈。",
+    "采用项目和部署目标支持的受维护Node版本，按现有版本管理、包管理器、锁文件和实际输出核验，不写死业务版本。",
+    "新项目优先评估TypeScript严格模式，已有明确JS/TS、ESM/CommonJS和框架选择按实际工程执行，不自动迁移或强制安装框架。",
+    "只使用非视觉PROJECT/FOUNDATION/MODULE/INTEGRATION/RELEASE，不使用SCENE/PAGE/DISPLAY_LAYER，不要求V0-V5或视觉基线。"
+  ],
+  "nativeRules": [
+    "按业务能力划分模块，传输校验、业务用例、数据访问/外部适配与装配职责明确，避免跨模块私有依赖。",
+    "外部输入在边界运行时校验，业务权限和租户隔离按实际需求定义；类型检查不能代替运行时验证。",
+    "事务、幂等、并发与重试显式限定，异步不等于CPU工作不阻塞，资源和等待队列有界。",
+    "应用装配与监听分开，导入不产生服务/数据库连接副作用，配置统一校验，请求/任务和共享资源具有明确生命周期。",
+    "最终集成冻结完成MODULE、实施包、证据清单及实际交付文件，逐行为核对真实原始输出，不伪造V5身份。",
+    "先复用适用已有进程，普通本地隔离验证自动执行；真实数据库/第三方写入/迁移/发布按具体授权，测试报告说明未执行范围。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "static-analysis",
+      "tests"
+    ],
+    "visual": [],
+    "assetImport": []
+  },
+  "runtimeRoots": [
+    "src",
+    "lib",
+    "server",
+    "test",
+    "tests",
+    "__tests__",
+    "config",
+    "scripts",
+    "docs",
+    "migrations",
+    "prisma",
+    "drizzle",
+    "sql",
+    "types",
+    "fixtures",
+    "package.json",
+    "package-lock.json",
+    "pnpm-lock.yaml",
+    "yarn.lock",
+    "npm-shrinkwrap.json",
+    "tsconfig.json",
+    "tsconfig.*.json",
+    "eslint.config.js",
+    "eslint.config.mjs",
+    "eslint.config.cjs",
+    ".eslintrc.json",
+    ".nvmrc",
+    ".node-version",
+    ".npmrc",
+    ".yarnrc.yml",
+    ".env.example",
+    "Dockerfile",
+    "docker-compose.yml",
+    "compose.yaml",
+    "server.js",
+    "index.js",
+    "main.js",
+    "jest.config.js",
+    "jest.config.ts",
+    "vitest.config.ts",
+    "vitest.config.js"
+  ],
+  "projectStructure": {
+    "source": "src/（按实际工程）",
+    "modules": "src/modules/<业务模块>/",
+    "infrastructure": "src/infrastructure/（实际共享适配）",
+    "tests": "test/ 或 tests/",
+    "configuration": "config/、版本与包管理器配置"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit"
+  ],
+  "sharedCapabilities": [
+    "reference-architecture-sdk-initialization"
+  ],
+  "capabilitySkills": [
+    "app-creator-workflow",
+    "app-product-planning",
+    "app-architecture",
+    "app-project-foundation",
+    "app-runtime-plugins",
+    "app-quality-review",
+    "app-release",
+    "app-artifact-cleanup"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "nodejs-workflow",
+      "capability": "app-creator-workflow",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-workflow"
+    },
+    {
+      "sourceSkill": "nodejs-product-planning",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-product-planning"
+    },
+    {
+      "sourceSkill": "nodejs-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-architecture"
+    },
+    {
+      "sourceSkill": "nodejs-project-foundation",
+      "capability": "app-project-foundation",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-project-foundation"
+    },
+    {
+      "sourceSkill": "nodejs-runtime-plugins",
+      "capability": "app-runtime-plugins",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-runtime-plugins"
+    },
+    {
+      "sourceSkill": "nodejs-quality-review",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-quality-review"
+    },
+    {
+      "sourceSkill": "nodejs-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-release"
+    },
+    {
+      "sourceSkill": "nodejs-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-nodejs/references/native-contracts.md",
+      "section": "mode-nodejs-artifact-cleanup"
+    }
+  ],
+  "nativeManual": "skills/app-stack-nodejs/references/native-contracts.md"
+}

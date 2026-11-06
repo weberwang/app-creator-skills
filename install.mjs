@@ -25,7 +25,7 @@ const BOOTSTRAP_FILES = Object.freeze([
   'skills/app-skill-runtime/direct-entry.mjs',
   'skills/app-skill-runtime/native-contracts.mjs',
 ]);
-const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter']);
+const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
 
 /** 规范并校验仓库坐标，只接受 GitHub 上的明确仓库地址。 */
 export function normalizeRepository(value) {
@@ -266,7 +266,7 @@ export async function createGitHubSource({ repo, ref, cacheRoot, fetchImpl = glo
 /** 校验用户选择并引导最小安装引擎，代码和技能始终来自同一个提交。 */
 export async function runRemoteBootstrap(argv = process.argv.slice(2), runtime = {}) {
   if (argv.includes('--help')) {
-    return { help: '用法：node install.mjs <已有项目目录> --repo owner/repo --stack unity|cocos|phaser|threejs|flutter[,...]|all [--ref ref] [--dry-run]\n默认覆盖所选安装目录中的不同内容，成功后不保留旧目录备份；相同内容跳过。' };
+    return { help: '用法：node install.mjs <已有项目目录> --repo owner/repo --stack unity|cocos|phaser|threejs|flutter|esp32|nodejs[,...]|all [--ref ref] [--dry-run]\n默认覆盖所选安装目录中的不同内容，成功后不保留旧目录备份；相同内容跳过。' };
   }
   const options = parseBootstrapArgs(argv);
   const source = await createGitHubSource({ repo: options.repo, ref: options.ref, ...runtime });
@@ -319,7 +319,7 @@ function parseBootstrapArgs(argv) {
   if (!options.repo) throw new Error('必须通过 --repo 指定远程仓库');
   options.repo = normalizeRepository(options.repo);
   if (options.ref !== null && (typeof options.ref !== 'string' || !options.ref.trim() || options.ref.length > 255 || /[\u0000-\u0020\u007f]/.test(options.ref))) throw new Error('--ref 无效');
-  if (!options.stacks.length || options.stacks.some((stack) => !STACKS.includes(stack))) throw new Error('--stack 必须明确选择 unity/cocos/phaser/threejs/flutter/all');
+  if (!options.stacks.length || options.stacks.some((stack) => !STACKS.includes(stack))) throw new Error('--stack 必须明确选择 unity/cocos/phaser/threejs/flutter/esp32/nodejs/all');
   options.stacks = [...new Set(options.stacks)];
   options.projectRoot ??= process.cwd();
   if (!existsSync(options.projectRoot) || !lstatSync(options.projectRoot).isDirectory()) throw new Error('目标项目必须是已有目录');

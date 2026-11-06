@@ -68,7 +68,9 @@ function createRepositoryFixture() {
   const state = { tree: [], directories: new Set(), blobs: new Map() };
   addBlob('install.mjs', readFileSync(join(REPOSITORY_ROOT, 'install.mjs')), state);
   for (const directory of ['packages/installer', 'skills', 'docs', 'tests']) {
-    addRealDirectory(join(REPOSITORY_ROOT, directory), directory, state);
+    // docs 是可选目录，干净检出不应因缺失文档而阻断离线引导测试。
+    const source = join(REPOSITORY_ROOT, directory);
+    if (directory !== 'docs' || existsSync(source)) addRealDirectory(source, directory, state);
   }
   for (const path of ['README.md', 'package.json', 'package-lock.json', '.gitignore']) {
     const absolute = join(REPOSITORY_ROOT, path);
@@ -155,6 +157,35 @@ async function withTemporaryProject(t, action) {
 }
 
 const repositoryFixture = createRepositoryFixture();
+
+/** 远程引导与下载后的共享安装器都需接受 ESP32，并只读取所选闭包。 */
+test('独立 bootstrap 可离线模拟安装 ESP32 技术栈', async (t) => {
+  await withTemporaryProject(t, async ({ project, cacheRoot }) => {
+    const { fetchImpl, requests } = createFakeFetch(repositoryFixture);
+    const result = await runRemoteBootstrap([project, '--repo', REPOSITORY, '--ref', 'main', '--stack', 'esp32'], { fetchImpl, cacheRoot, env: {} });
+    assert.deepEqual(result.remote.stacks, ['esp32']);
+    assert.deepEqual(result.remote.selectedDirectories, expectedRootsFor(['esp32']));
+    const paths = requests.filter((request) => request.kind === 'raw').map((request) => request.path);
+    assertRawRequestsStayWithinSelection(paths, expectedRootsFor(['esp32']));
+    assert.ok(existsSync(join(project, '.agents', 'skills', 'app-stack-esp32', 'profile.json')));
+    assert.equal(existsSync(join(project, '.agents', 'skills', 'app-stack-flutter')), false);
+  });
+});
+
+/** Node.js 不依赖浏览器或硬件栈，远程安装只下载实际选中的技能闭包。 */
+test('独立 bootstrap 可离线模拟安装 Node.js 服务端技术栈', async (t) => {
+  await withTemporaryProject(t, async ({ project, cacheRoot }) => {
+    const { fetchImpl, requests } = createFakeFetch(repositoryFixture);
+    const result = await runRemoteBootstrap([project, '--repo', REPOSITORY, '--ref', 'main', '--stack', 'nodejs'], { fetchImpl, cacheRoot, env: {} });
+    assert.deepEqual(result.remote.stacks, ['nodejs']);
+    assert.deepEqual(result.remote.selectedDirectories, expectedRootsFor(['nodejs']));
+    const paths = requests.filter((request) => request.kind === 'raw').map((request) => request.path);
+    assertRawRequestsStayWithinSelection(paths, expectedRootsFor(['nodejs']));
+    assert.ok(existsSync(join(project, '.agents', 'skills', 'app-stack-nodejs', 'profile.json')));
+    assert.equal(existsSync(join(project, '.agents', 'skills', 'app-stack-esp32')), false);
+    assert.equal(existsSync(join(project, '.agents', 'skills', 'app-ui-layout')), false);
+  });
+});
 
 test('独立 bootstrap 只安装所选闭包，复用缓存并允许追加第二栈', async (t) => {
   await withTemporaryProject(t, async ({ project, cacheRoot }) => {

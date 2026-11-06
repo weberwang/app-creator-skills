@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://app-creator-skills.local/app-workflow-control/work-item.schema.json",
   "title": "统一应用与游戏工作项",
-  "description": "五技术栈共用状态合同；V0-V5 视觉字段按 Work Item 单独绑定。",
+  "description": "游戏、应用、设备 GUI 与服务器共用状态合同；V0-V5 视觉字段仅在实际显示工作项中绑定。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -39,7 +39,9 @@
         "cocos",
         "phaser",
         "threejs",
-        "flutter"
+        "flutter",
+        "esp32",
+        "nodejs"
       ]
     },
     "workItemType": {
@@ -199,7 +201,9 @@
                 "cocos",
                 "phaser",
                 "threejs",
-                "flutter"
+                "flutter",
+                "esp32",
+                "nodejs"
               ]
             },
             "stageId": {
@@ -519,8 +523,12 @@
   },
   "allOf": [
     {
+      "if": { "properties": { "stack": { "const": "nodejs" } }, "required": ["stack"] },
+      "then": { "properties": { "workItemType": { "not": { "enum": ["SCENE", "PAGE", "DISPLAY_LAYER"] } } } }
+    },
+    {
       "if": { "properties": { "workItemType": { "const": "PAGE" } }, "required": ["workItemType"] },
-      "then": { "properties": { "stack": { "const": "flutter" } } }
+      "then": { "properties": { "stack": { "enum": ["flutter", "esp32"] } } }
     },
     {
       "if": { "properties": { "workItemType": { "const": "SCENE" } }, "required": ["workItemType"] },

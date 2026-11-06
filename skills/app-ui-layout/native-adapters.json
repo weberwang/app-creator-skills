@@ -46,23 +46,48 @@
         "when": "需要 Unity Canvas、Prefab、UXML、UI Toolkit/uGUI 的结构、锚点、安全区、布局和正式界面接入时读取，并按原生规范调用 unity:ui 路由。",
         "reused": true
       }
+    ],
+    "esp32": [
+      {
+        "sourceSkill": "esp32-ui-layout",
+        "path": "../app-stack-esp32/references/native-contracts.md",
+        "section": "mode-esp32-ui-layout",
+        "mode": "esp32-ui-layout",
+        "when": "当前项目为 ESP32 自带屏幕 GUI，执行本能力的设备端实施与验证时。"
+      }
     ]
   },
   "sharedWorkflows": [
     {
       "id": "ui-interaction",
       "path": "../app-domain-toolkit/references/ui-interaction.md",
-      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+      "stacks": [
+        "unity",
+        "cocos",
+        "phaser",
+        "threejs",
+        "flutter"
+      ]
     },
     {
       "id": "editor-display-authoring",
       "path": "../app-domain-toolkit/references/editor-display-authoring.md",
-      "stacks": ["unity", "cocos"]
+      "stacks": [
+        "unity",
+        "cocos"
+      ]
     },
     {
       "id": "ui-copy-principles",
       "path": "../app-domain-toolkit/references/ui-copy-principles.md",
-      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+      "stacks": [
+        "unity",
+        "cocos",
+        "phaser",
+        "threejs",
+        "flutter",
+        "esp32"
+      ]
     },
     {
       "id": "ui-layout",

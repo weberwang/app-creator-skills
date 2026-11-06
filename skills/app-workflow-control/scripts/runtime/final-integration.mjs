@@ -1,13 +1,15 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { validateNodeScopeObject, assertNodeResultObject, validateNodeCase } from './nodejs-integration.mjs';
 
 /** 核对项目内文件的冻结内容，避免正式组合或功能基线变化后沿用旧回归。 */
-function verifyIdentity(repo, ref, label) {
+function verifyIdentity(repo, ref, label, { allowEmpty = false } = {}) {
   if (!ref || typeof ref.path !== 'string' || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError(`${label}必须提供路径和小写 SHA-256`);
   const path = requireFile(repo, ref.path, label);
   const bytes = readFileSync(repoPath(repo, path, label).absolute);
-  if (!bytes.length || createHash('sha256').update(bytes).digest('hex') !== ref.sha256) throw new WorkflowError(`${label}内容已变化，必须重新验证最终集成`);
+  // 仅服务端实际交付文件可为空；状态、报告和原始输出仍须非空。
+  if ((!allowEmpty && !bytes.length) || createHash('sha256').update(bytes).digest('hex') !== ref.sha256) throw new WorkflowError(`${label}内容已变化，必须重新验证最终集成`);
   return path;
 }
 
@@ -35,6 +37,12 @@ export function validateIntegrationScope(repo, work) {
     if (!object || typeof object.objectId !== 'string' || !object.objectId.trim() || objectIds.has(object.objectId)) throw new WorkflowError('最终集成范围对象必须非空且唯一');
     const sourcePath = verifyIdentity(repo, object.workItemRef, `范围对象 ${object.objectId} 工作项`);
     const source = readJson(repo, sourcePath, '范围对象工作项');
+    if (work.stack === 'nodejs') {
+      // 服务端冻结模块实施包、证据清单和全部受管源码，不虚构视觉功能基线。
+      validateNodeScopeObject(repo, work, object, source, { verifyIdentity });
+      objectIds.add(object.objectId);
+      continue;
+    }
     // 开始回归前冻结实际完成版本与功能基线，防止相同对象名换绑新实现。
     if (source.workItemId === work.workItemId || source.projectId !== work.projectId || source.stack !== work.stack || !['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(source.workItemType) || source.visual?.objectId !== object.objectId || source.visual?.stage !== 'V5' || source.globalState !== 'COMPLETE') throw new WorkflowError(`范围对象 ${object.objectId} 必须属于当前项目与技术栈并已完成 V5`);
     verifyIdentity(repo, object.functionBaselineRef, `范围对象 ${object.objectId} 功能基线`);
@@ -74,7 +82,8 @@ export function validateFinalIntegration(repo, work, inspectSource) {
   if (JSON.stringify(resultObjects) !== JSON.stringify(expectedObjects)) throw new WorkflowError('最终集成结果对象与预先冻结的范围不一致');
   for (const expected of scope.objects) {
     const actual = evidence.objects.find((entry) => entry?.objectId === expected.objectId);
-    if (!sameIdentity(repo, actual?.workItemRef, expected.workItemRef) || !sameIdentity(repo, actual?.functionBaselineRef, expected.functionBaselineRef)) throw new WorkflowError(`最终集成对象 ${expected.objectId} 工作项或功能基线与预先冻结的范围不一致`);
+    if (work.stack === 'nodejs') assertNodeResultObject(repo, actual, expected, { sameIdentity });
+    else if (!sameIdentity(repo, actual?.workItemRef, expected.workItemRef) || !sameIdentity(repo, actual?.functionBaselineRef, expected.functionBaselineRef)) throw new WorkflowError(`最终集成对象 ${expected.objectId} 工作项或功能基线与预先冻结的范围不一致`);
   }
   const expectedCases = scope.cases.map((entry) => entry.caseId).sort();
   const resultCases = evidence.cases.map((entry) => entry?.caseId).sort();
@@ -87,9 +96,12 @@ export function validateFinalIntegration(repo, work, inspectSource) {
   for (const entry of evidence.objects) {
     if (!entry || typeof entry.objectId !== 'string' || !entry.objectId.trim() || objects.has(entry.objectId)) throw new WorkflowError('最终集成对象标识必须非空且唯一');
     const source = readJson(repo, verifyIdentity(repo, entry.workItemRef, '参与对象工作项'), '参与对象工作项');
-    if (source.workItemId === work.workItemId || source.projectId !== work.projectId || source.stack !== work.stack || !['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(source.workItemType) || source.visual?.objectId !== entry.objectId || source.visual?.stage !== 'V5' || source.globalState !== 'COMPLETE') throw new WorkflowError(`参与对象 ${entry.objectId} 必须属于当前项目与技术栈并已完成 V5`);
-    verifyIdentity(repo, entry.functionBaselineRef, `参与对象 ${entry.objectId} 功能基线`);
-    if (source.visual.functionBaselineRef?.sha256 !== entry.functionBaselineRef.sha256 || samePath(source.visual.functionBaselineRef?.path) !== samePath(entry.functionBaselineRef.path)) throw new WorkflowError(`参与对象 ${entry.objectId} 功能基线未绑定当前版本`);
+    if (work.stack === 'nodejs') validateNodeScopeObject(repo, work, entry, source, { verifyIdentity });
+    else {
+      if (source.workItemId === work.workItemId || source.projectId !== work.projectId || source.stack !== work.stack || !['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(source.workItemType) || source.visual?.objectId !== entry.objectId || source.visual?.stage !== 'V5' || source.globalState !== 'COMPLETE') throw new WorkflowError(`参与对象 ${entry.objectId} 必须属于当前项目与技术栈并已完成 V5`);
+      verifyIdentity(repo, entry.functionBaselineRef, `参与对象 ${entry.objectId} 功能基线`);
+      if (source.visual.functionBaselineRef?.sha256 !== entry.functionBaselineRef.sha256 || samePath(source.visual.functionBaselineRef?.path) !== samePath(entry.functionBaselineRef.path)) throw new WorkflowError(`参与对象 ${entry.objectId} 功能基线未绑定当前版本`);
+    }
     const checked = inspectSource(repo, source, { strict: true });
     if (!checked || typeof checked.then === 'function' || checked.status !== 'PASS' || (Array.isArray(checked.blocking) && checked.blocking.length)) throw new WorkflowError(`参与对象 ${entry.objectId} 严格检查未通过`);
     objects.set(entry.objectId, source);
@@ -102,6 +114,7 @@ export function validateFinalIntegration(repo, work, inspectSource) {
     if (samePath(casePath) === samePath(evidencePath) || !manifest.items.some((item) => item?.status === 'PASS' && typeof item.path === 'string' && samePath(item.path) === samePath(casePath))) throw new WorkflowError(`最终行为 ${entry.caseId} 必须有独立 PASS 证据`);
     const actual = readJson(repo, casePath, '最终行为实际验证记录');
     if (actual.schemaVersion !== '1.0' || actual.workItemId !== work.workItemId || actual.projectId !== work.projectId || actual.stack !== work.stack || actual.caseId !== entry.caseId || actual.status !== 'PASS' || !Array.isArray(actual.objectIds) || JSON.stringify([...actual.objectIds].sort()) !== JSON.stringify([...entry.objectIds].sort())) throw new WorkflowError(`最终行为 ${entry.caseId} 的实际验证记录身份、状态或覆盖不匹配`);
+    if (work.stack === 'nodejs') validateNodeCase(repo, work, actual, evidence, scope, { verifyIdentity });
     seen.add(entry.caseId);
     for (const id of entry.objectIds) {
       if (!objects.has(id)) throw new WorkflowError(`最终集成行为 ${entry.caseId} 引用了未登记对象`);
@@ -111,7 +124,7 @@ export function validateFinalIntegration(repo, work, inspectSource) {
   for (const [objectId, source] of objects) {
     if (!covered.has(objectId)) throw new WorkflowError(`最终集成未覆盖对象 ${objectId}`);
     // 引用共享功能来源的对象必须在最终组合中重跑其已冻结的各个行为范围。
-    for (const dependency of source.visual.functionDependencies ?? []) {
+    for (const dependency of source.visual?.functionDependencies ?? []) {
       if (!evidence.cases.some((entry) => entry.caseId === dependency.caseId && entry.objectIds.includes(objectId))) throw new WorkflowError(`最终集成缺少对象 ${objectId} 的功能范围 ${dependency.caseId}`);
     }
   }

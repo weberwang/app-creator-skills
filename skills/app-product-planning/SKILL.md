@@ -1,6 +1,6 @@
 ---
 name: app-product-planning
-description: "为新游戏或应用制定产品范围，或为既有 GDD 与功能编写有边界的增量策划和验收条件。"
+description: "为游戏、应用或服务器制定产品与服务范围，或为既有规格与功能编写有边界的增量需求和验收条件。"
 ---
 
 # 产品与游戏需求
@@ -9,7 +9,7 @@ description: "为新游戏或应用制定产品范围，或为既有 GDD 与功�
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
-涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
+涉及客户端界面文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。无界面服务器按本栈明确调用方、接口、数据、任务、错误合同与验收，不要求游戏循环、页面或视觉候选。
 
 首次全局视觉设计前，按[产品市场调研](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成竞品、受众与差异化分析，并交接设计依据；仅制作设计稿时也须完成。市场实验仍按用户明确范围执行。
 

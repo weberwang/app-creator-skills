@@ -1,6 +1,6 @@
-/** 验证显示元素新增与修改的 V0 公共约束通过编排和专业协议分发到五栈安装结果。 */
+/** 验证显示元素新增与修改的 V0 公共约束分发到声明视觉能力的安装结果。 */
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -27,17 +27,29 @@ function requireLink(root, source, target, section = '') {
 
 for (const stack of STACKS) {
   /** 实际安装后检查共享入口链，规则无需复制到每个原生手册才能适用于本栈。 */
-  test(`${stack} 显示元素新增与修改的 V0 约束由公共入口与专业协议统一接入`, (t) => {
+  test(`${stack} 按能力声明验证显示增量约束和安装边界`, (t) => {
     const project = mkdtempSync(join(tmpdir(), `display-increment-${stack}-`));
     // 仅回收独占临时项目，安装不启动开发服务、引擎或真实设备。
     t.after(() => rmSync(project, { recursive: true, force: true }));
     installSkills({ projectRoot: project, stacks: [stack] });
     const root = join(project, '.agents/skills');
+    const profile = JSON.parse(readFileSync(join(root, `app-stack-${stack}/profile.json`), 'utf8'));
+    const visualCapabilities = ['app-ui-layout', 'app-feedback'];
+    if (visualCapabilities.every((name) => !profile.capabilitySkills.includes(name))) {
+      // 无界面技术栈只验证能力边界，不要求伪造显示节点或视觉工作项。
+      for (const name of visualCapabilities) {
+        assert.equal(profile.capabilitySkills.includes(name), false);
+        assert.equal(existsSync(join(root, name)), false);
+      }
+      return;
+    }
     const expected = extractMarkdownSection(readFileSync(join(SOURCE_ROOT, 'skills', RULE), 'utf8'), SECTION);
-    for (const source of ['app-creator-workflow/SKILL.md', PROTOCOL, WORKFLOW, 'app-feedback/references/interaction-feedback.md']) {
+    const sources = ['app-creator-workflow/SKILL.md', PROTOCOL, WORKFLOW];
+    if (profile.capabilitySkills.includes('app-feedback')) sources.push('app-feedback/references/interaction-feedback.md');
+    else assert.equal(existsSync(join(root, 'app-feedback')), false);
+    for (const source of sources) {
       assert.equal(requireLink(root, source, RULE, SECTION), expected);
     }
-    const profile = JSON.parse(readFileSync(join(root, `app-stack-${stack}/profile.json`), 'utf8'));
     for (const capability of CAPABILITIES.filter((name) => profile.capabilitySkills.includes(name))) {
       requireLink(root, `${capability}/SKILL.md`, PROTOCOL);
     }

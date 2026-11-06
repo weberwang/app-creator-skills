@@ -45,13 +45,38 @@
         "mode": "flutter-product-spec",
         "when": "仅当项目技术栈为 Flutter，且任务属于“产品与游戏需求”时使用此原生专项能力。"
       }
+    ],
+    "esp32": [
+      {
+        "sourceSkill": "esp32-product-planning",
+        "path": "../app-stack-esp32/references/native-contracts.md",
+        "section": "mode-esp32-product-planning",
+        "mode": "esp32-product-planning",
+        "when": "当前项目为 ESP32 自带屏幕 GUI，执行本能力的设备端实施与验证时。"
+      }
+    ],
+    "nodejs": [
+      {
+        "sourceSkill": "nodejs-product-planning",
+        "path": "../app-stack-nodejs/references/native-contracts.md",
+        "section": "mode-nodejs-product-planning",
+        "mode": "nodejs-product-planning",
+        "when": "当前模块实际运行在Node.js服务器、后台任务或消息消费者，执行本能力的服务端开发与验证时。"
+      }
     ]
   },
   "sharedWorkflows": [
     {
       "id": "ui-copy-principles",
       "path": "../app-domain-toolkit/references/ui-copy-principles.md",
-      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter"]
+      "stacks": [
+        "unity",
+        "cocos",
+        "phaser",
+        "threejs",
+        "flutter",
+        "esp32"
+      ]
     },
     {
       "id": "game-production",

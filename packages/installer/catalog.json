@@ -635,6 +635,157 @@
         "flutter-tech-design",
         "flutter-ux-ui-quality"
       ]
+    },
+    "esp32": {
+      "capabilitySkills": [
+        "app-creator-workflow",
+        "app-product-planning",
+        "app-architecture",
+        "app-project-foundation",
+        "app-ui-layout",
+        "app-asset-workflow",
+        "app-feedback",
+        "app-runtime-plugins",
+        "app-quality-review",
+        "app-release",
+        "app-artifact-cleanup"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "esp32-workflow",
+          "capability": "app-creator-workflow",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-workflow"
+        },
+        {
+          "sourceSkill": "esp32-product-planning",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-product-planning"
+        },
+        {
+          "sourceSkill": "esp32-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-architecture"
+        },
+        {
+          "sourceSkill": "esp32-project-foundation",
+          "capability": "app-project-foundation",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-project-foundation"
+        },
+        {
+          "sourceSkill": "esp32-ui-layout",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-ui-layout"
+        },
+        {
+          "sourceSkill": "esp32-asset-workflow",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-asset-workflow"
+        },
+        {
+          "sourceSkill": "esp32-feedback",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-feedback"
+        },
+        {
+          "sourceSkill": "esp32-runtime-plugins",
+          "capability": "app-runtime-plugins",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-runtime-plugins"
+        },
+        {
+          "sourceSkill": "esp32-quality-review",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-quality-review"
+        },
+        {
+          "sourceSkill": "esp32-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-release"
+        },
+        {
+          "sourceSkill": "esp32-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-esp32/references/native-contracts.md",
+          "section": "mode-esp32-artifact-cleanup"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit"
+      ]
+    },
+    "nodejs": {
+      "capabilitySkills": [
+        "app-creator-workflow",
+        "app-product-planning",
+        "app-architecture",
+        "app-project-foundation",
+        "app-runtime-plugins",
+        "app-quality-review",
+        "app-release",
+        "app-artifact-cleanup"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "nodejs-workflow",
+          "capability": "app-creator-workflow",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-workflow"
+        },
+        {
+          "sourceSkill": "nodejs-product-planning",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-product-planning"
+        },
+        {
+          "sourceSkill": "nodejs-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-architecture"
+        },
+        {
+          "sourceSkill": "nodejs-project-foundation",
+          "capability": "app-project-foundation",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-project-foundation"
+        },
+        {
+          "sourceSkill": "nodejs-runtime-plugins",
+          "capability": "app-runtime-plugins",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-runtime-plugins"
+        },
+        {
+          "sourceSkill": "nodejs-quality-review",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-quality-review"
+        },
+        {
+          "sourceSkill": "nodejs-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-release"
+        },
+        {
+          "sourceSkill": "nodejs-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-nodejs/references/native-contracts.md",
+          "section": "mode-nodejs-artifact-cleanup"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit"
+      ]
     }
   }
 }

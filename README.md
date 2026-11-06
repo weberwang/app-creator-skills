@@ -1,8 +1,8 @@
 # 游戏与应用技能工作流
 
-为 AI 编程助手提供从需求、功能实现、视觉设计到集成验证和发布准备的项目工作流。支持 Unity、Cocos Creator、Phaser、Three.js 和 Flutter，可按项目技术栈安装到 `.agents/skills/`。
+为 AI 编程助手提供从需求、架构、功能实现到集成验证和发布准备的项目工作流，有界面时接入视觉设计。支持 Unity、Cocos Creator、Phaser、Three.js、Flutter、ESP32 设备 GUI 和 Node.js 服务器，可按项目技术栈安装到 `.agents/skills/`。
 
-你可以用自然语言描述想做的游戏或应用，由统一入口组织任务，按需调用产品、架构、玩法、视觉、资源、测试等专业能力。各技术栈使用自己的工程与领域规则，共用 V0–V5 阶段。
+你可以用自然语言描述想做的游戏、应用或服务器，由统一入口组织任务，按需调用产品、架构、玩法、视觉、资源、测试等专业能力。各技术栈使用自己的工程与领域规则；可见对象共用 V0–V5，Node.js 无界面服务器使用非视觉模块和集成流程。
 
 ## 能做什么
 
@@ -23,6 +23,8 @@
 | Phaser | Web 2D 游戏 | [app-stack-phaser](skills/app-stack-phaser/SKILL.md) |
 | Three.js | Web 3D 场景与游戏 | [app-stack-threejs](skills/app-stack-threejs/SKILL.md) |
 | Flutter | 跨平台应用 | [app-stack-flutter](skills/app-stack-flutter/SKILL.md) |
+| ESP32 | ESP32 自带屏幕的嵌入式 GUI 固件 | [app-stack-esp32](skills/app-stack-esp32/SKILL.md) |
+| Node.js | API 服务器、后台任务与消息消费者 | [app-stack-nodejs](skills/app-stack-nodejs/SKILL.md) |
 
 按实际项目选择一个或多个栈。专业能力的适用范围以对应入口及原生规范为准。
 
@@ -36,10 +38,12 @@ npx github:weberwang/app-creator-skills
 
 # 或直接指定技术栈
 npx github:weberwang/app-creator-skills flutter
+npx github:weberwang/app-creator-skills esp32
+npx github:weberwang/app-creator-skills nodejs
 npx github:weberwang/app-creator-skills unity,cocos
 ```
 
-安装到当前项目的 `.agents/skills/`，仅写入所选栈与公共依赖。只有显式选择 `all` 才安装全部五栈；非交互环境须指定技术栈。
+安装到当前项目的 `.agents/skills/`，仅写入所选栈与公共依赖。只有显式选择 `all` 才安装全部七栈；非交互环境须指定技术栈。
 
 私有 GitHub 仓库需要先配置 Git 的访问凭证。npx 会取得仓库包及其 Node 依赖，再从包内技能安装，不再通过 GitHub API 重复下载。需要固定版本时使用 `npx 'github:weberwang/app-creator-skills#提交SHA' flutter`，安装内容与该提交一致。npm 包发布后也可使用 `npx app-creator-skills flutter`。
 
@@ -76,7 +80,21 @@ node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 先验证玩法与跨场景状态传递，再设计正式场景和资源。
 ```
 
-初始化时会确认目标、平台、技术栈、核心功能和语言。 Flutter 可选择横屏、竖屏或双方向；游戏只选择横屏或竖屏之一。背景允许等比缩放覆盖视口，关键 UI 按安全区与实际宽高重排。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。
+```text
+使用 $app-creator-workflow 开始一个 ESP32 自带屏幕的 GUI 项目。
+先确认芯片、开发板、屏幕、输入方式和资源预算，评估 ESP-IDF + LVGL。
+先验证功能、导航和状态，再推进正式界面与字库、图片导入。
+先完成本地构建与可用的主机验证；真机运行和烧录另行授权。
+```
+
+```text
+使用 $app-creator-workflow 开始一个 Node.js 订单 API 服务器。
+先明确接口、业务模块、权限、数据一致性和部署约束，再选择框架与数据库。
+先完成隔离测试与模块集成；不创建页面、设计稿或视觉验收。
+真实数据库迁移和生产部署另行授权。
+```
+
+初始化时会确认目标、平台、技术栈和核心功能。含客户端界面的项目再确认语言、屏幕与输入。Flutter 可选择横屏、竖屏或双方向；游戏只选择横屏或竖屏之一。ESP32 按实际屏幕分辨率、旋转、保留区域与输入硬件设计，不套用游戏画布或手机安全区。背景允许等比缩放覆盖视口，关键 UI 按适用安全区与实际宽高重排。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。Node.js 服务器不询问界面方向或强制创建语言清单，按实际 API 合同处理本地化需求。
 
 也可以从已有项目中的具体任务开始：
 
@@ -87,6 +105,8 @@ node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 ## 项目如何推进
 
 项目整体按“需求与范围 → 全局基线 → 基础工程 → 场景、页面与显示层生产 → 全局集成验证 → 发布”推进，各可见对象使用统一的 V0–V5：
+
+Node.js 服务器沿用公共控制器与质量门，通过 MODULE 实现业务、INTEGRATION 验证当前模块组合、RELEASE 准备交付；不进入下表的视觉阶段。架构覆盖传输、业务、数据访问、外部适配与装配，另有输入校验、事务、幂等、任务、超时和有界关闭规范。详见 [Node.js 架构](skills/app-stack-nodejs/references/architecture.md)。
 
 | 阶段 | 主要成果 |
 | --- | --- |
@@ -110,6 +130,8 @@ node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 - 截图默认由用户人工检查。Flutter 默认按可用性验收，仅明确选择 `exact` 时要求完整精确还原对照。
 - 已知轻微偏差先记录并继续不受影响的工作，随后汇报；明确验收条件未满足时保留未通过或未决状态。
 - 真机、付费、签名、上传和实际发布需要对应明确授权。发布准备与实际发布分别管理。
+- ESP32 区分逻辑测试、固件构建、主机 GUI 模拟和实际设备运行；主机通过不代表屏幕、触控或硬件性能通过，烧录、擦除和 OTA 需对应明确授权。
+- Node.js 区分静态检查、业务/接口测试、隔离数据集成与真实依赖联调；不以 mock 通过宣称真实系统已联调，不自动执行真实数据库迁移、外部写入或部署。
 - 提交时仅选择当前运行、构建、验证和继续工作所需的记录；过时且无有效引用的中间产物不纳入提交。
 
 [工作流控制器](skills/app-workflow-control/SKILL.md)负责状态、实施单元和证据关系。`plan`、`record` 帮助生成和关联记录；`status`、`check` 用于读取状态和检查材料。控制器不会代替助手执行项目制作、引擎运行或构建，技术检查通过也不代替用户视觉确认。

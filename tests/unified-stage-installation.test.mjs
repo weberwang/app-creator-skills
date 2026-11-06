@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { installSkills, STACKS } from '../packages/installer/install-project-skills.mjs';
 
 /** 检查仓库自有控制器代码及实际领域入口均随单栈安装，不伪称来自外部源。 */
-for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成和单目标领域校验的全部代码与规范`, (t) => {
+for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成及对应领域的代码与规范`, (t) => {
   const project = mkdtempSync(join(tmpdir(), `stage-install-${stack}-`));
   // 仅回收当前用例创建的独立临时项目。
   t.after(() => rmSync(project, { recursive: true, force: true }));
@@ -27,7 +27,12 @@ for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成和单�
     'app-skill-runtime/dependencies.cjs',
   ];
   const web = { cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' };
-  const native = stack === 'flutter'
+  // Node.js 是无界面服务端，ESP32 使用设备页面合同，均不套用 Web 场景校验器。
+  const native = stack === 'nodejs'
+    ? ['app-stack-nodejs/SKILL.md', 'app-stack-nodejs/profile.json', 'app-workflow-control/scripts/runtime/approval.mjs']
+    : stack === 'esp32'
+    ? ['app-workflow-control/scripts/runtime/esp32-domain-check.mjs', 'app-workflow-control/scripts/runtime/approval.mjs', 'app-stack-esp32/references/domain-validation.md', 'app-ui-layout/scripts/relative-layout-policy.cjs']
+    : stack === 'flutter'
     ? ['adaptive-layout-implementation/scripts/validate-layout-spec.js', 'app-ui-layout/scripts/relative-layout-policy.cjs']
     : stack === 'unity'
       ? ['unity-domain-contracts/scripts/unity-contract-validation.mjs', 'unity-domain-contracts/scripts/runtime/visible-contract.mjs']

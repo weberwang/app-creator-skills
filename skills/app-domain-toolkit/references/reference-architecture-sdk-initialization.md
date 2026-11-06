@@ -1,6 +1,6 @@
 # 第三方 SDK 独立管理与初始化
 
-适用技术栈：unity、cocos、phaser、threejs、flutter。项目接入或调整第三方 SDK 时统一读取本规范，再按当前技术栈补充入口路径与原生要求；没有实际采用的 SDK 不创建占位文件，也不因此引入依赖。
+适用技术栈：unity、cocos、phaser、threejs、flutter、esp32、nodejs。项目接入或调整第三方 SDK 时统一读取本规范，再按当前技术栈补充入口路径与原生要求；没有实际采用的 SDK 不创建占位文件，也不因此引入依赖。
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
@@ -26,7 +26,7 @@
 
 ## 归因与广告直接启动和调用
 
-五栈项目按已确认的需求接入广告或归因。广告使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。归因使用 AppsFlyer。启动装配入口立即分别投递已接入 SDK 自身的初始化与启动任务。两者不互相等待，也不等待隐私页面、应用同意状态、登录、首屏完成或归因回调。使用 SDK 提供的适用默认配置或受限模式。具体 SDK 的真实平台、版本、配置和就绪条件由各自适配器处理。
+Unity、Cocos Creator、Phaser、Three.js 和 Flutter 项目按已确认的需求接入广告或归因；本段不声明这些厂商 SDK 支持 ESP32，设备端仅在实际平台与官方能力核实后处理明确需求。广告使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。归因使用 AppsFlyer。启动装配入口立即分别投递已接入 SDK 自身的初始化与启动任务。两者不互相等待，也不等待隐私页面、应用同意状态、登录、首屏完成或归因回调。使用 SDK 提供的适用默认配置或受限模式。具体 SDK 的真实平台、版本、配置和就绪条件由各自适配器处理。
 
 业务触发归因事件或广告请求时直接调用对应能力接口。应用层不设置额外开关或等待屏障。广告链路不引入、调用或等待 Google UMP。授权未决定或 MAX `hasUserConsent=false` 均不作为整项能力的前置条件。适配器按真实 SDK 状态返回结果。未就绪、无填充、离线或展示失败按既有回退处理，不阻塞调用方，也不伪造成功。
 

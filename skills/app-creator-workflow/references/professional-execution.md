@@ -1,15 +1,17 @@
 # 专业技能公共执行规范
 
-本参考是五技术栈专业技能唯一的公共执行接线。Unity、Cocos Creator、Phaser、Three.js 与 Flutter 的专业技能继续定义各自的 API、项目文件、资产身份、工具、构建和技术验收；专业技能不再维护第二套全局 CLI、Work Item 状态机或审批账本。
+本参考是各技术栈专业技能唯一的公共执行接线。Unity、Cocos Creator、Phaser、Three.js、Flutter、ESP32 与 Node.js 的专业技能继续定义各自的 API、项目文件、资产身份、工具、构建和技术验收；专业技能不再维护第二套全局 CLI、Work Item 状态机或审批账本。
+
+先按所选栈与真实任务判断条款适用范围。以下文本、布局、可见节点、输入命中、资源和 V0–V5 只用于实际客户端显示；Node.js 无界面服务器使用 MODULE 等非视觉工作项，执行其接口、数据、任务及生命周期规范，不读取未安装的 UI 能力，也不以截图或视觉确认为服务端工程门。
 
 ## 当前控制记录
 
-- Unity、Cocos、Phaser、Three.js 的静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片，以目标显示效果确定路线。Flutter 使用本栈原生文本规范。各栈同步本地化资源和可访问语义。
+- Unity、Cocos、Phaser、Three.js 的静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片，以目标显示效果确定路线。Flutter 与 ESP32 使用各自本栈原生文本规范。涉及客户端界面时同步本地化资源和可访问语义。
 - 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：保持已确认基准字号与断行，按用途声明单行/换行及固定字号/有界缩小策略、触发条件和具体最小可读字号；正文不持续缩小。更新已有布局规格与正式配置，并在当前验证中分别核对基准还原、内容极值及字体放大。
 - 新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素的设计或可见表现，就统一执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，从本次增量 V0 开始，再验证 V1 并完成适用 V2–V5；复用素材、组件、动态生成、局部特效参数或时序调整均不豁免 V0。先明确变化范围、所属对象、父级、定位参照和尺寸策略，再在正式源实现并验证，不重做无关宿主。
 - 场景、页面和显示层统一执行[节点最小化](../../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)。V3 拆解和布局优先复用已有节点，只保留有实际职责的节点。V5 按确认后的最简层级还原并核对正式源与实际运行结构。
 - 交互组件统一执行[可交互组件结构、命中与输入职责](../../app-domain-toolkit/references/ui-interaction.md)，每个操作绑定唯一语义控件，并按实际平台验证命中、焦点和事件竞争。
-- 五栈项目采用可视化编辑器时统一遵守[编辑器优先](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)。能配置的功能优先在正式场景、Prefab 或原生 UI 源中实现并保存。代码负责业务规则与运行时行为，读取正式配置，启动时不重建已配置节点或覆盖布局。功能性位置调整按[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)限定范围与结束策略。
+- 各栈项目采用可视化编辑器时统一遵守[编辑器优先](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)。能配置的功能优先在正式场景、Prefab 或原生 UI 源中实现并保存。代码负责业务规则与运行时行为，读取正式配置，启动时不重建已配置节点或覆盖布局。功能性位置调整按[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)限定范围与结束策略。
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。
 - 每项任务使用当前项目中的一个 Work Item；机器字段以 [Work Item Schema](../../app-workflow-control/schemas/work-item.schema.json) 和 [模板](../../app-workflow-control/templates/work-item.json) 为准。Work Item 绑定目标、技术栈、工作类型、阶段、允许/禁止路径、工程门状态、证据根和可选视觉/拷问引用。小型事实查询、文案或注释修正不必为了形式创建 Work Item。
 - 实施前以 [Implementation Package Schema](../../app-workflow-control/schemas/implementation-package.schema.json) 冻结实施单元顺序、并行组与依赖、所有者、写入路径、结果文件路径和实际验收命令。并行组与依赖组的激活规则以[控制器实施执行参考](../../app-workflow-control/references/implementation-execution.md)为准。实施单元路径必须在 Work Item 允许范围内，并避开禁止范围；不要从 profile 的建议目录扩大工作项授权。
@@ -33,7 +35,7 @@
 从已安装技能的目标仓库根目录调用 `.agents/skills/app-workflow-control/scripts/workflow-control.mjs`。命令和参数以脚本 `OPTIONS` 为准；下面只列当前支持入口。在维护 `app-creator-skills` 仓库源码时，才将示例中的 `.agents/skills/` 前缀替换为 `skills/`：
 
 ```text
-node .agents/skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter> --id <ID> --type <类型> --objective <目标>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|esp32|nodejs> --id <ID> --type <类型> --objective <目标>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <工作项相对路径> --spec <实际计划JSON相对路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <工作项相对路径> --unit <单元ID> --report <真实执行报告JSON相对路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项相对路径> --source-work-item <已完成来源相对路径> --impact <implementation|layout|assets|target> --reason <未变化与受影响范围的事实说明>

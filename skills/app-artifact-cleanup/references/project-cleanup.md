@@ -2,7 +2,7 @@
 
 本规范供游戏、应用和工具项目共用。整理指可追踪地调整目录、命名与分类；清理指识别后移除过期或可再生文件。两者分别计划和验证，重构目录不能顺带扩大删除范围。
 
-范围、路径归属、授权和验证证据遵循[公共执行协议](../../app-creator-workflow/references/professional-execution.md)。五栈现有的 `artifact-cleanup` 与 `artifact-cleanup-execution` 源工作流仍作为 Cocos、Phaser、Three.js 原生补充；本规范提供五栈共同维护的一份完整流程。
+范围、路径归属、授权和验证证据遵循[公共执行协议](../../app-creator-workflow/references/professional-execution.md)。各栈现有的 `artifact-cleanup` 与 `artifact-cleanup-execution` 源工作流仍作为 Cocos、Phaser、Three.js 原生补充；本规范提供各栈共同维护的一份完整流程。
 
 ## 建立候选清单与引用关系
 

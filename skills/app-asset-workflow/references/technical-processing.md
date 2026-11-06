@@ -1,6 +1,6 @@
 # 素材技术处理
 
-本技能的 `scripts/png-raster.mjs` 和 `scripts/remove-background-local.mjs` 提取自 Unity 基准的无引擎工具，五栈共用，不重复维护。工具支持 8 位非隔行 PNG 解码，实际支持格式以脚本拒绝条件为准。
+本技能的 `scripts/png-raster.mjs` 和 `scripts/remove-background-local.mjs` 提取自 Unity 基准的无引擎工具，各栈共用，不重复维护。工具支持 8 位非隔行 PNG 解码，实际支持格式以脚本拒绝条件为准。
 
 对已获得且符合纯色背景路线的素材，按需要显式运行：
 

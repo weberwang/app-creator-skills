@@ -1,0 +1,157 @@
+{
+  "id": "esp32",
+  "displayName": "ESP32 设备 GUI",
+  "detectAny": [
+    "sdkconfig",
+    "sdkconfig.defaults",
+    "main/idf_component.yml",
+    "platformio.ini"
+  ],
+  "frameworkPolicy": [
+    "优先核实板卡、芯片、屏幕和输入；通用CMake或平台文件不能单独证明ESP32目标。",
+    "默认评估 ESP-IDF + LVGL，实际SDK、GUI、BSP和移植组件版本以项目为准，不自动迁移已有明确技术选择。",
+    "设备页面使用PAGE，独立瞬态层使用DISPLAY_LAYER，驱动/业务/通信使用MODULE，不使用SCENE。"
+  ],
+  "nativeRules": [
+    "原生GUI按实际屏幕像素、LVGL父子布局和输入所有权实现，不套用Web DPR或Flutter布局语义。",
+    "GUI调用遵循唯一线程/锁策略；异步刷新完成后才能回收或复用对应缓冲。",
+    "字体、图片与缓冲在已声明的Flash/RAM/PSRAM预算内转换、注册和验证，不假设所有硬件具有PSRAM或图片解码器。",
+    "复用工程实际构建与测试入口，主机模拟和设备运行分开记录；真机、烧录、擦除和OTA需对应明确授权。",
+    "V2-V5执行独立ESP32领域证据合同，默认由用户人工检查截图，技术检查不代替视觉验收。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "build",
+      "tests"
+    ],
+    "visual": [
+      "layout",
+      "navigation",
+      "resource-budget"
+    ],
+    "assetImport": [
+      "asset-registration"
+    ]
+  },
+  "runtimeRoots": [
+    "main",
+    "components",
+    "include",
+    "src",
+    "test",
+    "tests",
+    "host",
+    "simulator",
+    "assets",
+    "assets-source",
+    "docs",
+    "CMakeLists.txt",
+    "sdkconfig",
+    "sdkconfig.defaults",
+    "sdkconfig.defaults.*",
+    "sdkconfig.*",
+    "idf_component.yml",
+    "dependencies.lock",
+    "partitions.csv",
+    "platformio.ini",
+    "lv_conf.h",
+    "Kconfig.projbuild",
+    "CMakePresets.json"
+  ],
+  "projectStructure": {
+    "source": "main/ 与 components/（按实际工程）",
+    "screens": "components/ui/（页面与共享控件）",
+    "tests": "test/ 或 tests/；host/ 或 simulator/（已有时）",
+    "assets": "assets/ 与生成资源的注册目录",
+    "designAssets": "assets-source/（正式制作源）"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit"
+  ],
+  "sharedCapabilities": [
+    "reference-architecture-sdk-initialization",
+    "ui-copy-principles"
+  ],
+  "capabilitySkills": [
+    "app-creator-workflow",
+    "app-product-planning",
+    "app-architecture",
+    "app-project-foundation",
+    "app-ui-layout",
+    "app-asset-workflow",
+    "app-feedback",
+    "app-runtime-plugins",
+    "app-quality-review",
+    "app-release",
+    "app-artifact-cleanup"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "esp32-workflow",
+      "capability": "app-creator-workflow",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-workflow"
+    },
+    {
+      "sourceSkill": "esp32-product-planning",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-product-planning"
+    },
+    {
+      "sourceSkill": "esp32-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-architecture"
+    },
+    {
+      "sourceSkill": "esp32-project-foundation",
+      "capability": "app-project-foundation",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-project-foundation"
+    },
+    {
+      "sourceSkill": "esp32-ui-layout",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-ui-layout"
+    },
+    {
+      "sourceSkill": "esp32-asset-workflow",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-asset-workflow"
+    },
+    {
+      "sourceSkill": "esp32-feedback",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-feedback"
+    },
+    {
+      "sourceSkill": "esp32-runtime-plugins",
+      "capability": "app-runtime-plugins",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-runtime-plugins"
+    },
+    {
+      "sourceSkill": "esp32-quality-review",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-quality-review"
+    },
+    {
+      "sourceSkill": "esp32-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-release"
+    },
+    {
+      "sourceSkill": "esp32-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-esp32/references/native-contracts.md",
+      "section": "mode-esp32-artifact-cleanup"
+    }
+  ],
+  "nativeManual": "skills/app-stack-esp32/references/native-contracts.md"
+}

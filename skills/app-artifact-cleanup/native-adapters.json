@@ -47,6 +47,24 @@
         "when": "整理 Flutter 项目目录、移动或重命名资源、判定并清理中间产物时使用；遵循公共流程及 Dart 导入、pubspec、生成代码和资源清单规则。",
         "authored": true
       }
+    ],
+    "esp32": [
+      {
+        "sourceSkill": "esp32-artifact-cleanup",
+        "path": "../app-stack-esp32/references/native-contracts.md",
+        "section": "mode-esp32-artifact-cleanup",
+        "mode": "esp32-artifact-cleanup",
+        "when": "当前项目为 ESP32 自带屏幕 GUI，执行本能力的设备端实施与验证时。"
+      }
+    ],
+    "nodejs": [
+      {
+        "sourceSkill": "nodejs-artifact-cleanup",
+        "path": "../app-stack-nodejs/references/native-contracts.md",
+        "section": "mode-nodejs-artifact-cleanup",
+        "mode": "nodejs-artifact-cleanup",
+        "when": "当前模块实际运行在Node.js服务器、后台任务或消息消费者，执行本能力的服务端开发与验证时。"
+      }
     ]
   },
   "sharedWorkflows": [

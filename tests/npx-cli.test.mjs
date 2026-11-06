@@ -132,6 +132,21 @@ test('交互终端根据实际输入安装选中的栈', async () => {
   assert.equal(harness.calls[0][harness.calls[0].indexOf('--stack') + 1], 'cocos,flutter');
 });
 
+/** 验证新增编号能选择 Node.js，同时 all 仍须由用户单独明确选择。 */
+test('交互终端可选择 ESP32、Node.js 或全部技术栈', async () => {
+  for (const [answer, expected] of [
+    ['6', 'esp32'],
+    ['7', 'nodejs'],
+    ['8', 'unity,cocos,phaser,threejs,flutter,esp32,nodejs'],
+    ['5,6', 'flutter,esp32'],
+    ['6,7', 'esp32,nodejs'],
+  ]) {
+    const harness = createHarness({ isTTY: true, answer });
+    await runNpxInstaller([], { config: CONFIG, env: {}, io: harness.io, bootstrap: harness.bootstrap });
+    assert.equal(harness.calls[0][harness.calls[0].indexOf('--stack') + 1], expected);
+  }
+});
+
 test('非交互终端缺少技术栈时输出帮助并立即失败，不默认安装全部', async () => {
   const harness = createHarness();
   await assert.rejects(runNpxInstaller([], {
@@ -145,5 +160,5 @@ test('非交互终端缺少技术栈时输出帮助并立即失败，不默认�
 
 test('all 只在明确指定时展开为全部技术栈', () => {
   const parsed = parseNpxArgs(['all'], { config: CONFIG, env: {} });
-  assert.deepEqual(parsed.stacks, ['unity', 'cocos', 'phaser', 'threejs', 'flutter']);
+  assert.deepEqual(parsed.stacks, ['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
 });

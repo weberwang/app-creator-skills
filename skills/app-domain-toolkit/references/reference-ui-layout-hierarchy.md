@@ -57,7 +57,7 @@ UIRoot
 
 ## V3 组织事实
 
-拆解和布局先按[节点最小化](reference-domain-display-ownership.md#节点最小化)判断视觉与交互能否合并，再按[五栈公共随动规则](reference-domain-display-ownership.md#随动与父子关系)为确需分开的元素判断父级。同一组件内必须跟随移动的元素由组内显示层较低的移动对象承载。仅有显示层序或静态定位依赖时，分别记录渲染顺序或位置参照。
+拆解和布局先按[节点最小化](reference-domain-display-ownership.md#节点最小化)判断视觉与交互能否合并，再按[各栈公共随动规则](reference-domain-display-ownership.md#随动与父子关系)为确需分开的元素判断父级。同一组件内必须跟随移动的元素由组内显示层较低的移动对象承载。仅有显示层序或静态定位依赖时，分别记录渲染顺序或位置参照。
 
 > 适用技术栈：cocos、phaser、threejs。
 

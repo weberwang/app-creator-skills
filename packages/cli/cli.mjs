@@ -5,12 +5,12 @@ import { dirname, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter']);
+const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
 const STACK_LABELS = Object.freeze([...STACKS, 'all']);
 const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const HELP_TEXT = [
   '用法：npx app-creator-skills <技术栈[,技术栈...]> [选项]',
-  '技术栈：unity、cocos、phaser、threejs、flutter；all 表示全部（须单独指定）',
+  '技术栈：unity、cocos、phaser、threejs、flutter、esp32、nodejs；all 表示全部（须单独指定）',
   '选项：--stack/-s <技术栈列表>、--dir/-d <项目目录>、--repo <owner/repo>、--ref <分支或提交>、--dry-run、--replace、--help/-h',
   '未指定项目目录时使用当前目录；远程仓库由安装包配置，也可通过 --repo 临时指定。',
   '默认覆盖所选安装目录中的不同内容，成功后不保留旧目录备份；相同内容跳过。',
@@ -121,7 +121,7 @@ function parsePromptSelection(answer) {
   if (typeof answer !== 'string' || !answer.trim()) throw new Error('没有选择技术栈，安装已取消');
   const tokens = answer.split(',').map((token) => token.trim());
   const requested = tokens.map((token) => {
-    if (/^[1-6]$/.test(token)) return STACK_LABELS[Number(token) - 1];
+    if (/^[1-8]$/.test(token)) return STACK_LABELS[Number(token) - 1];
     return token;
   });
   return parseStacks(requested.join(','), '技术栈选择');
@@ -174,7 +174,7 @@ export async function runNpxInstaller(argv = process.argv.slice(2), runtime = {}
       throw new Error('非交互终端必须在命令中指定技术栈');
     }
     io.write('请选择技术栈（输入名称或编号；多个选项用逗号分隔）：');
-    io.write('1. unity  2. cocos  3. phaser  4. threejs  5. flutter  6. all');
+    io.write('1. unity  2. cocos  3. phaser  4. threejs  5. flutter  6. esp32  7. nodejs  8. all');
     parsed.stacks = parsePromptSelection(await io.prompt('技术栈：'));
   }
   if (!parsed.repo.trim()) {

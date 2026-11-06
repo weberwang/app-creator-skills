@@ -5,7 +5,7 @@ description: 用户要求拷问或压力测试决策，或游戏与应用开发�
 
 # 决策拷问
 
-供五栈工作流共用。先读事实，再问真正需要用户判断的问题；不因首次实现、新阶段或新模块机械触发。受影响状态归 [app-workflow-control](../app-workflow-control/SKILL.md)，不另建审批流程。
+供各栈工作流共用。先读事实，再问真正需要用户判断的问题；不因首次实现、新阶段或新模块机械触发。受影响状态归 [app-workflow-control](../app-workflow-control/SKILL.md)，不另建审批流程。
 
 ## 执行
 

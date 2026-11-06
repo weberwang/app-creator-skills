@@ -1,6 +1,6 @@
-/** 验证五栈原生反馈入口在独立安装后仍能直接读取自主资源与阶段分流规则。 */
+/** 验证声明反馈能力的技术栈可在独立安装后读取对应分流规则。 */
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -13,12 +13,19 @@ const SECTION = '资源与视觉流程分流';
 
 for (const stack of STACKS) {
   /** 从实际安装的读取器验证直接依赖闭包，避免源仓库掩盖遗漏或锚点断链。 */
-  test(`${stack} 安装后的原生反馈模式直接加载自主分流规则`, async (t) => {
+  test(`${stack} 按能力声明加载反馈模式并保持安装边界`, async (t) => {
     const project = mkdtempSync(join(tmpdir(), `feedback-native-${stack}-`));
     // 仅回收测试独占临时目录，不触碰真实项目或启动引擎与服务。
     t.after(() => rmSync(project, { recursive: true, force: true }));
     installSkills({ projectRoot: project, stacks: [stack] });
     const skillsRoot = join(project, '.agents/skills');
+    const profile = JSON.parse(readFileSync(join(skillsRoot, `app-stack-${stack}/profile.json`), 'utf8'));
+    if (!profile.capabilitySkills.includes('app-feedback')) {
+      // 无视觉能力的服务端不安装无关反馈或布局技能；其他栈按各自声明判断。
+      assert.equal(existsSync(join(skillsRoot, 'app-feedback')), false);
+      if (!profile.capabilitySkills.includes('app-ui-layout')) assert.equal(existsSync(join(skillsRoot, 'app-ui-layout')), false);
+      return;
+    }
     const { loadNativeMode } = await import(pathToFileURL(join(skillsRoot, 'app-skill-runtime/read-native-mode.mjs')).href);
     const result = loadNativeMode({ skillsRoot, stack, capability: 'app-feedback' });
     const native = result.documents.filter((document) => document.kind === 'native');

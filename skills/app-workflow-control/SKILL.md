@@ -1,6 +1,6 @@
 ---
 name: app-workflow-control
-description: 维护五技术栈共用的游戏和应用 Work Item、六阶段状态、V0–V5 对象阶段、功能依赖、执行结果与证据门；不直接编辑引擎项目，不运行构建、设备或发布操作。
+description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item、六阶段状态、功能依赖、执行结果与证据门；有显示对象时使用 V0–V5，不直接运行工程、设备或发布操作。
 ---
 
 # 统一工作流控制面
@@ -45,7 +45,7 @@ description: 维护五技术栈共用的游戏和应用 Work Item、六阶段状
 ## CLI
 
 ```text
-node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
+node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|esp32|nodejs> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
 node skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <项目相对JSON路径> --spec <实际计划JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <项目相对JSON路径> --unit <单元ID> --report <真实执行报告JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>

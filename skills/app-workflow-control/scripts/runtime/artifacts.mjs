@@ -13,6 +13,9 @@ import { readFrozenVisualBaseline } from './visual-baseline-identity.mjs';
 import { validateSingleDomainTarget } from './single-domain-check.mjs';
 import { validateSceneReuseReview, validateSceneReuseCoverage } from './visual-reuse-binding.mjs';
 import { dependencyPath } from './feature-dependencies.mjs';
+import { hasPreciseApproval } from './approval.mjs';
+
+export { hasPreciseApproval } from './approval.mjs';
 
 const WORK_SOURCE_PATHS = new WeakMap();
 const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits']);
@@ -351,18 +354,6 @@ function requireNonEmptyFile(repo, value, label) {
   const size = statSync(repoPath(repo, path).absolute).size;
   if (size === 0) throw new WorkflowError(`${label} 是空文件：${path}`, 'EMPTY_EVIDENCE');
   return path;
-}
-
-/** 记录已授权动作的精确用户决策引用；并不执行动作或验证用户身份。 */
-export function hasPreciseApproval(work) {
-  const action = work.action;
-  if (!action?.effects?.some((effect) => PROTECTED_ACTIONS.has(effect))) return true;
-  const approval = action.approval;
-  if (!approval || approval.workItemId !== work.workItemId || approval.stack !== work.stack || approval.stageId !== work.stageId ||
-      approval.actionId !== action.actionId || approval.target !== action.target || !approval.userMessageRef) return false;
-  const expectedEffects = [...action.effects].filter((effect) => PROTECTED_ACTIONS.has(effect)).sort();
-  const approvedEffects = Array.isArray(approval.effects) ? [...approval.effects].sort() : [];
-  return JSON.stringify(expectedEffects) === JSON.stringify(approvedEffects);
 }
 
 /** 工作项可先完成本地准备，执行发布或关闭受保护工作项前仍需批准。 */
