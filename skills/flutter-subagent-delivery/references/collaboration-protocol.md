@@ -2,13 +2,13 @@
 
 ## 默认拓扑
 
-所有风险等级默认在当前分支的 checkout 使用一个写入者顺序完成。风险只改变验证和审核深度；只读探索和独立 F2 审核可以并行。普通单代理直接使用八字段任务契约，不创建 brief、账本或状态文件。
+所有风险等级默认在当前分支的 checkout 使用一个写入者顺序完成。风险只改变验证和审核深度；只读探索和独立 F2 审核可以并行。普通单代理按[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)明确目标与结果、涉及写入／输出时的路径、完成条件与验证方式，不创建 brief、账本或状态文件；正式委派继续使用完整任务包。
 
 ## 显式并行
 
 只有用户明确授权分支、worktree、提交、PR 或并行写入，Controller 才能启用对应动作。授权记录必须包含共同基线、每个 DRI、互斥写入范围、共享资源所有者、验证命令和授权边界；没有这些事实就返回 `NEEDS_CONTEXT`。依赖、路由、主题、生成文件、共享状态、迁移和单页 layout-spec 始终由一个写入者串行负责。
 
-交接只传[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)、已接受路径和最小证据；不粘贴会话或上游全文。不创建 YAML/JSON 状态机，不根据 Markdown 自动合并、清理或发布。
+正式委派交接使用[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)及公共完整任务包，传递已接受路径和最小证据；不粘贴会话或上游全文。不创建 YAML/JSON 状态机，不根据 Markdown 自动合并、清理或发布。
 
 ## 审核与记录
 

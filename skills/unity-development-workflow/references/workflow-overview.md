@@ -21,7 +21,7 @@
 
 场景与显示层的 V0–V5 按[阶段规则](../../unity-domain-contracts/references/stage-confirmation.md)推进：V0 内部分流不要求常规确认；V1 实现并验证功能，白盒按需使用；V2 确认真实目标图；V3 先确认拆解图，再独立确认布局图；V4 验收正式资源和导入，可展示临时组合预览；V5 完成正式 Scene/Prefab/UI 实现、布局校准与运行验收，用户确认后闭合。技术验证通过和初始任务授权不能替代人工确认。
 
-每个阶段任务必须声明 `taskId`、依赖、输入、输出、所有权、验收、非空 `acceptanceCommands` 和状态。只有依赖与证据真实满足才进入 READY；目录接近、代理空闲或文件存在都不是 READY 证据。Foundation 采用的第三方 SDK 由[SDK 唯一初始化入口](./sdk-initialization.md)独立启动；文件、确认成果、人工审阅及机器证据遵守[产物存放与证据边界](./artifact-storage.md)。
+普通阶段内任务采用[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，只明确结果、相关写入／输出路径及完成验证。使用控制器或领域结构化任务时，`taskId`、所有权、输入／输出、验收命令和状态等字段按实际 Schema 保留；存在依赖时核对其真实证据，不为普通任务自造 ID、状态或空命令。采用 READY 的实际合同仍须满足对应依赖和证据，目录接近、代理空闲或文件存在不能替代。Foundation 的第三方 SDK 按[唯一初始化入口](./sdk-initialization.md)独立启动；产物位置沿用[原生边界](./artifact-storage.md)。
 
 纯局部修改从最早受影响阶段开始。模块/场景/资源互不相关时不得强制重跑全项目；共享配置、序列化引用、全局基线或发布候选变化时，才扩展失效范围。
 

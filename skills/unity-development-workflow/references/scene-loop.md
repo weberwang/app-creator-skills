@@ -30,6 +30,6 @@
 
 以新绑定的 V5 Implementation Package 完成正式 Scene/Prefab/UI 接入、布局校准、玩法、视觉、音频、输入、生命周期和清理；在 Editor/PlayMode 中按实际实现采集 Screen/GameView、backbuffer 或 RenderTexture、Camera、Canvas/PanelSettings、安全区、方向/resize、输入命中、截图和状态轨迹。实际完成情况记录在交付和验收报告。缺少真实 Unity 测量时 V5 只能为 `NOT_RUN` 或失败；完成验证后展示真实组合和证据，用户确认后闭合。场景 V5 不等待独立瞬态层。
 
-美术质量五项逐项通过，动态体验按适用性覆盖正常游玩、重复反馈、事件峰值和同屏叠加；不适用项记录理由，适用项必须有真实运行证据。独立验收材料由控制面 `artExperienceAcceptanceRef` 引用，并绑定当前 Work Item、候选及场景/显示层；用户人工检查实际片段/截图后确认，机器侧参数不代表视觉通过。具体检查见[美术质量合同](./art-quality-contract.md)。
+美术质量五项逐项通过，动态体验按适用性覆盖正常游玩、重复反馈、事件峰值和同屏叠加；不适用项记录理由，适用项必须有真实运行证据。独立验收材料由公共 Evidence Manifest 的 `art-experience-acceptance` 条目通过 `path` 引用，并绑定当前 Work Item、候选及场景/显示层；用户人工检查实际片段/截图后确认，机器侧参数不代表视觉通过。具体检查见[美术质量合同](./art-quality-contract.md)。
 
 不同场景可并行只读准备；正式 Unity Editor 写入受单写者约束。完成一个场景不是切换下一个场景的强制前提，只有共享资源、入口或状态所有权存在依赖时才串行。

@@ -178,7 +178,7 @@ Work Item 范围、实际实施结果、证据与阶段迁移统一按[当前公
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 3. 对当前场景明确可观察玩家行为、状态迁移、时序、反馈、成功/失败和异常恢复。截图无法证明的行为标为待定义，不自行推断。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
-6. 只使用绑定当前 `scene_id` 或合规 `shared` 且 V4 `accepted` 的资源进入正式功能实现。用独立 Node、Component、Prefab 和命名节点层组织场景，按[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)显式设置渲染节点的 `UITransform.anchorPoint`，逐对象记录非中心例外及坐标转换，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属；UI 从 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 布局合同计算，区分左上布局坐标、Creator 锚点局部坐标、父子停靠与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证关系不变量，不把绝对屏幕坐标当作通用验收标准。
+6. V1 可直接实现正式功能并使用明确标识的临时资源；正式视觉资源消费及 V5 装配只使用绑定当前 `scene_id` 或合规 `shared` 且 V4 `accepted` 的资源。用独立 Node、Component、Prefab 和命名节点层组织场景，按[显示节点锚点与层级](../../cocos-game-ui-layout/references/display-object-layering.md)显式设置渲染节点的 `UITransform.anchorPoint`，逐对象记录非中心例外及坐标转换，并声明背景、世界、特效、HUD 与瞬态层的合成顺序和输入归属；UI 从 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 布局合同计算，区分左上布局坐标、Creator 锚点局部坐标、父子停靠与动画偏移，并在视口、安全区、方向、状态和内容变化后通过唯一入口幂等重排。普通测试验证关系不变量，不把绝对屏幕坐标当作通用验收标准。
 7. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/gameplay-implementation.md#完整流程)。
 
 <a id="mode-cocos-gameplay-development--证据"></a>

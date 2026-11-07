@@ -173,7 +173,7 @@ interface BannerVisibilityResult extends AdResult {
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#phase-与原生-gates-分离)。
 
-- `privacy`：除 MAX `hasUserConsent` 首次初始化配置外，其他实际适用广告请求/展示隐私条件是否达到 `ready`；不参与 MAX 初始化及初始化重试判定。`hasUserConsent=false` 本身不能产生 `privacy-pending` 或 `privacy-blocked`，初始化成功与用户选择分别记录，不能互相推断。
+- 对已核实无官方初始化隐私前置的组合，`privacy`：除 MAX `hasUserConsent` 首次初始化配置外，其他实际适用广告请求/展示隐私条件是否达到 `ready`；不参与 MAX 初始化及初始化重试判定。`hasUserConsent=false` 本身不能产生 `privacy-pending` 或 `privacy-blocked`，初始化成功与用户选择分别记录，不能互相推断。
 
 Cocos 场景只提供 `slotId` 与自然中断点上下文并消费结构化结果；`tryShow` 前由项目原生适配层读取该广告位当前实例就绪属性、phase 和共享 gates，任一 gate closed/unknown 都立即拒绝。前后台、断网、隐私变化和宿主切换由 Android/iOS 生命周期及 MAX 回调归一化后发布，恢复时重新计算 gates，而不是让场景写入广告 phase。
 
@@ -205,16 +205,18 @@ MAX 初始化成功后，广告服务去重投递启用的插页与激励视频�
 - 只有 MAX 真实初始化完成回调能确认成功。当前有效请求出现可观测的真实失败信号（同步调用异常、本地受理拒绝或 SDK 官方提供的失败回调）时，才按错误类别处理；单纯等待超时或没有任何回调时保留同一 in-flight 状态，不伪造失败或启动重试。
 - 初始化成功立即清零 MAX 初始化失败计数、取消 timer、清空 deadline/恢复意图，并只向广告服务投递一次全部启用插页与激励视频的预加载意图；广告位继续检查真实广告请求隐私条件并分别恢复。Banner 不创建、不预加载。MAX 初始化任务与每个广告位 RetryState 完全隔离，任一侧的重试不共享或改写另一侧 timer、计数、deadline。
 
-MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX 初始化回调不得等待该弹窗。仅项目实际采用的独立隐私能力维护真实状态及用户界面，其完成条件、失败计数或 timer 与 MAX 初始化任务分离。广告不依赖 Google UMP；CMP/ATT 尚无结果、失败或用户拒绝都不能替代 MAX 的真实初始化回调，不能把 MAX 任务标为成功/失败或自动再次初始化。真实且有官方依据的前置只影响它明确约束的任务/广告请求，不伪造隐私结果。
+对已核实无官方 CMP 前置且已关闭内建流程的组合， MAX 初始化回调不得等待该弹窗。仅项目实际采用的独立隐私能力维护真实状态及用户界面，其完成条件、失败计数或 timer 与 MAX 初始化任务分离。已采用或官方要求的 CMP（包括 UMP）按真实前置执行；CMP/ATT 尚无结果、失败或用户拒绝都不能替代 MAX 的真实初始化回调，不能把 MAX 任务标为成功/失败或自动再次初始化。真实且有官方依据的前置只影响它明确约束的任务/广告请求，不伪造隐私结果。
 
 ## MAX 隐私配置与初始化时序
+
+本节关闭 MAX 内建流程的配置为默认方案，不代表可以绕过已采用 CMP 的官方前置。按锁定平台和版本核实：自集成 CMP 必须在 MAX 初始化前完成；明确采用内建流程时由 initialize 触发，流程结束后才有初始化完成回调，相关 MMP/分析 SDK 按官方要求等待。下文“隐私不参与初始化”的独立路径、恢复及替身测试仅适用于已核实没有该前置的组合；不适用时仅阻断对应 SDK 并记录原因，不能强行 initialize，游戏及无关 SDK 继续。`false` 不是 CMP 完成或用户选择证明，不单独证明所有地区、渠道允许请求。
 
 1. 唯一初始化入口检查受控平台配置、当前 Activity/ViewController、环境开关与原生 SDK 配置；Web/小游戏直接 no-op。Cocos 引擎和 AssetDB 按自身生命周期运行，不作为第三方 SDK 初始化的一部分。
 2. 每个新 MAX 实例首次初始化前，通过锁定插件/SDK 支持的原生入口设置 `hasUserConsent=false`，并在初始化前关闭 MAX 内建 Terms and Privacy Policy Flow。Android 官方原生 API 为 `AppLovinPrivacySettings.setHasUserConsent(false)` 与 `AppLovinSdk.getInstance(context).getSettings().getTermsAndPrivacyPolicyFlowSettings().setEnabled(false)`；iOS 官方原生 API 为 `[ALPrivacySettings setHasUserConsent:NO]` 与 `[ALSdk shared].settings.termsAndPrivacyPolicyFlowSettings.enabled = NO`（Swift 使用 `isEnabled = false`）。随后由统一初始化模块调用当前版本的 MAX `initialize` 并只凭真实完成回调确认成功。按项目锁定 SDK/插件版本核验调用可用性和最终生效值。
 3. 官方也支持原生资源配置 `consent_flow_enabled=false`（Android）和 `ConsentFlowEnabled=NO`（iOS）。如项目采用资源配置，应合并保留其他有效值，并检查打包后的有效配置；不能因官方页面演示启用示例而保留 `true`。关闭流程不等于关闭 SDK、跳过 MAX 初始化或完成用户同意收集。
 4. 首次设置的 `hasUserConsent=false` 是 MAX 配置，不是用户已同意或拒绝的回执，不得据此伪造 CMP/TCF/ATT 结果或阻断初始化、广告请求和 load 重试。后续真实用户选择到达时按锁定插件官方接口同步，不由同实例初始化重试再次写入初始 `false` 覆盖。真实适用的 CMP/TCF、地区、网络及 ATT 条件继续由各自流程处理；确有官方前置时不得伪造完成，只阻断对应 SDK/广告动作并记录来源。
 5. iOS `Info.plist` 按当前 AppLovin SKAdNetwork 页面与实际启用的 mediated networks 生成/维护 `SKAdNetworkItems`，不能复制过期固定清单。Android/iOS 隐私 manifest、数据安全声明、商店隐私资料和目标地区限制由发布责任人核对；ATT 描述和请求时序按平台官方流程及项目决策处理，不重复弹窗，也不把未授权结果说成已授权。
-6. 广告模块不接入或等待 Google UMP。对实际适用的渠道核对真实授权配置及网络覆盖。任何外部控制台配置由责任人在授权范围内完成。隐私状态由适配层按官方 API 如实读取/传递；广告请求门只表达确有适用的阻断条件，不能仅因 `hasUserConsent=false` 返回 `privacy-pending` 或 `privacy-blocked`。儿童数据、年龄限制和地区义务不能自行假设或绕过。
+6. 不擅自新增 CMP；已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。对实际适用的渠道核对真实授权配置及网络覆盖。任何外部控制台配置由责任人在授权范围内完成。隐私状态由适配层按官方 API 如实读取/传递；广告请求门只表达确有适用的阻断条件，不能仅因 `hasUserConsent=false` 返回 `privacy-pending` 或 `privacy-blocked`。儿童数据、年龄限制和地区义务不能自行假设或绕过。
 
 官方参考：[Android MAX Privacy](https://support.applovin.com/en/max/android/overview/privacy)、[iOS MAX Privacy](https://support.applovin.com/en/max/ios/overview/privacy)、[Android Terms and Privacy Policy Flow](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow) 和 [iOS Terms and Privacy Policy Flow](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 
@@ -317,7 +319,7 @@ MAX 内建 Terms and Privacy Policy Flow 已在初始化前关闭，因此 MAX �
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
 - 用原生插件替身核验新实例首次初始化前先设置 `hasUserConsent=false` 并关闭 MAX 内建 Terms and Privacy Policy Flow，再调用 `initialize`；同实例重入/初始化重试不重复写入 false 或覆盖后续真实用户选择，新实例重新按首次配置执行。
-- 使用永不结束、失败和返回真实状态的独立 CMP/ATT 替身验证：MAX 内建流程关闭后，MAX 的真实初始化回调可独立确认 SDK 成功，不等待 CMP/ATT 用户界面；CMP/TCF/ATT 的真实状态与错误只更新对应隐私任务，不改变 MAX 初始化状态。
+- 对已核实无官方 CMP 初始化前置的组合，使用永不结束、失败和返回真实状态的独立 CMP/ATT 替身验证；另测必须先完成 CMP 的组合在未满足前置时只阻断 MAX：MAX 内建流程关闭后，MAX 的真实初始化回调可独立确认 SDK 成功，不等待 CMP/ATT 用户界面；CMP/TCF/ATT 的真实状态与错误只更新对应隐私任务，不改变 MAX 初始化状态。
 - 对 MAX 任务的假时钟/原生回调分别验证瞬时错误的 2/4/8/16/32/64 秒退避、`0.8–1.2` 抖动及 64 秒硬上限；重复瞬时失败无次数上限。配置/依赖/明确策略错误修正前不自动请求；unknown 先诊断，不能凭错误文本无限退避。
 - 分别注入当前有效请求的同步调用异常、本地受理拒绝和 SDK 官方失败回调，断言它们按真实失败信号分类；只有纯超时或完全无回调时保持 in-flight，不伪造失败或启动重试。
 - 关闭 `host`、`foreground`、`connectivity` 任一门时验证暂停 timer 且保留单调 deadline 和失败计数；恢复时仅按 deadline 恢复一次，重复恢复事件不能重复投递。

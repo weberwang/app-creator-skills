@@ -32,7 +32,7 @@ V1–V5 阶段切换或 `RETURN` 时，旧执行状态须归档；下一阶段�
 
 ## 可见 V5 美术与动态体验
 
-V5 `PASS` 还必须提供 `candidateId`、`candidateVersion` 与项目内 JSON 路径 `artExperienceAcceptanceRef`。材料遵循[美术验收合同](../../unity-development-workflow/references/art-quality-contract.md)，绑定工作项、场景或独立显示层、项目美术 brief、五项人工质量结果及四个动态情境。五项均通过；适用情境必须有非空真实录屏、有效片段范围、实测次数/并发、视口与人工观察。不适用情境逐一说明理由，不伪造实测。
+V5 `PASS` 的美术验收由公共 Evidence Manifest 的 `art-experience-acceptance` 条目引用，原生证据只保留引擎事实；布局运行证据需要时仍用原生 `candidateId` 绑定布局测量。材料遵循[美术验收合同](../../unity-development-workflow/references/art-quality-contract.md)，绑定工作项、场景或独立显示层、项目美术 brief、五项人工质量结果及四个动态情境。五项均通过；适用情境必须有非空真实录屏、有效片段范围、实测次数/并发、视口与人工观察。不适用情境逐一说明理由，不伪造实测。
 
 机器检查文件边界、结构、身份和结果记录，不能证明用户已实际观看或评价画面；编排者须依据真实用户回复填写确认。既有 V5 确认可同时覆盖这些材料，不新增审批。截图采集 `PASS`、几何容差 `PASS` 和美术人工通过分别记录，缺失、失败或未验证时阻断当前完成结论。直接状态迁移也会重新读取证据，不能以静态门状态绕过。
 

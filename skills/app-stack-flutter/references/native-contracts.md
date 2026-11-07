@@ -49,7 +49,7 @@ Turn an app idea into a constrained commercial product spec. The output must mak
 #### Inputs
 
 - App idea or business goal.
-- `docs/product/grilling-log.md` with the user's explicit shared-understanding confirmation when the product is entering the commercial delivery workflow.
+- 已有需求和用户决定；仅存在影响范围、成本或验收的实质未决项时，补充 `docs/product/grilling-log.md` 中对应的讨论结论。
 - Target market or audience, if known.
 - Platform assumptions: Flutter mobile first unless the user states otherwise.
 - Monetization intent, if known.
@@ -64,19 +64,19 @@ Turn an app idea into a constrained commercial product spec. The output must mak
 5. Define commercial constraints: payment, account, data ownership, privacy, support, and retention.
 6. Record the intended product quality: brand character, interaction tone, visual constraints, and decorations that are justified by the product rather than added for novelty.
 7. Derive a visual expression preset from product category and audience using [../flutter-ux-ui-quality/references/visual-expression-presets.md](../../flutter-ux-ui-quality/references/visual-expression-presets.md). Record preset ID, axis values, and derivation basis in the product brief. Do not lower task-clarity or trust gates; the preset only sets expression ceiling and exploration bias.
-8. Before handing off to global UX/UI exploration, run the one-time light visual interrogation from the preset reference. Record answers in `docs/product/grilling-log.md` and mirror signature and implementation-cost commitments in the product brief. Both records are required.
+8. 只有视觉签名、表达预算或实现成本存在实质未决取舍时，按预设参考开展轻量视觉讨论，记录实际决定并在产品简报同步结论。已有需求足够明确时直接继续；文字方向是设计输入，正式全局基线在 V1 后按公共 V2 三图规则建立。
 9. Write the product brief using [references/product-brief-template.md](../../flutter-product-spec/references/product-brief-template.md). Keep MVP scope, stories, market assumptions and acceptance criteria in that same document unless the user explicitly requests a standalone export.
 
 <a id="mode-flutter-product-spec--output-files"></a>
 #### Output Files
 
 - `docs/product/product-brief.md`
-- `docs/product/grilling-log.md` updates for the light visual interrogation
+- `docs/product/grilling-log.md`（仅实际发生讨论时更新）
 
 <a id="mode-flutter-product-spec--gate"></a>
 #### Gate
 
-Do not proceed to UX/UI or technical design until the grilling log records the user's explicit shared-understanding confirmation, the MVP has clear non-goals, every core feature has acceptance criteria, the product brief records a derived visual expression preset, and the one-time light visual interrogation answers are recorded in the grilling log with signature and implementation-cost commitments mirrored in the product brief.
+进入 UX/UI 或技术设计前，明确 MVP 非目标、核心功能验收条件和推导后的视觉表达预设。仅阻断尚未解决的实质需求取舍；已有用户决定可直接复用，不额外要求拷问文件或重复确认。正式全局视觉冻结遵循公共 V1 后 V2 三图基线，文字方向不构成独立冻结门。
 
 <a id="mode-flutter-product-spec--common-mistakes"></a>
 #### Common Mistakes
@@ -86,7 +86,7 @@ Do not proceed to UX/UI or technical design until the grilling log records the u
 - Missing account, privacy, or monetization assumptions for a commercial app.
 - Treating visual polish as a substitute for clear value, reliable feedback, and trust.
 - Leaving the visual expression preset blank, or using "restrained" as a universal default instead of deriving axes from category and audience.
-- Entering UX/UI after deriving a preset but before completing the light visual interrogation and brief mirror.
+- 对需求已经明确的任务强制重复视觉拷问，或把文字方向当作公共正式视觉基线。
 <!-- native-source:flutter-product-spec:end -->
 
 
@@ -110,7 +110,7 @@ Create the smallest practical technical design that supports the approved produc
 2. Identify the app and service shape: local-first, API-backed, subscription, content, community, commerce, AI, or enterprise.
 3. Choose only required state, routing, persistence, networking, auth, payment, observability, environment, and dependency capabilities.
 [公共架构模块契约](../../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)
-5. For APIs/services, define contract and versioning, authentication/authorization, idempotency/retry/timeout, migration/rollback, service tests, deployment/monitoring, backup/recovery, and client compatibility. If server implementation is out of scope, record only external dependencies, owners, assumptions, and client boundaries.
+5. 对 API/服务明确当前合同与版本、鉴权、幂等/重试/超时、适用的服务测试、部署监控与备份恢复。仅用户或需求明确要求历史兼容、数据迁移或弃用窗口时安排对应设计与验证；当前候选备份恢复和真实数据变更保护仍按风险执行。服务实现不在范围内时只记录外部依赖、责任边界与假设。
 6. Define layered platform verification: foundation startup/routing/plugin smoke; primary-target runtime smoke after critical business flows; complete platform matrix at final integration/release. Never auto-start physical-device acceptance.
 7. Define the shared breakpoint resolver, constrained page container, scroll-owner policy, docking/overlay primitives, and system-inset/keyboard infrastructure that page layout specs will consume. Do not reimplement these decisions independently in each page.
 8. Write `docs/architecture/technical-design.md` with [references/technical-design-template.md](../../flutter-tech-design/references/technical-design-template.md) and `docs/architecture/verification-platforms.md` with [references/verification-platforms-template.md](../../flutter-tech-design/references/verification-platforms-template.md).
@@ -118,7 +118,7 @@ Create the smallest practical technical design that supports the approved produc
 <a id="mode-flutter-tech-design--dependency-capability-bias"></a>
 #### Dependency Capability Bias
 
-- 代码实现命中[插件优先触发边界](plugin-selection.md#插件优先的实现触发边界)后，优先复用已有插件或使用通过准入的成熟插件，不以 SDK 可以手写为由重复实现；未触发的简单局部逻辑使用 SDK，自研先记录例外证据。
+- 命中[插件选型边界](plugin-selection.md#插件优先的实现触发边界)后，先复用已有方案；新增方案按官方现成能力、成熟插件、最小自研的顺序评估。官方缺口按事实记录，不要求先手写通用能力来证明不可用。
 - 技术设计、新增依赖和替换插件按[插件与技术方案选型](plugin-selection.md)执行；从[依赖能力档](../../flutter-project-init/references/dependency-profiles.md)选择实际需要的状态、路由、网络、数据、存储、平台和服务能力，不默认安装整套。
 - Record why each package/profile is enabled and which lighter option was rejected.
 - Require annotations and generation only for actually adopted generated-model/serialization profiles.
@@ -133,7 +133,7 @@ Explicitly address applicable account lifecycle, privacy-sensitive data, payment
 <a id="mode-flutter-tech-design--gate"></a>
 #### Gate
 
-Do not move to implementation planning until decisions, rejected alternatives, dependency profile reasons, module/data ownership, contracts, service boundaries, verification commands, layered platform scope, migrations/rollback, and production-risk ownership are explicit.
+进入实施规划前明确实际方案与被否决替代、依赖理由、模块与数据所有权、合同、服务边界、验证命令、平台范围和生产风险责任；迁移、历史兼容与弃用计划仅在明确要求时作为前置，当前变更的恢复措施按风险确定。
 <!-- native-source:flutter-tech-design:end -->
 
 
@@ -245,7 +245,7 @@ Always cover:
 - Export compliance and encryption declaration.
 - iOS entitlements, Android permissions, and manifest disclosures.
 - Data collection disclosures consistent with runtime analytics, crash, ads, and payment SDK behavior.
-- API/service contract version compatibility, auth/permission controls, idempotent retry behavior, migration rollback, service tests, deployment monitoring, backup restore and recovery evidence when applicable. If server implementation is externally owned, verify only the recorded dependency, owner, compatibility and release boundary.
+- 核对当前 API/服务合同、鉴权、幂等重试、适用的服务测试、部署监控与备份恢复证据；历史兼容、迁移和弃用仅在明确要求时验收。服务实现由外部负责时，只核对记录中的依赖、责任与本次交付边界。
 - Accessibility, localization, network failures, and offline behavior.
 - Release build verification commands.
 - The global verification platform scope and its required release evidence.
@@ -280,7 +280,7 @@ Produce:
 <a id="mode-flutter-release-readiness--gate"></a>
 #### Gate
 
-Do not approve the Release lane while any store, privacy, account, payment, crash reporting, API/service rollout/recovery, or release build blocker remains unresolved. Release-lane approval does not itself complete F3: QA and technical verdicts, any triggered Product or visual verdict, and explicit external-release authorization remain required. PR/CI evidence is required only when it is applicable to the current release scope and has been explicitly authorized; missing authorization must not trigger PR/CI creation.
+适用于当前范围的商店、隐私、账号、支付、崩溃上报、API/服务恢复或发布构建阻塞未解决时，不得批准 Release lane。原生 F3 仍需 QA、技术及实际触发的产品/视觉结论；`releaseIntent=prepare` 完成准备检查即可给出准备结论，不要求实际上线授权。`publish` 及其他外部写入执行前分别核对对应明确授权。PR/CI 证据只在适用且已授权时要求，不得为补证据自动创建外部资源。
 <!-- native-source:flutter-release-readiness:end -->
 
 
@@ -297,7 +297,7 @@ Do not approve the Release lane while any store, privacy, account, payment, cras
 <a id="mode-flutter-quality-review--输入"></a>
 #### 输入
 
-只加载 F1 或指定 F2 通道需要的路径：八字段任务契约、变更文件、F0 命令证据、`snapshot-id`、相关产品/设计/技术决策、页面 layout-spec/资产 manifest、以及该层级要求的平台烟测。没有 snapshot 或必要证据时返回 `NEEDS_CONTEXT`。
+只加载 F1 或指定 F2 通道需要的事实与路径：普通任务的[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，正式委派使用的八字段任务契约，以及实际变更文件、F0 命令证据、`snapshot-id`、相关产品／设计／技术决定、适用的 layout-spec／资产 manifest 和平台烟测。没有该审核所需 snapshot 或必要证据时返回 `NEEDS_CONTEXT`；工具或领域合同的必填项仍按实际要求提供。
 
 <a id="mode-flutter-quality-review--检查范围"></a>
 #### 检查范围
@@ -606,13 +606,15 @@ V1 实际验证功能和页面语义后进入 V2 目标设计；白盒或 Code S
 
 1. 以产品责任、路由/数据 ownership、业务流等级和页面交互顺序划分模块；跨模块先建立契约。
 2. 一个任务只交付一个垂直切片或隔离基础；模块进入可实施状态时再细化函数、状态、验收路径和 brief。
-3. 每个任务都填写[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)。普通单代理在对话中传递；只有跨角色、高风险持久上下文或用户要求才创建 Markdown brief。
+3. 普通单代理按[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)明确目标与结果、涉及写入／输出时的路径、完成条件与验证方式；当前代理默认负责。正式委派使用[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)及公共完整任务包；只有跨角色、高风险持久上下文或用户要求时才按需创建 Markdown brief。
 4. 默认当前分支的 checkout、单写者、顺序执行。其他分支、worktree、提交、PR 或并行写入仅在用户明确授权后规划，且写范围必须互斥。
 5. 只列出实际需要的实现角色和 F2 通道；不要预先组装全团队。UI 任务按需包含 layout-spec、关系测试和截图/golden 证据。
 6. 任务验证区分 F0 命令、共享基础烟测、关键业务流主目标烟测和最终平台矩阵；不能把局部证据写成全平台通过。
 
 <a id="mode-flutter-implementation-plan--输出"></a>
 #### 输出
+
+仅在当前范围及实际工具合同需要时选择或复用以下计划，不为普通单代理任务机械创建完整目录或占位文件：
 
 - `docs/plans/module-map.md`
 - `docs/plans/modules/<module-name>-scope.md`
@@ -624,7 +626,7 @@ V1 实际验证功能和页面语义后进入 V2 目标设计；白盒或 Code S
 <a id="mode-flutter-implementation-plan--gate"></a>
 #### Gate
 
-没有明确范围、验收条件、确认事实或可执行验证命令时暂停规划并返回 `NEEDS_CONTEXT`。正式审核前必须先获得测试等级选择并完成真实 F0；物理真机、发布和外部写入不自动发生。
+缺少目标、适用写入范围、验收条件或验证方式且无法继续时返回 `NEEDS_CONTEXT`；工具及领域合同要求的事实和命令仍须提供。正式审核前按实际影响推荐测试等级并自动执行适用验证，缺少所需真实 F0 证据不能冒充通过；T0 只检查本次改动。物理真机、发布和外部写入不自动发生。
 <!-- native-source:flutter-implementation-plan:end -->
 
 <!-- native-source:flutter-subagent-delivery:start -->

@@ -14,6 +14,8 @@ import { validateSingleDomainTarget } from './single-domain-check.mjs';
 import { validateSceneReuseReview, validateSceneReuseCoverage } from './visual-reuse-binding.mjs';
 import { dependencyPath } from './feature-dependencies.mjs';
 import { hasPreciseApproval } from './approval.mjs';
+import { validateCommandCapture } from './command-capture.mjs';
+import { validateDeletedFiles } from './deletion-baseline.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 
@@ -163,13 +165,14 @@ export function validateUnitResult(repo, work, pack, unit, result) {
     unitId: unit.unitId, sequence: unit.sequence,
   })) if (result[field] !== expected) throw new WorkflowError(`执行结果.${field} 未绑定当前工作项和单元`);
   if (result.exitCode !== 0) throw new WorkflowError('执行单元退出码必须为 0');
-  if (!Array.isArray(result.files) || !result.files.length) throw new WorkflowError('执行结果必须列出实际变更文件');
+  if (!Array.isArray(result.files) || (result.deletedFiles !== undefined && !Array.isArray(result.deletedFiles)) || (!result.files.length && !result.deletedFiles?.length)) throw new WorkflowError('执行结果必须列出实际变更或删除文件');
   const profile = loadProfile(repo, work.stack);
   result.files.forEach((path) => {
     const normalized = assertOwnedPath(repo, work, profile, path);
     if (!unit.paths.some((owned) => pathMatch(normalized, owned))) throw new WorkflowError(`执行结果越过单元 ${unit.unitId} 的文件所有权：${normalized}`, 'UNIT_PATH_OUT_OF_SCOPE');
     requireFile(repo, path, '执行结果中报告的交付文件');
   });
+  validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, [WORK_SOURCE_PATHS.get(work), ...collectWorkReferencePaths(work, repo), ...pack.executionUnits.map((item) => item.resultPath)].filter(Boolean));
   if (!Array.isArray(result.commandOutputs) || result.commandOutputs.length !== unit.acceptanceCommands.length) {
     throw new WorkflowError('验收命令实际输出必须与声明命令一一对应');
   }
@@ -178,6 +181,7 @@ export function validateUnitResult(repo, work, pack, unit, result) {
     if (entry.exitCode !== 0) throw new WorkflowError(`第 ${index + 1} 项验收命令失败`);
     requireText(entry.outputFile, `commandOutputs[${index}].outputFile`);
     const path = requireNonEmptyFile(repo, entry.outputFile, '验收命令真实输出文件');
+    validateCommandCapture(repo, path, entry);
     const root = repoPath(repo, work.evidenceRoot).relative;
     if (!pathMatch(path, `${root}/**`)) throw new WorkflowError('验收命令输出文件必须保存在当前 evidenceRoot');
   }

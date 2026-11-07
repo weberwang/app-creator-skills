@@ -1,5 +1,7 @@
 # 产物存放与证据边界
 
+输出分类、命名、批次及交接按[公共输出文件规范](../../app-creator-workflow/references/output-files.md)执行；本文件保留 Cocos 的原生目录及字段边界，不因公共建议改写固定文件或已绑定记录。
+
 在生成、导出、确认、接入或清理游戏产物前读取本文件。路径均相对目标 Cocos Creator 游戏项目根目录；按需创建目录，不预建空目录，不为本规范批量搬迁或改写既有记录。
 
 ## 存放位置
@@ -20,7 +22,7 @@
 
 根级 `evidence/<workItemId>/` 是人工审阅/验证目录，**不是**机器控制面的 `evidenceRoot`。Work Item、审批、委派、执行状态、Result、Evidence Manifest 与附件继续写入控制工具为当前任务确定的实际路径；视觉确认账本和回执只写入 `.workflow-control/user-resolutions/` 的真实位置。不得根据本文件重排机器目录。
 
-Evidence Manifest、自身文件列表、命令 `outputFile` 及任何明确受 `evidenceRoot` 约束的字段，只能使用该 Work Item `evidenceRoot` 内路径。根级 `evidence/`、`docs/confirmed/`、`assets-source/` 或其他外部位置不得填入受限字段；仅在对应业务 Schema/控制命令明确允许外部引用时才通过该类字段关联产物。不为满足字段约束复制或改写已冻结记录，也不把根级审阅目录伪装成机器证据根。
+公共 Evidence Manifest 的 `items[].path`、命令 `commandOutputs[].outputFile` 及任何明确受 `evidenceRoot` 约束的字段，只能使用该 Work Item `evidenceRoot` 内路径；执行结果 JSON 使用预声明 `resultPath`，其中 `files` 列实际改动交付，按执行单元 `paths` 所有权核对，不能误要求正式源码和资源位于证据根。根级 `evidence/`、`docs/confirmed/`、`assets-source/` 等外部位置只能通过对应业务合同允许的字段关联，不得填入受限证据字段；不为满足约束复制或改写冻结记录，也不把人工审阅目录伪装成机器证据根。
 
 Cocos Creator 正式运行资源必须安装到最终计划的 `assets/` 路径，源文件及 Creator 生成的 `.meta` 一并维护。遵循[交付资源流程](../../cocos-game-orchestrator/references/delivery-artifacts.md)：候选安装到计划路径后，先核验 AssetDB 导入、类型、UUID/子资源、脚本编译及隔离验证结果，再记录 V4 accepted；未 accepted 时不得绑定到正式场景或进入正式场景构建/发布候选的有效资源引用。正式场景消费在 accepted 后进入相应 V5 集成与重验。通过后不搬迁正式资源。Creator 构建可能收集的资源也要检查最终包，不能只靠目录名假定排除。目录、`.meta` 或导入成功都不替代人工确认与控制面记录。
 

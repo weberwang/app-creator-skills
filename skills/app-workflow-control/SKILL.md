@@ -19,6 +19,8 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 
 ## 工作项和文件
 
+输出分类、命名与交接遵循[工作流输出文件规范](../app-creator-workflow/references/output-files.md)，控制器路径仍以本技能实际工具与 Schema 为准。`Execution Result.files` 是单元所有权内的改动交付文件，`resultPath`、命令 `outputFile` 与公共 Manifest 条目按各自约束位于当前 `evidenceRoot`；目录规范不扩大字段、写入权限或自动归档能力。
+
 按 [schemas/work-item.schema.json](schemas/work-item.schema.json) 定义单个 JSON 工作项。生成新工作项用 CLI `init`，已有工作项引用指向项目里的机器记录：
 
 - `implementationPackageRef` → 固定顺序实施包。单元默认串行；连续且至少两项的 `parallelGroup` 可形成并行批次，组内声明的目录/文件所有权必须互斥。`dependsOn` 只引用更早批次的单元，不会改变 `sequence` 顺序。
@@ -70,3 +72,5 @@ node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo 
 当前功能 V1 验证后，视觉增量用 `reuse-visual` 校验来源并引用未变化的基线和 V2/V3 确认；同项目、技术栈、对象、候选及显示层宿主必须匹配，源工作项须 COMPLETE/V5。布局变化重新确认布局，目标变化重新确认目标；当前 V4/V5 和工程证据仍独立产生。完整规则见[统一流程](../app-creator-workflow/references/workflow.md#视觉确认的增量复用)。
 
 使用 [templates/](templates) 中同名合同记录真实实施包、结果、人工阶段确认、全局基线、素材评审和拷问。不要在已通过的证据里放模板占位符。
+
+Unity 可见对象 V5 另读取[公共美术验收](references/art-experience-acceptance.md)，通过公共 Manifest 条目逐目标引用真实记录；其他栈不新增强制任务。

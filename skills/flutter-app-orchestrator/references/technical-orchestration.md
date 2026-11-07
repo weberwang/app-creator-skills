@@ -13,7 +13,7 @@ description: Use when the user asks to coordinate a Flutter app task across prod
 
 1. 预检仓库、现有决策、依赖、健康服务和项目原生命令。
 2. 按[风险分级](../../flutter-subagent-delivery/references/task-risk-tiers.md)选择 `light`、`standard`、`high` 或 `release`。
-3. 用[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)在当前对话中交接目标；普通单代理不创建 brief。只有跨角色交接、高风险持久审核或用户明确要求时才落盘。
+3. 普通单代理按[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)在对话中明确目标与结果、涉及写入／输出的路径、完成条件与验证方式，不创建 brief。正式委派沿用[八字段任务契约](../../flutter-implementation-plan/references/task-brief-template.md)及公共完整任务包；只有跨角色交接、高风险持久审核或用户明确要求时才按需落盘。
 4. 默认在当前分支的 checkout 由单写者顺序完成；风险只改变验证和审核深度。其他分支、worktree、提交、PR 或并行写入必须有用户明确授权。
 5. 单写者完成改动后，报告推荐测试等级、理由、覆盖范围和命令，随后自动执行适用验证并根据结果修复或推进。没有真实命令证据不进入正式审核。
 6. F1 只按实际变更分诊；普通审核使用可复算 `snapshot-id`，已有且获授权的提交才补充 commit SHA。

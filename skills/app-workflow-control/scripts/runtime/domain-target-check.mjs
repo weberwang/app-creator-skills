@@ -5,6 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
+import { validatePublicArtExperience } from './art-experience.mjs';
 
 const STACKS = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -51,14 +52,8 @@ function validateUnityIdentity(repo, envelope, work, target, stage) {
     evidence = readJson(repo, envelope.nativeEvidenceRef?.path, 'Unity 原生 Evidence Manifest');
     if (evidence.workItemId !== work.workItemId || evidence.workItemType !== 'SCENE' || evidence.visualStage !== stage || evidence.verdict !== 'PASS') throw new WorkflowError('Unity 原生证据工作项、阶段或验收状态错绑');
     if (evidence.candidateId !== undefined && evidence.candidateId !== target.candidateId) throw new WorkflowError('Unity 原生证据候选身份错绑');
-    if (stage === 'V5' && evidence.candidateId !== target.candidateId) throw new WorkflowError('Unity V5 领域证据必须绑定当前候选');
     if (stage === 'V5') {
-      // 目标范围必须来自人工验收的实际情境，而不是只从可独立填写的包装字段复制。
-      const acceptance = readJson(repo, evidence.artExperienceAcceptanceRef, 'Unity 人工美术验收');
-      if (acceptance.workItemId !== work.workItemId || acceptance.sceneId !== target.sceneId || acceptance.candidateId !== target.candidateId) throw new WorkflowError('Unity 人工验收未绑定当前工作项、场景及候选');
-      const matches = Array.isArray(acceptance.scenarios) ? acceptance.scenarios.filter((item) => item?.required === true && item.status === 'PASS' && item.targetId === target.targetId && item.stateId === target.stateId && item.viewport?.width === target.viewport?.width && item.viewport?.height === target.viewport?.height) : [];
-      if (matches.length !== 1) throw new WorkflowError('Unity 人工验收必须唯一绑定当前目标、状态及运行视口');
-      validateTargetFile(repo, matches[0].referenceTarget, target.referenceTarget, 'Unity 人工验收目标');
+      validatePublicArtExperience(repo, work, target);
     }
   }
   return { native, evidence };

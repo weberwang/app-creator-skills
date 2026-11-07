@@ -82,7 +82,7 @@ test('未安装当前栈领域脚本时明确阻断而非跳过', (t) => {
   const { repo, work, target } = webFixture(t);
   const runtime = join(repo, 'isolated', 'skills', 'app-workflow-control', 'scripts', 'runtime');
   mkdirSync(runtime, { recursive: true });
-  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
+  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
   const moduleUrl = pathToFileURL(join(runtime, 'domain-target-check.mjs')).href;
   const script = `import {validateDomainTarget} from ${JSON.stringify(moduleUrl)}; const [repo,work,target]=JSON.parse(process.argv[1]); try {validateDomainTarget(repo,work,target,'V2'); process.exitCode=1;} catch(e) {process.stdout.write(e.message);}`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, JSON.stringify([repo, work, target])], { encoding: 'utf8', windowsHide: true });
@@ -171,7 +171,7 @@ function unityEvidence(stage, candidateId) {
     baselineHash: 'sha256:abc', recordedAt: '2026-10-26T00:00:00.000Z', verdict: 'PASS',
     gateResults: Object.fromEntries(['F0', 'F1', 'F2', 'F3', 'F4'].map((gate) => [gate, { status: gate === 'F4' ? 'NOT_RUN' : 'PASS', summary: '合成夹具', evidenceRefs: [] }])),
     unityEvidence: { editorStable: 'PASS', compile: 'PASS', domainReload: 'PASS', console: 'PASS', scenePrefabImporterGuid: 'PASS' },
-    candidateId, candidateVersion: 'version-1',
+    candidateId,
   };
   if (stage === 'V5') {
     const artifact = (source) => ({ source, measured: true, path: 'evidence/synthetic.bin' });
@@ -183,7 +183,6 @@ function unityEvidence(stage, candidateId) {
       resizeOrientationTrajectory: { sameProcess: true, events: [{ type: 'resize' }, { type: 'resize' }] }, supportedOrientations: ['landscape'],
     };
     evidence.productionContractAudit = { status: 'PASS', contractVersion: '1', staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false };
-    evidence.artExperienceAcceptanceRef = 'evidence/acceptance.json';
   }
   return evidence;
 }
@@ -210,14 +209,15 @@ test('Unity V3–V5 经领域门接受完整合同，并拒绝候选、场景和
   const image = Buffer.from('合成目标');
   const referenceTarget = { path: 'visual/target.png', sha256: createHash('sha256').update(image).digest('hex') };
   const target = { targetId: 'view-1', candidateId: 'c1', sceneId: 'Main', stateId: 'default', viewport: { width: 1920, height: 1080 }, referenceTarget, domainEvidenceRef: { path: 'docs/unity-domain.json' } };
-  const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity' };
+  const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity', evidenceRoot: 'evidence', evidenceRef: { path: 'evidence/manifest.json' } };
   const native = { schemaVersion: '1.0', visualStageModel: 'function-first-v1', workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stageId: 'scene-production', globalState: 'REVIEW', scene: { sceneId: 'Main', stage: 'V2', status: 'IN_PROGRESS' }, responsiveContract: unityContract(), baselineHash: 'sha256:abc', revision: 0, objective: '场景验收', moduleIds: ['scene'], allowedPaths: ['Assets/**'], forbiddenPaths: ['Library/**'], allowedActions: ['unity-code-change'], actionLevel: 'A3', actionType: 'unity-code-change', gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' } };
   put(repo, referenceTarget.path, image);
   put(repo, target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
   putUnityArtFixture(repo, target.candidateId, target);
+  put(repo, 'evidence/manifest.json', { workItemId: work.workItemId, stack: work.stack, visualStage: 'V5', items: [{ category: 'art-experience-acceptance', status: 'PASS', targetId: target.targetId, path: 'evidence/acceptance.json' }] });
   const ajv = new Ajv2020({ strict: false });
   addFormats(ajv);
-  const schema = JSON.parse(readFileSync(new URL('../../skills/unity-development-workflow/schemas/art-experience-acceptance.schema.json', import.meta.url), 'utf8'));
+  const schema = JSON.parse(readFileSync(new URL('../../skills/app-workflow-control/schemas/art-experience-acceptance.schema.json', import.meta.url), 'utf8'));
   const validateAcceptance = ajv.compile(schema);
   const acceptance = JSON.parse(readFileSync(join(repo, 'evidence/acceptance.json'), 'utf8'));
   assert.equal(validateAcceptance(acceptance), true, JSON.stringify(validateAcceptance.errors));
@@ -240,13 +240,13 @@ test('Unity V3–V5 经领域门接受完整合同，并拒绝候选、场景和
   // 包装字段与目标同时变化时，不能冒充已经人工验收过的运行情境。
   for (const changed of [{ ...target, stateId: 'other' }, { ...target, viewport: { width: 37, height: 41 } }]) {
     put(repo, target.domainEvidenceRef.path, { ...changed, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
-    assert.throws(() => validateDomainTarget(repo, work, changed, 'V5'), /状态及运行视口/);
+    assert.throws(() => validateDomainTarget(repo, work, changed, 'V5'), /状态和视口/);
   }
   const alternative = Buffer.from('其他目标');
   put(repo, 'visual/other.png', alternative);
   const changedTarget = { ...target, referenceTarget: { path: 'visual/other.png', sha256: createHash('sha256').update(alternative).digest('hex') } };
   put(repo, target.domainEvidenceRef.path, { ...changedTarget, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
-  assert.throws(() => validateDomainTarget(repo, work, changedTarget, 'V5'), /未绑定当前目标文件/);
+  assert.throws(() => validateDomainTarget(repo, work, changedTarget, 'V5'), /未唯一绑定/);
   put(repo, target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
   const missing = unityEvidence('V5', target.candidateId);
   missing.responsiveEvidence.screen.path = 'evidence/missing.bin';
@@ -264,7 +264,7 @@ function unityMultiFixture(t, stage) {
   };
   save('evidence/quality.txt', Buffer.from('合成测试数据'));
   const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension) => ({ dimension, status: 'PASS', evidenceRef: 'evidence/quality.txt' }));
-  const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity', visual: { objectId: 'Main', targets: [] } };
+  const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity', evidenceRoot: 'evidence', evidenceRef: { path: 'evidence/manifest.json' }, visual: { objectId: 'Main', targets: [] } };
   const native = { schemaVersion: '1.0', visualStageModel: 'function-first-v1', workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stageId: 'scene-production', globalState: 'REVIEW', scene: { sceneId: 'Main', stage, status: 'IN_PROGRESS' }, responsiveContract: unityContract(), baselineHash: 'sha256:abc', revision: 0, objective: '测试', moduleIds: ['scene'], allowedPaths: ['Assets/**'], forbiddenPaths: ['Library/**'], allowedActions: ['unity-code-change'], actionLevel: 'A3', actionType: 'unity-code-change', gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' } };
   save('docs/native-work.json', native);
   const manifest = { workItemId: work.workItemId, stack: work.stack, visualStage: 'V5', items: [] };
@@ -277,7 +277,7 @@ function unityMultiFixture(t, stage) {
     const acceptancePath = `evidence/acceptance-${id}.json`;
     copyFileSync(join(repo, 'evidence/acceptance.json'), join(repo, acceptancePath));
     const evidence = unityEvidence(stage, candidateId);
-    if (stage === 'V5') evidence.artExperienceAcceptanceRef = acceptancePath;
+    if (stage === 'V5') manifest.items.push({ category: 'art-experience-acceptance', status: 'PASS', targetId: id, path: acceptancePath });
     save(`docs/evidence-${id}.json`, evidence);
     save(target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: `docs/evidence-${id}.json` } });
     const message = `synthetic-user-${id}`;
@@ -293,6 +293,7 @@ function unityMultiFixture(t, stage) {
   const ids = work.visual.targets.map((target) => target.targetId);
   work.visual.coverageRef = save('docs/coverage.json', { workItemId: work.workItemId, sceneId: 'Main', status: 'CONFIRMED', userMessageRef: 'synthetic', targetIds: ids, targets: work.visual.targets.map(({ targetId, candidateId, sceneId, stateId, viewport, scope, referenceTarget }) => ({ targetId, candidateId, sceneId, stateId, viewport, scope, referenceTarget })) });
   work.visual.integrationEvidenceRef = save('docs/integration.json', { workItemId: work.workItemId, sceneId: 'Main', status: 'APPROVED', userMessageRef: 'synthetic', targetIds: ids });
+  save('evidence/manifest.json', manifest);
   return { repo, work, manifest, options: { validateDomainTarget, validateAssetReview: assertAssetReview, manifest, visualCategories } };
 }
 
@@ -312,4 +313,45 @@ test('Unity 多目标公共 V4 与 V5 执行真实领域和素材校验，缺失
       assert.throws(() => validateMultiVisualStage(f.repo, bad, stage, f.options), /缺少 V4 确认/);
     }
   }
+});
+
+test('多个场景目标可共享验收文件，但条目和候选必须逐目标唯一绑定', (t) => {
+  const f = unityMultiFixture(t, 'V5');
+  const left = JSON.parse(readFileSync(join(f.repo, 'evidence/acceptance-left.json'), 'utf8'));
+  const right = JSON.parse(readFileSync(join(f.repo, 'evidence/acceptance-right.json'), 'utf8'));
+  left.scenarios.push({ ...right.scenarios[0], candidateId: right.candidateId, candidateVersion: right.candidateVersion });
+  left.scenarios = left.scenarios.filter((scenario) => scenario.id !== 'event-peak');
+  left.scenarios.push({ id: 'event-peak', required: false, reason: '左目标不适用', status: 'NOT_APPLICABLE', targetId: 'left' });
+  left.scenarios.push({ id: 'event-peak', required: false, reason: '右目标不适用', status: 'NOT_APPLICABLE', targetId: 'right', candidateId: right.candidateId, candidateVersion: right.candidateVersion });
+  const ajv = new Ajv2020({ strict: false });
+  addFormats(ajv);
+  const schema = JSON.parse(readFileSync(new URL('../../skills/app-workflow-control/schemas/art-experience-acceptance.schema.json', import.meta.url), 'utf8'));
+  const validateAcceptance = ajv.compile(schema);
+  assert.equal(validateAcceptance(left), true, JSON.stringify(validateAcceptance.errors));
+  put(f.repo, 'evidence/shared.json', left);
+  for (const item of f.manifest.items.filter((item) => item.category === 'art-experience-acceptance')) item.path = 'evidence/shared.json';
+  put(f.repo, 'evidence/manifest.json', f.manifest);
+  for (const target of f.work.visual.targets) assert.equal(validateDomainTarget(f.repo, f.work, target, 'V5'), true);
+  const wrongState = structuredClone(left);
+  wrongState.scenarios = wrongState.scenarios.filter((scenario) => scenario.id !== 'repeated-feedback');
+  wrongState.scenarios.push({ ...wrongState.scenarios[0], id: 'repeated-feedback', stateId: 'wrong' });
+  put(f.repo, 'evidence/shared.json', wrongState);
+  assert.throws(() => validateDomainTarget(f.repo, f.work, f.work.visual.targets[0], 'V5'), /状态、视口或目标内容错绑/);
+  put(f.repo, 'evidence/shared.json', left);
+  const absent = structuredClone(left);
+  absent.scenarios = absent.scenarios.filter((scenario) => !(scenario.id === 'event-peak' && scenario.targetId === 'right'));
+  put(f.repo, 'evidence/shared.json', absent);
+  assert.throws(() => validateDomainTarget(f.repo, f.work, f.work.visual.targets[1], 'V5'), /逐目标登记/);
+  put(f.repo, 'evidence/shared.json', left);
+  const duplicate = structuredClone(f.manifest);
+  duplicate.items.push({ ...duplicate.items.find((item) => item.category === 'art-experience-acceptance') });
+  put(f.repo, 'evidence/manifest.json', duplicate);
+  assert.throws(() => validateDomainTarget(f.repo, f.work, f.work.visual.targets[0], 'V5'), /唯一/);
+  put(f.repo, 'evidence/manifest.json', f.manifest);
+  left.scenarios.at(-1).candidateId = left.candidateId;
+  put(f.repo, 'evidence/shared.json', left);
+  assert.throws(() => validateDomainTarget(f.repo, f.work, f.work.visual.targets[1], 'V5'), /候选/);
+  f.manifest.items.find((item) => item.targetId === 'left' && item.category === 'art-experience-acceptance').path = 'docs/native-work.json';
+  put(f.repo, 'evidence/manifest.json', f.manifest);
+  assert.throws(() => validateDomainTarget(f.repo, f.work, f.work.visual.targets[0], 'V5'), /越出 evidenceRoot/);
 });

@@ -24,7 +24,7 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
 8. `SCENE` 与 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求确认也不写入 `stageReviews`；V2–V5 按[阶段人工确认](./stage-confirmation.md)闭环。V3 先确认拆解图，再单独确认布局图；V2、V4、V5 使用 `confirmation`，V3 分别使用 `decompositionConfirmation` 和 `layoutConfirmation`。
 
-V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unity-evidence.md#可见-v4-美术与动态体验)：Manifest 明确 `candidateId`、`candidateVersion`、`artExperienceAcceptanceRef`，机器只核对材料与文件，不代替用户观看判断。该材料复用现有 V5 阶段确认；纯工程工作项不适用。
+V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unity-evidence.md#可见-v4-美术与动态体验)：公共 Evidence Manifest 的 `art-experience-acceptance` 条目引用公共验收 JSON，其中绑定 `candidateId`、`candidateVersion` 与目标身份，机器只核对材料与文件，不代替用户观看判断。该材料复用现有 V5 阶段确认；纯工程工作项不适用。
 
 屏幕 UI 的 V3–V5 实施包必须绑定 `uiLayoutPlanRef: {path}`，V5 Evidence 绑定当前 evidenceRoot 内的 `uiLayoutMeasurementRef: {path}`。按[布局组件运行证据](../../unity-development-workflow/references/ui-layout-runtime.md)核对同批 scene/state/candidate、完整节点覆盖、实际父级与参照、位置/宽度/高度唯一写入者及原生图片尺寸。缺失或失败时保持阻断并修复重验；普通工程和 World Space Canvas 不套用屏幕布局模型，不新增确认或 SHA 门禁。
 

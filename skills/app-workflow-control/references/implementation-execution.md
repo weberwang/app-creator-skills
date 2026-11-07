@@ -15,7 +15,17 @@
 
 进入 `IMPLEMENTING` 时，控制器会把实施计划快照、单元 `PENDING` 状态和首批单元 ID 写入 `execution-state.json`。`activeBatch` 表示当前允许提交的结果单元，不表示控制器已经启动任何执行进程。
 
-`unit-check --result <path>` 保持原参数。控制器读取指定结果中的 `unitId`，再核对它是否属于当前批次，并要求结果路径与该单元预先声明的 `resultPath` 一致。状态为 `PASS` 仍需通过完整结果核验：实际文件存在并属于单元路径所有权、计划命令与非空输出文件逐项对应，且结果绑定当前工作项、技术栈和实施包。
+`unit-check --result <path>` 保持原参数。控制器读取结果中的 `unitId`，核对当前批次及预声明 `resultPath`。`PASS` 仍需完整核验：`files` 中实际交付存在且属于单元所有权；可选 `deletedFiles` 属于同一范围、具有批次实施前冻结的存在性和内容身份且现已不存在。两类至少一类非空，不能将原本不存在的路径冒报为删除，或删除控制器/证据保护文件。后续重建被删路径会使已登记结果失效。
+
+计划命令与输出逐项对应。非空原始文本日志可直接使用；静默命令应使用 `command-capture-v1` 标准采集 JSON，真实 `command`、`exitCode` 必须与计划及结果一致，`stdout`/`stderr` 可为空。禁止用虚构成功文本填充日志。
+
+独立采集入口会真实执行当前活动批次的冻结命令，输出不可覆盖的记录：
+
+```text
+node .agents/skills/app-workflow-control/scripts/capture-command.mjs --repo <项目路径> --work-item <工作项路径> --unit <单元ID> --index <从1开始的命令序号> --output <evidenceRoot内新JSON路径>
+```
+
+本仓库维护时将 `.agents/skills/` 替换为 `skills/`。采集只证明实际命令及输出，不自动登记 PASS，也不授权命令中的真机、发布或其他受保护操作。
 
 一个并行批次的所有单元通过后，`activeBatch` 才切换到下一批。若尚有结果未提交，当前批次包含该批完整单元列表；最后一批全通过时值为空数组。完成状态仍保留所有单元结果并在 `check`、进入 `VALIDATING` 和从 `BLOCKED` 恢复时重新核验。
 

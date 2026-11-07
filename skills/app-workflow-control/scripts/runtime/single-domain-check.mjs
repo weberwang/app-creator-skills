@@ -7,6 +7,7 @@ import { spawnSync } from 'node:child_process';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
+import { validatePublicArtExperience } from './art-experience.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -43,14 +44,12 @@ async function validateUnity(repo, work, stage, doc) {
   full.validateWorkItem(native);
   if (stage !== 'V2') {
     const evidence = readJson(repo, identity(repo, doc.nativeEvidenceRef, 'Unity 原生证据'), 'Unity 原生证据');
-    if (evidence.workItemId !== work.workItemId || evidence.workItemType !== 'DISPLAY_LAYER' || evidence.visualStage !== stage || evidence.verdict !== 'PASS' || (stage === 'V5' && evidence.candidateId !== work.visual.candidateId)) throw new WorkflowError('Unity 显示层原生证据身份或阶段错绑');
+    if (evidence.workItemId !== work.workItemId || evidence.workItemType !== 'DISPLAY_LAYER' || evidence.visualStage !== stage || evidence.verdict !== 'PASS') throw new WorkflowError('Unity 显示层原生证据身份或阶段错绑');
+    // 原生候选仅服务布局实测；存在时仍必须对应当前显示层候选。
+    if (evidence.candidateId !== undefined && evidence.candidateId !== work.visual.candidateId) throw new WorkflowError('Unity 显示层布局候选身份错绑');
     full.validateEvidence(evidence, native, null, repo);
     if (stage === 'V5') {
-      // 运行条件和目标必须出自实际人工验收情境，不能只信外层包装。
-      const acceptance = readJson(repo, evidence.artExperienceAcceptanceRef, 'Unity 显示层人工验收');
-      if (acceptance.workItemId !== work.workItemId || acceptance.displayLayerId !== work.visual.objectId || acceptance.candidateId !== work.visual.candidateId || typeof doc.stateId !== 'string' || !doc.stateId.trim() || !Number.isInteger(doc.viewport?.width) || !Number.isInteger(doc.viewport?.height) || doc.viewport.width < 1 || doc.viewport.height < 1) throw new WorkflowError('Unity 显示层验收缺少当前对象、候选、状态或视口');
-      const matches = (acceptance.scenarios ?? []).filter((item) => item?.required === true && item.status === 'PASS' && item.targetId === work.visual.objectId && item.stateId === doc.stateId && item.viewport?.width === doc.viewport.width && item.viewport?.height === doc.viewport.height);
-      if (matches.length !== 1 || identity(repo, matches[0].referenceTarget, 'Unity 显示层验收目标') !== identity(repo, doc.referenceTarget, '领域目标') || matches[0].referenceTarget.sha256 !== doc.referenceTarget.sha256) throw new WorkflowError('Unity 显示层人工验收未绑定当前目标、状态和视口');
+      validatePublicArtExperience(repo, work, { targetId: work.visual.objectId, candidateId: work.visual.candidateId, stateId: doc.stateId, viewport: doc.viewport, referenceTarget: doc.referenceTarget });
     }
   }
 }

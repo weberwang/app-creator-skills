@@ -12,6 +12,7 @@ import { assertWorkflowPolicy, workflowMode } from './task-policy.mjs';
 import { assertReleaseTransition } from './release-policy.mjs';
 import { validateFeatureDependencies, dependencyPath } from './feature-dependencies.mjs';
 import { engineeringEvidence, assertEngineeringEvidence, unchangedFunctionSource, sameFunctionDependency, sameFunctionDependencies, sameDependencyPath } from './function-evidence.mjs';
+import { freezeDeletionBaseline, validateDeletionBaselineState } from './deletion-baseline.mjs';
 
 /** 产出供 CLI /工具稳定解析的统一结果结构。 */
 export function response({ status, work = null, changed = false, blocking = [], next = [], metadata = {} }) {
@@ -242,6 +243,7 @@ function validateExecutionState(repo, work, pack, state, { requireComplete = fal
   }
   const plan = createExecutionPlanSnapshot(pack, { repo });
   if (JSON.stringify(state.executionPlan) !== JSON.stringify(plan)) throw new WorkflowError('冻结的执行计划与当前实施包不匹配');
+  validateDeletionBaselineState(state, plan.batches);
   if (!Array.isArray(state.units) || state.units.length !== pack.executionUnits.length) throw new WorkflowError('Execution State 与实施包的执行单元数量不一致');
   for (const [index, unit] of pack.executionUnits.entries()) {
     const resultState = state.units[index];
@@ -305,6 +307,7 @@ async function completeUnitLocked({ repo, workItem, resultPath }) {
   const stateIndex = state.units.findIndex((entry) => entry.unitId === unit.unitId);
   state.units[stateIndex] = { ...state.units[stateIndex], status: 'PASS' };
   state.activeBatch = expectedActiveBatch(state.executionPlan.batches, state.units);
+  if (JSON.stringify(state.activeBatch) !== JSON.stringify(activeBatch)) freezeDeletionBaseline(repo, pack, state);
   work.revision += 1;
   await atomicWriteJson(repo, statePath, state);
   try {
@@ -446,6 +449,7 @@ async function startImplementation(repo, work) {
     units: pack.executionUnits.map(({ unitId, sequence }) => ({ unitId, sequence, status: 'PENDING' })),
     activeBatch: executionPlan.batches[0]?.unitIds ?? [],
   };
+  freezeDeletionBaseline(repo, pack, executionState);
   await atomicWriteJson(repo, statePath, executionState);
   return statePath;
 }

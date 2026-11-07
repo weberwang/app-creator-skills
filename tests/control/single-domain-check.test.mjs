@@ -291,7 +291,6 @@ test('Unity V5 显示层绑定真实原生运行与人工验收情境', (t) => {
     baselineHash: 'sha256:abc', recordedAt: '2026-10-26T00:00:00.000Z', verdict: 'PASS',
     gateResults: Object.fromEntries(['F0', 'F1', 'F2', 'F3', 'F4'].map((gate) => [gate, { status: gate === 'F4' ? 'NOT_RUN' : 'PASS', summary: '合成夹具', evidenceRefs: [] }])),
     unityEvidence: { editorStable: 'PASS', compile: 'PASS', domainReload: 'PASS', console: 'PASS', scenePrefabImporterGuid: 'PASS' },
-    candidateId: f.work.visual.candidateId, candidateVersion: 'version-1',
     responsiveEvidence: {
       gameView: artifact('GameView'), screen: artifact('Screen'), backbuffer: artifact('backbuffer'),
       canvasScaler: artifact('CanvasScaler'), camera: artifact('Camera'), screenshot: artifact('Screenshot'),
@@ -300,7 +299,6 @@ test('Unity V5 显示层绑定真实原生运行与人工验收情境', (t) => {
       resizeOrientationTrajectory: { sameProcess: true, events: [{ type: 'resize' }, { type: 'resize' }] }, supportedOrientations: ['landscape'],
     },
     productionContractAudit: { status: 'PASS', contractVersion: '1', staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false },
-    artExperienceAcceptanceRef: 'acceptance.json',
   };
   const budget = { brightnessContrast: 'test', screenCoverage: 'test', duration: 'test', triggerFrequency: 'test', maxConcurrent: 1, recovery: 'test', blendPolicy: 'test' };
   write(f.repo, 'brief.json', { schemaVersion: '1.0', projectId: f.work.projectId, theme: 'test', audience: { facts: ['test'], assumptions: [] }, coreLoop: 'test', experienceGoals: ['test'], viewingContext: 'test', visualHierarchy: ['test'], intensityBudget: { normal: budget, operation: budget, peak: budget, measurementMethod: 'test' } });
@@ -315,15 +313,27 @@ test('Unity V5 显示层绑定真实原生运行与人工验收情境', (t) => {
       ...['repeated-feedback', 'event-peak', 'overlap-peak'].map((id) => ({ id, required: false, reason: '合成夹具', status: 'NOT_APPLICABLE' })),
     ], confirmedBy: 'test', confirmedAt: '2026-10-26T00:00:00.000Z', userMessageRef: 'test', userText: '合成夹具',
   };
-  write(f.repo, 'acceptance.json', acceptance);
+  write(f.repo, 'evidence/acceptance.json', acceptance);
+  f.work.evidenceRoot = 'evidence'; f.work.evidenceRef = { path: 'evidence/manifest.json' };
+  write(f.repo, 'evidence/manifest.json', { workItemId: f.work.workItemId, stack: f.work.stack, visualStage: 'V5', items: [{ category: 'art-experience-acceptance', status: 'PASS', path: 'evidence/acceptance.json' }] });
   f.doc.nativeWorkItemRef = write(f.repo, 'native.json', native);
   f.doc.nativeEvidenceRef = write(f.repo, 'native-evidence.json', evidence);
   f.doc.stateId = 'default'; f.doc.viewport = { width: 1920, height: 1080 }; f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
+  f.doc.nativeEvidenceRef = write(f.repo, 'native-evidence.json', { ...evidence, candidateId: 'old-candidate' }); f.save();
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /候选身份错绑/);
+  f.doc.nativeEvidenceRef = write(f.repo, 'native-evidence.json', evidence); f.save();
+  const manifest = JSON.parse(readFileSync(join(f.repo, 'evidence/manifest.json'), 'utf8'));
+  write(f.repo, 'evidence/manifest.json', { ...manifest, items: [...manifest.items, manifest.items[0]] });
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /唯一/);
+  write(f.repo, 'evidence/manifest.json', manifest);
+  write(f.repo, 'evidence/acceptance.json', { ...acceptance, displayLayerId: 'other' });
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /独立显示层/);
+  write(f.repo, 'evidence/acceptance.json', acceptance);
   f.doc.stateId = 'other'; f.save();
-  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /未绑定当前目标、状态和视口/);
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /状态和视口/);
   f.doc.stateId = 'default'; f.doc.viewport = { width: 1280, height: 720 }; f.save();
-  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /未绑定当前目标、状态和视口/);
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /状态和视口/);
 });
 
 for (const [stack, makeManifest, makePng] of [['cocos', cocosManifest, cocosPng], ['phaser', phaserManifest, phaserPng], ['threejs', threeManifest, threePng]]) {

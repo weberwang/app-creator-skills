@@ -249,7 +249,7 @@ function validateUnityOwnership(pkg, files, allowedPaths, forbiddenPaths) {
 /** 校验证据清单结构并绑定当前 Work Item 与实施包。 */
 export function validateEvidence(evidence, work, pkg = null, repo = process.cwd()) {
   assertActiveReferences(work, { evidence });
-  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStageModel', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'uiLayoutMeasurementRef', 'resourceHandoffInspectionRef', 'productionContractAudit', 'candidateId', 'candidateVersion', 'artExperienceAcceptanceRef', 'artifacts', 'approval', 'metadata', 'riggingDelivery']);
+  const allowed = new Set(['schemaVersion', 'evidenceId', 'workItemId', 'packageId', 'workItemType', 'visualStageModel', 'visualStage', 'contractVersions', 'baselineHash', 'recordedAt', 'verdict', 'gateResults', 'unityEvidence', 'responsiveEvidence', 'uiLayoutMeasurementRef', 'resourceHandoffInspectionRef', 'productionContractAudit', 'candidateId', 'artifacts', 'approval', 'metadata', 'riggingDelivery']);
   knownObject(evidence, allowed, 'Evidence Manifest');
   if (evidence.resourceHandoffInspectionRef !== undefined) {
     knownObject(evidence.resourceHandoffInspectionRef, new Set(['path']), 'Evidence Manifest.resourceHandoffInspectionRef');

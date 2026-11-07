@@ -6,10 +6,12 @@
   "type": "object",
   "additionalProperties": false,
   "required": ["files", "commandOutputs", "evidence"],
+  "anyOf": [{"properties": {"files": {"minItems": 1}}}, {"required": ["deletedFiles"], "properties": {"deletedFiles": {"minItems": 1}}}],
   "properties": {
     "hostId": {"type": "string", "minLength": 1},
     "layerType": {"type": "string", "minLength": 1},
-    "files": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "files": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "deletedFiles": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "commandOutputs": {
       "type": "array",
       "minItems": 1,

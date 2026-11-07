@@ -1,0 +1,25 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "待填写工作项",
+  "candidateId": "待填写候选",
+  "candidateVersion": "待填写候选版本",
+  "sceneId": "待填写场景",
+  "artBriefRef": "待填写美术简报路径",
+  "qualityResults": {
+    "themeFit": {"status": "PASS", "reason": "待填写用户确认理由"},
+    "audienceFit": {"status": "PASS", "reason": "待填写用户确认理由"},
+    "gameplayReadability": {"status": "PASS", "reason": "待填写用户确认理由"},
+    "viewingComfort": {"status": "PASS", "reason": "待填写用户确认理由"},
+    "artCompletion": {"status": "PASS", "reason": "待填写用户确认理由"}
+  },
+  "scenarios": [
+    {"id": "normal-play", "required": true, "reason": "待填写", "status": "PASS", "recordingPath": "待填写.mp4", "durationSeconds": 1, "startSeconds": 0, "endSeconds": 1, "eventCount": 0, "peakConcurrency": 0, "viewport": {"width": 1, "height": 1}, "observations": "待填写用户观察", "targetId": "待填写目标", "stateId": "待填写状态", "referenceTarget": {"path": "待填写目标路径", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}},
+    {"id": "repeated-feedback", "required": false, "reason": "待填写不适用理由", "status": "NOT_APPLICABLE"},
+    {"id": "event-peak", "required": false, "reason": "待填写不适用理由", "status": "NOT_APPLICABLE"},
+    {"id": "overlap-peak", "required": false, "reason": "待填写不适用理由", "status": "NOT_APPLICABLE"}
+  ],
+  "confirmedBy": "待填写确认人",
+  "confirmedAt": "2000-01-01T00:00:00Z",
+  "userMessageRef": "待填写用户消息引用",
+  "userText": "待填写用户确认原文"
+}

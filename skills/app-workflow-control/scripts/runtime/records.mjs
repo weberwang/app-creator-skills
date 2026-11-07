@@ -14,7 +14,7 @@ import { withWorkLock } from './work-lock.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn']);
-const REPORT_FIELDS = new Set(['files', 'commandOutputs', 'evidence', 'hostId', 'layerType']);
+const REPORT_FIELDS = new Set(['files', 'deletedFiles', 'commandOutputs', 'evidence', 'hostId', 'layerType']);
 const REPORT_COMMAND_FIELDS = new Set(['command', 'exitCode', 'outputFile']);
 const REPORT_EVIDENCE_FIELDS = new Set(['category', 'path', 'targetId']);
 const GATE_ASSESSMENT_FIELDS = new Set(['status', 'reason']);
@@ -230,6 +230,7 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     exitCode: 0,
     ...(work.workItemType === 'DISPLAY_LAYER' ? { hostId: report.hostId, layerType: report.layerType } : {}),
     files: [...report.files],
+    ...(report.deletedFiles === undefined ? {} : { deletedFiles: [...report.deletedFiles] }),
     commandOutputs: report.commandOutputs.map((entry) => ({ ...entry })),
   };
   // 正式校验器核对文件所有权、命令顺序、退出码和非空输出；这里不执行命令。
@@ -349,7 +350,9 @@ function validateReportShape(report) {
   assertObjectFields(report, REPORT_FIELDS, 'Execution Report');
   if (report.hostId !== undefined) requireSafeText(report.hostId, 'Execution Report.hostId');
   if (report.layerType !== undefined) requireSafeText(report.layerType, 'Execution Report.layerType');
-  requireStringArray(report.files, 'Execution Report.files', { nonEmpty: true });
+  requireStringArray(report.files, 'Execution Report.files');
+  if (report.deletedFiles !== undefined) requireStringArray(report.deletedFiles, 'Execution Report.deletedFiles');
+  if (!report.files.length && !report.deletedFiles?.length) throw new WorkflowError('Execution Report 必须包含变更或删除文件');
   if (!Array.isArray(report.commandOutputs)) throw new WorkflowError('Execution Report.commandOutputs 必须为数组');
   for (const [index, entry] of report.commandOutputs.entries()) {
     assertObjectFields(entry, REPORT_COMMAND_FIELDS, `commandOutputs[${index}]`);
@@ -381,9 +384,11 @@ function validateManifestBinding(work, pack, manifest) {
 /** 拒绝把 Work Item、报告、计划、结果或清单本身伪装成原始文件。 */
 function validateNoRecordSelfReferences(repo, report, forbiddenRecords) {
   const filePaths = report.files.map((path, index) => pathKey(repoPath(repo, path, `Execution Report.files[${index}]`).relative));
+  const deletedPaths = (report.deletedFiles ?? []).map((path, index) => pathKey(repoPath(repo, path, `Execution Report.deletedFiles[${index}]`).relative));
   const outputPaths = report.commandOutputs.map((entry, index) => pathKey(repoPath(repo, entry.outputFile, `commandOutputs[${index}].outputFile`).relative));
   const evidencePaths = new Set(report.evidence.map((entry, index) => pathKey(repoPath(repo, entry.path, `evidence[${index}].path`).relative)));
   if (new Set(filePaths).size !== filePaths.length) throw new WorkflowError('Execution Report.files 不能重复声明同一实现文件');
+  if (new Set(deletedPaths).size !== deletedPaths.length || deletedPaths.some((path) => filePaths.includes(path) || outputPaths.includes(path) || evidencePaths.has(path) || forbiddenRecords.has(path))) throw new WorkflowError('Execution Report.deletedFiles 不能重复或引用工作流记录、命令输出、证据及交付文件');
   if (new Set(outputPaths).size !== outputPaths.length) throw new WorkflowError('每条验收命令必须提供独立的非空输出文件');
   for (const [index, path] of report.files.entries()) {
     const normalized = repoPath(repo, path, `Execution Report.files[${index}]`).relative;

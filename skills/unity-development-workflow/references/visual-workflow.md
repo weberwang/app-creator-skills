@@ -16,7 +16,7 @@ V0 仅作内部识别与分流，不请求常规确认。V2 真实目标图、V3
 
 ## 场景视觉目标与 Visual Bible
 
-新建且包含可见画面的 `SCENE` 或 `DISPLAY_LAYER` Work Item 必须生成自身的完整 V2 目标图，即使已有有效品牌/视觉规范；按已确认基线制作单个真实目标方案并等待用户确认。只有建立或替换全局基线时采用三张同条件候选的规则。已有有效基线直接复用，不重复选图。
+首次建立可见 `SCENE` 或 `DISPLAY_LAYER` 对象，或增量修改改变其有效视觉目标时，必须生成自身的完整 V2 目标图；按已确认基线制作单个真实目标方案并等待用户确认。既有对象仅创建新的增量 Work Item，且满足公共 `reuse-visual` 条件时，直接引用仍有效的目标、阶段和验收记录；新任务编号不代表新视觉对象。只有建立或替换全局基线时采用三张同条件候选，已有有效基线不重复选图。
 
 Visual Bible 记录色彩、材质、光照、镜头、字体、图标、动效、可读性、技术预算、允许复用和禁用项，并记录来源版本与位置。验收按实际画面和已确认要求判断；目标内普通实现修复无需重复确认未受影响决定，目标或布局依据变化时更新受影响合同并按既有规则处理。
 
@@ -98,7 +98,7 @@ V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 modal、popup、drawer、toast 等显示层在自己的 `DISPLAY_LAYER` Work Item 中验证打开、交互、关闭，以及焦点、输入、时间缩放和底层状态恢复；`hostSceneId` 只作上下文，显示层不阻断场景 V5。研发期不自动启动 Standalone/Player 或真机；设备证据仅在独立发布 Work Item 获明确授权后产生。
 
-正式候选的主题贴合、受众适配、玩法可读、观看舒适和美术完成度须逐项 `PASS`。V5 按适用性覆盖 `normal-play`、`repeated-feedback`、`event-peak`、`overlap-peak`；不适用项必须记录理由，缺少运行证据的适用项为 `NOT_RUN`。美术和动态体验材料绑定当前 Work Item、候选和场景，由控制面 `artExperienceAcceptanceRef` 引用；真实片段或截图由用户人工检查确认。机器侧参数和工程检查不代替视觉验收，具体标准见[美术质量合同](./art-quality-contract.md)。
+正式候选的主题贴合、受众适配、玩法可读、观看舒适和美术完成度须逐项 `PASS`。V5 按适用性覆盖 `normal-play`、`repeated-feedback`、`event-peak`、`overlap-peak`；不适用项必须记录理由，缺少运行证据的适用项为 `NOT_RUN`。美术和动态体验材料绑定当前 Work Item、候选和场景，由公共 Evidence Manifest 的 `art-experience-acceptance` 条目通过 `path` 引用；真实片段或截图由用户人工检查确认。机器侧参数和工程检查不代替视觉验收，具体标准见[美术质量合同](./art-quality-contract.md)。
 
 ### 文本与响应式合同
 

@@ -1,5 +1,7 @@
 # 产物目录与归档规范
 
+输出分类、命名、批次及交接按[公共输出文件规范](../../app-creator-workflow/references/output-files.md)执行；本文件保留 Three.js 的原生目录及字段边界，不因公共建议改写固定文件或已绑定记录。
+
 在生成、导出、确认、接入或清理产物前读取本文件。目录按用途和所有权划分，确认状态由现有清单、人工确认与控制面记录表达，不能只凭文件夹名称判断。按需创建目录，不预建空目录，不为本规范搬迁已有有效证据。
 
 ## 存放位置
@@ -21,7 +23,7 @@
 
 模块导入的小型资源可随所属代码放置，但必须在 TDD 和资源清单记录唯一正式路径；同一运行资源不能在源码和 `public/assets/` 同时维护。正式资源路径按稳定所有权和资源 ID 命名，不按 Work Item、生成批次或确认日期划分；候选版本、源文件和验收记录留在对应非运行目录。
 
-`evidence/<workItemId>/` 是项目根目录下的领域审阅/验证文件目录，不是控制面的 `evidenceRoot`。后者默认是 `.workflow-control/evidence/<workItemId>/`，用于 Evidence Manifest、`execution-state.json`、`units/<resultId>.json` 等机器工件；控制面要求位于 `evidenceRoot` 的输出和回执必须继续写入该根目录。生成器的临时转换目录可显式选择，但控制工具的同目录原子写临时文件、事务日志和测试隔离目录沿用工具实际机制，不强制改到 `output/`。
+`evidence/<workItemId>/` 是项目根目录下的领域审阅／验证文件目录，不是控制面的 `evidenceRoot`。后者默认是 `.workflow-control/evidence/<workItemId>/`，用于 Evidence Manifest、`execution-state.json` 及实际预声明 `resultPath` 等机器工件；公共 Manifest 的 `items[].path` 和命令 `outputFile` 等受限证据仍在该根内，`Execution Result.files` 则核对单元所有权内的实际改动文件，不把正式源码移入证据根。生成器临时转换目录可显式选择，控制工具的原子写临时文件、事务日志和测试隔离目录沿用实际机制，不强制改到 `output/`。
 
 ## 从生产到确认
 

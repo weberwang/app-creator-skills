@@ -17,7 +17,7 @@
 
 命令从工程已有 scripts 与固定工具版本选择。例如项目确有对应脚本时执行 `npm run typecheck`、`npm run lint`、`npm test`、`npm run build`；使用其他包管理器时采用其实际命令，不强制创建同名空脚本。TypeScript 常使用 `tsc --noEmit`，但 `strict` 不替代外部数据运行时校验。
 
-profile 工程证据类别为 `static-analysis` 与 `tests`，视觉和资源导入要求为空。每类提供实际执行、退出码与非空原始输出；缺工具或未执行不能通过填入自评 PASS 弥补。无关模块不为凑类别反复构建或测试。
+profile 工程证据类别为 `static-analysis` 与 `tests`，视觉和资源导入要求为空。每类提供实际执行、退出码与合法原始输出记录；静默命令使用公共标准采集 JSON，保留真实空 stdout/stderr。缺工具或未执行不能通过填入自评 PASS 弥补。无关模块不为凑类别反复构建或测试。
 
 ## 隔离与进程
 

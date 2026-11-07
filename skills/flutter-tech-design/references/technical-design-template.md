@@ -70,16 +70,18 @@ Delete unused rows. Quality review checks only adopted items.
 
 ## API / Service Contract
 
-If service implementation is out of scope, keep only dependency, owner, assumptions, compatibility and escalation boundaries.
+服务实现不在范围内时，只保留依赖、责任、假设与升级处理边界；历史兼容仅在明确要求时填写。
 
 - Contract source and versioning policy:
 - Request/response/error schema:
 - Authentication and authorization:
 - Idempotency, retry, timeout and rate limits:
-- Client compatibility and deprecation window:
+- 历史兼容与弃用窗口（仅明确要求时）：
 - External owner / availability dependency:
 
-## Data, Migration And Recovery
+## 数据与恢复
+
+按风险记录当前候选的备份恢复及真实数据变更保护；历史迁移和旧格式支持仅在用户或需求明确要求时填写，不默认增加兼容层。
 
 | Entity/store | Owner | Persistence | Privacy | Migration | Rollback | Backup/recovery |
 |---|---|---|---|---|---|---|
@@ -87,7 +89,7 @@ If service implementation is out of scope, keep only dependency, owner, assumpti
 ## Service Delivery (Conditional)
 
 - Service unit/integration/contract tests:
-- Migration rehearsal and rollback verification:
+- 明确要求的数据迁移演练，以及当前变更适用的恢复验证：
 - Deployment environments and rollout:
 - Monitoring, logs, metrics, traces and alerts:
 - Backup restore test and recovery objectives:

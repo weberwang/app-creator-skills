@@ -1,0 +1,168 @@
+import { lstatSync, readFileSync, realpathSync, statSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { isAbsolute, relative, resolve, sep } from 'node:path';
+import { isValidIsoTimestamp } from './timestamp-contract.mjs';
+import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+
+/** 人工质量项与动态情境的固定身份，机器仅检查记录而不解释画面。 */
+export const ART_QUALITY_ITEMS = Object.freeze(['themeFit', 'audienceFit', 'gameplayReadability', 'viewingComfort', 'artCompletion']);
+export const ART_SCENARIOS = Object.freeze(['normal-play', 'repeated-feedback', 'event-peak', 'overlap-peak']);
+/** 动态刺激预算各层级共用的严格字段；只有并发数采用可机器比较的整数。 */
+const INTENSITY_LEVEL_FIELDS = Object.freeze(['brightnessContrast', 'screenCoverage', 'duration', 'triggerFrequency', 'maxConcurrent', 'recovery', 'blendPolicy']);
+
+/** 判断结构化记录是否具有可审计内容。 */
+function record(value) { return value !== null && typeof value === 'object' && !Array.isArray(value); }
+/** 判断身份或人工说明是否为空。 */
+function text(value) { return typeof value === 'string' && value.trim().length > 0; }
+
+/** 只回读项目内普通文件，逐级拒绝链接；摘要不参与验收。 */
+export function readArtEvidenceFile(repo, path, json = false) {
+  if (!text(path) || isAbsolute(path) || /^[A-Za-z]:/.test(path) || path.includes('\\')) throw new Error('证据必须使用项目相对路径');
+  const root = realpathSync(resolve(repo));
+  const target = resolve(root, path);
+  const local = relative(root, target);
+  if (!local || local === '..' || local.startsWith(`..${sep}`) || isAbsolute(local)) throw new Error('证据路径越出项目');
+  let cursor = root;
+  for (const part of local.split(sep)) {
+    cursor = resolve(cursor, part);
+    if (lstatSync(cursor).isSymbolicLink()) throw new Error('证据路径不能经过链接');
+  }
+  if (!statSync(target).isFile() || statSync(target).size === 0) throw new Error('证据文件必须存在且非空');
+  return json ? JSON.parse(readFileSync(target, 'utf8')) : target;
+}
+
+/** 严格检查声明字段，避免误拼字段成为事实或绕过适用性。 */
+function shape(value, keys, label, errors) {
+  if (!record(value)) { errors.push(`${label} 必须是对象`); return false; }
+  for (const key of Object.keys(value)) if (!keys.includes(key)) errors.push(`${label} 含未声明字段 ${key}`);
+  return true;
+}
+
+/** 核对人工五项结果；未验证或失败不能由偏好选图抵消。 */
+export function validateArtQualityResults(results, requirePass = false) {
+  const errors = [];
+  if (!shape(results, ART_QUALITY_ITEMS, 'qualityResults', errors)) return errors;
+  for (const key of ART_QUALITY_ITEMS) {
+    const item = results[key];
+    if (!shape(item, ['status', 'reason'], `qualityResults.${key}`, errors)) continue;
+    if (!['PASS', 'FAIL', 'NOT_RUN'].includes(item.status) || !text(item.reason)) errors.push(`${key} 缺少实际人工结果或理由`);
+    if (requirePass && item.status !== 'PASS') errors.push(`${key} 人工质量未通过`);
+  }
+  return errors;
+}
+
+/** 验证美术 brief 的必要事实和三层结构化刺激预算，不指定通用刺激或医学阈值。 */
+export function validateArtBrief(brief) {
+  const errors = [];
+  if (!shape(brief, ['schemaVersion', 'projectId', 'theme', 'audience', 'coreLoop', 'experienceGoals', 'viewingContext', 'visualHierarchy', 'intensityBudget'], 'artBrief', errors)) return errors;
+  if (brief.schemaVersion !== '1.0') errors.push('artBrief.schemaVersion 无效');
+  for (const key of ['projectId', 'theme', 'coreLoop', 'viewingContext']) if (!text(brief[key])) errors.push(`artBrief.${key} 缺少事实`);
+  if (!shape(brief.audience, ['facts', 'assumptions'], 'artBrief.audience', errors)) return errors;
+  for (const key of ['facts', 'assumptions']) if (!Array.isArray(brief.audience[key]) || brief.audience[key].some((item) => !text(item))) errors.push(`audience.${key} 必须明确事实与假设`);
+  for (const key of ['experienceGoals', 'visualHierarchy']) if (!Array.isArray(brief[key]) || brief[key].length === 0 || brief[key].some((item) => !text(item))) errors.push(`artBrief.${key} 必须是非空事实数组`);
+  if (shape(brief.intensityBudget, ['normal', 'operation', 'peak', 'measurementMethod'], 'artBrief.intensityBudget', errors)) {
+    if (!text(brief.intensityBudget.measurementMethod)) errors.push('intensityBudget.measurementMethod 必须说明预算测量方法');
+    for (const key of ['normal', 'operation', 'peak']) {
+      const scope = `intensityBudget.${key}`;
+      const level = brief.intensityBudget[key];
+      if (!shape(level, INTENSITY_LEVEL_FIELDS, scope, errors)) continue;
+      for (const field of INTENSITY_LEVEL_FIELDS.filter((field) => field !== 'maxConcurrent')) {
+        if (!text(level[field])) errors.push(`${scope}.${field} 必须说明对应预算约束`);
+      }
+      if (!Number.isInteger(level.maxConcurrent) || level.maxConcurrent < 0) errors.push(`${scope}.maxConcurrent 必须为非负整数`);
+    }
+  }
+  return errors;
+}
+
+/** 检查 V5 人工美术验收与当前工作项、候选及真实动态文件绑定。 */
+export function validateArtExperienceAcceptance(acceptance, work, repo, target) {
+  const errors = [];
+  if (!shape(acceptance, ['schemaVersion', 'workItemId', 'candidateId', 'candidateVersion', 'sceneId', 'displayLayerId', 'artBriefRef', 'qualityResults', 'scenarios', 'confirmedBy', 'confirmedAt', 'userMessageRef', 'userText'], 'artExperienceAcceptance', errors)) return errors;
+  if (acceptance.schemaVersion !== '1.0') errors.push('美术验收 schemaVersion 无效');
+  for (const key of ['workItemId', 'candidateId', 'candidateVersion']) if (!text(acceptance[key])) errors.push(`美术验收缺少 ${key}`);
+  if (acceptance.workItemId !== work.workItemId) errors.push('美术验收未绑定当前工作项');
+  const sceneId = work.workItemType === 'SCENE' ? target.sceneId : work.visual.hostId;
+  if (acceptance.sceneId !== sceneId || (work.workItemType === 'DISPLAY_LAYER' ? acceptance.displayLayerId !== work.visual.objectId : acceptance.displayLayerId !== undefined)) errors.push('美术验收未绑定当前场景或独立显示层');
+  let brief;
+  try { brief = readArtEvidenceFile(repo, acceptance.artBriefRef, true); }
+  catch { errors.push('美术验收缺少真实 artBriefRef'); }
+  if (brief) {
+    errors.push(...validateArtBrief(brief));
+    if (brief.projectId !== work.projectId) errors.push('美术 brief 未绑定当前项目');
+  }
+  errors.push(...validateArtQualityResults(acceptance.qualityResults, true));
+  for (const key of ['confirmedBy', 'userMessageRef', 'userText']) if (!text(acceptance[key])) errors.push(`美术验收缺少人工 ${key}`);
+  if (!isValidIsoTimestamp(acceptance.confirmedAt)) errors.push('美术验收 confirmedAt 必须为有效带时区时间');
+  if (!Array.isArray(acceptance.scenarios)) return [...errors, '美术验收缺少动态情境'];
+  const seen = new Set();
+  for (const scenario of acceptance.scenarios) {
+    if (!shape(scenario, ['id', 'required', 'reason', 'status', 'recordingPath', 'durationSeconds', 'startSeconds', 'endSeconds', 'eventCount', 'peakConcurrency', 'viewport', 'observations', 'targetId', 'stateId', 'referenceTarget', 'candidateId', 'candidateVersion'], 'scenario', errors)) continue;
+    const identity = `${scenario.id}:${scenario.targetId ?? ''}`;
+    if (!ART_SCENARIOS.includes(scenario.id) || seen.has(identity)) errors.push('动态情境身份无效或重复');
+    seen.add(identity);
+    if ((scenario.candidateId !== undefined || scenario.candidateVersion !== undefined) && (!text(scenario.candidateId) || !text(scenario.candidateVersion))) errors.push('动态情境候选身份必须成对声明');
+    if (typeof scenario.required !== 'boolean' || !text(scenario.reason)) errors.push('动态情境必须声明适用性和理由');
+    if (scenario.id === 'normal-play' && scenario.required !== true) errors.push('normal-play 必须覆盖实际常态使用');
+    if (scenario.required === false) {
+      if (scenario.status !== 'NOT_APPLICABLE' || Object.keys(scenario).some((key) => !['id', 'required', 'reason', 'status', 'targetId', 'candidateId', 'candidateVersion'].includes(key)) || (scenario.targetId !== undefined && !text(scenario.targetId))) errors.push('不适用情境不得伪造录屏或实测结果');
+      continue;
+    }
+    if (scenario.status !== 'PASS' || !text(scenario.observations)) errors.push('适用动态情境缺少通过的实际人工观察');
+    if (!text(scenario.targetId)) errors.push('适用动态情境必须绑定具体目标');
+    // 按目标登记的人工情境必须绑定真实目标内容，避免目标图替换后沿用旧记录。
+    if (['targetId', 'stateId', 'referenceTarget'].some((key) => scenario[key] !== undefined)) {
+      const ref = scenario.referenceTarget;
+      if (!text(scenario.targetId) || !text(scenario.stateId) || !shape(ref, ['path', 'sha256'], 'scenario.referenceTarget', errors) || !/^[a-f0-9]{64}$/.test(ref?.sha256 ?? '')) errors.push('动态情境目标身份必须完整绑定 targetId、stateId 和目标内容');
+      else try {
+        const path = readArtEvidenceFile(repo, ref.path);
+        if (createHash('sha256').update(readFileSync(path)).digest('hex') !== ref.sha256) errors.push('动态情境目标文件内容已变化');
+      } catch { errors.push('动态情境目标文件不存在或不可读取'); }
+    }
+    try {
+      if (!/\.(mp4|webm|mov|mkv)$/i.test(scenario.recordingPath ?? '')) throw new Error('不是动态文件');
+      readArtEvidenceFile(repo, scenario.recordingPath);
+    } catch { errors.push('适用动态情境缺少真实项目内录屏'); }
+    const { startSeconds: start, endSeconds: end, durationSeconds: duration } = scenario;
+    if (![start, end, duration].every(Number.isFinite) || start < 0 || end <= start || end > duration) errors.push('动态片段起止或时长无效');
+    for (const key of ['eventCount', 'peakConcurrency']) if (!Number.isInteger(scenario[key]) || scenario[key] < 0) errors.push(`动态情境 ${key} 必须为非负实测整数`);
+    if (!shape(scenario.viewport, ['width', 'height'], 'scenario.viewport', errors) || !['width', 'height'].every((key) => Number.isInteger(scenario.viewport?.[key]) && scenario.viewport[key] > 0)) errors.push('动态情境 viewport 无效');
+  }
+  for (const id of ART_SCENARIOS) {
+    if (!seen.has(`${id}:`) && !seen.has(`${id}:${target.targetId}`)) errors.push('动态情境必须逐目标登记 required 或 not-applicable');
+    if (seen.has(`${id}:`) && [...seen].some((entry) => entry.startsWith(`${id}:`) && entry !== `${id}:`)) errors.push('动态情境不能同时使用公共和逐目标记录');
+    const item = acceptance.scenarios.find((scenario) => scenario.id === id && scenario.targetId === target.targetId);
+    if (item && (item.candidateId ?? acceptance.candidateId) !== target.candidateId) errors.push('动态情境候选与当前目标错绑');
+    if (item?.required && (item.stateId !== target.stateId || item.viewport?.width !== target.viewport?.width || item.viewport?.height !== target.viewport?.height || item.referenceTarget?.path !== target.referenceTarget?.path || item.referenceTarget?.sha256 !== target.referenceTarget?.sha256)) errors.push('动态情境状态、视口或目标内容错绑');
+  }
+  const matches = acceptance.scenarios.filter((item) => item?.id === 'normal-play' && item.required === true && item.status === 'PASS' && item.targetId === target.targetId && item.stateId === target.stateId && item.viewport?.width === target.viewport?.width && item.viewport?.height === target.viewport?.height && item.referenceTarget?.path === target.referenceTarget?.path && item.referenceTarget?.sha256 === target.referenceTarget?.sha256 && (item.candidateId ?? acceptance.candidateId) === target.candidateId);
+  if (matches.length !== 1) errors.push('人工验收未唯一绑定当前目标、候选、状态和视口');
+  return [...new Set(errors)];
+}
+
+/** 从公共清单读取当前目标的唯一美术验收记录并核对实际运行条件。 */
+export function validatePublicArtExperience(repo, work, target, manifest = undefined) {
+  const root = repoPath(repo, work.evidenceRoot, 'Evidence 根目录').relative;
+  if (!manifest) {
+    const manifestPath = requireFile(repo, work.evidenceRef?.path, 'Evidence Manifest');
+    if (!manifestPath.startsWith(`${root}/`)) throw new WorkflowError('Evidence Manifest 路径越出 evidenceRoot');
+    try { readArtEvidenceFile(repo, manifestPath); } catch { throw new WorkflowError('Evidence Manifest 路径不能经过链接'); }
+  }
+  const source = manifest ?? readJson(repo, work.evidenceRef?.path, 'Evidence Manifest');
+  if (source.workItemId !== work.workItemId || source.stack !== work.stack || source.visualStage !== 'V5' || !Array.isArray(source.items)) throw new WorkflowError('公共美术证据清单工作项、技术栈或阶段错绑');
+  if (work.implementationPackageRef?.path && source.implementationPackageRef !== work.implementationPackageRef.path) throw new WorkflowError('公共美术证据清单实施包错绑');
+  const targetId = work.workItemType === 'SCENE' ? target.targetId : undefined;
+  const artItems = source.items.filter((item) => item?.category === 'art-experience-acceptance');
+  if (work.workItemType === 'DISPLAY_LAYER' && (artItems.length !== 1 || artItems[0].targetId !== undefined)) throw new WorkflowError('显示层必须有唯一无 targetId 的公共美术验收条目');
+  if (work.workItemType === 'SCENE' && artItems.some((item) => !text(item.targetId) || (work.visual?.targets && !work.visual.targets.some((entry) => entry.targetId === item.targetId)))) throw new WorkflowError('公共美术验收条目目标错绑');
+  const matches = artItems.filter((item) => item.targetId === targetId);
+  if (matches.length !== 1 || matches[0].status !== 'PASS') throw new WorkflowError('当前目标必须有唯一通过的公共美术验收证据');
+  const path = requireFile(repo, matches[0].path, '公共美术验收');
+  // 清单条目必须位于当前工作项证据根目录，不能借用其他工作项材料。
+  if (!path.startsWith(`${root}/`)) throw new WorkflowError('公共美术验收路径越出 evidenceRoot');
+  try { readArtEvidenceFile(repo, path); } catch { throw new WorkflowError('公共美术验收必须是非空普通文件且路径不能经过链接'); }
+  const acceptance = readJson(repo, path, '公共美术验收');
+  const errors = validateArtExperienceAcceptance(acceptance, work, repo, target);
+  if (errors.length) throw new WorkflowError(`公共美术验收失败：${errors.join('；')}`);
+  return acceptance;
+}

@@ -49,14 +49,6 @@
     "candidateId": {
       "type": "string",
       "minLength": 1
-    },
-    "candidateVersion": {
-      "type": "string",
-      "minLength": 1
-    },
-    "artExperienceAcceptanceRef": {
-      "type": "string",
-      "minLength": 1
     }
   },
   "allOf": [
@@ -89,10 +81,7 @@
     "then": {
       "required": [
         "responsiveEvidence",
-        "productionContractAudit",
-        "candidateId",
-        "candidateVersion",
-        "artExperienceAcceptanceRef"
+        "productionContractAudit"
       ]
     }
   },

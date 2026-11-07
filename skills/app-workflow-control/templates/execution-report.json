@@ -1,5 +1,6 @@
 {
   "files": ["src/feature/example.ts"],
+  "deletedFiles": [],
   "commandOutputs": [
     {
       "command": "<必须与冻结计划中的命令完全一致>",

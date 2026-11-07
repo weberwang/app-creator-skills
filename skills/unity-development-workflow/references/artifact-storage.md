@@ -1,5 +1,7 @@
 # 产物存放与证据边界
 
+输出分类、命名、批次及交接按[公共输出文件规范](../../app-creator-workflow/references/output-files.md)执行；本文件继续规定 Unity 的具体目录，工具固定路径及已绑定文件不因公共命名建议改写。
+
 在生成、导出、确认、接入或清理项目产物前读取。下列路径相对于 Unity 项目根目录；只按需创建目录。目录位置说明用途，不代替人工确认、批准状态或质量门。已有冻结的 Work Item、确认记录和文件路径继续有效，不为采用本规范批量搬迁或改写引用。
 
 ## 唯一目录映射
@@ -22,7 +24,7 @@
 
 `Artifacts/reviews/` 与 `Artifacts/validation/` 是人工可读审阅/验证产物，不是控制工具的 `evidenceRoot`。控制面为每个 Work Item 指定的实际 `evidenceRoot` 才是机器证据根；不要根据 `.workflow-control/` 目录名推测、重排或新建证据目录。
 
-Evidence Manifest 的文件清单及其他受限字段（例如 `files`、命令 `outputFile`）只能引用当前 Work Item 实际 `evidenceRoot` 内的文件。`docs/confirmed/`、`ArtSource/`、`Artifacts/reviews/`、`Artifacts/validation/` 等外部位置，仅在业务合同或 Schema 明确允许外部引用时才可由相应字段引用；不得把人工审阅目录填成机器证据根。
+公共 Evidence Manifest 的 `items[].path`、命令 `commandOutputs[].outputFile` 及其他明确受限字段只能引用当前 Work Item 实际 `evidenceRoot` 内文件；执行结果 JSON 也保存在其预声明 `resultPath`。`Execution Result.files` 是单元 `paths` 所有权内的实际改动交付文件，不能误要求源码和正式资源进入证据根。`docs/confirmed/`、`ArtSource/`、`Artifacts/reviews/`、`Artifacts/validation/` 等外部位置仅通过对应业务合同允许的字段引用，不得把人工审阅目录填成机器证据根。
 
 ## 从候选到确认和接入
 
