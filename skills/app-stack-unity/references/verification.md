@@ -1,5 +1,7 @@
 # Unity 验证与依赖
 
+涉及性能定位或优化时，遵循[公共性能优化规范](../../app-domain-toolkit/references/performance-optimization.md)，按实际瓶颈使用项目已有工具检查主线程、渲染、GC、UI 重建及资源加载和释放；在相同场景与构建条件下比较优化前后，说明 Editor 与目标环境结果的区别。按需选择指标，不把未采集项记为通过。
+
 Unity 版本与证据格式以项目真实 Editor、包和平台为准。逐项核对 Unity 是否编译、导入或域重载完成，记录相关 Console 和实际环境。PlayMode、设备与 Release 构建分别计入任务计划，选择匹配的 EditMode、PlayMode、构建和性能预算检查；无设备证据时不得声称设备运行验证通过。
 
 阶段范围：V4 核对所需工程类别及 Profile 的 `evidenceRequirements.assetImport`（`asset-import`）：实际导入路径、Importer、GUID/子资源和项目内登记引用。此阶段不要求正式宿主 Scene/Prefab/UI 完整视觉验收。V5 检查 Profile 完整 `visual` 要求，读取已集成资产在正式场景中的布局、交互与可见效果；机器导入记录不能代替用户的美术检查。

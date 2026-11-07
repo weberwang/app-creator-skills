@@ -15,6 +15,8 @@ description: 开发或迭代游戏、Flutter 应用、ESP32 自带屏幕 GUI 及
 
 ## 进入任务
 
+涉及性能预算、瓶颈定位或优化时，按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)明确范围与目标，先采集可比基线，再定向优化并核对收益、副作用和功能回归；沿用各栈原生工具与现有证据。普通开发不扩展成全项目优化，发布额外检查／优化／图集沿用真实用户选择，不自动生成图集或执行图片改写、真机验收。
+
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
 
 各栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。

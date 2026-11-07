@@ -1,5 +1,7 @@
 # Three.js 渲染与验证
 
+涉及性能定位或优化时，遵循[公共性能优化规范](../../app-domain-toolkit/references/performance-optimization.md)，按实际瓶颈区分 CPU 更新、GPU 渲染与资源成本，结合 `renderer.info` 和可用采样工具检查几何、材质、纹理及释放；相同视口、场景负载和构建条件下复验，重复进出时核对共享资源仍可使用。
+
 新浏览器工程用 WebGL2 `WebGLRenderer`，按实际 Renderer 检查 Context 属性、颜色空间、自动清屏和设备缩放。WebGPU 采用须有单独的目标浏览器运行证据，静态声明或构建通过不足。
 
 根据面数、实例数、灯光、粒子和目标设备校验 `renderer.info`、GPU 纹理预算、阴影绘制、透明排序和目标帧率。基准在加载前、Scene 稳定运行、动画关闭和 Scene 离开后分别采集。World scene 必须通过实际 3D renderer 检查；表格、静态 UI 和局部屏幕元素可单独测。

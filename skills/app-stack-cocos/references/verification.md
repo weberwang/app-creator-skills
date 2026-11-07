@@ -1,5 +1,7 @@
 # Cocos Creator 验证
 
+涉及性能定位或优化时，遵循[公共性能优化规范](../../app-domain-toolkit/references/performance-optimization.md)，结合实际版本与场景按需检查脚本更新、渲染、过绘、合批、资源加载及节点生命周期；在相同负载与构建条件下复验，并检查退出和重复进入后的资源占用变化。
+
 Creator 工程验证取决于所选小版本、插件和当前 MCP 的实际可用能力。核对 AssetDB 就绪、导入完成、真实 UUID/子资源、脚本编译/类注册、相关 Console 日志、Prefab/Scene 树、组件属性、引用保存和当前目标平台。服务返回成功、文件存在、`.meta` 已出现或构建面板打开均不能证明应用已启动或资源可用。
 
 阶段范围：V4 核对工程验证类别与 Profile 的 `evidenceRequirements.assetImport`（`asset-import`），包括真实导入路径、AssetDB UUID/子资源、脚本产物和引用登记。无需此时运行正式宿主 Scene 的完整视觉验收。V5 验收全部 `visual` 类别，并针对已验收资源检查正式 Creator Scene 的布局、交互和集成外观；节点树/Importer 读回不能代替用户检查图片质量。

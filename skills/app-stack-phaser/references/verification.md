@@ -1,5 +1,7 @@
 # Phaser 验证
 
+涉及性能定位或优化时，遵循[公共性能优化规范](../../app-domain-toolkit/references/performance-optimization.md)，结合实际浏览器与项目构建按需检查长任务、Scene 更新、纹理加载及缓存，并区分 Canvas 与 DOM 的布局、绘制和输入开销；用相同视口、负载与构建条件比较前后结果。
+
 根据源语言修改范围选择适用的 TypeScript 类型检查、相关单测与 Vite production build。在正式游戏运行时验证已登记的 Phaser/Scene/Camera/renderer/dynamic asset 消费者和当前投递的交互；如果没有实际运行证据，只报告静态或构建检查完成。
 
 阶段范围：V4 完成当前需要的工程验证及 Profile `evidenceRequirements.assetImport`（`asset-loading`）：按实际 `vite build` 确认静态资源和 loader 路径进入构建，再用最小隔离检查确认所需图集/图片可被目标 loader 读取。无须此时完成正式宿主 Scene 的完整视觉验收。V5 覆盖全部 `visual` 类别，包括正式场景的 viewport、真实指针命中、游戏内资产加载和用户视觉检查。
