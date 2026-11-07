@@ -15,6 +15,8 @@ description: 开发或迭代游戏、Flutter 应用、ESP32 自带屏幕 GUI 及
 
 ## 进入任务
 
+编排前台加载相关任务时，按[加载显示任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)显式安排服务与最小视图、正式设计、素材制作或复用、业务接入及验证／人工验收，写入已有计划和任务包的负责人、所有权、依赖及交付引用；不将服务实现等同于加载画面交付。
+
 涉及性能预算、瓶颈定位或优化时，按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)明确范围与目标，先采集可比基线，再定向优化并核对收益、副作用和功能回归；沿用各栈原生工具与现有证据。普通开发不扩展成全项目优化，发布额外检查／优化／图集沿用真实用户选择，不自动生成图集或执行图片改写、真机验收。
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。

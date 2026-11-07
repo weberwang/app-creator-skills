@@ -29,6 +29,8 @@ Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑�
 
 ## 记录与门禁
 
+涉及加载显示时，按[加载显示任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)承接正式视觉与素材任务，明确负责人、有效目标／布局依赖、背景／指示器／字体／动效等实际所需交付及正式消费入口；复用合格素材或原生实现时保留依据，不强制新增图片。素材完成后交接实际路径及导入结果，不能用加载服务已实现代替显示设计与资源交付。
+
 生产规格使用 [style-recipe.json](templates/style-recipe.json) 与 [asset-task.json](templates/asset-task.json)，作为控制器记录的支持资料；它们不引入第二套状态。最终基线、素材验收、阶段确认分别使用控制器 templates 中的 `global-visual-baseline`、`asset-review` 与 Work Item 的 `visual.reviews`。真实用户消息只记录来源，不能由代理伪造批准。
 
 V4/V5 的 `assetReviewRef` 绑定当前候选及实际素材；全局基线不能替代单素材质量，素材通过不能替代运行组合验收。技术检查与人工风格判断分开记录，`NOT_RUN/FAIL` 不能提升为 `PASS`。出现需改变已选视觉方向或明显增加成本的取舍时路由 [grilling](../grilling/SKILL.md)，同目标局部返修直接继续。
