@@ -2,6 +2,8 @@
 
 ## glTF/GLB 导入
 
+涉及当前范围的项目整理或清理时，遵循[公共清理规范](../../app-artifact-cleanup/references/project-cleanup.md)，追踪模块导入、`public` URL、部署 base、Loader、模型引用的外部纹理及 decoder／transcoder 部署依赖；静态搜索未命中不能证明动态加载资源未使用。按受影响范围核对绑定解析、模型依赖及适用构建或加载验证；未运行的加载和目标环境检查保持未验证。
+
 优先使用 GLTFLoader。只有模型确有需要时登记 Draco、meshopt 或 KTX2 loader，包含 decoder/transcoder 运行部署文件、地址、缓存、CSP 与动态恢复能力。核对 glTF 内部 Scene、节点、纹理和材质槽实际名字与资产登记，网络文件和加载器成功不证明模型结构、质感或完整动画达标。
 
 角色使用 `SkeletonUtils.clone` 创建独立 Skeleton/SkinnedMesh 场景实例，并由具体实例拥有 AnimationMixer、Action 和角色状态。停用时停止并移除 Action、清掉 mixer root 缓存。动画 bounds、姿势、旋转碰撞和物理边界分别验证。

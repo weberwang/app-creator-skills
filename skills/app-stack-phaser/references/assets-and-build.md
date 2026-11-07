@@ -2,6 +2,8 @@
 
 ## 静态和动态资源
 
+涉及当前范围的项目整理或清理时，遵循[公共清理规范](../../app-artifact-cleanup/references/project-cleanup.md)，追踪模块导入、`public` URL、部署 base、Loader key、图集页面与帧及实际 Scene 消费者；静态搜索未命中不能证明动态加载资源未使用。按受影响范围核对路径解析、加载入口及适用构建或测试；未执行的加载和运行验证保持未验证。
+
 涉及 Scene 切换或弹出层加载时读取[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，将加载服务与显示层放在不随内容 Scene 关闭的宿主，区分 Loader 完成、目标显示／输入就绪和旧 Scene 清理；Cache 中仍有消费者的纹理与图集不能随局部实例销毁一并释放。
 
 使用 bundler 导入的资源由 TypeScript 模块绑定并生成正确 URL；`public/assets/` 的路径按部署 base 作为原样文件请求。正式路径在资源登记与消费者中唯一确定，不能混合相对源码路径、根域绝对路径和部署前缀。

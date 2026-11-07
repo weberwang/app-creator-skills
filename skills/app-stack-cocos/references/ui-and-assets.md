@@ -22,6 +22,8 @@ V2 起先定义正式视觉目标，再把图片的外观和程序行为拆成�
 
 ## 资产生命周期
 
+涉及当前范围的项目整理或清理时，遵循[公共清理规范](../../app-artifact-cleanup/references/project-cleanup.md)，核对 AssetDB UUID、导入子资源、Scene／Prefab 引用、Asset Bundle 及动态加载 key 的实际消费者；通过当前工程的原生资源管理流程维护身份，不孤立删除或伪造 `.meta`。按影响范围读回导入和引用并检查适用构建或测试；没有实际 Editor 或运行证据时保持未验证。
+
 Creator 的 `.meta` UUID 是资源引用基础设施的一部分。正式导入使用编辑器实际批量导入能力及显式不覆盖策略；按文件核对完整结果，读回 UUID、真实子资源、AssetDB 就绪和消费者。只有明确动态 `resources.load` 路线才放在 `assets/resources/`。Asset Bundle 留在其独立目录按其自身 key 加载。资源被运行时使用不等于它必须处于 `resources/`。编辑器管理的 UUID、SpriteFrame 和 Prefab 引用不得手工伪造。
 
 来源：`skills/app-stack-cocos/references/native-contracts.md#mode-cocos-game-ui-layout`、`skills/app-stack-cocos/references/native-contracts.md#mode-cocos-game-asset-integration`、`skills/cocos-game-architecture/references/project-structure.md`、`skills/cocos-game-workflow-control/references/cocos-mcp-protocol.md`。

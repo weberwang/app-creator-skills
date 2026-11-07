@@ -2,6 +2,8 @@
 
 ## 版本与项目结构
 
+涉及当前范围的项目整理或清理时，遵循[公共清理规范](../../app-artifact-cleanup/references/project-cleanup.md)，核对 `pubspec.yaml` 资源声明、代码生成输入／输出、平台构建及实际 Widget 或动态资源消费者；生成文件仅按项目既有生成合同判定可否重建。按受影响范围检查资源解析、生成结果及适用分析、测试或构建；未运行的平台验证保持未验证。
+
 使用 FVM 发现或运行当前项目 Flutter/Dart，不可从本机全局版本推断项目 SDK。检查 `pubspec.yaml`、`pubspec.lock`、`.fvmrc`/`fvm_config.json` 和现有分析/生成命令。源仓库不固定 Flutter 与 Dart 小版本、状态管理或路由依赖。
 
 依据项目现有代码将 `lib/` 分出已稳定的共享基础、独立功能 feature、业务/领域逻辑与 presentation Widgets；页面组件、状态 controller/provider、route 定义归入真正拥有它的 feature，不需要为一次性页面建立新包层级。测试统一在对应 `test/` 模块建立，与生产入口清晰隔离。
