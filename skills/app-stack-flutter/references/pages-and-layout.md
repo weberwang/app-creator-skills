@@ -8,6 +8,8 @@ modal、popup、drawer、toast 等瞬态层使用独立 `DISPLAY_LAYER`，每个
 
 ## 运行时显示结构
 
+页面切换与弹出层加载遵循[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，复用应用级加载服务，在实际 Navigator／Overlay 之上提供不随内容路由销毁的同一显示层；必要数据、Widget 挂载与输入就绪后才结束加载，不将路由状态或运行中的 Widget 实例作为弹窗资源缓存。
+
 遵循[场景与显示层职责](../../app-domain-toolkit/references/reference-domain-display-ownership.md)：代码目录、功能切片和 Widget 显示树分别描述归属、行为和装配。功能可以跨多个显示分支，每个显示实例仍有唯一的挂载、销毁与状态清理所有者；共享 Widget 实现不意味着跨宿主共享同一个实例。
 
 按项目现有导航组织实际 Widget 树，下图只表达可选职责，不要求固定名称、层数或额外框架：

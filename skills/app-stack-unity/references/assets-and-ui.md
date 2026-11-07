@@ -10,6 +10,8 @@ uGUI 新建 Canvas 的参考像素单位默认采用 `CanvasScaler.referencePixe
 
 ## 运行时显示结构
 
+涉及场景切换或弹出层加载时读取[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，将应用级加载服务与视图、场景激活／卸载、Prefab 实例和共享资源引用分别落实到项目已有 Unity 生命周期；加载入口不得随内容 Scene 卸载。
+
 V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)复用实际 Scene/Prefab、功能接口与项目已选 UI 路线，用简单几何、文本和可操作组件区分对象、状态及反馈；体验画面保持可理解，碰撞框或对象 ID 等调试信息按需显示。临时素材、模拟数据和占位通路只证明实际验证范围，不等待 V2 正式美术，也不代替 V4 资源验收。
 
 遵循[场景与显示层职责](../../app-domain-toolkit/references/reference-domain-display-ownership.md)：代码目录、功能切片和运行时显示树分别描述归属、行为和装配。功能可跨多个显示分支，每个实际显示实例仍须明确挂载、卸载和状态清理的唯一所有者；共享代码或 Prefab 不代表共享同一个运行时实例。

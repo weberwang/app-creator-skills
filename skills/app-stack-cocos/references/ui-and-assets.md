@@ -2,6 +2,8 @@
 
 ## Creator 原生 UI
 
+涉及场景切换或弹出层加载时读取[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，复用项目场景与资源加载入口，明确全局视图跨场景的归属、Prefab 实例销毁和资源依赖释放；资源加载完成与场景运行就绪分别验证。
+
 V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用 Creator 节点、Label 和可复用 Prefab 表达对象名称、可操作状态与操作反馈，文案遵循项目已选语言。沿用实际场景输入与功能接口，可按需隐藏碰撞框等调试标记，不强制另做一套体验系统。临时节点与资源标明用途，模拟数据和占位通路只证明实际覆盖范围。
 
 代码结构之外，正式 Scene/Prefab 还须按[显示结构与层级](../../cocos-game-ui-layout/references/display-object-layering.md#scene-与-prefab-显示结构)组织世界、Canvas、页面/HUD、导航和瞬态层的实际挂载、输入及生命周期；在已有技术设计与 V3 材料中落实，不另建结构审批链。
