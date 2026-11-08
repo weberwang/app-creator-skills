@@ -7,17 +7,17 @@ import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { initializeWork, loadWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { validateWork } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 
-const stacks = ['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs'];
+const stacks = ['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo', 'esp32', 'nodejs'];
 const types = ['PROJECT', 'FOUNDATION', 'MODULE', 'SCENE', 'PAGE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE'];
 const schema = JSON.parse(readFileSync(new URL('../../skills/app-workflow-control/schemas/work-item.schema.json', import.meta.url), 'utf8'));
 const validateSchema = new Ajv2020({ strict: false }).compile(schema);
 
 /** 按领域入口矩阵判断对象是否可实际推进。 */
 function supported(stack, type) {
-  return !(stack === 'nodejs' && ['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(type)) && !(type === 'PAGE' && !['flutter', 'esp32'].includes(stack)) && !(type === 'SCENE' && ['flutter', 'esp32'].includes(stack));
+  return !(stack === 'nodejs' && ['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(type)) && !(type === 'PAGE' && !['flutter', 'expo', 'esp32'].includes(stack)) && !(type === 'SCENE' && ['flutter', 'expo', 'esp32'].includes(stack));
 }
 
-test('七栈初始化遵循真实视觉对象矩阵，失败不写工作项', async (t) => {
+test('八栈初始化遵循真实视觉对象矩阵，失败不写工作项', async (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'visual-type-matrix-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   for (const stack of stacks) for (const type of types) {
@@ -54,7 +54,7 @@ test('读取现有工作项和 schema 与初始化使用相同对象矩阵', asy
   const page = await initializeWork({ repo, args: { id: 'page', stack: 'flutter', type: 'PAGE', objective: '验证页面' } });
   const scene = await initializeWork({ repo, args: { id: 'scene', stack: 'cocos', type: 'SCENE', objective: '验证场景' } });
   const originals = new Map([page, scene].map((result) => [result, loadWork(repo, result.metadata.workItemPath)]));
-  for (const [result, stack] of [[page, 'unity'], [page, 'cocos'], [page, 'phaser'], [page, 'threejs'], [page, 'nodejs'], [scene, 'flutter'], [scene, 'esp32'], [scene, 'nodejs']]) {
+  for (const [result, stack] of [[page, 'unity'], [page, 'cocos'], [page, 'phaser'], [page, 'threejs'], [page, 'nodejs'], [scene, 'flutter'], [scene, 'expo'], [scene, 'esp32'], [scene, 'nodejs']]) {
     const path = join(repo, result.metadata.workItemPath);
     const valid = originals.get(result);
     const invalid = { ...valid, stack };

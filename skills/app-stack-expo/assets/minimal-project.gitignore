@@ -1,0 +1,11 @@
+# 项目根的本地工具与 Expo 开发状态不入库。
+/.agents/
+/.expo/
+
+# 依赖及本地输出，按实际项目合并而非覆盖现有配置。
+/node_modules/
+/dist/
+/coverage/
+.env*.local
+
+# Android/iOS 若是正式源码必须保留；仅在确认 CNG 路线后另行配置。

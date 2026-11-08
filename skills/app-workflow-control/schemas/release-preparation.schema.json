@@ -10,7 +10,7 @@
     "schemaVersion": {"const": "1.0"},
     "status": {"enum": ["PASS", "FAIL", "NOT_RUN"]},
     "workItemId": {"type": "string", "minLength": 1},
-    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "esp32", "nodejs"]},
+    "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs"]},
     "stageId": {"const": "release"},
     "deliverablePath": {"type": "string", "minLength": 1},
     "evidencePath": {"type": "string", "minLength": 1}

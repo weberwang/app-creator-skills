@@ -1,6 +1,6 @@
 # 系统启动屏制作与交付
 
-在 Android、iOS/iPadOS 客户端新建基础工程，或修改启动配置、应用图标、主题和首帧衔接时读取。适用于游戏和非游戏 App，按目标操作系统实施；不因采用 Unity、Cocos、Phaser、Three.js 或 Flutter 而另建一套系统启动屏。
+在 Android、iOS/iPadOS 客户端新建基础工程，或修改启动配置、应用图标、主题和首帧衔接时读取。适用于游戏和非游戏 App，按目标操作系统实施；不因采用 Unity、Cocos、Phaser、Three.js、Flutter 或 Expo 而另建一套系统启动屏。
 
 ## 范围与归属
 
@@ -8,7 +8,7 @@
 
 只处理已选的 Android、iOS/iPadOS 目标。纯 Web、桌面、小游戏、ESP32 GUI 与 Node.js 服务不自动创建移动系统启动屏；宿主有独立要求时再按其实际能力处理。使用当前基础工程的 SHARED/MODULE 范围及已有技术设计、平台清单和证据，不为系统启动屏另建 PAGE/DISPLAY_LAYER、V2/V3 视觉生产门或确认账本。
 
-原生方案按项目实际路线分流：Cocos 使用 Creator 自身的原生构建与工程配置，不套用 Capacitor/WebView；Phaser、Three.js 等 Web 应用只有在明确选择移动宿主时才按下文封装原生规则处理。Unity、Flutter 沿各自原生工程配置，不能为了统一启动屏换一条打包路线。
+原生方案按项目实际路线分流：Cocos 使用 Creator 自身的原生构建与工程配置，不套用 Capacitor/WebView；Phaser、Three.js 等 Web 应用只有在明确选择移动宿主时才按下文封装原生规则处理。Unity、Flutter、Expo 沿各自原生工程配置，不能为了统一启动屏换一条打包路线。
 
 ## 内容与制作
 
@@ -46,6 +46,12 @@
 
 Cocos 的 Android/iOS 目标通过项目锁定 Creator 版本自己的原生构建生成平台制品。按实际项目配置、该版本支持的构建模板/扩展或原生源工程维护系统启动资源，核对重新构建后的有效结果；不引入 Web `webDir`、Capacitor copy/sync 或 WebView 就绪判据。系统画面、Creator 适用的引擎启动画面与首场景分开识别，原生渲染稳定首帧才是内容衔接依据；Creator Web 预览与构建面板就绪不证明原生运行通过。
 
+## Expo 原生构建的启动衔接
+
+Expo 的 Android/iOS 使用实际原生启动资源，遵守上文各平台内容要求，不套用 WebView 的 `webDir` 或 DOM 就绪判据。采用 `expo-splash-screen` 时按锁定 SDK 和已有 config plugin 配置维护本地素材；CNG 将应用配置与插件作为正式来源，直接维护原生工程的项目同时核对实际主题与 launch screen，避免下次生成覆盖。
+
+首个 React Native 稳定画面就绪后交接，若使用显式隐藏则只由应用启动所有者调用，并处理必要字体或本地资源失败；不等待所有 SDK、广告或远程数据，不为品牌展示延时。Expo Go 与 development build 不能完整证明最终启动屏，最终显示在对应 release build 上采集材料交用户检查；未运行时保留未验证，不为验收自动启动设备、云模拟器或付费构建。
+
 ## 任务安排与完成条件
 
 新项目在基础工程阶段安排；已有项目仅改受影响平台与衔接。按现有三项最小约定记录，默认当前执行者负责；有协作时再划分品牌素材、原生配置和验证的写入所有权，不另加必填表单。
@@ -67,4 +73,5 @@ Cocos 的 Android/iOS 目标通过项目锁定 Creator 版本自己的原生构�
 - [Apple Launching](https://developer.apple.com/design/human-interface-guidelines/launching)：系统启动画面接近首屏，避免文字与额外品牌展示。
 - [Unity Splash Screen](https://docs.unity3d.com/6000.1/Documentation/Manual/class-PlayerSettingsSplashScreen.html)：引擎 Splash 与自制首场景的区别；执行时核对实际锁定版本。
 - [Flutter Android 启动屏](https://docs.flutter.dev/platform-integration/android/splash-screen)、[Flutter iOS 启动屏](https://docs.flutter.dev/platform-integration/ios/launch-screen)：原生宿主配置与框架首帧的衔接。
+- [Expo SplashScreen](https://docs.expo.dev/versions/latest/sdk/splash-screen/)：原生启动屏的配置、首帧交接与 release build 验证边界，执行时核对项目锁定 SDK。
 - [Capacitor Splash Screen](https://capacitorjs.com/docs/apis/splash-screen)、[构建与同步](https://capacitorjs.com/docs/basics/workflow)、[配置](https://capacitorjs.com/docs/config)：系统启动与程序显示路径、版本适用配置，以及 Web 资源到原生工程的消费链；执行时核对项目锁定版本。

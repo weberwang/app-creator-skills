@@ -174,6 +174,7 @@ async function run(repo, work, stage) {
   if (work.stack === 'unity') return validateUnity(repo, work, stage, doc);
   if (WEB_PREFIX[work.stack]) return validateWeb(repo, work, stage, doc);
   if (work.stack === 'flutter') return validateFlutter(repo, work, stage, doc);
+  if (work.stack === 'expo') return (await import('./expo-domain-check.mjs')).validateExpo(repo, work, stage, doc, identity);
   // 非视觉技术栈不安装 UI 校验器，只有 ESP32 领域验证才加载其依赖。
   if (work.stack === 'esp32') return (await import('./esp32-domain-check.mjs')).validateEsp32(repo, work, stage, doc, identity);
   throw new WorkflowError('单目标领域合同不支持当前技术栈');

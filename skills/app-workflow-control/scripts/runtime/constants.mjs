@@ -25,7 +25,7 @@ export const TRANSITIONS = Object.freeze({
   BLOCKED: ['INTAKE', 'BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'RETURN'], COMPLETE: [],
 });
 /** 技术栈名称保持稳定，项目配置不得自行创建新栈分支。 */
-export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
+export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo', 'esp32', 'nodejs']);
 /** 执行中副作用较高的动作必须显式停止等待人工决定。 */
 export const PROTECTED_ACTIONS = new Set([
   'external-write', 'device', 'sign', 'upload', 'publish', 'payment', 'destructive',

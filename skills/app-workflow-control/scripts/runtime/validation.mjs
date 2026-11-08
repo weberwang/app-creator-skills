@@ -114,8 +114,8 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   requireOneOf(work.workItemType, WORK_ITEM_TYPES, 'Work Item.workItemType');
   // 视觉类型必须对应实际可用的领域入口，避免工作项到 V2 才发现无法推进。
   if (work.stack === 'nodejs' && ['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(work.workItemType)) throw new WorkflowError('Node.js 服务端领域合同不支持 SCENE/PAGE/DISPLAY_LAYER');
-  if (work.workItemType === 'PAGE' && !['flutter', 'esp32'].includes(work.stack)) throw new WorkflowError('PAGE 领域合同仅支持 Flutter 或 ESP32；游戏显示对象应使用真实 SCENE 或 DISPLAY_LAYER');
-  if (work.workItemType === 'SCENE' && ['flutter', 'esp32'].includes(work.stack)) throw new WorkflowError('Flutter 和 ESP32 不支持 SCENE 领域合同；应用显示对象应使用 PAGE 或 DISPLAY_LAYER');
+  if (work.workItemType === 'PAGE' && !['flutter', 'expo', 'esp32'].includes(work.stack)) throw new WorkflowError('PAGE 领域合同仅支持 Flutter、Expo 或 ESP32；游戏显示对象应使用真实 SCENE 或 DISPLAY_LAYER');
+  if (work.workItemType === 'SCENE' && ['flutter', 'expo', 'esp32'].includes(work.stack)) throw new WorkflowError('Flutter、Expo 和 ESP32 不支持 SCENE 领域合同；应用显示对象应使用 PAGE 或 DISPLAY_LAYER');
   if (work.workItemType === 'INTEGRATION') {
     requireOneOf(work.integrationPurpose, ['feature', 'final'], 'Work Item.integrationPurpose');
     if (work.integrationPurpose === 'feature' && (work.integrationScopeRef !== undefined || work.integrationEvidenceRef !== undefined)) throw new WorkflowError('早期功能集成不能声明最终集成范围或证据');

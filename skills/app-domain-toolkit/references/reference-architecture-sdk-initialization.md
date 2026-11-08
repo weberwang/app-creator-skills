@@ -1,6 +1,6 @@
 # 第三方 SDK 独立管理与初始化
 
-适用技术栈：unity、cocos、phaser、threejs、flutter、esp32、nodejs。项目接入或调整第三方 SDK 时统一读取本规范，再按当前技术栈补充入口路径与原生要求；没有实际采用的 SDK 不创建占位文件，也不因此引入依赖。
+适用技术栈：unity、cocos、phaser、threejs、flutter、expo、esp32、nodejs。项目接入或调整第三方 SDK 时统一读取本规范，再按当前技术栈补充入口路径与原生要求；没有实际采用的 SDK 不创建占位文件，也不因此引入依赖。
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
@@ -26,7 +26,7 @@
 
 ## 归因与广告直接启动和调用
 
-Unity、Cocos Creator、Phaser、Three.js 和 Flutter 项目按已确认的需求接入广告或归因；本段不声明这些厂商 SDK 支持 ESP32，设备端仅在实际平台与官方能力核实后处理明确需求。广告使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。归因使用 AppsFlyer。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
+Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认的需求接入广告或归因；本段不声明这些厂商 SDK 支持 ESP32，设备端仅在实际平台与官方能力核实后处理明确需求。广告使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。归因使用 AppsFlyer。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 
 业务触发归因事件或广告请求时调用对应能力接口，应用层不增加无关等待屏障。不因普通 SDK 接入擅自新增隐私业务；项目已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。`hasUserConsent=false` 不证明用户完成选择，也不单独证明所有地区和渠道允许请求。适配器按实际 SDK、隐私与网络条件返回结果；未就绪、无填充、离线或展示失败按既有回退处理，不阻塞调用方，也不伪造成功。
 

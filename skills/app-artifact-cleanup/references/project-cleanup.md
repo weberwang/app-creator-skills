@@ -68,7 +68,7 @@
 
 ## 核对活跃写入、并行工作和锁
 
-在候选分类和执行前，核对当前技术栈会写入或占用这些文件的进程与任务，例如 Unity Editor/AssetDatabase/导入器、Cocos Creator 编辑器与资源导入、Phaser/Three.js build 或 watch 进程、Flutter build、代码生成器/资源生成器，以及仍在进行的构建或导入。检查工作流/Work Item 记录里是否有并行任务声明或文件归属冲突。按本机可用方式核对相关进程身份、实际工程路径和正在操作的目标；只查进程名称不足以确认它是否属于当前项目。
+在候选分类和执行前，核对当前技术栈会写入或占用这些文件的进程与任务，例如 Unity Editor/AssetDatabase/导入器、Cocos Creator 编辑器与资源导入、Phaser/Three.js build 或 watch 进程、Flutter build、Expo Metro/Prebuild/原生构建、代码生成器/资源生成器，以及仍在进行的构建或导入。检查工作流/Work Item 记录里是否有并行任务声明或文件归属冲突。按本机可用方式核对相关进程身份、实际工程路径和正在操作的目标；只查进程名称不足以确认它是否属于当前项目。
 
 检查仓库已有的应用锁、生成器锁、AssetDatabase/导入占用及工作流事务状态，并按其原生规则识别所有者和活动范围。锁文件存在本身不能证明持有者仍运行；锁文件不存在也不能证明不会有进程随后启动。不得通过杀掉编辑器、构建或生成进程，移除锁文件，或绕过原生锁来强行清理。
 
@@ -108,6 +108,6 @@
 
 ## 原生身份与专业边界
 
-Unity `.meta`、GUID、`fileID` 与序列化身份由 Unity 专项维护；Flutter 的 `pubspec.yaml` 资源声明、代码生成文件、资源键以及打包资源清单按项目 Flutter SDK/生成工具核对。Cocos UUID/AssetDB、Phaser运行时资源键、Three.js模块/URL资源和构建清单各自按原生适配核对。不能手写或孤立删除身份文件以绕过编辑器数据库、重导入流程或项目生成器。
+Unity `.meta`、GUID、`fileID` 与序列化身份由 Unity 专项维护；Flutter 的 `pubspec.yaml` 资源声明、代码生成文件、资源键以及打包资源清单按项目 Flutter SDK/生成工具核对。Expo 按已选 CNG 或原生源码维护方式检查组件、静态资源引用、配置插件及生成入口，不统一删除 `android/ios`；`.expo/` 与构建缓存不是业务源，`.eas/workflows/` 仍是正式配置。Cocos UUID/AssetDB、Phaser运行时资源键、Three.js模块/URL资源和构建清单各自按原生适配核对。不能手写或孤立删除身份文件以绕过编辑器数据库、重导入流程或项目生成器。
 
 每次任务只应用当前技术栈明确采用的规则与工具。多栈仓库分成独立计划；共享文件的消费者归属未核清前保持待确认。

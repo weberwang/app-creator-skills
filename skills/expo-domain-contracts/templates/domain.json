@@ -1,0 +1,19 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "REPLACE",
+  "projectId": "REPLACE",
+  "stack": "expo",
+  "workItemType": "PAGE",
+  "visualStageModel": "function-first-v1",
+  "visualStage": "V2",
+  "objectId": "REPLACE",
+  "candidateId": "REPLACE",
+  "referenceTarget": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "platformProfileRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  }
+}

@@ -8,7 +8,7 @@
   "anyOf": [{"properties": {"files": {"minItems": 1}}}, {"required": ["deletedFiles"], "properties": {"deletedFiles": {"minItems": 1}}}],
   "properties": {
     "schemaVersion": {"const": "1.0"}, "status": {"enum": ["PASS", "FAIL"]},
-    "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "esp32", "nodejs"]},
+    "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs"]},
     "implementationPackageRef": {"type": "string"}, "unitId": {"type": "string"}, "sequence": {"type": "integer", "minimum": 1}, "exitCode": {"type": "integer"},
     "hostId": {"type": "string", "minLength": 1}, "layerType": {"type": "string", "minLength": 1},
     "files": {"type": "array", "items": {"type": "string", "minLength": 1}},

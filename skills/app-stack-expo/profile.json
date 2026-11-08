@@ -1,0 +1,50 @@
+{
+  "id": "expo",
+  "displayName": "Expo / React Native",
+  "detectAny": ["package.json", "app.json", "app.config.js", "app.config.ts"],
+  "frameworkPolicy": [
+    "根据 package.json 中实际 expo、react-native 依赖及 Expo 配置和运行入口共同识别，通用文件不能单独证明技术栈。",
+    "依据项目锁定的 Expo SDK、React Native、React、Node 与包管理器版本，核对原生模块兼容性。",
+    "应用页面使用 PAGE，独立瞬态层使用 DISPLAY_LAYER，业务模块使用 MODULE；不使用游戏 SCENE。"
+  ],
+  "nativeRules": [
+    "React Native 页面按逻辑像素、真实组件树、Flexbox 和安全区布局，核对键盘、字号、滚动和无障碍。",
+    "页面和弹窗共用加载服务，绑定请求身份及令牌；弹窗关闭卸载实例并取消所属任务，原生 Modal 层序按实际窗口处理。",
+    "新项目优先考虑 CNG 与 Expo Router；已选择原生工程维护或导航方案的项目按其实际结构处理，不盲目重建工程。",
+    "原生配置、启动屏、SDK 与环境变量按实际目标和权限处理；不把 Expo Go 预览当作原生发布构建验收。",
+    "有视觉改动时按公共 V0–V5 与 Expo 领域证据合同执行，截图默认交由用户人工确认。"
+  ],
+  "evidenceRequirements": {
+    "engineering": ["typecheck", "tests"],
+    "visual": ["layout", "navigation", "accessibility"],
+    "assetImport": ["asset-registration"]
+  },
+  "runtimeRoots": [
+    "app", "src", "components", "hooks", "constants", "context", "contexts", "services", "utils", "lib", "features", "navigation", "store", "types", "scripts", "assets", "assets-source", "tests", "test", "__tests__", "e2e", "docs", "plugins", "modules", "android", "ios", "web", ".eas", "app.json", "app.config.js", "app.config.cjs", "app.config.ts", "app.config.mjs", "index.js", "index.ts", "index.tsx", "App.js", "App.tsx", "package.json", "package-lock.json", "yarn.lock", "pnpm-lock.yaml", "bun.lock", "bun.lockb", "eas.json", "babel.config.js", "babel.config.cjs", "metro.config.js", "metro.config.cjs", "tsconfig.json", "eslint.config.js", "eslint.config.mjs", ".eslintrc.js", "jest.config.js", "jest.config.ts", ".env.example", ".gitignore", ".easignore"
+  ],
+  "projectStructure": {
+    "source": "app/ 或 src/（按实际项目）",
+    "screens": "app/ 或 src/app/，按已有导航方案组织",
+    "shared": "components/、hooks/ 和实际共享模块",
+    "tests": "tests/ 或 __tests__/，沿用项目已有测试入口",
+    "assets": "assets/（运行资源）",
+    "designAssets": "assets-source/（正式制作源，不打入运行包）"
+  },
+  "resourceDirectories": ["app-domain-toolkit", "expo-domain-contracts"],
+  "sharedCapabilities": ["reference-architecture-sdk-initialization", "ui-copy-principles"],
+  "capabilitySkills": ["app-creator-workflow", "app-product-planning", "app-architecture", "app-project-foundation", "app-ui-layout", "app-asset-workflow", "app-feedback", "app-runtime-plugins", "app-quality-review", "app-release", "app-artifact-cleanup"],
+  "nativeAdapters": [
+    {"sourceSkill":"expo-workflow","capability":"app-creator-workflow","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-workflow"},
+    {"sourceSkill":"expo-product-planning","capability":"app-product-planning","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-product-planning"},
+    {"sourceSkill":"expo-architecture","capability":"app-architecture","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-architecture"},
+    {"sourceSkill":"expo-project-foundation","capability":"app-project-foundation","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-project-foundation"},
+    {"sourceSkill":"expo-ui-layout","capability":"app-ui-layout","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-ui-layout"},
+    {"sourceSkill":"expo-asset-workflow","capability":"app-asset-workflow","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-asset-workflow"},
+    {"sourceSkill":"expo-feedback","capability":"app-feedback","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-feedback"},
+    {"sourceSkill":"expo-runtime-plugins","capability":"app-runtime-plugins","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-runtime-plugins"},
+    {"sourceSkill":"expo-quality-review","capability":"app-quality-review","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-quality-review"},
+    {"sourceSkill":"expo-release","capability":"app-release","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-release"},
+    {"sourceSkill":"expo-artifact-cleanup","capability":"app-artifact-cleanup","path":"skills/app-stack-expo/references/native-contracts.md","section":"mode-expo-artifact-cleanup"}
+  ],
+  "nativeManual": "skills/app-stack-expo/references/native-contracts.md"
+}

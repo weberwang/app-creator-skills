@@ -1,0 +1,36 @@
+{
+  "schemaVersion": "1.0",
+  "objectId": "REPLACE",
+  "platformProfileRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "unit": "logical-pixel",
+  "viewport": {
+    "width": 0,
+    "height": 0
+  },
+  "sourcePath": "REPLACE",
+  "decompositionRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "rootId": "screen",
+  "safeAreaStrategy": "REPLACE",
+  "keyboardStrategy": "REPLACE",
+  "textScaleStrategy": "REPLACE",
+  "nodes": [
+    {
+      "id": "screen",
+      "parentId": null,
+      "x": 0,
+      "y": 0,
+      "width": 0,
+      "height": 0,
+      "positioning": "relative",
+      "references": [
+        "viewport"
+      ]
+    }
+  ]
+}

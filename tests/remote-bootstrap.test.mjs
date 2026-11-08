@@ -158,6 +158,22 @@ async function withTemporaryProject(t, action) {
 
 const repositoryFixture = createRepositoryFixture();
 
+/** 独立远程引导覆盖真实 Expo 清单与领域资源，不下载未选择的其他技术栈。 */
+test('独立 bootstrap 可离线安装 Expo 及其领域合同', async (t) => {
+  await withTemporaryProject(t, async ({ project, cacheRoot }) => {
+    const { fetchImpl, requests } = createFakeFetch(repositoryFixture);
+    const result = await runRemoteBootstrap([project, '--repo', REPOSITORY, '--ref', 'main', '--stack', 'expo'], { fetchImpl, cacheRoot, env: {} });
+    assert.deepEqual(result.remote.stacks, ['expo']);
+    assert.deepEqual(result.remote.selectedDirectories, expectedRootsFor(['expo']));
+    const paths = requests.filter((request) => request.kind === 'raw').map((request) => request.path);
+    assertRawRequestsStayWithinSelection(paths, expectedRootsFor(['expo']));
+    assert.ok(paths.some((path) => path.startsWith('skills/expo-domain-contracts/')));
+    assert.ok(existsSync(join(project, '.agents', 'skills', 'app-stack-expo', 'profile.json')));
+    assert.ok(existsSync(join(project, '.agents', 'skills', 'expo-domain-contracts')));
+    assert.equal(existsSync(join(project, '.agents', 'skills', 'app-stack-flutter')), false);
+  });
+});
+
 /** 远程引导与下载后的共享安装器都需接受 ESP32，并只读取所选闭包。 */
 test('独立 bootstrap 可离线模拟安装 ESP32 技术栈', async (t) => {
   await withTemporaryProject(t, async ({ project, cacheRoot }) => {

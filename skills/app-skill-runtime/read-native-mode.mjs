@@ -7,7 +7,7 @@ import { extractMarkdownSection, extractNativeSection, markdownProse } from './n
 import { isDirectEntry } from './direct-entry.mjs';
 
 const DEFAULT_SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
+const STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
 const COMMON_ROOTS = ['app-creator-workflow', 'app-workflow-control', 'app-asset-workflow', 'grilling', 'app-domain-toolkit', 'app-skill-runtime'];
 const SAFE_NAME = /^[a-z0-9][a-z0-9-]*$/;
 

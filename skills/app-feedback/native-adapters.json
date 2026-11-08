@@ -55,6 +55,15 @@
         "mode": "esp32-feedback",
         "when": "当前项目为 ESP32 自带屏幕 GUI，执行本能力的设备端实施与验证时。"
       }
+    ],
+    "expo": [
+      {
+        "sourceSkill": "expo-feedback",
+        "path": "../app-stack-expo/references/native-contracts.md",
+        "section": "mode-expo-feedback",
+        "mode": "expo-feedback",
+        "when": "当前项目为 Expo / React Native，执行本能力的应用端实施与验证时。"
+      }
     ]
   },
   "sharedWorkflows": [
@@ -75,7 +84,8 @@
         "phaser",
         "threejs",
         "flutter",
-        "esp32"
+        "esp32",
+        "expo"
       ]
     },
     {

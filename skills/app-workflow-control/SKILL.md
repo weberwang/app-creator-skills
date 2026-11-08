@@ -5,7 +5,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 
 # 统一工作流控制面
 
-为 Unity、Cocos Creator、Phaser、Three.js 与 Flutter 保留一份权威状态机和证据合同。运行技术任务前加载对应 `app-stack-*` 的 `profile.json`，按当前技术栈读取编译、测试、资源导入和可视化运行规范。Unity 的 `.meta`、Cocos AssetDB、Phaser Vite、Three.js WebGL 和 Flutter 路由验证始终由技术 profile 决定。
+为 Unity、Cocos Creator、Phaser、Three.js、Flutter、Expo、ESP32 与 Node.js 保留一份权威状态机和证据合同。运行技术任务前加载对应 `app-stack-*` 的 `profile.json`，按当前技术栈读取编译、测试、资源导入和可视化运行规范。Unity 的 `.meta`、Cocos AssetDB、Phaser Vite、Three.js WebGL、Flutter 路由及 Expo 原生/Web 验证始终由技术 profile 决定。
 
 ## 状态和边界
 
@@ -47,7 +47,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 ## CLI
 
 ```text
-node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|esp32|nodejs> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
+node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|expo|esp32|nodejs> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
 node skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <项目相对JSON路径> --spec <实际计划JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <项目相对JSON路径> --unit <单元ID> --report <真实执行报告JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>

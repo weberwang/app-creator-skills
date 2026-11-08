@@ -63,6 +63,15 @@
         "mode": "nodejs-release",
         "when": "当前模块实际运行在Node.js服务器、后台任务或消息消费者，执行本能力的服务端开发与验证时。"
       }
+    ],
+    "expo": [
+      {
+        "sourceSkill": "expo-release",
+        "path": "../app-stack-expo/references/native-contracts.md",
+        "section": "mode-expo-release",
+        "mode": "expo-release",
+        "when": "当前项目为 Expo / React Native，执行本能力的应用端实施与验证时。"
+      }
     ]
   },
   "sharedWorkflows": [

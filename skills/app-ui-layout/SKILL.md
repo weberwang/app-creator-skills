@@ -24,7 +24,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 1. 列出页面状态、主要任务、紧急提示和真实内容；为每个控件写明语义、优先级、尺寸下限、交互状态与可访问标签。按[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)安排层级、形态与位置关系，使主要目标和操作意图无需先读文字也能辨认。
 2. 按[还原依据与变更边界](references/relative-layout.md#还原依据与变更边界)复用有效设计稿与现有布局规格，区分已确认目标、测量值、估计值及适配规则；按影响补齐，不另建布局源或逐项审批。按[UI 相对布局与定位](references/relative-layout.md)建立布局树和约束：标明容器层级、参照、对齐、间距、可伸缩/固定尺寸、滚动范围、遮挡关系、键盘/手柄焦点顺序。
    按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)把布局树落实到本栈实际节点、Widget 或 DOM，区分显示挂载、功能归属与渲染顺序。V3 先按[节点最小化](../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)判断同一操作的视觉与交互能否共用节点，再按[随动与父子关系](../app-domain-toolkit/references/reference-domain-display-ownership.md#随动与父子关系)为确需分开的元素确定父级。V5 按确认结构还原并验证移动后的相对位置与命中。
-3. Unity、Cocos、Phaser、Three.js 按[静态文本的可见表现](../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)为静态文本选择位图字体或独立文字图片，Flutter 使用本栈原生文本规范。按[文本宽度、缩放与换行](references/relative-layout.md#文本宽度缩放与换行)保持确认的阅读尺寸与断行，声明适配策略。读取当前栈原生模式引用的 `references/text-layout.md`，核实所选路线的排版能力，再落实断点、安全区、多语言、阅读尺寸放大和最小交互尺寸。
+3. Unity、Cocos、Phaser、Three.js 按[静态文本的可见表现](../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)为静态文本选择位图字体或独立文字图片，Flutter、Expo 使用各自本栈原生文本规范。按[文本宽度、缩放与换行](references/relative-layout.md#文本宽度缩放与换行)保持确认的阅读尺寸与断行，声明适配策略。读取当前栈原生模式引用的 `references/text-layout.md`，核实所选路线的排版能力，再落实断点、安全区、多语言、阅读尺寸放大和最小交互尺寸。
 4. 用最短、最长、空、错误和加载内容填充布局，检查截断、换行、溢出、按钮遮挡和视觉优先级退化。
 5. 在目标运行环境先核对同条件的设计目标、正式源值与运行值，再检查适用视口和内容适配及触控/鼠标/键盘导航；两类结果分别记录，修复偏差来源，不对单张截图加偏移或隐式改变设计目标。
 6. 交付布局规则、断点/内容矩阵、导航顺序、运行验证矩阵和需用户人工判断的视觉点。
@@ -38,7 +38,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 - 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。
-- Unity/Creator/Web UI 与 Flutter Widget 的布局系统并不相同；只使用当前栈匹配的原生适配模式。
+- Unity/Creator/Web UI、Flutter Widget 与 Expo React Native 的布局系统并不相同；只使用当前栈匹配的原生适配模式。
 - 效果图供目标确认，不能把按钮、动态文案和交互状态烘焙成不可访问的背景图。
 
 ## 交付

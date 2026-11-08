@@ -1,6 +1,6 @@
 ---
 name: app-creator-workflow
-description: 开发或迭代游戏、Flutter 应用、ESP32 自带屏幕 GUI 及 Node.js 服务器时，统一编排需求、架构、基础工程、功能、验证与交付；按当前技术栈加载独立规范，有界面时使用视觉流程。
+description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏幕 GUI 及 Node.js 服务器时，统一编排需求、架构、基础工程、功能、验证与交付；按当前技术栈加载独立规范，有界面时使用视觉流程。
 ---
 
 # 游戏与应用统一编排
@@ -48,10 +48,13 @@ description: 开发或迭代游戏、Flutter 应用、ESP32 自带屏幕 GUI 及
 | Phaser | `$app-stack-phaser` | package.json 的 Phaser 依赖与实际版本 |
 | Three.js | `$app-stack-threejs` | package.json 的 three 依赖及真实 3D 运行入口 |
 | Flutter | `$app-stack-flutter` | pubspec.yaml、FVM 配置及 Flutter SDK 依赖 |
+| Expo | `$app-stack-expo` | Expo 与 React Native 实际依赖、app.json/app.config.* 及实际应用入口；不能仅凭 package.json 判断 |
 | ESP32 | `$app-stack-esp32` | 实际芯片/板卡、ESP-IDF 目标与组件配置，或 platformio.ini 中的 ESP32 平台/框架 |
 | Node.js | `$app-stack-nodejs` | 实际服务器/消费者入口、服务端依赖、运行与部署脚本；仅有 package.json 或前端构建工具不能证明本栈 |
 
 探测文件只是线索。`package.json`、`assets/` 等通用文件不能独立证明技术栈；读取依赖和项目设置，仍无法判定时只问技术选择，不替用户重建项目。
+
+Expo 使用 React Native 的 PAGE 与独立 DISPLAY_LAYER，原生与 Web 按已选平台分别验证；采用项目实际 SDK、导航和原生工程维护方式。Expo Go、开发构建、发布构建的证明范围不同，不能以预览代替原生 SDK 或系统启动屏验收。云服务和插件是可选执行通道，不新增控制器或默认启动付费环境；具体见 [app-stack-expo](../app-stack-expo/SKILL.md)。
 
 ESP32 指设备自带屏幕运行的 GUI，页面使用 PAGE，独立瞬态层使用 DISPLAY_LAYER；驱动、业务和通信按 MODULE 管理。先确认硬件、输入、实际 SDK/GUI 版本和资源预算，再推进 V0–V5。外部手机或电脑控制客户端使用其自身技术栈，按协议与固件衔接。构建、主机模拟、设备运行和用户视觉确认分别记录，不能用主机结果替代硬件验收；具体见 [app-stack-esp32](../app-stack-esp32/SKILL.md)。
 
@@ -64,7 +67,7 @@ Cocos、Phaser、Three.js 的编排任务按需要读取以下公共资料，同
 - Cocos、Phaser 任务需要归档交付文件时，读取[交付文件保留与引用](../app-domain-toolkit/references/reference-orchestration-delivery-artifacts.md)。
 - 需要专业复核时读取[视觉质量](../app-domain-toolkit/references/reference-orchestration-visual-quality-gate.md)、[复核分工](../app-domain-toolkit/references/reference-orchestration-review-funnel.md)或[游戏生产里程碑](../app-domain-toolkit/references/reference-orchestration-quality-gates.md)。
 
-任务明确包含 Git 提交时，所有技术栈先按[工作流记录与提交范围](references/workflow.md#工作流记录与提交范围)选择必要文件；Cocos、Phaser、Three.js 再读取[最小提交规则](../app-domain-toolkit/references/git-minimal-submission.md)并结合本栈补充，Unity、Flutter 使用所选技术栈的 Git 规范。Git 提交或合并须有用户明确要求；任务范围内无副作用的本地集成可按已有授权执行。
+任务明确包含 Git 提交时，所有技术栈先按[工作流记录与提交范围](references/workflow.md#工作流记录与提交范围)选择必要文件；Cocos、Phaser、Three.js 再读取[最小提交规则](../app-domain-toolkit/references/git-minimal-submission.md)并结合本栈补充，Unity、Flutter、Expo 使用所选技术栈的 Git 规范。Git 提交或合并须有用户明确要求；任务范围内无副作用的本地集成可按已有授权执行。
 
 ## 交接与状态
 

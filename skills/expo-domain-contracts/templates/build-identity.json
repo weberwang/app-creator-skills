@@ -1,0 +1,31 @@
+{
+  "schemaVersion": "1.0",
+  "sourceRevision": "REPLACE",
+  "platform": "REPLACE",
+  "buildKind": "REPLACE",
+  "runtimeKind": "REPLACE",
+  "platformProfileRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "layoutSpecRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "layoutSourceRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "assetManifestRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "artifactRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "buildLogRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  }
+}

@@ -1,6 +1,6 @@
 # 工作流输出文件与交付规范
 
-在规划文件产物、调用生成／采集工具、保存审阅材料、交接、验证或清理前读取。适用于七栈的文档、控制记录、候选、媒体、命令输出及发布产物；按需创建文件，不为每个阶段建立空目录、占位报告或另一份输出状态账本。普通问答及无需持久证据的简短审阅可直接在对话交付。
+在规划文件产物、调用生成／采集工具、保存审阅材料、交接、验证或清理前读取。适用于各技术栈的文档、控制记录、候选、媒体、命令输出及发布产物；按需创建文件，不为每个阶段建立空目录、占位报告或另一份输出状态账本。普通问答及无需持久证据的简短审阅可直接在对话交付。
 
 ## 每项任务的最小约定
 
@@ -45,6 +45,7 @@
 | Phaser | [原生存放规范](../../phaser4-game-architecture/references/artifact-storage.md)：`output/`、人工 `evidence/`、确认及源目录，与正式 Web 资源路径分开 |
 | Three.js | [原生存放规范](../../threejs-game-architecture/references/artifact-storage.md)：沿实际资源模块／URL、领域决定记录和原生目录映射保存；不能把领域记录当成公共控制器记录 |
 | Flutter | 先读[最小工件矩阵](../../flutter-app-orchestrator/references/artifacts.md)，沿实际页面／资源／构建合同；不为每次单代理任务生成 brief 或独立报告 |
+| Expo | 正式组件、Expo 配置、配置插件和实际锁文件沿 [Expo 工程规范](../../app-stack-expo/references/engineering.md)；CNG 生成工程与手工维护的原生源码分开；`.expo/` 不作为业务证据，`.eas/workflows/` 按真实用途保留 |
 | ESP32、Node.js | 沿实际工程、SDK／构建与服务端合同，在已有技术方案中明确唯一映射；不虚构视觉阶段、原生目录或将固件／服务构建输出当作源文件 |
 
 没有原生固定目录、也没有当前项目映射的新输出，先在已有技术方案中指定位置：临时文件默认 `output/intermediate/<workItemId>/<unit-or-stage>/<batch>/`，未送审候选默认 `output/candidates/<workItemId>/<unit-or-stage>/<candidateId>/`，人工材料默认 `evidence/<workItemId>/reviews/<candidateId>/` 或 `evidence/<workItemId>/validation/<runId>/`。这些仅是缺省人工／临时目录，不是新增控制器路径；无候选、视觉阶段或运行批次时省略不适用层，不为填目录伪造身份。文档、源文件、正式资源与构建输出仍按实际合同指定，不另建平行目录。

@@ -40,6 +40,7 @@
         "phaser",
         "threejs",
         "flutter",
+        "expo",
         "esp32",
         "nodejs"
       ]
@@ -202,6 +203,7 @@
                 "phaser",
                 "threejs",
                 "flutter",
+                "expo",
                 "esp32",
                 "nodejs"
               ]
@@ -528,7 +530,7 @@
     },
     {
       "if": { "properties": { "workItemType": { "const": "PAGE" } }, "required": ["workItemType"] },
-      "then": { "properties": { "stack": { "enum": ["flutter", "esp32"] } } }
+      "then": { "properties": { "stack": { "enum": ["flutter", "expo", "esp32"] } } }
     },
     {
       "if": { "properties": { "workItemType": { "const": "SCENE" } }, "required": ["workItemType"] },

@@ -1,5 +1,7 @@
 # 单目标领域合同
 
+Expo PAGE 和 DISPLAY_LAYER 使用同一公共阶段与证据容器，由独立 Expo 领域校验器处理 React Native 布局、资源和运行记录。按 [Expo 领域证据合同](../../expo-domain-contracts/references/domain-validation.md)逐阶段绑定平台、正式源和当前宿主；V2 不提前要求 V3–V5 产物，原生与 Web、开发与发布构建的证明范围分别记录。不得借用 Flutter 专属字段、浏览器截图或手写 PASS 代替原生运行与用户视觉确认。
+
 PAGE 和 DISPLAY_LAYER 在 V1 完成功能验证后，V2–V5 分别将 `visual.domainEvidenceRef` 指向当前阶段的领域证据文件，引用包含实际 `path` 和 `sha256`。阶段证据根记录 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`workItemType`、`visualStageModel: "function-first-v1"`、`visualStage`、`objectId`、`candidateId` 和 `referenceTarget: {path,sha256}`；目标文件必须与该工作项的 V2 人工确认一致。阶段证据随阶段更新，不能拿 V2 的记录冒充 V5。
 
 DISPLAY_LAYER 另记录 `hostId` 和 `layerType`，必须与当前显示层工作项一致。Unity 证据以 `nativeWorkItemRef: {path,sha256}` 指向实际原生显示层工作项；V3–V5 另以 `nativeEvidenceRef` 指向对应阶段原生证据。原生工作项须绑定显示层、宿主、阶段和响应式合同，原生证据须通过实际领域校验；V5 还记录实际 `stateId` 和 `viewport`，并与人工验收情境中的对象、候选、目标和运行条件一致。

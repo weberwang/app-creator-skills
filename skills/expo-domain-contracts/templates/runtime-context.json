@@ -1,0 +1,38 @@
+{
+  "schemaVersion": "1.0",
+  "objectId": "REPLACE",
+  "workItemId": "REPLACE",
+  "candidateId": "REPLACE",
+  "platform": "REPLACE",
+  "environment": "REPLACE",
+  "buildKind": "REPLACE",
+  "runtimeKind": "REPLACE",
+  "platformProfileRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "layoutSpecRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "layoutSourceRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "assetManifestRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "buildIdentityRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "runEvidenceRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "interactionEvidenceRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  }
+}

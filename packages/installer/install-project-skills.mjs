@@ -12,7 +12,7 @@ import { sameInstallationContents } from './installation-content.mjs';
 /** 当前分发包根目录，安装不依赖源仓库所在磁盘。 */
 export const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 /** 已支持的技术栈与公共技能是唯一安装清单。 */
-export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs']);
+export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
 /** 公共技能始终整体安装，避免断开跨技能相对引用。 */
 export const COMMON_SKILLS = CORE_SKILLS;
 
@@ -108,7 +108,7 @@ function applyProjectIgnore(project) {
 
 /** 构造完全只读的安装计划，任何冲突在写入前一次性报告。 */
 export function planInstallation({ projectRoot, stacks, replace = false, sourceRoot = SOURCE_ROOT }) {
-  if (!Array.isArray(stacks) || stacks.length === 0 || stacks.some((stack) => !STACKS.includes(stack))) throw new Error('必须选择有效技术栈：unity/cocos/phaser/threejs/flutter/esp32/nodejs/all');
+  if (!Array.isArray(stacks) || stacks.length === 0 || stacks.some((stack) => !STACKS.includes(stack))) throw new Error(`必须选择有效技术栈：${STACKS.join('/')}/all`);
   const project = resolve(projectRoot);
   assertNoLinks(project);
   if (!existsSync(project) || !lstatSync(project).isDirectory()) throw new Error('目标项目必须是已有目录');
@@ -283,7 +283,7 @@ export async function runInstaller(argv = process.argv.slice(2)) {
     return runRemoteInstaller(argv);
   }
   const options = parseArgs(argv);
-  if (options.help) { console.log('node packages/installer/install-project-skills.mjs <项目目录> --stack unity|cocos|phaser|threejs|flutter|esp32|nodejs|all [--repo owner/repo] [--ref 分支或提交] [--dry-run] [--replace]\n仅安装所选栈及公共依赖；已有内容相同则跳过，内容不同需 --replace。'); return; }
+  if (options.help) { console.log(`node packages/installer/install-project-skills.mjs <项目目录> --stack ${STACKS.join('|')}|all [--repo owner/repo] [--ref 分支或提交] [--dry-run] [--replace]\n仅安装所选栈及公共依赖；已有内容相同则跳过，内容不同需 --replace。`); return; }
   const result = installSkills(options);
   console.log(JSON.stringify({
     status: 'PASS', changed: result.changed,

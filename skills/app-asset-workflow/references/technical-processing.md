@@ -18,6 +18,7 @@ node <技能目录>/scripts/remove-background-local.mjs --source art/item.raw.pn
 - Cocos：AssetDB UUID、导入子资源、SpriteFrame、Prefab 与资源加载路径。
 - Phaser：纹理/图集 key、帧、Scale/Camera 与实际加载和渲染对象。
 - Three.js：纹理色彩空间、UV/材质、glTF、实际渲染与 GPU 资源释放。
+- Expo：按实际 Metro 静态资源引用或已选加载库登记，核对图片密度、字体注册、缓存与真实 React Native 消费者；不得用整页位图替代交互或强行采用其他栈图集。
 - Flutter：pubspec 资产登记、逻辑/像素密度、Image 约束、缓存和真实 Widget 消费者。
 
 源仓库中的其他图集、模型和布局工具并未自动打包进本技能；需要时按技术规范及当前项目能力选用，不能调用不存在的旧工作流命令。

@@ -2,7 +2,7 @@
   "name": "app-creator-skills",
   "version": "1.0.0",
   "private": true,
-  "description": "游戏、应用、设备 GUI 与 Node.js 服务器公共工作流及七栈独立规范",
+  "description": "游戏、应用、设备 GUI 与 Node.js 服务器公共工作流及八栈独立规范",
   "type": "module",
   "engines": {
     "node": ">=22.20.0"

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": "1.0",
+  "objectId": "REPLACE",
+  "platformProfileRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "layoutSpecRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
+  "items": [],
+  "nativeOnlyReason": "REPLACE"
+}

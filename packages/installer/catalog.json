@@ -786,6 +786,93 @@
       "resourceDirectories": [
         "app-domain-toolkit"
       ]
+    },
+    "expo": {
+      "capabilitySkills": [
+        "app-creator-workflow",
+        "app-product-planning",
+        "app-architecture",
+        "app-project-foundation",
+        "app-ui-layout",
+        "app-asset-workflow",
+        "app-feedback",
+        "app-runtime-plugins",
+        "app-quality-review",
+        "app-release",
+        "app-artifact-cleanup"
+      ],
+      "nativeAdapters": [
+        {
+          "sourceSkill": "expo-workflow",
+          "capability": "app-creator-workflow",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-workflow"
+        },
+        {
+          "sourceSkill": "expo-product-planning",
+          "capability": "app-product-planning",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-product-planning"
+        },
+        {
+          "sourceSkill": "expo-architecture",
+          "capability": "app-architecture",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-architecture"
+        },
+        {
+          "sourceSkill": "expo-project-foundation",
+          "capability": "app-project-foundation",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-project-foundation"
+        },
+        {
+          "sourceSkill": "expo-ui-layout",
+          "capability": "app-ui-layout",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-ui-layout"
+        },
+        {
+          "sourceSkill": "expo-asset-workflow",
+          "capability": "app-asset-workflow",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-asset-workflow"
+        },
+        {
+          "sourceSkill": "expo-feedback",
+          "capability": "app-feedback",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-feedback"
+        },
+        {
+          "sourceSkill": "expo-runtime-plugins",
+          "capability": "app-runtime-plugins",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-runtime-plugins"
+        },
+        {
+          "sourceSkill": "expo-quality-review",
+          "capability": "app-quality-review",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-quality-review"
+        },
+        {
+          "sourceSkill": "expo-release",
+          "capability": "app-release",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-release"
+        },
+        {
+          "sourceSkill": "expo-artifact-cleanup",
+          "capability": "app-artifact-cleanup",
+          "path": "skills/app-stack-expo/references/native-contracts.md",
+          "section": "mode-expo-artifact-cleanup"
+        }
+      ],
+      "resourceDirectories": [
+        "app-domain-toolkit",
+        "expo-domain-contracts"
+      ]
     }
   }
 }
