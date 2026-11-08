@@ -2,6 +2,8 @@
 
 新建或调整 Creator 生产构建、准备发布候选时读取本文件。先确定项目锁定的 Creator 版本和真实构建入口；以该版本官方文档、工程配置、构建日志与最终产物共同证明构建设置生效。
 
+打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核实当前功能。无内购时通过 Creator 及实际原生依赖管理移除专用插件/SDK、桥接初始化和专用配置，重新生成/构建后核对最终原生包与依赖；不能只改生成目录或在场景里禁用购买入口。有订阅/恢复等实际功能时保留必要依赖，不误删其他能力的共享消费者。
+
 ## Creator 构建配置
 
 - 检查 Creator 编辑器版本、构建目标、构建面板/配置档、命令行选项、构建扩展及后处理脚本，记录实际生效设置。不得将 Phaser/Vite 或其他引擎的配置键直接复制到 Creator 工程。
@@ -11,6 +13,10 @@
 - 保留第三方依赖依法或按许可要求随包分发的许可证与 NOTICE 文件。压缩、改名或移除注释不等于完整反编译加固，也不替代授权材料交付。
 
 Creator 3.8 的核对入口：[General Build Options](https://docs.cocos.com/creator/3.8/manual/en/editor/publish/build-options.html)、[Build Guide](https://docs.cocos.com/creator/3.8/manual/en/editor/publish/build-guide.html) 和 [Feature Cropping](https://docs.cocos.com/creator/3.8/manual/en/editor/project/)。项目使用其他版本时改查对应版本文档，不推广 3.8 的界面、配置名或内部行为。
+
+## Creator 原生系统启动屏
+
+Android/iOS 使用 Creator 自身的原生构建与平台工程，按[Creator 原生启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#creator-原生构建的启动衔接)维护系统启动资源和实际配置；不使用 Capacitor/WebView 的封装步骤。记录可重复生成的配置来源，重新构建后核对原生制品中的主题、launch screen 和本地资源，分别衔接系统画面、适用的引擎启动画面及原生渲染首场景。Creator Web 预览、面板打开或构建完成不代表原生启动显示通过；运行与用户人工显示确认按已有授权执行，未运行如实记录。
 
 ## 最终产物 Source Map 检查
 

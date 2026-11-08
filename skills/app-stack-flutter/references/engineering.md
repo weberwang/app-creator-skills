@@ -10,6 +10,10 @@
 
 仅当多个页面真实复用同一稳定能力、且共享接口已经确认后才提到公共层。不用 `common/manager/util` 取代明确归属和接口。项目已确定领域结构时优先沿用，不为命名整齐而全仓迁移页面。
 
+## 系统启动屏
+
+目标包含 Android 或 iOS/iPadOS 时，按[系统启动屏规范](../../app-domain-toolkit/references/system-launch-screen.md)配置随包资源、首个稳定帧衔接和适用验证。Flutter Widget 不能替代 Android 原生启动主题或 iOS `LaunchScreen.storyboard` 等实际原生配置；使用生成工具时核对其写入范围，避免覆盖手工配置。优先项目及官方现成能力，沿用现有技术设计、清单和路径，不机械增加插件或新建视觉阶段门；真实显示交用户人工检查，未授权设备运行保持未验证。
+
 ## 状态与页面路由
 
 涉及技术设计、新增或替换插件时，按[插件与技术方案选型](plugin-selection.md)和[依赖能力档](../../flutter-project-init/references/dependency-profiles.md)执行；版本、平台准入、替代方案与验证结论写入同一技术设计记录。

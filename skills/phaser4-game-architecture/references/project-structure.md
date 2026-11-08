@@ -90,6 +90,7 @@ game-project/
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 - `modules/<module-id>/` 归属场景无关的基础服务；场景通过其公开接口调用。模块不得导入具体场景、显示层或其私有实现，场景之间也不得直接访问对方内部状态。纯规则与数据校验优先保持独立于 Phaser 显示对象，方便定向测试。
 - `platform/` 提供平台接口的实现，`game/contracts/` 定义接口，`src/main.ts` 完成注入。游戏业务不得直接导入 Capacitor 或具体平台适配器；平台实现不得依赖具体场景。Android 原生主题、Manifest 和 Activity 修改归属根级 `android/` 工程，不能放入 TypeScript 适配目录代替原生配置。
+- 已选 Android/iOS 原生宿主时，按[Web 封装原生的启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)在实际宿主源配置或可重复生成机制维护系统启动屏，核对宿主与 WebView/Canvas 首个稳定画面衔接及失败恢复；纯 Web 不因此创建原生工程或安装启动插件。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 
 ## 资源、命名与产物
@@ -113,6 +114,7 @@ game-project/
 
 1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
 2. 在对应基础模块完成游戏视口铺满、Android 启动与运行无标题栏/沉浸式全屏，以及音频后台暂停与原位置恢复；分别遵守[基础显示约束](../../phaser4-game-orchestrator/references/game-implementation.md#基础显示约束)和[音频生命周期约束](../../app-stack-phaser/references/native-contracts.md#mode-phaser4-game-audio--后台暂停与恢复约束)。
+   已选 Android/iOS 宿主时，同时验证生产 Web 输出、实际 `webDir`、宿主同步与最终原生包内的入口及本地启动资源；回读主题、Manifest 和 launch screen。Web 构建通过不能代替原生包及显示检查，运行或人工检查未执行时标记未验证。
 3. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
 
 ## 本栈配套资料

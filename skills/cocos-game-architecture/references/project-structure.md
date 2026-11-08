@@ -58,6 +58,7 @@ Creator 项目实际还可能包含 `library/`、`temp/`、`local/`、`build/` �
 - modal/popup 等瞬态显示层按需进入 `assets/scripts/display-layers/<id>/`，与宿主 Scene 的私有 `ui/` 独立；宿主通过公开接口和上下文协作。共享实现进入 `assets/scripts/shared/` 仅限至少两个已确认场景稳定复用的能力，或运行启动必需的能力；模块不得反向依赖 Scene/显示层。
 - 可复用 UI 或玩法对象优先形成职责明确的 Prefab；Prefab 与场景引用仍以 Creator 资源数据库中确认的 UUID 为准。
 - `extensions/`、`native/` 仅在确有编辑器扩展、构建扩展或原生插件时启用。按项目 Creator 版本记录宿主工程、平台权限与插件构建边界。
+- Android/iOS 系统启动资源由 Creator 实际原生构建配置或可重复的原生扩展维护，按[Creator 原生启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#creator-原生构建的启动衔接)核对生成后的有效资源与原生稳定首帧；不套用 Web 宿主的 `webDir`、Capacitor 或 WebView 入口。
 - 唯一应用装配/最小 Boot 启动点调用 `assets/scripts/platform/initialize-sdks.ts`；每个 SDK 的实际初始化与状态由 `assets/scripts/platform/sdks/<sdk>-sdk.ts` 分别管理。Scene、Component、构造函数和平台适配器不另行初始化 SDK。编辑器/引擎及 AssetDB 生命周期不迁入该文件，细则见[SDK 统一初始化](./sdk-initialization.md)。
 - 测试脚本、服务启动配置和生成资源不混入 Creator 运行时 `assets/`，除非项目明确需要将其作为游戏资源。
 

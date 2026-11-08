@@ -234,10 +234,11 @@ Use [references/release-checklist.md](../../flutter-release-readiness/references
 
 Always cover:
 
-- App identity, icons, splash, bundle IDs, versioning.
+- App identity, icons, bundle IDs, versioning；Android/iOS 系统启动屏的本地资源、首帧衔接与人工显示检查按[公共系统启动屏规范](../../app-domain-toolkit/references/system-launch-screen.md)核对，未执行的平台运行如实标记未验证。
 - Release signing and environment configuration.
 - Privacy policy, terms, consent, account deletion.
-- Payment, subscription, restore purchase, receipt validation when monetized.
+- 有商店内购功能时核对购买、订阅、恢复与收据；其他支付按实际需求验证，不因广告变现默认要求内购接入。
+- 打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
 - Crash reporting, analytics, logging, and support channels.
 - Store screenshots, descriptions, keywords, categories, and test account.
 - App Store Privacy Nutrition Labels.
@@ -444,6 +445,8 @@ Do not install Riverpod, hooks, Freezed, fpdart, JSON generators, or ScreenUtil 
 5. Set up the app shell, theme, routing, linting, test scaffolding, and code generation only when the selected profiles require them.
 6. Generate the project-local `flutter-dev` skill with `node scripts/create_flutter_dev_skill.js`, then adapt its dependency sections to the actual selected profiles.
 7. Write `docs/architecture/flutter-init.md` from [references/init-report-template.md](../../flutter-project-init/references/init-report-template.md).
+
+目标包含 Android 或 iOS/iPadOS 时，按[系统启动屏规范](../../app-domain-toolkit/references/system-launch-screen.md#任务安排与完成条件)安排原生配置与随包资源、首个稳定帧衔接、适用工程验证及用户人工显示检查。Android 启动主题和 iOS 原生 launch screen 由平台工程维护，Flutter Widget 不能替代；优先现有或官方现成能力，生成工具与手工配置不重复维护。沿用实际技术设计、资源路径和验证记录，不增加工作项字段或视觉阶段门。
 
 <a id="mode-flutter-project-init--verification"></a>
 #### Verification

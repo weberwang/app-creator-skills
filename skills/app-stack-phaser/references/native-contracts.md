@@ -108,6 +108,7 @@
 - 用 Phaser 4、TypeScript、Vite 实现 Web 核心；新项目优先采用官方当前的 create-phaser-game 流程。
 - 新建或调整 Vite 生产构建时，按[生产构建压缩与发布检查](../../phaser4-game-architecture/references/production-build.md)落实 Terser 两轮压缩、标识符缩短、注释移除与生产 Source Map 默认关闭；评估 Phaser Compressor 按需裁剪引擎，并交接实际配置入口、构建命令和验证证据。
 - 仅在移动平台档被实际需求触发时用 Capacitor 承载 iOS 与 Android，并将每个已采用插件封装在平台适配层；初始化不得默认安装非必需插件。
+- 已选 Android/iOS 宿主时，基础包按[Web 封装原生启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)维护原生启动配置及本地资源、WebView/Canvas 首帧与失败恢复；过渡层只按实际宿主生命周期管理，不能把 Web 页面当系统启动屏或仅凭 bridge ready 判定首帧。
 - 项目所有已采用 SDK 由 `src/platform/initialize-sdks.ts` 装配并分别投递，各 SDK 的初始化、状态和恢复由各自的 `src/platform/sdks/<sdk>-sdk.ts` 管理，`src/main.ts` 调用后 Phaser 首帧不等待初始化批次；设计和实施时读取[SDK 统一初始化](../../phaser4-game-architecture/references/sdk-initialization.md)，在 TDD 明确每个 SDK 的官方真实前置、就绪判据和失败/重试所有权，禁止无官方依据的跨 SDK 启动屏障或在场景、构造函数、业务服务和导入副作用中分散初始化。
 - Android/iOS 原生平台功能优先使用现有插件，按下述[原生平台插件选型](#mode-phaser4-game-architecture--原生平台插件选型)执行，避免重复实现原生能力。
 - 小游戏必须单独验证；可选商业能力须有显式接口和已批准开关。
@@ -329,7 +330,10 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 
 读取独立发布 Work Item、平台矩阵、资源登记、测试计划和发布清单。F0 校验任务范围与流程，F1 校验候选与发布规格，F2 完成 QA/技术/合规领域质量，F3 绑定工程证据，F4 只决定记录中明确的外部对象和发布动作。
 
+打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
+
 1. 分别核对小游戏、iOS、Google Play 的打包、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与账号删除要求。
+   对已选 Android/iOS 原生包核对生产 Web 输出、`webDir`、宿主同步和最终包中的入口、本地启动资源及原生主题/launch screen；背景与稳定首帧衔接由用户人工检查，未运行原生目标标记未验证，Web build 成功不能代替原生验收。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
    按[生产构建压缩与发布检查](../../phaser4-game-architecture/references/production-build.md)检查最终候选：Vite 生产入口显式设置 `build.sourcemap: false`，Terser 依赖、锁文件与压缩选项实际生效；检查所有公开产物及渠道包内 Web 资源，不得包含 Source Map 文件、内联映射或映射引用。登记 Phaser Compressor 的版本适用性、采用结果或未采用原因；采用时核对裁剪配置、实际引擎入口、体积对比和功能烟测，防止渠道配置覆盖或重复打入完整引擎。不能将基础压缩或引擎裁剪表述为完整反编译加固。

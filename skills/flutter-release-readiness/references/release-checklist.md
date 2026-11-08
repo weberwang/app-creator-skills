@@ -12,7 +12,7 @@
 - Bundle ID / application ID:
 - Version and build number:
 - Icons:
-- Splash:
+- Android/iOS 系统启动屏：原生配置与随包资源、首帧衔接及适用工程检查；实际显示由用户人工检查，未运行平台标记未验证：
 
 ## Legal and Privacy
 
@@ -31,6 +31,9 @@
 
 ## Monetization
 
+商品、购买、恢复和订阅条目仅在实际提供对应能力时填写；SDK 必要性核对始终适用。
+
+- 商店内购实际功能与 SDK 必要性：购买、订阅、恢复及既有权益逐项核对；无功能时移除专用 SDK 和接入，检查最终包及依赖，范围不明标记待确认。依据为项目根目录 `.agents/skills/app-release/references/release-readiness.md` 的“内购 SDK 必要性与移除”：
 - Products configured:
 - Purchase flow:
 - Failure flow:

@@ -113,6 +113,7 @@
 - 新建或调整 Vite 生产构建时，按[生产构建压缩与发布检查](../../threejs-game-architecture/references/production-build.md)配置 Terser 两轮压缩、标识符缩短、注释移除和生产 Source Map 显式关闭，核对最终 Web 与渠道资源的实际字节。
 - three.js `Scene` 是 `Object3D` 树，负责组织可见对象，不充当游戏状态容器。独立的场景控制器拥有玩法状态与生命周期，并提供 `enter`、`update`、`exit`、`dispose`；渲染循环按固定步长推进玩法/物理，再用渲染插值显示当前状态。
 - 浏览器是默认平台。仅当目标渠道确实要求原生宿主时才采用 Capacitor 或对应宿主；平台插件按能力逐项选择并封装在适配层，不预装非必需插件。
+- 已选 Android/iOS 宿主时，基础包按[Web 封装原生启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)维护原生启动配置及本地资源、WebView/Canvas 首帧与失败恢复；过渡层只按实际宿主生命周期管理，不能把 Web 页面当系统启动屏或仅凭 renderer 创建判定首帧。
 - 小游戏必须单独验证；可选商业能力须有显式接口和已批准开关。
 - 项目采用的 SDK 按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 独立投递，各 SDK 在 `src/platform/sdks/<sdk>-sdk.ts` 分别实现启动、回调、幂等和初始化重试。各 SDK 分别投递，只等待锁定平台、版本及流程的官方真实前置，不建立无关场景或全局就绪屏障；前置不满足仅限制对应 SDK，业务使用仍遵守相应能力门。
 - 基础模块按[音频生命周期约束](#mode-threejs-game-audio--后台暂停与恢复约束)处理浏览器页面可见性和音频上下文受限；只有采用原生宿主时才添加对应平台生命周期适配。
@@ -334,7 +335,10 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 
 读取独立发布 Work Item、平台矩阵、资源登记、测试计划和发布清单。F0 校验任务范围与流程，F1 校验候选与发布规格，F2 完成 QA/技术/合规领域质量，F3 绑定工程证据，F4 只决定记录中明确的外部对象和发布动作。
 
+打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
+
 1. 按项目实际采用的浏览器、小游戏或原生渠道核对打包、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与账号删除要求，不为未采用的宿主创建占位工程。
+   对已选 Android/iOS 原生包核对生产 Web 输出、`webDir`、宿主同步和最终包中的入口、本地启动资源及原生主题/launch screen；背景与稳定首帧衔接由用户人工检查，未运行原生目标标记未验证，Web build 成功不能代替原生验收。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
    按[生产构建压缩与发布检查](../../threejs-game-architecture/references/production-build.md)核对实际 Terser 配置与最终候选，使用产物检查器检查公开目录和已解包渠道 Web 资源；Source Map 文件、内联映射或映射引用未清除时不得交付发布候选。部署响应头与真实运行证据分别核对，不以压缩检查替代。

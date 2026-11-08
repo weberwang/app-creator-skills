@@ -84,6 +84,7 @@ game-project/
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 - `modules/<module-id>/` 归属场景无关的基础服务；场景通过其公开接口调用。模块不得导入具体场景、显示层或其私有实现，场景之间也不得直接访问对方内部状态。纯规则与数据校验优先保持独立于 ThreeJS 显示对象，方便定向测试。
 - `platform/` 默认只实现浏览器能力，`game/contracts/` 定义需要的平台接口，`src/main.ts` 完成注入。只有目标渠道明确需要原生宿主时才创建 Capacitor、Android 或 iOS 工程及适配器；业务不得直接导入原生插件或平台适配器。原生主题、Manifest 和 Activity 修改归属对应宿主工程。
+- 已选 Android/iOS 原生宿主时，按[Web 封装原生的启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)在实际宿主源配置或可重复生成机制维护系统启动屏，核对宿主与 WebView/Canvas 首个稳定画面衔接及失败恢复；纯 Web 不因此创建原生工程或安装启动插件。
 - 已采用 SDK 的初始化调用、完成处理、幂等和重试由 `src/platform/sdks/<sdk>-sdk.ts` 分别管理，按[SDK 分文件独立初始化](./sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 装配入口分别投递，只等待自身官方真实前置，不建立无关 SDK 依赖；无 SDK 时不创建空文件。各业务适配器不得另建 SDK 初始化实现，游戏不等待 SDK 批次完成。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#代码归属与依赖)。
 
@@ -101,6 +102,7 @@ game-project/
 
 1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
 2. 在对应基础模块完成 Canvas 视口适配、WebGL2 渲染循环、场景控制器切换与清理，以及浏览器音频暂停/恢复；分别遵守[基础显示约束](../../threejs-game-orchestrator/references/game-implementation.md#基础显示约束)和[音频生命周期约束](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-audio--后台暂停与恢复约束)。只有确实采用原生宿主时，才把该宿主的窗口与生命周期要求加入基础包。
+   已选 Android/iOS 宿主时，同时验证生产 Web 输出、实际 `webDir`、宿主同步与最终原生包内的入口及本地启动资源；回读主题、Manifest 和 launch screen。Web 构建通过不能代替原生包及显示检查，运行或人工检查未执行时标记未验证。
 3. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
 
 ## 本栈配套资料

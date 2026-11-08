@@ -34,6 +34,10 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
+- 已选 Android、iOS/iPadOS 原生宿主时，在基础工程阶段按[系统启动屏制作与交付](system-launch-screen.md)安排原生配置/本地资源、首帧衔接和验证任务；系统启动屏不走场景资源生产门，品牌开场或应用内加载页不能替代它。纯 Web/小游戏不因此新增移动宿主，已有工程只调整受影响平台。
+
+> 适用技术栈：cocos、phaser、threejs。
+
 - 项目目标包含 Android 时，必须同步修改原生宿主：启动主题、启动画面切换后的 Activity 主题及运行窗口均不显示 Android 窗口标题栏或 ActionBar；从冷启动首帧开始到游戏运行全程不得出现应用标题或标题栏占位，不能仅在 Web 页面或首场景加载后隐藏。
 
 > 适用技术栈：cocos、phaser、threejs。

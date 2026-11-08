@@ -16,6 +16,8 @@
 
 使用项目锁文件中的 Vite/npm 命令执行实际 production build。核对构建输出、字体和媒体路径、静态依赖、动态导入、配置模式及错误日志；部署时如果改变站点 base 或 Capacitor `webDir`，需有对应构建验证。开发服务器可辅助迭代，但不能代替生产构建。
 
+已采用 Android/iOS 原生宿主时，按[Web 封装原生的启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)核对生产输出、实际 `webDir`、宿主 copy/sync 和最终包内入口、静态媒体及离线启动资源；同步后回读原生主题/Manifest/launch screen 与 WebView 到稳定 Canvas 首帧的衔接。开发服务器或 Web 构建成功不代表原生包或人工显示已验收。
+
 开发用 SourceMap 只在实际用途中保留；按构建职责明确定义生产 SourceMap 是否输出和归档，避免将含有源码的 map 纳入不希望公开的分发件。检查首屏同步资源体积与需要后加载的关卡/Scene 资源边界。
 
 ## Phaser 角色资产

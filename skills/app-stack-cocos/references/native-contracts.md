@@ -108,6 +108,7 @@
 - 实际采用的第三方 SDK 初始化统一遵循[SDK 统一初始化](../../cocos-game-architecture/references/sdk-initialization.md)：唯一应用装配入口调用 `assets/scripts/platform/initialize-sdks.ts` 独立投递任务；启动场景/最小 Boot 组件只做应用装配，不承载场景玩法初始化，也不等待 SDK 完成。Creator 引擎和 AssetDB 保持自身生命周期，不放进第三方 SDK 初始化模块。
 - 资源候选、确认成果、Creator 正式资源、审阅证据和机器记录按[产物存放与证据边界](../../cocos-game-architecture/references/artifact-storage.md)归档。新建或调整发布构建、准备发布候选时按[生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核对 Creator 版本对应的有效配置与最终包。
 - 用 Creator 编辑器、AssetDB、构建配置和目标平台验证工程行为。Web、小游戏和原生平台的能力分别按项目实际构建目标核对。
+- Android/iOS 的系统启动屏沿 Creator 自身原生构建处理，读取[Creator 原生启动衔接](../../app-domain-toolkit/references/system-launch-screen.md#creator-原生构建的启动衔接)；平台资源及原生渲染首帧不使用 Capacitor/WebView 的封装与就绪规则。
 
 <a id="mode-cocos-game-architecture--场景资源与编辑器写入边界"></a>
 #### 场景、资源与编辑器写入边界
@@ -335,6 +336,8 @@ Creator Scene/Node/Component、Tween/Animation/ParticleSystem、Prefab、AssetDB
 Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编辑器构建操作按[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)并以实时 `tools/list` schema 执行；不得手写 `.scene`、`.prefab` 或 `.meta` 绑定。当前 MCP 的构建工具可能只打开 Creator 构建面板或报告 worker ready，这不构成构建完成；需经 Creator UI 实际完成构建并取得结果，否则候选构建验证保持 pending/blocked。
 
 读取独立发布 Work Item、平台矩阵、资源登记、测试计划和发布清单。F0 校验任务范围与流程，F1 校验候选与发布规格，F2 完成 QA/技术/合规领域质量，F3 绑定工程证据，F4 只决定记录中明确的外部对象和发布动作。
+
+打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
 
 1. 分别核对小游戏、iOS、Google Play 的打包、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与账号删除要求。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。

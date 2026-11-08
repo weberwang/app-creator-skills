@@ -260,6 +260,8 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 
 候选测试与构建使用 `unity:unity-cli`；IAP、LevelPlay、Vivox、多人和 LiveOps 使用对应 `unity:*` 专项 Skill。本角色负责平台矩阵、许可隐私、候选身份、签名/上传授权和最终放行，不重复维护 SDK 或 CLI 操作教程。
 
+打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
+
 1. 核对用户批准的平台集合和每个平台的 Unity 6 Build Profile、脚本后端、版本、场景、图形 API、输入、屏幕策略与日志配置；未选择平台不得生成候选包。
 2. 本角色是设备验证的唯一启动角色。先用机器可验证的当前 G2 结果确认状态为 `PASS`，并深验其覆盖全部模块、场景和用户批准平台；任一报告缺失、重复、失败、失效或项目/源码/状态身份不一致时，不得生成候选包、安装或启动任何 Standalone/Player，也不得开始设备验证。
 3. 只从可追溯源码修订和可复现构建配置生成各平台候选包。Windows/Android 按 `unity:unity-cli` 当前规则构建；iOS/iPadOS 必须在 macOS/Xcode、签名和真机条件具备时生成 IPA，否则保持 `BLOCKED`。
