@@ -239,6 +239,7 @@ Always cover:
 - Privacy policy, terms, consent, account deletion.
 - 有商店内购功能时核对购买、订阅、恢复与收据；其他支付按实际需求验证，不因广告变现默认要求内购接入。
 - 打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
+- 按[商店截图与宣传图任务](../../app-release/references/store-marketing-assets.md#任务安排与完成条件)核对目标商店、设备、地区语言和当期规格，复用市场调研提炼实际产品卖点与图片顺序；从当前稳定运行版本采集多张不同产品内容，制作平台允许的展示截图与适用独立宣传图，交付原图、可编辑源及最终导出。用户人工检查截图与成品；不以生成图冒充真实运行画面，也不因此自动运行真机、上传、投放或开展市场实验。
 - Crash reporting, analytics, logging, and support channels.
 - Store screenshots, descriptions, keywords, categories, and test account.
 - App Store Privacy Nutrition Labels.

@@ -151,6 +151,8 @@ Flutter PAGE 的 V1 先完成产品语义、状态与必要功能验证，可按
 
 ## 发布准备与实际上线
 
+目标包含商店展示时，安排[商店截图与宣传图制作任务](../../app-release/references/store-marketing-assets.md#任务安排与完成条件)。平台要求及卖点/截图脚本可在策划阶段准备，相关功能和画面稳定后采集多张真实内容并制作所需宣传图，发布准备核对当前内容、导出规格、顺序及用户人工确认。宣传素材不是游戏内场景资源，不另建视觉阶段门，也不自动包含商店上传、投放或市场实验。
+
 `RELEASE` 默认 `releaseIntent=prepare`。完成本次检查或候选打包、F0–F3及当前准备材料后，可从 PASSED/INTEGRATING 到 COMPLETE；完成结果标为 `release-prepared`。Evidence Manifest 必须唯一包含 PASS 的 `release-preparation` 记录，它绑定当前工作项、技术栈和 release 阶段，并引用当前证据根下两个独立、非空的交付材料与检查文件。交付可以是准备检查报告或构建产物，不能用结果JSON或manifest自身充当证据。
 
 实际发布选择 `releaseIntent=publish`，继续经过 RELEASE_APPROVAL_REQUIRED、F4、精确批准、RELEASING 和真实 `release-result` 后完成，结果标为 `release-published`。准备模式禁止 `publish` 动作和发布执行状态。签名、上传等其他受保护操作仍分别遵循原有精确授权规则。

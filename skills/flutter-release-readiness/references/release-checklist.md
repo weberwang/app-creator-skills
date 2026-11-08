@@ -65,6 +65,9 @@
 
 ## Store Assets
 
+- 商店截图与宣传图按项目根目录 `.agents/skills/app-release/references/store-marketing-assets.md` 的“任务安排与完成条件”执行，记录目标平台/设备/语言、当期官方规格、市场卖点与图片顺序：
+- 从当前稳定运行版本采集多张不同产品内容，保留原图及来源；展示截图与适用宣传图遵守平台规则，不以生成图冒充实际截图：
+- 交付可编辑制作源、各平台最终导出和用户人工显示检查结果；未采集、未验证或未确认的项如实记录：
 - Screenshots:
 - Description:
 - Keywords:

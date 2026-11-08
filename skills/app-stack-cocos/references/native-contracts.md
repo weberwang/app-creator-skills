@@ -339,6 +339,8 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 
 打包前按[内购 SDK 必要性与移除](../../app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及仍需客户端 SDK 的权益功能；确认无内购时移除专用 SDK 和接入并检查最终包，范围不明标记待确认，不因没有购买按钮就删除恢复或权益能力。
 
+按[商店截图与宣传图任务](../../app-release/references/store-marketing-assets.md#任务安排与完成条件)核对目标商店、设备、地区语言和当期规格，复用市场调研提炼真实卖点与图片顺序；从当前稳定运行版本采集多张不同游戏内容，制作平台允许的展示截图与适用独立宣传图，交付原图、可编辑源及最终导出。用户人工检查截图与成品；不以生成图冒充真实游戏画面，也不因此自动运行真机、上传、投放或开展市场实验。
+
 1. 分别核对小游戏、iOS、Google Play 的打包、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与账号删除要求。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)按[Creator 生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核对锁定 Creator 版本的 release 配置、压缩/混淆、注释移除、生产 Source Map 关闭、最终已解包候选扫描及 Feature Cropping 评估；Creator 的编辑器配置、CLI 覆盖和构建扩展以实际有效结果为准，不套用 Vite/Terser 固定键。候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
