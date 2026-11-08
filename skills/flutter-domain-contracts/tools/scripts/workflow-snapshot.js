@@ -189,6 +189,25 @@ function compareRecords(left, right) {
   return Buffer.compare(Buffer.from(leftKey, "utf8"), Buffer.from(rightKey, "utf8"));
 }
 
+/** 判断 Git 项目根级工具目录，不屏蔽业务子目录中的同名路径。 */
+function isLocalAgentsPath(relativePath) {
+  const value = process.platform === "win32" ? relativePath.toLowerCase() : relativePath;
+  return value === ".agents" || value.startsWith(".agents/");
+}
+
+/** 跨边界重命名保留业务路径变化，复制进入本地工具目录不虚构源文件删除。 */
+function projectChange(record) {
+  const targetLocal = isLocalAgentsPath(record.path);
+  if (!record.previousPath) return targetLocal ? null : record;
+  const sourceLocal = isLocalAgentsPath(record.previousPath);
+  if (sourceLocal && targetLocal) return null;
+  if (sourceLocal) return { status: "A", path: record.path };
+  if (targetLocal) {
+    return record.status.includes("C") ? null : { status: "D", path: record.previousPath };
+  }
+  return record;
+}
+
 /**
  * 合并基线 diff 和工作树状态，避免未跟踪、冲突或仅工作树变化的路径遗漏。
  * @param {Array<object>} diffRecords 基线 diff 记录
@@ -247,7 +266,9 @@ function createSnapshot(argv) {
   const baseSha = resolveBase(root, args.baseRef);
   const diffOutput = runGit(["diff", "--name-status", "--find-renames", "--no-ext-diff", "-z", baseSha, "--"], { cwd: root });
   const statusOutput = runGit(["status", "--porcelain=v1", "-z", "--untracked-files=all"], { cwd: root });
-  const records = mergeRecords(parseDiffRecords(diffOutput), parseStatusRecords(statusOutput));
+  // 先变换再合并，防止同一跨边界变更在 Git diff 和 status 中重复计入。
+  const projectRecords = (records) => records.map(projectChange).filter(Boolean);
+  const records = mergeRecords(projectRecords(parseDiffRecords(diffOutput)), projectRecords(parseStatusRecords(statusOutput)));
   const changed = [];
 
   for (const record of records) {

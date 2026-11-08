@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /** 按技术栈安装公共技能和独立规范，并根据调用方选择是否保留更新备份。 */
-import { closeSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
+import { accessSync, closeSync, constants, cpSync, existsSync, fstatSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readSync, readdirSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -37,12 +37,82 @@ function assertSourceTree(path) {
   if (lstatSync(path).isDirectory()) for (const item of readdirSync(path)) assertSourceTree(join(path, item));
 }
 
+/** 检查项目根忽略文件及有效规则；保留原有字节和换行，预演不写入。 */
+function inspectProjectIgnore(project) {
+  const path = join(project, '.gitignore');
+  let metadata;
+  try { metadata = lstatSync(path); }
+  catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (metadata && (metadata.isSymbolicLink() || !metadata.isFile() || metadata.nlink !== 1)) {
+    throw new Error('项目 .gitignore 必须是无硬链接的普通文件');
+  }
+  const original = metadata ? readFileSync(path) : Buffer.alloc(0);
+  if (metadata) {
+    const after = lstatSync(path);
+    if (after.isSymbolicLink() || after.dev !== metadata.dev || after.ino !== metadata.ino || after.nlink !== 1 || after.size !== metadata.size || after.mtimeMs !== metadata.mtimeMs) {
+      throw new Error('读取项目 .gitignore 时文件发生变化');
+    }
+  }
+  const content = original.toString('utf8').replace(/^\uFEFF/, '');
+  const lines = content.split(/\r?\n/);
+  const position = lines.findLastIndex((line) => ['/.agents/', '.agents/'].includes(line.trimEnd()));
+  // Git 可按大小写不敏感匹配；后续否定规则可能重新放行目录时，在末尾补一条。
+  const laterNegation = position >= 0 && lines.slice(position + 1).some((line) => line.startsWith('!') && (line.toLowerCase().includes('.agents') || /[*?[\]\\]/.test(line)));
+  const needed = position < 0 || laterNegation;
+  const newline = content.includes('\r\n') ? '\r\n' : '\n';
+  const needsSeparator = original.length > 0 && !content.endsWith('\n');
+  const suffix = needed ? Buffer.from(`${needsSeparator ? newline : ''}/.agents/${newline}`, 'utf8') : Buffer.alloc(0);
+  if (needed) accessSync(metadata ? path : project, constants.W_OK);
+  return { path, metadata, original, suffix };
+}
+
+/** 从已校验的文件描述符按位置读取完整内容，不依赖可变文件偏移量。 */
+function readDescriptor(handle) {
+  const size = fstatSync(handle).size;
+  const bytes = Buffer.alloc(size);
+  let offset = 0;
+  while (offset < size) {
+    const count = readSync(handle, bytes, offset, size - offset, offset);
+    if (!count) throw new Error('读取项目 .gitignore 时文件被截断');
+    offset += count;
+  }
+  if (fstatSync(handle).size !== size) throw new Error('读取项目 .gitignore 时文件发生变化');
+  return bytes;
+}
+
+/** 在技能切换成功后补充忽略规则，异常时保留忽略文件以免覆盖并发编辑。 */
+function applyProjectIgnore(project) {
+  const plan = inspectProjectIgnore(project);
+  if (!plan.suffix.length) return false;
+  let handle;
+  let writing = false;
+  try {
+    handle = openSync(plan.path, plan.metadata ? 'a+' : 'ax+', 0o666);
+    const actual = fstatSync(handle);
+    const pathMetadata = lstatSync(plan.path);
+    if (pathMetadata.isSymbolicLink() || !actual.isFile() || actual.nlink !== 1 || pathMetadata.dev !== actual.dev || pathMetadata.ino !== actual.ino || (plan.metadata && (plan.metadata.dev !== actual.dev || plan.metadata.ino !== actual.ino)) || !readDescriptor(handle).equals(plan.original)) {
+      throw new Error('项目 .gitignore 在安装期间发生变化，未覆盖用户内容');
+    }
+    const written = Buffer.concat([plan.original, plan.suffix]);
+    writing = true;
+    writeFileSync(handle, plan.suffix);
+    if (!readDescriptor(handle).equals(written)) throw new Error('项目 .gitignore 在写入时发生变化');
+    return true;
+  } catch (error) {
+    if (handle !== undefined) { closeSync(handle); handle = undefined; }
+    // 比较后再截断或删除仍有竞争窗口，失败时必须保留当前内容供人工核对。
+    if (writing) throw new Error(`${error.message}；已保留项目 .gitignore 当前内容，请检查`);
+    throw error;
+  } finally { if (handle !== undefined) closeSync(handle); }
+}
+
 /** 构造完全只读的安装计划，任何冲突在写入前一次性报告。 */
 export function planInstallation({ projectRoot, stacks, replace = false, sourceRoot = SOURCE_ROOT }) {
   if (!Array.isArray(stacks) || stacks.length === 0 || stacks.some((stack) => !STACKS.includes(stack))) throw new Error('必须选择有效技术栈：unity/cocos/phaser/threejs/flutter/esp32/nodejs/all');
   const project = resolve(projectRoot);
   assertNoLinks(project);
   if (!existsSync(project) || !lstatSync(project).isDirectory()) throw new Error('目标项目必须是已有目录');
+  inspectProjectIgnore(project);
   const destination = join(project, '.agents', 'skills');
   assertNoLinks(destination);
   const selected = [
@@ -109,7 +179,7 @@ function removeTemporaryTransaction(transaction, agentsRoot) {
 /** 在独占锁内应用计划；仅需临时回滚时，成功后删除本次事务。 */
 function applyInstallation(plan, { retainBackup }) {
   const changes = plan.entries.filter((entry) => entry.action !== 'skip');
-  if (!changes.length) return { ...plan, changed: false, backup: null };
+  if (!changes.length) return { ...plan, changed: applyProjectIgnore(plan.project), backup: null };
   const agentsRoot = join(plan.project, '.agents');
   const transactionId = `${Date.now()}-${randomUUID()}`;
   const transaction = retainBackup
@@ -154,6 +224,8 @@ function applyInstallation(plan, { retainBackup }) {
       applied.push(entry);
       renameSync(join(staged, entry.name), entry.target);
     }
+    // 最后合并忽略规则，保证技能切换失败不会留下额外的项目文件改动。
+    applyProjectIgnore(plan.project);
   } catch (error) {
     const failed = join(transaction, 'failed');
     try { mkdirSync(failed, { recursive: true }); }

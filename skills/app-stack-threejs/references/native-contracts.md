@@ -894,7 +894,7 @@ three.js 提供渲染与场景图；玩法循环、输入状态、物理世界�
 5. GPU 资源由资产服务引用计数持有；移除 Object3D 不会自动释放 geometry、material、texture 或 render target。异步加载返回后先核对场景代次，过期资源交还资产服务。退出清理事件、定时器、mixer、physics/nav handle 和独占资源；共享资源仅在最后持有者释放时 dispose。
 6. 最坏玩法密度记录帧时间 p50/p95、draw calls、triangles、材质与纹理数量、阴影与后处理开销、加载字节和切场景后的资源基线。先减少冗余绘制、材质、阴影和全屏 pass，再按已声明档位调整画质；不得在无数据时承诺 FPS。
 
-新项目运行 `node <技能目录>/scripts/create-game.mjs <空目录>`，脚本复制 [工程模板](../../threejs-game-runtime/assets/starter/package.json)并注入同一运行模块；模板目录本身不是完整可构建产物。生成后执行 `npm ci`、`npm run build`，落实实际玩法再验收。它只演示渲染、响应式输入、固定步和暂停恢复，不是完整游戏。先测试确定性规则、步进与坐标转换，再按需浏览器烟测；启动服务前检查可复用实例，不自动执行真机验收。
+新项目运行 `node <技能目录>/scripts/create-game.mjs <新项目目录>`，脚本复制 [工程模板](../../threejs-game-runtime/assets/starter/package.json)并注入同一运行模块；目录可预先存在 `.agents/`、Git 元数据及 `.gitignore`，这些内容保持原样，其他已有业务文件仍拒绝覆盖。模板目录本身不是完整可构建产物。生成后执行 `npm ci`、`npm run build`，落实实际玩法再验收。它只演示渲染、响应式输入、固定步和暂停恢复，不是完整游戏。先测试确定性规则、步进与坐标转换，再按需浏览器烟测；启动服务前检查可复用实例，不自动执行真机验收。
 <!-- native-source:threejs-game-runtime:end -->
 
 

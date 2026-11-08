@@ -23,10 +23,18 @@ function assertNoLinks(repo, path) {
   }
 }
 
+/** 识别项目根级本地技能目录，不排除业务子目录内的同名文件。 */
+function isLocalAgentsPath(relativePath) {
+  const value = process.platform === 'win32' ? relativePath.toLowerCase() : relativePath;
+  return value === '.agents' || value.startsWith('.agents/');
+}
+
 /** 遍历声明范围的现存普通文件，记录稳定的内容和文件身份。 */
 function snapshotFiles(repo, patterns, { hashContent = true } = {}) {
   const files = new Map();
   const visit = (relative) => {
+    // 在读取元数据前剪枝，避免本地技能变动污染删除基线。
+    if (isLocalAgentsPath(relative)) return;
     const absolute = relative ? resolve(repo, ...relative.split('/')) : resolve(repo);
     const before = statOrNull(absolute);
     if (!before || before.isSymbolicLink()) return;
@@ -46,6 +54,7 @@ function snapshotFiles(repo, patterns, { hashContent = true } = {}) {
     const wildcard = pattern.indexOf('*');
     const prefix = wildcard < 0 ? pattern : pattern.slice(0, wildcard);
     const root = wildcard < 0 ? prefix : prefix.endsWith('/') ? prefix.slice(0, -1) : dirname(prefix).replaceAll('\\', '/').replace(/^\.$/, '');
+    if (isLocalAgentsPath(root)) continue;
     if (root) assertNoLinks(repo, root);
     visit(root);
   }
@@ -93,6 +102,8 @@ export function validateDeletedFiles(repo, work, pack, unit, deleted, profile, p
   }
   for (const path of deleted) {
     const normalized = assertOwnedPath(repo, work, profile, path);
+    // 历史执行状态即使含有旧基线，也不能将本地技能文件当作删除交付。
+    if (isLocalAgentsPath(normalized)) throw new WorkflowError(`本地技能目录不能作为删除交付：${normalized}`);
     const pathKey = key(normalized);
     if (unique.has(pathKey)) throw new WorkflowError(`deletedFiles 不能重复：${normalized}`);
     unique.add(pathKey);

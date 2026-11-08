@@ -63,6 +63,8 @@ node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 
 本地安装遇到不同内容时使用 `--replace` 更新，并保留旧目录到 `.agents/skills-backups/`。
 
+`.agents/` 是项目根的本地工具目录，不纳入 Git、业务变更快照或发布包。安装器会幂等合并根 `.gitignore` 的 `/.agents/`，dry-run 不写文件；已跟踪的旧文件需在明确要求下仅移出 Git 索引并保留本地，安装器不自动修改索引。技能仍可从原位置读取和运行，业务记录保存在 `.workflow-control/` 等正式目录，不能放进 `.agents/` 隐藏；本仓库维护的 `skills/` 源码仍正常跟踪。
+
 ## 开始第一个项目
 
 在目标项目中打开能够读取项目技能的 AI 编程助手，使用统一入口，并说明产品目标与平台。例如：

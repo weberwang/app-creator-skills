@@ -1,11 +1,12 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { link, mkdtemp, mkdir, readFile, rm, unlink, writeFile } from 'node:fs/promises';
+import { link, mkdtemp, mkdir, readFile, realpath, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { completeUnit, initializeWork, inspectWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
+import { freezeDeletionBaseline, validateDeletedFiles } from '../../skills/app-workflow-control/scripts/runtime/deletion-baseline.mjs';
 
 /** 写入测试工作区的文件。 */
 async function put(repo, path, content) {
@@ -13,6 +14,38 @@ async function put(repo, path, content) {
   await mkdir(dirname(absolute), { recursive: true });
   await writeFile(absolute, content);
 }
+
+test('删除基线剪枝根技能目录并保留业务路径，旧基线不能申报技能删除', async (t) => {
+  const root = await realpath(tmpdir());
+  const repo = await mkdtemp(resolve(root, 'workflow-agents-baseline-'));
+  t.after(async () => {
+    const actual = await realpath(repo);
+    assert.equal(dirname(actual), root);
+    assert.match(basename(actual), /^workflow-agents-baseline-/);
+    await rm(actual, { recursive: true, force: true });
+  });
+  await put(repo, '.agents/skills/local.txt', '本地技能');
+  await put(repo, '.agents-other/business.txt', '相似前缀');
+  await put(repo, 'src/.agents/business.txt', '嵌套业务');
+  await put(repo, 'lib/old.dart', '业务删除');
+  const unit = { unitId: 'wide', paths: ['**'] };
+  const pack = { executionUnits: [unit, { unitId: 'direct', paths: ['.agents/skills'] }] };
+  const state = { activeBatch: ['wide', 'direct'] };
+  freezeDeletionBaseline(repo, pack, state);
+  assert.deepEqual(state.deletionBaselines.direct, []);
+  assert.deepEqual(state.deletionBaselines.wide.map((entry) => entry.path).sort(), [
+    '.agents-other/business.txt', 'lib/old.dart', 'src/.agents/business.txt',
+  ]);
+  const work = { evidenceRoot: '.workflow/evidence', allowedPaths: ['**'], forbiddenPaths: [] };
+  await put(repo, `${work.evidenceRoot}/execution-state.json`, JSON.stringify(state));
+  await unlink(resolve(repo, 'lib/old.dart'));
+  assert.doesNotThrow(() => validateDeletedFiles(repo, work, pack, unit, ['lib/old.dart'], {}, []));
+  // 模拟历史状态中的旧条目，确保不能绕过当前的本地技能排除规则。
+  state.deletionBaselines.wide.push({ path: '.agents/skills/local.txt', sha256: 'a'.repeat(64), dev: '1', ino: '1', links: 1 });
+  await put(repo, `${work.evidenceRoot}/execution-state.json`, JSON.stringify(state));
+  await unlink(resolve(repo, '.agents/skills/local.txt'));
+  assert.throws(() => validateDeletedFiles(repo, work, pack, unit, ['.agents/skills/local.txt'], {}, []), /本地技能目录不能作为删除交付/);
+});
 
 test('真实静默命令可采集，失败退出码及伪造采集被拒绝', async (t) => {
   const repo = await mkdtemp(resolve(tmpdir(), 'workflow-capture-'));

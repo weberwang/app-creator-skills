@@ -165,7 +165,8 @@ test('冷内容缓存可从现有安装逐文件复用且不请求技能载荷',
 
   const coldTransport = fakeGitHub(repo);
   const result = await installFixture(reusedProject, join(root, 'new', 'nested', 'cache'), repo, { fetchImpl: coldTransport.fetchImpl });
-  assert.equal(result.changed, false);
+  assert.equal(result.changed, true);
+  assert.equal(readFileSync(join(reusedProject, '.gitignore'), 'utf8'), '/.agents/\n');
   assert.ok(result.remote.metrics.reusedLocal > 0);
   assert.ok(!rawPaths(coldTransport.requests).some((path) => path.startsWith('skills/')));
   assert.deepEqual(rawPaths(coldTransport.requests), ['packages/installer/catalog.json']);
