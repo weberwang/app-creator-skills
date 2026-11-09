@@ -40,6 +40,18 @@
   },
   "sharedWorkflows": [
     {
+      "id": "game-content-playtesting",
+      "path": "../app-domain-toolkit/references/game-content-playtesting.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs"],
+      "onDemand": true
+    },
+    {
+      "id": "game-characteristics",
+      "path": "../app-domain-toolkit/references/game-characteristics.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs"],
+      "onDemand": true
+    },
+    {
       "id": "editor-display-authoring",
       "path": "../app-domain-toolkit/references/editor-display-authoring.md",
       "stacks": ["unity", "cocos"]

@@ -1,4 +1,5 @@
 import { createPublicProjectTemplates } from "../../app-domain-toolkit/templates/project-control-templates.mjs";
+import { GAME_CHARACTERISTICS_TEMPLATE_SECTIONS } from "../../app-domain-toolkit/templates/game-characteristics-templates.mjs";
 
 const PUBLIC_PROJECT_TEMPLATES = createPublicProjectTemplates({ stack: "cocos" });
 
@@ -32,3 +33,8 @@ export const OPTIONAL_TEMPLATES = {
     "release-checklist.md": "# 发布检查清单\n\n## 发布候选版本\n\n- 版本号：\n- 构建提交：\n- 候选包 SHA-256：\n- 构建命令：\n- 候选包位置：\n\n## 必须核验\n\n- [ ] 按[内购 SDK 必要性与移除](../.agents/skills/app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及既有权益；无内购时移除专用 SDK 和接入并复查最终包与依赖，范围不明标记待确认。\n- [ ] 人工已批准 G3。\n- [ ] 每个目标渠道都有对应候选包和测试证据。\n- [ ] 商店资料、隐私声明、分级和资源授权已核验。\n- [ ] Creator 实际生产入口关闭 Debug 与 Source Maps，核验压缩/改名及去注释的最终效果；采用 Terser 扩展时按实际入口验证两轮压缩、mangle 与注释移除，保留必要许可证。\n- [ ] 最终公开目录及已解包渠道资源已通过只读 Source Map 检查，无映射文件、内联映射及映射引用；HTTP 响应头另行核对。\n- [ ] Creator Feature Cropping 适用性、采用或未采用理由、有效配置、包体积对比及功能验证均已记录；MCP 面板打开或 worker ready 不作为构建成功证据。\n- [ ] 没有密钥或商店凭据进入仓库。\n- [ ] 已知风险、回滚或热修复方案已记录。\n- [ ] API/服务边界、迁移回滚、部署监控与备份恢复已按适用范围核验。\n- [ ] 合并前已核对当前分支、批准候选 SHA、干净工作区、git diff --check、测试/CI、审核结论和授权。\n\n## Creator 原生系统启动屏\n\n- [ ] Android/iOS 候选沿 Creator 原生构建，已核对可重复生成的系统启动配置和最终包资源，参见[系统启动屏规范](../.agents/skills/app-domain-toolkit/references/system-launch-screen.md#creator-原生构建的启动衔接)；未套用 Capacitor/WebView 路线。\n- [ ] 系统画面、适用引擎启动画面与原生稳定首帧的衔接有对应证据；实际显示由用户人工确认，未执行或未授权的原生运行如实标记未验证，不用 Creator Web 预览或构建成功代替。\n\n## 商店截图与宣传图\n\n- [ ] 按[商店素材任务](../.agents/skills/app-release/references/store-marketing-assets.md#任务安排与完成条件)核对目标商店、设备、地区语言及当期官方素材规格，复用市场调研确定真实卖点和图片顺序。\n- [ ] 按截图脚本从当前稳定运行版本采集多张不同游戏内容，保留原图、版本及来源；不以生成图或概念图冒充真实截图。\n- [ ] 按平台允许的方式制作商店展示截图与适用的独立宣传图，保存可编辑制作源和最终导出；逐项核对格式、数量、尺寸、语言和版本绑定。\n- [ ] 用户已人工检查截图与成品显示；未采集、未验证或未确认的项标记未完成，未获明确授权不运行真机、不上传商店或开展市场实验。\n"
   }
 };
+
+// 三栈共享项目文档表格，避免特点与验证链在各栈模板中分别维护。
+CORE_TEMPLATES["GDD.md"] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['GDD.md'];
+CORE_TEMPLATES["TDD.md"] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['TDD.md'];
+OPTIONAL_TEMPLATES.qa['qa-plan.md'] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['qa-plan.md'];

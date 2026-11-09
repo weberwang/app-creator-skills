@@ -1,4 +1,5 @@
 import { createPublicProjectTemplates } from "../../app-domain-toolkit/templates/project-control-templates.mjs";
+import { GAME_CHARACTERISTICS_TEMPLATE_SECTIONS } from "../../app-domain-toolkit/templates/game-characteristics-templates.mjs";
 
 const PUBLIC_PROJECT_TEMPLATES = createPublicProjectTemplates({ stack: "phaser" });
 
@@ -32,3 +33,8 @@ export const OPTIONAL_TEMPLATES = {
     "release-checklist.md": "# 发布检查清单\n\n## 发布候选版本\n\n- 版本号：\n- 构建提交：\n- 候选包 SHA-256：\n- 构建命令：\n- 候选包位置：\n\n## 必须核验\n\n- [ ] 按[内购 SDK 必要性与移除](../.agents/skills/app-release/references/release-readiness.md#内购-sdk-必要性与移除)核对购买、订阅、恢复及既有权益；无内购时移除专用 SDK 和接入并复查最终包与依赖，范围不明标记待确认。\n- [ ] 人工已批准 G3。\n- [ ] 每个目标渠道都有对应候选包和测试证据。\n- [ ] 商店资料、隐私声明、分级和资源授权已核验。\n- [ ] 已选 Android/iOS 原生目标按[公共启动屏规范](../.agents/skills/app-domain-toolkit/references/system-launch-screen.md#web-封装原生的启动衔接)核对原生配置与资源、Web 构建和宿主同步后的最终包；首帧衔接由用户人工检查，未运行或未人工确认标记未验证。\n- [ ] 生产构建显式关闭 Source Map，Terser 两轮压缩、标识符缩短与注释移除已在真实入口生效。\n- [ ] 最终公开目录及已解包渠道资源已检查，无映射文件、内联映射和映射引用；HTTP 响应头另行核对。\n- [ ] 没有密钥或商店凭据进入仓库。\n- [ ] 已知风险、回滚或热修复方案已记录。\n- [ ] API/服务边界、迁移回滚、部署监控与备份恢复已按适用范围核验。\n- [ ] 合并前已核对当前分支、批准候选 SHA、干净工作区、git diff --check、测试/CI、审核结论和授权。\n\n## 商店截图与宣传图\n\n- [ ] 按[商店素材任务](../.agents/skills/app-release/references/store-marketing-assets.md#任务安排与完成条件)核对目标商店、设备、地区语言及当期官方素材规格，复用市场调研确定真实卖点和图片顺序。\n- [ ] 按截图脚本从当前稳定运行版本采集多张不同游戏内容，保留原图、版本及来源；不以生成图或概念图冒充真实截图。\n- [ ] 按平台允许的方式制作商店展示截图与适用的独立宣传图，保存可编辑制作源和最终导出；逐项核对格式、数量、尺寸、语言和版本绑定。\n- [ ] 用户已人工检查截图与成品显示；未采集、未验证或未确认的项标记未完成，未获明确授权不运行真机、不上传商店或开展市场实验。\n"
   }
 };
+
+// 三栈共享项目文档表格，避免特点与验证链在各栈模板中分别维护。
+CORE_TEMPLATES["GDD.md"] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['GDD.md'];
+CORE_TEMPLATES["TDD.md"] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['TDD.md'];
+OPTIONAL_TEMPLATES.qa['qa-plan.md'] += GAME_CHARACTERISTICS_TEMPLATE_SECTIONS['qa-plan.md'];

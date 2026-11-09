@@ -16,11 +16,11 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 ## 共用操作步骤
 
 1. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。
-2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；每条用例写清前置条件、操作、预期、实际和证据位置。
+2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；每条用例写清前置条件、操作、预期、实际和证据位置。游戏任务按[QA 用例映射](../app-domain-toolkit/references/game-characteristics.md#qa)追踪特点、规则来源、功能/对象和验证结果，复用 V1 专项证据，在 V5 与最终集成重验实际受影响组合及完整游玩周期；不对普通应用或服务器套用游戏检查。
 3. 性能检查按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)选取相关指标，记录源／资源快照、设备、构建及采样模式、场景／负载、缓存条件、预热、采样窗口和原始数据；与基线及预算同条件比较，分别覆盖适用的冷／热路径、首次／缓存命中与反复进出，不凭一次波动或平均 FPS 推断改善。优化后检查成本转移、副作用和功能回归，区分目标达成、相对改善、无可辨收益、退化与未验证。
 4. 将发现按影响、频率、可绕过性和证据可信度分级，并按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)分开记录观察事实、推测根因与建议修复。
-5. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)只复验失败或受实际影响的区域及必要回归；环境、输入或快照失效时重新检查相关通道，新增副作用时扩展覆盖。
-6. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)汇总通过、失败、阻断、未运行、环境限制和剩余风险，以覆盖范围内的证据说明当前结论，不替用户宣告体验验收。
+5. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)只复验失败或受实际影响的区域及必要回归；环境、输入或快照失效时重新检查相关通道，新增副作用时扩展覆盖。游戏从 V1 进入正式组合或调整规则、资源、时基等内容时，按[回归清单](../app-domain-toolkit/references/game-characteristics.md#regression)关联实际变化、用例、可复用证据及当前重验结果。
+6. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)汇总通过、失败、阻断、未运行、环境限制和剩余风险，以覆盖范围内的证据说明当前结论，不替用户宣告体验验收。游戏内容和体验调整按[关卡与试玩规范](../app-domain-toolkit/references/game-content-playtesting.md#playtest)整理任务、条件、客观观察、人工反馈和调整后的复验；已有模型/求解器的检查范围与真实游玩结论分开报告。
 
 ## 关键边界
 

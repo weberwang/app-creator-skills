@@ -56,3 +56,17 @@
 ## 风险与待决策
 
 只链接当前有效的控制面决策。
+
+## V1 机制验证与正式组合回归
+
+依据 GDD 规则和[V1 专项验证](../../../app-domain-toolkit/references/game-characteristics.md#v1)选择当前功能的实际风险；沿用现有工作项、实施单元与证据，不预填验证结果。正式组合按[变更复验](../../../app-domain-toolkit/references/game-characteristics.md#regression)记录受影响范围。
+
+| 特点/规则来源 | 关联工作项/实施单元 | 代码或配置入口 | V1 前置/输入与验证方式 | QA 用例引用 | 正式组合回归范围/证据 |
+| --- | --- | --- | --- | --- | --- |
+
+## 内容生产与试玩计划
+
+涉及内容时，按[关卡生产](../../../app-domain-toolkit/references/game-content-playtesting.md#levels)、[专项工具选择](../../../app-domain-toolkit/references/game-content-playtesting.md#tools)和[人工试玩](../../../app-domain-toolkit/references/game-content-playtesting.md#playtest)选择适用检查与任务，复用现有计划和证据。
+
+| 内容数据/编辑器入口与消费者 | 自动检查及覆盖边界 | 人工试玩任务 | 受影响回归及证据 |
+| --- | --- | --- | --- |
