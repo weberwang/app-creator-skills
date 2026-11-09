@@ -1,6 +1,7 @@
 import { computeTargetBounds } from "./layout-geometry.mjs";
 import { validateUiLayoutPlanShape } from "./layout-plan-shape.mjs";
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+import { validateNativePositionPlan } from "./layout-native-docking.mjs";
 
 const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 
@@ -277,6 +278,7 @@ export function validateUiLayoutPlan(plan, options = {}) {
         mode, floatingKind: layout.floatingRootKind ?? null };
     });
     errors.push(...validateRelativeLayoutNodes(relativeNodes, { label: "Unity UI", roots: ["viewport", "safe-area"] }));
+    validateNativePositionPlan(plan, errors);
     for (const node of plan.nodes) {
       if (node.layoutBinding.uiLayout.positioning !== "absolute") continue;
       if (node.layoutBinding.centerAlignment) errors.push(`独立浮层本体 ${node.id} 不得声明居中策略。`);

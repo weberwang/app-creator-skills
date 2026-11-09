@@ -1,5 +1,7 @@
 # 单目标领域合同
 
+Roblox 使用 SCENE 和独立 DISPLAY_LAYER，不使用 PAGE。显示层公共包装沿用下述身份、冻结引用与宿主字段，另以 `robloxEvidenceRef: {path,sha256}` 关联[Roblox 原生合同](../../roblox-domain-contracts/references/domain-validation.md)。V2–V5 分别验证目标上下文、布局、正式资源和当前运行组合；V1 及非视觉模块由公共工程证据入口验证原生执行记录，不能只靠材料类别或离线校验通过。结构、工程与用户人工显示结论分别记录，工具和本地保存通道未实测时保留未验证。
+
 Expo PAGE 和 DISPLAY_LAYER 使用同一公共阶段与证据容器，由独立 Expo 领域校验器处理 React Native 布局、资源和运行记录。按 [Expo 领域证据合同](../../expo-domain-contracts/references/domain-validation.md)逐阶段绑定平台、正式源和当前宿主；V2 不提前要求 V3–V5 产物，原生与 Web、开发与发布构建的证明范围分别记录。不得借用 Flutter 专属字段、浏览器截图或手写 PASS 代替原生运行与用户视觉确认。
 
 PAGE 和 DISPLAY_LAYER 在 V1 完成功能验证后，V2–V5 分别将 `visual.domainEvidenceRef` 指向当前阶段的领域证据文件，引用包含实际 `path` 和 `sha256`。阶段证据根记录 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`workItemType`、`visualStageModel: "function-first-v1"`、`visualStage`、`objectId`、`candidateId` 和 `referenceTarget: {path,sha256}`；目标文件必须与该工作项的 V2 人工确认一致。阶段证据随阶段更新，不能拿 V2 的记录冒充 V5。

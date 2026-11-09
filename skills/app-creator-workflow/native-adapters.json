@@ -1,6 +1,15 @@
 {
   "capability": "app-creator-workflow",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-workflow",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-workflow",
+        "mode": "roblox-workflow",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "flutter": [
       {
         "sourceSkill": "flutter-implementation-plan",

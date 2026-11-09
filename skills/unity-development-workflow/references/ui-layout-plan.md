@@ -1,5 +1,13 @@
 # 居中与机器布局包
 
+## 普通 UI 的原生停靠
+
+每个普通屏幕 UI 节点在已有 `layoutBinding` 中明确真实父级、水平与垂直停靠意图、`anchor`、`pivot`、尺寸策略，以及 `uiLayout.positionDriver` 和 `sizeDrivers`。uGUI 的普通静态位置优先由 `RECT_TRANSFORM` 或父 `LAYOUT_GROUP` 表达；UI Toolkit 使用 `UITOOLKIT_LAYOUT` 或相对实际父级定位的 `UITOOLKIT_STYLE`。两轴锚点、边距与尺寸各自有明确控制者，`pivot` 本身不能证明相对于父级的停靠。弹窗默认相对宿主布局，父布局管理的子项由该布局定位。
+
+`SCRIPT` 只在已有结构客观限制原生停靠时声明 `nativeFallback`：`non-parent-reference` 表示真实定位参照不是直接父级；`partial-composite` 表示虚拟组合只是已有父级内容的一部分；`complex-composite` 表示完整组合的实际几何或引用不能由父原生布局表达。必须填写具体 `reason`；验证器同时检查父级、成员和参照，完整等间距单行或单列组合应由父原生布局管理。不得为了套用原生布局而改变已确认功能树或添加无职责空容器。
+
+拖拽、指针跟随、世界跟随和过渡可以临时由 `SCRIPT`/`ANIMATION` 控制当前节点的位置；必须在 `positionBehavior` 写明有限 `kind`、`property: position`、功能原因、触发条件、当前布局坐标空间、双轴有限 `range.min/max`，以及 `restore.driver/trigger`。恢复驱动须属于本 UI 系统的原生布局，并对同一节点满足正常原生定位的直接父级参照、锚点、父布局表达能力和布局归属；原生驱动名称与文字交接不能取代这些事实。功能活动期间与原生位置驱动互斥，恢复后再次验证停靠；它不能与 `nativeFallback` 同时声明，也不能用功能标签掩盖静态布局。
+
 在 V3 拆解确认后生成布局图时读取。`ui-layout-plan.schema.json` 规范布局图的机器数据，复用现有 `layoutBinding`；它不是第二份拆解清单、确认账本或新的工作流阶段。`sceneId/stateId`、UI 系统与坐标空间必须明确。每个节点的 `decompositionElementId` 对应 `splitPlan.items[].id`，节点 `id` 对应该 item 的 `targetPrefabNodeIds` 中某个真实 Prefab/Scene 节点 ID；不从几何位置猜测身份或层级。
 
 计划可带 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef`，格式均为 `{ "path": "Artifacts/..." }`，只允许目标 Unity 工程内的项目相对路径。路径引用的是工程中真实保存的工件，不创建虚构的确认记录。纯内存几何 schema 允许不带 refs；`layout-plan`、`layout-check`、`compile-json` 和控制面 V3 要求前两个引用，V5 的 `layout-runtime-check` 与控制面 V5 还要求 `prefabAssemblyRef`。

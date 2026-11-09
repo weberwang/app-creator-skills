@@ -39,7 +39,7 @@
 从已安装技能的目标仓库根目录调用 `.agents/skills/app-workflow-control/scripts/workflow-control.mjs`。命令和参数以脚本 `OPTIONS` 为准；下面只列当前支持入口。在维护 `app-creator-skills` 仓库源码时，才将示例中的 `.agents/skills/` 前缀替换为 `skills/`：
 
 ```text
-node .agents/skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|expo|esp32|nodejs> --id <ID> --type <类型> --objective <目标>
+node .agents/skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|expo|esp32|nodejs|roblox> --id <ID> --type <类型> --objective <目标>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <工作项相对路径> --spec <实际计划JSON相对路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <工作项相对路径> --unit <单元ID> --report <真实执行报告JSON相对路径>
 node .agents/skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项相对路径> --source-work-item <已完成来源相对路径> --impact <implementation|layout|assets|target> --reason <未变化与受影响范围的事实说明>

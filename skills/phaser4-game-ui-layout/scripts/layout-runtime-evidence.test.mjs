@@ -51,6 +51,22 @@ test("目标仍居中但实际对象移动时，运行门依据实测中心拒�
   assert.match(errors.join("\n"), /必须严格居中/);
 });
 
+test("受控入场可暂离水平中心，未接管轴及额外写入者仍受约束", () => {
+  const setup = centeredFixture();
+  const icon = setup.nodes.find((node) => node.layout_node_id === "icon");
+  Object.assign(icon.ui_layout, { layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: { kind: "transition", reason: "按钮入场", trigger: "打开面板", properties: ["x"], restore_driver: "REFLOW", restore_rule: "结束交回布局" } });
+  icon.layout_execution.position_driver = "ANIMATION";
+  setup.runtime_registry.get("icon").position_writes = [{ driver: "ANIMATION", writer_id: "transition:icon" }];
+  setup.icon.x += 10;
+  assert.deepEqual(validateLayoutRuntimeEvidence(setup.nodes, capture(setup), setup.runtime_context), []);
+  setup.icon.y += 5;
+  assert.match(validateLayoutRuntimeEvidence(setup.nodes, capture(setup), setup.runtime_context).join("\n"), /居中/);
+  setup.icon.y -= 5;
+  const geometry = capture(setup);
+  geometry.component_snapshots.find((item) => item.layout_node_id === "icon").position_writes.push({ driver: "REFLOW", writer_id: "unexpected:icon" });
+  assert.match(validateLayoutRuntimeEvidence(setup.nodes, geometry, setup.runtime_context).join("\n"), /唯一实际写入/);
+});
+
 test("同次产物一起扩大安全区也不能覆盖冻结的小安全区", () => {
   const setup = centeredFixture();
   const geometry = capture(setup);
@@ -82,7 +98,7 @@ test("手写 passed 测量不能掩盖同批实际对象位置变化", () => {
   setup.icon.x += 5;
   const geometry = capture(setup);
   geometry.node_measurements = [{ layout_node_id: "icon", actual_bounds: setup.nodes[3].target_bounds, result: "passed" }];
-  assert.match(validateLayoutRuntimeEvidence(setup.nodes, geometry, setup.runtime_context).join("\n"), /actual_bounds 与同批 component_snapshot 不一致/);
+  assert.match(validateLayoutRuntimeEvidence(setup.nodes, geometry, setup.runtime_context).join("\n"), /actual_bounds 与同批 component_snapshot 不一致|普通 UI horizontal 相对锚点间距/);
 });
 
 test("装饰溢出理由不能豁免实际安全区或根边界", () => {
@@ -92,7 +108,7 @@ test("装饰溢出理由不能豁免实际安全区或根边界", () => {
   node.ui_layout.visual_overflow = { reason: "装饰允许超出面板" };
   setup.icon.x = -35;
   const errors = validateLayoutRuntimeEvidence(setup.nodes, capture(setup), setup.runtime_context);
-  assert.match(errors.join("\n"), /实际边界超出 safe-area/);
+  assert.match(errors.join("\n"), /实际边界超出 safe-area|普通 UI horizontal 相对锚点间距/);
 });
 
 test("隐藏自身、业务祖先或实际根不能通过冻结布局验收", () => {

@@ -111,9 +111,9 @@ function checkCenterAlignment(value, path, errors) {
 function checkUiLayout(value, path, errors) {
   const keys = new Set([
     "groupingBasis", "layoutOwner", "positionDriver", "sizeDrivers", "imageSizing", "sizePolicy", "overflowPolicy", "safeAreaPolicy",
-    "interactionPolicy", "visualOverflow", "independentContainerReason", "minimumSize", "positioning", "floatingRootKind", "independentPosition",
+    "interactionPolicy", "visualOverflow", "independentContainerReason", "minimumSize", "positioning", "floatingRootKind", "independentPosition", "positionBehavior", "nativeFallback",
   ]);
-  const required = ["groupingBasis", "layoutOwner", "sizePolicy", "overflowPolicy", "safeAreaPolicy", "interactionPolicy"];
+  const required = ["groupingBasis", "layoutOwner", "positionDriver", "sizeDrivers", "sizePolicy", "overflowPolicy", "safeAreaPolicy", "interactionPolicy"];
   if (!checkObject(value, path, keys, required, errors)) return;
 
   const basisValues = new Set(["POSITION", "LAYOUT", "INTERACTION", "STATE", "CLIP", "REUSE"]);
@@ -135,6 +135,29 @@ function checkUiLayout(value, path, errors) {
   if (value.positioning === "absolute" && !Object.hasOwn(value, "independentPosition")) addError(errors, path, "绝对浮层本体必须声明 independentPosition");
   if (value.positioning !== "absolute" && Object.hasOwn(value, "independentPosition")) addError(errors, path, "只有绝对浮层本体可以声明 independentPosition");
   if (value.positionDriver !== undefined) checkString(value.positionDriver, `${path}.positionDriver`, errors, LAYOUT_DRIVERS);
+  if (value.nativeFallback !== undefined) {
+    const fallback = value.nativeFallback;
+    if (checkObject(fallback, `${path}.nativeFallback`, new Set(["kind", "reason"]), ["kind", "reason"], errors)) {
+      checkString(fallback.kind, `${path}.nativeFallback.kind`, errors, new Set(["non-parent-reference", "partial-composite", "complex-composite"]));
+      checkString(fallback.reason, `${path}.nativeFallback.reason`, errors);
+    }
+  }
+  if (value.positionBehavior !== undefined) {
+    const behavior = value.positionBehavior;
+    if (checkObject(behavior, `${path}.positionBehavior`, new Set(["kind", "property", "reason", "trigger", "coordinateSpace", "range", "restore"]), ["kind", "property", "reason", "trigger", "coordinateSpace", "range", "restore"], errors)) {
+      checkString(behavior.kind, `${path}.positionBehavior.kind`, errors, new Set(["drag", "pointer-follow", "world-follow", "transition"]));
+      checkString(behavior.property, `${path}.positionBehavior.property`, errors, new Set(["position"]));
+      for (const key of ["reason", "trigger", "coordinateSpace"]) checkString(behavior[key], `${path}.positionBehavior.${key}`, errors);
+      if (checkObject(behavior.range, `${path}.positionBehavior.range`, new Set(["min", "max"]), ["min", "max"], errors)) {
+        checkVector2(behavior.range.min, `${path}.positionBehavior.range.min`, errors);
+        checkVector2(behavior.range.max, `${path}.positionBehavior.range.max`, errors);
+      }
+      if (checkObject(behavior.restore, `${path}.positionBehavior.restore`, new Set(["driver", "trigger"]), ["driver", "trigger"], errors)) {
+        checkString(behavior.restore.driver, `${path}.positionBehavior.restore.driver`, errors, LAYOUT_DRIVERS);
+        checkString(behavior.restore.trigger, `${path}.positionBehavior.restore.trigger`, errors);
+      }
+    }
+  }
   if (value.sizeDrivers !== undefined) {
     const drivers = value.sizeDrivers;
     if (checkObject(drivers, `${path}.sizeDrivers`, new Set(["width", "height"]), ["width", "height"], errors)) {

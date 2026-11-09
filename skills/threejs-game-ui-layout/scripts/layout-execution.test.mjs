@@ -24,6 +24,8 @@ function node(id, options = {}) {
       ...(options.position_reference_id !== undefined ? { position_reference_id: options.position_reference_id } : {}),
       ...(options.position_driver !== undefined ? { position_driver: options.position_driver } : {}),
       ...(options.size_driver !== undefined ? { size_driver: options.size_driver } : {}),
+      ...(options.position_behavior !== undefined ? { position_behavior: options.position_behavior } : {}),
+      ...(options.renderer !== undefined ? { renderer: options.renderer } : {}),
     },
   };
 }
@@ -55,16 +57,16 @@ test("驱动枚举固定，缺省计划派生为共享位置及策略对应尺�
   assert.deepEqual(input[0].ui_layout.grouping_basis, ["POSITION"], "计划生成应深拷贝节点输入");
 });
 
-test("DOM_LAYOUT、STATIC、ANIMATION 和明确尺寸驱动满足控制权约束", () => {
+test("DOM_LAYOUT 与有界行为满足控制权约束，静态坐标被拒绝", () => {
   const parent = node("panel", { element_type: "container", role: "container" });
   const dom = node("dom-child", { parent: "panel", position_driver: "DOM_LAYOUT", size_policy: "FLEX", size_driver: "DOM_LAYOUT" });
   const stat = node("static-child", { position_driver: "STATIC", layout_owner: "SELF" });
-  const animation = node("animated-child", { position_driver: "ANIMATION", layout_owner: "EXTERNAL" });
-  const plans = deriveLayoutExecutionPlans([parent, dom, stat, animation]);
+  const animation = node("animated-child", { position_driver: "ANIMATION", layout_owner: "EXTERNAL", position_behavior: { kind: "transition", reason: "面板入场", trigger: "打开时", properties: ["x"], restore_driver: "DOM_LAYOUT", restore_rule: "结束交回 CSS" } });
+  const plans = deriveLayoutExecutionPlans([parent, dom, animation]);
   assert.equal(plans[1].layout_execution.position_driver, "DOM_LAYOUT");
   assert.equal(plans[1].layout_execution.size_driver, "DOM_LAYOUT");
-  assert.equal(plans[2].layout_execution.position_driver, "STATIC");
-  assert.equal(plans[3].layout_execution.position_driver, "ANIMATION");
+  assert.equal(plans[2].layout_execution.position_driver, "ANIMATION");
+  assert.throws(() => deriveLayoutExecutionPlans([stat]), /必须相对停靠/);
 
   const declarationErrors = [];
   validateLayoutDriverDeclaration({ position_driver: "STATIC", layout_owner: "PARENT", size_policy: "FIXED", size_driver: "SHARED" }, declarationErrors);
@@ -92,13 +94,13 @@ test("派生和节点校验都会拒绝位置与尺寸驱动的非法所有权�
   }
 });
 
-test("DOM_LAYOUT 限制真实父级、非重排滚动和非居中组成员", () => {
+test("DOM_LAYOUT 使用真实父级并支持原生流式和滚动容器", () => {
   const panel = node("panel", { element_type: "container", role: "container" });
   const independentReference = node("child", { parent: "panel", position_reference_id: "viewport", position_driver: "DOM_LAYOUT" });
   assert.throws(() => deriveLayoutExecutionPlans([panel, independentReference]), /只能使用真实父级/);
 
   for (const overflow_policy of ["REFLOW", "SCROLL"]) {
-    assert.throws(() => deriveLayoutExecutionPlans([node("child", { position_driver: "DOM_LAYOUT", overflow_policy })]), /不能与 REFLOW\/SCROLL/);
+    assert.equal(deriveLayoutExecutionPlans([node("child", { position_driver: "DOM_LAYOUT", overflow_policy })])[0].layout_execution.position_driver, "DOM_LAYOUT");
   }
   const grouped = node("icon", { position_driver: "DOM_LAYOUT", center_alignment: { member_ids: ["icon", "label"] }, axis_alignment: { horizontal: "center", vertical: "top" } });
   const label = node("label", { reference_id: "icon", position_reference_id: "icon" });
@@ -130,7 +132,7 @@ test("图文整体居中组的每个成员都必须使用 SHARED 位置驱动", 
   for (const memberId of ["icon", "label"]) {
     for (const driver of ["DOM_LAYOUT", "STATIC", "ANIMATION"]) {
       const members = group(memberId, driver);
-      assert.throws(() => deriveLayoutExecutionPlans(members), /position_driver 必须为 SHARED/);
+      assert.throws(() => deriveLayoutExecutionPlans(members), /position_driver 必须为 SHARED|必须相对停靠|position_behavior/);
       const errors = [];
       validateLayoutExecutionNodes(members, errors);
       assert(errors.some((message) => message.includes("position_driver 必须为 SHARED")), errors.join(" | "));

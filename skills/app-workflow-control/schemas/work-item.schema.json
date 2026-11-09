@@ -42,7 +42,8 @@
         "flutter",
         "expo",
         "esp32",
-        "nodejs"
+        "nodejs",
+        "roblox"
       ]
     },
     "workItemType": {
@@ -205,7 +206,8 @@
                 "flutter",
                 "expo",
                 "esp32",
-                "nodejs"
+                "nodejs",
+                "roblox"
               ]
             },
             "stageId": {
@@ -534,7 +536,7 @@
     },
     {
       "if": { "properties": { "workItemType": { "const": "SCENE" } }, "required": ["workItemType"] },
-      "then": { "properties": { "stack": { "enum": ["unity", "cocos", "phaser", "threejs"] } } }
+      "then": { "properties": { "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox"] } } }
     },
     {
       "if": { "required": ["visual"] },

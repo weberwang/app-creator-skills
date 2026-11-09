@@ -10,7 +10,7 @@ import { extractMarkdownSection } from '../skills/app-skill-runtime/native-contr
 
 const RULE = 'app-domain-toolkit/references/game-characteristics.md';
 const CONTENT = 'app-domain-toolkit/references/game-content-playtesting.md';
-const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs']);
+const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 const ENTRIES = {
   'app-product-planning': 'identify',
   'app-gameplay-development': 'v1',

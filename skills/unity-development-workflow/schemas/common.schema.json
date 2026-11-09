@@ -397,6 +397,37 @@
             "positionDriver": {
               "$ref": "#/$defs/layoutDriver"
             },
+            "nativeFallback": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "reason"],
+              "properties": {
+                "kind": { "enum": ["non-parent-reference", "partial-composite", "complex-composite"] },
+                "reason": { "type": "string", "minLength": 1 }
+              },
+              "description": "脚本布局仅在当前真实参照或虚拟组合证明原生受限时声明。"
+            },
+            "positionBehavior": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "property", "reason", "trigger", "coordinateSpace", "range", "restore"],
+              "properties": {
+                "kind": { "enum": ["drag", "pointer-follow", "world-follow", "transition"] },
+                "property": { "const": "position" },
+                "reason": { "type": "string", "minLength": 1 },
+                "trigger": { "type": "string", "minLength": 1 },
+                "coordinateSpace": { "type": "string", "minLength": 1 },
+                "range": {
+                  "type": "object", "additionalProperties": false, "required": ["min", "max"],
+                  "properties": { "min": { "$ref": "#/$defs/vector2" }, "max": { "$ref": "#/$defs/vector2" } }
+                },
+                "restore": {
+                  "type": "object", "additionalProperties": false, "required": ["driver", "trigger"],
+                  "properties": { "driver": { "$ref": "#/$defs/layoutDriver" }, "trigger": { "type": "string", "minLength": 1 } }
+                }
+              },
+              "description": "功能性位置驱动必须限制当前节点和范围，并声明原生控制权恢复。"
+            },
             "sizeDrivers": {
               "$ref": "#/$defs/layoutSizeDrivers"
             },

@@ -29,7 +29,11 @@
 
 ## 位置与尺寸控制权
 
-`ui_layout.position_driver` 与可选的 `ui_layout.size_driver` 是两项独立决定。V3 自动选型不读取尚未采集的运行时矩阵；默认计划假设节点与 Widget target 路径为 `scale=1`、`rotation=0`、`skew=0`。已知项目路径存在非单位变换时，显式选择 `SHARED` 并由共享布局换算。若 V5 实际逻辑变换与 WIDGET 计划不符，阻断并回到上游调整位置驱动器，不通过增加容器规避。满足其他条件时，只有节点由自身管理位置、参照是已存在父/祖先 Node、九点停靠可由 Widget 表达，且不是背景、组合居中成员、`REFLOW` 或 `SCROLL` 时才自动选 `WIDGET`；逻辑根与其他情况使用 `SHARED`。Creator 原生父 Layout 若负责排列子节点，子节点必须使用 `position_driver: LAYOUT`，不能另用 Widget 写同一位置；自定义项目布局器使用 `SHARED` 驱动并保留 `layout_owner: PARENT`。
+`ui_layout.position_driver` 与可选的 `ui_layout.size_driver` 是两项独立决定。V3 自动选型不读取尚未采集的运行时矩阵；默认计划假设节点与 Widget target 路径为 `scale=1`、`rotation=0`、`skew=0`。其他条件允许 Widget 时，普通 UI 必须选择 `WIDGET`；`layout_owner`、`REFLOW` 或 `SCROLL` 不单独构成原生不可用的依据。已知项目路径存在非单位变换时，允许显式选择 `SHARED` 且声明 `widget_fallback: non-unit-transform`；行为结束后恢复 `SHARED` 也须遵循该要求。该计划在 V5 必须以实际 `node_to_layout`、`reference_to_layout` 矩阵证实至少一条路径非单位，不能以自填理由或两个单位矩阵通过。若实际逻辑变换与 WIDGET 计划或 SHARED 回退不符，阻断并回到上游调整位置驱动器，不通过增加容器规避。实际父/祖先 Node 上可表达的停靠必须使用 Widget，逻辑根、兄弟定位和整体组合可用 `SHARED`。Creator 原生父 Layout 若负责排列子节点，子节点必须使用 `position_driver: LAYOUT`，不能另用 Widget 写同一位置；确有结构限制时共享布局可保留 `layout_owner: PARENT`。普通 UI 和浮层本体不使用 `STATIC`；独立定位浮层仅由具体位置行为临时控制，背景按自身边界处理。
+
+正式节点的 `axis_alignment` 及当前批次实际 `layout_bounds`、`reference_bounds` 必须与 Widget 已冻结的双轴边距一致；父框或视口变化后重新采集，不能仅凭组件 flag 声称停靠生效。位置行为的 `position_behavior`、可恢复驱动和组件条件遵循[Widget 定位策略](./widget-layout.md)：V5 核查可用组件、目标及矩阵，触发和恢复是否真实发生仍需在现有运行用例中验证。
+
+有效位置行为活动时，仅当节点 active、行为和恢复资格通过且实际位置写入者唯一为 `ANIMATION`、无原生组件争写，才暂缓其声明接管轴的静态居中或边距比较；未声明的轴、节点尺寸、引用和其他节点仍逐项检查。虚拟居中组当前不支持成员独立行为，整体过渡由实际宿主节点控制。结束后按恢复驱动重新核对停靠；单帧记录本身不能证明结束与交接已经发生。
 
 `size_driver` 可取 `SPRITE_RAW`、`FIXED`、`WIDGET`、`LAYOUT`、`SHARED`、`CONTENT`，并按以下规则约束：
 

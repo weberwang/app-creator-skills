@@ -6,6 +6,8 @@ V3 制定执行策略、V4 导入核对、V5 正式组合校准时读取。复�
 
 在 `layoutBinding.uiLayout` 明确 `positionDriver` 与 `sizeDrivers.width/height`。位置、宽度、高度可由不同机制管理；同一时段同一属性只能有一个有效写入者。`layoutOwner` 仍表示责任归属，不能证明某原生组件存在。
 
+普通 UI 的相对停靠、原生优先、可核实的共享布局回退和功能位置交接按[布局计划](./ui-layout-plan.md#普通-ui-的原生停靠)声明。uGUI 使用或恢复到 `RECT_TRANSFORM` 时回读的 `anchorMin`、`anchorMax`、`pivot` 必须与当前计划一致；仅移动业务节点的脚本不能代替可表达的原生停靠。对于普通 HUD 的非居中轴，除父容器原生排布或明确功能行为外，依据当前参照核对设计边缘间距。功能行为只允许在声明的坐标空间和有限范围内接管，须保留实际注册写入者和原生恢复依据，恢复后另采集正常布局状态。uGUI 的 `CANVAS_LOCAL` 行为范围对应同批 `anchoredPosition`，UI Toolkit 的 `UI_TOOLKIT_PANEL` 对应 Panel 内实际矩形坐标。
+
 | 机制 | 实际核验 |
 | --- | --- |
 | RECT_TRANSFORM | uGUI 的固定锚点、偏移和尺寸配置；不是持续执行 SetNativeSize 的组件。 |
@@ -45,6 +47,8 @@ Toolkit 只读加载场景，从实际 Screen/Canvas/Panel 取得同批 viewport
 uGUI 目标或 UIDocument 上的 `LayoutWriterRegistration` 只登记取证事实，不执行布局。每项绑定真实 `Behaviour writer`、SCRIPT/ANIMATION、负责的属性；UI Toolkit 还用 `elementName` 绑定具体元素。采集器核对真实组件身份与 `isActiveAndEnabled`，禁用组件不计作有效写入者。
 
 该机制覆盖原生组件和已登记写入者，不能证明任意未登记脚本没有写布局。实现负责人仍须审查脚本、动画曲线与生命周期入口，补齐登记；不能把组件类型扫描当作完整行为证明。重复登记或多个实际机制争写属性必须暴露为冲突。
+
+父布局是否排除某一子项由采集器实际读取 `LayoutElement.ignoreLayout` 后计入位置写入者；当前快照没有保存该属性本身，离线检查不能从 `parentLayoutGroup.enabled` 单独重建参与事实，也不能认证该记录确由 Unity 产生。UI Toolkit 当前快照不含 USS 规则来源或 left/right/top/bottom 属性，工程检查只能核对同批实际几何与所记录写入者，跨视口的原生样式及完整行为须在真实 Panel 中另行验证。
 
 UI Toolkit 的外部尺寸交接按实际 Flex 控制轴和明确 inline 固定尺寸判断；`resolvedStyle` 不提供 USS 规则来源，本检查器不解析整套 USS。依赖复杂 USS 与脚本共同约束的尺寸仍需审查实际交接，不能用宽高快照证明所有样式来源都已排除。
 

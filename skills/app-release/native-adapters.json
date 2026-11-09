@@ -1,6 +1,15 @@
 {
   "capability": "app-release",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-release",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-release",
+        "mode": "roblox-game-release",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "unity": [
       {
         "sourceSkill": "unity-game-release",

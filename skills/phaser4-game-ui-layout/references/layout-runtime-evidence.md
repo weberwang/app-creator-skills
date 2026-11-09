@@ -10,14 +10,14 @@
 | --- | --- | --- |
 | 位置 | `REFLOW` | 当前项目统一 `reflowUi` 写入基础布局位置 |
 | 位置 | `PARENT_LAYOUT` | 项目父级排版逻辑管理子项位置，非 Phaser 原生 Layout 组件 |
-| 位置 | `STATIC` | 显式冻结的静态位置 |
+| 位置 | `STATIC` | 普通游戏 UI 拒绝该声明，固定尺寸仍使用相对停靠或父级排布 |
 | 位置 | `ANIMATION` | 显式声明由动画控制该位置属性，不同时由重排覆盖 |
 | 尺寸 | `FIXED` | 已确认固定布局尺寸 |
 | 尺寸 | `CONTENT` | 当前文字或内容测量结果决定尺寸 |
 | 尺寸 | `REFLOW` | 重排计算 stretch/flex 布局尺寸 |
 | 尺寸 | `NINE_SLICE` | 冻结九宫格合同控制显示尺寸 |
 
-位置默认由 `layout_owner=PARENT` 选择 `PARENT_LAYOUT`，其余选择 `REFLOW`；`STATIC`/`ANIMATION` 只能显式声明，不按对象名称或是否播放动画猜测。尺寸优先由已冻结 `nine_slice.mode=stretch` 选择 `NINE_SLICE`，其余按 `CONTENT`、`STRETCH/FLEX`、`FIXED` 分别选择 `CONTENT`、`REFLOW`、`FIXED`。显式声明必须与职责和尺寸策略相容。
+位置默认由 `layout_owner=PARENT` 选择 `PARENT_LAYOUT`，其余选择 `REFLOW`；普通 UI 不允许以 `STATIC` 冻结屏幕位置。`ANIMATION` 必须显式声明，在 `ui_layout.position_behavior` 填写 `kind=drag|pointer-follow|world-follow|transition`、`reason`、`trigger`、非空无重复的本节点位置属性 `properties`（仅 `x/y`）、`restore_driver=REFLOW|PARENT_LAYOUT` 与 `restore_rule`。行为期间只允许一个位置写入者，结束后交回所声明的基础布局；不能将缩放画布或资源 origin 当作停靠。尺寸优先由已冻结 `nine_slice.mode=stretch` 选择 `NINE_SLICE`，其余按 `CONTENT`、`STRETCH/FLEX`、`FIXED` 分别选择 `CONTENT`、`REFLOW`、`FIXED`。显式声明必须与职责和尺寸策略相容。
 
 Phaser Container 与底板显示对象分别维护。普通图片保持源帧逻辑尺寸，禁止额外内容缩放、`contain`、`cover` 或 `fill`；屏幕装饰背景例外，允许等比 `cover-v1` 缩放，九宫格按冻结切片扩展；源帧尺寸与实际显示几何分开记录，不移植 Cocos 的 RAW、Widget、UITransform 或同 Node Sprite 容器规则。
 

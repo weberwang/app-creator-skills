@@ -47,7 +47,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 ## CLI
 
 ```text
-node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|expo|esp32|nodejs> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
+node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项目路径> --stack <unity|cocos|phaser|threejs|flutter|expo|esp32|nodejs|roblox> --id <ID> --type <FOUNDATION|SCENE|PAGE|...> --objective <目标>
 node skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <项目相对JSON路径> --spec <实际计划JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <项目相对JSON路径> --unit <单元ID> --report <真实执行报告JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>

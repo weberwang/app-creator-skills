@@ -63,7 +63,7 @@
           "y": 0.5
         },
         "constraints": [
-          "弹窗本体由当前交互决定落位，并保持完整可见和安全区约束。"
+          "弹窗本体相对宿主安全区居中，并保持完整可见。"
         ],
         "resizePolicy": "LAYOUT_REBUILD",
         "axisAlignment": {
@@ -89,12 +89,8 @@
           "overflowPolicy": "KEEP_VISIBLE",
           "safeAreaPolicy": "INSIDE_SAFE_AREA",
           "interactionPolicy": "HIT_TARGET",
-          "positioning": "absolute",
-          "floatingRootKind": "popup",
-          "independentPosition": {
-            "x": 300,
-            "y": 200
-          }
+          "positioning": "relative",
+          "floatingRootKind": "popup"
         }
       }
     },
@@ -156,7 +152,7 @@
             "LAYOUT",
             "STATE"
           ],
-          "positionDriver": "SCRIPT",
+          "positionDriver": "LAYOUT_GROUP",
           "sizeDrivers": {
             "width": "RECT_TRANSFORM",
             "height": "RECT_TRANSFORM"
@@ -164,7 +160,7 @@
           "imageSizing": {
             "mode": "NATIVE"
           },
-          "layoutOwner": "SELF",
+          "layoutOwner": "PARENT",
           "sizePolicy": "FIXED",
           "overflowPolicy": "KEEP_VISIBLE",
           "safeAreaPolicy": "INSIDE_SAFE_AREA",
@@ -220,12 +216,12 @@
             "POSITION",
             "STATE"
           ],
-          "positionDriver": "SCRIPT",
+          "positionDriver": "LAYOUT_GROUP",
           "sizeDrivers": {
             "width": "CONTENT_SIZE_FITTER",
             "height": "CONTENT_SIZE_FITTER"
           },
-          "layoutOwner": "SELF",
+          "layoutOwner": "PARENT",
           "sizePolicy": "CONTENT",
           "overflowPolicy": "KEEP_VISIBLE",
           "safeAreaPolicy": "INSIDE_SAFE_AREA",

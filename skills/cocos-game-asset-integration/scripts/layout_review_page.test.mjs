@@ -63,7 +63,7 @@ function fixture({ longName = false } = {}) {
         display_name: null,
         layout_role: "visual-component",
         semantic_grouping: { kind: "part", rationale: "标题文字属于对话框功能组件并保持相对位置" },
-        ui_layout: { grouping_basis: ["LAYOUT"], layout_owner: "PARENT", size_policy: "CONTENT", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE" },
+        ui_layout: { grouping_basis: ["LAYOUT"], layout_owner: "SELF", size_policy: "CONTENT", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE" },
         parent_layout_node_id: "container:dialog",
         parent_target_bounds: parent,
         target_bounds: child,

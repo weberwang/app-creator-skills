@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Roblox 领域证据基本结构",
+  "description": "此结构仅提供基础字段检查；跨文件、身份、路径、摘要及阶段约束由领域校验器执行。",
+  "type": "object",
+  "required": ["schemaVersion", "workItemId", "projectId", "stack", "workItemType"],
+  "properties": {
+    "schemaVersion": { "enum": ["roblox-engineering/1.0", "roblox-visual/1.0", "roblox-layout/1.0", "roblox-assets/1.0", "roblox-runtime/1.0"] },
+    "workItemId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "stack": { "const": "roblox" },
+    "workItemType": { "type": "string", "minLength": 1 },
+    "visualStage": { "enum": ["V1", "V2", "V3", "V4", "V5"] },
+    "stateId": { "type": "string", "minLength": 1 },
+    "viewport": { "type": "object", "required": ["width", "height"], "properties": { "width": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number", "exclusiveMinimum": 0 } } },
+    "studio": { "type": "object" },
+    "editObservationRef": { "type": "object", "required": ["path", "sha256"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "space": { "enum": ["world-studs", "screen-scale-offset"] },
+          "className": { "type": "string", "minLength": 1 },
+          "screenInsets": { "enum": ["None", "DeviceSafeInsets", "CoreUISafeInsets", "TopbarSafeInsets"] },
+          "clipToDeviceSafeArea": { "type": "boolean" },
+          "sizeConstraint": { "enum": ["RelativeXY", "RelativeXX", "RelativeYY"] },
+          "sizeModifiers": { "type": "array" },
+          "anchorPoint": { "type": "object", "required": ["x", "y"], "properties": { "x": { "type": "number" }, "y": { "type": "number" } } },
+          "positionWriters": { "type": "array", "minItems": 1, "maxItems": 1, "items": { "enum": ["UDIM2", "UIListLayout", "UIGridLayout", "SHARED"] } },
+          "sizeWriters": { "type": "object", "required": ["horizontal", "vertical"], "properties": { "horizontal": { "enum": ["UDIM2", "LAYOUT", "AUTOMATIC"] }, "vertical": { "enum": ["UDIM2", "LAYOUT", "AUTOMATIC"] } } }
+        },
+        "allOf": [
+          { "if": { "properties": { "space": { "const": "screen-scale-offset" }, "className": { "enum": ["ScreenGui", "GuiMain"] } }, "required": ["space", "className"] }, "then": { "required": ["screenInsets", "clipToDeviceSafeArea", "sizeModifiers"] } },
+          { "if": { "properties": { "space": { "const": "screen-scale-offset" }, "className": { "not": { "enum": ["ScreenGui", "GuiMain"] } } }, "required": ["space", "className"] }, "then": { "required": ["position", "size", "anchorPoint", "positionWriters", "sizeWriters", "sizeConstraint", "sizeModifiers"] } }
+        ]
+      }
+    }
+  },
+  "allOf": [
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-engineering/1.0" } } }, "then": { "required": ["implementationPackageRef", "studio", "sources", "root", "editReadbackRef", "requiredContexts", "checks"] } },
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-visual/1.0" } } }, "then": { "required": ["visualStage", "studio", "object", "editReadbackRef", "referenceTarget"] } },
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-layout/1.0" } } }, "then": { "required": ["studio", "rootId", "nodes"] } },
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-assets/1.0" } } }, "then": { "required": ["studio", "layoutSpecRef", "externalAssets", "items"] } },
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-runtime/1.0" } } }, "then": { "required": ["studio", "layoutSpecRef", "assetManifestRef", "clientId", "observationRef", "bindings", "interactions"] } },
+    { "if": { "properties": { "schemaVersion": { "const": "roblox-visual/1.0" }, "workItemType": { "const": "DISPLAY_LAYER" }, "visualStage": { "const": "V5" } }, "required": ["visualStage"] }, "then": { "required": ["stateId", "viewport", "hostId", "layerType"] } }
+  ]
+}

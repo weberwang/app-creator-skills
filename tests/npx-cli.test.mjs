@@ -5,6 +5,7 @@ import { copyFileSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { spawnSync } from 'node:child_process';
 import { parseNpxArgs, runNpxInstaller } from '../packages/cli/cli.mjs';
+import { STACKS } from '../packages/installer/install-project-skills.mjs';
 
 const CONFIG = Object.freeze({ repository: 'fixture/app-creator-skills', ref: 'stable' });
 
@@ -132,13 +133,14 @@ test('交互终端根据实际输入安装选中的栈', async () => {
   assert.equal(harness.calls[0][harness.calls[0].indexOf('--stack') + 1], 'cocos,flutter');
 });
 
-/** 验证新增编号能选择 Expo，同时 all 仍须由用户单独明确选择。 */
-test('交互终端可选择 ESP32、Node.js、Expo 或全部技术栈', async () => {
+/** 验证新增编号能选择 Roblox，同时 all 编号根据实际栈清单计算。 */
+test('交互终端可选择 ESP32、Node.js、Expo、Roblox 或全部技术栈', async () => {
   for (const [answer, expected] of [
     ['6', 'esp32'],
     ['7', 'nodejs'],
     ['8', 'expo'],
-    ['9', 'unity,cocos,phaser,threejs,flutter,esp32,nodejs,expo'],
+    ['9', 'roblox'],
+    [String(STACKS.length + 1), STACKS.join(',')],
     ['5,6', 'flutter,esp32'],
     ['6,7', 'esp32,nodejs'],
   ]) {
@@ -161,5 +163,5 @@ test('非交互终端缺少技术栈时输出帮助并立即失败，不默认�
 
 test('all 只在明确指定时展开为全部技术栈', () => {
   const parsed = parseNpxArgs(['all'], { config: CONFIG, env: {} });
-  assert.deepEqual(parsed.stacks, ['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
+  assert.deepEqual(parsed.stacks, [...STACKS]);
 });

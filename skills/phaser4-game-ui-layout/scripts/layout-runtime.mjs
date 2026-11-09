@@ -1,5 +1,5 @@
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
-const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+const { validateRelativeLayoutNodes, validateGameUiDockingOffsets } = relativeLayoutPolicy;
 /**
  * Phaser 布局运行快照的纯几何与结构校验。
  *
@@ -612,7 +612,7 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
   }
   for (const id of componentIds) errors.push(`${label}.component_snapshots 多出布局节点快照：${id}`);
 
-  validateFloatingRuntimeOffsets(businessNodes, snapshotsById, errors, label, (a, b) => Math.abs(a - b) <= 1e-6 || matchesFloat32Budget(a, b), (snapshot) => snapshot);
+  validateGameUiDockingOffsets(businessNodes, snapshotsById, errors, label, (a, b) => Math.abs(a - b) <= 1e-6 || matchesFloat32Budget(a, b));
   return errors.length === 0;
 }
 
@@ -649,35 +649,4 @@ function validateRelativeWebNodes(input, errors, label, kind) {
     return { id, parentId, references, mode, floatingKind };
   });
   errors.push(...validateRelativeLayoutNodes(canonical, { label, roots: ["viewport", "safe-area"] }));
-}
-
-/** 依据冻结节点、同批参照实测和原生容差验证浮层内部锚点。 */
-function validateFloatingRuntimeOffsets(nodes, snapshots, errors, label, sameNumber, getSnapshot) {
-  const idOf = (node) => node?.layout_node_id ?? node?.layoutNodeId;
-  const parentOf = (node) => node?.parent_layout_node_id ?? node?.parentLayoutNodeId;
-  const byId = new Map(nodes.map((node) => [idOf(node), node]));
-  const boundsOf = (node) => node?.target_bounds ?? node?.targetBounds ?? node?.bounds;
-  const valid = (rect) => rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width > 0 && rect.height > 0;
-  for (const node of nodes) {
-    const id = idOf(node); let ancestor = byId.get(parentOf(node)); const visited = new Set([id]); let inside = false;
-    while (ancestor && !visited.has(idOf(ancestor))) {
-      visited.add(idOf(ancestor));
-      if (["popup", "floating", "toast"].includes((ancestor.ui_layout ?? ancestor.uiLayout)?.floating_root_kind)) { inside = true; break; }
-      ancestor = byId.get(parentOf(ancestor));
-    }
-    if (!inside) continue;
-    const snapshot = getSnapshot(snapshots.get(id));
-    if (!snapshot || snapshot.active === false) continue;
-    const refId = node.reference_id ?? node.referenceId ?? node.ui_layout?.position_reference_id ?? node.uiLayout?.positionReferenceId ?? node.position_reference_id ?? node.positionReferenceId ?? parentOf(node);
-    const original = boundsOf(node); const reference = boundsOf(byId.get(refId)) ?? node.reference_target_bounds ?? node.referenceTargetBounds;
-    const actual = snapshot.layout_bounds ?? snapshot.actual_bounds; const actualRef = snapshot.reference_bounds;
-    if (![original, reference, actual, actualRef].every(valid)) { errors.push(label + "." + id + " 浮层内部缺少原始或同批实际参照矩形"); continue; }
-    const alignment = node.axis_alignment ?? node.axisAlignment ?? { horizontal: "left", vertical: "top" };
-    for (const [axis, start, size, end] of [["horizontal", "x", "width", "right"], ["vertical", "y", "height", "bottom"]]) {
-      if (alignment[axis] === "center") continue;
-      const edge = (rect, ref, atEnd) => atEnd ? ref[start] + ref[size] - rect[start] - rect[size] : rect[start] - ref[start];
-      const ends = alignment[axis] === "stretch" ? [false, true] : [alignment[axis] === end];
-      if (ends.some((atEnd) => !sameNumber(edge(actual, actualRef, atEnd), edge(original, reference, atEnd)))) errors.push(label + "." + id + " 浮层内部 " + axis + " 相对锚点间距与冻结事实不一致");
-    }
-  }
 }

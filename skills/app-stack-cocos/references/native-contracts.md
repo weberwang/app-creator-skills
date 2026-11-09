@@ -630,12 +630,14 @@ pending → generating → generated → validating → packing → packed → r
 
 UI 布局参照按[场景与弹窗尺寸参照](../../cocos-game-ui-layout/references/layout-hierarchy.md#场景与弹窗尺寸参照)统一确定：全屏 UI 的父级是场景，按场景逻辑尺寸相对布局；弹窗有底板时，内容按底板对应功能容器的宽高相对布局；弹窗没有底板时，按宿主场景逻辑尺寸相对布局。弹窗底板容器本身相对场景定位，简单结构中底板 Sprite 节点可直接兼任容器根；全屏装饰背景仍是独立显示层。安全区约束关键内容的可见范围，不替换这三种尺寸参照。
 
-效果图 V3 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。Widget 只在已确认的父/祖先参照和单一位置所有权下使用，兄弟参照、图文整体居中及 REFLOW/SCROLL 交给共享布局；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
+效果图 V3 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。Widget 在已确认的父/祖先参照和单一位置所有权下必须优先使用；兄弟参照与图文整体居中可由共享布局处理，REFLOW/SCROLL 容器自身停靠和子项原生 Layout 排布分别确定控制权；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
 
 <a id="mode-cocos-game-ui-layout--全局控制接入"></a>
 #### 全局控制接入
 
 位置参照根 `viewport`/`safe-area` 使用合成布局几何，不代表同名 Creator Node，也不能作为 Widget target，直接参照时由 `SHARED` 处理。`viewport` 使用当前完整逻辑视口；`safe-area` 使用整批节点统一的实际安全区矩形。已存在的实际 Canvas 等父/祖先节点才可作为 Widget target。位置与尺寸驱动器分开判定，Widget 定位和共享或自身 Layout 尺寸计算可顺序协作，只有同一属性出现多个并行写入者才是冲突；V5 组件快照规则见 [Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)，完整策略见 [Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)。
+
+普通 UI 必须相对真实父级或有效参照停靠，原生 Widget 可表达时必须使用 Widget；父 Layout 管理的子项使用 Layout。Widget 其他条件满足但已知路径为非单位变换时，V3 可声明 `SHARED` 与 `widget_fallback: non-unit-transform`，V5 须按实际矩阵证明回退有效，单位路径不能借自填理由绕过原生布局。普通 UI 和浮层本体不得以 `STATIC` 固定冻结坐标；独立定位的浮层必须声明受控位置行为和合法恢复驱动，背景遵循其专用边界。尺寸控制仍按 RAW 原尺寸及九宫格授权分别处理。
 
 
 

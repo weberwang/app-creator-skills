@@ -1,6 +1,6 @@
 # 游戏与应用技能工作流
 
-为 AI 编程助手提供从需求、架构、功能实现到集成验证和发布准备的项目工作流，有界面时接入视觉设计。支持 Unity、Cocos Creator、Phaser、Three.js、Flutter、Expo、ESP32 设备 GUI 和 Node.js 服务器，可按项目技术栈安装到 `.agents/skills/`。
+为 AI 编程助手提供从需求、架构、功能实现到集成验证和发布准备的项目工作流，有界面时接入视觉设计。支持 Unity、Cocos Creator、Phaser、Three.js、Roblox、Flutter、Expo、ESP32 设备 GUI 和 Node.js 服务器，可按项目技术栈安装到 `.agents/skills/`。
 
 你可以用自然语言描述想做的游戏、应用或服务器，由统一入口组织任务，按需调用产品、架构、玩法、视觉、资源、测试等专业能力。各技术栈使用自己的工程与领域规则；可见对象共用 V0–V5，Node.js 无界面服务器使用非视觉模块和集成流程。
 
@@ -22,6 +22,7 @@
 | Cocos Creator | 基于 Creator 的游戏项目 | [app-stack-cocos](skills/app-stack-cocos/SKILL.md) |
 | Phaser | Web 2D 游戏 | [app-stack-phaser](skills/app-stack-phaser/SKILL.md) |
 | Three.js | Web 3D 场景与游戏 | [app-stack-threejs](skills/app-stack-threejs/SKILL.md) |
+| Roblox | Roblox Studio 游戏体验与 Place 内容 | [app-stack-roblox](skills/app-stack-roblox/SKILL.md) |
 | Flutter | 跨平台应用 | [app-stack-flutter](skills/app-stack-flutter/SKILL.md) |
 | Expo | 基于 React Native 的 Android、iOS 应用；Web 按需启用 | [app-stack-expo](skills/app-stack-expo/SKILL.md) |
 | ESP32 | ESP32 自带屏幕的嵌入式 GUI 固件 | [app-stack-esp32](skills/app-stack-esp32/SKILL.md) |
@@ -40,12 +41,13 @@ npx github:weberwang/app-creator-skills
 # 或直接指定技术栈
 npx github:weberwang/app-creator-skills flutter
 npx github:weberwang/app-creator-skills expo
+npx github:weberwang/app-creator-skills roblox
 npx github:weberwang/app-creator-skills esp32
 npx github:weberwang/app-creator-skills nodejs
 npx github:weberwang/app-creator-skills unity,cocos
 ```
 
-安装到当前项目的 `.agents/skills/`，仅写入所选栈与公共依赖。只有显式选择 `all` 才安装全部八栈；非交互环境须指定技术栈。
+安装到当前项目的 `.agents/skills/`，仅写入所选栈与公共依赖。只有显式选择 `all` 才安装全部九栈；非交互环境须指定技术栈。
 
 私有 GitHub 仓库需要先配置 Git 的访问凭证。npx 会取得仓库包及其 Node 依赖，再从包内技能安装，不再通过 GitHub API 重复下载。需要固定版本时使用 `npx 'github:weberwang/app-creator-skills#提交SHA' flutter`，安装内容与该提交一致。npm 包发布后也可使用 `npx app-creator-skills flutter`。
 
@@ -98,7 +100,9 @@ node packages/installer/install-project-skills.mjs ../my-app --stack flutter
 真实数据库迁移和生产部署另行授权。
 ```
 
-初始化时会确认目标、平台、技术栈和核心功能。含客户端界面的项目再确认语言、屏幕与输入。Flutter、Expo 可选择横屏、竖屏或双方向；游戏只选择横屏或竖屏之一。ESP32 按实际屏幕分辨率、旋转、保留区域与输入硬件设计，不套用游戏画布或手机安全区。背景允许等比缩放覆盖视口，关键 UI 按适用安全区与实际宽高重排。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。Node.js 服务器不询问界面方向或强制创建语言清单，按实际 API 合同处理本地化需求。
+初始化时会确认目标、平台、技术栈和核心功能。含客户端界面的项目再确认语言、屏幕与输入。Flutter、Expo 可选择横屏、竖屏或双方向；Unity、Cocos、Phaser、Three.js 游戏只选择横屏或竖屏之一，Roblox 按平台与项目实际支持的设备和方向处理。ESP32 按实际屏幕分辨率、旋转、保留区域与输入硬件设计，不套用游戏画布或手机安全区。背景允许等比缩放覆盖视口，关键 UI 按适用安全区与实际宽高重排。界面语言默认建议简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可选；以用户实际选择为准，已有明确选择时直接沿用。Node.js 服务器不询问界面方向或强制创建语言清单，按实际 API 合同处理本地化需求。
+
+Roblox 项目由 Studio 内置 MCP 执行场景、脚本及试玩操作。通过 [Roblox Studio 官方接入说明](https://create.roblox.com/docs/studio/mcp)连接后，按实际 Studio 版本探测工具；工作流不会因为安装技能而自动安装、启动或配置 Studio。未连接时仍可分析需求、准备方案和编写代码，但 Studio 运行、Place 保存回读及画面体验应标记未验证。
 
 也可以从已有项目中的具体任务开始：
 

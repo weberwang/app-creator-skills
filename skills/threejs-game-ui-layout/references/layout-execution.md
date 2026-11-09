@@ -16,7 +16,13 @@ V5 在实例化 DOM/HUD 布局前，必须从已确认的业务节点和 `ui_lay
 }
 ```
 
-`position_driver` 只允许 `DOM_LAYOUT`、`SHARED`、`STATIC`、`ANIMATION`，缺省为 `SHARED`。`STATIC` 要求 `layout_owner=SELF`；`ANIMATION` 要求 `layout_owner=EXTERNAL`。`DOM_LAYOUT` 只能以真实 `parent_layout_node_id` 为定位参照，不能承接 `center_alignment.member_ids` 中的整体居中成员，也不能与 `overflow_policy=REFLOW/SCROLL` 并用。定位参照仍由 `ui_layout.position_reference_id` 显式决定；未声明时回退真实父级，节点已有的 `reference_id` 必须完全一致。
+`position_driver` 的枚举为 `DOM_LAYOUT`、`SHARED`、`STATIC`、`ANIMATION`，普通游戏 UI 禁止 `STATIC`。正式路线已确定时填写 `ui_layout.renderer=DOM|HUD`；DOM 对真实父级的普通停靠及流式/滚动排布使用 `DOM_LAYOUT`，省略驱动时由该事实派生。HUD 或尚未确定实际 renderer 的计划缺省为 `SHARED`，后续实际 DOM 快照仍须核对原生优先规则，不能以省略字段绕过。`DOM_LAYOUT` 只能以真实 `parent_layout_node_id` 为定位参照；不可拆的虚拟居中组合和独立参照按现有结构核实共享回退。定位参照仍由 `ui_layout.position_reference_id` 决定，未声明时为真实父级，已有 `reference_id` 必须一致。
+
+`ANIMATION` 要求 `layout_owner=EXTERNAL`，并填写 `ui_layout.position_behavior`：`kind` 为 `drag|pointer-follow|world-follow|transition`，`reason`、`trigger`、`restore_rule` 明确用途及交接，`properties` 只含当前节点的 `x/y` 且非空无重复，`restore_driver` 为 `DOM_LAYOUT|SHARED`。行为期间维持唯一位置写入者；该记录不能授权普通静态坐标或改变其他节点、尺寸。
+
+V5 活动 DOM 节点的 `component_snapshot.dom_layout` 保留实际计算样式：`parent_id`、`position`、`parent_display`；绝对/固定 CSS 定位还须记录实际 `containing_block_id` 及 `inset.left/right/top/bottom`。双轴至少各有一个实际非 auto 的有限 px/% 边距，包含块与本节点的真实布局父级一致。自然流、Flex/Grid 由真实父容器排布。采样从同一节点的 `getComputedStyle`、真实 DOM 父级和包含块取得，不能按计划回填；原生机制记录与实际矩形仍按各自合同核对。数据一致性不认证采集来源，也不等同完整 CSS 求解或全部视口运行通过。
+
+实际 DOM 固定边距沿用本栈中心采样的 `0.5 logical-px` 量化预算，容纳原生小数布局读数；Canvas HUD 保留其原有数值精度。该预算不适用于其他引擎，也不授权修改停靠方向或设计间距。
 
 `size_driver` 按 `size_policy` 派生：`FIXED → FIXED`、`CONTENT → CONTENT`、`STRETCH/FLEX → SHARED`。拉伸或弹性尺寸可以明确声明 `DOM_LAYOUT`；固定和内容尺寸必须分别由 `FIXED` 与 `CONTENT` 驱动，不能声明冲突的写入者。
 

@@ -29,7 +29,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 5. 在目标运行环境先核对同条件的设计目标、正式源值与运行值，再检查适用视口和内容适配及触控/鼠标/键盘导航；两类结果分别记录，修复偏差来源，不对单张截图加偏移或隐式改变设计目标。
 6. 交付布局规则、断点/内容矩阵、导航顺序、运行验证矩阵和需用户人工判断的视觉点。
 
-项目采用可视化编辑器时，统一遵循[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)，将可配置功能保存在正式场景、Prefab 或原生 UI 源中。新增显示元素时，同步交付正式可编辑源及适用的动态预览。
+项目采用可视化编辑器时，统一遵循[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)，将可配置功能保存在正式场景、Prefab、Roblox Place 或原生 UI 源中。新增显示元素时，同步交付正式可编辑源及适用的动态预览。
 
 ## 关键边界
 
@@ -38,6 +38,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 - 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。
+- 游戏普通屏幕 UI 必须落实[双轴停靠或原生容器排布](references/relative-layout.md#游戏-ui-的停靠与原生机制)；原生能表达时使用原生机制，位置与尺寸分别确定控制者，并核对正式源与运行属性。
 - Unity/Creator/Web UI、Flutter Widget 与 Expo React Native 的布局系统并不相同；只使用当前栈匹配的原生适配模式。
 - 效果图供目标确认，不能把按钮、动态文案和交互状态烘焙成不可访问的背景图。
 

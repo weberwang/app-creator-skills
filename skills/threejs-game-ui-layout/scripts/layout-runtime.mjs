@@ -1,5 +1,9 @@
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
-const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+import domDockingPolicy from "../../app-ui-layout/scripts/game-ui-dom-docking.cjs";
+import behaviorPolicy from "../../app-ui-layout/scripts/game-ui-behavior.cjs";
+const { validateRelativeLayoutNodes, validateGameUiDockingOffsets } = relativeLayoutPolicy;
+const { validateGameDomDocking } = domDockingPolicy;
+const { projectActivePositionCentering } = behaviorPolicy;
 import { validateLayoutExecutionNodes } from "./layout-execution.mjs";
 import { normalizeCenterAlignment } from "./center-alignment.mjs";
 import { isBackgroundDisplayNode } from "./display-node-role.mjs";
@@ -138,6 +142,7 @@ function validateImageSnapshot(node, snapshot, plan, errors, label) {
 
 /** 从运行快照检查严格中心、带理由补偿中心和图文组包围框。 */
 function validateRuntimeCentering(nodes, snapshotsById, errors, label) {
+  nodes = projectActivePositionCentering(nodes, nodes, snapshotsById, errors, label, (a, b) => Math.abs(a - b) <= CENTER_TOLERANCE);
   const groupByMember = new Map();
   const groups = [];
   for (const node of nodes) {
@@ -272,6 +277,7 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
 
   const businessNodes = nodes.filter((node) => isRecord(node) && node.is_root_container !== true);
   const nodeById = new Map(businessNodes.map((node) => [node.layout_node_id ?? node.layoutNodeId, node]));
+  const groupedIds = new Set(businessNodes.flatMap((node) => Array.isArray(node.center_alignment?.member_ids) ? node.center_alignment.member_ids : []));
   const snapshotsById = new Map();
   const expectedIds = new Set(nodeById.keys());
   for (const [index, entry] of geometry.component_snapshots.entries()) {
@@ -298,6 +304,7 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
     if (snapshot.batch_id !== geometry.runtime_batch.batch_id) errors.push(`${itemLabel}.batch_id 与运行批次不一致`);
     if (snapshot.viewport_revision !== geometry.runtime_batch.viewport_revision) errors.push(`${itemLabel}.viewport_revision 与运行批次不一致`);
     if (!["DOM", "HUD"].includes(snapshot.renderer)) errors.push(`${itemLabel}.renderer 必须是 DOM 或 HUD`);
+    if (snapshot.active === true) errors.push(...validateGameDomDocking(node, snapshot, { grouped: groupedIds.has(id), label: itemLabel }));
     if (typeof snapshot.active !== "boolean") errors.push(`${itemLabel}.active 必须是布尔值`);
     const expectedParentId = node.parent_layout_node_id ?? node.parentLayoutNodeId;
     if (snapshot.active === true && snapshot.parent_layout_node_id !== expectedParentId) {
@@ -364,7 +371,8 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
     }
   }
 
-  validateFloatingRuntimeOffsets(businessNodes, snapshotsById, errors, label, (a, b) => Math.abs(a - b) <= BOUNDS_EPSILON, (snapshot) => snapshot);
+  // DOM 小数布局沿用现有原生中心采样预算；HUD 的数值合同保持原精度。
+  validateGameUiDockingOffsets(businessNodes, snapshotsById, errors, label, (a, b, snapshot) => Math.abs(a - b) <= (snapshot.renderer === "DOM" ? CENTER_TOLERANCE : BOUNDS_EPSILON));
   validateRuntimeCentering(businessNodes.map((node) => (node?.ui_layout ?? node?.uiLayout)?.positioning === "absolute" && ["popup", "floating", "toast"].includes((node?.ui_layout ?? node?.uiLayout)?.floating_root_kind) ? { ...node, axis_alignment: { horizontal: "left", vertical: "top" }, center_alignment: undefined } : node), snapshotsById, errors, label);
   return errors;
 }
@@ -402,35 +410,4 @@ function validateRelativeWebNodes(input, errors, label, kind) {
     return { id, parentId, references, mode, floatingKind };
   });
   errors.push(...validateRelativeLayoutNodes(canonical, { label, roots: ["viewport", "safe-area"] }));
-}
-
-/** 依据冻结节点、同批参照实测和原生容差验证浮层内部锚点。 */
-function validateFloatingRuntimeOffsets(nodes, snapshots, errors, label, sameNumber, getSnapshot) {
-  const idOf = (node) => node?.layout_node_id ?? node?.layoutNodeId;
-  const parentOf = (node) => node?.parent_layout_node_id ?? node?.parentLayoutNodeId;
-  const byId = new Map(nodes.map((node) => [idOf(node), node]));
-  const boundsOf = (node) => node?.target_bounds ?? node?.targetBounds ?? node?.bounds;
-  const valid = (rect) => rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width > 0 && rect.height > 0;
-  for (const node of nodes) {
-    const id = idOf(node); let ancestor = byId.get(parentOf(node)); const visited = new Set([id]); let inside = false;
-    while (ancestor && !visited.has(idOf(ancestor))) {
-      visited.add(idOf(ancestor));
-      if (["popup", "floating", "toast"].includes((ancestor.ui_layout ?? ancestor.uiLayout)?.floating_root_kind)) { inside = true; break; }
-      ancestor = byId.get(parentOf(ancestor));
-    }
-    if (!inside) continue;
-    const snapshot = getSnapshot(snapshots.get(id));
-    if (!snapshot || snapshot.active === false) continue;
-    const refId = node.reference_id ?? node.referenceId ?? node.ui_layout?.position_reference_id ?? node.uiLayout?.positionReferenceId ?? node.position_reference_id ?? node.positionReferenceId ?? parentOf(node);
-    const original = boundsOf(node); const reference = boundsOf(byId.get(refId)) ?? node.reference_target_bounds ?? node.referenceTargetBounds;
-    const actual = snapshot.layout_bounds ?? snapshot.actual_bounds; const actualRef = snapshot.reference_bounds;
-    if (![original, reference, actual, actualRef].every(valid)) { errors.push(label + "." + id + " 浮层内部缺少原始或同批实际参照矩形"); continue; }
-    const alignment = node.axis_alignment ?? node.axisAlignment ?? { horizontal: "left", vertical: "top" };
-    for (const [axis, start, size, end] of [["horizontal", "x", "width", "right"], ["vertical", "y", "height", "bottom"]]) {
-      if (alignment[axis] === "center") continue;
-      const edge = (rect, ref, atEnd) => atEnd ? ref[start] + ref[size] - rect[start] - rect[size] : rect[start] - ref[start];
-      const ends = alignment[axis] === "stretch" ? [false, true] : [alignment[axis] === end];
-      if (ends.some((atEnd) => !sameNumber(edge(actual, actualRef, atEnd), edge(original, reference, atEnd)))) errors.push(label + "." + id + " 浮层内部 " + axis + " 相对锚点间距与冻结事实不一致");
-    }
-  }
 }

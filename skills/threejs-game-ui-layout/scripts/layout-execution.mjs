@@ -1,5 +1,8 @@
 import { hasSpriteRendering, isBackgroundDisplayNode, isLayoutContainer } from "./display-node-role.mjs";
 import { isNineSliceStretchTargetAllowed, requiresNineSliceDecision, validateNineSliceContract, validateNineSliceTargetBounds } from "./nine-slice-contract.mjs";
+import dockingPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+
+const { validateGameUiPositionDriver } = dockingPolicy;
 
 /** 允许运行时位置控制权的明确来源。 */
 export const POSITION_DRIVERS = Object.freeze(["DOM_LAYOUT", "SHARED", "STATIC", "ANIMATION"]);
@@ -156,15 +159,18 @@ function derivePlanForNode(record, knownIds, centerMembers, errors) {
     errors.push(`${label}.reference_id 必须等于 ui_layout.position_reference_id 或真实父级 ${referenceId}`);
   }
 
-  const positionDriver = ui.position_driver ?? "SHARED";
+  const positionDriver = ui.position_driver ?? (ui.renderer === "DOM" && referenceId === parentId && !centerMembers.has(id) ? "DOM_LAYOUT" : "SHARED");
+  if (ui.renderer !== undefined && !["DOM", "HUD"].includes(ui.renderer)) errors.push(`${label}.ui_layout.renderer 必须为 DOM 或 HUD`);
+  if (ui.renderer === "HUD" && positionDriver === "DOM_LAYOUT") errors.push(`${label} HUD 节点不能声明 DOM_LAYOUT 原生驱动`);
+  // 原生 CSS 对实际父容器的停靠和流式排布可直接表达，不允许用共享脚本绕过。
+  errors.push(...validateGameUiPositionDriver({ driver: positionDriver, nativeDriver: ui.renderer === "DOM" ? "DOM_LAYOUT" : null,
+    sharedAllowed: referenceId !== parentId || centerMembers.has(id), independent: ui.positioning === "absolute", behavior: ui.position_behavior,
+    baseDrivers: referenceId === parentId && !centerMembers.has(id) && ui.renderer !== "HUD" ? ["DOM_LAYOUT", "SHARED"] : ["SHARED"] }, label));
   if (centerMembers.has(id) && positionDriver !== "SHARED") {
     errors.push(`${label}.图文整体居中组成员的 position_driver 必须为 SHARED`);
   }
   if (positionDriver === "DOM_LAYOUT") {
     if (referenceId !== parentId) errors.push(`${label}.position_driver=DOM_LAYOUT 只能使用真实父级作为定位参照`);
-    if (ui.overflow_policy === "REFLOW" || ui.overflow_policy === "SCROLL") {
-      errors.push(`${label}.position_driver=DOM_LAYOUT 不能与 REFLOW/SCROLL 布局策略并用`);
-    }
   }
 
   const sizePolicy = ui.size_policy;

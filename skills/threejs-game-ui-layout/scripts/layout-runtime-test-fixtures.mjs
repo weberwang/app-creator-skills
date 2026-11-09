@@ -25,7 +25,8 @@ export function layoutRuntimeFixture(nodes, {
       return {
         layout_node_id: id,
         component_snapshot: {
-          batch_id, viewport_revision, renderer: "DOM", active: true,
+          batch_id, viewport_revision, renderer: node.ui_layout?.renderer ?? (plan.position_driver === "DOM_LAYOUT" ? "DOM" : "HUD"), active: true,
+          ...(plan.position_driver === "DOM_LAYOUT" ? { dom_layout: { parent_id: node.parent_layout_node_id ?? node.parentLayoutNodeId, containing_block_id: node.parent_layout_node_id ?? node.parentLayoutNodeId, position: "absolute", parent_display: "block", inset: { left: `${bounds.x - referenceBounds.x}px`, top: `${bounds.y - referenceBounds.y}px`, right: "auto", bottom: "auto" } } } : {}),
           parent_layout_node_id: node.parent_layout_node_id ?? node.parentLayoutNodeId,
           reference_id: plan.reference_id,
           position_writers: [plan.position_driver], size_writers: [plan.size_driver],

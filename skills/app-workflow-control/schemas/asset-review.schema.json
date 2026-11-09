@@ -6,7 +6,7 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "workItemId", "stack", "visualStage", "candidateId", "technicalStatus", "humanStatus", "userMessageRef", "qualityChecks", "assets"],
   "properties": {
-    "schemaVersion": {"const": "1.0"}, "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs"]},
+    "schemaVersion": {"const": "1.0"}, "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"]},
     "visualStage": {"const": "V4"}, "candidateId": {"type": "string", "minLength": 1},
     "technicalStatus": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "humanStatus": {"enum": ["PASS", "FAIL", "NOT_RUN"]}, "userMessageRef": {"type": "string", "minLength": 1},
     "qualityChecks": {"$ref": "human-review.schema.json#/properties/qualityChecks"},

@@ -25,7 +25,7 @@ const BOOTSTRAP_FILES = Object.freeze([
   'skills/app-skill-runtime/direct-entry.mjs',
   'skills/app-skill-runtime/native-contracts.mjs',
 ]);
-const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
+const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo', 'roblox']);
 
 /** 规范并校验仓库坐标，只接受 GitHub 上的明确仓库地址。 */
 export function normalizeRepository(value) {

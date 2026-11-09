@@ -162,7 +162,10 @@
               "required": [
                 "axisAlignment",
                 "uiLayout"
-              ]
+              ],
+              "properties": {
+                "uiLayout": { "required": ["positionDriver", "sizeDrivers"] }
+              }
             }
           ]
         },

@@ -1,5 +1,7 @@
 # 场景多目标记录
 
+Roblox 场景目标沿用当前数组与公共确认链，`domainEvidenceRef` 仍使用现有路径引用。领域包装绑定目标、候选、场景/状态、视口及冻结目标，再通过带摘要的 `robloxEvidenceRef` 关联[本栈原生材料](../../roblox-domain-contracts/references/domain-validation.md)。Place 是正式工程宿主，一个 Place 可承载多个功能或数据关卡，不按关卡数量机械建场景；当前 Studio、Edit 与 Client/Server 运行上下文分别核对。
+
 一个 `SCENE` 工作项使用 `visual.objectId` 标识正式场景、`visual.stage` 记录共同阶段，并通过 `visual.targets` 登记一张或多张正式目标图。不要为每张目标另建场景或复制正式资源。V0、功能验证 V1 和 V2 初期可无视觉目标；离开 V2 前至少规划并确认一个目标。
 
 每个目标填写唯一 `targetId` 和 `candidateId`、`sceneId`、`stateId`、`viewport.width/height`、可读区域说明 `scope`、`referenceTarget` 的 `{path,sha256}`，以及 `domainEvidenceRef`、`reviews` 和 V4 的 `assetReviewRef`。目标图、确认记录及素材评审的 SHA-256 均由实际文件字节计算，不能使用模板占位值。`visual.coverageRef` 的 `{path,sha256}` 指向用户确认的覆盖清单：记录 `workItemId`、`sceneId`、`status=CONFIRMED`、真实 `userMessageRef`、完整 `targetIds`，并在 `targets` 中逐项冻结上述身份、区域、视口及 `referenceTarget`。可以用同一次 V2 用户确认同时确认目标和覆盖范围，不强加额外审批。

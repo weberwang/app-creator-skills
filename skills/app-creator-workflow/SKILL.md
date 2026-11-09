@@ -25,7 +25,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 涉及性能预算、瓶颈定位或优化时，按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)明确范围与目标，先采集可比基线，再定向优化并核对收益、副作用和功能回归；沿用各栈原生工具与现有证据。普通开发不扩展成全项目优化，发布额外检查／优化／图集沿用真实用户选择，不自动生成图集或执行图片改写、真机验收。
 
-目标包含 Android、iOS/iPadOS，且新建基础工程或修改启动链路时，按[系统启动屏制作与交付](../app-domain-toolkit/references/system-launch-screen.md)安排平台配置、本地资源、首帧衔接及验证；游戏与非游戏 App 分别遵守目标平台内容要求，不默认添加 Logo＋文本品牌页，不为其他目标引入移动启动屏。
+自有客户端目标包含 Android、iOS/iPadOS，且新建基础工程或修改启动链路时，按[系统启动屏制作与交付](../app-domain-toolkit/references/system-launch-screen.md)安排平台配置、本地资源、首帧衔接及验证；游戏与非游戏 App 分别遵守目标平台内容要求，不默认添加 Logo＋文本品牌页，不为其他目标引入移动启动屏。Roblox 体验运行在平台客户端中，采用本栈实际加载和传送路线，不为它制作独立 APK/IPA 或自有系统启动屏。
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
 
@@ -44,6 +44,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 | 技术栈 | 独立规范 | 识别依据 |
 | --- | --- | --- |
 | Unity | `$app-stack-unity` | ProjectSettings/ProjectVersion.txt、Packages/manifest.json |
+| Roblox | `$app-stack-roblox` | 用户选定或已连接的 Roblox Studio Place，或核实后的 `.rbxl`/`.rbxlx` 正式文件；单个 `.luau` 文件不能单独证明 |
 | Cocos Creator | `$app-stack-cocos` | Creator 工程与 assets/settings/profiles |
 | Phaser | `$app-stack-phaser` | package.json 的 Phaser 依赖与实际版本 |
 | Three.js | `$app-stack-threejs` | package.json 的 three 依赖及真实 3D 运行入口 |
@@ -53,6 +54,8 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 | Node.js | `$app-stack-nodejs` | 实际服务器/消费者入口、服务端依赖、运行与部署脚本；仅有 package.json 或前端构建工具不能证明本栈 |
 
 探测文件只是线索。`package.json`、`assets/` 等通用文件不能独立证明技术栈；读取依赖和项目设置，仍无法判定时只问技术选择，不替用户重建项目。
+
+Roblox 使用 `SCENE`、独立 `DISPLAY_LAYER` 与 `MODULE`，由当前 Studio 的 Edit 正式源与 Client/Server 运行分别承载；同一 Place 可以包含多个功能或关卡。先按 [Roblox 技术栈](../app-stack-roblox/SKILL.md)确认目标实例、脚本同步、正式 Place 快照与实际工具；Studio 工具结果或 Play 状态不能代替项目内实际保存的正式源。Studio 未连接时继续不依赖它的仓库工作，相关运行、源回读及人工视觉结论保持未验证。
 
 Expo 使用 React Native 的 PAGE 与独立 DISPLAY_LAYER，原生与 Web 按已选平台分别验证；采用项目实际 SDK、导航和原生工程维护方式。Expo Go、开发构建、发布构建的证明范围不同，不能以预览代替原生 SDK 或系统启动屏验收。云服务和插件是可选执行通道，不新增控制器或默认启动付费环境；具体见 [app-stack-expo](../app-stack-expo/SKILL.md)。
 

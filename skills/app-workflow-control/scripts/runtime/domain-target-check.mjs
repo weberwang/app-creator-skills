@@ -63,6 +63,9 @@ function validateUnityIdentity(repo, envelope, work, target, stage) {
 async function runDomainChecks({ repo, work, target, stage }) {
   if (!VISUAL_STAGES.includes(stage)) throw new WorkflowError(`不支持的领域校验阶段：${stage}`);
   const document = readJson(repo, target.domainEvidenceRef?.path, '目标领域证据');
+  if (work.stack === 'roblox') {
+    return (await import('./roblox-domain-check.mjs')).validateRobloxScene(repo, work, target, stage, document, validateTargetFile);
+  }
   if (work.stack === 'unity') {
     const path = resolve(SKILLS_ROOT, 'unity-domain-contracts/scripts/runtime/visible-contract.mjs');
     const fullPath = resolve(SKILLS_ROOT, 'unity-domain-contracts/scripts/unity-contract-validation.mjs');

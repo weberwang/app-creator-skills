@@ -1,5 +1,6 @@
 import { validateNineSliceDecision } from "./nine-slice-contract.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
+import { validateNativePositionSnapshot } from "./layout-native-docking.mjs";
 
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const WRITER_KINDS = new Set(["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"]);
@@ -578,22 +579,12 @@ function validateActualGeometry(node, actualRect, nodesById, actualRects, roots,
   }
 }
 
-/** 按每条实际中心关系重算单节点中心或图文组的联合包围框中心。 */
-/** 沿已校验的父链识别浮层后代，本体自身不享有后代检查。 */
-function isFloatingDescendant(node, nodesById) {
-  let parent = nodesById.get(node.parentElementId);
-  while (parent) {
-    if (parent.layoutBinding.uiLayout.floatingRootKind) return true;
-    parent = nodesById.get(parent.parentElementId);
-  }
-  return false;
-}
-
 /** 与计划派生一致地读取左右或上下边缘，尺寸变化时仍保留原始间距。 */
 function edgeCoordinate(rect, axis, alignment) {
   if (axis === "horizontal") return rect.x + (alignment === "right" ? rect.width : 0);
   return rect.y + (alignment === "bottom" ? rect.height : 0);
 }
+/** 按实际中心关系及相对边距核验普通屏幕 UI，允许容器排布与功能行为改变间距。 */
 function validateActualCentering(plan, measurements, actualRects, roots, errors) {
   const nodesById = new Map(plan.nodes.map((node) => [node.id, node]));
   const groupByMemberAndAxis = new Map();
@@ -611,6 +602,8 @@ function validateActualCentering(plan, measurements, actualRects, roots, errors)
   for (const leader of plan.nodes) {
     const group = leader.layoutBinding.centerAlignment;
     if (!Array.isArray(group?.memberIds)) continue;
+    // 过渡或拖拽期间由功能行为临时接管位置，静态组合关系在恢复阶段复验。
+    if (group.memberIds.some((memberId) => nodesById.get(memberId)?.layoutBinding.uiLayout.positionBehavior)) continue;
     const memberMeasurements = group.memberIds.map((memberId) => measurements.get(memberId));
     const hasActiveMember = memberMeasurements.some((row) => row?.componentSnapshot?.active === true);
     if (!hasActiveMember) continue;
@@ -647,6 +640,7 @@ function validateActualCentering(plan, measurements, actualRects, roots, errors)
     const measurement = measurements.get(node.id);
     const rect = actualRects.get(node.id);
     if (!measurement || !rect || measurement.componentSnapshot?.active !== true) continue;
+    if (node.layoutBinding.uiLayout.positionBehavior) continue;
     const referenceId = node.layoutBinding.positionReferenceId ?? node.parentElementId;
     const referenceMeasurement = ROOT_IDS.has(referenceId) ? null : measurements.get(referenceId);
     const referenceRect = ROOT_IDS.has(referenceId)
@@ -662,8 +656,10 @@ function validateActualCentering(plan, measurements, actualRects, roots, errors)
       const owner = groupByMemberAndAxis.get(`${axis}:${node.id}`);
       if (owner) continue;
 
-      // 浮层内部非中心轴按原始锚点间距对照同批实际参照，不能依赖可空 targetRect。
-      if (!strategy && !aligned && isFloatingDescendant(node, nodesById)) {
+      // 流式容器与临时功能行为可按实际内容重排；其他停靠须维持设计参照边距。
+      const layout = node.layoutBinding.uiLayout;
+      const dynamicPlacement = ["LAYOUT_GROUP", "UITOOLKIT_LAYOUT"].includes(layout.positionDriver) || Boolean(layout.positionBehavior);
+      if (!strategy && !aligned && !dynamicPlacement) {
         const sourceReference = nodesById.get(referenceId)?.bounds ?? plan.roots[referenceId];
         if (!observedReference || !sourceReference) {
           errors.push(`节点 ${node.id} 的 ${axis} 相对定位缺少实际位置参照矩形。`);
@@ -765,6 +761,7 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
           ? readSize(snapshotData.snapshot.rectTransform?.localSize, `节点 ${node.id} 的 RectTransform.localSize`, errors, { positive: snapshotData.expectedActive })
           : null;
         validateUiSystemSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, rectSize);
+        validateNativePositionSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, measurement);
         if (snapshotData.expectedActive && snapshotData.snapshot.active && measurement.actualRect !== null) {
           actualRects.set(node.id, readRect(measurement.actualRect, `节点 ${node.id} 的 actualRect`, errors));
         } else if (measurement.actualRect !== null && measurement.actualRect !== undefined) {

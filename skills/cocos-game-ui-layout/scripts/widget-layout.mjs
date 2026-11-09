@@ -1,5 +1,9 @@
 import { deriveSpriteGeometry } from "./sprite-layout-sizing.mjs";
-import { isBackgroundDisplayNode, isLayoutContainer } from "./display-node-role.mjs";
+import { isLayoutContainer } from "./display-node-role.mjs";
+import { describeWidgetAvailability, positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
+import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+
+const { validateGameUiPositionDriver } = relativeLayoutPolicy;
 
 const STABLE_ROOTS = new Set(["viewport", "safe-area"]);
 const POSITION_DRIVERS = new Set(["WIDGET", "SHARED", "LAYOUT", "STATIC", "ANIMATION"]);
@@ -103,6 +107,14 @@ export function validateLayoutDriverDeclaration(uiLayout, errors = [], label = "
     && (typeof uiLayout.size_driver !== "string" || !SIZE_DRIVERS.has(uiLayout.size_driver))) {
     errors.push(`${label}.size_driver 只支持 SPRITE_RAW、FIXED、WIDGET、LAYOUT、SHARED 或 CONTENT`);
   }
+  if (Object.hasOwn(uiLayout, "widget_fallback")) {
+    // 计划仅能记录一种可由运行矩阵证实的回退，不能以任意理由绕过原生停靠。
+    if (uiLayout.widget_fallback !== "non-unit-transform") errors.push(`${label}.widget_fallback 只支持 non-unit-transform`);
+    if (uiLayout.position_driver !== "SHARED" && !(uiLayout.position_driver === "ANIMATION" && uiLayout.position_behavior?.restore_driver === "SHARED")) errors.push(`${label}.widget_fallback 仅适用于 SHARED 定位或行为结束后恢复 SHARED`);
+  }
+  if (Object.hasOwn(uiLayout, "position_behavior") || uiLayout.position_driver === "ANIMATION") {
+    errors.push(...validateGameUiPositionDriver({ driver: uiLayout.position_driver, behavior: uiLayout.position_behavior, baseDrivers: ["WIDGET", "SHARED", "LAYOUT"] }, label));
+  }
 
   if (Object.hasOwn(uiLayout, "widget_stretch_axes")) {
     const axes = uiLayout.widget_stretch_axes;
@@ -162,24 +174,6 @@ function readBounds(node, byId, referenceId, parentId, label) {
     throw new TypeError(`${label} 缺少定位参照 ${referenceId} 的有效 reference_target_bounds/parent_target_bounds`);
   }
   return { bounds, referenceBounds };
-}
-
-/** 沿真实父链判断参照是不是实际父级或祖先，逻辑稳定根永远不是 Widget target。 */
-function isParentOrAncestor(node, referenceId, byId, label) {
-  if (STABLE_ROOTS.has(referenceId)) return false;
-  let currentId = node.parent_layout_node_id;
-  if (!isNonEmptyString(currentId)) throw new TypeError(`${label}.parent_layout_node_id 必须是非空字符串`);
-  const visited = new Set();
-  while (isNonEmptyString(currentId)) {
-    if (STABLE_ROOTS.has(currentId)) return false;
-    if (visited.has(currentId)) throw new TypeError(`${label} 的实际父链存在循环：${currentId}`);
-    visited.add(currentId);
-    const parent = byId.get(currentId);
-    if (!parent) return false;
-    if (currentId === referenceId) return true;
-    currentId = parent.parent_layout_node_id;
-  }
-  return false;
 }
 
 /** 收集虚拟图文组成员，确保每个成员共用共享布局控制。 */
@@ -311,26 +305,26 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   const owner = uiLayout.layout_owner;
   const explicitDriver = uiLayout.position_driver;
   const stretchAxes = uiLayout.widget_stretch_axes ?? [];
-  const parentId = node.parent_layout_node_id;
-  const referenceId = node.reference_id ?? uiLayout.position_reference_id ?? parentId;
-  if (!isNonEmptyString(referenceId)) throw new TypeError(`${label}.reference_id/ui_layout.position_reference_id/parent_layout_node_id 必须是非空字符串`);
-  const isAncestor = isParentOrAncestor(node, referenceId, byId, label);
-  const isGroupMember = centerMembers.has(node.layout_node_id);
-  const background = isBackgroundDisplayNode(node);
-  const overflow = uiLayout.overflow_policy;
-  const widgetUnavailableReason = isGroupMember
-    ? "虚拟图文组必须由共享布局按组合边界整体居中"
-    : STABLE_ROOTS.has(referenceId)
-      ? `定位参照 ${referenceId} 是逻辑稳定根，由共享布局映射，不假定它对应实际 Widget target Node`
-    : !isAncestor
-      ? "定位参照不是实际父级或祖先，Widget 无法直接引用"
-      : background
-        ? "背景节点不承担普通 UI 子项的 Widget 定位"
-        : ["REFLOW", "SCROLL"].includes(overflow)
-          ? `overflow_policy=${overflow} 需要共享/父级布局控制`
-          : owner !== "SELF"
-            ? `layout_owner=${owner ?? "未声明"} 不允许节点自身用 Widget 控制位置`
-            : null;
+  const availability = describeWidgetAvailability(node, byId, centerMembers, label);
+  const { parentId, referenceId, ancestor: isAncestor, group: isGroupMember, background, reason: widgetUnavailableReason } = availability;
+  const structuralAvailability = describeWidgetAvailability(node, byId, centerMembers, label, { ignoreOwnership: true });
+
+  // 路径矩阵在 V3 尚不可观察，唯一允许的显式回退须留到 V5 用实际矩阵证实。
+  const widgetCandidate = structuralAvailability.reason === null;
+  if (uiLayout.widget_fallback !== undefined && !widgetCandidate) {
+    throw new TypeError(`${label}.ui_layout.widget_fallback 仅用于其他条件满足 Widget 的非单位变换路径`);
+  }
+  const floatingBody = uiLayout.positioning === "absolute" && ["popup", "floating", "toast"].includes(uiLayout.floating_root_kind);
+  if (floatingBody && background) throw new TypeError(`${label} 独立浮层本体不能借背景职责豁免相对停靠`);
+  if (explicitDriver === "STATIC" && !background) {
+    throw new TypeError(`${label} 普通 UI 必须相对停靠，不能用 STATIC 固定冻结坐标`);
+  }
+  if (!background && (!isRecord(node.axis_alignment)
+    || !["left", "center", "right"].includes(node.axis_alignment.horizontal)
+    || !["top", "center", "bottom"].includes(node.axis_alignment.vertical))) {
+    // SHARED 和父 Layout 也必须保存双轴停靠意图，不能借未选择 Widget 隐去规格。
+    throw new TypeError(`${label}.axis_alignment 必须提供合法的 horizontal/vertical 九点停靠值`);
+  }
 
   let positionDriver = explicitDriver;
   if (isGroupMember && explicitDriver !== undefined && explicitDriver !== "SHARED") {
@@ -338,6 +332,10 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   }
   if (positionDriver === undefined) {
     positionDriver = owner === "SELF" && widgetUnavailableReason === null ? "WIDGET" : "SHARED";
+  }
+  if (widgetCandidate && positionDriver === "SHARED" && uiLayout.widget_fallback !== "non-unit-transform") {
+    // PARENT/EXTERNAL 是职责标签，不证明可由 Widget 表达的停靠必须改用共享计算。
+    throw new TypeError(`${label} 原生 Widget 可表达当前停靠，SHARED 仅可声明待 V5 核实的 non-unit-transform 回退`);
   }
   if (positionDriver === "WIDGET" && owner !== "SELF") {
     throw new TypeError(`${label}.ui_layout.position_driver=WIDGET 要求 layout_owner=SELF`);
@@ -348,11 +346,22 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   if (positionDriver === "LAYOUT" && owner !== "PARENT") {
     throw new TypeError(`${label}.ui_layout.position_driver=LAYOUT 要求 layout_owner=PARENT`);
   }
+  if (positionDriver === "LAYOUT" && (referenceId !== parentId || STABLE_ROOTS.has(parentId) || !byId.has(parentId))) {
+    throw new TypeError(`${label}.ui_layout.position_driver=LAYOUT 必须由实际父节点控制并引用该父节点`);
+  }
   if (positionDriver === "ANIMATION" && owner !== "EXTERNAL") {
     throw new TypeError(`${label}.ui_layout.position_driver=ANIMATION 要求 layout_owner=EXTERNAL`);
   }
   if (positionDriver === "STATIC" && owner !== "SELF") {
     throw new TypeError(`${label}.ui_layout.position_driver=STATIC 要求 layout_owner=SELF`);
+  }
+  if (!background) {
+    const { baseDrivers } = positionBehaviorBaseDrivers(node, byId, centerMembers, label);
+    const restoreLayout = positionDriver === "LAYOUT" || (positionDriver === "ANIMATION" && uiLayout.position_behavior?.restore_driver === "LAYOUT" && baseDrivers.includes("LAYOUT"));
+    const nativeDriver = restoreLayout ? "LAYOUT" : widgetCandidate ? "WIDGET" : null;
+    const sharedAllowed = !widgetCandidate || uiLayout.widget_fallback === "non-unit-transform";
+    const behaviorErrors = validateGameUiPositionDriver({ driver: positionDriver, nativeDriver, sharedAllowed, independent: floatingBody, behavior: uiLayout.position_behavior, baseDrivers }, label);
+    if (behaviorErrors.length) throw new TypeError(behaviorErrors[0]);
   }
 
   if (stretchAxes.length > 0 && positionDriver !== "WIDGET") {
@@ -402,10 +411,8 @@ function deriveNodePlan(node, byId, centerMembers, label) {
     reason = "定位参照不是父级或祖先，由共享布局按实际参照 bounds 计算，不增加包装容器。";
   } else if (background) {
     reason = "背景职责不使用 Widget 参与普通 UI 定位，由共享布局保留冻结几何。";
-  } else if (["REFLOW", "SCROLL"].includes(overflow)) {
-    reason = `overflow_policy=${overflow} 需要共享布局持续管理位置。`;
   } else if (explicitDriver === "SHARED") {
-    reason = "显式选择 SHARED，由共享布局入口按节点事实计算位置。";
+    reason = "计划按非单位变换使用 SHARED；V5 必须从实际节点与参照矩阵证实该回退。";
   } else {
     reason = `layout_owner=${owner ?? "未声明"} 不由节点自身控制位置，交由共享布局入口计算。`;
   }

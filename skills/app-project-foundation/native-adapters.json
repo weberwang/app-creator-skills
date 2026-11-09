@@ -1,6 +1,15 @@
 {
   "capability": "app-project-foundation",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-project-foundation",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-project-foundation",
+        "mode": "roblox-project-foundation",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "threejs": [
       {
         "sourceSkill": "threejs-game-runtime",
@@ -56,7 +65,8 @@
         "flutter",
         "esp32",
         "nodejs",
-        "expo"
+        "expo",
+        "roblox"
       ]
     }
   ]

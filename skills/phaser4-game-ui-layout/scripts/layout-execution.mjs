@@ -6,6 +6,9 @@
 
 import { validateNineSliceContract } from "./nine-slice-contract.mjs";
 import { isSyntheticLayoutRoot } from "./layout-root-bounds.mjs";
+import dockingPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+
+const { validateGameUiPositionDriver } = dockingPolicy;
 
 /** 位置属性允许的项目级驱动器。 */
 export const LAYOUT_POSITION_DRIVERS = Object.freeze(["REFLOW", "PARENT_LAYOUT", "STATIC", "ANIMATION"]);
@@ -61,6 +64,7 @@ function deriveNodePlan(node, index, errors, label) {
   if (POSITION_DRIVERS.has(positionDriver) && !ownerCompatible) {
     errors.push(`${nodeLabel}.ui_layout.position_driver=${positionDriver} 与 layout_owner=${owner} 冲突`);
   }
+  errors.push(...validateGameUiPositionDriver({ driver: positionDriver, independent: ui.positioning === "absolute", behavior: ui.position_behavior, baseDrivers: ["REFLOW", "PARENT_LAYOUT"] }, nodeLabel));
 
   let nineSliceStretch = false;
   if (node.nine_slice !== undefined) {

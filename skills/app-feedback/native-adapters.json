@@ -1,6 +1,15 @@
 {
   "capability": "app-feedback",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-feedback",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-feedback",
+        "mode": "roblox-game-feedback",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "unity": [
       {
         "sourceSkill": "unity-game-juice",
@@ -72,7 +81,8 @@
       "path": "../app-domain-toolkit/references/editor-display-authoring.md",
       "stacks": [
         "unity",
-        "cocos"
+        "cocos",
+        "roblox"
       ]
     },
     {
@@ -85,7 +95,8 @@
         "threejs",
         "flutter",
         "esp32",
-        "expo"
+        "expo",
+        "roblox"
       ]
     },
     {

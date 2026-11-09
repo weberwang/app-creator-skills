@@ -1,6 +1,6 @@
 # 界面文案通用原则
 
-适用技术栈：cocos、phaser、threejs、unity、flutter、expo、esp32。适用于游戏和应用中所有用户可见文案，包括标题、按钮、弹窗、引导、奖励和状态反馈。
+适用技术栈：cocos、phaser、threejs、unity、roblox、flutter、expo、esp32。适用于游戏和应用中所有用户可见文案，包括标题、按钮、弹窗、引导、奖励和状态反馈。
 
 ## 表达选择
 

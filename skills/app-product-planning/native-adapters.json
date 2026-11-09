@@ -1,6 +1,15 @@
 {
   "capability": "app-product-planning",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-production",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-production",
+        "mode": "roblox-game-production",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "unity": [
       {
         "sourceSkill": "unity-game-production",
@@ -78,13 +87,13 @@
     {
       "id": "game-content-playtesting",
       "path": "../app-domain-toolkit/references/game-content-playtesting.md",
-      "stacks": ["unity", "cocos", "phaser", "threejs"],
+      "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],
       "onDemand": true
     },
     {
       "id": "game-characteristics",
       "path": "../app-domain-toolkit/references/game-characteristics.md",
-      "stacks": ["unity", "cocos", "phaser", "threejs"],
+      "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],
       "onDemand": true
     },
     {
@@ -97,7 +106,8 @@
         "threejs",
         "flutter",
         "esp32",
-        "expo"
+        "expo",
+        "roblox"
       ]
     },
     {

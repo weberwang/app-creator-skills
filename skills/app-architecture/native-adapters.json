@@ -1,6 +1,15 @@
 {
   "capability": "app-architecture",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-architecture",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-architecture",
+        "mode": "roblox-game-architecture",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "unity": [
       {
         "sourceSkill": "unity-game-architecture",
@@ -112,7 +121,8 @@
         "flutter",
         "esp32",
         "nodejs",
-        "expo"
+        "expo",
+        "roblox"
       ]
     }
   ]

@@ -17,7 +17,7 @@ const ENUMS = Object.freeze({
   safe_area_policy: new Set(["FULL_BLEED", "INSIDE_SAFE_AREA"]),
   interaction_policy: new Set(["HIT_TARGET", "DELEGATE_TO_PARENT", "NONE"]),
 });
-const FIELDS = new Set(["positioning", "floating_root_kind", "grouping_basis", ...Object.keys(ENUMS), "minimum_size", "position_reference_id", "visual_overflow", "independent_container_reason", "position_driver", "size_driver", "widget_stretch_axes"]);
+const FIELDS = new Set(["positioning", "floating_root_kind", "grouping_basis", ...Object.keys(ENUMS), "minimum_size", "position_reference_id", "visual_overflow", "independent_container_reason", "position_driver", "size_driver", "widget_stretch_axes", "widget_fallback", "position_behavior"]);
 
 /** 判断普通对象。 */
 function isObject(value) { return value !== null && typeof value === "object" && !Array.isArray(value); }
@@ -37,6 +37,7 @@ export function normalizeUiLayout(value) {
     ...(value.minimum_size !== undefined ? { minimum_size: isObject(value.minimum_size) ? { ...value.minimum_size } : value.minimum_size } : {}),
     ...(value.position_reference_id !== undefined ? { position_reference_id: value.position_reference_id } : {}),
     ...(value.visual_overflow !== undefined ? { visual_overflow: isObject(value.visual_overflow) ? { ...value.visual_overflow } : value.visual_overflow } : {}),
+    ...(value.position_behavior !== undefined ? { position_behavior: isObject(value.position_behavior) ? { ...value.position_behavior, ...(Array.isArray(value.position_behavior.properties) ? { properties: [...value.position_behavior.properties] } : {}) } : value.position_behavior } : {}),
   };
 }
 

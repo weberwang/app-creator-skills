@@ -1,6 +1,15 @@
 {
   "capability": "app-3d-asset-pipeline",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-asset-pipeline",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-asset-pipeline",
+        "mode": "roblox-game-asset-pipeline",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "threejs": [
       {
         "sourceSkill": "threejs-game-model-pipeline",

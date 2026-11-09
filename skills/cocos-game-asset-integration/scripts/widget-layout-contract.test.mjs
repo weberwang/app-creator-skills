@@ -10,7 +10,7 @@ import { layoutNodeIdentityProjection, validateEffectImageParentChildLayoutNodes
 const VIEWPORT = { width: 240, height: 160 };
 
 /** 使用真实拆解入口构造底板及同级内容，避免测试绕过布局职责和图片身份校验。 */
-function fixture({ group = false, sibling = false, driver, owner = "SELF", stretch = false } = {}) {
+function fixture({ group = false, sibling = false, driver, owner = "SELF", stretch = false, fallback } = {}) {
   const items = [
     ["panel", { x: 20, y: 20, width: 160, height: 80 }],
     ["icon", { x: 70, y: 50, width: 24, height: 24 }],
@@ -29,6 +29,7 @@ function fixture({ group = false, sibling = false, driver, owner = "SELF", stret
         grouping_basis: ["POSITION"], layout_owner: id === "icon" ? owner : "SELF", size_policy: "FIXED",
         overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE",
         ...(id === "icon" && driver ? { position_driver: driver } : {}),
+        ...(id === "icon" && fallback ? { widget_fallback: fallback } : {}),
         ...(id === "icon" && stretch ? { widget_stretch_axes: ["horizontal"] } : {}),
         ...(id === "text" ? { position_reference_id: "icon" } : {}),
       },
@@ -85,7 +86,17 @@ test("控制权不匹配和RAW双边尺寸约束在布局工作流中关闭生�
   validateUiLayout({ ...fixture().elements[1].ui_layout, layout_owner: "PARENT", position_driver: "WIDGET" }, {}, errors);
   assert(errors.some((message) => /WIDGET|Widget|SELF/.test(message)));
   assert.throws(() => fixture({ stretch: true }), /RAW/);
-  assert.equal(fixture({ owner: "EXTERNAL" }).nodes[1].layout_execution.position_driver, "SHARED");
+  for (const owner of ["PARENT", "EXTERNAL"]) assert.throws(() => fixture({ owner }), /原生 Widget 可表达当前停靠/);
+});
+
+test("真实拆解入口不允许用共享或静态驱动绕过原生停靠", () => {
+  assert.throws(() => fixture({ driver: "SHARED" }), /原生 Widget 可表达/);
+  assert.throws(() => fixture({ driver: "STATIC" }), /普通 UI 必须相对停靠/);
+  const prepared = fixture({ driver: "SHARED", fallback: "non-unit-transform" });
+  const icon = prepared.nodes.find((item) => item.layout_node_id === "icon");
+  assert.equal(icon.ui_layout.widget_fallback, "non-unit-transform");
+  assert.equal(icon.layout_execution.position_driver, "SHARED");
+  assert.deepEqual(validateEffectImageParentChildLayoutNodes(prepared.nodes, VIEWPORT, { requireExecutionPlan: true }), []);
 });
 
 test("审阅和共享门拒绝篡改参照、中心参数、尺寸控制和删除执行计划", () => {

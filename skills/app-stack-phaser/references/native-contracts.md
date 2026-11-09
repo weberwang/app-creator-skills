@@ -660,6 +660,8 @@ V3 同时派生位置与尺寸各自唯一控制者的执行计划；V5 按[Phas
 #### UI 相对布局约束
 
 UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
+
+普通屏幕 UI 必须有双轴停靠或真实父容器排布；沿现有唯一布局入口响应参照、视口、安全区及内容变化，不使用 `STATIC` 替代相对关系。Scale Manager 负责画布，不提供通用 Widget；已有 DOM UI 使用浏览器原生布局，Canvas HUD 使用本栈 REFLOW/PARENT_LAYOUT。行为临时接管时按[运行证据](../../phaser4-game-ui-layout/references/layout-runtime-evidence.md)限定位置属性及恢复方式。
 <!-- native-source:phaser4-game-ui-layout:end -->
 
 

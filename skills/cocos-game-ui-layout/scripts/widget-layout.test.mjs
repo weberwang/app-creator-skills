@@ -12,6 +12,7 @@ const NINE_SLICE = {
   source_size: { width: 32, height: 32 },
   borders: { left: 4, right: 4, top: 4, bottom: 4 },
 };
+const DRAG_BEHAVIOR = { kind: "drag", reason: "玩家拖动浮层", trigger: "拖动开始", properties: ["x", "y"], restore_driver: "WIDGET", restore_rule: "拖动结束后恢复 Widget 停靠" };
 
 /** 创建作为 Widget 定位目标的底板节点。 */
 function panelNode(overrides = {}) {
@@ -104,6 +105,88 @@ test("角标可独立贴右上角，且不改变主图标居中策略", () => {
   assert.deepEqual(marker.layout_execution.widget.vertical, { alignment: "top", value: 0 });
 });
 
+test("原生可表达时拒绝共享或静态绕过，仅接受待运行矩阵证明的非单位路径", () => {
+  for (const position_driver of ["SHARED", "STATIC"]) {
+    const ordinary = iconNode({ ui_layout: { layout_owner: "SELF", position_driver, size_policy: "FIXED" } });
+    assert.throws(() => plans([viewportNode(), panelNode(), ordinary]), /原生 Widget|普通 UI 必须相对停靠/);
+  }
+  const nonUnit = iconNode({ ui_layout: { layout_owner: "SELF", position_driver: "SHARED", size_policy: "FIXED", widget_fallback: "non-unit-transform" } });
+  const planned = plans([viewportNode(), panelNode(), nonUnit]);
+  assert.equal(planned[2].layout_execution.position_driver, "SHARED");
+  assert.match(planned[2].layout_execution.reason, /V5.*实际节点与参照矩阵/);
+  assert.throws(() => plans([viewportNode(), panelNode(), iconNode({ ui_layout: { layout_owner: "SELF", position_driver: "SHARED", widget_fallback: "随意理由", size_policy: "FIXED" } })]), /只支持 non-unit-transform/);
+  assert.throws(() => plans([viewportNode(), panelNode(), iconNode({ reference_id: "viewport", ui_layout: { layout_owner: "SELF", position_driver: "SHARED", widget_fallback: "non-unit-transform", size_policy: "FIXED" } })]), /仅用于其他条件满足 Widget/);
+  assert.throws(() => plans([viewportNode(), panelNode(), iconNode({ ui_layout: { layout_owner: "SELF", position_driver: "WIDGET", widget_fallback: "non-unit-transform", size_policy: "FIXED" } })]), /仅适用于 SHARED/);
+  assert.throws(() => plans([viewportNode(), panelNode(), { ...nonUnit, axis_alignment: undefined }]), /axis_alignment 必须提供/);
+  const sibling = iconNode({ layout_node_id: "peer" });
+  const withoutAxes = iconNode({ reference_id: "peer", axis_alignment: undefined, ui_layout: { layout_owner: "SELF", position_driver: "SHARED", size_policy: "FIXED" } });
+  assert.throws(() => plans([viewportNode(), panelNode(), sibling, withoutAxes]), /axis_alignment 必须提供/);
+});
+
+test("PARENT 或 EXTERNAL 职责不能掩盖可表达的原生停靠", () => {
+  for (const layout_owner of ["PARENT", "EXTERNAL"]) {
+    for (const position_driver of [undefined, "SHARED"]) {
+      const ordinary = iconNode({ ui_layout: { layout_owner, ...(position_driver ? { position_driver } : {}), size_policy: "FIXED" } });
+      assert.throws(() => plans([viewportNode(), panelNode(), ordinary]), /原生 Widget 可表达当前停靠/);
+    }
+    const transformed = iconNode({ ui_layout: { layout_owner, position_driver: "SHARED", widget_fallback: "non-unit-transform", size_policy: "FIXED" } });
+    assert.equal(plans([viewportNode(), panelNode(), transformed])[2].layout_execution.position_driver, "SHARED");
+  }
+});
+
+test("滚动或重排职责不能代替容器本身的原生停靠", () => {
+  for (const overflow_policy of ["REFLOW", "SCROLL"]) {
+    const list = { ...iconNode(), element_type: "container", owner_type: undefined, ui_layout: { layout_owner: "SELF", overflow_policy, size_policy: "FIXED" } };
+    assert.equal(plans([viewportNode(), panelNode(), list])[2].layout_execution.position_driver, "WIDGET");
+    list.ui_layout.position_driver = "SHARED";
+    assert.throws(() => plans([viewportNode(), panelNode(), list]), /原生 Widget 可表达当前停靠/);
+  }
+  const scroll = iconNode({ layout_node_id: "scroll", element_type: "container", owner_type: undefined, target_bounds: { x: 10, y: 10, width: 120, height: 80 }, axis_alignment: { horizontal: "left", vertical: "top" }, ui_layout: { layout_owner: "SELF", overflow_policy: "SCROLL", size_policy: "FIXED" } });
+  const item = iconNode({ layout_node_id: "item", parent_layout_node_id: "scroll", target_bounds: { x: 20, y: 20, width: 20, height: 20 }, axis_alignment: { horizontal: "left", vertical: "top" }, ui_layout: { layout_owner: "PARENT", position_driver: "LAYOUT", size_policy: "FIXED" } });
+  const result = plans([viewportNode(), panelNode(), scroll, item]);
+  assert.equal(result[2].layout_execution.position_driver, "WIDGET");
+  assert.equal(result[3].layout_execution.position_driver, "LAYOUT");
+  item.reference_id = "panel";
+  assert.throws(() => plans([viewportNode(), panelNode(), scroll, item]), /LAYOUT 必须由实际父节点控制并引用该父节点/);
+});
+
+test("普通 UI 和浮层禁止静态冻结，有受控拖拽及背景按各自边界处理", () => {
+  const ordinary = panelNode({ ui_layout: { layout_owner: "SELF", position_driver: "STATIC", size_policy: "FIXED" } });
+  assert.throws(() => plans([viewportNode(), ordinary]), /普通 UI 必须相对停靠/);
+  const floating = panelNode({ ui_layout: { layout_owner: "SELF", position_driver: "STATIC", positioning: "absolute", floating_root_kind: "popup", size_policy: "FIXED" } });
+  const background = panelNode({ role: "background", ui_layout: { layout_owner: "SELF", position_driver: "STATIC", size_policy: "FIXED" } });
+  assert.throws(() => plans([viewportNode(), floating]), /普通 UI 必须相对停靠/);
+  assert.throws(() => plans([viewportNode(), { ...floating, role: "background" }]), /浮层本体不能借背景职责/);
+  floating.ui_layout = { layout_owner: "EXTERNAL", position_driver: "ANIMATION", positioning: "absolute", floating_root_kind: "popup", size_policy: "FIXED", position_behavior: { ...DRAG_BEHAVIOR, restore_driver: "SHARED" } };
+  assert.equal(plans([viewportNode(), floating])[1].layout_execution.position_driver, "ANIMATION");
+  delete floating.ui_layout.position_behavior;
+  assert.throws(() => plans([viewportNode(), floating]), /必须提供 position_behavior/);
+  assert.equal(plans([viewportNode(), background])[1].layout_execution.position_driver, "STATIC");
+});
+
+test("位置行为必须限定受控属性和可恢复的真实布局驱动", () => {
+  const behaviorNode = (behavior, overrides = {}) => iconNode({ ...overrides, ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", size_policy: "FIXED", position_behavior: behavior } });
+  assert.equal(plans([viewportNode(), panelNode(), behaviorNode(DRAG_BEHAVIOR)])[2].layout_execution.position_driver, "ANIMATION");
+  for (const behavior of [
+    { ...DRAG_BEHAVIOR, reason: "" },
+    { ...DRAG_BEHAVIOR, properties: ["x", "width"] },
+    { ...DRAG_BEHAVIOR, restore_rule: "" },
+    { ...DRAG_BEHAVIOR, restore_driver: "STATIC" },
+  ]) assert.throws(() => plans([viewportNode(), panelNode(), behaviorNode(behavior)]), /position_behavior/);
+  const peer = iconNode({ layout_node_id: "peer" });
+  assert.throws(() => plans([viewportNode(), panelNode(), peer, behaviorNode(DRAG_BEHAVIOR, { reference_id: "peer" })]), /restore_driver 必须返回有效/);
+  const sharedRestore = behaviorNode({ ...DRAG_BEHAVIOR, restore_driver: "SHARED" });
+  assert.throws(() => plans([viewportNode(), panelNode(), sharedRestore]), /原生布局可表达当前位置关系/);
+  sharedRestore.ui_layout.widget_fallback = "non-unit-transform";
+  assert.equal(plans([viewportNode(), panelNode(), sharedRestore])[2].layout_execution.position_driver, "ANIMATION");
+  const parentLayoutRestore = behaviorNode({ ...DRAG_BEHAVIOR, restore_driver: "LAYOUT" });
+  assert.equal(plans([viewportNode(), panelNode(), parentLayoutRestore])[2].layout_execution.position_driver, "ANIMATION");
+  assert.throws(() => plans([viewportNode(), panelNode(), peer, behaviorNode({ ...DRAG_BEHAVIOR, restore_driver: "LAYOUT" }, { reference_id: "peer" })]), /restore_driver 必须返回有效/);
+  assert.throws(() => plans([viewportNode(), panelNode(), iconNode({ ui_layout: { layout_owner: "SELF", position_driver: "WIDGET", size_policy: "FIXED", position_behavior: DRAG_BEHAVIOR } })]), /仅用于实际行为驱动/);
+  const groupMember = behaviorNode({ ...DRAG_BEHAVIOR, restore_driver: "SHARED" }, { center_alignment: { member_ids: ["icon", "peer"] } });
+  assert.throws(() => plans([viewportNode(), panelNode(), groupMember, peer]), /虚拟居中组成员必须使用 SHARED/);
+});
+
 test("图文整体组、兄弟参照与动画控制交给共享职责，不新增包装节点", () => {
   const groupLeader = iconNode({
     layout_node_id: "group-icon",
@@ -117,7 +200,7 @@ test("图文整体组、兄弟参照与动画控制交给共享职责，不新�
   });
   const animated = iconNode({
     layout_node_id: "animated",
-    ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", size_policy: "FIXED" },
+    ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", size_policy: "FIXED", position_behavior: DRAG_BEHAVIOR },
   });
   const source = [viewportNode(), panelNode(), groupLeader, groupMember, sibling, animated];
   const result = plans(source);
@@ -209,6 +292,7 @@ test("STRETCH 与 FLEX 按位置控制者派生尺寸驱动，互不争写属性
   const flexByParent = {
     layout_node_id: "flex-parent",
     parent_layout_node_id: "panel",
+    reference_id: "sibling",
     target_bounds: { x: 10, y: 10, width: 60, height: 20 },
     axis_alignment: { horizontal: "left", vertical: "top" },
     element_type: "container",
@@ -261,8 +345,8 @@ test("STRETCH 与 FLEX 按位置控制者派生尺寸驱动，互不争写属性
 test("非法驱动声明、所有权组合、RAW 拉伸和控制冲突必须报错", () => {
   const declarationErrors = validateLayoutDriverDeclaration({ position_driver: "UNKNOWN", layout_owner: ["SELF"], size_driver: "UNKNOWN", widget_stretch_axes: ["horizontal", "horizontal"] });
   assert.equal(declarationErrors.length, 5);
-  for (const [position_driver, layout_owner] of [["WIDGET", "PARENT"], ["STATIC", "EXTERNAL"], ["LAYOUT", "SELF"], ["ANIMATION", "PARENT"]]) {
-    assert.equal(validateLayoutDriverDeclaration({ position_driver, layout_owner }).length, 1, `${position_driver} 必须声明对应的 ${layout_owner} 职责`);
+  for (const [position_driver, layout_owner, expectedOwner] of [["WIDGET", "PARENT", "SELF"], ["STATIC", "EXTERNAL", "SELF"], ["LAYOUT", "SELF", "PARENT"], ["ANIMATION", "PARENT", "EXTERNAL"]]) {
+    assert.ok(validateLayoutDriverDeclaration({ position_driver, layout_owner }).some((error) => error.includes(`要求 layout_owner=${expectedOwner}`)), `${position_driver} 必须声明对应的布局职责`);
   }
 
   const cases = [

@@ -16,6 +16,7 @@ import { dependencyPath } from './feature-dependencies.mjs';
 import { hasPreciseApproval } from './approval.mjs';
 import { validateCommandCapture } from './command-capture.mjs';
 import { validateDeletedFiles } from './deletion-baseline.mjs';
+import { validateRobloxEngineeringEvidence } from './roblox-domain-check.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 
@@ -211,6 +212,8 @@ export function validateEvidence(repo, work, { requireEngineering = true, requir
   if (requireAssetImport && work.visual?.stage === 'V4' && profile.evidenceRequirements.assetImport?.length) {
     requireKinds(profile.evidenceRequirements.assetImport, validItems, 'assetImport');
   }
+  // Roblox 的 V1 和无视觉模块也核对原生运行材料，类别和非空文件本身不能证明 Studio 执行。
+  if (work.stack === 'roblox' && requireEngineering) validateRobloxEngineeringEvidence(repo, work, manifest, pack);
   return { manifest, pack };
 }
 

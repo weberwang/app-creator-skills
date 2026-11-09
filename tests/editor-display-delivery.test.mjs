@@ -8,7 +8,7 @@ import test from 'node:test';
 import { installSkills, SOURCE_ROOT, STACKS } from '../packages/installer/install-project-skills.mjs';
 
 const REFERENCE = 'app-domain-toolkit/references/editor-display-authoring.md';
-const EDITOR_STACKS = ['unity', 'cocos'];
+const EDITOR_STACKS = ['unity', 'cocos', 'roblox'];
 const CAPABILITIES = ['app-ui-layout', 'app-asset-workflow', 'app-gameplay-development', 'app-feedback', 'app-animation'];
 
 /** 只读取本次独立安装的文件，避免源仓库掩盖安装闭包中的缺失。 */

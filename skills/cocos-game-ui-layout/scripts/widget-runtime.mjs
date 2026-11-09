@@ -1,7 +1,8 @@
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
-const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+const { validateRelativeLayoutNodes, validateGameUiPositionDriver } = relativeLayoutPolicy;
 import { validateCenterAlignmentNodes } from "./center-alignment.mjs";
 import { isBackgroundDisplayNode, isLayoutContainer } from "./display-node-role.mjs";
+import { positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
 
 const POSITION_DRIVERS = new Set(["WIDGET", "SHARED", "LAYOUT", "STATIC", "ANIMATION"]);
 const SIZE_DRIVERS = new Set(["SPRITE_RAW", "FIXED", "WIDGET", "LAYOUT", "SHARED", "CONTENT"]);
@@ -195,8 +196,87 @@ function validateSprite(node, snapshot, label, errors, plan) {
   }
 }
 
+/** 按实际父框和节点框重算原生停靠边距，避免仅靠 Widget 配置宣称布局生效。 */
+function validateWidgetGeometry(widget, bounds, reference, label, errors) {
+  if (!isBounds(bounds) || !isBounds(reference)) return;
+  const values = {
+    left: bounds.x - reference.x,
+    right: reference.x + reference.width - bounds.x - bounds.width,
+    top: bounds.y - reference.y,
+    bottom: reference.y + reference.height - bounds.y - bounds.height,
+    horizontal_center: bounds.x + bounds.width / 2 - reference.x - reference.width / 2,
+    vertical_center: -(bounds.y + bounds.height / 2 - reference.y - reference.height / 2),
+  };
+  for (const [axis, names] of [[widget.horizontal, ["left", "right", "horizontal_center"]], [widget.vertical, ["top", "bottom", "vertical_center"]]]) {
+    if (!isRecord(axis)) continue;
+    const [start, end, center] = names;
+    const constraints = axis.alignment === "stretch" ? [[start, axis.start], [end, axis.end]]
+      : [[axis.alignment === "center" ? center : axis.alignment, axis.value]];
+    for (const [name, expected] of constraints) {
+      if (Object.hasOwn(values, name) && !sameNumber(values[name], expected)) {
+        errors.push(`${label} 实际布局边距 ${name} 与 Widget 停靠值不一致`);
+      }
+    }
+  }
+}
+
+/** 动画接管只保留单一写入者，并核对结束后声明的实际组件和可用参照。 */
+function validateAnimationRestoration(node, snapshot, parentSnapshot, nodesById, centerMembers, label, errors) {
+  let base;
+  try { base = positionBehaviorBaseDrivers(node, nodesById, centerMembers, label); }
+  catch (error) { errors.push(`${label} 无法推导位置行为的恢复驱动：${error.message}`); return; }
+  const uiLayout = node.ui_layout ?? node.uiLayout ?? {};
+  const behavior = uiLayout.position_behavior;
+  if (uiLayout.position_driver !== "ANIMATION" || uiLayout.layout_owner !== "EXTERNAL") {
+    errors.push(`${label} 位置行为必须绑定 ANIMATION 计划与 EXTERNAL 所有权`);
+    return;
+  }
+  if (base.availability.group) {
+    errors.push(`${label} 虚拟居中组成员当前不支持独立位置行为`);
+    return;
+  }
+  const restoreLayout = behavior?.restore_driver === "LAYOUT" && base.baseDrivers.includes("LAYOUT");
+  const nativeDriver = restoreLayout ? "LAYOUT" : base.availability.reason === null ? "WIDGET" : null;
+  const sharedAllowed = base.availability.reason !== null || uiLayout.widget_fallback === "non-unit-transform";
+  const issues = validateGameUiPositionDriver({ driver: "ANIMATION", nativeDriver, sharedAllowed, behavior, baseDrivers: base.baseDrivers }, label);
+  errors.push(...issues);
+  if (issues.length || snapshot.active !== true) return;
+  const nodeUnit = isIdentityMatrix(snapshot.node_to_layout);
+  const referenceUnit = isIdentityMatrix(snapshot.reference_to_layout);
+  if (behavior.restore_driver === "SHARED" && base.availability.reason === null && nodeUnit && referenceUnit) {
+    errors.push(`${label} 行为恢复到 SHARED 缺少非单位变换事实，单位路径须恢复原生 Widget`);
+  }
+  if (behavior.restore_driver === "LAYOUT") {
+    const layout = parentSnapshot?.layout;
+    if (!isRecord(layout) || !["HORIZONTAL", "VERTICAL", "GRID"].includes(layout.type)) {
+      errors.push(`${label} 行为恢复到 LAYOUT 缺少实际父级排布组件`);
+    }
+  }
+  if (behavior.restore_driver !== "WIDGET") return;
+  if (!nodeUnit || !referenceUnit) errors.push(`${label} 行为恢复 Widget 要求实际节点及参照路径为单位矩阵`);
+  const widget = snapshot.widget;
+  if (!isRecord(widget) || widget.target_id !== base.availability.referenceId || widget.align_mode !== "ON_WINDOW_RESIZE") {
+    errors.push(`${label} 行为恢复 Widget 必须保留绑定当前参照的原生组件`);
+    return;
+  }
+  const axis = node.axis_alignment;
+  const flags = { left: "is_align_left", right: "is_align_right", top: "is_align_top", bottom: "is_align_bottom", horizontal_center: "is_align_horizontal_center", vertical_center: "is_align_vertical_center" };
+  const horizontal = axis?.horizontal === "center" ? "horizontal_center" : axis?.horizontal;
+  const vertical = axis?.vertical === "center" ? "vertical_center" : axis?.vertical;
+  if (!flags[horizontal] || !flags[vertical]) { errors.push(`${label} 行为恢复 Widget 缺少双轴停靠意图`); return; }
+  for (const [name, flag] of Object.entries(flags)) {
+    const required = name === horizontal || name === vertical;
+    if (widget[flag] !== required || (required && widget[flag.replace("is_align_", "is_absolute_")] !== true)) errors.push(`${label} 行为恢复 Widget 的 ${flag} 与冻结停靠不一致`);
+  }
+  const referenceNode = nodesById.get(base.availability.referenceId);
+  const target = node.target_bounds ?? node.targetBounds ?? node.bounds;
+  const reference = referenceNode?.target_bounds ?? referenceNode?.targetBounds ?? referenceNode?.bounds ?? node.reference_target_bounds ?? node.referenceTargetBounds;
+  if (!isBounds(target) || !isBounds(reference)) errors.push(`${label} 行为恢复 Widget 缺少冻结节点和参照矩形`);
+  else validateWidgetGeometry({ horizontal: { alignment: axis.horizontal, value: widget[horizontal] }, vertical: { alignment: axis.vertical, value: widget[vertical] } }, target, reference, label, errors);
+}
+
 /** 将 Widget 计划和运行时六个方向 flag、目标及偏移逐项对照。 */
-function validateWidget(plan, snapshot, label, active, errors) {
+function validateWidget(node, plan, snapshot, label, active, errors) {
   const widget = snapshot.widget;
   if (widget === null) {
     if (plan.position_driver === "WIDGET") errors.push(`${label}.widget 缺少计划要求的原生 Widget`);
@@ -230,6 +310,8 @@ function validateWidget(plan, snapshot, label, active, errors) {
     errors.push(`${label}.layout_execution.widget 缺少可映射的 Widget 目标或九点对齐计划`);
     return { enabled: activeWidget, sizeAxes: new Set() };
   }
+  // V3 已确认双轴意图的正式节点必须验证实际几何；原始快照字段缺失由外层报错。
+  if (active && isRecord(node.axis_alignment)) validateWidgetGeometry(planWidget, snapshot.layout_bounds, snapshot.reference_bounds, label, errors);
   if (!isId(planWidget.target_id) || !isId(widget.target_id)) errors.push(`${label}.widget.target_id 必须是非空节点 ID`);
   if (!isId(planWidget.align_mode) || !isId(widget.align_mode)) errors.push(`${label}.widget.align_mode 必须是非空模式`);
   if (widget.target_id !== planWidget.target_id) errors.push(`${label}.widget.target_id 与 layout_execution.widget.target_id 不一致`);
@@ -268,7 +350,7 @@ function validateWidget(plan, snapshot, label, active, errors) {
 }
 
 /** 校验单条全组件快照，并从实际组件推导位置、尺寸写入者。 */
-function validateSnapshot(node, snapshot, label, parentSnapshot, errors) {
+function validateSnapshot(node, snapshot, label, parentSnapshot, nodesById, centerMembers, errors) {
   if (!isRecord(snapshot)) {
     errors.push(`${label}.component_snapshot 必须是对象`);
     return;
@@ -312,6 +394,24 @@ function validateSnapshot(node, snapshot, label, parentSnapshot, errors) {
   }
   const nodeMatrixValid = validateMatrix(snapshot.node_to_layout, `${label}.component_snapshot.node_to_layout`, errors);
   const referenceMatrixValid = validateMatrix(snapshot.reference_to_layout, `${label}.component_snapshot.reference_to_layout`, errors);
+  const uiLayout = node.ui_layout ?? node.uiLayout ?? {};
+  const floatingBody = uiLayout.positioning === "absolute" && ["popup", "floating", "toast"].includes(uiLayout.floating_root_kind);
+  if (floatingBody && isBackgroundDisplayNode(node)) errors.push(`${label} 独立浮层本体不能借背景职责豁免相对停靠`);
+  if (active && plan.position_driver === "STATIC" && !isBackgroundDisplayNode(node)) {
+    errors.push(`${label} 普通 UI 必须相对停靠，不能用 STATIC 固定冻结坐标`);
+  }
+  if (floatingBody && plan.position_driver !== "ANIMATION") errors.push(`${label} 独立定位的游戏浮层必须有受控位置行为，普通弹窗应相对宿主停靠`);
+  if (plan.position_driver === "ANIMATION") validateAnimationRestoration(node, snapshot, parentSnapshot, nodesById, centerMembers, label, errors);
+  else if (uiLayout.position_behavior !== undefined) errors.push(`${label} position_behavior 仅用于实际行为驱动`);
+  if (uiLayout.widget_fallback !== undefined) {
+    const restoresShared = plan.position_driver === "ANIMATION" && uiLayout.position_behavior?.restore_driver === "SHARED";
+    if (uiLayout.widget_fallback !== "non-unit-transform" || (plan.position_driver !== "SHARED" && !restoresShared)) {
+      errors.push(`${label}.ui_layout.widget_fallback 只能为 SHARED 定位或恢复 SHARED 的 non-unit-transform`);
+    } else if (nodeMatrixValid && referenceMatrixValid && isIdentityMatrix(snapshot.node_to_layout) && isIdentityMatrix(snapshot.reference_to_layout)) {
+      // V3 的回退只是待核实计划，两条真实路径均单位时必须回到原生 Widget。
+      errors.push(`${label} Widget 回退未被实际变换矩阵证实，单位路径必须使用原生 Widget`);
+    }
+  }
   if (nodeMatrixValid && node.sprite_geometry != null && !(isBackgroundDisplayNode(node) && !isLayoutContainer(node))) {
     // 背景仅由独立背景节点执行 cover，其他图片的轴长不能因逻辑变换改变。
     const { a, b, c, d } = snapshot.node_to_layout;
@@ -322,7 +422,7 @@ function validateSnapshot(node, snapshot, label, parentSnapshot, errors) {
     if (referenceMatrixValid && !isIdentityMatrix(snapshot.reference_to_layout)) errors.push(`${label} Widget 定位要求 reference_to_layout 为单位矩阵`);
   }
 
-  const widgetResult = validateWidget(plan, snapshot, label, active, errors);
+  const widgetResult = validateWidget(node, plan, snapshot, label, active, errors);
   const layout = snapshot.layout;
   const parentLayout = snapshot.parent_layout;
   if (parentSnapshot && !sameValue(parentLayout, parentSnapshot.layout)) {
@@ -408,8 +508,36 @@ function validateWriters(value, active, expected, allowed, label, errors) {
   if (value.length !== 1 || value[0] !== expected) errors.push(`${label} 必须且只能记录计划中的单一写入者 ${expected}`);
 }
 
+/** 仅在确认的活动轴上暂缓居中；涉及该轴的虚拟组一起保留其他轴校验。 */
+function suppressActiveCenterConstraints(nodes, activeBehaviorAxes) {
+  const suppressed = new Map([...activeBehaviorAxes].map(([id, axes]) => [id, new Set(axes)]));
+  for (const leader of nodes) {
+    const members = leader.center_alignment?.member_ids;
+    if (!Array.isArray(members)) continue;
+    for (const axis of ["horizontal", "vertical"]) {
+      if (leader.axis_alignment?.[axis] !== "center" || !members.some((id) => activeBehaviorAxes.get(id)?.has(axis))) continue;
+      for (const id of members) {
+        if (!suppressed.has(id)) suppressed.set(id, new Set());
+        suppressed.get(id).add(axis);
+      }
+    }
+  }
+  return nodes.map((node) => {
+    const axes = suppressed.get(node.layout_node_id);
+    if (!axes?.size) return node;
+    const alignment = { ...node.axis_alignment };
+    const center = isRecord(node.center_alignment) ? { ...node.center_alignment } : undefined;
+    for (const axis of axes) {
+      alignment[axis] = axis === "horizontal" ? "left" : "top";
+      if (center) delete center[axis];
+    }
+    if (center?.member_ids && alignment.horizontal !== "center" && alignment.vertical !== "center") delete center.member_ids;
+    return { ...node, axis_alignment: alignment, center_alignment: center && Object.keys(center).length ? center : undefined };
+  });
+}
+
 /** 用真实快照边界重放中心合同，只报告偏差，不改写运行时几何。 */
-function validateObservedCenterAlignment(nodesById, snapshotsById, label, errors) {
+function validateObservedCenterAlignment(nodesById, snapshotsById, label, errors, activeBehaviorAxes) {
   const observedNodes = [];
   let allBoundsValid = true;
   const stableRootBounds = new Map();
@@ -480,7 +608,7 @@ function validateObservedCenterAlignment(nodesById, snapshotsById, label, errors
     observedNodes.push(observed);
   }
   if (allBoundsValid && observedNodes.length === nodesById.size) {
-    validateCenterAlignmentNodes(observedNodes.map((node) => (node?.ui_layout ?? node?.uiLayout)?.positioning === "absolute" && ["popup", "floating", "toast"].includes((node?.ui_layout ?? node?.uiLayout)?.floating_root_kind) ? { ...node, axis_alignment: { horizontal: "left", vertical: "top" }, center_alignment: undefined } : node), errors, `${label}.observed_center_alignment`);
+    validateCenterAlignmentNodes(suppressActiveCenterConstraints(observedNodes, activeBehaviorAxes), errors, `${label}.observed_center_alignment`);
   }
 }
 
@@ -506,6 +634,12 @@ export function validateLayoutRuntimeSnapshots(nodes, measurements, errors = [],
     else nodesById.set(id, node);
   }
   const snapshotsById = new Map();
+  const activeBehaviorAxes = new Map();
+  const centerMembers = new Set();
+  for (const node of nodesById.values()) {
+    const members = Array.isArray(node.center_alignment?.member_ids) ? node.center_alignment.member_ids : [];
+    for (const id of members) if (isId(id)) centerMembers.add(id);
+  }
   for (const [index, measurement] of measurements.entries()) {
     const itemLabel = `${label}[${index}]`;
     if (!isRecord(measurement)) {
@@ -533,13 +667,19 @@ export function validateLayoutRuntimeSnapshots(nodes, measurements, errors = [],
     const parentSnapshot = parentMeasurement?.component_snapshot;
     const childSnapshot = measurement.component_snapshot;
     // active 表示 activeInHierarchy：业务父级已停用时，子节点不可能仍处于层级激活状态。
+    const errorsBefore = errors.length;
     if (parentSnapshot?.active === false && childSnapshot?.active === true) {
       errors.push(`${label}.${id}.component_snapshot.active 与父节点 ${parentId} 的 activeInHierarchy 矛盾`);
     }
-    validateSnapshot(node, measurement.component_snapshot, `${label}.${id}`, parentSnapshot, errors);
+    validateSnapshot(node, measurement.component_snapshot, `${label}.${id}`, parentSnapshot, nodesById, centerMembers, errors);
+    // 只有完整通过行为、恢复资格和当前写入者检查后，才暂缓对应轴的静态几何。
+    if (errors.length === errorsBefore && childSnapshot?.active === true && node.layout_execution?.position_driver === "ANIMATION") {
+      const properties = (node.ui_layout ?? node.uiLayout)?.position_behavior?.properties ?? [];
+      activeBehaviorAxes.set(id, new Set(properties.map((property) => property === "x" ? "horizontal" : "vertical")));
+    }
   }
-  validateFloatingRuntimeOffsets([...nodesById.values()], snapshotsById, errors, label, sameNumber, (item) => item?.component_snapshot);
-  validateObservedCenterAlignment(nodesById, snapshotsById, label, errors);
+  validateFloatingRuntimeOffsets([...nodesById.values()], snapshotsById, errors, label, sameNumber, (item) => item?.component_snapshot, activeBehaviorAxes);
+  validateObservedCenterAlignment(nodesById, snapshotsById, label, errors, activeBehaviorAxes);
   return errors;
 }
 
@@ -579,7 +719,7 @@ function validateRelativeWebNodes(input, errors, label, kind) {
 }
 
 /** 依据冻结节点、同批参照实测和原生容差验证浮层内部锚点。 */
-function validateFloatingRuntimeOffsets(nodes, snapshots, errors, label, sameNumber, getSnapshot) {
+function validateFloatingRuntimeOffsets(nodes, snapshots, errors, label, sameNumber, getSnapshot, activeBehaviorAxes) {
   const idOf = (node) => node?.layout_node_id ?? node?.layoutNodeId;
   const parentOf = (node) => node?.parent_layout_node_id ?? node?.parentLayoutNodeId;
   const byId = new Map(nodes.map((node) => [idOf(node), node]));
@@ -592,19 +732,22 @@ function validateFloatingRuntimeOffsets(nodes, snapshots, errors, label, sameNum
       if (["popup", "floating", "toast"].includes((ancestor.ui_layout ?? ancestor.uiLayout)?.floating_root_kind)) { inside = true; break; }
       ancestor = byId.get(parentOf(ancestor));
     }
-    if (!inside) continue;
+    const controlledAxes = activeBehaviorAxes.get(id);
+    if (!inside && !controlledAxes) continue;
     const snapshot = getSnapshot(snapshots.get(id));
     if (!snapshot || snapshot.active === false) continue;
+    if (controlledAxes?.has("horizontal") && controlledAxes.has("vertical")) continue;
     const refId = node.reference_id ?? node.referenceId ?? node.ui_layout?.position_reference_id ?? node.uiLayout?.positionReferenceId ?? node.position_reference_id ?? node.positionReferenceId ?? parentOf(node);
     const original = boundsOf(node); const reference = boundsOf(byId.get(refId)) ?? node.reference_target_bounds ?? node.referenceTargetBounds;
     const actual = snapshot.layout_bounds ?? snapshot.actual_bounds; const actualRef = snapshot.reference_bounds;
-    if (![original, reference, actual, actualRef].every(valid)) { errors.push(label + "." + id + " 浮层内部缺少原始或同批实际参照矩形"); continue; }
+    if (![original, reference, actual, actualRef].every(valid)) { errors.push(label + "." + id + (inside ? " 浮层内部" : " 位置行为") + "缺少原始或同批实际参照矩形"); continue; }
     const alignment = node.axis_alignment ?? node.axisAlignment ?? { horizontal: "left", vertical: "top" };
     for (const [axis, start, size, end] of [["horizontal", "x", "width", "right"], ["vertical", "y", "height", "bottom"]]) {
+      if (controlledAxes?.has(axis)) continue;
       if (alignment[axis] === "center") continue;
       const edge = (rect, ref, atEnd) => atEnd ? ref[start] + ref[size] - rect[start] - rect[size] : rect[start] - ref[start];
       const ends = alignment[axis] === "stretch" ? [false, true] : [alignment[axis] === end];
-      if (ends.some((atEnd) => !sameNumber(edge(actual, actualRef, atEnd), edge(original, reference, atEnd)))) errors.push(label + "." + id + " 浮层内部 " + axis + " 相对锚点间距与冻结事实不一致");
+      if (ends.some((atEnd) => !sameNumber(edge(actual, actualRef, atEnd), edge(original, reference, atEnd)))) errors.push(label + "." + id + (inside ? " 浮层内部 " : " 位置行为未控制的 ") + axis + " 相对锚点间距与冻结事实不一致");
     }
   }
 }

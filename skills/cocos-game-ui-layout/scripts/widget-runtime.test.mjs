@@ -48,7 +48,7 @@ test("接受严格居中 Widget 和保持 RAW 原尺寸的普通图片", () => {
 
 test("接受父 Layout 只排布位置且 RAW 子图片尺寸不变", () => {
   const parent = node("panel", {
-    parent: "viewport", position: "STATIC", size: "FIXED", geometry: null,
+    parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
     bounds: { x: 0, y: 0, width: 100, height: 80 }, widget: null,
   });
   const child = node("icon", { parent: "panel", position: "LAYOUT", widget: null });
@@ -71,7 +71,7 @@ test("接受 Widget 定位与自身 Layout.CONTAINER 尺寸分工", () => {
 test("NONE Layout 的 CONTAINER 配置不写入尺寸", () => {
   const item = node("fixed-none-layout", {
     geometry: null,
-    position: "STATIC",
+    position: "SHARED",
     size: "FIXED",
     widget: null,
     runtime_layout: { enabled: true, type: "NONE", resize_mode: "CONTAINER", align_horizontal: false, align_vertical: false },
@@ -100,7 +100,7 @@ test("拒绝父 Layout 抢写共享定位以及 Layout.CHILDREN 改变 RAW 尺�
   assert.ok(errorsFor([shared], [{ layout_node_id: "shared", component_snapshot: sharedSnapshot }]).some((message) => message.includes("父 Layout 会重排")));
 
   const parent = node("panel", {
-    parent: "viewport", position: "STATIC", size: "FIXED", geometry: null,
+    parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
     runtime_layout: { enabled: true, type: "HORIZONTAL", resize_mode: "CHILDREN", align_horizontal: false, align_vertical: false },
     bounds: { x: 0, y: 0, width: 100, height: 80 }, widget: null,
   });
@@ -112,7 +112,7 @@ test("拒绝父 Layout 抢写共享定位以及 Layout.CHILDREN 改变 RAW 尺�
 test("父子两个 Layout 同时控制宽度时拒绝，分别控制宽高时允许", () => {
   const makeLayoutPair = (parentType, selfType) => {
     const parent = node("panel", {
-      parent: "viewport", position: "STATIC", size: "FIXED", geometry: null,
+      parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
       runtime_layout: { enabled: true, type: parentType, resize_mode: "CHILDREN", align_horizontal: false, align_vertical: false },
       bounds: { x: 0, y: 0, width: 100, height: 80 }, widget: null,
     });
@@ -130,7 +130,7 @@ test("父子两个 Layout 同时控制宽度时拒绝，分别控制宽高时允
 
 test("父 Grid 与自身水平 Layout 同时写宽度时拒绝", () => {
   const parent = node("panel", {
-    parent: "viewport", position: "STATIC", size: "FIXED", geometry: null,
+    parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
     runtime_layout: { enabled: true, type: "GRID", resize_mode: "CHILDREN", align_horizontal: false, align_vertical: false, start_axis: "HORIZONTAL", cell_size: { width: 20, height: 20 } },
     bounds: { x: 0, y: 0, width: 100, height: 80 }, widget: null,
   });
@@ -145,7 +145,7 @@ test("父 Grid 与自身水平 Layout 同时写宽度时拒绝", () => {
 test("Grid 容器按 start_axis 判定尺寸轴，且 Grid 必须声明 start_axis", () => {
   const makePair = (startAxis) => {
     const parent = node("panel", {
-      parent: "viewport", position: "STATIC", size: "FIXED", geometry: null,
+      parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
       runtime_layout: { enabled: true, type: "HORIZONTAL", resize_mode: "CHILDREN", align_horizontal: false, align_vertical: false },
       bounds: { x: 0, y: 0, width: 100, height: 80 }, widget: null,
     });
@@ -161,7 +161,7 @@ test("Grid 容器按 start_axis 判定尺寸轴，且 Grid 必须声明 start_ax
   assert.ok(overlap.some((message) => message.includes("父 Layout.CHILDREN 与 自身 Layout.CONTAINER 同时控制 width")), overlap.join("\n"));
 
   const missingAxis = node("grid-missing-axis", {
-    geometry: null, position: "STATIC", size: "FIXED", widget: null,
+    geometry: null, position: "SHARED", size: "FIXED", widget: null,
     runtime_layout: { enabled: true, type: "GRID", resize_mode: "CONTAINER", align_horizontal: false, align_vertical: false },
   });
   assert.ok(errorsFor([missingAxis]).some((message) => message.includes("start_axis 必须是 HORIZONTAL 或 VERTICAL")));
@@ -198,6 +198,145 @@ test("共享布局不能通过逻辑矩阵放大 RAW 图片", () => {
   row.component_snapshot.node_to_layout = { a: 2, b: 0, c: 0, d: 2 };
   row.component_snapshot.reference_to_layout = { a: 1, b: 0, c: 0, d: 0.5 };
   assert.ok(errorsFor([item], [row]).some((message) => message.includes("逻辑变换不得缩放")));
+});
+
+test("V5 必须用实际非单位矩阵证明共享回退，单位路径不能绕过原生 Widget", () => {
+  const parent = node("panel", { parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null, bounds: { x: 0, y: 0, width: 100, height: 80 } });
+  const child = node("content", { parent: "panel", position: "SHARED", size: "FIXED", geometry: null, widget: null,
+    ui_layout: { layout_owner: "SELF", position_driver: "SHARED", widget_fallback: "non-unit-transform" } });
+  const nodes = [parent, child];
+  const rows = snapshots(nodes);
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("单位路径必须使用原生 Widget")));
+  rows[1].component_snapshot.node_to_layout = { a: 0, b: 1, c: -1, d: 0 };
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  rows[1].component_snapshot.node_to_layout = { a: 1, b: 0, c: 0, d: 1 };
+  rows[1].component_snapshot.reference_to_layout = { a: 0, b: 1, c: -1, d: 0 };
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  child.ui_layout.widget_fallback = "随意理由";
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("只能为 SHARED 定位或恢复 SHARED 的 non-unit-transform")));
+});
+
+test("Widget 停靠在父框变大后仍保持实际右下边距", () => {
+  const parent = node("panel", { parent: "viewport", position: "SHARED", size: "SHARED", geometry: null, widget: null, bounds: { x: 0, y: 0, width: 120, height: 100 } });
+  const child = node("button", { parent: "panel", size: "FIXED", geometry: null,
+    bounds: { x: 80, y: 60, width: 20, height: 20 }, axis_alignment: { horizontal: "right", vertical: "bottom" },
+    widget: { target_id: "panel", align_mode: "ON_WINDOW_RESIZE", horizontal: { alignment: "right", value: 20 }, vertical: { alignment: "bottom", value: 20 } } });
+  const nodes = [parent, child];
+  const rows = snapshots(nodes);
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  rows[0].component_snapshot.layout_bounds = { x: 0, y: 0, width: 160, height: 120 };
+  rows[0].component_snapshot.ui_transform = { width: 160, height: 120 };
+  rows[1].component_snapshot.reference_bounds = { x: 0, y: 0, width: 160, height: 120 };
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("实际布局边距 right")));
+  rows[1].component_snapshot.layout_bounds = { x: 120, y: 80, width: 20, height: 20 };
+  assert.deepEqual(errorsFor(nodes, rows), []);
+});
+
+test("运行快照拒绝普通 UI 和浮层静态冻结，受控浮层行为和背景按边界处理", () => {
+  const ordinary = node("ordinary", { position: "STATIC", size: "FIXED", geometry: null, widget: null });
+  assert.ok(errorsFor([ordinary]).some((message) => message.includes("普通 UI 必须相对停靠")));
+  const floating = node("floating", { position: "STATIC", size: "FIXED", geometry: null, widget: null,
+    element_type: "container", ui_layout: { positioning: "absolute", floating_root_kind: "popup" } });
+  assert.ok(errorsFor([floating]).some((message) => message.includes("普通 UI 必须相对停靠")));
+  floating.layout_execution.position_driver = "ANIMATION";
+  floating.ui_layout = { layout_owner: "EXTERNAL", position_driver: "ANIMATION", positioning: "absolute", floating_root_kind: "popup", position_behavior: { kind: "drag", reason: "玩家拖动浮层", trigger: "拖动开始", properties: ["x", "y"], restore_driver: "SHARED", restore_rule: "拖动结束后回到宿主位置" } };
+  assert.deepEqual(errorsFor([floating]), []);
+  const background = node("background", { position: "STATIC", size: "FIXED", geometry: null, widget: null, role: "background" });
+  assert.deepEqual(errorsFor([background]), []);
+});
+
+test("行为结束的 Widget、共享和 Layout 恢复必须绑定实际可用组件与参照", () => {
+  const parent = node("panel", { parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null, bounds: { x: 0, y: 0, width: 200, height: 100 } });
+  const behavior = { kind: "drag", reason: "玩家拖动", trigger: "拖动开始", properties: ["x", "y"], restore_driver: "WIDGET", restore_rule: "拖动结束后重新启用 Widget" };
+  const child = node("child", { parent: "panel", position: "ANIMATION", size: "FIXED", geometry: null, widget: null, bounds: { x: 80, y: 40, width: 40, height: 20 }, axis_alignment: { horizontal: "center", vertical: "center" }, ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: behavior } });
+  const nodes = [parent, child];
+  const rows = snapshots(nodes);
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("必须保留绑定当前参照的原生组件")));
+  const widget = createLayoutRuntimeSnapshot(node("probe", { parent: "panel", bounds: child.target_bounds })).widget;
+  widget.enabled = false;
+  rows[1].component_snapshot.widget = widget;
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  widget.target_id = "other";
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("必须保留绑定当前参照的原生组件")));
+  widget.target_id = "panel";
+  rows[1].component_snapshot.node_to_layout = { a: 0, b: 1, c: -1, d: 0 };
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("恢复 Widget 要求实际节点及参照路径为单位矩阵")));
+  rows[1].component_snapshot.node_to_layout = { a: 1, b: 0, c: 0, d: 1 };
+  behavior.restore_driver = "SHARED";
+  rows[1].component_snapshot.widget = null;
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("原生布局可表达当前位置关系")));
+  child.ui_layout.widget_fallback = "non-unit-transform";
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("单位路径须恢复原生 Widget")));
+  rows[1].component_snapshot.reference_to_layout = { a: 0, b: 1, c: -1, d: 0 };
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  behavior.restore_driver = "LAYOUT";
+  delete child.ui_layout.widget_fallback;
+  assert.ok(errorsFor(nodes, rows).some((message) => message.includes("缺少实际父级排布组件")));
+  const layout = { enabled: false, type: "HORIZONTAL", resize_mode: "NONE", align_horizontal: false, align_vertical: false };
+  rows[0].component_snapshot.layout = layout;
+  rows[1].component_snapshot.parent_layout = structuredClone(layout);
+  assert.deepEqual(errorsFor(nodes, rows), []);
+});
+
+test("居中节点的受控过渡允许活动轴位移，未接管的轴和恢复后仍须居中", () => {
+  const parent = node("panel", { parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null, bounds: { x: 0, y: 0, width: 200, height: 100 } });
+  const behavior = { kind: "transition", reason: "入场过渡", trigger: "开始入场", properties: ["x"], restore_driver: "WIDGET", restore_rule: "入场结束后恢复原生停靠" };
+  const child = node("child", { parent: "panel", position: "ANIMATION", size: "FIXED", geometry: null, widget: null, bounds: { x: 80, y: 40, width: 40, height: 20 }, axis_alignment: { horizontal: "center", vertical: "center" }, ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: behavior } });
+  const nodes = [parent, child]; const rows = snapshots(nodes);
+  const widget = createLayoutRuntimeSnapshot(node("probe", { parent: "panel", bounds: child.target_bounds })).widget;
+  widget.enabled = false; rows[1].component_snapshot.widget = widget;
+  rows[1].component_snapshot.layout_bounds.x += 12;
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  rows[1].component_snapshot.layout_bounds.y += 3;
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("vertical 必须严格居中")));
+  rows[1].component_snapshot.layout_bounds.y -= 3;
+  widget.enabled = true;
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("实际启用了 Widget")));
+  widget.enabled = false;
+  rows[1].component_snapshot.position_writers = ["ANIMATION", "WIDGET"];
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("单一写入者")));
+  rows[1].component_snapshot.position_writers = ["ANIMATION"];
+  behavior.properties = ["x", "width"];
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("position_behavior.properties")));
+  behavior.properties = ["x"];
+  child.ui_layout.position_driver = "SHARED";
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("必须绑定 ANIMATION 计划与 EXTERNAL 所有权")));
+  child.ui_layout.position_driver = "ANIMATION";
+  child.layout_execution = { position_driver: "WIDGET", size_driver: "FIXED", widget: centeredWidget("panel") };
+  child.ui_layout = { layout_owner: "SELF", position_driver: "WIDGET" };
+  rows[1].component_snapshot.position_writers = ["WIDGET"]; widget.enabled = true;
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("实际布局边距")));
+  rows[1].component_snapshot.layout_bounds.x = child.target_bounds.x;
+  assert.deepEqual(errorsFor(nodes, rows), []);
+});
+
+test("浮层内部拖拽只豁免活动横轴，未控制的纵向间距和争写仍须验证", () => {
+  const body = node("body", { parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null, element_type: "container", bounds: { x: 20, y: 10, width: 160, height: 80 }, axis_alignment: { horizontal: "left", vertical: "top" }, ui_layout: { layout_owner: "SELF", positioning: "relative", floating_root_kind: "popup" } });
+  const behavior = { kind: "drag", reason: "拖动内容", trigger: "拖动开始", properties: ["x"], restore_driver: "WIDGET", restore_rule: "拖动结束后恢复停靠" };
+  const child = node("content", { parent: "body", position: "ANIMATION", size: "FIXED", geometry: null, widget: null, bounds: { x: 30, y: 20, width: 20, height: 20 }, axis_alignment: { horizontal: "left", vertical: "top" }, ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: behavior } });
+  const nodes = [body, child]; const rows = snapshots(nodes);
+  const widgetPlan = { target_id: "body", align_mode: "ON_WINDOW_RESIZE", horizontal: { alignment: "left", value: 10 }, vertical: { alignment: "top", value: 10 } };
+  const widget = createLayoutRuntimeSnapshot(node("probe", { parent: "body", bounds: child.target_bounds, widget: widgetPlan })).widget;
+  widget.enabled = false; rows[1].component_snapshot.widget = widget;
+  rows[1].component_snapshot.layout_bounds.x += 20;
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  rows[1].component_snapshot.layout_bounds.y += 3;
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("浮层内部 vertical 相对锚点间距")));
+  rows[1].component_snapshot.layout_bounds.y -= 3;
+  widget.enabled = true;
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("实际启用了 Widget")));
+  widget.enabled = false;
+  rows[1].component_snapshot.position_writers = ["ANIMATION", "WIDGET"];
+  assert.ok(errorsFor(nodes, rows).some((error) => error.includes("单一写入者")));
+});
+
+test("虚拟居中组不支持伪造成员独立动画跳过组中心", () => {
+  const behavior = { kind: "transition", reason: "尝试移动组成员", trigger: "开始", properties: ["x"], restore_driver: "SHARED", restore_rule: "结束后恢复共享布局" };
+  const icon = node("icon", { parent: "viewport", position: "ANIMATION", size: "FIXED", geometry: null, widget: null, bounds: { x: 40, y: 40, width: 10, height: 10 }, reference_target_bounds: { x: 0, y: 0, width: 102, height: 100 }, axis_alignment: { horizontal: "center", vertical: "top" }, center_alignment: { horizontal: { mode: "strict" }, member_ids: ["icon", "text"] }, ui_layout: { layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: behavior } });
+  const text = node("text", { parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null, bounds: { x: 52, y: 40, width: 10, height: 10 }, reference_target_bounds: { x: 0, y: 0, width: 102, height: 100 }, axis_alignment: { horizontal: "left", vertical: "top" } });
+  const rows = snapshots([icon, text]);
+  rows[0].component_snapshot.layout_bounds.x += 5;
+  assert.ok(errorsFor([icon, text], rows).some((error) => error.includes("虚拟居中组成员当前不支持独立位置行为")));
 });
 
 test("严格居中使用实际 Widget 快照几何而非原生 flag 声明", () => {
@@ -276,7 +415,7 @@ test("只有独立背景节点可按 cover 缩放", () => {
 
 test("业务参照使用其运行时边界，同一稳定根边界必须一致", () => {
   const panel = node("panel", {
-    parent: "viewport", position: "STATIC", size: "FIXED", geometry: null, widget: null,
+    parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null,
     bounds: { x: 0, y: 0, width: 100, height: 80 },
     reference_target_bounds: { x: 0, y: 0, width: 200, height: 100 },
   });
@@ -322,14 +461,14 @@ test("要求每个节点恰有绑定快照，并拒绝重复或额外 ID", () =>
 });
 
 test("校验非 Sprite 固定节点与固定 SLICED Sprite 的目标尺寸", () => {
-  const container = node("fixed-container", { geometry: null, position: "STATIC", size: "FIXED", widget: null });
+  const container = node("fixed-container", { geometry: null, position: "SHARED", size: "FIXED", widget: null });
   const containerRow = snapshots([container])[0];
   containerRow.component_snapshot.ui_transform.width += 1;
   assert.ok(errorsFor([container], [containerRow]).some((message) => message.includes("固定节点的 UITransform 尺寸")));
 
   const sliced = node("fixed-sliced", {
     geometry: { type: "SLICED", size_mode: "CUSTOM", content_size: { width: 20, height: 20 } },
-    position: "STATIC", size: "FIXED", widget: null,
+    position: "SHARED", size: "FIXED", widget: null,
   });
   const slicedRow = snapshots([sliced])[0];
   slicedRow.component_snapshot.ui_transform.height += 1;
@@ -354,7 +493,7 @@ test("inactive 快照不把停用组件当成有效位置或尺寸写入者", ()
 
 test("active快照遵守 activeInHierarchy 父子约束", () => {
   const parent = node("inactive-panel", {
-    parent: "viewport", active: true, position: "STATIC", size: "FIXED", geometry: null, widget: null,
+    parent: "viewport", active: true, position: "SHARED", size: "FIXED", geometry: null, widget: null,
     bounds: { x: 0, y: 0, width: 100, height: 80 },
   });
   const child = node("inactive-icon", { parent: "inactive-panel", active: true });

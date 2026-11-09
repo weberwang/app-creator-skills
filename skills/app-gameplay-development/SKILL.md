@@ -22,7 +22,7 @@ description: "按已确认的玩法规则实现游戏状态、输入响应、实
 5. 为关键状态转移补确定性测试或可重复手工步骤，覆盖极值、快速重复、暂停恢复、销毁/重载和存档回读。按[游戏 V1 专项验证](../app-domain-toolkit/references/game-characteristics.md#v1)从实际机制选择用例，优先验证最大不确定性，并将规则、对象、用例及真实结果交给 QA；白盒仍可选，不等待正式视觉。正式资源或实现调整时按[回归清单](../app-domain-toolkit/references/game-characteristics.md#regression)核对实际影响并复验，保留未受影响证据。
 6. 提交改动范围、状态/事件变化、可复现操作、实际验证输出及未覆盖风险；用户可感知的手感和画面仍交独立验收。
 
-Unity、Cocos 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
+Unity、Cocos、Roblox 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
 
 ## 关键边界
 

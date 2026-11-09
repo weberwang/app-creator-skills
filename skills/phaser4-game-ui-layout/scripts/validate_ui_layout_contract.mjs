@@ -544,8 +544,7 @@ function validateCoordinateSpaces(spaces, errors) {
 
 /** 验证水平和纵向双方停靠点。 */
 function validateAnchors(anchors, label, errors) {
-  if (!isObject(anchors)) { errors.push(`${label}.anchors 必须是对象`); return; }
-  for (const axis of ["horizontal", "vertical"]) { const item = anchors[axis]; if (!isObject(item)) { errors.push(`${label}.anchors.${axis} 缺失`); continue; } for (const side of ["self", "reference"]) if (!isString(item[side])) errors.push(`${label}.anchors.${axis}.${side} 必须是非空字符串`); if (!("offset" in item) || !(isNumber(item.offset) || isString(item.offset))) errors.push(`${label}.anchors.${axis}.offset 必须声明`); }
+  errors.push(...relativeLayoutPolicy.validateUiDockingAxes(anchors, `${label}.anchors`));
 }
 
 /** 验证最小、首选、最大尺寸和策略。 */
@@ -576,6 +575,7 @@ function validateRelativeWebNodes(input, errors, label, kind) {
     const mode = kind === "regions" ? node?.positioning : Object.hasOwn(layout, "positioning") ? layout.positioning : "relative";
     const owner = kind === "regions" ? (node ?? {}) : layout;
     const floatingKind = Object.hasOwn(owner, "floating_root_kind") ? owner.floating_root_kind : null;
+    if (mode === "absolute") errors.push(...relativeLayoutPolicy.validateGameUiPositionDriver({ driver: owner.position_driver, independent: true, behavior: owner.position_behavior, baseDrivers: ["REFLOW", "PARENT_LAYOUT"] }, label + "." + id));
     if (Object.hasOwn(owner, "floating_root_kind") && !["popup", "floating", "toast"].includes(floatingKind)) errors.push(label + "." + id + " floating_root_kind 必须为 popup/floating/toast");
     if (floatingKind !== null) {
       if (kind === "regions" && node?.semantic_role !== floatingKind) errors.push(label + "." + id + " 浮层本体类型必须与 semantic_role 一致");

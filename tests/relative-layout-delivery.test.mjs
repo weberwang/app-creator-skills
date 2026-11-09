@@ -8,8 +8,9 @@ import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { installSkills, SOURCE_ROOT } from '../packages/installer/install-project-skills.mjs';
 import YAML from '../skills/app-skill-runtime/yaml.mjs';
+import { createRobloxVisualFixture } from './helpers/roblox-fixture.mjs';
 
-const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'flutter'];
+const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'roblox', 'flutter'];
 const POLICY = 'app-ui-layout/scripts/relative-layout-policy.cjs';
 
 /** 安装后的导入必须从临时项目解析，不能偷偷使用维护目录的原生模块。 */
@@ -19,9 +20,10 @@ async function importInstalled(skills, path) {
 
 for (const stack of STACKS) {
   test(`${stack} 独立安装的模板与真实校验器保留相对布局硬门`, async (t) => {
-    const project = mkdtempSync(join(tmpdir(), `relative-layout-installed-${stack}-`));
+    const roblox = stack === 'roblox' ? createRobloxVisualFixture(t, { stage: 'V3', layer: true }) : null;
+    const project = roblox?.repo ?? mkdtempSync(join(tmpdir(), `relative-layout-installed-${stack}-`));
     // 只回收本用例创建的独占临时目录，安装不会修改用户项目或全局技能。
-    t.after(() => rmSync(project, { recursive: true, force: true }));
+    if (!roblox) t.after(() => rmSync(project, { recursive: true, force: true }));
     installSkills({ projectRoot: project, stacks: [stack] });
     const skills = join(project, '.agents/skills');
     assert.ok(existsSync(join(skills, POLICY)), '公共校验实现必须进入所选技术栈的安装闭包');
@@ -29,6 +31,15 @@ for (const stack of STACKS) {
     const digest = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
     assert.equal(digest(join(skills, POLICY)), digest(join(SOURCE_ROOT, 'skills', POLICY)));
     for (const other of STACKS.filter((item) => item !== stack)) assert.ok(!existsSync(join(skills, `app-stack-${other}`)));
+
+    if (roblox) {
+      const { validateRobloxVisual } = await importInstalled(skills, 'roblox-domain-contracts/scripts/validate-visual.mjs');
+      assert.doesNotThrow(() => validateRobloxVisual(project, roblox.work, { stage: 'V3', envelope: roblox.envelope }));
+      delete roblox.layout.nodes[1].anchorPoint;
+      roblox.saveVisual();
+      assert.throws(() => validateRobloxVisual(project, roblox.work, { stage: 'V3', envelope: roblox.envelope }), /anchorPoint|原点|锚点/i);
+      return;
+    }
 
     if (stack === 'unity') {
       const { validateUiLayoutPlan } = await importInstalled(skills, 'unity-development-workflow/scripts/layout-plan-validation.mjs');

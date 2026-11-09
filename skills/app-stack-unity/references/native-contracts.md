@@ -817,4 +817,6 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 #### UI 相对布局约束
 
 UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
+
+普通屏幕 UI 按[原生停靠计划](../../unity-development-workflow/references/ui-layout-plan.md#普通-ui-的原生停靠)优先使用 uGUI `RectTransform`/父 `LayoutGroup` 或已选 UI Toolkit 的原生布局；共同容器排布的子项由同一父布局负责。仅在现有参照或不可拆组合无法由原生表达时使用可核实的共享布局回退；拖拽和动画须登记限定位置范围及原生恢复，不得以普通脚本覆盖静态停靠。[运行回读与证据边界](../../unity-development-workflow/references/ui-layout-runtime.md)
 <!-- native-source:unity-game-visual-assets:end -->

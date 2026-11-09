@@ -30,6 +30,8 @@ for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成及对�
   // 应用、设备和服务端分别安装其领域合同，不套用 Web 游戏的场景校验器。
   const native = stack === 'nodejs'
     ? ['app-stack-nodejs/SKILL.md', 'app-stack-nodejs/profile.json', 'app-workflow-control/scripts/runtime/approval.mjs']
+    : stack === 'roblox'
+    ? ['app-stack-roblox/SKILL.md', 'app-stack-roblox/profile.json', 'app-stack-roblox/references/native-contracts.md', 'app-workflow-control/scripts/runtime/roblox-domain-check.mjs', 'roblox-domain-contracts/scripts/validate-evidence.mjs', 'roblox-domain-contracts/scripts/validate-visual.mjs']
     : stack === 'expo'
     ? ['app-stack-expo/SKILL.md', 'app-stack-expo/profile.json', 'app-stack-expo/references/native-contracts.md', 'app-workflow-control/scripts/runtime/expo-domain-check.mjs', 'app-ui-layout/scripts/relative-layout-policy.cjs', 'expo-domain-contracts/references/domain-validation.md', 'expo-domain-contracts/templates/domain.json', 'expo-domain-contracts/templates/layout.json', 'expo-domain-contracts/templates/asset-manifest.json', 'expo-domain-contracts/templates/runtime-context.json']
     : stack === 'esp32'

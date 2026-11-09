@@ -1,6 +1,9 @@
 import { validateCenterAlignmentNodes } from "./center-alignment.mjs";
 import { collectLayoutRootBounds, isSyntheticLayoutRoot } from "./layout-root-bounds.mjs";
 import { projectRuntimeSnapshotsForCenterAlignment, validateLayoutRuntimeSnapshots } from "./layout-runtime.mjs";
+import behaviorPolicy from "../../app-ui-layout/scripts/game-ui-behavior.cjs";
+
+const { projectActivePositionCentering } = behaviorPolicy;
 
 /** 运行矩形比较仅吸收 Float32 量化，不使用可用性验收的视觉偏差阈值。 */
 function near(left, right) {
@@ -81,7 +84,9 @@ export function validateLayoutRuntimeEvidence(nodes, geometry, context, errors =
   if (runtimeErrors.length === 0) {
     validateActualBounds(nodes, geometry, roots, runtimeErrors, label);
     // 中心验证器消费几何字段；必须先替换为实际测量，避免把目标居中误报为运行居中。
-    const actualNodes = projectRuntimeSnapshotsForCenterAlignment(nodes, geometry)
+    const projectedNodes = projectRuntimeSnapshotsForCenterAlignment(nodes, geometry);
+    const snapshots = new Map(geometry.component_snapshots.map((snapshot) => [snapshot.layout_node_id, snapshot]));
+    const actualNodes = projectActivePositionCentering(projectedNodes, nodes, snapshots, runtimeErrors, `${label}.runtime_center`, near)
       .filter((node) => !isSyntheticLayoutRoot(node))
       .map((node) => (node?.ui_layout ?? node?.uiLayout)?.positioning === "absolute" && ["popup", "floating", "toast"].includes((node?.ui_layout ?? node?.uiLayout)?.floating_root_kind) ? { ...node, axis_alignment: { horizontal: "left", vertical: "top" }, center_alignment: undefined } : node);
     validateCenterAlignmentNodes(actualNodes, runtimeErrors, `${label}.runtime_center`, geometry.runtime_capture.viewport, { precision: "phaser-float32" });

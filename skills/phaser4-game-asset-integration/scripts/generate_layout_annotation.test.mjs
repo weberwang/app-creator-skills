@@ -140,7 +140,7 @@ test("完整生成链保留兄弟定位参照、非根溢出和显式小安全�
   for (const [, source] of inlineScripts) assert.doesNotThrow(() => new Script(source), "模板脚本必须可语法编译" );
 });
 
-test("生成链将图文组整体居中、传播参照位移并保留 STATIC/ANIMATION/NineSlice 执行计划", async () => {
+test("生成链将图文组整体居中、传播参照位移并保留相对布局和受控动画计划", async () => {
   const value = await fixture();
   await configureReferenceOverflowScenario(value, (elements, decisions) => {
     const icon = elements.find((element) => element.element_id === "icon-element");
@@ -153,10 +153,10 @@ test("生成链将图文组整体居中、传播参照位移并保留 STATIC/ANI
       component_id: "label",
       placement_id: "label-placement",
       semantic_grouping: { kind: "standalone", rationale: "说明文字与图标作为一个视觉单元" },
-      ui_layout: { grouping_basis: ["POSITION"], layout_owner: "SELF", position_driver: "ANIMATION", size_policy: "FIXED", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE" },
+      ui_layout: { grouping_basis: ["POSITION"], layout_owner: "EXTERNAL", position_driver: "ANIMATION", position_behavior: { kind: "transition", reason: "当前文字入场", trigger: "面板打开", properties: ["x"], restore_driver: "REFLOW", restore_rule: "入场结束交还原停靠" }, size_policy: "FIXED", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE" },
     };
     elements.push(label);
-    panel.ui_layout.position_driver = "STATIC";
+    panel.ui_layout.position_driver = "REFLOW";
     badge.nine_slice = { mode: "stretch", reason: "角标底板按冻结九宫格保持边角", source_size: { width: 5, height: 8 }, borders: { left: 1, right: 1, top: 1, bottom: 1 } };
     decisions.push({ element_id: "label-element", horizontal_alignment: "center", vertical_alignment: "top" });
     const leader = decisions.find((item) => item.element_id === "icon-element");
@@ -182,7 +182,7 @@ test("生成链将图文组整体居中、传播参照位移并保留 STATIC/ANI
   assert.equal(Object.hasOwn(badge, "center_alignment"), false);
   assert.deepEqual(icon.axis_alignment, { horizontal: "center", vertical: "top" });
   assert.deepEqual(icon.center_alignment, { horizontal: { mode: "strict" }, member_ids: ["icon-element", "label-element"] });
-  assert.deepEqual(panel.layout_execution, { position_driver: "STATIC", size_driver: "FIXED" });
+  assert.deepEqual(panel.layout_execution, { position_driver: "REFLOW", size_driver: "FIXED" });
   assert.deepEqual(label.layout_execution, { position_driver: "ANIMATION", size_driver: "FIXED" });
   assert.deepEqual(badge.layout_execution, { position_driver: "PARENT_LAYOUT", size_driver: "NINE_SLICE" });
   assert.deepEqual(metadata.nodes.find((node) => node.layout_node_id === "icon-element").center_alignment, icon.center_alignment);

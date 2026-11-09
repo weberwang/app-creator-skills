@@ -151,7 +151,7 @@
             "LAYOUT",
             "STATE"
           ],
-          "positionDriver": "SCRIPT",
+          "positionDriver": "LAYOUT_GROUP",
           "sizeDrivers": {
             "width": "RECT_TRANSFORM",
             "height": "RECT_TRANSFORM"
@@ -159,7 +159,7 @@
           "imageSizing": {
             "mode": "NATIVE"
           },
-          "layoutOwner": "SELF",
+          "layoutOwner": "PARENT",
           "sizePolicy": "FIXED",
           "overflowPolicy": "KEEP_VISIBLE",
           "safeAreaPolicy": "INSIDE_SAFE_AREA",
@@ -215,12 +215,12 @@
             "POSITION",
             "STATE"
           ],
-          "positionDriver": "SCRIPT",
+          "positionDriver": "LAYOUT_GROUP",
           "sizeDrivers": {
             "width": "CONTENT_SIZE_FITTER",
             "height": "CONTENT_SIZE_FITTER"
           },
-          "layoutOwner": "SELF",
+          "layoutOwner": "PARENT",
           "sizePolicy": "CONTENT",
           "overflowPolicy": "KEEP_VISIBLE",
           "safeAreaPolicy": "INSIDE_SAFE_AREA",

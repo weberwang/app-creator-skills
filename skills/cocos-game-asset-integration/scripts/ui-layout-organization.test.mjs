@@ -35,6 +35,37 @@ test("拒绝空定位 ID、无效溢出理由、视觉溢出额外键和未知�
   assert.equal(allowsVisualOverflow({ visual_overflow: { reason: " " } }), false);
 });
 
+test("非单位 Widget 回退在拆解入口保留且必须绑定 SHARED 和固定枚举", () => {
+  const base = { grouping_basis: ["LAYOUT"], layout_owner: "SELF", size_policy: "FIXED", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE" };
+  const value = { ...base, position_driver: "SHARED", widget_fallback: "non-unit-transform" };
+  const normalized = normalizeUiLayout(value);
+  const errors = [];
+  validateUiLayout(normalized, { parentId: "container" }, errors);
+  assert.deepEqual(errors, []);
+  assert.equal(normalized.widget_fallback, "non-unit-transform");
+  for (const patch of [{ widget_fallback: "manual" }, { position_driver: "WIDGET" }]) {
+    const invalid = [];
+    validateUiLayout({ ...value, ...patch }, { parentId: "container" }, invalid);
+    assert.ok(invalid.some((error) => error.includes("widget_fallback")), invalid.join("；"));
+  }
+});
+
+test("位置行为可在拆解中保留并验证受控属性与恢复规则", () => {
+  const base = { grouping_basis: ["LAYOUT"], layout_owner: "EXTERNAL", size_policy: "FIXED", overflow_policy: "KEEP_VISIBLE", safe_area_policy: "INSIDE_SAFE_AREA", interaction_policy: "NONE", position_driver: "ANIMATION" };
+  const position_behavior = { kind: "drag", reason: "拖动面板", trigger: "拖动开始", properties: ["x", "y"], restore_driver: "SHARED", restore_rule: "拖动结束后恢复停靠" };
+  const value = normalizeUiLayout({ ...base, position_behavior });
+  const errors = [];
+  validateUiLayout(value, { parentId: "container" }, errors);
+  assert.deepEqual(errors, []);
+  position_behavior.properties.push("width");
+  assert.deepEqual(value.position_behavior.properties, ["x", "y"]);
+  for (const behavior of [{ ...value.position_behavior, kind: "manual" }, { ...value.position_behavior, properties: ["width"] }, { ...value.position_behavior, restore_rule: "" }]) {
+    const invalid = [];
+    validateUiLayout({ ...base, position_behavior: behavior }, { parentId: "container" }, invalid);
+    assert.ok(invalid.some((error) => error.includes("position_behavior")), invalid.join("；"));
+  }
+});
+
 test("不同定位对象必须声明 POSITION，且只允许同级、祖先或稳定根", () => {
   const elements = [node("container", "viewport"), node("first", "container", { position_reference_id: "second" }), node("second", "container")];
   const missingBasisErrors = [];

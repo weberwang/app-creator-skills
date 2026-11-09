@@ -632,6 +632,8 @@ V3 从已确认字段派生位置与尺寸的唯一驱动器，具体决策见[�
 #### UI 相对布局约束
 
 UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/references/relative-layout.md)。本栈父级、锚点、坐标换算及原生组件按技术约束实现；浮层本体与内部 UI 的边界按公共规范验收。
+
+DOM HUD 的父级停靠及流式/滚动排布必须使用原生 CSS，正式路线明确时写入 `ui_layout.renderer=DOM` 并使用 DOM_LAYOUT；Canvas HUD 按既有共享布局入口处理，不混入世界变换。V5 对实际 renderer 和 DOM 计算样式再次核对，不能靠省略路线或只写 `relative` 绕过。共享例外和受控行为依[布局执行合同](../../threejs-game-ui-layout/references/layout-execution.md)验证，位置/尺寸各自保持唯一写入者。
 <!-- native-source:threejs-game-ui-layout:end -->
 
 

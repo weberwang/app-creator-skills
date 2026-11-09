@@ -9,6 +9,8 @@ const CANVAS = { width: 120, height: 80 };
 
 test("多行分组理由仅在右栏折叠空白，节点保留确认原文", () => {
   const elements = validElements();
+  // 本用例的普通节点使用原生自身停靠，语义分组与实际父级维持原样。
+  for (const element of elements) if (element.parent_element_id !== "viewport") element.ui_layout.layout_owner = "SELF";
   elements[3].semantic_grouping.rationale = "属于同一入口\n共同移动";
   const decisions = new Map(elements.map((element) => [element.element_id, { horizontal: "left", vertical: "top" }]));
   const facts = deriveAutomaticLayoutFacts(deriveLayoutNodesFromDecompositionElements(elements, CANVAS, { alignmentDecisions: decisions }), CANVAS);

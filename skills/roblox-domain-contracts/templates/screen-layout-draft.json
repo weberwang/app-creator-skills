@@ -1,0 +1,42 @@
+{
+  "note": "采集前占位草稿；须替换所有身份、实际源和证据引用，不能作为通过证据。",
+  "schemaVersion": "roblox-layout/1.0",
+  "workItemId": "请填写",
+  "projectId": "请填写",
+  "stack": "roblox",
+  "workItemType": "DISPLAY_LAYER",
+  "objectId": "请填写",
+  "targetId": "请填写",
+  "candidateId": "请填写",
+  "studio": null,
+  "rootId": "screen-root",
+  "editObservationRef": { "path": "请填写已保存的 Edit 回读路径", "sha256": "" },
+  "nodes": [
+    {
+      "id": "screen-root",
+      "className": "ScreenGui",
+      "instancePath": ["game", "StarterGui", "请替换"],
+      "parentId": null,
+      "space": "screen-scale-offset",
+      "positionReferenceId": "safe-area",
+      "screenInsets": "CoreUISafeInsets",
+      "clipToDeviceSafeArea": true,
+      "sizeModifiers": []
+    },
+    {
+      "id": "button",
+      "className": "TextButton",
+      "instancePath": ["game", "StarterGui", "请替换", "请替换"],
+      "parentId": "screen-root",
+      "positionReferenceId": "screen-root",
+      "space": "screen-scale-offset",
+      "position": { "xScale": 1, "xOffset": -24, "yScale": 1, "yOffset": -24 },
+      "size": { "xScale": 0, "xOffset": 160, "yScale": 0, "yOffset": 48 },
+      "anchorPoint": { "x": 1, "y": 1 },
+      "positionWriters": ["UDIM2"],
+      "sizeConstraint": "RelativeXY",
+      "sizeModifiers": [],
+      "sizeWriters": { "horizontal": "UDIM2", "vertical": "UDIM2" }
+    }
+  ]
+}

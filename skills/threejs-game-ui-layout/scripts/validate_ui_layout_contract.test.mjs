@@ -88,16 +88,16 @@ test("声明的关键容差校验实测差值，不能用 delta=0 隐藏偏移",
   assertFailed(document, "runtime_measurement.y 超出声明容差");
 });
 
-test("usability 未声明精确几何容差时保留宽松策略，声明边界值时允许通过", () => {
+test("usability 仍须保持声明的停靠边距，关键几何容差单位单独校验", () => {
   const relaxed = fidelityContract(); relaxed.visual_validation = { mode: "usability" };
   delete relaxed.critical_alignments[0].tolerance;
   relaxed.critical_alignments[0].runtime_measurement.y += 12;
   relaxed.component_snapshots[0].component_snapshot.layout_bounds.y += 12;
-  assert.equal(validateContract(relaxed).status, "passed");
+  assertFailed(relaxed, "普通 UI vertical 相对锚点间距");
   const bounded = fidelityContract(); bounded.visual_validation = { mode: "usability" };
   bounded.critical_alignments[0].runtime_measurement.y += 2; bounded.critical_alignments[0].delta.y = 2;
   bounded.component_snapshots[0].component_snapshot.layout_bounds.y += 2;
-  assert.equal(validateContract(bounded).status, "passed");
+  assertFailed(bounded, "普通 UI vertical 相对锚点间距");
   bounded.critical_alignments[0].tolerance.unit = "percent";
   assertFailed(bounded, "tolerance.unit 必须是");
 });
@@ -254,7 +254,7 @@ test("关键对齐与 parity ID 必须唯一", () => { const alignment = fidelit
 test("缺少坐标空间失败", () => { const document = copy(); document.coordinate_spaces = []; assertFailed(document, "coordinate_spaces 必须是非空数组"); });
 test("坐标空间循环失败", () => { const document = copy(); document.coordinate_spaces[0].parent = "ui-space"; document.coordinate_spaces[1].parent = "screen-space"; assertFailed(document, "坐标空间存在循环"); });
 test("范围区域 ID 必须一致", () => { const document = copy(); document.scope.ui_ids.splice(document.scope.ui_ids.indexOf("title"), 1); assertFailed(document, "scope.ui_ids 缺少 regions ID"); });
-test("水平和垂直锚点均必需", () => { for (const axis of ["horizontal", "vertical"]) { const document = copy(); delete document.regions[0].anchors[axis]; assertFailed(document, `anchors.${axis} 缺失`); } });
+test("水平和垂直锚点均必需且不能伪造轴向", () => { for (const axis of ["horizontal", "vertical"]) { const document = copy(); delete document.regions[0].anchors[axis]; assertFailed(document, `anchors.${axis}`); const invalid = copy(); invalid.regions[0].anchors[axis].self = "随意坐标"; assertFailed(invalid, "明确停靠点"); } });
 /** 验证资源原点默认居中，非中心例外必须携带可复核的布局换算依据。 */
 test("显示对象默认中心原点，非中心例外须说明原因与坐标换算", () => {
   const missing = copy(); missing.regions[2].origin = "top-left"; assertFailed(missing, "origin 非中心时必须声明");

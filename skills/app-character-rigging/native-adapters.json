@@ -1,6 +1,15 @@
 {
   "capability": "app-character-rigging",
   "adapters": {
+    "roblox": [
+      {
+        "sourceSkill": "roblox-game-character-rigging",
+        "path": "../app-stack-roblox/references/native-contracts.md",
+        "section": "mode-roblox-game-character-rigging",
+        "mode": "roblox-game-character-rigging",
+        "when": "当前项目实际使用 Roblox Studio，执行该能力的原生实施与验证时。"
+      }
+    ],
     "unity": [
       {
         "sourceSkill": "unity-game-2d-rigging",

@@ -13,6 +13,7 @@ const STACKS = {
   cocos: 'cocos-game-orchestrator',
   phaser: 'phaser4-game-orchestrator',
   threejs: 'threejs-game-orchestrator',
+  roblox: 'app-stack-roblox',
 };
 
 /** 校验从生成的项目文档出发能定位规范中的真实章节。 */
@@ -44,8 +45,9 @@ for (const [stack, skill] of Object.entries(STACKS)) {
     let createCore;
     let createQa;
     let checkUnknown;
-    if (stack === 'unity') {
-      const initializer = await import(pathToFileURL(join(root, skill, 'scripts/workflow-files.mjs')).href);
+    if (stack === 'unity' || stack === 'roblox') {
+      const script = stack === 'roblox' ? 'initialize-project-docs.mjs' : 'workflow-files.mjs';
+      const initializer = await import(pathToFileURL(join(root, skill, 'scripts', script)).href);
       createCore = () => initializer.initializeDocs({ projectRoot: project, projectId: 'game-docs-test' });
       createQa = () => initializer.initializeDocs({ projectRoot: project, projectId: 'game-docs-test', include: 'qa' });
       checkUnknown = () => initializer.initializeDocs({ projectRoot: project, projectId: 'game-docs-test', include: 'unknown' });

@@ -105,6 +105,65 @@ test("同批完整活动快照通过并绑定场景和视口上下文", () => {
   assert.deepEqual(errors, []);
 });
 
+test("实际 DOM 路线必须使用原生布局并回读同节点计算样式", () => {
+  const source = node("panel", { element_type: "container", role: "container" });
+  source.ui_layout.renderer = "DOM";
+  const result = geometryFor([source]);
+  const actual = snapshotOf(result.geometry, "panel");
+  actual.renderer = "DOM";
+  actual.dom_layout = { parent_id: "viewport", containing_block_id: "viewport", position: "absolute", parent_display: "block", inset: { left: "10px", top: "10px", right: "auto", bottom: "auto" } };
+  assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  delete actual.dom_layout;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /dom_layout 计算样式/);
+  actual.renderer = "HUD";
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /实际 DOM|渲染路线/);
+
+  const shared = geometryFor([node("panel", { element_type: "container", role: "container" })]);
+  snapshotOf(shared.geometry, "panel").renderer = "DOM";
+  assert.match(validateLayoutRuntimeSnapshots(shared.nodes, shared.geometry).join("\n"), /必须使用 DOM_LAYOUT/);
+});
+
+test("普通 HUD 的非居中停靠边距也绑定实际父框", () => {
+  const source = node("panel", { element_type: "container", role: "container", layout_owner: "SELF", axis_alignment: { horizontal: "left", vertical: "top" } });
+  source.reference_target_bounds = structuredClone(VIEWPORT);
+  const result = geometryFor([source]);
+  assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  snapshotOf(result.geometry, "panel").layout_bounds.x += 5;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /普通 UI horizontal 相对锚点间距/);
+});
+
+test("DOM 小数布局在父视口增大后保持右边距，量化预算不掩盖实际漂移", () => {
+  const source = node("panel", { element_type: "container", role: "container", layout_owner: "SELF", axis_alignment: { horizontal: "right", vertical: "top" }, target_bounds: { x: VIEWPORT.width - 44, y: 10, width: 20, height: 10 } });
+  source.ui_layout.renderer = "DOM";
+  source.reference_target_bounds = structuredClone(VIEWPORT);
+  const result = geometryFor([source]);
+  result.geometry.runtime_batch.viewport_bounds.width += 33.3;
+  const actual = snapshotOf(result.geometry, "panel");
+  actual.renderer = "DOM";
+  actual.reference_bounds.width += 33.3;
+  actual.layout_bounds.x += 33.3 + 0.005;
+  actual.dom_layout = { parent_id: "viewport", containing_block_id: "viewport", position: "absolute", parent_display: "block", inset: { right: "24px", top: "10px", left: "auto", bottom: "auto" } };
+  assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  actual.layout_bounds.x += 1;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /相对锚点间距/);
+});
+
+test("有界活动行为仅暂缓受控轴的居中或边距，不放宽其他轴和写入者", () => {
+  const source = node("panel", { element_type: "container", role: "container", layout_owner: "EXTERNAL", position_driver: "ANIMATION", axis_alignment: { horizontal: "center", vertical: "center" }, target_bounds: { x: VIEWPORT.width / 2 - 10, y: VIEWPORT.height / 2 - 5, width: 20, height: 10 } });
+  source.ui_layout.renderer = "HUD";
+  source.ui_layout.position_behavior = { kind: "transition", reason: "按钮入场", trigger: "打开面板", properties: ["x"], restore_driver: "SHARED", restore_rule: "结束交回布局" };
+  source.reference_target_bounds = structuredClone(VIEWPORT);
+  const result = geometryFor([source]);
+  const actual = snapshotOf(result.geometry, "panel");
+  actual.layout_bounds.x += 12;
+  assert.deepEqual(validateLayoutRuntimeSnapshots(result.nodes, result.geometry), []);
+  actual.layout_bounds.y += 2;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /实际中心/);
+  actual.layout_bounds.y -= 2;
+  actual.position_writers.push("SHARED");
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /唯一匹配/);
+});
+
 test("活动节点的父级、定位参照和属性写入者必须匹配派生计划", () => {
   const result = geometryFor([node("panel", { element_type: "container", role: "container" }), node("child", { parent: "panel", position_reference_id: "viewport" })]);
   const child = snapshotOf(result.geometry, "child");

@@ -171,6 +171,7 @@ function validateFlutterLayerContext(repo, work, stage, doc) {
 async function run(repo, work, stage) {
   if (!['V2', 'V3', 'V4', 'V5'].includes(stage)) throw new WorkflowError('单目标领域检查只适用于 V2–V5');
   const doc = readEnvelope(repo, work, stage);
+  if (work.stack === 'roblox') return (await import('./roblox-domain-check.mjs')).validateRobloxLayer(repo, work, stage, doc);
   if (work.stack === 'unity') return validateUnity(repo, work, stage, doc);
   if (WEB_PREFIX[work.stack]) return validateWeb(repo, work, stage, doc);
   if (work.stack === 'flutter') return validateFlutter(repo, work, stage, doc);

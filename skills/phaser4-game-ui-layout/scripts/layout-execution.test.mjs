@@ -13,16 +13,17 @@ function node(id, owner = "SELF", sizePolicy = "FIXED", extra = {}) {
 }
 
 /** 验证位置默认值只由 layout_owner 决定，特殊策略必须显式声明。 */
-test("位置驱动默认值按职责稳定派生，STATIC/ANIMATION仅接受显式声明", () => {
+test("位置驱动默认值按职责派生，行为必须有范围且静态位置不能绕过停靠", () => {
   const plans = deriveLayoutExecutionPlans([
     node("self"),
     node("external", "EXTERNAL"),
     node("parent", "PARENT"),
-    node("static", "SELF", "FIXED", { ui_layout: { position_driver: "STATIC" } }),
-    node("animation", "EXTERNAL", "FIXED", { ui_layout: { position_driver: "ANIMATION" } }),
+    node("animation", "EXTERNAL", "FIXED", { ui_layout: { position_driver: "ANIMATION", position_behavior: { kind: "transition", reason: "当前节点入场", trigger: "打开面板时", properties: ["x"], restore_driver: "REFLOW", restore_rule: "入场结束归还布局" } } }),
     { layout_node_id: "viewport", is_root_container: true, parent_layout_node_id: null },
   ]);
-  assert.deepEqual(plans.map((item) => item.layout_execution.position_driver), ["REFLOW", "REFLOW", "PARENT_LAYOUT", "STATIC", "ANIMATION"]);
+  assert.deepEqual(plans.map((item) => item.layout_execution.position_driver), ["REFLOW", "REFLOW", "PARENT_LAYOUT", "ANIMATION"]);
+  assert.throws(() => deriveLayoutExecutionPlans([node("static", "SELF", "FIXED", { ui_layout: { position_driver: "STATIC" } })]), /必须相对停靠/);
+  assert.throws(() => deriveLayoutExecutionPlans([node("animation", "EXTERNAL", "FIXED", { ui_layout: { position_driver: "ANIMATION" } })]), /position_behavior/);
 });
 
 /** 验证 PARENT、SELF 和 EXTERNAL 的所有不相容显式组合都会报错。 */

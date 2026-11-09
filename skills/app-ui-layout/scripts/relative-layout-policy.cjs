@@ -1,5 +1,7 @@
 "use strict";
 
+const { activePositionAxes } = require("./game-ui-behavior.cjs");
+
 /** 所有技术栈共用实际 UI 节点的相对定位校验，不另建脱离原生节点的布局图。 */
 const MODES = new Set(["relative", "absolute"]);
 /** 浮层本体类型采用封闭集合；普通 overlay、HUD 或组件名称不构成豁免。 */
@@ -135,4 +137,90 @@ function validateRelativeLayoutNodes(nodes, options = {}) {
   return errors;
 }
 
-module.exports = { validateRelativeLayoutNodes };
+/** 游戏位置行为只在受控节点和明确交接范围内接管布局，不作为静态坐标的通用豁免。 */
+function validateGameUiPositionDriver(input, label = "游戏 UI") {
+  const errors = [];
+  const { driver, nativeDriver = null, sharedAllowed = false, independent = false, behavior, baseDrivers = [], properties = ["x", "y"] } = input;
+  if (driver === "STATIC") errors.push(`${label} 普通游戏 UI 必须相对停靠，不能使用 STATIC 冻结位置。`);
+  if (independent && driver !== "ANIMATION") errors.push(`${label} 独立定位的游戏浮层必须有受控位置行为，普通弹窗应相对宿主停靠。`);
+  if (nativeDriver !== null && driver !== nativeDriver && driver !== "ANIMATION" && !sharedAllowed) {
+    errors.push(`${label} 原生布局可表达当前位置关系，必须使用 ${nativeDriver}。`);
+  }
+  if (driver !== "ANIMATION") {
+    if (behavior !== undefined) errors.push(`${label} position_behavior 仅用于实际行为驱动，不能替代原生布局。`);
+    return errors;
+  }
+  if (!behavior || typeof behavior !== "object" || Array.isArray(behavior)) return [...errors, `${label} 行为驱动必须提供 position_behavior。`];
+  const keys = ["kind", "reason", "trigger", "properties", "restore_driver", "restore_rule"];
+  if (Object.keys(behavior).some((key) => !keys.includes(key))) errors.push(`${label} position_behavior 含未定义字段。`);
+  if (!["drag", "pointer-follow", "world-follow", "transition"].includes(behavior.kind)) errors.push(`${label} position_behavior.kind 必须为明确的位置行为。`);
+  for (const key of ["reason", "trigger", "restore_rule"]) if (!isId(behavior[key])) errors.push(`${label} position_behavior.${key} 必须明确声明。`);
+  if (!Array.isArray(behavior.properties) || !behavior.properties.length || new Set(behavior.properties).size !== behavior.properties.length || behavior.properties.some((key) => !properties.includes(key))) errors.push(`${label} position_behavior.properties 只能接管本节点的位置属性。`);
+  if (!baseDrivers.includes(behavior.restore_driver)) errors.push(`${label} position_behavior.restore_driver 必须返回有效的基础布局驱动。`);
+  else errors.push(...validateGameUiPositionDriver({ driver: behavior.restore_driver, nativeDriver, sharedAllowed, baseDrivers, properties }, `${label} 恢复布局`));
+  return errors;
+}
+
+/** 按同批参照核对固定边距；容器排布和活动行为由各栈的原生控制权合同处理。 */
+function validateGameUiDockingOffsets(nodes, snapshots, errors, label, sameNumber, getSnapshot = (value) => value) {
+  const idOf = (node) => node?.layout_node_id ?? node?.layoutNodeId;
+  const parentOf = (node) => node?.parent_layout_node_id ?? node?.parentLayoutNodeId;
+  const byId = new Map(nodes.map((node) => [idOf(node), node]));
+  const boundsOf = (node) => node?.target_bounds ?? node?.targetBounds ?? node?.bounds;
+  const valid = (rect) => rect && [rect.x, rect.y, rect.width, rect.height].every(Number.isFinite) && rect.width > 0 && rect.height > 0;
+  for (const node of nodes) {
+    const id = idOf(node);
+    const ui = node.ui_layout ?? node.uiLayout ?? {};
+    let ancestor = byId.get(parentOf(node)); const seen = new Set([id]); let floating = false;
+    while (ancestor && !seen.has(idOf(ancestor))) {
+      seen.add(idOf(ancestor));
+      if (FLOATING_KINDS.has((ancestor.ui_layout ?? ancestor.uiLayout)?.floating_root_kind)) { floating = true; break; }
+      ancestor = byId.get(parentOf(ancestor));
+    }
+    const alignment = node.axis_alignment ?? node.axisAlignment ?? (floating ? { horizontal: "left", vertical: "top" } : null);
+    // 本函数补充完整布局合同的固定边距核验；纯矩阵采样本身并不携带停靠计划。
+    if (!alignment) continue;
+    const snapshot = getSnapshot(snapshots.get(id));
+    if (!snapshot || snapshot.active === false) continue;
+    const controlledAxes = activePositionAxes(node, snapshot);
+    // 只有实际原生流式排布事实允许子项重排，PARENT 标签本身不构成豁免。
+    const css = snapshot.dom_layout;
+    if (snapshot.renderer === "DOM" && node.layout_execution?.position_driver === "DOM_LAYOUT" && css?.parent_id === parentOf(node)
+      && ["static", "relative"].includes(css.position) && ["flex", "inline-flex", "grid", "inline-grid"].includes(css.parent_display)) continue;
+    const referenceId = node.reference_id ?? node.referenceId ?? ui.position_reference_id ?? ui.positionReferenceId ?? node.position_reference_id ?? node.positionReferenceId ?? parentOf(node);
+    const original = boundsOf(node);
+    const reference = boundsOf(byId.get(referenceId)) ?? node.reference_target_bounds ?? node.referenceTargetBounds
+      ?? (referenceId === parentOf(node) ? node.parent_target_bounds ?? node.parentTargetBounds : undefined);
+    if (![original, reference].every(valid)) continue;
+    const actual = snapshot.layout_bounds ?? snapshot.actual_bounds;
+    const actualRef = snapshot.reference_bounds;
+    if (![actual, actualRef].every(valid)) { errors.push(`${label}.${id} 停靠缺少同批实际参照矩形。`); continue; }
+    for (const [axis, start, size, end, offsetKey] of [["horizontal", "x", "width", "right", "x"], ["vertical", "y", "height", "bottom", "y"]]) {
+      const offset = node.offset?.[offsetKey];
+      if (typeof offset === "string" && (!offset.trim() || !Number.isFinite(Number(offset)))) { errors.push(`${label}.${id} ${axis} 表达式边距缺少可核实的运行求值，不能通过停靠校验。`); continue; }
+      if (controlledAxes.includes(axis)) continue;
+      // 居中组合沿现有中心合同核对；数值字符串同样必须满足实际边距关系。
+      if (alignment[axis] === "center") continue;
+      const edge = (rect, ref, atEnd) => atEnd ? ref[start] + ref[size] - rect[start] - rect[size] : rect[start] - ref[start];
+      const ends = alignment[axis] === "stretch" ? [false, true] : [alignment[axis] === end];
+      if (ends.some((atEnd) => !sameNumber(edge(actual, actualRef, atEnd), edge(original, reference, atEnd), snapshot))) errors.push(`${label}.${id} ${floating ? "浮层内部 " : "普通 UI "}${axis} 相对锚点间距与冻结事实不一致。`);
+    }
+  }
+}
+
+/** 检查声明式屏幕 UI 的双轴锚点；资源原点和定位参照不能代替轴向意图。 */
+function validateUiDockingAxes(axes, label = "anchors") {
+  const errors = [];
+  if (!axes || typeof axes !== "object" || Array.isArray(axes)) return [`${label} 必须声明双轴停靠。`];
+  for (const [axis, sides] of [["horizontal", ["left", "center", "right", "stretch"]], ["vertical", ["top", "center", "bottom", "stretch"]]]) {
+    const item = axes[axis];
+    if (!item || typeof item !== "object" || Array.isArray(item)) { errors.push(`${label}.${axis} 必须声明双轴停靠。`); continue; }
+    if (!sides.includes(item.self)) errors.push(`${label}.${axis}.self 必须为当前轴的明确停靠点。`);
+    const rootStretch = item.self === "stretch" && ["viewport", "safe-area"].includes(item.reference);
+    if (!sides.includes(item.reference) && !rootStretch) errors.push(`${label}.${axis}.reference 必须为当前轴的明确停靠点。`);
+    if (!(Number.isFinite(item.offset) || isId(item.offset))) errors.push(`${label}.${axis}.offset 必须为有限边距或本栈可求值的表达式。`);
+  }
+  return errors;
+}
+
+module.exports = { validateRelativeLayoutNodes, validateGameUiPositionDriver, validateGameUiDockingOffsets, validateUiDockingAxes };

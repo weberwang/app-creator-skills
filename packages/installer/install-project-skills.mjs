@@ -12,7 +12,7 @@ import { sameInstallationContents } from './installation-content.mjs';
 /** 当前分发包根目录，安装不依赖源仓库所在磁盘。 */
 export const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 /** 已支持的技术栈与公共技能是唯一安装清单。 */
-export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
+export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo', 'roblox']);
 /** 公共技能始终整体安装，避免断开跨技能相对引用。 */
 export const COMMON_SKILLS = CORE_SKILLS;
 

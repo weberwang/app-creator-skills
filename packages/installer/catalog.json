@@ -873,6 +873,49 @@
         "app-domain-toolkit",
         "expo-domain-contracts"
       ]
+    },
+    "roblox": {
+      "capabilitySkills": [
+        "app-creator-workflow",
+        "app-product-planning",
+        "app-architecture",
+        "app-project-foundation",
+        "app-gameplay-development",
+        "app-game-balance",
+        "app-audio",
+        "app-feedback",
+        "app-ui-layout",
+        "app-asset-workflow",
+        "app-3d-modeling",
+        "app-3d-texturing",
+        "app-animation",
+        "app-character-rigging",
+        "app-3d-asset-pipeline",
+        "app-quality-review",
+        "app-release",
+        "app-artifact-cleanup"
+      ],
+      "nativeAdapters": [
+        {"sourceSkill":"roblox-workflow","capability":"app-creator-workflow","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-workflow"},
+        {"sourceSkill":"roblox-game-production","capability":"app-product-planning","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-production"},
+        {"sourceSkill":"roblox-game-architecture","capability":"app-architecture","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-architecture"},
+        {"sourceSkill":"roblox-project-foundation","capability":"app-project-foundation","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-project-foundation"},
+        {"sourceSkill":"roblox-gameplay-development","capability":"app-gameplay-development","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-gameplay-development"},
+        {"sourceSkill":"roblox-game-balance","capability":"app-game-balance","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-balance"},
+        {"sourceSkill":"roblox-game-audio","capability":"app-audio","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-audio"},
+        {"sourceSkill":"roblox-game-feedback","capability":"app-feedback","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-feedback"},
+        {"sourceSkill":"roblox-game-ui-layout","capability":"app-ui-layout","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-ui-layout"},
+        {"sourceSkill":"roblox-game-asset-integration","capability":"app-asset-workflow","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-asset-integration"},
+        {"sourceSkill":"roblox-game-3d-modeling","capability":"app-3d-modeling","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-3d-modeling"},
+        {"sourceSkill":"roblox-game-3d-texturing","capability":"app-3d-texturing","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-3d-texturing"},
+        {"sourceSkill":"roblox-game-animation","capability":"app-animation","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-animation"},
+        {"sourceSkill":"roblox-game-character-rigging","capability":"app-character-rigging","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-character-rigging"},
+        {"sourceSkill":"roblox-game-asset-pipeline","capability":"app-3d-asset-pipeline","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-asset-pipeline"},
+        {"sourceSkill":"roblox-game-qa-performance","capability":"app-quality-review","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-qa-performance"},
+        {"sourceSkill":"roblox-game-release","capability":"app-release","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-release"},
+        {"sourceSkill":"roblox-artifact-cleanup","capability":"app-artifact-cleanup","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-artifact-cleanup"}
+      ],
+      "resourceDirectories": ["app-domain-toolkit", "roblox-domain-contracts"]
     }
   }
 }

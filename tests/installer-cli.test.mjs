@@ -6,10 +6,10 @@ import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { STACKS } from '../packages/installer/install-project-skills.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const INSTALLER = join(ROOT, 'packages/installer/install-project-skills.mjs');
-const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo'];
 
 /** 仅在独占临时项目中运行一次性 CLI，不启动开发服务或接触真实用户项目。 */
 function invoke(t, args, project) {
@@ -32,7 +32,7 @@ test('CLI 必须明确选择技术栈且无效选择不会写入项目', (t) => 
 });
 
 /** 每个单栈与组合选择均通过实际输出证明安装边界，预览不写目标目录。 */
-test('CLI 支持八个单栈、多栈组合以及显式 all', (t) => {
+test('CLI 支持全部单栈、多栈组合以及显式 all', (t) => {
   for (const choice of [...STACKS, 'unity,cocos', 'flutter,esp32', 'esp32,nodejs', 'expo,nodejs', 'all']) {
     const result = invoke(t, ['--stack', choice, '--dry-run']);
     assert.equal(result.status, 0, result.stderr);

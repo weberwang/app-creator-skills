@@ -1,0 +1,192 @@
+{
+  "id": "roblox",
+  "displayName": "Roblox Studio",
+  "detectAny": [
+    "*.rbxl",
+    "*.rbxlx"
+  ],
+  "frameworkPolicy": [
+    "以用户指定项目及已连接 Studio 的 Place/DataModel 或实际保存的 Place 文件共同确认技术栈；单个 .luau 文件或通用目录不能独立证明。",
+    "沿用项目实际 Studio 与平台版本，运行时采用 Luau 和 Roblox 客户端/服务端模型；平台能力以当前实例、权限及实际工具发现为准。",
+    "游戏世界使用 SCENE，独立瞬态层使用 DISPLAY_LAYER，业务服务使用 MODULE；一个 Place 可包含多个场景功能或数据关卡。"
+  ],
+  "nativeRules": [
+    "先发现并复用可用 Studio 实例，绑定 studio_id 和本地 Place 或已发布 Experience/Place；正式源、模拟客户端与服务端上下文分别记录。",
+    "使用官方 Script Sync 同步已选 Luau 源；正式场景、地形、GUI 与实例属性以保存并回读的 Place 快照为准，验证自动保存通道前不能声称其存在。",
+    "同一 Place 的编辑、同步与保存保持单写者；运行时克隆与 Play 状态不能冒充 Edit 正式源。",
+    "客户端输入和 Remote 均经服务端验证权限、语义、距离、频率和数据；DataStore、HTTP、上传与 Open Cloud 按实际目标和副作用处理。",
+    "Terrain 仅在批准范围内修改并核对恢复依据；界面使用 Roblox 实际 GUI、安全区与输入模型，世界空间以 studs 为单位，不套用浏览器或自有应用构建。",
+    "截图交用户人工检查；Studio 连接、可用工具、模拟运行、真机与线上能力分别记录，不能凭模板或静态合同宣称运行通过。"
+  ],
+  "evidenceRequirements": {
+    "engineering": [
+      "roblox-engineering"
+    ],
+    "visual": [
+      "roblox-runtime",
+      "asset-import"
+    ],
+    "assetImport": [
+      "asset-import"
+    ]
+  },
+  "runtimeRoots": [
+    "src",
+    "places",
+    "assets",
+    "tests",
+    "docs",
+    "ArtSource"
+  ],
+  "projectStructure": {
+    "scripts": "src/（Script Sync 实际映射）",
+    "places": "places/（已保存且回读的正式 Place 快照）",
+    "assets": "assets/（本地资源及授权来源）",
+    "sourceArt": "ArtSource/（可编辑制作源）",
+    "tests": "tests/（实际项目测试入口）",
+    "docs": "docs/（产品、技术与验收记录）"
+  },
+  "resourceDirectories": [
+    "app-domain-toolkit",
+    "roblox-domain-contracts"
+  ],
+  "sharedCapabilities": [
+    "editor-display-authoring",
+    "reference-architecture-sdk-initialization",
+    "ui-copy-principles",
+    "game-characteristics",
+    "game-content-playtesting",
+    "balance"
+  ],
+  "capabilitySkills": [
+    "app-creator-workflow",
+    "app-product-planning",
+    "app-architecture",
+    "app-project-foundation",
+    "app-gameplay-development",
+    "app-game-balance",
+    "app-audio",
+    "app-feedback",
+    "app-ui-layout",
+    "app-asset-workflow",
+    "app-3d-modeling",
+    "app-3d-texturing",
+    "app-animation",
+    "app-character-rigging",
+    "app-3d-asset-pipeline",
+    "app-quality-review",
+    "app-release",
+    "app-artifact-cleanup"
+  ],
+  "nativeAdapters": [
+    {
+      "sourceSkill": "roblox-workflow",
+      "capability": "app-creator-workflow",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-workflow"
+    },
+    {
+      "sourceSkill": "roblox-game-production",
+      "capability": "app-product-planning",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-production"
+    },
+    {
+      "sourceSkill": "roblox-game-architecture",
+      "capability": "app-architecture",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-architecture"
+    },
+    {
+      "sourceSkill": "roblox-project-foundation",
+      "capability": "app-project-foundation",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-project-foundation"
+    },
+    {
+      "sourceSkill": "roblox-gameplay-development",
+      "capability": "app-gameplay-development",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-gameplay-development"
+    },
+    {
+      "sourceSkill": "roblox-game-balance",
+      "capability": "app-game-balance",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-balance"
+    },
+    {
+      "sourceSkill": "roblox-game-audio",
+      "capability": "app-audio",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-audio"
+    },
+    {
+      "sourceSkill": "roblox-game-feedback",
+      "capability": "app-feedback",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-feedback"
+    },
+    {
+      "sourceSkill": "roblox-game-ui-layout",
+      "capability": "app-ui-layout",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-ui-layout"
+    },
+    {
+      "sourceSkill": "roblox-game-asset-integration",
+      "capability": "app-asset-workflow",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-asset-integration"
+    },
+    {
+      "sourceSkill": "roblox-game-3d-modeling",
+      "capability": "app-3d-modeling",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-3d-modeling"
+    },
+    {
+      "sourceSkill": "roblox-game-3d-texturing",
+      "capability": "app-3d-texturing",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-3d-texturing"
+    },
+    {
+      "sourceSkill": "roblox-game-animation",
+      "capability": "app-animation",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-animation"
+    },
+    {
+      "sourceSkill": "roblox-game-character-rigging",
+      "capability": "app-character-rigging",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-character-rigging"
+    },
+    {
+      "sourceSkill": "roblox-game-asset-pipeline",
+      "capability": "app-3d-asset-pipeline",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-asset-pipeline"
+    },
+    {
+      "sourceSkill": "roblox-game-qa-performance",
+      "capability": "app-quality-review",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-qa-performance"
+    },
+    {
+      "sourceSkill": "roblox-game-release",
+      "capability": "app-release",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-game-release"
+    },
+    {
+      "sourceSkill": "roblox-artifact-cleanup",
+      "capability": "app-artifact-cleanup",
+      "path": "skills/app-stack-roblox/references/native-contracts.md",
+      "section": "mode-roblox-artifact-cleanup"
+    }
+  ],
+  "nativeManual": "skills/app-stack-roblox/references/native-contracts.md"
+}

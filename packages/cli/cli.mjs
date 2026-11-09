@@ -5,7 +5,7 @@ import { dirname, resolve } from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import { fileURLToPath } from 'node:url';
 
-const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo']);
+const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'esp32', 'nodejs', 'expo', 'roblox']);
 const STACK_LABELS = Object.freeze([...STACKS, 'all']);
 const MODULE_DIRECTORY = dirname(fileURLToPath(import.meta.url));
 const HELP_TEXT = [
