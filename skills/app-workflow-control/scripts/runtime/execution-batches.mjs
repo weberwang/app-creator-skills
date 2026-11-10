@@ -49,6 +49,11 @@ export function buildExecutionBatches(units, { repo } = {}) {
 export function createExecutionPlanSnapshot(pack, { repo } = {}) {
   const batches = buildExecutionBatches(pack.executionUnits, { repo });
   return {
+    ...(pack.productionScopeRef ? {
+      productionScopeRef: { ...pack.productionScopeRef }, productionBatchId: pack.productionBatchId ?? null,
+      // 前置是集合，开发执行顺序仍由单元批次决定；仅重排引用不改变冻结内容。
+      ...(pack.productionDependencies ? { productionDependencies: structuredClone(pack.productionDependencies).sort((a, b) => a.batchId < b.batchId ? -1 : a.batchId > b.batchId ? 1 : 0) } : {}),
+    } : {}),
     units: pack.executionUnits.map((unit) => ({
       unitId: unit.unitId,
       sequence: unit.sequence,

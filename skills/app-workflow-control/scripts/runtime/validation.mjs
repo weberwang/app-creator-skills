@@ -2,6 +2,7 @@ import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, STAGES, TRANSIT
 import { readFileSync } from 'node:fs';
 import { repoPath, stackProfileLocation, WorkflowError } from './io.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
+import { validateProductionScope } from './production-scope.mjs';
 
 /** 明确允许的 Work Item 字段，错误字段名应尽早中断。 */
 const WORK_FIELDS = new Set([
@@ -11,6 +12,7 @@ const WORK_FIELDS = new Set([
   'grillingRef', 'visual', 'visualBaselineRequired', 'evidenceRoot', 'action',
   'returnRecord', 'blockedRecord', 'invalidatedRefs', 'transitionHistory', 'category',
   'workflowMode', 'releaseIntent', 'planningRef', 'integrationPurpose', 'integrationScopeRef', 'integrationEvidenceRef',
+  'productionScopeRef', 'productionBatchId', 'productionDependencies',
 ]);
 
 /** 确认值为非空字符串，错误中保留可定位字段名。 */
@@ -89,11 +91,14 @@ function validateVisual(work) {
   if (work.visual.reuse !== undefined) {
     const reuse = work.visual.reuse;
     if (!reuse || typeof reuse !== 'object' || Array.isArray(reuse)) throw new WorkflowError('visual.reuse 必须是复用来源记录');
-    for (const name of Object.keys(reuse)) if (!['sourceWorkItemRef', 'impact', 'reason', 'inheritedReviews'].includes(name)) throw new WorkflowError(`visual.reuse 包含未知字段：${name}`);
+    for (const name of Object.keys(reuse)) if (!['sourceWorkItemRef', 'impact', 'reason', 'inheritedReviews', 'targetIds'].includes(name)) throw new WorkflowError(`visual.reuse 包含未知字段：${name}`);
     requireText(reuse.sourceWorkItemRef?.path, 'visual.reuse.sourceWorkItemRef.path');
     requireOneOf(reuse.impact, ['implementation', 'layout', 'assets', 'target'], 'visual.reuse.impact');
     requireText(reuse.reason, 'visual.reuse.reason');
     if (!Array.isArray(reuse.inheritedReviews) || new Set(reuse.inheritedReviews).size !== reuse.inheritedReviews.length || reuse.inheritedReviews.some((name) => !['V2', 'V3Decomposition', 'V3Layout'].includes(name))) throw new WorkflowError('visual.reuse.inheritedReviews 只能包含唯一的目标、拆解及布局确认');
+    if (reuse.targetIds !== undefined && (work.workItemType !== 'SCENE' || reuse.impact === 'target' || !Array.isArray(reuse.targetIds) || !reuse.targetIds.length || new Set(reuse.targetIds).size !== reuse.targetIds.length || reuse.targetIds.some((id) => typeof id !== 'string' || !id.trim()))) {
+      throw new WorkflowError('visual.reuse.targetIds 仅允许场景继承非空、唯一的来源目标');
+    }
   }
   if (work.stageId !== 'scene-production') throw new WorkflowError('SCENE/PAGE/DISPLAY_LAYER 必须处于 scene-production');
   if (work.workItemType === 'DISPLAY_LAYER') {
@@ -221,6 +226,16 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
     if (work.globalState !== 'BLOCKED' && work.blockedRecord.resolvedAt === null) throw new WorkflowError('未解决的 BLOCKED 不能由其他状态绕过');
   }
   if (work.grillingRef && work.grillingRef.path === undefined) throw new WorkflowError('待决拷问必须绑定文件记录');
+  if (work.productionScopeRef !== undefined) {
+    const ref = work.productionScopeRef;
+    if (!ref || typeof ref !== 'object' || Array.isArray(ref) || Object.keys(ref).some((key) => !['path', 'sha256'].includes(key)) || typeof ref.path !== 'string' || !ref.path.trim() || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('productionScopeRef 必须绑定实际路径与 SHA-256');
+    if (!['MODULE', 'SCENE', 'PAGE', 'DISPLAY_LAYER', 'INTEGRATION'].includes(work.workItemType)) throw new WorkflowError('生产范围仅用于功能、显示对象及集成工作项');
+    // 最终集成消费总范围，其他工作项只能代表其中一个明确的生产批次。
+    if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') {
+      if (work.productionBatchId !== undefined || work.productionDependencies !== undefined) throw new WorkflowError('最终集成不能缩为单个 productionBatchId 或批次依赖');
+    } else requireText(work.productionBatchId, 'productionBatchId');
+    if (repo) validateProductionScope(repo, work);
+  } else if (work.productionBatchId !== undefined || work.productionDependencies !== undefined) throw new WorkflowError('生产批次与依赖必须同时绑定 productionScopeRef');
   if (requireProfile && repo) loadProfile(repo, work.stack);
   return work;
 }

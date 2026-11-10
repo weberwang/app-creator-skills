@@ -5,6 +5,8 @@ description: 在 Roblox Studio 游戏中规划或实现 Luau、Place、客户端
 
 # Roblox Studio 技术栈
 
+大世界和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排；同一 Place 的正式源、Client／Server 权威与跨 Place 运行上下文按真实项目分别核对。
+
 先读 [统一编排](../app-creator-workflow/SKILL.md)和[控制器](../app-workflow-control/SKILL.md)，确认当前 Experience/Place、Studio 实例、权限、项目路径与实际版本。按任务读取[工程与 Studio](references/engineering.md)、[内容与地形](references/content.md)、[文本布局](references/text-layout.md)、[验证与交付](references/verification.md)及本栈[原生能力手册](references/native-contracts.md)。本技能提供原生路线，不创建第二套控制状态。
 
 用户指定优先；已连接 Studio 的 Place 和实际保存的 `.rbxl`/`.rbxlx` 是识别线索，单个 `.luau` 或普通目录不足以证明技术栈。先发现并复用现有 Studio，不自动新开实例或结束他人的会话；读取本机实际可用的 `list_roblox_studios`、`get_studio_state`、`skill` 与按需工具，始终绑定目标 `studio_id` 及 `Edit`、`Client` 或 `Server` 上下文。工具名称与参数依当前连接结果，不能把文档中的能力当作已连接或已执行。

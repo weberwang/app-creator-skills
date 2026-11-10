@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "多状态与多步骤批次覆盖记录",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "scopeId", "workItemId", "projectId", "stack", "productionBatchId", "implementationPackageRef", "status", "cases"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"}, "scopeId": {"$ref": "#/$defs/text"}, "workItemId": {"$ref": "#/$defs/text"}, "projectId": {"$ref": "#/$defs/text"}, "stack": {"$ref": "#/$defs/text"}, "productionBatchId": {"$ref": "#/$defs/text"}, "implementationPackageRef": {"$ref": "#/$defs/text"}, "visualStage": {"enum": ["V1", "V5"]}, "status": {"const": "PASS"},
+    "cases": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/case"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "transition": {"type": "object", "additionalProperties": false, "required": ["transitionId", "fromStateId", "toStateId"], "properties": {"transitionId": {"$ref": "#/$defs/text"}, "fromStateId": {"$ref": "#/$defs/text"}, "toStateId": {"$ref": "#/$defs/text"}}},
+    "path": {"type": "object", "additionalProperties": false, "required": ["pathId", "stepIds"], "properties": {"pathId": {"$ref": "#/$defs/text"}, "stepIds": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}}},
+    "ref": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
+    "case": {"type": "object", "additionalProperties": false, "required": ["caseId", "objectIds", "stepIds", "stateIds", "transitions", "evidenceRef"], "properties": {"caseId": {"$ref": "#/$defs/text"}, "objectIds": {"allOf": [{"$ref": "#/$defs/ids"}, {"minItems": 1}]}, "stepIds": {"$ref": "#/$defs/ids"}, "stateIds": {"$ref": "#/$defs/ids"}, "transitions": {"type": "array", "items": {"$ref": "#/$defs/transition"}}, "paths": {"type": "array", "items": {"$ref": "#/$defs/path"}}, "evidenceRef": {"$ref": "#/$defs/ref"}}}
+  }
+}

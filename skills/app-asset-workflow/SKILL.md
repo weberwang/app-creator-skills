@@ -5,6 +5,8 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 # 有设计约束的素材生产
 
+多状态场景和复杂页面按[分批生产](../app-domain-toolkit/references/incremental-production.md#累计对象与视觉增量)连接功能范围与视觉目标；只为需要独立确认的显示差异规划目标，不为每个步骤或数据值强制生图。
+
 接入 [app-creator-workflow](../app-creator-workflow/SKILL.md) 的全局基线与 V0–V5；状态与记录归 [app-workflow-control](../app-workflow-control/SKILL.md)。涉及场景、页面、显示层、功能或机制的显示设计与可见表现新增或修改时，先读取[公共执行协议](../app-creator-workflow/references/professional-execution.md)，从本次增量 V0 定义范围；已有有效目标与素材可复用，不强制重新生图。V1 功能先验证，白盒按需使用；V2 才冻结正式视觉目标。去 AI 味是设计与生产质量问题，不是可由一个提示词、滤镜或检测分数保证的结果。
 
 界面美术应让用户在不阅读文字时，也能理解主要目标、可操作对象及反馈意图；按[无文字意图可读性规范](references/interface-intent.md)设计，并纳入现有候选和组合的人工审阅。正式页面保留必要文案与无障碍标签。

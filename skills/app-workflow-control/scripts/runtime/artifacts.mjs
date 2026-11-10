@@ -17,11 +17,15 @@ import { hasPreciseApproval } from './approval.mjs';
 import { validateCommandCapture } from './command-capture.mjs';
 import { validateDeletedFiles } from './deletion-baseline.mjs';
 import { validateRobloxEngineeringEvidence } from './roblox-domain-check.mjs';
+import { assertProductionDependencies, validateProductionPackage } from './production-scope.mjs';
+import { validateProductionBatchEvidence } from './production-coverage.mjs';
+import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
+import { getWorkSource } from './work-source.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
+export { bindWorkSource } from './work-source.mjs';
 
-const WORK_SOURCE_PATHS = new WeakMap();
-const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits']);
+const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits', 'productionScopeRef', 'productionBatchId', 'productionDependencies']);
 const UNIT_FIELDS = new Set(['unitId', 'sequence', 'type', 'owner', 'paths', 'resultPath', 'acceptanceCommands', 'parallelGroup', 'dependsOn']);
 
 /** 跨栈美术检查记录的固定维度，便于直接比较候选和实装资源。 */
@@ -34,12 +38,6 @@ const ANTI_AI_DIMENSIONS = Object.freeze([
   'ui-specificity', 'product-character', 'edge-quality', 'integration-cohesion',
 ]);
 
-/** 在内存中登记已验证 Work Item 的真实文件位置，不扩展持久化 Work schema。 */
-export function bindWorkSource(work, relativePath) {
-  if (work && typeof work === 'object') WORK_SOURCE_PATHS.set(work, relativePath);
-  return work;
-}
-
 /** 要求项目引用存在且与当前工作栈、实施包绑定。 */
 export function loadPackage(repo, work) {
   if (!work.implementationPackageRef?.path) throw new WorkflowError('尚未绑定 implementationPackageRef');
@@ -49,6 +47,8 @@ export function loadPackage(repo, work) {
     throw new WorkflowError('Implementation Package 版本、工作项或技术栈错绑');
   }
   if (work.visual && pack.visualStage !== work.visual.stage) throw new WorkflowError('Implementation Package.visualStage 与当前视觉阶段不匹配');
+  validateProductionPackage(repo, work, pack);
+  assertProductionDependencies(repo, work, inspectProductionDependencySource);
   if (!Array.isArray(pack.executionUnits) || !pack.executionUnits.length) throw new WorkflowError('Implementation Package.executionUnits 不能为空');
   const profile = loadProfile(repo, work.stack);
   const seen = new Set();
@@ -105,7 +105,7 @@ function assertUniqueResultPaths(repo, units) {
 function assertResultPathsAvoidReservedFiles(repo, work, units) {
   const evidenceRoot = repoPath(repo, work.evidenceRoot, 'Work Item.evidenceRoot').relative;
   const reserved = [`${evidenceRoot}/execution-state.json`];
-  const workSource = WORK_SOURCE_PATHS.get(work);
+  const workSource = getWorkSource(work);
   if (workSource) reserved.push(workSource);
   for (const path of collectWorkReferencePaths(work, repo)) reserved.push(path);
 
@@ -130,10 +130,11 @@ export function collectWorkReferencePaths(work, repo) {
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
+  for (const dependency of work.productionDependencies ?? []) collect(dependency.workItemRef);
   collect(work.visual?.coverageRef);
   collect(work.visual?.integrationEvidenceRef);
   collect(work.visual?.functionBaselineRef);
@@ -173,7 +174,7 @@ export function validateUnitResult(repo, work, pack, unit, result) {
     if (!unit.paths.some((owned) => pathMatch(normalized, owned))) throw new WorkflowError(`执行结果越过单元 ${unit.unitId} 的文件所有权：${normalized}`, 'UNIT_PATH_OUT_OF_SCOPE');
     requireFile(repo, path, '执行结果中报告的交付文件');
   });
-  validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, [WORK_SOURCE_PATHS.get(work), ...collectWorkReferencePaths(work, repo), ...pack.executionUnits.map((item) => item.resultPath)].filter(Boolean));
+  validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, [getWorkSource(work), ...collectWorkReferencePaths(work, repo), ...pack.executionUnits.map((item) => item.resultPath)].filter(Boolean));
   if (!Array.isArray(result.commandOutputs) || result.commandOutputs.length !== unit.acceptanceCommands.length) {
     throw new WorkflowError('验收命令实际输出必须与声明命令一一对应');
   }
@@ -371,6 +372,8 @@ export function requiresProtectedActionApproval(work, to) {
 
 /** 校验六阶段、对象类型、拷问、基线及审批的共同迁移边界。 */
 export function assertTransitionInputs(repo, work, to) {
+  // 前置批次可先规划；实际进入生产后必须持续绑定已完成的冻结来源。
+  if (['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(to)) assertProductionDependencies(repo, work, inspectProductionDependencySource);
   requireOneOf(to, Object.keys(TRANSITIONS).concat(['RETURN']), '目标全局状态');
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
@@ -481,7 +484,8 @@ export function assertReadyToPass(repo, work) {
   assertVisualReuse(repo, work);
   if (work.visual?.stage === 'V1') {
     assertGates(work, ['F0', 'F1', 'F2', 'F3']);
-    validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
+    const { manifest } = validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
+    validateProductionBatchEvidence(repo, work, manifest);
     return;
   }
   if (work.visual && ['V0', 'V2', 'V3'].includes(work.visual.stage)) {
@@ -496,7 +500,8 @@ export function assertReadyToPass(repo, work) {
     assertVisualReview(repo, work, 'V4');
     validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
   } else {
-    validateEvidence(repo, work, { requireEngineering: true, requireVisual: Boolean(work.visual) });
+    const { manifest } = validateEvidence(repo, work, { requireEngineering: true, requireVisual: Boolean(work.visual) });
+    validateProductionBatchEvidence(repo, work, manifest);
     if (work.visual) assertVisualReview(repo, work, 'V5');
   }
   validateGlobalBaseline(repo, work);
@@ -536,7 +541,7 @@ function assertReleasePreparation(repo, work) {
   const manifestPath = repoPath(repo, work.evidenceRef.path, 'Evidence Manifest').relative;
   const key = (path) => process.platform === 'win32' ? path.toLowerCase() : path;
   const reservedMaterials = new Set([key(resultPath), key(manifestPath)]);
-  const workSource = WORK_SOURCE_PATHS.get(work);
+  const workSource = getWorkSource(work);
   if (workSource) reservedMaterials.add(key(repoPath(repo, workSource, 'Work Item 源文件').relative));
   reservedMaterials.add(key(repoPath(repo, `${evidenceRoot}/execution-state.json`, '执行状态文件').relative));
   for (const path of collectWorkReferencePaths(work, repo)) {

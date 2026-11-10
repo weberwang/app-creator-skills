@@ -14,7 +14,7 @@ const IMPACT_REVIEWS = Object.freeze({
 const IMPACT_STAGE = Object.freeze({ implementation: 'V3', assets: 'V3', layout: 'V2', target: 'V2' });
 
 /** 在目标工作项锁内，安全复用同项目同视觉对象已完成人工确认的前置阶段。 */
-export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impact, reason }) {
+export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impact, reason, targetIds }) {
   requireText(workItem, '--work-item');
   requireText(sourceWorkItem, '--source-work-item');
   requireText(reason, '--reason');
@@ -29,13 +29,15 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
     const source = loadWork(repo, sourcePath);
     assertVisualReuse(repo, source);
     validateSource(work, source, sourcePath, targetPath);
+    validateSelectedTargets(work, source, impact, targetIds);
     assertFunctionBaseline(repo, work);
     assertSourceReviews(repo, source, impact);
 
     const inheritedReviews = [...IMPACT_REVIEWS[impact]];
     const sceneTargets = work.workItemType === 'SCENE' && impact !== 'target';
+    const selectedTargets = sceneTargets && targetIds ? source.visual.targets.filter((target) => targetIds.includes(target.targetId)) : source.visual?.targets;
     const inheritedPaths = [source.globalVisualBaselineRef.path, ...(sceneTargets
-      ? [source.visual.coverageRef?.path, ...source.visual.targets.flatMap((target) => inheritedReviews.map((name) => target.reviews?.[name]?.path))].filter(Boolean)
+      ? [...(!targetIds ? [source.visual.coverageRef?.path] : []), ...selectedTargets.flatMap((target) => inheritedReviews.map((name) => target.reviews?.[name]?.path))].filter(Boolean)
       : inheritedReviews.map((name) => source.visual.reviews[name].path))];
     assertReferencesAvailable(repo, work, inheritedPaths);
     if (work.globalVisualBaselineRef?.path &&
@@ -49,9 +51,8 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
     work.globalVisualBaselineRef = { path: repoPath(repo, source.globalVisualBaselineRef.path).relative, sha256: source.globalVisualBaselineRef.sha256 };
     if (sceneTargets) {
       // 目标保留新工作项自己的领域合同；只继承来源已确认的视图与指定阶段记录。
-      if (!Array.isArray(work.visual.targets) || work.visual.targets.length !== source.visual.targets?.length || !work.visual.targets.length) throw new WorkflowError('场景复用前必须建立对应来源的目标与当前领域合同');
-      work.visual.coverageRef = { ...source.visual.coverageRef };
-      for (const target of work.visual.targets) {
+      if (!targetIds) work.visual.coverageRef = { ...source.visual.coverageRef };
+      for (const target of work.visual.targets.filter((entry) => !targetIds || targetIds.includes(entry.targetId))) {
         const original = source.visual.targets.find((item) => item.targetId === target.targetId);
         if (!original) throw new WorkflowError(`来源缺少目标 ${target.targetId}`);
         target.reviews ??= {};
@@ -61,9 +62,12 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
       for (const name of inheritedReviews) work.visual.reviews[name] = { path: repoPath(repo, source.visual.reviews[name].path).relative, sha256: source.visual.reviews[name].sha256 };
       if (impact !== 'target') work.visual.candidateId = source.visual.candidateId;
     }
-    work.visual.stage = IMPACT_STAGE[impact];
+    // 局部继承时仍有新目标或未选择目标，必须让它们先经过本批 V2 确认。
+    const partialScene = targetIds !== undefined;
+    work.visual.stage = partialScene ? 'V2' : IMPACT_STAGE[impact];
     work.visual.reuse = {
       sourceWorkItemRef: { path: sourcePath }, impact, reason, inheritedReviews,
+      ...(targetIds ? { targetIds: [...targetIds] } : {}),
     };
     work.revision += 1;
     work.transitionHistory ??= [];
@@ -83,11 +87,30 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
       status: 'PASS', work, changed: true,
       metadata: {
         reusedReviews: inheritedReviews,
-        remainingChecks: remainingChecks(impact),
+        remainingChecks: partialScene ? ['为本批未继承的场景目标完成 V2/V3 确认', '重新确认当前累计覆盖范围', '当前项目完成 V4 素材导入证据与人工确认', '当前项目完成 V5 运行时人工验收'] : remainingChecks(impact),
         sourceWorkItem: sourcePath,
       },
     });
   });
+}
+
+/** 校验显式选择的目标及累计范围，不允许借部分复用悄悄丢弃已完成视图。 */
+function validateSelectedTargets(work, source, impact, targetIds) {
+  if (targetIds !== undefined && (work.workItemType !== 'SCENE' || impact === 'target')) throw new WorkflowError('targetIds 仅支持 SCENE 的 V2/V3 目标复用');
+  if (work.workItemType !== 'SCENE' || impact === 'target') return;
+  const targets = work.visual.targets;
+  const originals = source.visual.targets;
+  if (!Array.isArray(targets) || !Array.isArray(originals) || !targets.length || !originals.length) throw new WorkflowError('场景复用前必须建立对应来源的目标与当前领域合同');
+  const currentIds = new Set(targets.map((target) => target.targetId));
+  const sourceIds = new Set(originals.map((target) => target.targetId));
+  if (currentIds.size !== targets.length || sourceIds.size !== originals.length || [...sourceIds].some((id) => !currentIds.has(id))) throw new WorkflowError('场景累计范围必须保留全部来源目标且身份唯一');
+  if (targetIds === undefined) {
+    if (targets.length !== originals.length) throw new WorkflowError('场景复用前必须建立对应来源的目标与当前领域合同');
+    return;
+  }
+  if (!Array.isArray(targetIds) || !targetIds.length || targetIds.some((id) => typeof id !== 'string' || !id.trim()) || new Set(targetIds).size !== targetIds.length || targetIds.some((id) => !sourceIds.has(id) || !currentIds.has(id))) {
+    throw new WorkflowError('场景复用 targetIds 必须唯一且均属于来源和当前目标');
+  }
 }
 
 /** 拒绝未完成来源、跨项目或跨对象复用，且验证所有将被继承的原始记录。 */

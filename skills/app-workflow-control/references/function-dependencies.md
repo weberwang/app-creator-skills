@@ -1,5 +1,7 @@
 # 功能范围与跨对象依赖
 
+大场景和跨页面流程先按[分批生产](../../app-domain-toolkit/references/incremental-production.md)确定总范围、当前可验证步骤、状态转移和必要路径；本批 `caseId` 对应实际行为而不是视觉状态标签。批次完成仅证明其范围，最终集成须核对总范围和当前正式组合。
+
 SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接实施或复用已有功能，是否制作白盒由实际不确定性决定。一个功能可能覆盖多个对象；不要令功能来源依赖这些对象的 V5，否则会形成循环。
 
 对于共享功能，在显示对象的 `visual.functionDependencies` 中按行为范围登记来源工作项及证据。每项填写 `workItemRef.path`、`caseId` 和 `evidenceRef` 的 `{path,sha256}`；一个对象可依赖多个范围，各范围的 `caseId` 必须在该对象内唯一，可使用功能名前缀避免重名。来源必须是同项目、同技术栈、无视觉阶段且已通过的 MODULE 或 INTEGRATION，控制器严格检查它的工程证据和执行状态。

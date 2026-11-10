@@ -5,6 +5,8 @@ description: 为浏览器中的 three.js 3D 应用或游戏设计世界场景、
 
 # Three.js 技术栈
 
+复杂世界和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，核对同一正式三维世界、镜头／HUD 和资源生命周期，不按目标图复制运行场景。
+
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。
 
 

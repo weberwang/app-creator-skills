@@ -5,6 +5,8 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 
 # 技术架构与模块设计
 
+游戏大场景或复杂 App 流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)确定场景／页面正式源、状态权威、真实对象依赖和每批验证路径；独立所有权可并行，共享场景、路由及配置保持单写者。
+
 把已确认需求组织成可维护、可测试、可逐步交付的模块设计，并让架构决策能够追溯到需求和风险。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。

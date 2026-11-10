@@ -5,6 +5,8 @@ description: 在 Cocos Creator 项目中实现或审查场景、节点、Compone
 
 # Cocos Creator 技术栈
 
+大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用同一正式 Scene、Prefab 与 AssetDB 身份；共享编辑器源保持单写者并在每批保存、回读。
+
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。
 
 

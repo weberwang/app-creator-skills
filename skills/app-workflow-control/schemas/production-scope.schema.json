@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "多状态与多步骤生产总范围",
+  "description": "冻结实际对象、业务状态、必要步骤和开发批次；区域仅在适用时声明。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "scopeId", "projectId", "stack", "objects", "states", "steps", "transitions", "batches"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "scopeId": {"$ref": "#/$defs/text"},
+    "projectId": {"$ref": "#/$defs/text"},
+    "stack": {"$ref": "#/$defs/text"},
+    "objects": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/object"}},
+    "regions": {"type": "array", "items": {"$ref": "#/$defs/region"}},
+    "states": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/state"}},
+    "steps": {"type": "array", "items": {"$ref": "#/$defs/step"}},
+    "transitions": {"type": "array", "items": {"$ref": "#/$defs/transition"}},
+    "paths": {"type": "array", "items": {"$ref": "#/$defs/path"}},
+    "batches": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/batch"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "minLength": 1, "pattern": "\\S"},
+    "ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "optionalIds": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "object": {
+      "type": "object", "additionalProperties": false, "required": ["objectId", "workItemType"],
+      "properties": {"objectId": {"$ref": "#/$defs/text"}, "workItemType": {"enum": ["SCENE", "PAGE", "DISPLAY_LAYER"]}, "targetIds": {"$ref": "#/$defs/ids"}, "hostId": {"$ref": "#/$defs/text"}, "layerType": {"enum": ["modal", "popup", "drawer", "toast"]}},
+      "allOf": [
+        {"if": {"properties": {"workItemType": {"const": "SCENE"}}, "required": ["workItemType"]}, "then": {"required": ["targetIds"]}, "else": {"not": {"required": ["targetIds"]}}},
+        {"if": {"properties": {"workItemType": {"const": "DISPLAY_LAYER"}}, "required": ["workItemType"]}, "then": {"required": ["hostId", "layerType"]}, "else": {"not": {"anyOf": [{"required": ["hostId"]}, {"required": ["layerType"]}]}}}
+      ]
+    },
+    "region": {"type": "object", "additionalProperties": false, "required": ["regionId", "objectId", "description"], "properties": {"regionId": {"$ref": "#/$defs/text"}, "objectId": {"$ref": "#/$defs/text"}, "description": {"$ref": "#/$defs/text"}}},
+    "state": {"type": "object", "additionalProperties": false, "required": ["stateId", "objectId", "description"], "properties": {"stateId": {"$ref": "#/$defs/text"}, "objectId": {"$ref": "#/$defs/text"}, "description": {"$ref": "#/$defs/text"}, "regionIds": {"$ref": "#/$defs/optionalIds"}}},
+    "step": {"type": "object", "additionalProperties": false, "required": ["stepId", "objectIds", "stateIds", "precondition", "action", "expectedResult", "caseId"], "properties": {"stepId": {"$ref": "#/$defs/text"}, "objectIds": {"$ref": "#/$defs/ids"}, "stateIds": {"$ref": "#/$defs/ids"}, "precondition": {"$ref": "#/$defs/text"}, "action": {"$ref": "#/$defs/text"}, "expectedResult": {"$ref": "#/$defs/text"}, "caseId": {"$ref": "#/$defs/text"}}},
+    "transition": {"type": "object", "additionalProperties": false, "required": ["transitionId", "fromStateId", "toStateId", "trigger", "expectedResult", "caseId"], "properties": {"transitionId": {"$ref": "#/$defs/text"}, "fromStateId": {"$ref": "#/$defs/text"}, "toStateId": {"$ref": "#/$defs/text"}, "trigger": {"$ref": "#/$defs/text"}, "expectedResult": {"$ref": "#/$defs/text"}, "caseId": {"$ref": "#/$defs/text"}}},
+    "path": {"type": "object", "additionalProperties": false, "required": ["pathId", "stepIds", "caseId"], "properties": {"pathId": {"$ref": "#/$defs/text"}, "stepIds": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/text"}}, "caseId": {"$ref": "#/$defs/text"}}},
+    "batch": {"type": "object", "additionalProperties": false, "required": ["batchId", "objectIds", "stepIds", "transitionIds"], "properties": {"batchId": {"$ref": "#/$defs/text"}, "objectIds": {"$ref": "#/$defs/ids"}, "stepIds": {"$ref": "#/$defs/optionalIds"}, "transitionIds": {"$ref": "#/$defs/optionalIds"}, "pathIds": {"$ref": "#/$defs/optionalIds"}, "dependsOn": {"$ref": "#/$defs/optionalIds"}}}
+  }
+}

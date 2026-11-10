@@ -317,6 +317,9 @@
     },
     "integrationEvidenceRef": { "$ref": "#/$defs/visualFileIdentity" },
     "integrationScopeRef": { "$ref": "#/$defs/visualFileIdentity" },
+    "productionScopeRef": { "$ref": "#/$defs/visualFileIdentity" },
+    "productionBatchId": { "type": "string", "minLength": 1 },
+    "productionDependencies": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["batchId", "workItemRef"], "properties": { "batchId": { "type": "string", "minLength": 1 }, "workItemRef": { "type": "object", "additionalProperties": false, "required": ["path"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } } } } },
     "planningRef": {
       "$ref": "#/$defs/refOrNull"
     }
@@ -481,7 +484,8 @@
                   "V3Layout"
                 ]
               }
-            }
+            },
+            "targetIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
           }
         }
       },
@@ -526,6 +530,23 @@
     }
   },
   "allOf": [
+    {
+      "if": { "anyOf": [{ "required": ["productionBatchId"] }, { "required": ["productionDependencies"] }] },
+      "then": { "required": ["productionScopeRef"] }
+    },
+    {
+      "if": { "required": ["productionScopeRef"] },
+      "then": {
+        "properties": { "workItemType": { "enum": ["MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION"] } },
+        "if": { "properties": { "workItemType": { "const": "INTEGRATION" }, "integrationPurpose": { "const": "final" } }, "required": ["integrationPurpose"] },
+        "then": { "not": { "anyOf": [{ "required": ["productionBatchId"] }, { "required": ["productionDependencies"] }] } },
+        "else": { "required": ["productionBatchId"] }
+      }
+    },
+    {
+      "if": { "required": ["visual"], "properties": { "visual": { "required": ["reuse"], "properties": { "reuse": { "required": ["targetIds"] } } } } },
+      "then": { "properties": { "workItemType": { "const": "SCENE" }, "visual": { "properties": { "reuse": { "properties": { "impact": { "not": { "const": "target" } } } } } } } }
+    },
     {
       "if": { "properties": { "stack": { "const": "nodejs" } }, "required": ["stack"] },
       "then": { "properties": { "workItemType": { "not": { "enum": ["SCENE", "PAGE", "DISPLAY_LAYER"] } } } }

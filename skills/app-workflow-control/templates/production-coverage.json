@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "scopeId": "replace-with-scope-id",
+  "workItemId": "replace-with-work-item-id",
+  "projectId": "replace-with-project-id",
+  "stack": "replace-with-stack",
+  "productionBatchId": "replace-with-batch-id",
+  "implementationPackageRef": ".workflow-control/implementation-packages/replace-with-work-item-id.json",
+  "visualStage": "V1",
+  "status": "PASS",
+  "cases": [{"caseId": "replace-with-case-id", "objectIds": ["replace-with-object-id"], "stepIds": ["replace-with-step-id"], "stateIds": ["replace-with-state-id"], "transitions": [], "paths": [{"pathId": "replace-with-path-id", "stepIds": ["replace-with-step-id"]}], "evidenceRef": {"path": ".workflow-control/evidence/replace-with-work-item-id/replace-with-actual-output.txt", "sha256": "replace-with-actual-sha256"}}]
+}

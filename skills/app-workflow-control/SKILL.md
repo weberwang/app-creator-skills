@@ -5,6 +5,8 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 
 # 统一工作流控制面
 
+大场景和复杂应用分批时使用[多状态与多步骤生产](../app-domain-toolkit/references/incremental-production.md)定义总范围、本批范围与最终覆盖；开发批次顺序和游戏／应用运行步骤分别记录，控制器不会自行运行功能或判断截图。
+
 为 Unity、Cocos Creator、Phaser、Three.js、Flutter、Expo、ESP32 与 Node.js 保留一份权威状态机和证据合同。运行技术任务前加载对应 `app-stack-*` 的 `profile.json`，按当前技术栈读取编译、测试、资源导入和可视化运行规范。Unity 的 `.meta`、Cocos AssetDB、Phaser Vite、Three.js WebGL、Flutter 路由及 Expo 原生/Web 验证始终由技术 profile 决定。
 
 ## 状态和边界
@@ -51,6 +53,7 @@ node skills/app-workflow-control/scripts/workflow-control.mjs init --repo <项�
 node skills/app-workflow-control/scripts/workflow-control.mjs plan --repo <项目路径> --work-item <项目相对JSON路径> --spec <实际计划JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs record --repo <项目路径> --work-item <项目相对JSON路径> --unit <单元ID> --report <真实执行报告JSON路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>
+node skills/app-workflow-control/scripts/workflow-control.mjs reuse-visual --repo <项目路径> --work-item <新场景工作项路径> --source-work-item <已完成来源路径> --impact <implementation|layout|assets> --reason <事实说明> --target-ids <来源目标ID列表，以逗号分隔>
 node skills/app-workflow-control/scripts/workflow-control.mjs refresh-function-baseline --repo <项目路径> --work-item <项目相对 JSON 路径> --spec <功能重验规格 JSON 路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs status --repo <项目路径> --work-item <项目相对 JSON 路径>
 node skills/app-workflow-control/scripts/workflow-control.mjs check --repo <项目路径> --work-item <项目相对 JSON 路径>
@@ -62,6 +65,10 @@ node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo 
 ```
 
 `init` 只生成 Work Item，不覆盖已有记录。PAGE/SCENE/DISPLAY_LAYER 必须建立或复用已确认的全局视觉基线，V1 功能验证不等待选图；无视觉生产的局部工程任务使用非视觉工作项，不要求视觉基线。
+
+需要机器核对复杂游戏或 App 的增量范围时，先按[生产范围模板](templates/production-scope.json)准备项目内总范围；生产工作项在 `init` 追加 `--production-scope <项目相对范围 JSON> --production-batch <批次 ID>`，有前置批次时另附 `--production-dependencies <前置引用 JSON>`，最终 `INTEGRATION --integration-purpose final` 只追加相同 `--production-scope`。本批证据及最终覆盖要求见[分批生产](../app-domain-toolkit/references/incremental-production.md#按需绑定机器范围)；未绑定范围的普通任务不产生额外记录。
+
+绑定总范围的工作项完成时，返回结果的 `metadata.workflowView.completionKind` 区分 `production-batch-complete`（当前批次）和 `production-scope-complete`（最终范围集成），同时返回范围引用与适用的批次 ID；该标记依赖真实阶段门和证据，不代替人工视觉确认或实际发布。
 
 单个无视觉生产的本地 FOUNDATION/MODULE 修复可用 `init --mode light`，从 REVIEW 起步；仍须 F0–F3、单个独立实施单元和当前栈必需证据。普通任务默认 `standard`，视觉、发布、集成或受保护动作使用普通流程。纯查询、文案或注释通常无需建立工作项。
 

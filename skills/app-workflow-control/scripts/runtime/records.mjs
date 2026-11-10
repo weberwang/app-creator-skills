@@ -11,6 +11,8 @@ import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from 
 import { assertOwnedPath, loadProfile, pathMatch, validateWork } from './validation.mjs';
 import { inspectPendingRegressionExecution, inspectWork, loadWork, response } from './workflow.mjs';
 import { withWorkLock } from './work-lock.mjs';
+import { freezeProductionDependencies } from './production-scope.mjs';
+import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn']);
@@ -35,6 +37,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   const plan = readJson(repo, sourcePath, 'Work Plan');
   validatePlanShape(plan);
   assertPlanningState(repo, work);
+  freezeProductionDependencies(repo, work, inspectProductionDependencySource);
 
   if (!SAFE_ID.test(work.workItemId)) throw new WorkflowError('Work Item.workItemId 不能安全用于实施包文件名');
   const packagePath = `.workflow-control/implementation-packages/${work.workItemId}-r${work.revision + 1}.json`;
@@ -84,6 +87,11 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     stack: work.stack,
     workItemType: work.workItemType,
     ...(work.visual ? { visualStage: work.visual.stage } : {}),
+    ...(work.productionScopeRef ? {
+      productionScopeRef: { ...work.productionScopeRef },
+      ...(work.productionBatchId ? { productionBatchId: work.productionBatchId } : {}),
+      ...(work.productionDependencies ? { productionDependencies: structuredClone(work.productionDependencies) } : {}),
+    } : {}),
     executionUnits,
   };
   const manifest = {

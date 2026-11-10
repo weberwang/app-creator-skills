@@ -91,27 +91,47 @@ function assertSceneReuseBinding(repo, work, source, reuse) {
   const allowed = new Set(REVIEW_NAMES[reuse.impact]);
   const inherited = reuse.inheritedReviews;
   if (!Array.isArray(inherited) || new Set(inherited).size !== inherited.length || inherited.some((name) => !allowed.has(name))) throw new WorkflowError('场景复用阶段与影响范围不匹配');
-  if (!inherited.length) return;
   const targets = work.visual.targets;
   const originals = source.visual?.targets;
-  if (!Array.isArray(targets) || !Array.isArray(originals) || targets.length !== originals.length || targets.length === 0) throw new WorkflowError('场景复用必须保留全部来源目标');
-  if (!sameFileIdentity(repo, work.visual.coverageRef, source.visual.coverageRef)) throw new WorkflowError('场景复用必须引用来源的冻结视图清单');
-  assertNotInvalidated(repo, work, [work.visual.coverageRef.path, work.globalVisualBaselineRef.path]);
+  const selected = reuse.targetIds;
+  if (selected !== undefined && (!Array.isArray(selected) || !selected.length || selected.some((id) => typeof id !== 'string' || !id.trim()) || new Set(selected).size !== selected.length || !inherited.length)) throw new WorkflowError('场景复用 targetIds 必须是非空唯一的已继承目标列表');
+  if (!Array.isArray(targets) || !Array.isArray(originals)) throw new WorkflowError('场景复用必须建立来源和当前目标');
+  if (inherited.length) {
+    const sourceIds = new Set(originals.map((target) => target.targetId));
+    const targetIds = new Set(targets.map((target) => target.targetId));
+    if (!targets.length || !originals.length || sourceIds.size !== originals.length || targetIds.size !== targets.length || [...sourceIds].some((id) => !targetIds.has(id))) throw new WorkflowError('场景复用必须保留全部来源目标');
+    if (selected === undefined) {
+      if (targets.length !== originals.length || !sameFileIdentity(repo, work.visual.coverageRef, source.visual.coverageRef)) throw new WorkflowError('场景复用必须引用来源的冻结视图清单');
+    } else {
+      if (selected.some((id) => !sourceIds.has(id) || !targetIds.has(id))) throw new WorkflowError('场景复用 targetIds 不属于来源或当前目标');
+      // 新累计范围必须取得本批自己的确认，旧覆盖清单不能代替新增目标的确认。
+      if (work.visual.coverageRef?.path && samePath(repo, work.visual.coverageRef.path, source.visual.coverageRef?.path)) throw new WorkflowError('场景累计范围不能复用来源覆盖清单');
+    }
+  }
+  assertNotInvalidated(repo, work, [work.visual.coverageRef?.path, work.globalVisualBaselineRef.path].filter(Boolean));
+  // 来源后来发生 RETURN 作废时，当前批次也不得继续借用相关确认。
+  const sourceTargets = originals.filter((target) => inherited.length && (selected === undefined || selected.includes(target.targetId)));
+  assertNotInvalidated(repo, source, [source.globalVisualBaselineRef.path, inherited.length ? source.visual.coverageRef?.path : null, ...sourceTargets.flatMap((target) => [target.referenceTarget?.path, ...inherited.map((name) => target.reviews?.[name]?.path)])].filter(Boolean));
   for (const target of targets) {
     const original = originals.find((item) => item.targetId === target.targetId);
-    if (!original || target.candidateId !== original.candidateId || !sameFileIdentity(repo, target.referenceTarget, original.referenceTarget) || target.sceneId !== original.sceneId || target.stateId !== original.stateId || target.scope !== original.scope || target.viewport?.width !== original.viewport?.width || target.viewport?.height !== original.viewport?.height) throw new WorkflowError(`场景目标 ${target.targetId} 与来源不一致`);
-    for (const name of inherited) if (!sameFileIdentity(repo, target.reviews?.[name], original.reviews?.[name])) throw new WorkflowError(`场景目标 ${target.targetId} 的 ${name} 确认未绑定来源`);
+    const inheritTarget = inherited.length && (selected === undefined || selected.includes(target.targetId));
+    if (inheritTarget && (!original || target.candidateId !== original.candidateId || !sameFileIdentity(repo, target.referenceTarget, original.referenceTarget) || target.sceneId !== original.sceneId || target.stateId !== original.stateId || target.scope !== original.scope || target.viewport?.width !== original.viewport?.width || target.viewport?.height !== original.viewport?.height)) throw new WorkflowError(`场景目标 ${target.targetId} 与来源不一致`);
+    if (inheritTarget) for (const name of inherited) if (!sameFileIdentity(repo, target.reviews?.[name], original.reviews?.[name])) throw new WorkflowError(`场景目标 ${target.targetId} 的 ${name} 确认未绑定来源`);
     for (const name of ['V2', 'V3Decomposition', 'V3Layout', 'V4', 'V5']) {
-      if (!inherited.includes(name) && target.reviews?.[name]?.path && samePath(repo, target.reviews[name].path, original.reviews?.[name]?.path)) throw new WorkflowError(`场景目标 ${target.targetId} 的 ${name} 不能复用来源确认`);
+      if ((!inheritTarget || !inherited.includes(name)) && target.reviews?.[name]?.path && samePath(repo, target.reviews[name].path, original?.reviews?.[name]?.path)) throw new WorkflowError(`场景目标 ${target.targetId} 的 ${name} 不能复用来源确认`);
     }
-    if (target.assetReviewRef?.path && samePath(repo, target.assetReviewRef.path, original.assetReviewRef?.path)) throw new WorkflowError(`场景目标 ${target.targetId} 不能复用来源资产评审`);
-    assertNotInvalidated(repo, work, [target.referenceTarget.path, target.domainEvidenceRef?.path, target.assetReviewRef?.path, ...Object.values(target.reviews ?? {}).map((entry) => entry?.path)].filter(Boolean));
+    if (target.assetReviewRef?.path && samePath(repo, target.assetReviewRef.path, original?.assetReviewRef?.path)) throw new WorkflowError(`场景目标 ${target.targetId} 不能复用来源资产评审`);
+    assertNotInvalidated(repo, work, [target.referenceTarget?.path, target.domainEvidenceRef?.path, target.assetReviewRef?.path, ...Object.values(target.reviews ?? {}).map((entry) => entry?.path)].filter(Boolean));
   }
 }
 
 /** 比较受项目路径约束的实际引用，不接受空路径。 */
 function samePath(repo, left, right) {
-  return Boolean(left && right && repoPath(repo, left).relative === repoPath(repo, right).relative);
+  if (!left || !right) return false;
+  const leftPath = repoPath(repo, left).relative;
+  const rightPath = repoPath(repo, right).relative;
+  // Windows 路径大小写不同仍可能指向同一文件，不能绕过来源引用限制。
+  return process.platform === 'win32' ? leftPath.toLowerCase() === rightPath.toLowerCase() : leftPath === rightPath;
 }
 
 /** 比较路径和内容指纹的共同身份。 */
@@ -127,6 +147,8 @@ export function validateSceneReuseReview(repo, work, target, name, reference, re
 
 /** 复验冻结覆盖清单确实来自同一场景的已确认复用来源。 */
 export function validateSceneReuseCoverage(repo, work, record) {
+  // 逐目标继承不能使旧批次成为累计覆盖清单的拥有者，即使路径不同也一样。
+  if (work.visual?.reuse?.targetIds !== undefined) throw new WorkflowError('场景累计范围必须由当前工作项确认');
   return resolveReuseOwner(repo, work, record.workItemId, null);
 }
 
@@ -140,6 +162,8 @@ export function resolveReuseOwner(repo, work, ownerId, name, targetId = null) {
     visited.add(current.workItemId);
     const reuse = current.visual.reuse;
     if (!reuse || (name ? !reuse.inheritedReviews?.includes(name) : !reuse.inheritedReviews?.length)) throw new WorkflowError('确认拥有者不在已声明的复用来源链中');
+    // 逐目标复用的每一跳都必须显式选择该目标，不能借其他目标的继承权限跨越来源链。
+    if (targetId && reuse.targetIds !== undefined && !reuse.targetIds.includes(targetId)) throw new WorkflowError(`场景目标 ${targetId} 未声明为可继承目标`);
     const source = readJson(repo, reuse.sourceWorkItemRef.path, '视觉复用来源 Work Item');
     if (targetId && !source.visual.targets?.some((item) => item.targetId === targetId)) throw new WorkflowError('复用来源缺少场景目标');
     current = source;

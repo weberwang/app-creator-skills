@@ -1,11 +1,15 @@
+import { response } from './responses.mjs';
+export { response } from './responses.mjs';
+export { initializeWork } from './work-initialization.mjs';
+export { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { existsSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname } from 'node:path';
-import { GATES, PROTECTED_ACTIONS, STAGE_LABELS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
+import { PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
 import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyToPass, assertTransitionInputs, assertVisualReview, bindWorkSource, hasPreciseApproval, loadPackage, requiresProtectedActionApproval, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
 import { validateFinalIntegration, validateIntegrationScope } from './final-integration.mjs';
 import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
-import { loadProfile, requireOneOf, requireText, validateWork } from './validation.mjs';
+import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { createExecutionPlanSnapshot, expectedActiveBatch } from './execution-batches.mjs';
 import { withWorkLock } from './work-lock.mjs';
 import { assertWorkflowPolicy, workflowMode } from './task-policy.mjs';
@@ -13,26 +17,7 @@ import { assertReleaseTransition } from './release-policy.mjs';
 import { validateFeatureDependencies, dependencyPath } from './feature-dependencies.mjs';
 import { engineeringEvidence, assertEngineeringEvidence, unchangedFunctionSource, sameFunctionDependency, sameFunctionDependencies, sameDependencyPath } from './function-evidence.mjs';
 import { freezeDeletionBaseline, validateDeletionBaselineState } from './deletion-baseline.mjs';
-
-/** 产出供 CLI /工具稳定解析的统一结果结构。 */
-export function response({ status, work = null, changed = false, blocking = [], next = [], metadata = {} }) {
-  return {
-    status,
-    stage: work ? `${work.stageId}/${work.globalState}` : null,
-    changed,
-    blocking,
-    next,
-    metadata: {
-      workflowView: work ? {
-        phaseId: work.stageId, phaseLabel: STAGE_LABELS[work.stageId],
-        visualStage: work.visual?.stage ?? null, workItemType: work.workItemType,
-        workflowMode: workflowMode(work), releaseIntent: work.releaseIntent ?? null,
-        completionKind: work.globalState === 'COMPLETE' ? (work.workItemType === 'RELEASE' ? `release-${work.releaseIntent === 'prepare' ? 'prepared' : 'published'}` : 'task-complete') : null,
-      } : null,
-      ...metadata,
-    },
-  };
-}
+import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -72,74 +57,6 @@ function assertReleaseExecutionReady(repo, work) {
   inspectExecution(repo, work, { requireComplete: true });
 }
 
-/** 创建不覆盖已有文件的最小 Work Item 与固定目录布局。 */
-export async function initializeWork({ repo, args }) {
-  requireText(args?.id, '--id');
-  const workPath = args['work-item'] ?? `.workflow-control/work-items/${args.id}.json`;
-  return withWorkLock(repo, workPath, () => initializeWorkLocked({ repo, args }));
-}
-
-/** 在已取得 Work Item 排他锁后执行初始化，避免同名并发创建竞争。 */
-async function initializeWorkLocked({ repo, args }) {
-  const id = args.id;
-  const stack = args.stack;
-  const type = args.type ?? 'FOUNDATION';
-  const mode = args.mode ?? 'standard';
-  const objective = args.objective;
-  requireText(id, '--id');
-  requireText(objective, '--objective');
-  requireOneOf(type, ['PROJECT', 'FOUNDATION', 'MODULE', 'SCENE', 'PAGE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE'], '--type');
-  const profile = loadProfile(repo, stack);
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$/.test(id)) throw new WorkflowError('--id 只能包含字母、数字、点、下划线和短横线');
-  const workPath = args['work-item'] ?? `.workflow-control/work-items/${id}.json`;
-  const workTarget = repoPath(repo, workPath, 'Work Item 输出路径');
-  if (existsSync(workTarget.absolute)) throw new WorkflowError(`拒绝覆盖现有 Work Item：${workPath}`, 'ALREADY_EXISTS');
-  const visualType = ['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(type);
-  const integrationPurpose = type === 'INTEGRATION' ? (args['integration-purpose'] ?? 'feature') : undefined;
-  if (integrationPurpose !== undefined) requireOneOf(integrationPurpose, ['feature', 'final'], '--integration-purpose');
-  if (type !== 'INTEGRATION' && args['integration-purpose'] !== undefined) throw new WorkflowError('只有 INTEGRATION 可以使用 --integration-purpose');
-  if (visualType && type === 'DISPLAY_LAYER') {
-    requireText(args['host-id'], '--host-id');
-    requireOneOf(args['layer-type'], ['modal', 'popup', 'drawer', 'toast'], '--layer-type');
-  }
-  const work = {
-    schemaVersion: VERSION,
-    workItemId: id,
-    projectId: args['project-id'] ?? 'default-project',
-    stack,
-    workItemType: type,
-    stageId: type === 'PROJECT' ? 'requirements-scope' : type === 'INTEGRATION' && integrationPurpose === 'final' ? 'global-integration-validation' : type === 'RELEASE' ? 'release' : visualType ? 'scene-production' : 'foundation-engineering',
-    globalState: mode === 'light' ? 'REVIEW' : 'INTAKE',
-    workflowMode: mode,
-    ...(type === 'RELEASE' ? { releaseIntent: args['release-intent'] ?? 'prepare' } : {}),
-    ...(type === 'INTEGRATION' ? { integrationPurpose } : {}),
-    objective,
-    allowedPaths: [...profile.runtimeRoots],
-    forbiddenPaths: ['node_modules/**', '**/.git/**', '**/Library/**', '**/Temp/**'],
-    gateStatus: Object.fromEntries(GATES.map((gate) => [gate, 'NOT_RUN'])),
-    revision: 0,
-    implementationPackageRef: null,
-    planningRef: null,
-    evidenceRef: null,
-    globalVisualBaselineRef: null,
-    assetReviewRef: null,
-    grillingRef: null,
-    visualBaselineRequired: visualType,
-    evidenceRoot: `.workflow-control/evidence/${id}`,
-    ...(visualType ? { visual: {
-      objectId: args['object-id'] ?? id,
-      stageModel: 'function-first-v1',
-      stage: 'V0',
-      ...(type === 'DISPLAY_LAYER' ? { hostId: args['host-id'], layerType: args['layer-type'] } : {}),
-      ...(type === 'SCENE' ? { targets: [] } : { reviews: {} }),
-    } } : {}),
-  };
-  if (type !== 'RELEASE' && args['release-intent'] !== undefined) throw new WorkflowError('只有 RELEASE 可以使用 --release-intent');
-  validateWork(work, { repo });
-  await atomicWriteJson(repo, workPath, work);
-  return response({ status: 'PASS', work, changed: true, metadata: { workItemPath: workPath, stackProfile: profile.displayName } });
-}
-
 /** 无写入地收集 Work Item 阶段和资产引用的阻断原因。 */
 export function inspectWork(repo, work, { strict = false } = {}) {
   return inspectWorkCore(repo, work, { strict, checkFunctionBaseline: true });
@@ -154,7 +71,16 @@ export function inspectPendingRegressionExecution(repo, work) {
 /** 视觉复用仅复验已完成来源的视觉与执行记录；当前工作项仍须通过功能基线。 */
 export function inspectVisualReuseSource(repo, work) {
   if (work?.globalState !== 'COMPLETE' || work.visual?.stage !== 'V5') throw new WorkflowError('视觉复用来源必须为已完成的 V5 工作项');
+  assertFunctionBaseline(repo, work, { historical: true });
   return inspectWorkCore(repo, work, { strict: true, checkFunctionBaseline: false });
+}
+
+/** 前置批次证明历史完成，当前源码仍由本批和最终集成重新验证。 */
+export function inspectProductionDependencyHistory(repo, source, sourcePath) {
+  const current = loadWork(repo, sourcePath);
+  if (current.globalState !== 'COMPLETE' || JSON.stringify(current) !== JSON.stringify(source)) throw new WorkflowError('生产依赖来源在检查期间变化或尚未完成');
+  assertFunctionBaseline(repo, current, { historical: true });
+  return inspectWorkCore(repo, current, { strict: true, checkFunctionBaseline: false });
 }
 
 /** 按用途收集诊断，常规检查始终包含当前功能基线。 */
@@ -720,7 +646,7 @@ function assertFunctionHostResults(repo, work) {
 }
 
 /** V2 起持续重验功能来源及 V1 实际工程记录，禁止清空阶段引用后凭空通过。 */
-export function assertFunctionBaseline(repo, work) {
+export function assertFunctionBaseline(repo, work, { historical = false } = {}) {
   if (!work.visual || ['V0', 'V1'].includes(work.visual.stage)) return;
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '') || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('缺少有效功能基线或基线内容已变化');
@@ -736,7 +662,7 @@ export function assertFunctionBaseline(repo, work) {
       // PASSED→COMPLETE 只改变生命周期 revision；计划或证据引用变化才需要重验。
       if (!sameDependencyPath(repo, sourceSnapshot.workItemRef?.path, snapshot.dependencies[index].workItemRef?.path) || source.implementationPackageRef?.path !== sourceSnapshot.implementationPackageRef?.path || source.evidenceRef?.path !== sourceSnapshot.evidenceRef?.path || source.evidenceRoot !== sourceSnapshot.evidenceRoot || !Array.isArray(sourceSnapshot.files) || !sourceSnapshot.files.length) throw new WorkflowError('功能来源计划或证据已变化，必须重新验证');
       assertEngineeringEvidence(repo, source, sourceSnapshot.engineeringEvidence);
-      for (const identity of sourceSnapshot.files) if (fileDigest(repo, identity.path).sha256 !== identity.sha256) throw new WorkflowError(`功能来源交付或证据已变化：${identity.path}`);
+      assertFunctionSnapshotFiles(repo, source, sourceSnapshot.files, { historical, label: '功能来源交付或证据' });
     }
     return;
   }
@@ -745,7 +671,7 @@ export function assertFunctionBaseline(repo, work) {
   assertEngineeringEvidence(repo, original, snapshot.engineeringEvidence);
   validateWork(original, { repo });
   if (original.workItemId !== work.workItemId || original.projectId !== work.projectId || original.stack !== work.stack || original.workItemType !== work.workItemType || original.visual?.objectId !== work.visual.objectId || (work.workItemType === 'DISPLAY_LAYER' && (original.visual.hostId !== snapshot.hostId || original.visual.layerType !== snapshot.layerType)) || (snapshot.mode === 'local' ? original.visual?.stage !== 'V1' || original.globalState !== 'PASSED' : !['V4', 'V5'].includes(original.visual?.stage) || !['IMPLEMENTING', 'VALIDATING'].includes(original.globalState))) throw new WorkflowError('V1 功能基线身份或状态无效');
-  for (const identity of snapshot.files) if (fileDigest(repo, identity.path).sha256 !== identity.sha256) throw new WorkflowError(`V1 功能证据已变化：${identity.path}`);
+  assertFunctionSnapshotFiles(repo, original, snapshot.files, { historical, label: 'V1 功能证据' });
   if (snapshot.mode === 'local') assertReadyToPass(repo, original);
   else {
     assertGates(original, ['F0', 'F1', 'F2', 'F3']);

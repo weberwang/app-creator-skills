@@ -5,6 +5,8 @@ description: 规划、开发或交付采用 Expo 的 React Native 应用时使�
 
 # Expo 技术栈
 
+复杂页面和跨页面流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用实际导航、组件、表单与数据状态，验证键盘、返回和适用的中断恢复。
+
 先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用六阶段、工作项、证据和 V0–V5。应用页面使用 `PAGE`，独立瞬态层使用 `DISPLAY_LAYER` 并绑定实际页面宿主；业务能力使用 `MODULE`，不使用游戏 `SCENE`。Android、iOS 只处理实际选定的平台；Web 为按需目标，服务端 API 使用其实际服务端工作项。
 
 结合 `package.json` 的 Expo 与 React Native 依赖、应用配置及真实入口识别工程；`package.json` 或 `app.json` 单独存在不足以证明 Expo。沿用项目锁定的 Expo SDK、React Native、React、Node 和包管理器，先核实依赖与目标平台兼容。新项目优先评估 Expo Router，现有项目保留其实际导航方案。

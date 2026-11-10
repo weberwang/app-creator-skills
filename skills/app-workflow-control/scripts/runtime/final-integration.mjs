@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { validateNodeScopeObject, assertNodeResultObject, validateNodeCase } from './nodejs-integration.mjs';
+import { validateProductionIntegration, validateProductionIntegrationScope } from './production-coverage.mjs';
 
 /** 核对项目内文件的冻结内容，避免正式组合或功能基线变化后沿用旧回归。 */
 function verifyIdentity(repo, ref, label, { allowEmpty = false } = {}) {
@@ -31,12 +32,14 @@ export function validateIntegrationScope(repo, work) {
   const path = verifyIdentity(repo, work.integrationScopeRef, '最终集成范围');
   const scope = readJson(repo, path, '最终集成范围');
   if (scope.schemaVersion !== '1.0' || scope.workItemId !== work.workItemId || scope.projectId !== work.projectId || scope.stack !== work.stack) throw new WorkflowError('最终集成范围身份不匹配');
+  if (!work.productionScopeRef && scope.productionScopeRef) throw new WorkflowError('最终集成遗漏了已声明的生产总范围');
   if (!Array.isArray(scope.objects) || !scope.objects.length || !Array.isArray(scope.cases) || !scope.cases.length) throw new WorkflowError('最终集成范围必须列出对象和行为');
   const objectIds = new Set();
   for (const object of scope.objects) {
     if (!object || typeof object.objectId !== 'string' || !object.objectId.trim() || objectIds.has(object.objectId)) throw new WorkflowError('最终集成范围对象必须非空且唯一');
     const sourcePath = verifyIdentity(repo, object.workItemRef, `范围对象 ${object.objectId} 工作项`);
     const source = readJson(repo, sourcePath, '范围对象工作项');
+    if (!work.productionScopeRef && source.productionScopeRef) throw new WorkflowError(`范围对象 ${object.objectId} 已绑定生产总范围，最终集成不得省略`);
     if (work.stack === 'nodejs') {
       // 服务端冻结模块实施包、证据清单和全部受管源码，不虚构视觉功能基线。
       validateNodeScopeObject(repo, work, object, source, { verifyIdentity });
@@ -57,6 +60,7 @@ export function validateIntegrationScope(repo, work) {
     for (const id of entry.objectIds) covered.add(id);
   }
   if (covered.size !== objectIds.size) throw new WorkflowError('最终集成范围必须覆盖全部对象');
+  validateProductionIntegrationScope(repo, work, scope);
   return scope;
 }
 
@@ -128,4 +132,5 @@ export function validateFinalIntegration(repo, work, inspectSource) {
       if (!evidence.cases.some((entry) => entry.caseId === dependency.caseId && entry.objectIds.includes(objectId))) throw new WorkflowError(`最终集成缺少对象 ${objectId} 的功能范围 ${dependency.caseId}`);
     }
   }
+  validateProductionIntegration(repo, work, scope, manifest);
 }

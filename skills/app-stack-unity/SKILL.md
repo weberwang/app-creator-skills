@@ -5,6 +5,8 @@ description: 在已选用 Unity 的游戏或交互项目中制定与实现 Unity
 
 # Unity 技术栈
 
+大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，维持同一正式 Scene、Prefab 和资源身份；共享编辑器源保持单写者并在每批保存、回读。
+
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。
 
 

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "1.0",
+  "scopeId": "replace-with-scope-id",
+  "projectId": "replace-with-project-id",
+  "stack": "replace-with-stack",
+  "objects": [{"objectId": "replace-with-object-id", "workItemType": "PAGE"}],
+  "states": [{"stateId": "replace-with-state-id", "objectId": "replace-with-object-id", "description": "替换为实际状态含义"}],
+  "steps": [{"stepId": "replace-with-step-id", "objectIds": ["replace-with-object-id"], "stateIds": ["replace-with-state-id"], "precondition": "替换为真实前置", "action": "替换为实际操作", "expectedResult": "替换为可观察结果", "caseId": "replace-with-case-id"}],
+  "transitions": [],
+  "paths": [{"pathId": "replace-with-path-id", "stepIds": ["replace-with-step-id"], "caseId": "replace-with-case-id"}],
+  "batches": [{"batchId": "replace-with-batch-id", "objectIds": ["replace-with-object-id"], "stepIds": ["replace-with-step-id"], "transitionIds": [], "pathIds": ["replace-with-path-id"]}]
+}

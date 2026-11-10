@@ -12,12 +12,12 @@ import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
   plan: ['repo', 'work-item', 'spec'], record: ['repo', 'work-item', 'unit', 'report'],
-  'reuse-visual': ['repo', 'work-item', 'source-work-item', 'impact', 'reason'],
+  'reuse-visual': ['repo', 'work-item', 'source-work-item', 'impact', 'reason', 'target-ids'],
   'refresh-function-baseline': ['repo', 'work-item', 'spec'],
   'check-action': ['repo', 'work-item', 'action-id', 'effect', 'target'],
   lint: ['repo'],
@@ -48,7 +48,9 @@ export async function main(argv = process.argv.slice(2)) {
   }
   if (command === 'reuse-visual') {
     for (const name of ['source-work-item', 'impact', 'reason']) requireText(args[name], `--${name}`);
-    return output(await reuseVisualReviews({ repo, workItem: args['work-item'], sourceWorkItem: args['source-work-item'], impact: args.impact, reason: args.reason }), true);
+    if (args['target-ids'] !== undefined) requireText(args['target-ids'], '--target-ids');
+    const targetIds = args['target-ids'] === undefined ? undefined : String(args['target-ids']).split(',').map((id) => id.trim());
+    return output(await reuseVisualReviews({ repo, workItem: args['work-item'], sourceWorkItem: args['source-work-item'], impact: args.impact, reason: args.reason, targetIds }), true);
   }
   if (command === 'refresh-function-baseline') {
     requireText(args.spec, '--spec');
@@ -104,7 +106,7 @@ async function runSafe({ repo, workItem }) {
   return result;
 }
 
-/** 校验公共控制器文件、JSON 模板和五种技术栈 profile。 */
+/** 校验公共控制器文件、生产范围模板和当前安装的技术栈 profile。 */
 async function lintPackage(repo) {
   const skillRoot = resolve(import.meta.dirname, '..');
   const schemaFiles = [
@@ -112,13 +114,14 @@ async function lintPackage(repo) {
     'evidence-manifest.schema.json', 'human-review.schema.json', 'grilling-record.schema.json',
     'asset-review.schema.json', 'global-visual-baseline.schema.json', 'release-result.schema.json',
     'release-preparation.schema.json', 'work-plan.schema.json', 'execution-report.schema.json',
+    'production-scope.schema.json', 'production-coverage.schema.json',
   ];
   for (const file of schemaFiles) {
     const path = resolve(skillRoot, 'schemas', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }
     catch (error) { throw new WorkflowError(`schema ${file} 无效或缺失：${error.message}`, 'PACKAGE_INVALID'); }
   }
-  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json'];
+  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json', 'production-scope.json', 'production-coverage.json'];
   for (const file of templateFiles) {
     const path = resolve(skillRoot, 'templates', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }
