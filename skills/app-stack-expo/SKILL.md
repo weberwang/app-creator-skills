@@ -5,6 +5,8 @@ description: 规划、开发或交付采用 Expo 的 React Native 应用时使�
 
 # Expo 技术栈
 
+目标为 Google Play／App Store 时，按[渠道接入](../app-release/references/channel-platform-integration.md)及本栈原生来源／构建核对身份、隐私、按需商业 SDK 和候选；Expo Go、Web 导出或移动应用不自动成为 CrazyGames 游戏或微信／抖音小游戏，不默认启用 EAS 云构建或商店提交。
+
 复杂页面和跨页面流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用实际导航、组件、表单与数据状态，验证键盘、返回和适用的中断恢复。
 
 先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用六阶段、工作项、证据和 V0–V5。应用页面使用 `PAGE`，独立瞬态层使用 `DISPLAY_LAYER` 并绑定实际页面宿主；业务能力使用 `MODULE`，不使用游戏 `SCENE`。Android、iOS 只处理实际选定的平台；Web 为按需目标，服务端 API 使用其实际服务端工作项。

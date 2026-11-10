@@ -7,7 +7,7 @@
         "path": "../app-stack-cocos/references/native-contracts.md",
         "section": "mode-cocos-game-ad-integration",
         "mode": "cocos-game-ad-integration",
-        "when": "仅当项目技术栈为 Cocos Creator，且任务属于“游戏广告接入”时使用此原生专项能力。"
+        "when": "仅当项目技术栈为 Cocos Creator，且已确认采用 MAX 的受支持 Android/iOS 原生广告接入时使用；CrazyGames、微信和抖音渠道 SDK 广告不使用此模式。"
       }
     ],
     "phaser": [
@@ -16,7 +16,7 @@
         "path": "../app-stack-phaser/references/native-contracts.md",
         "section": "mode-phaser4-game-ad-integration",
         "mode": "phaser4-game-ad-integration",
-        "when": "仅当项目技术栈为 Phaser，且任务属于“游戏广告接入”时使用此原生专项能力。"
+        "when": "仅当项目技术栈为 Phaser，且已确认采用 MAX 的受支持 Android/iOS 原生广告接入时使用；CrazyGames、微信和抖音渠道 SDK 广告不使用此模式。"
       }
     ],
     "threejs": [
@@ -25,11 +25,17 @@
         "path": "../app-stack-threejs/references/native-contracts.md",
         "section": "mode-threejs-game-ad-integration",
         "mode": "threejs-game-ad-integration",
-        "when": "仅当项目技术栈为 Three.js，且任务属于“游戏广告接入”时使用此原生专项能力。"
+        "when": "仅当项目技术栈为 Three.js，且已确认采用 MAX 的受支持 Android/iOS 原生广告接入时使用；CrazyGames、微信和抖音渠道 SDK 广告不使用此模式。"
       }
     ]
   },
   "sharedWorkflows": [
+    {
+      "id": "channel-platform-integration",
+      "path": "../app-release/references/channel-platform-integration.md",
+      "stacks": ["cocos", "phaser", "threejs"],
+      "onDemand": true
+    },
     {
       "id": "reference-architecture-sdk-initialization",
       "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",

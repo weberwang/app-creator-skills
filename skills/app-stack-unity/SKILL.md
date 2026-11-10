@@ -5,6 +5,8 @@ description: 在已选用 Unity 的游戏或交互项目中制定与实现 Unity
 
 # Unity 技术栈
 
+已选 CrazyGames、微信／抖音小游戏、Google Play 或 App Store 时，按[渠道接入](../app-release/references/channel-platform-integration.md)核实当前 Unity 版本对应的 Web、小游戏适配或原生构建路线，再接入所选平台能力；Editor 或普通 WebGL 可运行不证明渠道通过。
+
 大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，维持同一正式 Scene、Prefab 和资源身份；共享编辑器源保持单写者并在每批保存、回读。
 
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。

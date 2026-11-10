@@ -49,11 +49,11 @@ Roblox 根据已确认目标设备、Roblox 客户端支持及实际配置记录
 
 ## Banner 显示区域
 
-Banner 在完整游戏区域内叠加显示。禁止缩小游戏渲染区域、改变画面比例或为广告添加内容 inset 与空白占位。覆盖位置只能是背景留白等无有效内容的区域，角色、目标、路径、HUD、文字及操作区域均须避让。动态内容进入覆盖位置时立即隐藏广告，安全位置恢复后再检查显示。具体要求见[Banner 布局、显隐与刷新](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#提前规划-ui-布局)。
+采用原生 MAX Banner 时，在完整游戏区域内叠加显示。禁止缩小游戏渲染区域、改变画面比例或为广告添加内容 inset 与空白占位。覆盖位置只能是背景留白等无有效内容的区域，角色、目标、路径、HUD、文字及操作区域均须避让。动态内容进入覆盖位置时立即隐藏广告，安全位置恢复后再检查显示。具体要求见[Banner 布局、显隐与刷新](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#提前规划-ui-布局)；其他渠道按[平台专项](../../app-release/references/channel-platform-integration.md)的实际广告 API 与布局要求执行，不把原生视图规则套到平台托管广告。
 
 ## 归因与广告
 
-广告聚合使用 AppLovin MAX，归因使用 AppsFlyer。启动时分别投递任务，业务通过对应能力接口调用；不增加无关 SDK、隐私界面或登录屏障。已采用或官方要求的 CMP（包括 UMP）及其他真实前置必须按锁定平台、版本和流程满足，未满足只限制受影响 SDK，不阻塞游戏或无关任务，也不因普通接入擅自新增隐私业务。广告预加载、刷新和重试均采用非个性化模式；[请求适配器](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)处理真实就绪状态及适用的数据授权限制，不能从非个性化配置推断所有请求均允许。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
+已确认需要广告聚合或归因、且实际原生目标受支持时，分别使用 AppLovin MAX 和 AppsFlyer；不因渠道接入自动增加广告或归因。CrazyGames、微信／抖音小游戏使用[对应平台能力](../../app-release/references/channel-platform-integration.md#隐私与商业能力)，不加载不适用的原生 SDK。启动时分别投递任务，业务通过对应能力接口调用；不增加无关 SDK、隐私界面或登录屏障。已采用或官方要求的 CMP（包括 UMP）及其他真实前置必须按锁定平台、版本和流程满足，未满足只限制受影响 SDK，不阻塞游戏或无关任务。广告预加载、刷新和重试均采用非个性化模式，MAX 的[请求适配器](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)和平台适配器分别核实配置，不能从非个性化推断所有请求均允许。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
 
 ## 隐私流程约束
 
@@ -172,6 +172,8 @@ SCENE 累计生产且本批需要新增目标时，可按[多目标记录](../..
 影响分类依据实际目标、对象状态、素材和布局关系，由当前执行者明确说明理由，不用文件版本或摘要变化自动推断。全局视觉方向变化时不复用旧基线，重新完成首次三候选选择。复用不会继承工程 Evidence、V4/V5确认或旧执行状态；未变化素材可由原生流程继续使用实际文件。内部实现或数值不改变可见行为时定向功能回归；新增状态或交互须重验受影响功能并评估目标与布局；核心跨场景规则变化先更新对应切片，再逐对象检查影响。RETURN 只撤销实际受影响的确认，并同步清理复用来源声明。
 
 ## 发布准备与实际上线
+
+已选 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，按[渠道接入任务](../../app-release/references/channel-platform-integration.md#接入任务与完成条件)从需求期确认平台与能力，基础工程验证本栈实际产物，功能期接通适配器及失败恢复，最终集成和候选逐渠道核对证据、资质及资料。平台强制的隐私／授权前置不能因默认不新增隐私业务而跳过；未满足时限制相应能力或候选，不默认扩建无关隐私业务。沿用现有工作项和六阶段，不自动启用全部渠道。
 
 目标包含商店展示时，安排[商店截图与宣传图制作任务](../../app-release/references/store-marketing-assets.md#任务安排与完成条件)。平台要求及卖点/截图脚本可在策划阶段准备，相关功能和画面稳定后采集多张真实内容并制作所需宣传图，发布准备核对当前内容、导出规格、顺序及用户人工确认。宣传素材不是游戏内场景资源，不另建视觉阶段门，也不自动包含商店上传、投放或市场实验。
 

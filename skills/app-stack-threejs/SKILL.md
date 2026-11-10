@@ -5,6 +5,8 @@ description: 为浏览器中的 three.js 3D 应用或游戏设计世界场景、
 
 # Three.js 技术栈
 
+已选分发渠道按[渠道接入](../app-release/references/channel-platform-integration.md)区分 CrazyGames Web、需核实适配能力的微信／抖音小游戏，以及 Google Play／App Store 的已确认原生宿主路线；WebGL、DOM、音频和资源能力按实际宿主验证，不从浏览器结果推断小游戏可用。
+
 复杂世界和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，核对同一正式三维世界、镜头／HUD 和资源生命周期，不按目标图复制运行场景。
 
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。

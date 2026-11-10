@@ -29,6 +29,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 
 - 涉及性能预算或资源策略时，按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)在现有方案中明确目标平台、关键流程／负载、预算来源、测量基线、所有者和不可牺牲条件；以瓶颈证据决定缓存、池化、预取或合批等机制，说明时间、内存、加载粒度与维护成本，不默认加入整套优化设施或自拟统一阈值。
 - 第三方 SDK 的文件职责遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)及其中的隐私流程解耦约束，技术栈资料仅补充入口路径和原生要求。
+- 已选渠道按[导出方案与运行时平台选择](../app-release/references/channel-platform-integration.md#导出方案与运行时平台选择)确定同包支持范围或必要独立导出，由唯一入口识别宿主并按需加载对应 SDK；再按[SDK 边界](../app-release/references/channel-platform-integration.md#能力适配与-sdk-边界)明确独立适配器、配置隔离与服务端可信边界。平台 SDK 与 MAX 原生方案按实际能力选择，微信内 H5 与微信小游戏分别处理。
 - 架构图必须反映真实仓库和目标栈，不凭空引入框架、服务或新依赖。
 - 平台/API细节和资源生命周期由当前栈原生适配补齐；未经授权不得修改公共配置或执行迁移写入。
 

@@ -5,6 +5,8 @@ description: 在 Cocos Creator 项目中实现或审查场景、节点、Compone
 
 # Cocos Creator 技术栈
 
+已选 CrazyGames、微信／抖音小游戏、Google Play 或 App Store 时，按[渠道接入](../app-release/references/channel-platform-integration.md)选择当前 Creator 版本的对应平台构建与 SDK；Cocos 使用自身原生导出路线，不默认套用 WebView 包装，编辑器／浏览器结果不代替真实宿主验证。
+
 大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用同一正式 Scene、Prefab 与 AssetDB 身份；共享编辑器源保持单写者并在每批保存、回读。
 
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。

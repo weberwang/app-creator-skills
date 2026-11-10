@@ -6,6 +6,8 @@
 
 发布候选中的所有 SDK 同时遵守[隐私流程与 SDK 解耦](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)：核对用途策略、未授权及撤回路径和最终包自动启动配置，缺少实际行为证据时明确标记未验证。
 
+选定 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，按[渠道接入任务](channel-platform-integration.md#接入任务与完成条件)与对应平台专项核对实际工程／包、SDK、环境、资质、隐私、广告、支付和审核访问资料。一个平台通过不能覆盖其他终端或宿主，渠道准备、上传、提审、审核结果和正式上线分别记录；不改变本节 prepare／publish 的合同及授权边界。
+
 包含 Android、iOS/iPadOS 目标时，按[系统启动屏制作与交付](../../app-domain-toolkit/references/system-launch-screen.md)核对最终候选实际包含的原生配置与本地资源、首帧衔接及适用的人工显示结论。输入未变可复用已有有效证据；品牌开场、引导页、应用内加载页不充当系统启动屏验收，缺少原生运行材料时如实标记未验证，不自动真机验收。
 
 ## 内购 SDK 必要性与移除

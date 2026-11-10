@@ -85,6 +85,12 @@
   },
   "sharedWorkflows": [
     {
+      "id": "channel-platform-integration",
+      "path": "references/channel-platform-integration.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "release",
       "path": "../app-domain-toolkit/references/release.md",
       "stacks": [

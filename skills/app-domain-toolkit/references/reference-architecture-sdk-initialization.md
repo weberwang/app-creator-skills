@@ -18,6 +18,8 @@
 
 默认不编排隐私弹窗、隐私中心、同意管理、撤回或重新征求同意等业务，不自动创建对应工作项、页面、模块、占位代码或引入同意管理 SDK。仅在用户明确要求或已确认的项目需求纳入范围时实施；下述隐私模块的职责和业务验证只在该范围内适用。已有隐私业务不因本规则被删除或停用，不因普通 SDK 接入、升级或工程初始化擅自扩展。
 
+已选渠道有明确的强制隐私／授权交互时，按[渠道接入](../../app-release/references/channel-platform-integration.md#隐私与商业能力)在当前方案中明确必要范围并满足，不能以默认规则跳过官方前置；未满足时保持相应能力受限或阻断相关候选，不扩建无关隐私中心或伪造同意。
+
 - 隐私流程由独立模块唯一管理告知、选择、同意版本、持久化、撤回及重新征求同意。SDK 管理器不得展示隐私弹窗、写入用户同意或把初始化成功当作用户同意；隐私模块不得直接调用具体 SDK API、持有其初始化状态或等待 SDK 全部就绪。
 - 隐私模块只输出按用途区分的授权快照与变更通知，至少区分未决定、允许、拒绝和撤回。组合层订阅通知，通过注入的能力接口把可执行策略传给各 SDK 管理器；SDK 管理器负责映射厂商参数及执行自身启停。隐私模块和 SDK 模块均依赖公共契约，不互相导入实现。厂商同意管理 SDK 也通过适配器提供能力，不成为应用隐私状态的唯一权威。
 - 每个 SDK 在方案中登记初始化、数据采集、网络请求、标识符读取、业务调用分别需要的授权用途，以及依赖导入、原生自动启动和后台任务的副作用。初始化本身需要授权时，在授权满足前不得导入有副作用的模块或启动 SDK；仅在有明确依据证明初始化无此副作用时，才可先初始化并保持受限。关闭 Manifest、Provider、插件注册或静态初始化中的绕行入口；无法关闭时阻断该 SDK 接入。
@@ -26,7 +28,7 @@
 
 ## 归因与广告直接启动和调用
 
-Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认的需求接入广告或归因；本段不声明这些厂商 SDK 支持 ESP32，设备端仅在实际平台与官方能力核实后处理明确需求。广告使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）。归因使用 AppsFlyer。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
+Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认需求及实际受支持的原生目标接入广告或归因；不声明厂商 SDK 支持全部栈或终端。原生广告聚合使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）；原生归因使用 AppsFlyer。CrazyGames、微信和抖音小游戏按[渠道平台规范](../../app-release/references/channel-platform-integration.md#隐私与商业能力)使用适用的平台接口，不把 MAX／AppsFlyer 作为通用宿主依赖；ESP32 等仅在平台能力核实后处理明确需求。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 
 业务触发归因事件或广告请求时调用对应能力接口，应用层不增加无关等待屏障。不因普通 SDK 接入擅自新增隐私业务；项目已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。`hasUserConsent=false` 不证明用户完成选择，也不单独证明所有地区和渠道允许请求。适配器按实际 SDK、隐私与网络条件返回结果；未就绪、无填充、离线或展示失败按既有回退处理，不阻塞调用方，也不伪造成功。
 

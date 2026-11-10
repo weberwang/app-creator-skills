@@ -5,6 +5,8 @@ description: 规划或实现 Flutter 应用页面、Widget 状态、导航、自
 
 # Flutter 技术栈
 
+目标为 Google Play／App Store 时，按[渠道接入](../app-release/references/channel-platform-integration.md)及本栈原生构建核对应用身份、隐私、按需商业 SDK 和商店候选；Flutter Web 或移动应用不自动成为 CrazyGames 游戏或微信／抖音小游戏。
+
 复杂页面和跨页面流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用实际导航、Widget、表单与数据状态，验证键盘、返回和适用的中断恢复。
 
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。

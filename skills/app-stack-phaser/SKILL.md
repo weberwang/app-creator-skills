@@ -5,6 +5,8 @@ description: 在 Phaser 4 浏览器游戏中设计或实现 TypeScript、Vite、
 
 # Phaser 技术栈
 
+已选分发渠道按[渠道接入](../app-release/references/channel-platform-integration.md)区分 CrazyGames Web、需核实适配能力的微信／抖音小游戏，以及 Google Play／App Store 的已确认原生宿主路线；普通 Vite Web 构建不自动支持所有宿主，平台广告与原生 MAX 分开适配。
+
 大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，核对同一正式游戏世界的镜头、Canvas／DOM、资源和输入生命周期，不按目标图复制运行场景。
 
 完整专业入口和原工具见[专业技能与工具索引](references/specialist-skills.md)，不要用本技术栈概览替代专业技能。

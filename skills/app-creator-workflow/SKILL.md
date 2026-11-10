@@ -7,6 +7,8 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 游戏大场景、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据，先完成可验证路径再按需要推进下一批；小范围修改沿用已有任务。
 
+选定 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，按[渠道平台接入](../app-release/references/channel-platform-integration.md)从需求、架构和基础工程安排实际适配任务，按本批能力验证并在最终候选逐渠道核对；普通项目不默认启用全部渠道，宿主 SDK 与 MAX 原生方案分别适用，不另建发布状态机。
+
 以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素设计或可见表现，就从本次增量的 V0 开始；纯非视觉修改按实际影响处理，不重做无关宿主或全项目阶段。
 
 默认不编排隐私弹窗、隐私中心及同意管理等业务，仅在用户明确要求或已确认项目需求包含时实施；不擅自删除已有业务。涉及明确纳入范围的隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。
