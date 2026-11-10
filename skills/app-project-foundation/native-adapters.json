@@ -58,6 +58,12 @@
   },
   "sharedWorkflows": [
     {
+      "id": "tool-capability-verification",
+      "path": "../app-domain-toolkit/references/tool-capability-verification.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "reference-architecture-sdk-initialization",
       "path": "../app-domain-toolkit/references/reference-architecture-sdk-initialization.md",
       "stacks": [

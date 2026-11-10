@@ -1,7 +1,7 @@
 /** 使用 Unity 合成协议材料验证两批增量复用；不会启动编辑器或代表真实人工验收。 */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -118,7 +118,7 @@ async function runStage(repo, path, stage, extraItems = []) {
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS'; work.gateStatus.F2 = 'PASS';
   const packPath = `.workflow-control/implementation-packages/${work.workItemId}-${stage}.json`;
-  const unit = { unitId: `unit-${stage}`, sequence: 1, type: 'SCENE', owner: 'synthetic-test', paths: ['Assets/Main.unity'], resultPath: `${work.evidenceRoot}/unit-${stage}.json`, acceptanceCommands: ['node --version'] };
+  const unit = { unitId: `unit-${stage}`, sequence: 1, type: 'SCENE', owner: 'synthetic-test', paths: ['Assets/Main.unity', ...(stage === 'V1' ? [`Assets/Scripts/${work.workItemId}.cs`] : [])], resultPath: `${work.evidenceRoot}/unit-${stage}.json`, acceptanceCommands: ['node --version'] };
   const pack = { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: 'SCENE', visualStage: stage, executionUnits: [unit] };
   put(repo, packPath, pack);
   const manifestPath = `${work.evidenceRoot}/manifest-${stage}.json`;
@@ -147,6 +147,7 @@ async function runV1(repo, path, content) {
   put(repo, path, work);
   await advanceVisual({ repo, workItem: path, to: 'V1' });
   put(repo, 'Assets/Main.unity', content);
+  put(repo, `Assets/Scripts/${work.workItemId}.cs`, '// 合成测试功能源码');
   await runStage(repo, path, 'V1');
   await advanceVisual({ repo, workItem: path, to: 'V2' });
 }
@@ -227,6 +228,9 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
       writeFileSync(full, original);
     }
   }
+  // 保留正式场景和视觉确认，只更名来源 V1 的独立功能源码。
+  renameSync(join(repo, 'Assets/Scripts/first.cs'), join(repo, 'Assets/Scripts/first-renamed.cs'));
+  assert.equal(inspectVisualReuseSource(repo, source).status, 'PASS');
   const cli = spawnSync(process.execPath, args, { encoding: 'utf8', windowsHide: true });
   assert.equal(cli.status, 0, cli.stderr);
   assert.equal(JSON.parse(cli.stdout).status, 'PASS');

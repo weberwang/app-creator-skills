@@ -85,6 +85,18 @@
   },
   "sharedWorkflows": [
     {
+      "id": "tool-capability-verification",
+      "path": "../app-domain-toolkit/references/tool-capability-verification.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
+      "id": "release-readiness",
+      "path": "references/release-readiness.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "channel-platform-integration",
       "path": "references/channel-platform-integration.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],

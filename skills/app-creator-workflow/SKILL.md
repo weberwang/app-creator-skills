@@ -33,6 +33,8 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
 
+基础工程、插件或 SDK 接入按[工具能力核实](../app-domain-toolkit/references/tool-capability-verification.md)区分资料、连接、执行和真实结果；需要运行时按[统一运行验证](../app-quality-review/references/runtime-validation.md)复用实际实例、执行受影响操作并清理本任务资源。素材生产及复用按[来源与消费者关联](../app-asset-workflow/references/asset-provenance.md)更新现有清单；候选准备按[构建输出绑定](../app-release/references/release-readiness.md#实际构建输出与候选绑定)核对真实输出与当前输入。只对本次适用职责安排任务，不增加必填账本或另一套控制流程。
+
 各栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。
 
 各技术栈涉及显示元素设计或可见表现的新增与修改，均从 V0 开始，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)确定增量范围，补齐位置、真实父子关系、尺寸、层序及输入等约定，再推进 V1–V5；场景、页面和显示层统一适用，复用组件、素材和程序化显示不以无需生图为由跳过 V0。

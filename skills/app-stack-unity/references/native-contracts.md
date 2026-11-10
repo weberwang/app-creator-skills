@@ -637,10 +637,10 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 
 V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录独立 Spine/视觉审查，F3 记录 Unity 编译、导入、PlayMode 与资源证据；只有真实视觉取舍使用 `USER_DECISION`。
 
-<a id="mode-unity-game-spine-reskin--v0-引用-visual-bible"></a>
-##### V0 引用 Visual Bible
+<a id="mode-unity-game-spine-reskin--v0-范围与参考"></a>
+##### V0 范围与参考
 
-引用仍有效且覆盖该角色的 Visual Bible。若缺失、失效或范围不足，返回 `$app-creator-workflow` 建立或选择全局视觉基线；已有有效规范时不强制重新生成候选。
+明确本次角色、动画、交互及换皮范围；已有仍有效且覆盖该角色的 Visual Bible 时记录引用。基线缺失、失效或范围不足时先完成 V1 功能验证，在 V2 建立或补充基线，不把选图设为功能验证的前置。
 
 <a id="mode-unity-game-spine-reskin--v1-功能验证"></a>
 ##### V1 功能验证
@@ -650,7 +650,7 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 <a id="mode-unity-game-spine-reskin--v2-换皮草图与结构映射"></a>
 ##### V2 换皮草图与结构映射
 
-1. 产出实际可查看的完整换皮草图/灰盒，以及站立、移动、攻击等足以暴露连接和遮挡问题的关键姿势。
+1. V1 验证完成后，按 `$app-creator-workflow` 建立或选择缺失的全局视觉基线；已有有效规范时直接复用，不重新生成三候选。依据该基线产出实际可查看的完整换皮草图/灰盒，以及站立、移动、攻击等足以暴露连接和遮挡问题的关键姿势。
 2. 画出每个部件的完整边界、被遮挡补全、连接区、前后遮挡、Clipping 边界和极端弯曲余量；不得只提交正面静态半身图。
 3. 提交逐项 `skinId → slotName → attachmentName` 映射，标明 Attachment 类型、现有 Mesh/Linked Mesh、原点/Pivot、画布、用途、朝向、状态和预期 Atlas Region。
 4. 完成独立视觉/Spine 审查；存在实质取舍时请求用户确认当前草图、关键姿势和映射版本。生产边界未冻结时不得进入 V3。

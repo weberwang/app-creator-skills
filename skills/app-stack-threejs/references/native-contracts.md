@@ -342,7 +342,7 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 1. 按项目实际采用的浏览器、小游戏或原生渠道核对打包、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与账号删除要求，不为未采用的宿主创建占位工程。
    对已选 Android/iOS 原生包核对生产 Web 输出、`webDir`、宿主同步和最终包中的入口、本地启动资源及原生主题/launch screen；背景与稳定首帧衔接由用户人工检查，未运行原生目标标记未验证，Web build 成功不能代替原生验收。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
-3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
+3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希按实际合同和计划选择，不统一设为必填；已纳入验收的候选身份或文件快照检查必须通过，失败时按[候选绑定规则](../../app-release/references/release-readiness.md#只读候选文件快照)核实变化、处理并复验，不能因摘要可选而跳过失败或延后到人工验收之后。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
    按[生产构建压缩与发布检查](../../threejs-game-architecture/references/production-build.md)核对实际 Terser 配置与最终候选，使用产物检查器检查公开目录和已解包渠道 Web 资源；Source Map 文件、内联映射或映射引用未清除时不得交付发布候选。部署响应头与真实运行证据分别核对，不以压缩检查替代。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 5. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)
@@ -748,11 +748,11 @@ Git 的[最小提交集](../../threejs-game-architecture/references/artifact-sto
 - ThreeJS Web、浏览器预览和小游戏不直接调用 MAX，也不加载原生广告 SDK；广告能力在这些运行目标上必须是明确的 `unsupported`/no-op，调用后立即返回并继续游戏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - 视频广告位在用户触发展示但当前不可用，或官方插件接受展示后回调 `displayFailed` 时，通过统一 UI 层弹出一次“视频广告暂不可用，请稍后再试”Toast；不得由插件适配层直接操作 ThreeJS UI，也不得因重复回调重复提示。
-- 必须在 MAX 初始化前明确关闭内建 Terms and Privacy Policy Flow，并核对最终 Android/iOS 构建配置不会重新启用；不能仅删除弹窗调用或未经核对就假定默认关闭。官方 Cordova 接口未暴露该流程开关时，通过官方支持的宿主配置取消其 opt-in 启用项，不编造 JS 方法。关闭后仍正常调用 MAX initialize，以真实初始化完成回调确认成功，经核实无官方依赖时不额外等待隐私弹窗、CMP、ATT 或 AppsFlyer；有官方必需前置时先满足，未满足仅限制 MAX。隐私状态仅控制广告加载与展示，其未完成、失败或用户拒绝不得覆盖已经确认的 MAX 初始化成功；独立隐私方案和真实授权状态仍单独配置。关闭方式与最终配置核对见[接入合同](../../threejs-game-ad-integration/references/applovin-max-contract.md#初始化与隐私独立编排)。
-- MAX 与项目其他已采用 SDK 的初始化、完成回调、幂等和初始化重试分别写在 `src/platform/sdks/<sdk>-sdk.ts`，由 `src/platform/initialize-sdks.ts` 投递，遵循[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)。MAX 不等待其他 SDK，也不在成功回调里启动其他 SDK；广告服务只消费其初始化结果并管理广告位，不再持有第二套初始化请求或重试状态。
-- 每次创建新的 MAX SDK 实例时，在该实例首次实际 initialize 前手动调用官方 `AppLovinMAX.setHasUserConsent(false)`，不能只写本地变量或依赖默认值。该值是 SDK 隐私配置，不是广告开关；不得因 `false` 把 privacy gate 置为 pending/blocked、跳过插页/激励预加载、阻止 Banner 按需加载、暂停加载重试或拒绝展示。SDK 已就绪且其他实际条件满足时照常请求广告，由 SDK/adapter 按该配置处理；不承诺填充，也不把值改成 true 来绕过真实失败。设置 false 与关闭内建流程分别执行，不能互相代替。
-- 本 Skill 中有效初始化配置必须包含已核实的独立时序资格：“隐私未决仍初始化”和相关重试规则仅适用于官方支持的 SDK/CMP 组合。官方要求自有 CMP 前置而当前组合不满足独立时序时，MAX 返回配置阻断，不调用 initialize、不安排自动重试，也不等待 CMP 或 AppsFlyer；记录具体限制后按当前任务解决，其他 SDK 与游戏继续。该配置阻断不能从用户拒绝同意或 ATT 状态本身推断。
-- 项目启用 AppsFlyer 时，其初始化与实际启动使用 `src/platform/sdks/appsflyer-sdk.ts` 的独立任务；不能挂在 MAX 初始化、内建隐私流程或广告加载回调下，MAX 失败或不回调不影响 AppsFlyer 启动，AppsFlyer 失败或不回调也不阻止 MAX。该规则不要求未采用 AppsFlyer 的项目额外安装 SDK。
+- MAX 内建 Terms and Privacy Policy Flow 默认关闭，明确采用时按官方支持的宿主配置启用；核对最终 Android/iOS 构建配置与所选路径一致，不编造 JS 方法。内建流程由 initialize 触发，相关 MMP/分析 SDK 按官方要求等待；自有 CMP 路径先满足真实前置。未满足仅限制相关 SDK，游戏与无关 SDK 继续。以真实初始化回调确认成功，独立维护真实授权状态。配置与核对见[接入合同](../../threejs-game-ad-integration/references/applovin-max-contract.md#初始化与隐私独立编排)。
+- MAX 与项目其他已采用 SDK 的初始化、完成回调、幂等和初始化重试分别写在 `src/platform/sdks/<sdk>-sdk.ts`，由 `src/platform/initialize-sdks.ts` 投递，遵循[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)。仅等待已核实的官方前置，不建立无关全局等待；广告服务只消费初始化结果并管理广告位，不持有第二套初始化请求或重试状态。
+- 每次创建新的 MAX SDK 实例时，先核对已有真实授权快照并按适用官方路径映射；仅无有效选择且手动标志路径适用时，在首次实际 initialize 前调用官方 `AppLovinMAX.setHasUserConsent(false)`。不得用 false 覆盖真实选择，也不能仅写本地变量冒充原生配置。false 不单独使 privacy gate 为 pending/blocked 或阻止广告请求；真实请求限制仍按实际条件处理，不保证填充或擅改授权值。
+- “隐私未决仍初始化”和相关重试规则仅适用于官方支持的 SDK/CMP 组合。官方要求自有 CMP 前置时，未满足只限制 MAX、不调用 initialize 或抢跑重试；条件满足后按适用路径启动。确无可用接入配置时记录原因并阻断，游戏及无关 SDK 继续；不能从用户拒绝或 ATT 状态本身推断配置阻断。
+- 项目启用 AppsFlyer 时，其初始化与实际启动使用 `src/platform/sdks/appsflyer-sdk.ts` 的独立任务；无官方依赖时 MAX 失败或不回调不影响其启动，反之亦然；明确采用内建隐私流程且官方要求等待时遵守相关前置。该规则不要求未采用 AppsFlyer 的项目额外安装 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 
 <a id="mode-threejs-game-ad-integration--全局控制接入"></a>
@@ -778,7 +778,7 @@ Git 的[最小提交集](../../threejs-game-architecture/references/artifact-sto
 共享门面至少提供以下语义，具体参数命名可按目标项目惯例落地，但不能改变返回时序：
 
 ```ts
-initialize(config): Promise<InitResult> // 只确认桥接请求受理/初始化状态，不等待隐私流程或广告加载
+initialize(config): Promise<InitResult> // 只确认桥接请求受理/初始化状态，不等待无关隐私流程或广告加载；真实前置另行核验
 retryInitialize(): Promise<InitResult>  // 手动入口复用初始化恢复任务，不绕过退避或配置阻断
 preload(slotId): Promise<PreloadResult> // 仅插页/激励后台加载；Banner 返回 format-mismatch
 isReady(slotId): ReadyResult            // 全屏读取实例就绪属性；Banner 读取加载状态，不创建或加载
@@ -797,9 +797,9 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 - 初始化恢复：MAX 管理文件中的独立任务最多持有一个初始化请求和一个待执行重试 timer，广告服务不另建；瞬时失败持续退避，宿主/前台/网络门关闭保留 deadline，隐私状态不暂停初始化重试，恢复时去重调度；配置错误不自动重试。成功、禁用或销毁清理该初始化恢复任务，成功结果交给广告服务只投递一次全屏预加载意图，广告请求仍检查隐私门，阻断时保留意图待恢复。单独重试 MAX 不重新初始化其他 SDK。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
 - Banner：不预加载、不默认创建；首次展示请求创建并加载，创建失败和加载失败共用一个持续退避重试任务；离开展示场景立即取消任务并使旧请求失效，再次进入须重新请求展示；ready 且布局安全后按当前可见请求显示，失败保持隐藏且无 Toast；按平台尺寸规则和系统安全区验证游戏内覆盖位置，不遮挡任何有效内容，冲突时立即隐藏；加载、失败、重试与显隐均不缩小渲染区域、不改变画面比例、不增加内容 inset 或空白占位；刷新只有一个所有者，禁止 JS/ThreeJS 自建刷新 timer。
-- 合规与安全：实际适用的渠道授权配置、MAX 隐私标志、iOS ATT、SKAdNetwork 及目标地区要求均有责任人和证据；核验 MAX 内建隐私流程在实际初始化配置与最终 Android/iOS 产物中均已关闭，真实初始化回调仍能完成；AppsFlyer 按独立任务启动，不把关闭 MAX 流程等同于同意授权。SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
+- 合规与安全：实际适用的渠道授权配置、MAX 隐私标志、iOS ATT、SKAdNetwork 及目标地区要求均有责任人和证据；分别核验内建流程默认关闭和明确采用时启用的实际配置与最终 Android/iOS 产物，按所选路径验证真实回调和相关官方依赖；不把流程配置等同于同意授权。SDK key 与广告位来自受控的分环境构建配置并仅供官方插件适配器使用，账号凭证与 Ad Review key 不进入 Web 层，遥测脱敏。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/advertising-integration.md#完整流程)。
-- 授权值与加载分离：检查真实调用顺序为 `setHasUserConsent(false)` 后才 initialize；收到真实初始化完成信号且其他条件满足时，值保持 false 仍投递全部启用全屏广告位的预加载，并允许 Banner 按需加载、失败后的原有重试及就绪后的展示。只有独立的真实请求限制才阻断，不等待该值变成 true，不恢复 MAX 内建隐私流程，AppsFlyer 继续独立启动。
+- 授权值与加载分离：验证新实例先核对已有真实选择并如实映射；仅在无有效选择且手动标志路径适用时检查 `setHasUserConsent(false)` 先于 initialize。收到真实初始化完成信号且其他条件满足时，false 不单独阻止全屏预加载、Banner 按需加载、重试或展示。内建流程及 AppsFlyer 按所选路径的真实官方依赖验证。
 
 本仓库本次只交付 Skill 指导文件，不新增运行时代码、脚本、SDK 依赖或外部配置。
 

@@ -72,7 +72,7 @@ export function inspectPendingRegressionExecution(repo, work) {
 export function inspectVisualReuseSource(repo, work) {
   if (work?.globalState !== 'COMPLETE' || work.visual?.stage !== 'V5') throw new WorkflowError('视觉复用来源必须为已完成的 V5 工作项');
   assertFunctionBaseline(repo, work, { historical: true });
-  return inspectWorkCore(repo, work, { strict: true, checkFunctionBaseline: false });
+  return inspectWorkCore(repo, work, { strict: true, checkFunctionBaseline: false, historical: true });
 }
 
 /** 前置批次证明历史完成，当前源码仍由本批和最终集成重新验证。 */
@@ -80,17 +80,17 @@ export function inspectProductionDependencyHistory(repo, source, sourcePath) {
   const current = loadWork(repo, sourcePath);
   if (current.globalState !== 'COMPLETE' || JSON.stringify(current) !== JSON.stringify(source)) throw new WorkflowError('生产依赖来源在检查期间变化或尚未完成');
   assertFunctionBaseline(repo, current, { historical: true });
-  return inspectWorkCore(repo, current, { strict: true, checkFunctionBaseline: false });
+  return inspectWorkCore(repo, current, { strict: true, checkFunctionBaseline: false, historical: true });
 }
 
 /** 按用途收集诊断，常规检查始终包含当前功能基线。 */
-function inspectWorkCore(repo, work, { strict, checkFunctionBaseline }) {
+function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical = false }) {
   const blocking = [];
   const next = [];
   let activeBatch = null;
   try {
     assertTransitionInputs(repo, work, work.globalState);
-    if (checkFunctionBaseline) assertFunctionBaseline(repo, work);
+    if (checkFunctionBaseline) assertFunctionBaseline(repo, work, { historical });
   } catch (error) {
     blocking.push(error.message);
   }
@@ -108,7 +108,7 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline }) {
   const recoveringImplementation = work.globalState === 'BLOCKED' && work.blockedRecord?.returnState === 'IMPLEMENTING';
   if (executionStates.includes(work.globalState) || recoveringImplementation) {
     try {
-      const execution = inspectExecution(repo, work, { requireComplete: work.globalState !== 'IMPLEMENTING' && !recoveringImplementation });
+      const execution = inspectExecution(repo, work, { requireComplete: work.globalState !== 'IMPLEMENTING' && !recoveringImplementation, historical });
       activeBatch = execution.activeBatch;
       if (strict && work.globalState === 'IMPLEMENTING' && activeBatch.length) {
         blocking.push(`执行批次尚未全部完成：${activeBatch.join(', ')}`);
@@ -150,16 +150,16 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline }) {
 }
 
 /** 校验当前有序执行计划，返回尚未闭合的首个单元。 */
-function inspectExecution(repo, work, { requireComplete = false } = {}) {
+function inspectExecution(repo, work, { requireComplete = false, historical = false } = {}) {
   const pack = loadPackage(repo, work);
   const statePath = `${work.evidenceRoot}/execution-state.json`;
   const state = readJson(repo, statePath, 'Execution State');
-  const activeBatch = validateExecutionState(repo, work, pack, state, { requireComplete });
+  const activeBatch = validateExecutionState(repo, work, pack, state, { requireComplete, historical });
   return { pack, state, activeBatch };
 }
 
 /** 校验运行时状态、冻结计划、当前批次和全部已通过单元的真实结果。 */
-function validateExecutionState(repo, work, pack, state, { requireComplete = false } = {}) {
+function validateExecutionState(repo, work, pack, state, { requireComplete = false, historical = false } = {}) {
   if (state.schemaVersion !== VERSION || state.workItemId !== work.workItemId || state.stack !== work.stack || state.implementationPackageRef !== work.implementationPackageRef.path) {
     throw new WorkflowError('Execution State 未绑定当前工作项和实施包');
   }
@@ -195,7 +195,7 @@ function validateExecutionState(repo, work, pack, state, { requireComplete = fal
     if (resultState.status === 'PASS') {
       const resultPath = requireFile(repo, unit.resultPath, '执行单元结果');
       const result = readJson(repo, resultPath, 'Execution Unit Result');
-      validateUnitResult(repo, work, pack, unit, result);
+      validateUnitResult(repo, work, pack, unit, result, { historical });
     }
   }
   const activeBatch = expectedActiveBatch(plan.batches, state.units);
@@ -577,9 +577,9 @@ function resolveReturn(work, from, to, args) {
 }
 
 /** 来源必须先符合工作项合同，再执行完整状态及工程证据检查。 */
-function inspectFunctionSource(repo, source) {
+function inspectFunctionSource(repo, source, { historical = false } = {}) {
   validateWork(source, { repo });
-  return inspectWork(repo, source, { strict: true });
+  return inspectWorkCore(repo, source, { strict: true, checkFunctionBaseline: true, historical });
 }
 
 /** 冻结工程记录的内容身份，避免后续只凭路径存在复用过期证据。 */
@@ -636,16 +636,16 @@ async function freezeFunctionBaseline(repo, work) {
 }
 
 /** 显示层执行结果必须明确记录实际验证的宿主与层类型。 */
-function assertFunctionHostResults(repo, work) {
+function assertFunctionHostResults(repo, work, { historical = false } = {}) {
   if (work.workItemType !== 'DISPLAY_LAYER') return;
-  const { pack } = inspectExecution(repo, work, { requireComplete: true });
+  const { pack } = inspectExecution(repo, work, { requireComplete: true, historical });
   for (const unit of pack.executionUnits) {
     const result = readJson(repo, unit.resultPath, '显示层功能执行结果');
     if (result.hostId !== work.visual.hostId || result.layerType !== work.visual.layerType) throw new WorkflowError('显示层功能执行结果未绑定当前宿主及类型');
   }
 }
 
-/** V2 起持续重验功能来源及 V1 实际工程记录，禁止清空阶段引用后凭空通过。 */
+/** V2 起重验功能来源及 V1 工程记录；仅历史来源可允许业务交付增量变化。 */
 export function assertFunctionBaseline(repo, work, { historical = false } = {}) {
   if (!work.visual || ['V0', 'V1'].includes(work.visual.stage)) return;
   const ref = work.visual.functionBaselineRef;
@@ -655,7 +655,7 @@ export function assertFunctionBaseline(repo, work, { historical = false } = {}) 
   if (work.workItemType === 'DISPLAY_LAYER' && (snapshot.hostId !== work.visual.hostId || snapshot.layerType !== work.visual.layerType)) throw new WorkflowError('显示层宿主或类型已变化，必须重新验证功能');
   if (snapshot.mode === 'dependencies') {
     if (!sameFunctionDependencies(repo, snapshot.dependencies, work.visual.functionDependencies)) throw new WorkflowError('功能依赖已变化，必须重新验证 V1');
-    validateFeatureDependencies(repo, work, inspectFunctionSource);
+    validateFeatureDependencies(repo, work, historical ? (root, source) => inspectFunctionSource(root, source, { historical: true }) : inspectFunctionSource);
     if (!Array.isArray(snapshot.sources) || snapshot.sources.length !== snapshot.dependencies.length) throw new WorkflowError('功能基线缺少来源执行记录');
     for (const [index, sourceSnapshot] of snapshot.sources.entries()) {
       const source = readJson(repo, dependencyPath(repo, snapshot.dependencies[index].workItemRef.path), '功能来源工作项');
@@ -677,8 +677,8 @@ export function assertFunctionBaseline(repo, work, { historical = false } = {}) 
     assertGates(original, ['F0', 'F1', 'F2', 'F3']);
     validateEvidence(repo, original, { requireEngineering: true, requireVisual: false, requireAssetImport: false });
   }
-  inspectExecution(repo, original, { requireComplete: true });
-  assertFunctionHostResults(repo, original);
+  inspectExecution(repo, original, { requireComplete: true, historical });
+  assertFunctionHostResults(repo, original, { historical });
 }
 
 /** 从不可变执行记录提取每个交付文件及其原有功能验收命令。 */

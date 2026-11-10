@@ -38,6 +38,8 @@ Unity／Cocos 先按锁定引擎版本核对官方 Web、小游戏适配或原�
 
 ## 能力适配与 SDK 边界
 
+接入过程按[工具与能力核实](../../app-domain-toolkit/references/tool-capability-verification.md)分别证明指导资料、工具连接、实际操作和真实结果；Skill、开发工具或依赖已下载，不等于已有广告桥接、专用导出器或业务能力通过。候选准备按[实际构建输出绑定](release-readiness.md#实际构建输出与候选绑定)选择当前导出产物，避免旧包参与宿主验证。
+
 - 复用[独立 SDK 管理](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)：业务依赖登录、广告、支付、存储等稳定能力接口；每个渠道适配器独立管理宿主 API、初始化、回调和错误映射。只实现实际需求，不为五个平台预建一套空管理器。
 - 构建时确定导出方案、支持平台范围与环境；支持同包复用时由运行时平台判断选择配置和 SDK，确需专用工程时分别导出。按实际平台隔离应用 ID、广告位、包标识和入口，原生插件遵守真实打包边界。未选中平台不导入有副作用的 SDK，不向网页注入 `wx`／`tt` 替身冒充正式能力；不支持时返回明确受限结果，测试替身只用于测试。客户端公开配置与服务端秘密分开，AppSecret、会话密钥、私钥、商店 API 凭据不进入客户端包或日志。
 - 渠道 SDK 的真实初始化前置按锁定版本遵守，依赖它的调用须等其就绪；单 SDK 失败不阻断无关模块，不设置等待全部 SDK 的屏障或无限加载页。超时／失败明确恢复或限制对应能力，不能将超时视为初始化成功。平台加载事件是遥测，[应用内加载显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)和[系统启动屏](../../app-domain-toolkit/references/system-launch-screen.md)仍由各自所有者管理，不以事件上报代替内容可用。

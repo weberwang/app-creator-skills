@@ -212,9 +212,9 @@ MAX 初始化成功后，广告服务去重投递启用的插页与激励视频�
 本节关闭 MAX 内建流程的配置为默认方案，不代表可以绕过已采用 CMP 的官方前置。按锁定平台和版本核实：自集成 CMP 必须在 MAX 初始化前完成；明确采用内建流程时由 initialize 触发，流程结束后才有初始化完成回调，相关 MMP/分析 SDK 按官方要求等待。下文“隐私不参与初始化”的独立路径、恢复及替身测试仅适用于已核实没有该前置的组合；不适用时仅阻断对应 SDK 并记录原因，不能强行 initialize，游戏及无关 SDK 继续。`false` 不是 CMP 完成或用户选择证明，不单独证明所有地区、渠道允许请求。
 
 1. 唯一初始化入口检查受控平台配置、当前 Activity/ViewController、环境开关与原生 SDK 配置；Web/小游戏直接 no-op。Cocos 引擎和 AssetDB 按自身生命周期运行，不作为第三方 SDK 初始化的一部分。
-2. 每个新 MAX 实例首次初始化前，通过锁定插件/SDK 支持的原生入口设置 `hasUserConsent=false`，并在初始化前关闭 MAX 内建 Terms and Privacy Policy Flow。Android 官方原生 API 为 `AppLovinPrivacySettings.setHasUserConsent(false)` 与 `AppLovinSdk.getInstance(context).getSettings().getTermsAndPrivacyPolicyFlowSettings().setEnabled(false)`；iOS 官方原生 API 为 `[ALPrivacySettings setHasUserConsent:NO]` 与 `[ALSdk shared].settings.termsAndPrivacyPolicyFlowSettings.enabled = NO`（Swift 使用 `isEnabled = false`）。随后由统一初始化模块调用当前版本的 MAX `initialize` 并只凭真实完成回调确认成功。按项目锁定 SDK/插件版本核验调用可用性和最终生效值。
-3. 官方也支持原生资源配置 `consent_flow_enabled=false`（Android）和 `ConsentFlowEnabled=NO`（iOS）。如项目采用资源配置，应合并保留其他有效值，并检查打包后的有效配置；不能因官方页面演示启用示例而保留 `true`。关闭流程不等于关闭 SDK、跳过 MAX 初始化或完成用户同意收集。
-4. 首次设置的 `hasUserConsent=false` 是 MAX 配置，不是用户已同意或拒绝的回执，不得据此伪造 CMP/TCF/ATT 结果或阻断初始化、广告请求和 load 重试。后续真实用户选择到达时按锁定插件官方接口同步，不由同实例初始化重试再次写入初始 `false` 覆盖。真实适用的 CMP/TCF、地区、网络及 ATT 条件继续由各自流程处理；确有官方前置时不得伪造完成，只阻断对应 SDK/广告动作并记录来源。
+2. 每个新 MAX 实例首次初始化前先读取已有真实授权快照，按所选隐私路径和锁定插件/SDK 的官方语义映射；仅无有效选择且手动标志路径适用时设置 `hasUserConsent=false`，不得覆盖已确定选择。默认关闭 MAX 内建 Terms and Privacy Policy Flow，明确采用时按官方方式启用并保留其流程；按项目锁定版本核验调用及最终生效值。默认手动路径的 Android 原生入口包括 `AppLovinPrivacySettings.setHasUserConsent(false)` 与 `AppLovinSdk.getInstance(context).getSettings().getTermsAndPrivacyPolicyFlowSettings().setEnabled(false)`；iOS 对应 `[ALPrivacySettings setHasUserConsent:NO]` 与 `[ALSdk shared].settings.termsAndPrivacyPolicyFlowSettings.enabled = NO`（Swift 使用 `isEnabled = false`）。满足该路径真实前置后由统一初始化模块调用 `initialize` 并只凭真实完成回调确认成功；内建路径按其官方顺序执行，不机械叠加手动示例。
+3. 默认关闭路径可按锁定版本核实原生资源配置 `consent_flow_enabled=false`（Android）和 `ConsentFlowEnabled=NO`（iOS）。如采用资源配置，应合并保留其他有效值，并检查最终包的有效配置；明确采用内建流程时保留官方要求的启用配置。关闭流程不等于关闭 SDK、跳过初始化或完成用户同意收集。
+4. 适用手动路径中设置的 `hasUserConsent=false` 是 MAX 配置，不是用户已同意或拒绝的回执，不得据此伪造 CMP/TCF/ATT 结果或阻断初始化、广告请求和 load 重试。后续真实用户选择到达时按锁定插件官方接口同步，同实例重试和新实例初始化都不得用初始 `false` 覆盖真实选择。真实适用的 CMP/TCF、地区、网络及 ATT 条件继续由各自流程处理；确有官方前置时不得伪造完成，只阻断对应 SDK/广告动作并记录来源。
 5. iOS `Info.plist` 按当前 AppLovin SKAdNetwork 页面与实际启用的 mediated networks 生成/维护 `SKAdNetworkItems`，不能复制过期固定清单。Android/iOS 隐私 manifest、数据安全声明、商店隐私资料和目标地区限制由发布责任人核对；ATT 描述和请求时序按平台官方流程及项目决策处理，不重复弹窗，也不把未授权结果说成已授权。
 6. 不擅自新增 CMP；已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。对实际适用的渠道核对真实授权配置及网络覆盖。任何外部控制台配置由责任人在授权范围内完成。隐私状态由适配层按官方 API 如实读取/传递；广告请求门只表达确有适用的阻断条件，不能仅因 `hasUserConsent=false` 返回 `privacy-pending` 或 `privacy-blocked`。儿童数据、年龄限制和地区义务不能自行假设或绕过。
 
@@ -318,8 +318,8 @@ MAX 初始化成功后，广告服务去重投递启用的插页与激励视频�
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#状态机和非阻塞单测)。
 
-- 用原生插件替身核验新实例首次初始化前先设置 `hasUserConsent=false` 并关闭 MAX 内建 Terms and Privacy Policy Flow，再调用 `initialize`；同实例重入/初始化重试不重复写入 false 或覆盖后续真实用户选择，新实例重新按首次配置执行。
-- 对已核实无官方 CMP 初始化前置的组合，使用永不结束、失败和返回真实状态的独立 CMP/ATT 替身验证；另测必须先完成 CMP 的组合在未满足前置时只阻断 MAX：MAX 内建流程关闭后，MAX 的真实初始化回调可独立确认 SDK 成功，不等待 CMP/ATT 用户界面；CMP/TCF/ATT 的真实状态与错误只更新对应隐私任务，不改变 MAX 初始化状态。
+- 用原生插件替身分别核验：默认关闭内建流程且无有效选择、官方手动标志路径适用时，先设置 `hasUserConsent=false` 再调用 `initialize`；已有真实选择时按快照映射而不覆盖；明确采用内建流程时保持启用，按官方流程等待真实完成回调及适用的 MMP/分析依赖。同实例重入和新实例初始化均不覆盖已有或后续选择。
+- 对已核实无官方 CMP 初始化前置且关闭内建流程的组合，使用永不结束、失败和返回真实状态的独立 CMP/ATT 替身验证 MAX 可凭真实回调独立确认成功；另测必须先完成 CMP 的组合在未满足前置时只阻断 MAX。明确采用内建流程时验证 initialize 触发流程并按真实回调和官方依赖推进。CMP/TCF/ATT 的真实状态与错误不覆盖已确认的 MAX 初始化状态。
 - 对 MAX 任务的假时钟/原生回调分别验证瞬时错误的 2/4/8/16/32/64 秒退避、`0.8–1.2` 抖动及 64 秒硬上限；重复瞬时失败无次数上限。配置/依赖/明确策略错误修正前不自动请求；unknown 先诊断，不能凭错误文本无限退避。
 - 分别注入当前有效请求的同步调用异常、本地受理拒绝和 SDK 官方失败回调，断言它们按真实失败信号分类；只有纯超时或完全无回调时保持 in-flight，不伪造失败或启动重试。
 - 关闭 `host`、`foreground`、`connectivity` 任一门时验证暂停 timer 且保留单调 deadline 和失败计数；恢复时仅按 deadline 恢复一次，重复恢复事件不能重复投递。

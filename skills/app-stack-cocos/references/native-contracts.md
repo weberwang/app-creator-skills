@@ -343,7 +343,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 
 1. 仅对已选渠道按[渠道接入规范](../../app-release/references/channel-platform-integration.md)核对对应构建、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与适用账号删除要求；小游戏采用 Creator 对应平台构建，原生目标采用 Creator 自身导出，不为未选渠道制造候选。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
-3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)按[Creator 生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核对锁定 Creator 版本的 release 配置、压缩/混淆、注释移除、生产 Source Map 关闭、最终已解包候选扫描及 Feature Cropping 评估；Creator 的编辑器配置、CLI 覆盖和构建扩展以实际有效结果为准，不套用 Vite/Terser 固定键。候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
+3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)按[Creator 生产构建与发布检查](../../cocos-game-architecture/references/production-build.md)核对锁定 Creator 版本的 release 配置、压缩/混淆、注释移除、生产 Source Map 关闭、最终已解包候选扫描及 Feature Cropping 评估；Creator 的编辑器配置、CLI 覆盖和构建扩展以实际有效结果为准，不套用 Vite/Terser 固定键。候选 SHA、包哈希按实际合同和计划选择，不统一设为必填；已纳入验收的候选身份或文件快照检查必须通过，失败时按[候选绑定规则](../../app-release/references/release-readiness.md#只读候选文件快照)核实变化、处理并复验，不能因摘要可选而跳过失败或延后到人工验收之后。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 5. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)
 <!-- native-source:cocos-game-release:end -->
@@ -850,7 +850,7 @@ Creator 资源导入/刷新、AssetDB 查询、场景引用核验和编辑器构
 - 不得在 Cocos 场景或普通业务组件中持有 SDK key、广告网络凭证、MAX 原生对象或原生宿主 View。SDK key 与 ad unit ID 由受控分环境构建配置注入原生适配层；账号凭证与 Ad Review key 不进入客户端。
 - 初始化和加载不得阻塞场景切换、输入、结算或主循环。插页与激励视频静默预加载；全屏展示只在自然中断点按当前就绪状态尝试。Banner 按请求创建/加载，只有已就绪且区域安全时显示。
 - 每个广告位独立维护状态、失败计数、deadline 和至多一个重试任务；加载/重试静默。奖励只由匹配的激励回调异步发放并保证幂等；视频不可用或展示失败时通过统一 UI 显示一次本地化提示。
-- MAX 内建 Terms and Privacy Policy Flow 在初始化前关闭；新实例首次初始化前由统一初始化入口设置 `hasUserConsent=false`。该值是 MAX 配置，不是用户回执，也不单独阻断广告请求；真实 CMP/TCF、地区、网络和 ATT 要求继续按官方文档处理。具体配置和隐私门以细则合同为准。
+- MAX 内建 Terms and Privacy Policy Flow 默认关闭，明确采用时保持启用并按官方要求处理相关 SDK 依赖。新实例首次初始化前先核对已有真实授权快照，按适用官方路径映射；仅无有效选择且手动标志路径适用时设置 `hasUserConsent=false`，不得覆盖真实选择。该值不是用户回执，也不单独阻断广告请求；真实 CMP/TCF、地区、网络和 ATT 要求按官方文档处理。具体配置和隐私门以细则合同为准。
 
 <a id="mode-cocos-game-ad-integration--全局控制接入"></a>
 #### 全局控制接入

@@ -1,14 +1,16 @@
 /** 验证真实控制器的生产范围、计划冻结和跨批次依赖接线。 */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, linkSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { completeUnit, initializeWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { completeUnit, initializeWork, inspectProductionDependencyHistory, inspectWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
+import { validateUnitResult } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
+import { freezeDeletionBaseline, validateDeletedFiles } from '../../skills/app-workflow-control/scripts/runtime/deletion-baseline.mjs';
 
 /** 创建独占项目，递归清理前核对其真实路径和前缀。 */
 function project(t) {
@@ -50,7 +52,7 @@ function definition() {
 }
 
 /** 通过真实初始化与 plan 入口建立有界功能实施，不自动设置工程通过。 */
-async function prepare(repo, id, batchId, dependenciesPath) {
+async function prepare(repo, id, batchId, dependenciesPath, paths = ['src/flow.ts']) {
   const initialized = await initializeWork({ repo, args: {
     id, stack: 'expo', type: 'MODULE', objective: '验证生产接线', 'project-id': 'fixture',
     'production-scope': 'docs/flow.json', 'production-batch': batchId,
@@ -62,19 +64,20 @@ async function prepare(repo, id, batchId, dependenciesPath) {
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   put(repo, workPath, work);
   const planPath = `docs/plan-${id}.json`;
-  put(repo, planPath, { executionUnits: [{ unitId: id, owner: 'fixture', paths: ['src/flow.ts'], acceptanceCommands: ['node --version'] }] });
+  put(repo, planPath, { executionUnits: [{ unitId: id, owner: 'fixture', paths, acceptanceCommands: ['node --version'] }] });
   await prepareWorkRecords({ repo, workItem: workPath, planPath });
   await transitionWork({ repo, workItem: workPath, to: 'REVIEW', args: {} });
   return { repo, workPath, work: loadWork(repo, workPath) };
 }
 
 /** 用显式合成材料完成首批功能闭环，供后批核验历史完成记录。 */
-async function completeFirst(context) {
+async function completeFirst(context, { deleted = false } = {}) {
   const { repo, workPath } = context;
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   let work = loadWork(repo, workPath);
   const root = work.evidenceRoot;
-  put(repo, 'src/flow.ts', '// 合同测试的合成代码\n');
+  if (deleted) unlinkSync(join(repo, 'src/flow.ts'));
+  else put(repo, 'src/flow.ts', '// 合同测试的合成代码\n');
   const raw = put(repo, `${root}/raw.txt`, '合同测试合成输出，不代表真实 App 已运行\n');
   const coverage = {
     schemaVersion: '1.0', scopeId: 'edit-flow', workItemId: work.workItemId, projectId: 'fixture', stack: 'expo',
@@ -84,7 +87,7 @@ async function completeFirst(context) {
   put(repo, `${root}/coverage.json`, coverage);
   const reportPath = `${root}/report.json`;
   put(repo, reportPath, {
-    files: ['src/flow.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: raw.path }],
+    files: deleted ? [] : ['src/flow.ts'], ...(deleted ? { deletedFiles: ['src/flow.ts'] } : {}), commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: raw.path }],
     evidence: [
       { category: 'typecheck', path: raw.path }, { category: 'tests', path: raw.path },
       { category: 'production-coverage', path: `${root}/coverage.json` }, { category: 'production-output', path: raw.path },
@@ -155,4 +158,74 @@ test('真实前批完成后冻结依赖，unit-check 持续拒绝被改写的前
   assert.notEqual(captured.status, 0);
   assert.equal(existsSync(join(repo, output)), false);
   assert.equal(loadWork(repo, second.workPath).globalState, 'IMPLEMENTING');
+});
+
+test('后批更名并替换业务交付时，历史依赖仍有效而当前检查保持严格', async (t) => {
+  const repo = project(t);
+  put(repo, 'docs/flow.json', definition());
+  const first = await prepare(repo, 'edit', 'edit');
+  const finished = await completeFirst(first);
+  put(repo, 'docs/dependencies.json', [{ batchId: 'edit', workItemRef: { path: first.workPath } }]);
+  const second = await prepare(repo, 'save', 'save', 'docs/dependencies.json', ['src']);
+  await transitionWork({ repo, workItem: second.workPath, to: 'IMPLEMENTING', args: {} });
+  renameSync(join(repo, 'src/flow.ts'), join(repo, 'src/flow-next.ts'));
+  assert.equal(inspectProductionDependencyHistory(repo, finished, first.workPath).status, 'PASS');
+  assert.match(inspectWork(repo, finished, { strict: true }).blocking.join(' '), /交付文件不存在/);
+  const output = `${second.work.evidenceRoot}/capture.json`;
+  const captured = spawnSync(process.execPath, [resolve('skills/app-workflow-control/scripts/capture-command.mjs'), '--repo', repo, '--work-item', second.workPath, '--unit', 'save', '--index', '1', '--output', output], { encoding: 'utf8', windowsHide: true });
+  assert.equal(captured.status, 0, captured.stderr);
+  const report = `${second.work.evidenceRoot}/report.json`;
+  put(repo, report, { files: ['src/flow-next.ts'], deletedFiles: ['src/flow.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [] });
+  const recorded = await recordWorkResult({ repo, workItem: second.workPath, unitId: 'save', reportPath: report });
+  assert.equal((await completeUnit({ repo, workItem: second.workPath, resultPath: recorded.metadata.resultPath })).status, 'PASS');
+  put(repo, `${finished.evidenceRoot}/raw.txt`, '历史输出遭到改写');
+  assert.equal(inspectProductionDependencyHistory(repo, finished, first.workPath).status, 'BLOCKED');
+});
+
+test('后批重建历史删除路径时仍保留删除前基线验证', async (t) => {
+  const repo = project(t);
+  put(repo, 'docs/flow.json', definition());
+  put(repo, 'src/flow.ts', '// 删除前的业务文件\n');
+  const first = await prepare(repo, 'edit', 'edit');
+  const finished = await completeFirst(first, { deleted: true });
+  put(repo, 'docs/dependencies.json', [{ batchId: 'edit', workItemRef: { path: first.workPath } }]);
+  const second = await prepare(repo, 'save', 'save', 'docs/dependencies.json');
+  await transitionWork({ repo, workItem: second.workPath, to: 'IMPLEMENTING', args: {} });
+  put(repo, 'src/flow.ts', '// 后批重新实现\n');
+  assert.equal(inspectProductionDependencyHistory(repo, finished, first.workPath).status, 'PASS');
+  assert.match(inspectWork(repo, finished, { strict: true }).blocking.join(' '), /仍然存在或已重建/);
+});
+
+test('仅接受已申报且唯一的真实更名，未申报与多硬链接仍拒绝', (t) => {
+  const repo = project(t);
+  put(repo, 'src/old.ts', '已有业务文件');
+  const unit = { unitId: 'one', paths: ['src'] };
+  const pack = { executionUnits: [unit] };
+  const state = { activeBatch: ['one'], executionPlan: { batches: [{ unitIds: ['one'] }] } };
+  freezeDeletionBaseline(repo, pack, state);
+  put(repo, 'evidence/execution-state.json', state);
+  const work = { evidenceRoot: 'evidence', allowedPaths: ['**'], forbiddenPaths: [] };
+  renameSync(join(repo, 'src/old.ts'), join(repo, 'src/new.ts'));
+  /** 验证当前声明是否能证明安全更名。 */
+  const check = (deliveredFiles) => validateDeletedFiles(repo, work, pack, unit, ['src/old.ts'], {}, [], { deliveredFiles });
+  assert.throws(() => check([]), /硬链接别名/);
+  assert.doesNotThrow(() => check(['src/new.ts']));
+  linkSync(join(repo, 'src/new.ts'), join(repo, 'src/extra.ts'));
+  assert.throws(() => check(['src/new.ts']), /硬链接别名/);
+});
+
+test('历史交付与控制记录或证据重合时仍要求真实文件存在', (t) => {
+  const repo = project(t);
+  const work = { workItemId: 'one', stack: 'expo', evidenceRoot: 'evidence', implementationPackageRef: { path: 'docs/plan.json' }, allowedPaths: ['**'], forbiddenPaths: [] };
+  const unit = { unitId: 'one', sequence: 1, paths: ['**'], acceptanceCommands: [], resultPath: 'evidence/result.json' };
+  const pack = { executionUnits: [unit] };
+  const result = { schemaVersion: '1.0', status: 'PASS', workItemId: 'one', stack: 'expo', implementationPackageRef: 'docs/plan.json', unitId: 'one', sequence: 1, exitCode: 0, files: ['docs/plan.json', 'evidence/raw.txt'], commandOutputs: [] };
+  put(repo, 'docs/plan.json', '{}');
+  put(repo, 'evidence/raw.txt', '证据');
+  assert.doesNotThrow(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }));
+  unlinkSync(join(repo, 'evidence/raw.txt'));
+  assert.throws(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }), /交付文件不存在/);
+  put(repo, 'evidence/raw.txt', '证据');
+  unlinkSync(join(repo, 'docs/plan.json'));
+  assert.throws(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }), /交付文件不存在/);
 });

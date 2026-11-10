@@ -35,6 +35,8 @@ Unity、Cocos、Roblox 任务新增显示元素时，统一遵循[显示元素�
 
 生成、送审及正式接入前按[工作流输出文件规范](../app-creator-workflow/references/output-files.md)明确实际产物及其位置，沿用本栈原生映射；按需保存媒体、布局数据、生成记录和必要源输入。多候选、重验或合同要求时记录真实批次／版本，不为无相关产物创建占位文件。确认目录不代替真实确认，归档副本不替换冻结原件，正式消费者不从临时／审阅目录加载。
 
+生成、制作、导入、替换或复用素材时，按[资源来源与消费者关联](references/asset-provenance.md)在现有唯一素材清单中关联需求／参考、实际制作来源与处理、正式资源身份和真实消费者；已有事实直接引用，仅更新受影响关系。正式素材完成还须有适用导入回读、运行结果和用户人工显示确认，不由清单或文件存在推断通过。
+
 涉及加载显示时，按[加载显示任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)明确实际视觉与素材交付及验收；跨角色交接时指定负责人，按实际需要传递有效目标、布局依赖和消费入口。复用合格素材或原生实现时沿用已有依据，不强制新增图片。素材完成后交接实际路径及导入结果，不能用加载服务已实现代替显示设计与资源交付。
 
 生产规格使用 [style-recipe.json](templates/style-recipe.json) 与 [asset-task.json](templates/asset-task.json)，作为控制器记录的支持资料；它们不引入第二套状态。最终基线、素材验收、阶段确认分别使用控制器 templates 中的 `global-visual-baseline`、`asset-review` 与 Work Item 的 `visual.reviews`。真实用户消息只记录来源，不能由代理伪造批准。

@@ -159,7 +159,7 @@ function pathsOverlap(left, right) {
 }
 
 /** 校验候选工作项的执行单元结果、命令输出及证据归属。 */
-export function validateUnitResult(repo, work, pack, unit, result) {
+export function validateUnitResult(repo, work, pack, unit, result, { historical = false } = {}) {
   if (!result || result.schemaVersion !== VERSION || result.status !== 'PASS') throw new WorkflowError('执行结果必须绑定 schemaVersion 1.0 且真实状态 PASS');
   for (const [field, expected] of Object.entries({
     workItemId: work.workItemId, stack: work.stack,
@@ -169,12 +169,17 @@ export function validateUnitResult(repo, work, pack, unit, result) {
   if (result.exitCode !== 0) throw new WorkflowError('执行单元退出码必须为 0');
   if (!Array.isArray(result.files) || (result.deletedFiles !== undefined && !Array.isArray(result.deletedFiles)) || (!result.files.length && !result.deletedFiles?.length)) throw new WorkflowError('执行结果必须列出实际变更或删除文件');
   const profile = loadProfile(repo, work.stack);
+  const protectedPaths = [getWorkSource(work), ...collectWorkReferencePaths(work, repo), ...pack.executionUnits.map((item) => item.resultPath)].filter(Boolean);
+  /** 按操作系统路径语义比较控制记录和交付文件。 */
+  const key = (path) => { const relative = repoPath(repo, path).relative; return process.platform === 'win32' ? relative.toLowerCase() : relative; };
+  const protectedSet = new Set(historical ? protectedPaths.map(key) : []);
   result.files.forEach((path) => {
     const normalized = assertOwnedPath(repo, work, profile, path);
     if (!unit.paths.some((owned) => pathMatch(normalized, owned))) throw new WorkflowError(`执行结果越过单元 ${unit.unitId} 的文件所有权：${normalized}`, 'UNIT_PATH_OUT_OF_SCOPE');
-    requireFile(repo, path, '执行结果中报告的交付文件');
+    // 历史业务交付可由后批更名或删除；记录和证据仍按原路径验证。
+    if (!historical || protectedSet.has(key(normalized)) || pathMatch(key(normalized), `${key(work.evidenceRoot)}/**`)) requireFile(repo, path, '执行结果中报告的交付文件');
   });
-  validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, [getWorkSource(work), ...collectWorkReferencePaths(work, repo), ...pack.executionUnits.map((item) => item.resultPath)].filter(Boolean));
+  validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, protectedPaths, { historical, deliveredFiles: result.files });
   if (!Array.isArray(result.commandOutputs) || result.commandOutputs.length !== unit.acceptanceCommands.length) {
     throw new WorkflowError('验收命令实际输出必须与声明命令一一对应');
   }

@@ -84,7 +84,7 @@ export function validateDeletionBaselineState(state, batches) {
 }
 
 /** 验证删除目标原先真实存在、已消失，且不越权或借由并发硬链接冒用。 */
-export function validateDeletedFiles(repo, work, pack, unit, deleted, profile, protectedPaths) {
+export function validateDeletedFiles(repo, work, pack, unit, deleted, profile, protectedPaths, { historical = false, deliveredFiles = [] } = {}) {
   if (!Array.isArray(deleted)) throw new WorkflowError('deletedFiles 必须为数组');
   if (!deleted.length) return;
   const state = readJson(repo, `${work.evidenceRoot}/execution-state.json`, 'Execution State');
@@ -92,13 +92,14 @@ export function validateDeletedFiles(repo, work, pack, unit, deleted, profile, p
   if (!Array.isArray(baseline)) throw new WorkflowError('删除操作缺少实施前冻结的文件基线');
   const key = (value) => process.platform === 'win32' ? value.toLowerCase() : value;
   const protectedSet = new Set(protectedPaths.map((path) => key(repoPath(repo, path).relative)));
+  const deliveredSet = new Set(deliveredFiles.map((path) => key(repoPath(repo, path).relative)));
   const unique = new Set();
   const batch = state.executionPlan?.batches?.find((item) => item.unitIds.includes(unit.unitId));
   const aliases = new Map();
   // 每次核验只扫描同批所有权一次，成本不随删除条目数重复放大。
-  for (const unitId of new Set([unit.unitId, ...(batch?.unitIds ?? [])])) {
+  for (const unitId of historical ? [] : new Set([unit.unitId, ...(batch?.unitIds ?? [])])) {
     const owner = pack.executionUnits.find((item) => item.unitId === unitId);
-    if (owner) aliases.set(unitId, new Set(snapshotFiles(repo, owner.paths, { hashContent: false }).map((item) => `${item.dev}:${item.ino}`)));
+    if (owner) aliases.set(unitId, snapshotFiles(repo, owner.paths, { hashContent: false }));
   }
   for (const path of deleted) {
     const normalized = assertOwnedPath(repo, work, profile, path);
@@ -109,16 +110,24 @@ export function validateDeletedFiles(repo, work, pack, unit, deleted, profile, p
     unique.add(pathKey);
     if (!unit.paths.some((owned) => pathMatch(normalized, owned))) throw new WorkflowError(`删除文件越过单元所有权：${normalized}`);
     if (protectedSet.has(pathKey) || pathMatch(normalized, `${work.evidenceRoot}/**`)) throw new WorkflowError(`不能删除工作流保留记录：${normalized}`);
-    assertNoLinks(repo, normalized);
-    if (statOrNull(repoPath(repo, normalized).absolute)) throw new WorkflowError(`删除文件仍然存在或已重建：${normalized}`);
     const old = baseline.find((item) => key(item.path) === pathKey);
     if (!old || !/^[a-f0-9]{64}$/.test(old.sha256 ?? '') || !old.dev || !old.ino || old.links !== 1) throw new WorkflowError(`删除文件缺少安全的实施前存在性及内容基线：${normalized}`);
+    // 历史删除只核对冻结基线，后批可以重新创建该业务路径。
+    if (historical) continue;
+    assertNoLinks(repo, normalized);
+    if (statOrNull(repoPath(repo, normalized).absolute)) throw new WorkflowError(`删除文件仍然存在或已重建：${normalized}`);
     // 同批其他所有权内即使后来新增硬链接，也不能把该文件冒充为独立删除。
     const identity = `${old.dev}:${old.ino}`;
-    if (aliases.get(unit.unitId)?.has(identity)) throw new WorkflowError(`删除文件仍存在硬链接别名：${normalized}`);
+    const ownedAliases = (aliases.get(unit.unitId) ?? []).filter((item) => `${item.dev}:${item.ino}` === identity);
+    if (ownedAliases.length) {
+      // 仅接受同一单元明确交付、单链接且未经过链接路径的真实更名。
+      const renamed = ownedAliases.length === 1 && ownedAliases[0].links === 1 && deliveredSet.has(key(ownedAliases[0].path));
+      if (!renamed) throw new WorkflowError(`删除文件仍存在硬链接别名：${normalized}`);
+      assertNoLinks(repo, ownedAliases[0].path);
+    }
     for (const otherId of batch?.unitIds ?? []) {
       if (otherId === unit.unitId) continue;
-      if (aliases.get(otherId)?.has(identity)) {
+      if (aliases.get(otherId)?.some((item) => `${item.dev}:${item.ino}` === identity)) {
         throw new WorkflowError(`删除文件与并行单元存在硬链接别名：${normalized}`);
       }
     }

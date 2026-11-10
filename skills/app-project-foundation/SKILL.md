@@ -5,6 +5,8 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 
 # 项目初始化与基础运行时
 
+基础工程与插件／SDK 接入按[工具与接入能力核实](../app-domain-toolkit/references/tool-capability-verification.md)区分指导资料、工具连接、操作可执行和结果验证；只检查本次所需操作，复用真实实例，缺口只限制受影响任务，不以插件安装或命令受理代替能力接通。
+
 为新项目建立可复现的最小启动基线，或在已有项目中围绕真实运行时问题做有限迭代。先判断模式；既有项目的修复不得默认重建脚手架或替换成熟架构。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。

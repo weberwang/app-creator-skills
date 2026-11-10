@@ -337,7 +337,7 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 1. 仅对已选渠道按[渠道接入规范](../../app-release/references/channel-platform-integration.md)核对对应构建、版本、图标截图、描述、隐私、分级、广告或内购披露、数据收集与适用账号删除要求，不把普通 Web 包直接视为小游戏工程或商店原生候选。
    对已选 Android/iOS 原生包核对生产 Web 输出、`webDir`、宿主同步和最终包中的入口、本地启动资源及原生主题/launch screen；背景与稳定首帧衔接由用户人工检查，未运行原生目标标记未验证，Web build 成功不能代替原生验收。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
-3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希仅作可选追踪，不要求填写或匹配，不阻断发布工作项验收；摘要核对留到最终人工验收后处理。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
+3. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)候选 SHA、包哈希按实际合同和计划选择，不统一设为必填；已纳入验收的候选身份或文件快照检查必须通过，失败时按[候选绑定规则](../../app-release/references/release-readiness.md#只读候选文件快照)核实变化、处理并复验，不能因摘要可选而跳过失败或延后到人工验收之后。共享基础和关键玩法流证据只能证明各自范围；发布 Work Item 应覆盖实际目标渠道/平台矩阵，并以本栈发布清单确认对应项，不得自动发起真机验收。
    按[生产构建压缩与发布检查](../../phaser4-game-architecture/references/production-build.md)检查最终候选：Vite 生产入口显式设置 `build.sourcemap: false`，Terser 依赖、锁文件与压缩选项实际生效；检查所有公开产物及渠道包内 Web 资源，不得包含 Source Map 文件、内联映射或映射引用。登记 Phaser Compressor 的版本适用性、采用结果或未采用原因；采用时核对裁剪配置、实际引擎入口、体积对比和功能烟测，防止渠道配置覆盖或重复打入完整引擎。不能将基础压缩或引擎裁剪表述为完整反编译加固。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/release.md#发布准备与依赖审查)。
 5. [公共发布候选与证据约定](../../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)

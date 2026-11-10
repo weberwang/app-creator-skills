@@ -30,7 +30,7 @@
 
 MAX 初始化任务和隐私状态处理由不同模块分别投递，只在锁定平台、版本和流程确有官方前置时等待该条件。自集成 CMP 按官方要求在 MAX 初始化前完成；明确采用内建流程时由 initialize 触发，结束后才接收完成回调，相关 MMP/分析 SDK 按官方前置等待。未满足仅限制依赖该条件的 SDK，游戏与无关任务继续。不擅自新增 CMP；已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。
 
-- 新 MAX 实例首次实际初始化前，按[广告合同](../../cocos-game-ad-integration/references/applovin-max-contract.md#max-隐私配置与初始化时序)调用锁定插件所支持的 `setHasUserConsent(false)`；同实例的初始化重试复用已确定配置，不再次写回 `false` 覆盖后续真实隐私更新。MAX 内建 Terms and Privacy Policy Flow 必须通过已支持的宿主或原生配置在初始化前显式关闭，并核验最终生效配置。
+- 新 MAX 实例首次实际初始化前按[广告合同](../../cocos-game-ad-integration/references/applovin-max-contract.md#max-隐私配置与初始化时序)先读取真实授权快照，并按锁定插件及所选隐私路径映射；只有无有效选择且官方手动标志路径适用时设置 `setHasUserConsent(false)`。同实例重试复用已确定配置，不覆盖已有或后续真实选择。MAX 内建 Terms and Privacy Policy Flow 默认关闭，明确采用时按官方流程启用；通过受支持配置核验最终生效值。
 - `hasUserConsent=false` 是 MAX 初始化配置，不是用户同意或拒绝回执，也不代表广告不可用。它本身不阻断 MAX 初始化、广告请求或加载恢复；广告业务仍按其他真实适用的 CMP/TCF、地区、宿主和网络条件处理。
 - 项目采用 AppsFlyer 时，在其管理文件实现初始化任务并由统一入口投递。核对锁定插件的 session-ready 及真实隐私前置；无官方依赖时不等待 MAX、广告加载或归因回调，配置、状态和失败恢复各自隔离。
 - 官方真实前置若与独立初始化目标冲突，按“独立启动与真实前置”仅报告并阻断对应 SDK；不得谎报 CMP/ATT 结果、套用其他框架 API或扩展为全局等待。
@@ -39,6 +39,6 @@ MAX 初始化任务和隐私状态处理由不同模块分别投递，只在锁�
 
 在 TDD 与实施包中记录采用的 SDK、目标平台与配置来源、真实前置、完成信号、状态所有者、失败分类、初始化重试所有者及业务使用边界。没有实际需求时不安装未采用的 SDK。
 
-目标项目的定向验证覆盖：两个 SDK 独立投递；单个 SDK 抛错、拒绝、失败或不回调时其他 SDK与首帧不受阻；重复入口、配置切换和迟到回调；平台不支持及 SDK 自身官方前置；单 SDK 重试不重跑其他 SDK；广告运行期重试与 SDK 初始化恢复互相隔离。采用 MAX/AppsFlyer 时还需核验 MAX 内建流程关闭、首次设置 `false` 后收到实际初始化回调，以及 AppsFlyer 按自身官方条件实际启动。
+目标项目的定向验证覆盖：两个 SDK 独立投递；不存在官方依赖时单个 SDK 抛错、拒绝、失败或不回调不阻止其他 SDK 与首帧；重复入口、配置切换和迟到回调；平台不支持及 SDK 自身官方前置；单 SDK 重试不重跑其他 SDK；广告运行期重试与 SDK 初始化恢复互相隔离。采用 MAX/AppsFlyer 时分别核验默认关闭与明确采用内建流程的配置及真实回调、适用的 MMP 等待；覆盖已有授权快照和无有效选择的手动 `false` 路径，并核验 AppsFlyer 按自身官方条件实际启动。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#交付与验证)。

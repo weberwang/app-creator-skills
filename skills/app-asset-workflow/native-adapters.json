@@ -83,6 +83,12 @@
   },
   "sharedWorkflows": [
     {
+      "id": "asset-provenance",
+      "path": "references/asset-provenance.md",
+      "stacks": ["roblox", "unity", "cocos", "phaser", "threejs", "flutter", "esp32", "expo"],
+      "onDemand": true
+    },
+    {
       "id": "editor-display-authoring",
       "path": "../app-domain-toolkit/references/editor-display-authoring.md",
       "stacks": [

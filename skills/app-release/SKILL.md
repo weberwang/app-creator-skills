@@ -19,6 +19,8 @@ description: "为游戏或应用准备可追溯候选版本，核对第三方配
 
 ## 共用操作步骤
 
+构建与交付按[实际构建输出与候选绑定](references/release-readiness.md#实际构建输出与候选绑定)明确本次真实输出位置及其当前输入依据；不按目录惯例、修改时间或首个存在的旧包猜选候选。工具／SDK 的宣称与实际结果按[能力核实](../app-domain-toolkit/references/tool-capability-verification.md)分别对照。
+
 1. 先明确交付是检查/候选准备还是实际上线：RELEASE 默认 releaseIntent=prepare，以真实 release-preparation 材料及必需工程证据完成准备；实际发布显式使用 publish，并保留 F4、精确批准和实际 release-result。[公共收尾规则](../app-creator-workflow/references/workflow.md#发布准备与实际上线)规定两类结果，准备完成不能标成已发布。
 2. 冻结最终候选输入前，客户端按[内购 SDK 必要性与移除](references/release-readiness.md#内购-sdk-必要性与移除)检查实际功能：没有内购功能时移除专用 SDK、依赖及相关接入，有功能时只保留实际所需依赖。按[项目清理任务](../app-artifact-cleanup/references/project-cleanup.md#清理任务拆解与安排时机)核对本轮记录及实际项目内容的清理结果／保留项，确认本地续接、提交与发布去向；未知归属先核实，不为打包越权删除。再按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)冻结源版本、依赖锁定、构建参数、内容版本与目标矩阵，保证验证绑定同一输入；后续清理改变候选输入时重建受影响产物并复验。
 3. 盘点从代码与依赖、平台/渠道构建参数、环境覆盖和远程配置到最终产物的第三方参数生效链，逐项比较目标环境的批准配置并标明证据和不确定项；秘密只通过授权的安全配置通道核对。详细检查见[第三方与正式环境核对规范](references/release-readiness.md)。
