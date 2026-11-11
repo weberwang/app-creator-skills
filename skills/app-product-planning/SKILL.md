@@ -15,7 +15,7 @@ description: "为游戏、应用或服务器制定产品与服务范围，或为
 
 首次全局视觉设计前，按[产品市场调研](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成竞品、受众与差异化分析，并交接设计依据；仅制作设计稿时也须完成。市场实验仍按用户明确范围执行。
 
-目标包含商店宣传素材时，按[商店截图与宣传图制作](../app-release/references/store-marketing-assets.md#平台要求与卖点依据)复用现有调研，提前确定目标商店/语言、真实卖点、截图内容与顺序；正式截图等相关功能和画面稳定后采集，不为宣传承诺增加不存在的玩法，也不默认开展投放或 A/B 实验。
+目标包含商店或游戏平台展示时，按[商店文案与展示素材制作](../app-release/references/store-marketing-assets.md#平台要求与卖点依据)复用现有调研，提前确定目标平台、语言和真实卖点，并按实际槽位起草商店文案、封面构图、截图顺序及视频分镜。正式画面在相关功能和显示稳定后采集。
 
 ## 输入
 
