@@ -20,11 +20,11 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 ## 共用操作步骤
 
 1. 先区分新建基础与既有运行时迭代/排错；确认仓库状态、工具链、锁文件、启动入口和用户要求，避免把已有工程当成空白脚手架。
-2. 新建时按产品计划和架构选择最小骨架、版本和运行入口。只有包含客户端界面时，才按[统一流程](../app-creator-workflow/references/workflow.md)确认界面语言、默认显示语言和适用屏幕方向：Flutter、Expo 可选横屏、竖屏或双方向，游戏只选一种，ESP32 按实际屏幕与输入。Node.js 按服务端入口、配置、数据和生命周期建立基线，不要求屏幕或视觉材料。迭代时保留现有结构，从复现路径、日志和生命周期定位最小受影响区域。
+2. 新建时按产品计划和架构选择最小骨架、版本和运行入口，只建设[首条正式功能切片](../app-creator-workflow/references/workflow.md#功能切片与跨对象依赖)必需的基础能力；沿正式入口、模块与测试路径演进，不为未来功能铺满基础设施或建立长期平行 Demo。只有包含客户端界面时，才按[统一流程](../app-creator-workflow/references/workflow.md)确认界面语言、默认显示语言和适用屏幕方向：Flutter、Expo 可选横屏、竖屏或双方向，游戏只选一种，ESP32 按实际屏幕与输入。Node.js 按服务端入口、配置、数据和生命周期建立基线，不要求屏幕或视觉材料。迭代时按[增量影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)保留现有结构，从复现路径、日志和生命周期定位最小受影响区域。
 3. 只加入当前任务必需的直接依赖；有界面的新项目补最小运行入口/首场景与资源组织。Android、iOS/iPadOS 按[系统启动屏规范](../app-domain-toolkit/references/system-launch-screen.md)落实原生配置与首帧衔接，不默认添加 Logo＋文本品牌页；服务端补应用装配、集中配置和实际启动/测试入口。均明确环境隔离，迭代时避免无关升级、入口替换或配置重建。
 4. 定义可复现安装/构建命令、环境样例和错误处理；任何密钥和平台凭证留在安全配置通道。
-5. 按当前模式验证：新建检查可复现安装、锁定依赖和最小功能路径，有界面时验证资源与交互，服务端验证配置、应用装配、实际接口/任务与关闭；迭代检查原问题复现路径、修复后回归及相关资源释放。
-6. 记录工具版本、实际命令、输出、未运行的目标设备与后续原生规范入口。
+5. 按当前模式验证：新建检查可复现安装、锁定依赖和最小功能路径，贯通实际操作／请求、业务规则、数据、反馈及适用异常恢复；有界面时验证资源与交互，服务端验证配置、应用装配、实际接口/任务与关闭。迭代检查原问题复现路径、修复后回归及相关资源释放；按[质量证据与返修复验](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)保留可重复执行的关键行为与缺陷回归测试，不仅交付一次性日志。
+6. 记录工具版本、实际命令、输出、未运行的目标设备与后续原生规范入口；按[当前项目知识](../app-creator-workflow/references/professional-conventions.md#current-project-knowledge)维护仍可执行的安装、启动、构建与测试说明，只更新变化事实，冻结历史证据不覆盖。标记临时数据、资源及替身的替换条件，后续沿同一正式机制接入资产。
 
 ## 关键边界
 
@@ -46,4 +46,3 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 先根据仓库实际依赖与项目配置确认当前 `app-stack-*`，再打开同目录的 [native-adapters.json](native-adapters.json)。按 `when` 选择 `mode`，从 `path` 指向的本栈原生手册中定位 `section` 章节，只读取该模式及其明确需要的脚本、模板和校验器；同栈同能力的多个模式在同一本手册内维护。
 使用共用读取工具：`node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> app-project-foundation [sourceSkill]`。单模式可省略来源，多模式必须指定清单中的 `sourceSkill`；输出所选章节、直接公共依赖及按需资源路径，不递归加载其他模式。维护本技能仓库时将 `.agents/skills/` 换为 `skills/`。
 若 manifest 未列当前栈，继续使用该栈 `app-stack-*` 中的原生规范/索引及适用公共流程；这本身不代表能力缺失。仅当已声明并选中的原生手册或模式章节未随安装提供时才报告阻断。公共工作流只在 `sharedWorkflows[].stacks` 包含当前栈时读取；`onDemand: true` 的参考按当前任务选择，读取器仅列出路径。不要加载其他栈模式或臆造接口；栈未确认且会影响实现时先澄清。
-
