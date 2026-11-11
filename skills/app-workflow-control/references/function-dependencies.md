@@ -16,6 +16,8 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 各技术栈的 DISPLAY_LAYER 功能证据还须绑定单一实际宿主与层类型：直接实现时每个功能执行结果记录 `hostId`、`layerType`；共享功能来源的行为证据也记录相同字段。宿主或类型变化后须针对新上下文重新验证原功能范围并更新基线，不能复用旧宿主的业务通过记录。不同宿主可以共用实现，但各自的验证证据必须与实际宿主一致。
 
+公共 Toast 按[前置视觉任务](../../app-domain-toolkit/references/ui-copy-principles.md#toast-前置视觉任务)在业务模块之前完成独立 DISPLAY_LAYER 的 V0–V5。先用可运行的实际宿主验证 Toast 自身显示、动画和生命周期，再实现业务消费者。前置顺序与组件交付引用记入项目实施计划，`visual.functionDependencies` 继续仅引用满足本节合同的非视觉 MODULE 或 feature INTEGRATION。Toast 使用自己的显示层工作项和视觉证据，后续宿主接入按实际组合验证。
+
 ## 导航框架与共享路由
 
 先按可验证行为确定职责：无视觉共享路由 `MODULE` 负责路由注册、跳转、参数、返回和状态恢复；需要跨对象验证时也可使用 `integrationPurpose: feature` 的 `INTEGRATION`。Flutter、Expo 的稳定常驻导航框架可在确需独立视觉验收时用 `PAGE` 表达；首页及其他页面各自负责内容。游戏中只把实际存在的大厅、主菜单及内容场景作为 `SCENE`，常驻导航由实际宿主承载，共享导航组件或 Prefab 仅在有真实消费者时提取。正式导航资源由实际对象按照 V3/V4 生产和验收，其他宿主复用已验收资源并验证组合；不能借无视觉模块绕过正式资源门。短暂的弹窗、抽屉、Toast 等是独立 `DISPLAY_LAYER`，每项绑定单一真实宿主；多个宿主可以共用实现，但需按实际宿主分别验证。

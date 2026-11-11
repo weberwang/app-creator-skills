@@ -22,6 +22,7 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 1. 先区分新建基础与既有运行时迭代/排错；确认仓库状态、工具链、锁文件、启动入口和用户要求，避免把已有工程当成空白脚手架。
 2. 新建时按产品计划和架构选择最小骨架、版本和运行入口，只建设[首条正式功能切片](../app-creator-workflow/references/workflow.md#功能切片与跨对象依赖)必需的基础能力；沿正式入口、模块与测试路径演进，不为未来功能铺满基础设施或建立长期平行 Demo。只有包含客户端界面时，才按[统一流程](../app-creator-workflow/references/workflow.md)确认界面语言、默认显示语言和适用屏幕方向：Flutter、Expo 可选横屏、竖屏或双方向，游戏只选一种，ESP32 按实际屏幕与输入。Node.js 按服务端入口、配置、数据和生命周期建立基线，不要求屏幕或视觉材料。迭代时按[增量影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)保留现有结构，从复现路径、日志和生命周期定位最小受影响区域。
 3. 只加入当前任务必需的直接依赖；有界面的新项目补最小运行入口/首场景与资源组织。Android、iOS/iPadOS 按[系统启动屏规范](../app-domain-toolkit/references/system-launch-screen.md)落实原生配置与首帧衔接，不默认添加 Logo＋文本品牌页；服务端补应用装配、集中配置和实际启动/测试入口。均明确环境隔离，迭代时避免无关升级、入口替换或配置重建。
+   客户端需要统一 Toast 时，先建立可运行的实际根宿主、浮窗挂载入口和验证入口，随后在业务模块实现之前完成[Toast 前置视觉任务](../app-domain-toolkit/references/ui-copy-principles.md#toast-前置视觉任务)。Toast 以独立 DISPLAY_LAYER 交付 V0–V5，基础工程提供其运行上下文与接口接线。已有适用组件按证据复用。
 4. 定义可复现安装/构建命令、环境样例和错误处理；任何密钥和平台凭证留在安全配置通道。
 5. 按当前模式验证：新建检查可复现安装、锁定依赖和最小功能路径，贯通实际操作／请求、业务规则、数据、反馈及适用异常恢复；有界面时验证资源与交互，服务端验证配置、应用装配、实际接口/任务与关闭。迭代检查原问题复现路径、修复后回归及相关资源释放；按[质量证据与返修复验](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)保留可重复执行的关键行为与缺陷回归测试，不仅交付一次性日志。
 6. 记录工具版本、实际命令、输出、未运行的目标设备与后续原生规范入口；按[当前项目知识](../app-creator-workflow/references/professional-conventions.md#current-project-knowledge)维护仍可执行的安装、启动、构建与测试说明，只更新变化事实，冻结历史证据不覆盖。标记临时数据、资源及替身的替换条件，后续沿同一正式机制接入资产。
@@ -39,6 +40,7 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 
 - 已选移动平台的系统启动屏按[任务安排与完成条件](../app-domain-toolkit/references/system-launch-screen.md#任务安排与完成条件)交付平台配置及本地资源、首帧衔接和定向验证；复用现有任务/技术设计，工程结果与用户人工显示确认分开记录，不为 Web、桌面或设备 GUI 自动新增移动启动屏。
 - 涉及前台加载显示时，按[加载显示任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)交付加载服务、两种显示模式的最小视图、后备入口及功能证据；需要交接时传递实际源路径、接口及相关依赖，跨角色明确责任人。最小视图功能通过不能代替正式画面完成。
+- 公共 Toast 的交接引用统一接口、正式组件与资源路径、绑定宿主以及当前视觉任务的完成证据，业务模块据此接入。
 - 新建任务交付基础工程、版本/依赖清单、环境模板和启动证据；迭代任务交付根因、限定改动、回归结果和未覆盖平台。
 
 ## 当前技术栈的原生流程

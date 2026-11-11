@@ -23,6 +23,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 3. 沿主要用户流程或游戏事件追踪数据产生、校验、存储、观察、生命周期与恢复责任；具体数据流约定见[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)。
 4. 按[技术方案选型顺序](../app-creator-workflow/references/professional-conventions.md#solution-selection)优先官方、其次成熟社区、最后自研；结合[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)比较复杂度、性能、测试性、迁移成本和平台限制，记录来源、适用版本、决策依据、被拒方案、风险与复审条件；自研须说明官方和社区方案的具体缺口。
 5. 按[协作与交接](../app-creator-workflow/references/handoffs.md)为并行实施拆出有序交接包，明确文件/对象所有权、接口冻结点、先决任务、可独立验证的结果及集成责任。
+   客户端需要统一 Toast 时，按[Toast 前置视觉任务](../app-domain-toolkit/references/ui-copy-principles.md#toast-前置视觉任务)先安排最小宿主，再安排独立 DISPLAY_LAYER 的 V0–V5，随后进入业务模块实现。确定统一接口、组件与资源的唯一所有者，其他宿主按实际接入范围验证组合。
 6. 按[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)检查实际改动中的退化，阻碍交付时做必要局部重构，并按[质量证据与返修复验](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)先用行为测试保护现有公开行为、补充永久回归。设计覆盖关键边界的测试与演进方案；涉及数据格式变更时列出备份、升级、回滚和旧数据处置步骤。
 
 ## 关键边界

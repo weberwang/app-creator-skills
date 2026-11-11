@@ -203,7 +203,7 @@ V0 在现有计划中写清新增或修改的元素、触发状态、所属真�
 
 V3 沿用已有规格，按[还原依据](../../app-ui-layout/references/relative-layout.md#还原依据与变更边界)记录受影响目标及其来源、元素布局与适配约束；V5 分别核对基准条件下的目标值、正式源值和运行值，以及不同条件下的合法适配。正式可编辑源可以是原生场景、界面文件、声明式 UI 或组件代码，不要求每个技术栈使用编辑器。结构、工程和人工视觉结论按[验证与交付](../../app-creator-workflow/references/verification.md#三类验收结论)分别报告。
 
-功能切片可以跨多个显示分支，通过公开接口与[跨对象依赖](../../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)推进，不按显示树重新拆成互相等待的功能任务。共享路由为非视觉 MODULE 或 feature INTEGRATION；早期功能验证不等待目标场景 V5，最终集成才使用本批次完成的正式对象。共享组件不携带其他宿主的验收通过结论。
+功能切片可以跨多个显示分支，通过公开接口与[跨对象依赖](../../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)推进，不按显示树重新拆成互相等待的功能任务。共享路由为非视觉 MODULE 或 feature INTEGRATION；早期功能验证不等待目标场景 V5，最终集成才使用本批次完成的正式对象。公共 Toast 按[前置视觉任务](ui-copy-principles.md#toast-前置视觉任务)先在最小实际宿主完成独立 DISPLAY_LAYER，再由业务模块消费。共享组件不携带其他宿主的验收通过结论。
 
 结构更新按真实影响处理：仅内部重构且功能及视觉约定未变时，不重做未受影响的视觉确认；纯显示名称调整只有在冻结稳定 ID 与运行绑定均未改变时才属于此类。代码移动、实际引用或实施包所有权/结果路径变化时，仍按[实施执行规则](../../app-workflow-control/references/implementation-execution.md)更新引用和执行闭环；源码变化后完成真实工程重验，并按[功能基线规则](../../app-workflow-control/references/function-dependencies.md)刷新受影响基线，不重算旧证据摘要冒充新验证。安全等价路径与数组顺序变化继续沿用已有语义比较规则。真实父级/布局参照、合成、交互或宿主语义变化时更新受影响材料并重验；宿主变更遵守[单目标领域合同](../../app-workflow-control/references/single-target-domain.md)，不能用内部重构名义复用旧宿主证据。
 

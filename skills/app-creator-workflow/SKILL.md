@@ -13,7 +13,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 默认不编排隐私弹窗、隐私中心及同意管理等业务，仅在用户明确要求或已确认项目需求包含时实施；不擅自删除已有业务。涉及明确纳入范围的隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。
 
-涉及客户端界面错误反馈时统一遵循[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)：普通业务错误使用 Toast，需要用户确认的使用弹窗，后台加载和重试失败保持静默；功能增量同样适用。Node.js API 的状态码、错误合同与日志按其服务端规范处理。
+涉及客户端界面错误反馈时统一遵循[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)：普通业务错误使用 Toast，需要用户确认的使用弹窗，后台加载和重试失败保持静默；功能增量同样适用。公共组件按[Toast 前置视觉任务](../app-domain-toolkit/references/ui-copy-principles.md#toast-前置视觉任务)在最小运行宿主就绪后、业务模块实现之前完成 DISPLAY_LAYER 的 V0–V5。Node.js API 的状态码、错误合同与日志按其服务端规范处理。
 
 涉及场景／页面切换或弹出层时统一遵循[场景与弹出层统一加载](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：共用唯一加载服务和全局显示层，场景使用不透明全屏过渡、弹窗使用半透明蒙层，并发时场景样式优先；按请求身份与独立令牌管理取消、替代、失败和输入交接。弹窗首次触发才加载，仅缓存模板、图片及依赖资源，关闭销毁实例并停止任务，重开创建新实例读取当前业务数据；场景切换清理旧宿主弹出层、任务与独占资源，后台预取保持静默。
 
