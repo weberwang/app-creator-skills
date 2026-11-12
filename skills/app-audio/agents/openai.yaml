@@ -1,6 +1,6 @@
 interface:
-  display_name: "游戏音频"
-  short_description: "为游戏场景梳理音乐、环境声和事件音效的触发、混音、资源预算及平台回归。"
-  default_prompt: "使用 $app-audio，按已确认的技术栈完成当前游戏音频任务并交付可验证结果。"
+  display_name: "游戏与应用音频"
+  short_description: "按需规划游戏和应用音频，区分播放录音与素材制作，验证生命周期和听感。"
+  default_prompt: "使用 $app-audio，按已确认需求和当前技术栈完成适用的音频方案、实施与验证。"
 policy:
   allow_implicit_invocation: true

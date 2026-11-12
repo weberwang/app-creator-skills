@@ -10,6 +10,7 @@
 - **探索游戏方案**：复杂游戏由关卡与场景设计职责在 V1 实现前提供[关卡结构草案和关键视角概念图](skills/app-domain-toolkit/references/game-design-exploration.md)，先看清路线、空间节奏与玩家视角，再验证机制和空间假设。
 - **先验证功能**：按用户行为拆分功能，先验证机制与关键路径，再推进正式视觉；白盒、白模和临时资源按需使用。
 - **制作视觉与资源**：确定视觉方向，生成一张或多张场景设计稿，完成拆解、布局、资源生产和导入。
+- **按需处理音频**：非游戏客户端按[App 音频工作流](skills/app-domain-toolkit/references/app-audio.md)区分提示、播放、录音／语音和平台通知，无需求则跳过；游戏按[音效生产流程](skills/app-audio/references/sfx-production.md)设计与制作适用素材。分别记录文件技术、实际运行与用户听感，不默认增加声音或后台能力。
 - **组织跨场景功能**：明确导航框架、主页、共享路由和弹窗的职责，复用共享实现并验证实际组合。
 - **持续交付**：支持局部修复、功能增量、质量审核、项目整理和发布准备，保留继续工作所需的有效记录。
 - **接入渠道**：按已选目标执行 [CrazyGames、微信／抖音小游戏及移动商店接入](skills/app-release/references/channel-platform-integration.md)，区分平台 SDK、原生构建、合规资料与实际上线。
@@ -133,6 +134,8 @@ Node.js 服务器沿用公共控制器与质量门，通过 MODULE 实现业务�
 
 大场景和复杂 App 流程按[多状态与多步骤的分批生产](skills/app-domain-toolkit/references/incremental-production.md)明确完整范围、关键状态和步骤，再选择可验证的一批实施；同一正式场景／页面可持续增量生产。本批完成仅代表该批范围，整体交付还须核对必要路径和当前正式组合。
 
+App 多页面按[多页面推进顺序](skills/app-domain-toolkit/references/incremental-production.md#多页面推进顺序)统一视觉方向，优先完成能验证共享组件、关键状态和适配风险的代表页，再复用方案推进其他页面。各页 V2–V5 独立推进和验收；依赖明确且所有权互斥时可提前并行，不默认所有页面同步进入下一阶段。
+
 跨场景功能先验证跳转、参数、状态与返回等行为，再支持相关对象的视觉工作；不要求目的地先完成 V5。导航共享机制、常驻框架、主页内容和瞬态显示层按实际职责划分，最终在正式组合中重跑完整路径。详见[功能范围与跨对象依赖](skills/app-workflow-control/references/function-dependencies.md)。
 
 后续增量可复用同项目、技术栈及对象中仍有效的视觉确认，仅重做受影响的部分。功能代码变化时按实际范围回归，未变化的共享来源继续复用；数组重排和安全的等价路径不会要求改写合同证据。详见[完整工作流](skills/app-creator-workflow/references/workflow.md)。
@@ -160,7 +163,8 @@ Node.js 服务器沿用公共控制器与质量门，通过 MODULE 实现业务�
 | 任务 | 能力入口 |
 | --- | --- |
 | 需求、架构与工程基础 | `$app-product-planning`、`$app-architecture`、`$app-project-foundation` |
-| 玩法、数值与音频 | `$app-gameplay-development`、`$app-game-balance`、`$app-audio` |
+| 玩法与数值 | `$app-gameplay-development`、`$app-game-balance` |
+| 音频（按需） | 游戏专项使用 `$app-audio`；非游戏客户端读取[App 音频工作流](skills/app-domain-toolkit/references/app-audio.md)，按当前栈实际能力实施 |
 | 视觉目标、素材与布局 | `$app-asset-workflow`、`$app-ui-layout` |
 | 可选代码草图 | `$app-ui-code-sketch` |
 | 动画、角色绑定与 Spine | `$app-animation`、`$app-character-rigging`、`$app-spine-reskin` |

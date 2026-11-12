@@ -19,6 +19,10 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 ## 共用操作步骤
 
+游戏音效任务按[试听与返修](../app-audio/references/sfx-production.md#audition)分别核对文件技术检查、真实运行及用户人工听感，覆盖本批适用的单音、连续操作和实际上下文。将变体重复、时序、混音和生命周期问题关联现有 QA 用例及局部修订；解码、采样峰值或 RMS 通过不能代替听感和平台播放结论。
+
+非游戏客户端按[App 音频工作流](../app-domain-toolkit/references/app-audio.md)只检查本批已启用的用途：提示的重复与静音、内容播放的进度／切页／中断、录音或语音的取消与结果归属，以及适用的平台通知。文件技术、实际行为和用户人工听感分别记录；不强制无音频 App 制作素材，也不把未验证的权限、后台或原生运行能力标为通过。
+
 游戏方案阶段先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)核对创意与核心循环的完整体验推演，记录具体问题、依据及后续验证问题。相关机制实现前核对方案问题的处理去向，V1 与后续真实参与者观察继续验证已交接的假设。
 
 1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。

@@ -85,6 +85,18 @@
   },
   "sharedWorkflows": [
     {
+      "id": "app-audio",
+      "path": "../app-domain-toolkit/references/app-audio.md",
+      "stacks": ["flutter", "expo", "esp32"],
+      "onDemand": true
+    },
+    {
+      "id": "sfx-production",
+      "path": "../app-audio/references/sfx-production.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "game-design-exploration",
       "path": "../app-domain-toolkit/references/game-design-exploration.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],

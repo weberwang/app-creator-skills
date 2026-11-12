@@ -32,6 +32,8 @@ description: "为游戏、应用或服务器制定产品与服务范围，或为
 4. 按[策划范围与验收约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)整理新产品必要能力与不做项，或既有策划中受影响的规则、内容、状态、依赖和回归条件。涉及游戏关卡、波次、谜题或任务内容时，按[关卡与内容生产](../app-domain-toolkit/references/game-content-playtesting.md#levels)明确本批目标、机制依赖、难度来源和完成/失败/恢复，沿用现有 GDD 清单，不把每关机械拆成场景或新增机制。
    从零复杂游戏或空间关系实质变化时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡设计师与场景设计师把目标转成结构草案和关键玩家视角概念图，在相关 V1 实现前展示可审阅方案，并交接需运行验证的空间、镜头与机制假设；普通局部修改复用有效方案。
 5. 为范围设置可观察验收条件、依赖与回归点，并按[公共策划约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)区分建议和用户决定。只有任务包含市场验证时，才设计样本、原型/人工服务实验、观察指标和停止条件。
+   游戏需要声音反馈时，按[音效设计](../app-audio/references/sfx-production.md#design)在既有 GDD／音频计划中交接事件语义、体验与声音风格依据、使用频率及代表样本范围；与关卡／场景设计共享材质、区域、地标和镜头信息，不默认给每个操作添加声音。
+   非游戏客户端仅在需求包含音频时按[App 音频工作流](../app-domain-toolkit/references/app-audio.md)确定用途、本批方案、代表路径及前后台策略；播放／录音功能与必要声音素材分开安排，不默认增加点击音或背景音乐，无需求则跳过。
 6. 提交新产品简报或既有GDD的差异更新，保留对应工件结构，列出未决决定、来源证据与可复现验收方式；避免把假设写成已批准需求。
 
 ## 关键边界

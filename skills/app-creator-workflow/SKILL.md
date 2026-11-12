@@ -7,7 +7,13 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 游戏大场景、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据，先完成可验证路径再按需要推进下一批；小范围修改沿用已有任务。
 
+App 多页面按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择本批路径与代表页：统一视觉方向后，默认优先让代表页完成 V2–V5，再复用共享方案推进其余页面；依赖明确且所有权互斥时可提前并行。各 `PAGE` 独立记录阶段和验收，不默认所有页面同步推进，也不将代表页 V5 设为无关页面的前置门。
+
 从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)明确关卡设计师、场景设计师的职责，在相关 V1 实现前交付本批关卡结构草案与关键视角概念图。探索归入需求／基线和对象 V0，V1 验证假设后再进入正式视觉制作；不增加阶段或逐图审批。
+
+游戏包含声音反馈时，由 [app-audio](../app-audio/SKILL.md) 按[音效设计与生产](../app-audio/references/sfx-production.md#design)从本批事件确定声音风格、分层和代表样本，再交接受控变体、动态混音及情境试听返修。影响机制理解的样本可在 V1 前探索，V1 验证真实触发；纯音频任务沿用模块／资源实施单元，不要求视觉设计稿或 V2/V3 确认。
+
+非游戏客户端仅在已确认需求包含声音时，按[App 音频工作流](../app-domain-toolkit/references/app-audio.md)区分提示音、内容播放、录音／语音及平台通知；先出本批方案并验证代表用例，再复用到实际消费者。无需求则跳过，不默认添加界面音效或背景音乐；音频功能不强制制作素材，前后台策略按用途决定。沿用当前栈真实能力，不调用未声明的 `app-audio` 原生模式；纯音频不新增视觉阶段。
 
 选定 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，按[渠道平台接入](../app-release/references/channel-platform-integration.md)从需求、架构和基础工程安排实际适配任务，按本批能力验证并在最终候选逐渠道核对；普通项目不默认启用全部渠道，宿主 SDK 与 MAX 原生方案分别适用，不另建发布状态机。
 

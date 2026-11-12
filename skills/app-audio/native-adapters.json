@@ -49,6 +49,12 @@
   },
   "sharedWorkflows": [
     {
+      "id": "sfx-production",
+      "path": "references/sfx-production.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "audio",
       "path": "../app-domain-toolkit/references/audio.md",
       "stacks": [

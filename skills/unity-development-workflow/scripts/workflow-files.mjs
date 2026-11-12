@@ -136,11 +136,14 @@ export function initializeDocs({ projectRoot, projectId, include, force = false 
     if (name === "project-profile.yaml") {
       const rendered = readFileSync(source, "utf8").replace(/^projectId: .+$/m, "projectId: " + projectId);
       writeAtomic(targets[index], rendered);
-    } else if (["GDD.md", "TDD.md", "qa-plan.md"].includes(name)) {
-      // 三份项目模板中的公共领域参考以源码目录为基准，输出到 docs 后统一改为已安装技能路径。
+    } else if (["GDD.md", "TDD.md", "qa-plan.md", "audio-plan.md"].includes(name)) {
+      // 模板链接以制作源目录为基准，复制到项目 docs 后转换为实际安装入口。
       const rendered = readFileSync(source, "utf8").replaceAll(
         "../../../app-domain-toolkit/references/",
         "../.agents/skills/app-domain-toolkit/references/",
+      ).replaceAll(
+        "../../../app-audio/references/",
+        "../.agents/skills/app-audio/references/",
       );
       writeAtomic(targets[index], rendered);
     } else {
