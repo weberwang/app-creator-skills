@@ -1,6 +1,6 @@
 /** 验证游戏专项规范的独立安装、按需读取及非游戏技术栈边界。 */
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -10,6 +10,7 @@ import { extractMarkdownSection } from '../skills/app-skill-runtime/native-contr
 
 const RULE = 'app-domain-toolkit/references/game-characteristics.md';
 const CONTENT = 'app-domain-toolkit/references/game-content-playtesting.md';
+const EXPLORATION = 'app-domain-toolkit/references/game-design-exploration.md';
 const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 const ENTRIES = {
   'app-product-planning': 'identify',
@@ -24,6 +25,11 @@ const RULES = [
     'app-gameplay-development': 'levels',
     'app-game-balance': 'playtest',
     'app-quality-review': 'playtest',
+  } },
+  { path: EXPLORATION, entries: {
+    'app-product-planning': 'explore',
+    'app-gameplay-development': 'handoff',
+    'app-asset-workflow': 'handoff',
   } },
 ];
 
@@ -58,7 +64,8 @@ for (const stack of STACKS) {
     for (const capability of capabilities) {
       if (!profile.capabilitySkills.includes(capability)) {
         assert.equal(isGame, false, `${stack} 缺少游戏所需能力 ${capability}`);
-        assert.equal(existsSync(join(root, capability)), false);
+        // 公共素材目录可能随安装交付，是否允许使用应以读取器的能力边界为准。
+        assert.throws(() => loadNativeMode({ skillsRoot: root, stack, capability }), /当前技术栈未声明该能力/);
         continue;
       }
       const manifest = JSON.parse(readFileSync(join(root, capability, 'native-adapters.json'), 'utf8'));
@@ -86,6 +93,15 @@ for (const stack of STACKS) {
     for (const source of ['app-creator-workflow/SKILL.md', 'app-creator-workflow/references/workflow.md', 'app-creator-workflow/references/domain-production.md']) {
       checkLink(root, source);
     }
+    // 设计职责、原型验证和正式多视图制作都必须能接回同一份探索规范。
+    for (const [source, section] of [
+      ['app-creator-workflow/SKILL.md', 'explore'],
+      ['app-creator-workflow/references/workflow.md', 'explore'],
+      ['app-creator-workflow/references/professional-execution.md', 'explore'],
+      ['app-creator-workflow/references/handoffs.md', 'roles'],
+      ['app-creator-workflow/references/readable-functional-prototype.md', 'handoff'],
+      ['app-asset-workflow/references/multi-image-scene-design.md', 'explore'],
+    ]) checkLink(root, source, section, EXPLORATION);
     // 声明的按需参考丢失必须报错，不能悄悄退回源仓库或当作可选检查跳过。
     for (const rule of RULES) {
       const missing = resolve(root, rule.path);
