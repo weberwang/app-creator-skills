@@ -49,7 +49,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)及本栈规范，从 V0/V1 明确宿主、内容、常驻 UI 和瞬态层的显示职责，白盒可选。视觉任务在相关功能完成 V1 验证后加载 [app-asset-workflow](../app-asset-workflow/SKILL.md)，将视觉签名、三候选基线、真实素材、技术检查和人工验收接入工作项。游戏内容或场景超出单张设计稿的可读范围时，按[多张场景设计稿](../app-asset-workflow/references/multi-image-scene-design.md)规划、生成和交接。同项目、技术栈和对象已有完成的 V5 工作项时，按语义影响用 `reuse-visual` 继承未变化的基线及 V2/V3 确认；当前功能验证、V4 导入和 V5 运行/人工验收仍独立完成。技术通过不等于画面通过。
    V3 拆解与布局分别确认后，在 V4 前段按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)用少量资产与真实组件试接，检查规格和适配风险并沿用样本人工审阅，再分批生产、及时接入；不等美术全部完成才开始组件代码，不把试接视为 V5 正式组合通过。共享文件和原生编辑器仍保持单写者。
 6. 实施后按[验证与交付](references/verification.md)先推荐 T0–T3 的理由、覆盖与命令，再自动执行；记录真实结果。失败优先 repair/revalidate，仅上游目标或范围真实失效才显式 return。
-   按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)沉淀必要回归测试，更新受影响的当前项目说明，处理临时实现并给出剩余风险与下一入口；不增加状态、报告或审批。
+   按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)沉淀必要回归测试，更新受影响的当前项目说明并处理临时实现；按[精简交付](references/output-files.md#精简交付)简短反馈，不默认生成独立报告，不增加状态或审批。
 
 | 技术栈 | 独立规范 | 识别依据 |
 | --- | --- | --- |

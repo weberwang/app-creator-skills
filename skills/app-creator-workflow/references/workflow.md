@@ -187,7 +187,7 @@ SCENE 累计生产且本批需要新增目标时，可按[多目标记录](../..
 
 每批实现与审核按[架构模块契约](professional-conventions.md#architecture-module-contracts)检查实际改动是否增加重复规则、状态多写者、私有穿透或生命周期风险，只做保障本次交付所必需的局部重构；按[质量证据与返修复验](professional-conventions.md#quality-evidence-and-retests)沉淀关键行为和缺陷回归测试。测试留在正式项目目录，本轮命令输出沿原证据路径保存，不以报告或静态规范断言替代应用行为测试。
 
-收尾按[验证约定](verification.md)及[当前项目知识](professional-conventions.md#current-project-knowledge)核对适用的行为、正式源／资源、回归、架构边界、操作说明、临时实现和剩余风险，让下一轮可定位入口、运行相关检查并继续修改。已有 F1/F2/F3 承担交付与质量职责，不新增可维护性分数、账本、阶段或逐项审批；小任务仅更新变化事实，不要求全仓重验或复制全套文档。历史冻结记录保持不变，当前说明随实际变化更新并引用有效历史依据。
+收尾按[验证约定](verification.md)核对适用项，按[当前项目知识](professional-conventions.md#current-project-knowledge)仅更新变化事实，让下一轮可定位入口、运行相关检查并继续修改。面向用户按[精简交付](output-files.md#精简交付)简短反馈，不把内部检查清单扩写成报告。已有 F1/F2/F3 承担交付与质量职责，不新增可维护性分数、账本、阶段或逐项审批，不要求全仓重验或复制全套文档。历史冻结记录保持不变，当前说明引用有效历史依据。
 
 ## 发布准备与实际上线
 
