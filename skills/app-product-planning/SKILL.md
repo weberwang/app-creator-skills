@@ -28,6 +28,7 @@ description: "为游戏、应用或服务器制定产品与服务范围，或为
 1. 判断工作模式：新产品定义读取目标用户与问题；既有产品策划读取GDD/规则和当前任务，只打开相关章节；明确的市场验证任务额外识别待验证的市场假设。
 2. 按[策划范围与验收约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)区分已确认事实、证据、假设和未决事项；记录本次变化的用户目标与触发场景，不改写既有已确认设计。
 3. 为目标变化写出可观察结果。仅在相关时描述应用关键任务流或游戏核心循环，不为局部功能增量重写无关产品循环。游戏新项目或机制变化按[游戏特点识别](../app-domain-toolkit/references/game-characteristics.md#identify)在现有 GDD 中关联实际特点、规则、风险与验收预期，交接 V1 优先验证项及 QA 用例；混合类型按机制组合，既有事实直接复用。
+   创意与核心循环方案形成后，先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)推演首次接触、完整周期与连续重复的体验，在相关实现和正式视觉制作前修正方案问题，并将关键假设交给 V1 与真实参与者观察。记录写入当前 GDD 或方案评审，使用现有 F1/F2。
 4. 按[策划范围与验收约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)整理新产品必要能力与不做项，或既有策划中受影响的规则、内容、状态、依赖和回归条件。涉及游戏关卡、波次、谜题或任务内容时，按[关卡与内容生产](../app-domain-toolkit/references/game-content-playtesting.md#levels)明确本批目标、机制依赖、难度来源和完成/失败/恢复，沿用现有 GDD 清单，不把每关机械拆成场景或新增机制。
 5. 为范围设置可观察验收条件、依赖与回归点，并按[公共策划约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)区分建议和用户决定。只有任务包含市场验证时，才设计样本、原型/人工服务实验、观察指标和停止条件。
 6. 提交新产品简报或既有GDD的差异更新，保留对应工件结构，列出未决决定、来源证据与可复现验收方式；避免把假设写成已批准需求。
