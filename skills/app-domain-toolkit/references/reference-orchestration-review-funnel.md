@@ -32,24 +32,10 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-- Work Item、阶段、模块、领域、候选和基线身份。
-
-> 适用技术栈：cocos、phaser、threejs。
-
-- 覆盖事实、证据、阻断项、未覆盖项和领域结论。
-
-> 适用技术栈：cocos、phaser、threejs。
-
-- 实际 diff、路径所有者、A 等级与适用的高影响操作批准 ID。
-
-> 适用技术栈：cocos、phaser、threejs。
-
-- 证据失效条件、处置级别（`repair`/`revalidate`/`return`）和建议返回的最早状态。
-
-> 适用技术栈：cocos、phaser、threejs。
-
-- `affectedScope`、实际失效的下游阶段/单元以及是否需要显式 `RETURN`；不得用“退回阶段”文本代替处置分类。
-
-> 适用技术栈：cocos、phaser、threejs。
+- 引用当前 Work Item、候选及证据入口；任务包已明确且未变化的阶段、模块、领域和基线不再逐项抄写。
+- 返回领域结论及必要证据引用；阻断和未覆盖项有则补充，无则不生成空栏目或完整审核报告。
+- 实际 diff、路径所有权和授权引用沿用当前实施包，仅补变化或冲突，不重复登记风险枚举。
+- 发生缺陷或事实变化时才补证据失效条件及处置（`repair`/`revalidate`/`return`）；无实质发现时简述结论后停止。
+- 需要返修或返回时明确 `affectedScope`、失效的下游阶段/单元及是否显式 `RETURN`；不得用“退回阶段”文本代替处置分类。
 
 领域审查者负责提议与审查；状态迁移及最终门结论由公共控制器处理。产品决定不替代外部动作的明确授权，相关批准按当前 Work Item 的 `action.approval` 记录。

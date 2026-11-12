@@ -22,11 +22,11 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 游戏方案阶段先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)核对创意与核心循环的完整体验推演，记录具体问题、依据及后续验证问题。相关机制实现前核对方案问题的处理去向，V1 与后续真实参与者观察继续验证已交接的假设。
 
 1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。
-2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；每条用例写清前置条件、操作、预期、实际和证据位置。涉及素材分批接入时按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)检查，V4 样本试接不代替 V5 正式组合按适用范围的完整回归。游戏任务按[QA 用例映射](../app-domain-toolkit/references/game-characteristics.md#qa)追踪特点、规则来源、功能/对象和验证结果，复用 V1 专项证据，在 V5 与最终集成重验实际受影响组合及完整游玩周期；不对普通应用或服务器套用游戏检查。
+2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；自动化用例引用已有测试、断言及原始结果，手工检查或缺陷复现才补充必要前置、步骤、预期与实际，不逐条抄写通过用例。涉及素材分批接入时按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)检查，V4 样本试接不代替 V5 正式组合按适用范围的完整回归。游戏任务按[QA 用例映射](../app-domain-toolkit/references/game-characteristics.md#qa)追踪特点、规则来源、功能/对象和验证结果，复用 V1 专项证据，在 V5 与最终集成重验实际受影响组合及完整游玩周期；不对普通应用或服务器套用游戏检查。
 3. 性能检查按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)选取相关指标，记录源／资源快照、设备、构建及采样模式、场景／负载、缓存条件、预热、采样窗口和原始数据；与基线及预算同条件比较，分别覆盖适用的冷／热路径、首次／缓存命中与反复进出，不凭一次波动或平均 FPS 推断改善。优化后检查成本转移、副作用和功能回归，区分目标达成、相对改善、无可辨收益、退化与未验证。
 4. 按[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)审查实际改动的退化及必要局部重构；将发现按影响、频率、可绕过性和证据可信度分级，并按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)分开记录观察事实、推测根因与建议修复。
 5. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)核对重构前的行为保护与永久回归测试，只复验失败或受实际影响的区域及必要回归；环境、输入或快照失效时重新检查相关通道，新增副作用时扩展覆盖。游戏从 V1 进入正式组合或调整规则、资源、时基等内容时，按[回归清单](../app-domain-toolkit/references/game-characteristics.md#regression)关联实际变化、用例、可复用证据及当前重验结果。
-6. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)汇总通过、失败、阻断、未运行、环境限制和剩余风险，以覆盖范围内的证据说明当前结论，不替用户宣告体验验收。游戏内容和体验调整按[关卡与试玩规范](../app-domain-toolkit/references/game-content-playtesting.md#playtest)整理任务、条件、客观观察、人工反馈和调整后的复验；已有模型/求解器的检查范围与真实游玩结论分开报告。
+6. 按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)引用已有验证结果，只补失败、阻断、未运行、环境限制和剩余风险，不另建 QA 汇总报告，不替用户宣告体验验收。游戏内容和体验调整按[关卡与试玩规范](../app-domain-toolkit/references/game-content-playtesting.md#playtest)保留必要观察、人工反馈和调整后的复验引用；区分模型/求解器覆盖与真实游玩结论。
 
 ## 关键边界
 
@@ -66,7 +66,7 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 - 涉及加载显示时按[任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)核对服务、设计、素材、正式接入及验证的真实交付，按适用范围覆盖消费入口和宿主；跨角色交接时核对责任及相关依赖。加载逻辑或资源导入通过而正式视图缺失时列为交付缺口，人工显示确认缺失时保留待确认，不合并为整项完成。
 - 按[当前项目知识](../app-creator-workflow/references/professional-conventions.md#current-project-knowledge)核对受影响的现行说明与接手入口，引用历史证据但不将其当作当前验证结论。
-- 普通审查直接输出带快照身份的报告，包括适用的测试矩阵、复现步骤、性能数据、缺陷分类、修复复验结果和剩余风险；不为报告创建网页或启动服务。
+- 普通审查按[精简交付](../app-creator-workflow/references/output-files.md#精简交付)反馈结论及必要缺口，快照、复现、性能及复验细节引用已有证据，不重复输出测试矩阵或另写审查报告；不为审查创建网页或启动服务。
 
 ## 当前技术栈的原生流程
 
