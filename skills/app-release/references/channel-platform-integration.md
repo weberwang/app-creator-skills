@@ -73,7 +73,7 @@ Unity／Cocos 先按锁定引擎版本核对官方 Web、小游戏适配或原�
 
 隐私指引、权限用途、数据声明及实际 SDK 行为须一致，按[隐私解耦规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)处理。平台明确要求的必要授权与业务交互须在当前接入方案中明确并满足，不能用“默认不新增隐私流程”跳过；未满足时限制对应能力或阻断相关候选，不伪造用户同意，也不扩建无关隐私中心。拒绝、未决定、撤回及读取失败按适用接口验证，平台授权、系统权限和应用同意分别记录。
 
-广告仅接入已确认且该渠道允许的能力。CrazyGames、微信和抖音分别使用适用的平台广告接口；Android／iOS 实际采用 MAX 时继续遵守固定七网络及其[原生合同](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md)，MAX 的 Web／小游戏 no-op 只约束 MAX 适配器，不代表禁用平台自身广告。不把 MAX 的就绪属性、回调名、冷却或重试规则套到另一平台；同一广告位由一个适配器负责，不能同时请求两套广告。继续执行非个性化请求要求，按平台的实际配置／官方合同核实；无法落实或确认时停用受影响广告路径，不以平台托管或测试成功推定已满足。奖励只依据所选 API 的实际有效完成结果幂等发放；关闭、取消、无填充、超时或失败不得冒充完成，平台控制频控时不叠加冲突的展示请求。
+广告仅接入已确认且该渠道允许的能力。CrazyGames、微信和抖音分别使用适用的平台广告接口；Android／iOS 按[引擎移动 SDK 路线](../../app-domain-toolkit/references/mobile-sdk-integration.md)接入 Firebase 和 AppsFlyer，广告顶层聚合在 AdMob 与 MAX 中二选一；AdMob 按[对应约定](../../app-domain-toolkit/references/reference-ad-admob-contract.md)，实际采用 MAX 时继续遵守固定七网络及其[原生合同](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md)，MAX 的 Web／小游戏 no-op 只约束 MAX 适配器，不代表禁用平台自身广告。不把 MAX 的就绪属性、回调名、冷却或重试规则套到另一平台；同一广告位由一个适配器负责，不能同时请求两套广告。继续执行非个性化请求要求，按平台的实际配置／官方合同核实；无法落实或确认时停用受影响广告路径，不以平台托管或测试成功推定已满足。奖励只依据所选 API 的实际有效完成结果幂等发放；关闭、取消、无填充、超时或失败不得冒充完成，平台控制频控时不叠加冲突的展示请求。
 
 支付先判定数字内容、订阅、实物或其他业务性质，再按渠道、地区、主体和终端的当前规则选接口；不把微信／抖音支付、Google Play Billing、StoreKit 或第三方付款互相替代。仅按需提供商品、下单、取消、待处理、失败、恢复／权益同步；服务端按对应合同验证交易及通知并幂等发货，不将客户端成功回调当最终可信凭证。无内购功能时按[内购 SDK 必要性](release-readiness.md#内购-sdk-必要性与移除)移除专用依赖，但不误删有真实消费者的平台综合 SDK。沙箱交易、真实购买、广告点击及外部配置仍遵守对应授权边界。
 

@@ -61,7 +61,9 @@ Roblox 根据已确认目标设备、Roblox 客户端支持及实际配置记录
 
 已选微信小游戏或 CrazyGames 时，基础工程按[渠道 SDK 复用](../../app-release/references/channel-sdk-reuse.md)接入当前引擎的渠道专属具名实现，业务按需调用明确的登录、广告、支付、分享和平台数据接口；不逐项目重写，不只做通用转发，也不接管网络、文件、音频、渲染等基础引擎接口。Google Play 按引擎原生 SDK 路线处理，不新增独立渠道层。
 
-已确认需要广告聚合或归因、且实际原生目标受支持时，分别使用 AppLovin MAX 和 AppsFlyer；不因渠道接入自动增加广告或归因。CrazyGames、微信／抖音小游戏使用[对应平台能力](../../app-release/references/channel-platform-integration.md#隐私与商业能力)，不加载不适用的原生 SDK。启动时分别投递任务，业务通过对应能力接口调用；不增加无关 SDK、隐私界面或登录屏障。已采用或官方要求的 CMP（包括 UMP）及其他真实前置必须按锁定平台、版本和流程满足，未满足只限制受影响 SDK，不阻塞游戏或无关任务。广告预加载、刷新和重试均采用非个性化模式，MAX 的[请求适配器](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)和平台适配器分别核实配置，不能从非个性化推断所有请求均允许。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
+所有 SDK 统一遵守[SDK 不阻塞应用流程](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#sdk-不阻塞应用流程)：启动入口分别投递即返回，首帧、资源加载、场景切换、结算和继续游戏不等待任何 SDK 或隐私选择。授权不足只跳过相应能力；广告后台预加载，触发展示未就绪立即回退，不设置广告加载页或等待队列，不让广告成为进入下一步的必经条件。
+
+Unity、Cocos、Phaser、Three.js 的 Android/iOS 按[移动 SDK 复用](../../app-domain-toolkit/references/mobile-sdk-integration.md)接入 Firebase 统计、事件与异常、AppsFlyer 归因，以及 AdMob 或 AppLovin MAX 二选一的顶层广告聚合；先使用安装脚本复制当前引擎的具体实现，再接线实际原生依赖与配置。其他栈按实际引擎能力核实；不因渠道接入自动增加广告或归因。CrazyGames、微信／抖音小游戏使用[对应平台能力](../../app-release/references/channel-platform-integration.md#隐私与商业能力)，不加载不适用的原生 SDK。启动时分别投递任务，业务通过对应能力接口调用；不增加无关 SDK、隐私界面或登录屏障。已采用或官方要求的 CMP（包括 UMP）及其他真实前置必须按锁定平台、版本和流程满足，未满足只限制受影响 SDK，不阻塞游戏或无关任务。广告预加载、刷新和重试均采用非个性化模式，MAX 的[请求适配器](../../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)和平台适配器分别核实配置，不能从非个性化推断所有请求均允许。详见[归因与广告直接启动和调用](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。
 
 ## 隐私流程约束
 

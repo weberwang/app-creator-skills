@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <DefineConstants>APP_CREATOR_FIREBASE_SDK;APP_CREATOR_APPSFLYER_SDK</DefineConstants>
+    <DefineConstants Condition="'$(SdkPlatform)' == 'iOS'">$(DefineConstants);UNITY_IOS</DefineConstants>
+    <DefineConstants Condition="'$(SdkPlatform)' != 'iOS'">$(DefineConstants);UNITY_ANDROID</DefineConstants>
+    <DefineConstants Condition="'$(SdkProvider)' == 'AdMob'">$(DefineConstants);APP_CREATOR_ADMOB_SDK</DefineConstants>
+    <DefineConstants Condition="'$(SdkProvider)' == 'Max'">$(DefineConstants);APP_CREATOR_MAX_SDK</DefineConstants>
+  </PropertyGroup>
+</Project>

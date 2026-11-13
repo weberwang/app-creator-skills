@@ -1,5 +1,6 @@
 # 广告接入的通用交接
 
+本文仅规定 MAX 路线；Android/iOS 顶层聚合允许 AdMob 与 MAX 二选一。AdMob 读取[移动 SDK 接入](mobile-sdk-integration.md)与[AdMob 聚合约定](reference-ad-admob-contract.md)，不套用以下 MAX 专属配置。
 以下原生流程用于实际采用 MAX 的受支持目标；Web／小游戏 no-op 只表示 MAX 适配器不在这些宿主工作。CrazyGames、微信和抖音的广告按[渠道平台规范](../../app-release/references/channel-platform-integration.md#隐私与商业能力)接入各自适用 API，不运行本节 MAX 初始化／预加载／刷新合同，不把平台广告错误映射成 MAX 成功。
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。广告调用遵循[归因与广告直接启动和调用](reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)。广告服务中的状态检查仅反映实际 SDK、平台和广告位条件，不新增应用前置流程。公共状态与授权仍由 app-workflow-control 管理。

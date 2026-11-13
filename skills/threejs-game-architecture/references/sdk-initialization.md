@@ -1,5 +1,6 @@
 <a id="sdk-单文件独立初始化"></a>
 
+Android/iOS 采用 Firebase（统计、事件、异常）、AppsFlyer 和 AdMob／MAX 二选一时，先读取[移动 SDK 复用](../../app-domain-toolkit/references/mobile-sdk-integration.md)，安装当前引擎具体实现并接线原生依赖，不逐项目重写 SDK。
 # SDK 分文件独立初始化
 
 当项目接入或调整任何第三方 SDK 的初始化时读取本文件。目标游戏按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)为各 SDK 使用独立 `src/platform/sdks/<sdk>-sdk.ts` 管理文件；`src/platform/initialize-sdks.ts` 只装配并分别投递管理器任务；没有采用 SDK 时不创建占位文件，不因本规范增加 SDK 或依赖。

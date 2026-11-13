@@ -14,6 +14,16 @@
 - 广告加载/展示、支付交易、登录界面、埋点业务和隐私交互仍归各自业务模块；业务层通过注入的能力接口读取状态、调用能力或请求单个 SDK 重试，不在页面、场景、构造函数或模块导入时再次启动 SDK，不复制初始化状态和重试器。
 - 唯一装配不等于串行等待：各 SDK 分别投递，单 SDK 的导入失败、异常、重试或不回调不阻止无关 SDK 与应用首帧；只等待自身真实的官方前置，不建立无关 SDK 或整批就绪屏障。SDK 导入不产生自动初始化副作用。
 
+## SDK 不阻塞应用流程
+
+所有 SDK（包括引擎原生 SDK、渠道 SDK、统计、异常、归因、广告和隐私能力）均不得成为启动、首帧、资源加载、进入游戏、场景切换、结算或继续游戏的等待条件。唯一入口分别投递初始化并立即返回，不在这些流程中 `await initialize()`、等待整批任务、轮询就绪或展示 SDK 加载遮罩；超时只结束该 SDK 的诊断等待，游戏不必等到超时才继续。
+
+- 授权未知、拒绝、撤回或必需前置未完成时，立即跳过需要授权的 SDK 操作并返回受限结果；不等待用户选择、不锁住游戏、不把隐私弹窗或 CMP 完成作为游戏入口。以后收到项目现有策略变化时，只恢复对应 SDK，不能让游戏重新进入加载等待，也不能伪造同意或绕过厂商必需前置。
+- SDK 具体实现可以异步观察自己的真实回调，但等待只存在于 SDK 内部；单 SDK 同步抛错、异步失败、永不回调或诊断处理器抛错，都不能阻断其他任务和游戏。SDK 错误由相应能力的结果或隔离诊断报告，不向游戏启动链抛出整批失败。
+- 广告加载、刷新和重试只在后台进行。触发展示仅检查当前缓存与策略：未就绪、受限、无填充、已有展示或失败时立即返回不可用并继续既有流程，不临时加载后等待、不排队等待初始化、授权、加载或网络，不用广告 Loading 覆盖游戏。
+- 插屏广告不可成为过关、结算、退出或下一局的必经步骤。激励广告由用户主动选择，仅真实奖励回调兑现对应可选奖励；不可用、取消或失败时结束本次尝试，继续正常玩法，不扣除参与成本、不伪造奖励、不等待迟到回调才能继续。广告已展示时由厂商视图接管画面，项目只按实际展示生命周期暂停和恢复必要音频/输入，不能额外延长暂停。
+- Banner 未加载、布局不安全或失效时保持隐藏且不留空白等待区。加载与销毁结果均不得成为场景切换的前置；迟到结果由原所有者清理，不能弹出过期广告或覆盖新场景。
+
 ## 隐私流程与 SDK 解耦
 
 所有 SDK 均遵守本节，包括广告、统计、崩溃上报、登录、支付、推送及提供同意管理能力的 SDK。解耦指职责和依赖分离，不代表绕过隐私条件提前初始化。
@@ -30,7 +40,7 @@
 
 ## 归因与广告直接启动和调用
 
-Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认需求及实际受支持的原生目标接入广告或归因；不声明厂商 SDK 支持全部栈或终端。原生广告聚合使用 AppLovin MAX，聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）；原生归因使用 AppsFlyer。CrazyGames、微信和抖音小游戏按[渠道平台规范](../../app-release/references/channel-platform-integration.md#隐私与商业能力)使用适用的平台接口，不把 MAX／AppsFlyer 作为通用宿主依赖；ESP32 等仅在平台能力核实后处理明确需求。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
+Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认需求及实际受支持的原生目标接入广告或归因；不声明厂商 SDK 支持全部栈或终端。Unity、Cocos、Phaser、Three.js 的 Android/iOS 复用[移动 SDK 具体实现](mobile-sdk-integration.md)：Firebase Analytics 处理统计与事件，Crashlytics 处理异常，AppsFlyer 处理归因；广告顶层聚合在 AdMob 与 AppLovin MAX 中显式二选一。其他栈按实际依赖核实引擎路线。采用 MAX 时聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）；原生归因使用 AppsFlyer。CrazyGames、微信和抖音小游戏按[渠道平台规范](../../app-release/references/channel-platform-integration.md#隐私与商业能力)使用适用的平台接口，不把 MAX／AppsFlyer 作为通用宿主依赖；ESP32 等仅在平台能力核实后处理明确需求。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 
 业务触发归因事件或广告请求时调用对应能力接口，应用层不增加无关等待屏障。不因普通 SDK 接入擅自新增隐私业务；项目已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。`hasUserConsent=false` 不证明用户完成选择，也不单独证明所有地区和渠道允许请求。适配器按实际 SDK、隐私与网络条件返回结果；未就绪、无填充、离线或展示失败按既有回退处理，不阻塞调用方，也不伪造成功。
 

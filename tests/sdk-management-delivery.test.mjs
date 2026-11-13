@@ -42,6 +42,7 @@ for (const stack of STACKS) {
     const reference = read(root, REFERENCE);
     assert.equal(reference, read(join(SOURCE_ROOT, 'skills'), REFERENCE));
     extractMarkdownSection(reference, '文件职责');
+    extractMarkdownSection(reference, 'SDK 不阻塞应用流程');
     const profile = JSON.parse(read(root, `app-stack-${stack}/profile.json`));
     assert.ok(profile.sharedCapabilities.includes('reference-architecture-sdk-initialization'));
     const { loadNativeMode } = await import(pathToFileURL(join(root, 'app-skill-runtime/read-native-mode.mjs')).href);

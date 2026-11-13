@@ -162,6 +162,11 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
     'skills/app-release/scripts/install-channel-sdks.mjs',
     'skills/app-release/assets/channel-sdks/unity/WechatMinigameChannel.cs',
     'skills/app-release/assets/channel-sdks/typescript/crazygames-channel.ts',
+    'skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs',
+    'skills/app-domain-toolkit/assets/mobile-sdks/unity/FirebaseAnalyticsManager.cs',
+    'skills/app-domain-toolkit/assets/mobile-sdks/cocos/native/ios/providers/admob/ACAdMobBridge.mm',
+    'skills/app-domain-toolkit/assets/mobile-sdks/capacitor/max-sdk.ts',
+    'skills/app-domain-toolkit/references/mobile-sdk-integration.md',
   ];
   const payload = paths.map((path) => ({ path, bytes: readFileSync(new URL(`../${path}`, import.meta.url)) }));
   const repo = makeRepository({ extraFiles: [

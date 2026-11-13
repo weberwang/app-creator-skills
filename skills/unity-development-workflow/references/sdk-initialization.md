@@ -1,5 +1,6 @@
 # SDK 统一初始化
 
+Android/iOS 采用 Firebase（统计、事件、异常）、AppsFlyer 和 AdMob／MAX 二选一时，先读取[移动 SDK 复用](../../app-domain-toolkit/references/mobile-sdk-integration.md)，安装当前引擎具体实现并接线原生依赖，不逐项目重写 SDK。
 项目实际采用的 SDK 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)分文件管理，默认每个 SDK 使用 `Assets/Scripts/Foundation/Sdks/<Sdk>Manager.cs`；TDD 映射唯一装配入口与各 SDK 管理文件。默认入口为 `Assets/Scripts/Foundation/InitializeSdks.cs`，由启动 Composition Root 在首个场景开始前调用一次；若项目既有结构使用其他路径，只在 TDD 固定该唯一映射。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK、UPM 包或平台依赖。
 
 ## 唯一入口与职责

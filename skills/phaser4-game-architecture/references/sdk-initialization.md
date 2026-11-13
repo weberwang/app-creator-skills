@@ -1,5 +1,6 @@
 # SDK 统一初始化
 
+Android/iOS 采用 Firebase（统计、事件、异常）、AppsFlyer 和 AdMob／MAX 二选一时，先读取[移动 SDK 复用](../../app-domain-toolkit/references/mobile-sdk-integration.md)，安装当前引擎具体实现并接线原生依赖，不逐项目重写 SDK。
 项目实际采用的 SDK 按[SDK 文件职责](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#文件职责)分文件管理：每个 SDK 使用 `src/platform/sdks/<sdk>-sdk.ts`。`src/main.ts` 在装配阶段调用 `src/platform/initialize-sdks.ts`，该入口只装配并独立投递各管理器任务。没有采用 SDK 时不创建占位文件，也不因本规范增加 SDK 或依赖。
 
 ## 唯一入口与职责
