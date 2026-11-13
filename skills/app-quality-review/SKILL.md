@@ -25,6 +25,8 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 游戏方案阶段先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)核对创意与核心循环的完整体验推演，记录具体问题、依据及后续验证问题。相关机制实现前核对方案问题的处理去向，V1 与后续真实参与者观察继续验证已交接的假设。
 
+当前视觉设计稿完成后，按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)审查一次，依据本轮问题修改后交用户确认；若该稿已有这一轮记录，直接沿用，不在质量审核、换代理或修改版本时自动重开。不得扩展到其他页面或循环优化，后续工程验证及用户人工显示确认仍按原阶段执行。
+
 1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。
 2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；自动化用例引用已有测试、断言及原始结果，手工检查或缺陷复现才补充必要前置、步骤、预期与实际，不逐条抄写通过用例。涉及素材分批接入时按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)检查，V4 样本试接不代替 V5 正式组合按适用范围的完整回归。游戏任务按[QA 用例映射](../app-domain-toolkit/references/game-characteristics.md#qa)追踪特点、规则来源、功能/对象和验证结果，复用 V1 专项证据，在 V5 与最终集成重验实际受影响组合及完整游玩周期；不对普通应用或服务器套用游戏检查。
 3. 性能检查按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)选取相关指标，记录源／资源快照、设备、构建及采样模式、场景／负载、缓存条件、预热、采样窗口和原始数据；与基线及预算同条件比较，分别覆盖适用的冷／热路径、首次／缓存命中与反复进出，不凭一次波动或平均 FPS 推断改善。优化后检查成本转移、副作用和功能回归，区分目标达成、相对改善、无可辨收益、退化与未验证。

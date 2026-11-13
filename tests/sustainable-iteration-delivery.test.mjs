@@ -22,6 +22,9 @@ const DOCUMENTS = [
   'app-architecture/SKILL.md',
   'app-quality-review/SKILL.md',
   'app-asset-workflow/SKILL.md',
+  'app-asset-workflow/references/art-review.md',
+  'app-asset-workflow/references/interface-intent.md',
+  'app-asset-workflow/references/multi-image-scene-design.md',
   'app-domain-toolkit/references/incremental-production.md',
 ];
 
