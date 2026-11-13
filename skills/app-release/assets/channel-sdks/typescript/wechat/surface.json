@@ -1,0 +1,914 @@
+{
+  "revision": "42c427aa8c3961b7a4f8ea5bd6112c2bcf058177",
+  "version": "3.8.22",
+  "license": "MIT",
+  "source": "https://github.com/wechat-miniprogram/minigame-api-typings/tree/42c427aa8c3961b7a4f8ea5bd6112c2bcf058177",
+  "sourceHashes": {
+    "types/wx/index.d.ts": "99f5668b354fdabec56ef4e1dfe41cb8a2b4d53a254185545657dea46252d551",
+    "types/wx/lib.wx.api.d.ts": "917ccb15aef4eb858d5d7e6f2f00033b6620aad29d5f4f254b31451d63a104dd"
+  },
+  "included": [
+    {
+      "name": "addCard",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/card/wx.addCard.html"
+    },
+    {
+      "name": "authPrivateMessage",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.authPrivateMessage.html"
+    },
+    {
+      "name": "authorize",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/authorize/wx.authorize.html"
+    },
+    {
+      "name": "checkHandoffEnabled",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.checkHandoffEnabled.html"
+    },
+    {
+      "name": "checkIsAddedToMyMiniProgram",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/my-miniprogram/wx.checkIsAddedToMyMiniProgram.html"
+    },
+    {
+      "name": "checkIsSupportFacialRecognition",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/face/wx.checkIsSupportFacialRecognition.html"
+    },
+    {
+      "name": "checkIsSupportMidasPayment",
+      "group": "midas-payment",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/midas-payment/wx.checkIsSupportMidasPayment.html"
+    },
+    {
+      "name": "checkSession",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/login/wx.checkSession.html"
+    },
+    {
+      "name": "createAdSkipCard",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/AdSkipCard.html"
+    },
+    {
+      "name": "createBannerAd",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/BannerAd.html"
+    },
+    {
+      "name": "createCustomAd",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/CustomAd.html"
+    },
+    {
+      "name": "createFeedbackButton",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/feedback/FeedbackButton.html"
+    },
+    {
+      "name": "createGameClubButton",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/game-club/GameClubButton.html"
+    },
+    {
+      "name": "createGridAd",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/GridAd.html"
+    },
+    {
+      "name": "createInterstitialAd",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/InterstitialAd.html"
+    },
+    {
+      "name": "createOpenSettingButton",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/setting/OpenSettingButton.html"
+    },
+    {
+      "name": "createPageManager",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/openlink/PageManager.html"
+    },
+    {
+      "name": "createRewardedVideoAd",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/RewardedVideoAd.html"
+    },
+    {
+      "name": "createStoreGift",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/store-gift/StoreGift.html"
+    },
+    {
+      "name": "createUserInfoButton",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/user-info/UserInfoButton.html"
+    },
+    {
+      "name": "enterChatToolMode",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.enterChatToolMode.html"
+    },
+    {
+      "name": "exitChatTool",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.exitChatTool.html"
+    },
+    {
+      "name": "getAccountInfoSync",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/account-info/wx.getAccountInfoSync.html"
+    },
+    {
+      "name": "getChannelsLiveInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.getChannelsLiveInfo.html"
+    },
+    {
+      "name": "getChannelsLiveNoticeInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.getChannelsLiveNoticeInfo.html"
+    },
+    {
+      "name": "getChatToolInfo",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.getChatToolInfo.html"
+    },
+    {
+      "name": "getDirectAdStatusSync",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/wx.getDirectAdStatusSync.html"
+    },
+    {
+      "name": "getEnterOptionsSync",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.getEnterOptionsSync.html"
+    },
+    {
+      "name": "getExptInfoSync",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.getExptInfoSync.html"
+    },
+    {
+      "name": "getFriendCloudStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getFriendCloudStorage.html"
+    },
+    {
+      "name": "getFriendSendGiftStatus",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getFriendSendGiftStatus.html"
+    },
+    {
+      "name": "getGameClubData",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/game-club/wx.getGameClubData.html"
+    },
+    {
+      "name": "getGameExptInfo",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.getGameExptInfo.html"
+    },
+    {
+      "name": "getGroupCloudStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getGroupCloudStorage.html"
+    },
+    {
+      "name": "getGroupEnterInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/group/wx.getGroupEnterInfo.html"
+    },
+    {
+      "name": "getGroupInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getGroupInfo.html"
+    },
+    {
+      "name": "getGroupMembersInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getGroupMembersInfo.html"
+    },
+    {
+      "name": "getLaunchOptionsSync",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.getLaunchOptionsSync.html"
+    },
+    {
+      "name": "getOpenDataContext",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/context/OpenDataContext.html"
+    },
+    {
+      "name": "getPhoneNumber",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/user-info/wx.getPhoneNumber.html"
+    },
+    {
+      "name": "getPotentialFriendList",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getPotentialFriendList.html"
+    },
+    {
+      "name": "getPrivacySetting",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/privacy/wx.getPrivacySetting.html"
+    },
+    {
+      "name": "getRankManager",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/game-component/RankManager.html"
+    },
+    {
+      "name": "getRelationFriendList",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getRelationFriendList.html"
+    },
+    {
+      "name": "getSetting",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/setting/wx.getSetting.html"
+    },
+    {
+      "name": "getShareInfo",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.getShareInfo.html"
+    },
+    {
+      "name": "getShowSplashAdStatus",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/wx.getShowSplashAdStatus.html"
+    },
+    {
+      "name": "getUserCloudStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getUserCloudStorage.html"
+    },
+    {
+      "name": "getUserCloudStorageKeys",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getUserCloudStorageKeys.html"
+    },
+    {
+      "name": "getUserInfo",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/user-info/wx.getUserInfo.html"
+    },
+    {
+      "name": "getUserInteractiveStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.getUserInteractiveStorage.html"
+    },
+    {
+      "name": "getWeRunData",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/werun/wx.getWeRunData.html"
+    },
+    {
+      "name": "hideShareMenu",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.hideShareMenu.html"
+    },
+    {
+      "name": "isChatTool",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.isChatTool.html"
+    },
+    {
+      "name": "login",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/login/wx.login.html"
+    },
+    {
+      "name": "modifyFriendInteractiveStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.modifyFriendInteractiveStorage.html"
+    },
+    {
+      "name": "notifyGroupMembers",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.notifyGroupMembers.html"
+    },
+    {
+      "name": "offAddToFavorites",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offAddToFavorites.html"
+    },
+    {
+      "name": "offAddToSchedule",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offAddToSchedule.html"
+    },
+    {
+      "name": "offCopyUrl",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offCopyUrl.html"
+    },
+    {
+      "name": "offDirectAdStatusChange",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/wx.offDirectAdStatusChange.html"
+    },
+    {
+      "name": "offHandoff",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offHandoff.html"
+    },
+    {
+      "name": "offHide",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.offHide.html"
+    },
+    {
+      "name": "offInteractiveStorageModified",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.offInteractiveStorageModified.html"
+    },
+    {
+      "name": "offShareAppMessage",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offShareAppMessage.html"
+    },
+    {
+      "name": "offShareMessageToFriend",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offShareMessageToFriend.html"
+    },
+    {
+      "name": "offShareTimeline",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.offShareTimeline.html"
+    },
+    {
+      "name": "offShow",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.offShow.html"
+    },
+    {
+      "name": "onAddToFavorites",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onAddToFavorites.html"
+    },
+    {
+      "name": "onAddToSchedule",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onAddToSchedule.html"
+    },
+    {
+      "name": "onCopyUrl",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onCopyUrl.html"
+    },
+    {
+      "name": "onDirectAdStatusChange",
+      "group": "ad",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/ad/wx.onDirectAdStatusChange.html"
+    },
+    {
+      "name": "onHandoff",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onHandoff.html"
+    },
+    {
+      "name": "onHide",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.onHide.html"
+    },
+    {
+      "name": "onInteractiveStorageModified",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.onInteractiveStorageModified.html"
+    },
+    {
+      "name": "onMessage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/context/wx.onMessage.html"
+    },
+    {
+      "name": "onNeedPrivacyAuthorization",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/privacy/wx.onNeedPrivacyAuthorization.html"
+    },
+    {
+      "name": "onShareAppMessage",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onShareAppMessage.html"
+    },
+    {
+      "name": "onShareMessageToFriend",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onShareMessageToFriend.html"
+    },
+    {
+      "name": "onShareTimeline",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.onShareTimeline.html"
+    },
+    {
+      "name": "onShow",
+      "group": "lifecycle",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/base/app/life-cycle/wx.onShow.html"
+    },
+    {
+      "name": "openCard",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/card/wx.openCard.html"
+    },
+    {
+      "name": "openChannelsActivity",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.openChannelsActivity.html"
+    },
+    {
+      "name": "openChannelsEvent",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.openChannelsEvent.html"
+    },
+    {
+      "name": "openChannelsLive",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.openChannelsLive.html"
+    },
+    {
+      "name": "openChannelsUserProfile",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.openChannelsUserProfile.html"
+    },
+    {
+      "name": "openChatTool",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.openChatTool.html"
+    },
+    {
+      "name": "openCustomerServiceChat",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/service-chat/wx.openCustomerServiceChat.html"
+    },
+    {
+      "name": "openCustomerServiceConversation",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/customer-message/wx.openCustomerServiceConversation.html"
+    },
+    {
+      "name": "openPrivacyContract",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/privacy/wx.openPrivacyContract.html"
+    },
+    {
+      "name": "openSetting",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/setting/wx.openSetting.html"
+    },
+    {
+      "name": "removeUserCloudStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.removeUserCloudStorage.html"
+    },
+    {
+      "name": "reportEvent",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.reportEvent.html"
+    },
+    {
+      "name": "reportMonitor",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.reportMonitor.html"
+    },
+    {
+      "name": "reportScene",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.reportScene.html"
+    },
+    {
+      "name": "reportUserBehaviorBranchAnalytics",
+      "group": "data-analysis",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/data-analysis/wx.reportUserBehaviorBranchAnalytics.html"
+    },
+    {
+      "name": "requestFacialRecognition",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/account-info/wx.requestFacialRecognition.html"
+    },
+    {
+      "name": "requestFacialVerify",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/face/wx.requestFacialVerify.html"
+    },
+    {
+      "name": "requestMidasFriendPayment",
+      "group": "midas-payment",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/midas-payment/wx.requestMidasFriendPayment.html"
+    },
+    {
+      "name": "requestMidasPayment",
+      "group": "midas-payment",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/midas-payment/wx.requestMidasPayment.html"
+    },
+    {
+      "name": "requestMidasPaymentGameItem",
+      "group": "midas-payment",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/midas-payment/wx.requestMidasPaymentGameItem.html"
+    },
+    {
+      "name": "requestSubscribeMessage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/subscribe-message/wx.requestSubscribeMessage.html"
+    },
+    {
+      "name": "requestSubscribeSystemMessage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/subscribe-message/wx.requestSubscribeSystemMessage.html"
+    },
+    {
+      "name": "requirePrivacyAuthorize",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/privacy/wx.requirePrivacyAuthorize.html"
+    },
+    {
+      "name": "reserveChannelsLive",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/channels/wx.reserveChannelsLive.html"
+    },
+    {
+      "name": "selectGroupMembers",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.selectGroupMembers.html"
+    },
+    {
+      "name": "sendGiftToFriend",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.sendGiftToFriend.html"
+    },
+    {
+      "name": "setHandoffQuery",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.setHandoffQuery.html"
+    },
+    {
+      "name": "setMessageToFriendQuery",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.setMessageToFriendQuery.html"
+    },
+    {
+      "name": "setUserCloudStorage",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.setUserCloudStorage.html"
+    },
+    {
+      "name": "shareAppMessage",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.shareAppMessage.html"
+    },
+    {
+      "name": "shareAppMessageToGroup",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.shareAppMessageToGroup.html"
+    },
+    {
+      "name": "shareEmojiToGroup",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.shareEmojiToGroup.html"
+    },
+    {
+      "name": "shareImageToGroup",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.shareImageToGroup.html"
+    },
+    {
+      "name": "shareMessageToFriend",
+      "group": "open-api",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/open-api/data/wx.shareMessageToFriend.html"
+    },
+    {
+      "name": "shareTextToGroup",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.shareTextToGroup.html"
+    },
+    {
+      "name": "shareVideoToGroup",
+      "group": "chattool",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/chattool/wx.shareVideoToGroup.html"
+    },
+    {
+      "name": "showShareImageMenu",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.showShareImageMenu.html"
+    },
+    {
+      "name": "showShareMenu",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.showShareMenu.html"
+    },
+    {
+      "name": "startHandoff",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.startHandoff.html"
+    },
+    {
+      "name": "updateShareMenu",
+      "group": "share",
+      "url": "https://developers.weixin.qq.com/minigame/dev/api/share/wx.updateShareMenu.html"
+    }
+  ],
+  "excluded": [
+    "network",
+    "file",
+    "audio",
+    "render",
+    "device",
+    "input",
+    "system",
+    "getSharedCanvas",
+    "getGameLogManager",
+    "getMiniReportManager",
+    "getScenePerformanceManager",
+    "wx.cloud 基础云数据库／文件／网络服务"
+  ],
+  "signatureCorrections": {
+    "RequestMidasPaymentGameItemOption.signData": "保留服务端签名的 JSON 字符串，禁止重新序列化"
+  },
+  "bindingCounts": {
+    "Runtime": 121,
+    "AdSkipCard": 12,
+    "BannerAd": 9,
+    "CustomAd": 14,
+    "GridAd": 9,
+    "InterstitialAd": 9,
+    "RewardedVideoAd": 9,
+    "UserInfoButton": 5,
+    "FeedbackButton": 5,
+    "GameClubButton": 5,
+    "OpenSettingButton": 5,
+    "StoreGift": 3,
+    "RankManager": 7,
+    "OpenDataContext": 1,
+    "PageManager": 5
+  },
+  "objectMethods": {
+    "Runtime": [
+      "addCard",
+      "authPrivateMessage",
+      "authorize",
+      "checkHandoffEnabled",
+      "checkIsAddedToMyMiniProgram",
+      "checkIsSupportFacialRecognition",
+      "checkIsSupportMidasPayment",
+      "checkSession",
+      "createAdSkipCard",
+      "createBannerAd",
+      "createCustomAd",
+      "createFeedbackButton",
+      "createGameClubButton",
+      "createGridAd",
+      "createInterstitialAd",
+      "createOpenSettingButton",
+      "createPageManager",
+      "createRewardedVideoAd",
+      "createStoreGift",
+      "createUserInfoButton",
+      "enterChatToolMode",
+      "exitChatTool",
+      "getAccountInfoSync",
+      "getChannelsLiveInfo",
+      "getChannelsLiveNoticeInfo",
+      "getChatToolInfo",
+      "getDirectAdStatusSync",
+      "getEnterOptionsSync",
+      "getExptInfoSync",
+      "getFriendCloudStorage",
+      "getFriendSendGiftStatus",
+      "getGameClubData",
+      "getGameExptInfo",
+      "getGroupCloudStorage",
+      "getGroupEnterInfo",
+      "getGroupInfo",
+      "getGroupMembersInfo",
+      "getLaunchOptionsSync",
+      "getOpenDataContext",
+      "getPhoneNumber",
+      "getPotentialFriendList",
+      "getPrivacySetting",
+      "getRankManager",
+      "getRelationFriendList",
+      "getSetting",
+      "getShareInfo",
+      "getShowSplashAdStatus",
+      "getUserCloudStorage",
+      "getUserCloudStorageKeys",
+      "getUserInfo",
+      "getUserInteractiveStorage",
+      "getWeRunData",
+      "hideShareMenu",
+      "isChatTool",
+      "login",
+      "modifyFriendInteractiveStorage",
+      "notifyGroupMembers",
+      "offAddToFavorites",
+      "offAddToSchedule",
+      "offCopyUrl",
+      "offDirectAdStatusChange",
+      "offHandoff",
+      "offHide",
+      "offInteractiveStorageModified",
+      "offShareAppMessage",
+      "offShareMessageToFriend",
+      "offShareTimeline",
+      "offShow",
+      "onAddToFavorites",
+      "onAddToSchedule",
+      "onCopyUrl",
+      "onDirectAdStatusChange",
+      "onHandoff",
+      "onHide",
+      "onInteractiveStorageModified",
+      "onMessage",
+      "onNeedPrivacyAuthorization",
+      "onShareAppMessage",
+      "onShareMessageToFriend",
+      "onShareTimeline",
+      "onShow",
+      "openCard",
+      "openChannelsActivity",
+      "openChannelsEvent",
+      "openChannelsLive",
+      "openChannelsUserProfile",
+      "openChatTool",
+      "openCustomerServiceChat",
+      "openCustomerServiceConversation",
+      "openPrivacyContract",
+      "openSetting",
+      "removeUserCloudStorage",
+      "reportEvent",
+      "reportMonitor",
+      "reportScene",
+      "reportUserBehaviorBranchAnalytics",
+      "requestFacialRecognition",
+      "requestFacialVerify",
+      "requestMidasFriendPayment",
+      "requestMidasPayment",
+      "requestMidasPaymentGameItem",
+      "requestSubscribeMessage",
+      "requestSubscribeSystemMessage",
+      "requirePrivacyAuthorize",
+      "reserveChannelsLive",
+      "selectGroupMembers",
+      "sendGiftToFriend",
+      "setHandoffQuery",
+      "setMessageToFriendQuery",
+      "setUserCloudStorage",
+      "shareAppMessage",
+      "shareAppMessageToGroup",
+      "shareEmojiToGroup",
+      "shareImageToGroup",
+      "shareMessageToFriend",
+      "shareTextToGroup",
+      "shareVideoToGroup",
+      "showShareImageMenu",
+      "showShareMenu",
+      "startHandoff",
+      "updateShareMenu"
+    ],
+    "AdSkipCard": [
+      "load",
+      "offClose",
+      "offError",
+      "offLoad",
+      "offShow",
+      "offUse",
+      "onClose",
+      "onError",
+      "onLoad",
+      "onShow",
+      "onUse",
+      "show"
+    ],
+    "BannerAd": [
+      "destroy",
+      "hide",
+      "offError",
+      "offLoad",
+      "offResize",
+      "onError",
+      "onLoad",
+      "onResize",
+      "show"
+    ],
+    "CustomAd": [
+      "destroy",
+      "hide",
+      "isShow",
+      "offClose",
+      "offError",
+      "offHide",
+      "offLoad",
+      "offResize",
+      "onClose",
+      "onError",
+      "onHide",
+      "onLoad",
+      "onResize",
+      "show"
+    ],
+    "GridAd": [
+      "destroy",
+      "hide",
+      "offError",
+      "offLoad",
+      "offResize",
+      "onError",
+      "onLoad",
+      "onResize",
+      "show"
+    ],
+    "InterstitialAd": [
+      "destroy",
+      "load",
+      "offClose",
+      "offError",
+      "offLoad",
+      "onClose",
+      "onError",
+      "onLoad",
+      "show"
+    ],
+    "RewardedVideoAd": [
+      "destroy",
+      "load",
+      "offClose",
+      "offError",
+      "offLoad",
+      "onClose",
+      "onError",
+      "onLoad",
+      "show"
+    ],
+    "UserInfoButton": [
+      "destroy",
+      "hide",
+      "offTap",
+      "onTap",
+      "show"
+    ],
+    "FeedbackButton": [
+      "destroy",
+      "hide",
+      "offTap",
+      "onTap",
+      "show"
+    ],
+    "GameClubButton": [
+      "destroy",
+      "hide",
+      "offTap",
+      "onTap",
+      "show"
+    ],
+    "OpenSettingButton": [
+      "destroy",
+      "hide",
+      "offTap",
+      "onTap",
+      "show"
+    ],
+    "StoreGift": [
+      "getOrderInfo",
+      "isSupported",
+      "open"
+    ],
+    "RankManager": [
+      "abort",
+      "createChallenge",
+      "getScore",
+      "middleUpdate",
+      "offChallengeStart",
+      "onChallengeStart",
+      "update"
+    ],
+    "OpenDataContext": [
+      "postMessage"
+    ],
+    "PageManager": [
+      "destroy",
+      "load",
+      "off",
+      "on",
+      "show"
+    ]
+  },
+  "artifactHashes": {
+    "types": "e31227bc8654077bc4b480c671d9da2a3a3e7f9a8089c9a89387da5e405e641e",
+    "bindings": "0cec2a8bdae1605814a5423d8de231fdeaeae400f461e9a7dd91aa2eb8c45188"
+  },
+  "additionalBindings": [
+    {
+      "name": "requestVirtualPayment",
+      "implementation": "api.ts",
+      "source": "https://github.com/wechat-miniprogram/minigame-tuanjie-transform-sdk/blob/915d4bf4f60ef0cd1c29316a8d67257185d609a7/Runtime/WXBase.cs",
+      "note": "小游戏 3.8.22 声明遗漏；独立具名封装，按真实宿主可用性检查，签名原串为 string"
+    }
+  ]
+}

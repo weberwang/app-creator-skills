@@ -1,0 +1,497 @@
+{
+  "source": "\u5FAE\u4FE1\u63D0\u4EA4 915d4bf4f60ef0cd1c29316a8d67257185d609a7\uFF1BCrazyGames Unity SDK 5.38.0\uFF1B\u5B98\u65B9 unitypackage SHA-256 bcee1f79c0dc17718f40140eb7bfca7520af1e9833001f9112c4a704f02da3f8",
+  "sources": [
+    {
+      "name": "WXBase.cs",
+      "sha256": "3649f43a8ba0d99487994b9edaa5dffc49e3c41a7eb0821c3234a008fbe8f20b"
+    },
+    {
+      "name": "WX.cs",
+      "sha256": "7780554641e592282908dc5d15ac8e75b5cabf2f262d4e8062c71d66435c4526"
+    },
+    {
+      "name": "wx-runtime.dll",
+      "sha256": "afc833b03576ce260f8dab96f51af1bdad79fb6027f6bc7e7a34dd328d71a61e"
+    },
+    {
+      "name": "CrazySDK.cs",
+      "sha256": "7b0081a57654ede279cf6bc72990365b718b6ef53a32bcce7cf20a16ca9e9c03"
+    },
+    {
+      "name": "AdModule.cs",
+      "sha256": "6fe04b749463b34e6722abb5a94f460fae2c1efd9cfd2bca5241dbac1870acce"
+    },
+    {
+      "name": "AnalyticsModule.cs",
+      "sha256": "2315fddba735c8104a727148dd9a805df940fe4e5ef9b3136ac779884e0501bd"
+    },
+    {
+      "name": "BannerModule.cs",
+      "sha256": "d284821408a59bb83501d7721919b18c01353481aca052db48c6cd63ed8ddd5d"
+    },
+    {
+      "name": "DataModule.cs",
+      "sha256": "d1652fb40673996164b7aabfcbabfbdacf40fc0a96da201ba1eb2ab320f00cd6"
+    },
+    {
+      "name": "GameModule.cs",
+      "sha256": "3e4345960e2783dbafb25617e010d40039207e346b1b965399a3a888254de711"
+    },
+    {
+      "name": "StoreModule.cs",
+      "sha256": "f940ebc4bc615b925f12ff70ecd72a7c2206b44c88d7d2f5c205fced06bbc7b6"
+    },
+    {
+      "name": "UserModule.cs",
+      "sha256": "29a0f38b563894e656a44635a73fc7f29991f49d265745d2f8af978da9d9d58f"
+    }
+  ],
+  "generated": [
+    {
+      "channel": "wechat",
+      "sourceType": "WeChatWASM.WX/WXBase",
+      "methods": [
+        "AddCard(AddCardOption callback)",
+        "AuthPrivateMessage(AuthPrivateMessageOption callback)",
+        "Authorize(AuthorizeOption callback)",
+        "CheckIsAddedToMyMiniProgram(CheckIsAddedToMyMiniProgramOption callback)",
+        "CheckIsSupportFacialRecognition(CheckIsSupportFacialRecognitionOption callback)",
+        "CheckIsSupportMidasPayment(CheckIsSupportMidasPaymentOption callback)",
+        "CheckSession(CheckSessionOption callback)",
+        "CreateBannerAd(WXCreateBannerAdParam param)",
+        "CreateCustomAd(WXCreateCustomAdParam param)",
+        "CreateFeedbackButton(CreateOpenSettingButtonOption option)",
+        "CreateFixedBottomMiddleBannerAd(string adUnitId, int adIntervals, int height)",
+        "CreateGameClubButton(WXCreateGameClubButtonParam param)",
+        "CreateInterstitialAd(WXCreateInterstitialAdParam param)",
+        "CreatePageManager()",
+        "CreateRewardedVideoAd(WXCreateRewardedVideoAdParam param)",
+        "CreateUserInfoButton(int x, int y, int width, int height, string lang, bool withCredentials)",
+        "EnterChatToolMode(EnterChatToolModeOption callback)",
+        "ExitChatTool(ExitChatToolOption callback)",
+        "ExitMiniProgram(ExitMiniProgramOption callback)",
+        "GetAccountInfoSync()",
+        "GetChannelsLiveInfo(GetChannelsLiveInfoOption callback)",
+        "GetChannelsLiveNoticeInfo(GetChannelsLiveNoticeInfoOption callback)",
+        "GetChatToolInfo(GetChatToolInfoOption callback)",
+        "GetDirectAdStatusSync()",
+        "GetEnterOptionsSync()",
+        "GetExptInfoSync(string[] keys)",
+        "GetGameClubData(GetGameClubDataOption callback)",
+        "GetGameExptInfo(GetGameExptInfoOption callback)",
+        "GetGroupEnterInfo(GetGroupEnterInfoOption callback)",
+        "GetGroupMembersInfo(GetGroupMembersInfoOption callback)",
+        "GetLaunchOperaHandler()",
+        "GetLaunchOptionsSync()",
+        "GetOpenDataContext(OpenDataContextOption option = null)",
+        "GetPhoneNumber(GetPhoneNumberOption callback)",
+        "GetPrivacySetting(GetPrivacySettingOption callback)",
+        "GetRankManager()",
+        "GetSetting(GetSettingOption callback)",
+        "GetShareInfo(GetShareInfoOption callback)",
+        "GetShowSplashAdStatus(GetShowSplashAdStatusOption callback)",
+        "GetUserInfo(GetUserInfoOption callback)",
+        "GetUserInteractiveStorage(GetUserInteractiveStorageOption callback)",
+        "GetWeRunData(GetWeRunDataOption callback)",
+        "HideShareMenu(HideShareMenuOption callback)",
+        "IsChatTool()",
+        "Login(LoginOption callback)",
+        "NotifyGroupMembers(NotifyGroupMembersOption callback)",
+        "OffAddToFavorites(Action\u003CAction\u003COnAddToFavoritesListenerResult\u003E\u003E callback = null)",
+        "OffCopyUrl(Action\u003CAction\u003COnCopyUrlListenerResult\u003E\u003E callback = null)",
+        "OffDirectAdStatusChange(Action\u003COnDirectAdStatusChangeListenerResult\u003E result)",
+        "OffHandoff(Action\u003CAction\u003COnHandoffListenerResult\u003E\u003E callback = null)",
+        "OffHide(Action\u003CGeneralCallbackResult\u003E res)",
+        "OffInteractiveStorageModified(Action\u003Cstring\u003E res)",
+        "OffShareMessageToFriend(Action\u003COnShareMessageToFriendListenerResult\u003E result)",
+        "OffShareTimeline(Action\u003CAction\u003COnShareTimelineListenerResult\u003E\u003E callback = null)",
+        "OffShow(Action\u003COnShowListenerResult\u003E result)",
+        "OnAddToFavorites(Action\u003CAction\u003COnAddToFavoritesListenerResult\u003E\u003E callback)",
+        "OnCopyUrl(Action\u003CAction\u003COnCopyUrlListenerResult\u003E\u003E callback)",
+        "OnDirectAdStatusChange(Action\u003COnDirectAdStatusChangeListenerResult\u003E result)",
+        "OnHandoff(Action\u003CAction\u003COnHandoffListenerResult\u003E\u003E callback)",
+        "OnHide(Action\u003CGeneralCallbackResult\u003E res)",
+        "OnInteractiveStorageModified(Action\u003Cstring\u003E res)",
+        "OnLaunchProgress(Action\u003CLaunchEvent\u003E action = null)",
+        "OnMessage(Action\u003Cstring\u003E res)",
+        "OnNeedPrivacyAuthorization(Action\u003Cstring\u003E res)",
+        "OnShareAppMessage(WXShareAppMessageParam defaultParam, Action\u003CAction\u003CWXShareAppMessageParam\u003E\u003E action = null)",
+        "OnShareMessageToFriend(Action\u003COnShareMessageToFriendListenerResult\u003E result)",
+        "OnShareTimeline(Action\u003CAction\u003COnShareTimelineListenerResult\u003E\u003E callback)",
+        "OnShow(Action\u003COnShowListenerResult\u003E result)",
+        "OpenCard(OpenCardOption callback)",
+        "OpenChannelsActivity(OpenChannelsActivityOption callback)",
+        "OpenChannelsEvent(OpenChannelsEventOption callback)",
+        "OpenChannelsLive(OpenChannelsLiveOption callback)",
+        "OpenChannelsUserProfile(OpenChannelsUserProfileOption callback)",
+        "OpenChatTool(OpenChatToolOption callback)",
+        "OpenCustomerServiceChat(OpenCustomerServiceChatOption callback)",
+        "OpenCustomerServiceConversation(OpenCustomerServiceConversationOption callback)",
+        "OpenPrivacyContract(OpenPrivacyContractOption callback)",
+        "OpenSetting(OpenSettingOption callback)",
+        "PrivacyAuthorizeResolve(PrivacyAuthorizeResolveOption res)",
+        "RemoveUserCloudStorage(RemoveUserCloudStorageOption callback)",
+        "ReportEvent(string eventId, Dictionary\u003Cstring, string\u003E data)",
+        "ReportMonitor(string name, double value)",
+        "ReportScene(ReportSceneOption callback)",
+        "ReportUserBehaviorBranchAnalytics(ReportUserBehaviorBranchAnalyticsOption option)",
+        "ReportUserBehaviorBranchAnalytics(string branchId, string branchDim, int eventType)",
+        "RequestFacialRecognition(RequestFacialRecognitionOption callback)",
+        "RequestFacialVerify(RequestFacialVerifyOption callback)",
+        "RequestMidasFriendPayment(RequestMidasFriendPaymentOption callback)",
+        "RequestMidasPayment(RequestMidasPaymentOption callback)",
+        "RequestMidasPaymentGameItem(RequestMidasPaymentGameItemOption callback)",
+        "RequestSubscribeMessage(RequestSubscribeMessageOption callback)",
+        "RequestSubscribeSystemMessage(RequestSubscribeSystemMessageOption callback)",
+        "RequestVirtualPayment(RequestVirtualPaymentOption option)",
+        "RequirePrivacyAuthorize(RequirePrivacyAuthorizeOption callback)",
+        "ReserveChannelsLive(ReserveChannelsLiveOption option)",
+        "RestartMiniProgram(RestartMiniProgramOption callback)",
+        "SelectGroupMembers(SelectGroupMembersOption callback)",
+        "SetHandoffQuery(string query)",
+        "SetMessageToFriendQuery(SetMessageToFriendQueryOption option)",
+        "SetUserCloudStorage(SetUserCloudStorageOption callback)",
+        "ShareAppMessage(ShareAppMessageOption option)",
+        "ShareAppMessageToGroup(ShareAppMessageToGroupOption callback)",
+        "ShareEmojiToGroup(ShareEmojiToGroupOption callback)",
+        "ShareImageToGroup(ShareImageToGroupOption callback)",
+        "ShareTextToGroup(ShareTextToGroupOption callback)",
+        "ShareVideoToGroup(ShareVideoToGroupOption callback)",
+        "ShowShareImageMenu(ShowShareImageMenuOption callback)",
+        "ShowShareMenu(ShowShareMenuOption callback)",
+        "UpdateShareMenu(UpdateShareMenuOption callback)"
+      ],
+      "managed": [
+        "InitSDK"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.CrazySDK",
+      "methods": [],
+      "properties": [
+        "IsInitialized",
+        "IsShutDown",
+        "Environment",
+        "IsAvailable"
+      ],
+      "managed": [
+        "Init",
+        "InitAsync"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.AdModule",
+      "methods": [
+        "HasAdblock(Action\u003Cbool\u003E callback)",
+        "HasAdblockAsync()",
+        "RequestAd(CrazyAdType adType, Action adStarted, Action\u003CSdkError\u003E adError, Action adFinished)"
+      ],
+      "properties": [
+        "AdblockStatus"
+      ],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.AnalyticsModule",
+      "methods": [
+        "TrackOrder(PaymentProvider provider, object order)"
+      ],
+      "properties": [],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.BannerModule",
+      "methods": [
+        "RefreshBanners()",
+        "RegisterBanner(CrazyBanner banner)",
+        "UnregisterBanner(CrazyBanner banner)"
+      ],
+      "properties": [
+        "Banners"
+      ],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.DataModule",
+      "methods": [
+        "DeleteAll()",
+        "DeleteKey(string key)",
+        "GetFloat(string key)",
+        "GetFloat(string key, float defaultValue)",
+        "GetInt(string key)",
+        "GetInt(string key, int defaultValue)",
+        "GetString(string key)",
+        "GetString(string key, string defaultValue)",
+        "HasKey(string key)",
+        "SetFloat(string key, float value)",
+        "SetInt(string key, int value)",
+        "SetString(string key, string value)"
+      ],
+      "properties": [],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.GameModule",
+      "methods": [
+        "AddJoinRoomListener(Action\u003CDictionary\u003Cstring, string\u003E\u003E listener)",
+        "AddQualityChangeListener(Action\u003CGameQuality\u003E listener)",
+        "AddSettingsChangeListener(Action\u003CGameSettings\u003E listener)",
+        "ClearGameContext()",
+        "GameplayStart()",
+        "GameplayStop()",
+        "GetInviteLinkParameter(string paramName)",
+        "HappyTime()",
+        "HideInviteButton()",
+        "InviteLink(Dictionary\u003Cstring, string\u003E parameters)",
+        "LeftRoom()",
+        "RemoveJoinRoomListener(Action\u003CDictionary\u003Cstring, string\u003E\u003E listener)",
+        "RemoveQualityChangeListener(Action\u003CGameQuality\u003E listener)",
+        "RemoveSettingsChangeListener(Action\u003CGameSettings\u003E listener)",
+        "ReportGameCompletedPercentage(int percentage)",
+        "SetGameContext(Dictionary\u003Cstring, string\u003E context)",
+        "ShowInviteButton(Dictionary\u003Cstring, string\u003E parameters)",
+        "UpdateRoom(UpdateRoomInput input)"
+      ],
+      "properties": [
+        "IsInstantJoin",
+        "IsInstantMultiplayer",
+        "IsOfflineMode",
+        "Settings",
+        "Quality",
+        "InviteParams"
+      ],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.StoreModule",
+      "methods": [
+        "BuyItem(string itemId, Action\u003CSdkError, PurchaseResult\u003E callback)",
+        "BuyItemAsync(string itemId)",
+        "ConsumeItem(string sku, int quantity, Action\u003CSdkError\u003E callback)",
+        "ConsumeItemAsync(string sku, int quantity)",
+        "GetCatalogItems(Action\u003CSdkError, CatalogPage\u003E callback)",
+        "GetCatalogItems(int limit, int offset, Action\u003CSdkError, CatalogPage\u003E callback)",
+        "GetCatalogItemsAsync()",
+        "GetCatalogItemsAsync(int limit, int offset)",
+        "GetPlayerInventory(Action\u003CSdkError, InventoryPage\u003E callback)",
+        "GetPlayerInventory(int limit, int offset, Action\u003CSdkError, InventoryPage\u003E callback)",
+        "GetPlayerInventoryAsync()",
+        "GetPlayerInventoryAsync(int limit, int offset)",
+        "SetSandbox(bool sandbox)"
+      ],
+      "properties": [],
+      "managed": [
+        "Init"
+      ]
+    },
+    {
+      "channel": "crazygames",
+      "sourceType": "CrazyGames.UserModule",
+      "methods": [
+        "AddAuthListener(Action\u003CPortalUser\u003E listener)",
+        "AddScore(float score)",
+        "GetUser(Action\u003CPortalUser\u003E callback)",
+        "GetUserAsync()",
+        "GetUserToken(Action\u003CSdkError, string\u003E callback)",
+        "GetUserToken(InGameAuthSigningKeyType signingKeyType, Action\u003CSdkError, string\u003E callback)",
+        "GetUserTokenAsync()",
+        "GetUserTokenAsync(InGameAuthSigningKeyType signingKeyType)",
+        "GetXsollaUserToken(Action\u003CSdkError, string\u003E callback)",
+        "GetXsollaUserTokenAsync()",
+        "ListFriends(int page, int size, Action\u003CSdkError, FriendsPage\u003E callback)",
+        "ListFriendsAsync(int page, int size)",
+        "RemoveAuthListener(Action\u003CPortalUser\u003E listener)",
+        "ShowAccountLinkPrompt(Action\u003CSdkError, bool\u003E callback)",
+        "ShowAccountLinkPromptAsync()",
+        "ShowAuthPrompt(Action\u003CSdkError, PortalUser\u003E callback)",
+        "ShowAuthPromptAsync()",
+        "SubmitScore(string encryptedScore)",
+        "SubmitScore(string encryptedScore, double score)",
+        "SubmitScore(string encryptedScore, float score)",
+        "SubmitScore(string encryptedScore, long score)",
+        "SyncUnityGameData()"
+      ],
+      "properties": [
+        "IsUserAccountAvailable"
+      ],
+      "managed": [
+        "Init"
+      ]
+    }
+  ],
+  "objects": [
+    {
+      "sourceType": "WeChatWASM.WXBannerAd",
+      "wrapper": "WechatBannerAd",
+      "methods": [
+        "OnResize",
+        "OffResize",
+        "Hide"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXCustomAd",
+      "wrapper": "WechatCustomAd",
+      "methods": [
+        "OnClose",
+        "OnHide",
+        "OffClose",
+        "OffHide",
+        "Hide"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXInterstitialAd",
+      "wrapper": "WechatInterstitialAd",
+      "methods": [
+        "Load",
+        "OnClose",
+        "OffClose"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXRewardedVideoAd",
+      "wrapper": "WechatRewardedVideoAd",
+      "methods": [
+        "Load",
+        "OnClose",
+        "OffClose",
+        "ReportShareBehavior"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXOpenDataContext",
+      "wrapper": "WechatOpenDataContext",
+      "methods": [
+        "PostMessage"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXRankManager",
+      "wrapper": "WechatRankManager",
+      "methods": [
+        "MiddleUpdate",
+        "Update",
+        "CreateChallenge",
+        "Abort",
+        "OnChallengeStart",
+        "OffChallengeStart"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXUserInfoButton",
+      "wrapper": "WechatUserInfoButton",
+      "methods": [
+        "Destroy",
+        "Hide",
+        "OffTap",
+        "OnTap",
+        "Show"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXFeedbackButton",
+      "wrapper": "WechatFeedbackButton",
+      "methods": [
+        "Destroy",
+        "Hide",
+        "OffTap",
+        "OnTap",
+        "Show"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXGameClubButton",
+      "wrapper": "WechatGameClubButton",
+      "methods": [
+        "Destroy",
+        "Hide",
+        "Show",
+        "OnTap",
+        "OffTap"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXPageManager",
+      "wrapper": "WechatPageManager",
+      "methods": [
+        "Destroy",
+        "Off",
+        "On",
+        "Load",
+        "Show"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXLaunchOpera",
+      "wrapper": "WechatLaunchOpera",
+      "methods": [
+        "SetPercentage",
+        "GetRunning",
+        "End",
+        "onEnd",
+        "offEnd",
+        "SetGlobalVar",
+        "GetGlobalVar",
+        "IsPlayStoryLine"
+      ]
+    },
+    {
+      "sourceType": "WeChatWASM.WXBaseAd",
+      "wrapper": "WechatAd",
+      "methods": [
+        "Show",
+        "Show",
+        "OnError",
+        "OnLoad",
+        "OffError",
+        "OffLoad",
+        "Destroy"
+      ]
+    }
+  ],
+  "unityRootDifferences": {
+    "reason": "\u4EE5\u4E0B\u5FAE\u4FE1\u5C0F\u6E38\u620F JS \u5019\u9009\u63A5\u53E3\u672A\u51FA\u73B0\u5728\u672C\u5FEB\u7167 WX/WXBase \u6839\u7C7B\u578B\uFF1B\u662F\u5426\u53EF\u4ECE\u5F00\u653E\u6570\u636E\u57DF\u6216\u672A\u6765 SDK \u83B7\u53D6\u987B\u53E6\u884C\u6838\u5B9E\uFF0C\u4E0D\u80FD\u4F2A\u9020\u5B9E\u73B0\u3002",
+    "methods": [
+      "CheckHandoffEnabled",
+      "OffAddToSchedule",
+      "OffShareAppMessage",
+      "OnAddToSchedule",
+      "StartHandoff",
+      "CreateOpenSettingButton",
+      "CreateStoreGift",
+      "GetFriendCloudStorage",
+      "GetFriendSendGiftStatus",
+      "GetGroupCloudStorage",
+      "GetGroupInfo",
+      "GetPotentialFriendList",
+      "GetRelationFriendList",
+      "GetUserCloudStorage",
+      "GetUserCloudStorageKeys",
+      "ModifyFriendInteractiveStorage",
+      "SendGiftToFriend",
+      "ShareMessageToFriend",
+      "CreateAdSkipCard",
+      "CreateGridAd",
+      "GetGameLogManager",
+      "GetScenePerformanceManager"
+    ]
+  }
+}

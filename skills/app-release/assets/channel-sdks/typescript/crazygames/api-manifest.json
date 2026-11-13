@@ -1,0 +1,32 @@
+{
+  "platform": "crazygames",
+  "runtime": "HTML5 SDK v3",
+  "checkedAt": "2026-11-13",
+  "source": "https://sdk.crazygames.com/crazygames-sdk-v3.js",
+  "observedSourceSha256": "4ab3b0b809974c9279bfa8ef066e787c222eb638877ff641695220e6616cb486",
+  "sources": [
+    "https://docs.crazygames.com/sdk/intro/",
+    "https://docs.crazygames.com/sdk/game/",
+    "https://docs.crazygames.com/sdk/video-ads/",
+    "https://docs.crazygames.com/sdk/banners/",
+    "https://docs.crazygames.com/sdk/user/",
+    "https://docs.crazygames.com/sdk/data/",
+    "https://docs.crazygames.com/sdk/store/",
+    "https://docs.crazygames.com/sdk/in-game-purchases/",
+    "https://docs.crazygames.com/sdk/leaderboards-client/"
+  ],
+  "properties": ["environment", "isQaTool", "game.link", "game.id", "game.settings", "game.isInstantMultiplayer", "game.isOfflineMode", "game.inviteParams", "user.isUserAccountAvailable"],
+  "methods": {
+    "game": ["gameplayStart", "gameplayStop", "loadingStart", "loadingStop", "happytime", "reportGameCompletedPercentage", "inviteLink", "showInviteButton", "hideInviteButton", "getInviteParam", "addSettingsChangeListener", "removeSettingsChangeListener", "updateRoom", "leftRoom", "addJoinRoomListener", "removeJoinRoomListener", "setGameContext", "clearGameContext"],
+    "ad": ["requestAd", "hasAdblock"],
+    "banner": ["requestBanner", "requestResponsiveBanner", "clearBanner", "clearAllBanners"],
+    "user": ["getUser", "showAuthPrompt", "getUserToken", "getXsollaUserToken", "showAccountLinkPrompt", "listFriends", "addAuthListener", "removeAuthListener", "submitScore"],
+    "data": ["getItem", "setItem", "removeItem", "clear"],
+    "analytics": ["trackOrder"],
+    "store": ["setSandbox", "getCatalogItems", "getPlayerInventory", "buyItem", "consumeItem"]
+  },
+  "businessMethods": ["ad.showRewardedAd", "user.login", "store.purchase"],
+  "managedInitialization": "init 由 CrazyGamesChannel.initialize 唯一负责",
+  "excluded": "设备系统、引擎通用能力和 SDK 内部事件处理器不属于本次渠道专属公开接口。官方已废弃的方法不为旧版兼容而新增。",
+  "unverified": "官方动态脚本会更新；未找到适用于全部 HTML5 模块的官方完整类型声明。已核对官方文档、SDK 源码及 Cocos 官方公开类型，未文档化的 SDK 内部方法不视为稳定公开合同。运行期广告、账号、平台存档、购买与宿主仍需项目实测。"
+}

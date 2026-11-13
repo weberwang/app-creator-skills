@@ -152,6 +152,31 @@ test('dry-run 只读迁移清单，不下载载荷或写入目标目录', async 
   assert.equal(existsSync(join(project, '.agents')), false);
 });
 
+test('远程安装递归保留渠道复用源码和项目接入脚本的真实字节', async (t) => {
+  const root = testDirectory(t);
+  const project = join(root, 'project');
+  mkdirSync(project);
+  const catalog = makeRepository().catalog;
+  catalog.stacks.unity.capabilitySkills.push('app-release');
+  const paths = [
+    'skills/app-release/scripts/install-channel-sdks.mjs',
+    'skills/app-release/assets/channel-sdks/unity/WechatMinigameChannel.cs',
+    'skills/app-release/assets/channel-sdks/typescript/crazygames-channel.ts',
+  ];
+  const payload = paths.map((path) => ({ path, bytes: readFileSync(new URL(`../${path}`, import.meta.url)) }));
+  const repo = makeRepository({ extraFiles: [
+    { path: 'packages/installer/catalog.json', bytes: JSON.stringify(catalog) },
+    { path: 'skills/app-release/SKILL.md', bytes: '# 渠道复用测试夹具\n' },
+    ...payload,
+  ] });
+  const transport = fakeGitHub(repo);
+  await installFixture(project, join(root, 'cache'), repo, { fetchImpl: transport.fetchImpl });
+  for (const { path, bytes } of payload) {
+    assert.ok(rawPaths(transport.requests).includes(path));
+    assert.deepEqual(readFileSync(join(project, '.agents', path)), bytes);
+  }
+});
+
 test('冷内容缓存可从现有安装逐文件复用且不请求技能载荷', async (t) => {
   const root = testDirectory(t);
   const originalProject = join(root, 'original-project');
