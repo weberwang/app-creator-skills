@@ -14,6 +14,7 @@ import { validManifest as phaserManifest, minimalPng as phaserPng } from '../../
 import { validManifest as threeManifest, minimalPng as threePng } from '../../skills/threejs-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
 import { loadVisualConfirmationAuthority } from '../../skills/cocos-domain-contracts/scripts/visual-confirmation-authority.mjs';
+import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const require = createRequire(import.meta.url);
@@ -31,7 +32,7 @@ function fixture(t, { stack = 'flutter', type = 'PAGE', stage = 'V2' } = {}) {
   const repo = mkdtempSync(join(tmpdir(), 'single-domain-test-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   const referenceTarget = write(repo, 'target.txt', '测试目标内容');
-  write(repo, 'v2-review.json', { referenceTarget });
+  write(repo, 'v2-review.json', { referenceTarget, scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
   const visual = { objectId: 'example-page', candidateId: 'candidate-a', stage, reviews: { V2: { path: 'v2-review.json' } } };
   if (type === 'DISPLAY_LAYER') Object.assign(visual, { objectId: 'dialog', hostId: 'host', layerType: 'modal' });
   const work = { workItemId: 'work-a', projectId: 'project-a', stack, workItemType: type, visual };
@@ -79,7 +80,7 @@ test('Flutter V2 绑定真实目标且不要求提前制作布局规格', (t) =>
 });
 
 test('Flutter V3 执行真实布局合同并校验对象与文件身份', (t) => {
-  const f = fixture(t, { stage: 'V3' }); addLayout(f); f.save();
+  const f = fixture(t, { stage: 'V3' }); addLayout(f); attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V3'), true);
   writeFileSync(join(f.repo, 'layout.yaml'), 'phase: sketch\npage: {id: example-page}\n');
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V3'), /布局规格.*内容/);
@@ -89,18 +90,20 @@ test('Flutter V3 执行真实布局合同并校验对象与文件身份', (t) =>
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V3'), /未绑定当前页面/);
 });
 
-test('Flutter V5 可用性模式允许草图，精确模式要求 fidelity', (t) => {
+test('Flutter V5 可用性模式可省略像素矩阵但仍要求设计还原和对照', (t) => {
   const f = fixture(t, { stage: 'V5' }); addLayout(f); f.save();
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /设计拆解/);
+  attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
   f.doc.visualValidationMode = 'exact'; f.save();
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /exact.*fidelity/);
-  addFidelityLayout(f); f.save();
+  addFidelityLayout(f); attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
 });
 
 test('Flutter fidelity 对照目标与实际截图和测量文件均须有效', (t) => {
   const f = fixture(t, { stage: 'V5' }); f.doc.visualValidationMode = 'exact';
-  const spec = addFidelityLayout(f); f.save();
+  const spec = addFidelityLayout(f); attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
   const wrongTarget = write(f.repo, 'wrong-target.txt', '非当前视觉目标');
   spec.parity_cases[0].target_screenshot = wrongTarget.path;
@@ -123,19 +126,19 @@ test('Flutter fidelity 多视口分别绑定已确认目标，拒绝未经确认
   const spec = addFidelityLayout(f);
   const secondTarget = write(f.repo, 'second-target.txt', '合成的第二视口目标');
   const secondReview = write(f.repo, 'second-review.json', {
-    workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
-    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认',
+    schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] },
     referenceTarget: secondTarget, targetRef: secondTarget.path, targetSha256: secondTarget.sha256,
   });
   spec.parity_cases.push({ ...spec.parity_cases[0], id: 'landscape-case', orientation: 'landscape', viewport: { width: 844, height: 390 }, target_screenshot: secondTarget.path, target_sha256: secondTarget.sha256 });
   f.doc.layoutSpecRef = write(f.repo, 'layout.yaml', spec);
-  f.doc.additionalTargets = [{ referenceTarget: secondTarget, reviewRef: secondReview }]; f.save();
+  f.doc.additionalTargets = [{ referenceTarget: secondTarget, reviewRef: secondReview }]; attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
   delete f.doc.additionalTargets; f.save();
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /未绑定已确认目标/);
   const unrelatedReview = write(f.repo, 'second-review.json', {
-    workItemId: 'other-work', objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
-    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认',
+    schemaVersion: '1.0', workItemId: 'other-work', objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] },
     referenceTarget: secondTarget, targetRef: secondTarget.path, targetSha256: secondTarget.sha256,
   });
   f.doc.additionalTargets = [{ referenceTarget: secondTarget, reviewRef: unrelatedReview }]; f.save();
@@ -154,16 +157,16 @@ test('Flutter 显示层额外目标确认不能跨宿主或层类型复用', (t)
     interactions: ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef })),
   });
   for (const name of ['V2', 'V3Decomposition', 'V3Layout', 'V4', 'V5']) {
-    f.work.visual.reviews[name] = write(f.repo, `${name}.json`, { referenceTarget: f.referenceTarget, hostId: 'host', layerType: 'modal', ...(name === 'V5' ? { runtimeContextRef } : {}) });
+    f.work.visual.reviews[name] = write(f.repo, `${name}.json`, { referenceTarget: f.referenceTarget, hostId: 'host', layerType: 'modal', ...(name === 'V2' ? { scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } } : {}), ...(name === 'V5' ? { runtimeContextRef } : {}) });
   }
   f.doc.runtimeContextRef = runtimeContextRef;
   const target = write(f.repo, 'extra-target.txt', '额外目标');
-  const review = { workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
-    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', hostId: 'host', layerType: 'modal',
+  const review = { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] }, hostId: 'host', layerType: 'modal',
     referenceTarget: target, targetRef: target.path, targetSha256: target.sha256 };
   spec.parity_cases.push({ ...spec.parity_cases[0], id: 'extra', orientation: 'landscape', viewport: { width: 844, height: 390 }, target_screenshot: target.path, target_sha256: target.sha256 });
   f.doc.layoutSpecRef = write(f.repo, 'layout.yaml', spec);
-  f.doc.additionalTargets = [{ referenceTarget: target, reviewRef: write(f.repo, 'extra-review.json', review) }]; f.save();
+  f.doc.additionalTargets = [{ referenceTarget: target, reviewRef: write(f.repo, 'extra-review.json', review) }]; attachFlutterDesignFixture(f.repo, f.work, f.doc); f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
   review.hostId = 'other-host'; review.workItemId = 'source-work';
   f.doc.additionalTargets[0].reviewRef = write(f.repo, 'extra-review.json', review); f.save();
@@ -189,8 +192,8 @@ test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目�
   const spec = addFidelityLayout(f);
   const secondTarget = write(f.repo, 'reuse-target.txt', '已确认的合成额外视口');
   const secondReview = write(f.repo, 'reuse-review.json', {
-    workItemId: 'source-work', objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
-    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成原始确认',
+    schemaVersion: '1.0', workItemId: 'source-work', objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+    stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成原始确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] },
     referenceTarget: secondTarget, targetRef: secondTarget.path, targetSha256: secondTarget.sha256,
   });
   spec.parity_cases.push({ ...spec.parity_cases[0], id: 'reused-landscape', orientation: 'landscape', viewport: { width: 844, height: 390 }, target_screenshot: secondTarget.path, target_sha256: secondTarget.sha256 });
@@ -201,7 +204,7 @@ test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目�
   const created = await initializeWork({ repo: f.repo, args: { id: 'source-work', stack: 'flutter', type: 'PAGE', objective: '合成来源', 'project-id': f.work.projectId, 'object-id': f.work.visual.objectId } });
   const source = JSON.parse(readFileSync(join(f.repo, created.metadata.workItemPath), 'utf8'));
   source.globalState = 'COMPLETE'; source.visual.stage = 'V5'; source.visual.candidateId = f.work.visual.candidateId;
-  source.visual.reviews.V2 = write(f.repo, 'source-v2-review.json', { referenceTarget: f.referenceTarget });
+  source.visual.reviews.V2 = write(f.repo, 'source-v2-review.json', { referenceTarget: f.referenceTarget, scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
   const baselineCandidate = write(f.repo, 'baseline-candidate.txt', '合成视觉候选');
   const baselineReview = write(f.repo, 'baseline-review.json', { targetRef: baselineCandidate.path, targetSha256: baselineCandidate.sha256 });
   source.globalVisualBaselineRef = write(f.repo, 'baseline.json', { schemaVersion: '1.0', projectId: f.work.projectId, stack: 'flutter', selectedCandidateId: 'a', candidates: [{ candidateId: 'a', path: baselineCandidate.path }], selectionReviewRef: baselineReview });
@@ -210,6 +213,7 @@ test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目�
   f.work.globalVisualBaselineRef = { ...source.globalVisualBaselineRef };
   f.work.visual.reviews.V2 = source.visual.reviews.V2;
   f.work.visual.reuse = { sourceWorkItemRef: { path: created.metadata.workItemPath }, impact: 'implementation', reason: '目标未变化', inheritedReviews: ['V2'] };
+  attachFlutterDesignFixture(f.repo, f.work, f.doc);
   f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
 

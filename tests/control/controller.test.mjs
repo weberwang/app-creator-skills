@@ -372,6 +372,11 @@ test('视觉 RETURN 回退到最早受影响阶段并撤销下游确认', async 
     V3Layout: { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) },
     V4: { path: 'reviews/v3.json', sha256: '0'.repeat(64) }, V5: { path: 'reviews/v4.json', sha256: '0'.repeat(64) },
   };
+  // 这些合成文件用于证明 RETURN 只作废引用，不删除历史材料。
+  await putJson(fixture.repo, 'reviews/v2-layout.json', { historical: 'layout' });
+  await putJson(fixture.repo, 'reviews/assets.json', { historical: 'assets' });
+  await putJson(fixture.repo, 'reviews/domain.json', { historical: 'domain' });
+  work.visual.domainEvidenceRef = await frozenReview(fixture.repo, 'reviews/domain.json');
   await putJson(fixture.repo, 'reviews/global-baseline.json', { scope: 'synthetic' }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, 'reviews/global-baseline.json');
   work.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'PASS', F4: 'PASS' };
@@ -386,6 +391,9 @@ test('视觉 RETURN 回退到最早受影响阶段并撤销下游确认', async 
   assert.equal(returned.visual.reviews.V5, undefined);
   assert.equal(returned.globalVisualBaselineRef.path, 'reviews/global-baseline.json');
   assert.equal(returned.assetReviewRef, null);
+  assert.equal(returned.visual.domainEvidenceRef, undefined);
+  assert.ok(returned.invalidatedRefs.some((ref) => ref.path === 'reviews/domain.json' && ref.state === 'V5'));
+  for (const path of ['reviews/v2-layout.json', 'reviews/assets.json', 'reviews/domain.json']) assert.ok((await readFile(resolve(fixture.repo, path))).length);
   assert.equal(returned.gateStatus.F2, 'NOT_RUN');
   assert.equal(returned.gateStatus.F3, 'NOT_RUN');
   returned.visual.reviews.V3Layout = { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) };
@@ -395,6 +403,10 @@ test('视觉 RETURN 回退到最早受影响阶段并撤销下游确认', async 
   returned.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   await putJson(fixture.repo, fixture.workPath, returned);
   assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /assetReviewRef 重新绑定了 RETURN 已作废引用/);
+  returned.assetReviewRef = null;
+  returned.visual.domainEvidenceRef = await frozenReview(fixture.repo, 'reviews/domain.json');
+  await putJson(fixture.repo, fixture.workPath, returned);
+  assert.throws(() => inspect({ repo: fixture.repo, workItem: fixture.workPath }), /重新绑定已作废引用：reviews\/domain\.json/);
 });
 
 test('全局基线 RETURN 后不能重绑旧选择记录', async (t) => {
@@ -425,6 +437,8 @@ test('实现返修 RETURN 保留仍有效的 V2–V4 确认与素材评审', asy
     V2: { path: 'reviews/v1.json', sha256: '0'.repeat(64) }, V3Decomposition: { path: 'reviews/v2-decomposition.json', sha256: '0'.repeat(64) },
     V3Layout: { path: 'reviews/v2-layout.json', sha256: '0'.repeat(64) }, V4: { path: 'reviews/v3.json', sha256: '0'.repeat(64) }, V5: { path: 'reviews/v4.json', sha256: '0'.repeat(64) },
   };
+  await putJson(fixture.repo, 'reviews/runtime-domain.json', { historical: 'runtime' });
+  work.visual.domainEvidenceRef = await frozenReview(fixture.repo, 'reviews/runtime-domain.json');
   work.assetReviewRef = { path: 'reviews/assets.json', sha256: '0'.repeat(64) };
   work.implementationPackageRef = { path: 'packages/old.json' };
   work.evidenceRef = { path: 'evidence/old.json' };
@@ -438,6 +452,9 @@ test('实现返修 RETURN 保留仍有效的 V2–V4 确认与素材评审', asy
   assert.equal(returned.visual.reviews.V3Layout.path, 'reviews/v2-layout.json');
   assert.equal(returned.visual.reviews.V4.path, 'reviews/v3.json');
   assert.equal(returned.visual.reviews.V5, undefined);
+  assert.equal(returned.visual.domainEvidenceRef, undefined);
+  assert.ok(returned.invalidatedRefs.some((ref) => ref.path === 'reviews/runtime-domain.json'));
+  assert.ok((await readFile(resolve(fixture.repo, 'reviews/runtime-domain.json'))).length);
   assert.equal(returned.assetReviewRef.path, 'reviews/assets.json');
   assert.equal(returned.implementationPackageRef, null);
   assert.equal(returned.evidenceRef, null);
@@ -532,7 +549,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
   const target = await put(fixture.repo, 'visual/home-target.png', '合成 V2 目标材料');
   const v1ReviewPath = '.workflow-control/reviews/home-target.json';
   const v1Checks = await createQualityChecks(fixture.repo, 'visual/reviews/v1');
-  await putVisualReview(fixture.repo, v1ReviewPath, reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'target', userMessageRef: 'chat://home-target', targetRef: target, qualityChecks: v1Checks }), work.workItemId, target);
+  await putVisualReview(fixture.repo, v1ReviewPath, { ...reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'target', userMessageRef: 'chat://home-target', targetRef: target, qualityChecks: v1Checks }), scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } }, work.workItemId, target);
   work.visual.reviews.V2 = await frozenReview(fixture.repo, v1ReviewPath);
   await writeSingleDomainFixture(fixture.repo, work, 'V2');
   await putJson(fixture.repo, fixture.workPath, work);

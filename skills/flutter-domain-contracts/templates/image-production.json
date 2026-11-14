@@ -1,0 +1,12 @@
+{
+  "identity": "independent",
+  "consumerIds": ["replace-real-consumer"],
+  "sourceRegion": {"x": 0, "y": 0, "width": 96, "height": 96, "unit": "px"},
+  "outputPath": "assets/images/replace-image.png",
+  "outputSize": {"width": 192, "height": 192},
+  "displaySize": {"width": 96, "height": 96},
+  "density": 2,
+  "background": "transparent",
+  "transparentInsets": {"top": 0, "right": 0, "bottom": 0, "left": 0},
+  "edgePolicy": "按当前设计检查 Alpha 和边缘，需切片/帧序时增加 slice/frames"
+}

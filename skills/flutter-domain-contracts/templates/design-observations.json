@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0", "format": "flutter-design-observations-v1",
+  "workItemId": "replace-work-item", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "implementationId": "native-heading", "method": "source-inspection",
+  "designReconstructionRef": {"path": "design/decomposition.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "sourceRefs": [],
+  "consumers": [],
+  "observations": []
+}

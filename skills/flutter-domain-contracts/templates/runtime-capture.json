@@ -1,0 +1,10 @@
+{
+  "schemaVersion": "1.0", "format": "flutter-runtime-capture-v1",
+  "workItemId": "replace-work-item", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "runtimeRef": {"path": "evidence/current-runtime.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "conditions": {}, "pixelRatio": 1,
+  "designReconstructionRef": {"path": "design/decomposition.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "implementationEvidenceRefs": [], "sourceRefs": [],
+  "captureMethod": "replace-with-actual-flutter-capture-method",
+  "captureOutputRef": {"path": "evidence/capture-output.log", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}
+}

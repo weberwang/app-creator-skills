@@ -1,0 +1,24 @@
+{
+  "schemaVersion": "1.0",
+  "workItemId": "replace-work-item",
+  "objectId": "replace-page",
+  "candidateId": "replace-confirmed-candidate",
+  "referenceTarget": {"path": "design/confirmed.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "conditions": [{"id": "default-phone", "stateId": "default", "viewport": {"width": 390, "height": 844}, "language": "zh-CN", "textScale": 1,
+    "adaptation": {"platform": "android", "orientation": "portrait", "safeArea": {"top": 24, "right": 0, "bottom": 24, "left": 0}, "keyboard": "hidden"}}],
+  "elements": [{"id": "heading", "label": "请替换为源图实际元素并穷尽当前设计", "targetRef": {"path": "design/confirmed.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+    "region": {"x": 16, "y": 32, "width": 240, "height": 48, "unit": "px"}, "conditionIds": ["default-phone"], "parentId": null, "layoutReference": "viewport", "implementationId": "native-heading"}],
+  "implementations": [{"id": "native-heading", "kind": "native", "designItemIds": ["heading"],
+    "consumers": [{"id": "heading-widget", "sourcePath": "lib/features/home/heading.dart", "symbol": "Heading"}],
+    "designReason": "示例标题需保留可访问文本；请按源图逐项判断，不能直接声明全部原生",
+    "requirements": {
+      "structure": {"value": {"widget": "Text", "layout": "column", "children": []}, "basis": "estimated", "reason": "示例，须从已确认源图推导真实结构"},
+      "size": {"value": {"width": 240, "height": 48}, "basis": "estimated", "reason": "示例，替换为当前设计尺寸与单位依据"},
+      "spacing": {"value": {"top": 8, "right": 8, "bottom": 8, "left": 8}, "basis": "estimated", "reason": "示例，替换为真实布局间距"},
+      "typography": {"value": {"family": "Noto Sans", "size": 18, "weight": 500, "lineHeight": 1.4, "letterSpacing": 0}, "basis": "estimated", "reason": "示例，核对当前设计字体与排版"},
+      "color": {"value": {"background": "#ffffff", "foreground": "#222222"}, "basis": "estimated", "reason": "示例，颜色仅是还原要求的一部分"},
+      "border": {"value": {"width": 0, "color": "#00000000"}, "basis": "estimated", "reason": "示例无边框"},
+      "shape": {"value": {"kind": "rectangle", "radius": 0}, "basis": "estimated", "reason": "示例，按当前轮廓推导"},
+      "states": {"value": {"ids": ["default"], "rules": {"default": "显示实际标题"}}, "basis": "estimated", "reason": "示例，须覆盖实际状态及变化"}
+    }}]
+}

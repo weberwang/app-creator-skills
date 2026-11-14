@@ -1,5 +1,8 @@
 {
-  "purpose": "单素材生产规格，最终验收使用控制器 asset-review 模板；下列还原依据仅补受影响且适用项，未知值保留 null，不将估计视为确认，也不表示已有自动校验",
+  "purpose": "单素材生产支持资料；Flutter V3 必须同时使用 flutter-domain-contracts 的 design-reconstruction 合同与模板，必填生产规格不能以 null 通过。V4 才生产和导入，最终验收使用控制器 asset-review 模板。测量、估计、适配与批准变更分别记录。",
+  "designItemIds": [],
+  "implementationId": "",
+  "designReconstructionRef": null,
   "assetId": "",
   "objectId": "",
   "featureIds": [],

@@ -10,6 +10,7 @@ import { assertVisualReview } from '../../skills/app-workflow-control/scripts/ru
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { advanceVisual, assertFunctionBaseline, completeUnit, initializeWork, inspectWork, loadWork, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
@@ -73,6 +74,7 @@ function humanRecord({ objectId, stage, purpose, candidateId, targetRef, userMes
     schemaVersion: '1.0', objectId, candidateId, stage, purpose,
     decision: 'APPROVED', userMessageRef,
     ...(targetRef ? { targetRef } : {}), ...(checks ? { qualityChecks: checks } : {}),
+    ...(stage === 'V2' && purpose === 'target' ? { scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } } : {}),
     ...(hostId ? { hostId, layerType } : {}), ...(runtimeContextRef ? { runtimeContextRef } : {}),
   };
 }
@@ -216,6 +218,8 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
     assets: [{ assetId: 'component-a', assetType: 'native-component', output: componentOutput, componentEvidenceRef: componentEvidence }],
   });
   work.assetReviewRef = await frozenReview(fixture.repo, assetReviewPath);
+  // 资源评审完成后再冻结完整合成领域证据，避免旧式组件占位覆盖逐项还原依据。
+  await writeSingleDomainFixture(fixture.repo, work, 'V5');
 
   const profile = loadProfile(fixture.repo, work.stack);
   const packPath = `.workflow-control/implementation-packages/${work.workItemId}-v4.json`;
@@ -267,6 +271,8 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
     const nextReviewPath = '.workflow-control/reviews/v5-revalidated-runtime.json';
     await putVisualReview(fixture.repo, nextReviewPath, humanRecord({ objectId: current.visual.objectId, candidateId: current.visual.candidateId, stage: 'V5', purpose: 'runtime-acceptance', userMessageRef: 'test-message://new-v5', targetRef: runtimeRef }), current.workItemId, targetRef);
     current.visual.reviews.V5 = await frozenReview(fixture.repo, nextReviewPath);
+    // 新人工确认须重新绑定完整设计项、运行条件及当前对照。
+    await writeSingleDomainFixture(fixture.repo, current, 'V5');
     await putJson(fixture.repo, fixture.workPath, current);
     const manifest = JSON.parse(await readFile(resolve(fixture.repo, evidencePath), 'utf8'));
     manifest.items.push(...items.filter((item) => !profile.evidenceRequirements.engineering.includes(item.category)));
@@ -368,6 +374,9 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
   updatedReview.runtimeContextRef = domain.runtimeContextRef;
   await putJson(fixture.repo, updatedReviewPath, updatedReview);
   work.visual.reviews.V5 = await frozenReview(fixture.repo, updatedReviewPath);
+  // 测试使用新的宿主设计合同和当前实现/对照，旧宿主证据不能充作新宿主结论。
+  delete domain.designReconstructionRef;
+  attachFlutterDesignFixture(fixture.repo, work, domain);
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
   assert.doesNotThrow(() => assertVisualReview(fixture.repo, work, 'V5'));

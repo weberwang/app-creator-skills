@@ -9,6 +9,7 @@
 | [run-fixtures.js](../../adaptive-layout-implementation/scripts/run-fixtures.js) | 从现有 YAML 模板及夹具变更生成输入，检查规格是否按预期通过或失败；复算声明几何的关系，不运行 Flutter 或求解真实页面布局 |
 | [adaptive-layout-implementation](native-contracts.md#mode-adaptive-layout-implementation) | 包含规格结构、约束和关系复算校验、错误信息及脚本；真实项目仍需对应 Flutter 实现和布局测量 |
 | [validate-workflow.js](../../flutter-domain-contracts/tools/scripts/validate-workflow.js) | 维护时核对本栈完整技能、路由、引用及可复算风险场景；不证明 Flutter 工程通过 |
+| [设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md) | 公共控制器 V3–V5 实际消费 designReconstructionRef、逐属性原始观测、确认范围及当前完整组合；全原生页面也不可绕过 |
 | [flutter-project-init](native-contracts.md#mode-flutter-project-init) | 保留初始化脚本及生成到工程的完整 flutter-dev 技能模板，不把模板计为独立根入口 |
 
 在技能仓库运行 `npm run test:flutter-layout`；安装到项目后可运行：

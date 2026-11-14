@@ -326,7 +326,10 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
     const pictureSha = name === 'V2' ? targetSha : createHash('sha256').update(name).digest('hex');
     const reviewPath = `reviews/${name}.json`;
     const review = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId, candidateId: work.visual.candidateId, stage, purpose, decision: 'APPROVED', userMessageRef: `chat://${name}`, targetRef: picturePath, targetSha256: pictureSha, referenceTarget };
-    if (name === 'V2') review.qualityChecks = await createQualityChecks(fixture.repo, 'reviews/v1-quality');
+    if (name === 'V2') {
+      review.qualityChecks = await createQualityChecks(fixture.repo, 'reviews/v1-quality');
+      review.scope = { kind: 'full-object', designItemIds: [], conditionIds: [] };
+    }
     if (name === 'V3Layout') {
       const decompositionPath = work.visual.reviews.V3Decomposition.path;
       const bytes = await readFile(resolve(fixture.repo, decompositionPath));

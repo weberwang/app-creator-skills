@@ -33,6 +33,12 @@ export function repoPath(repo, value, label = '路径') {
   return { absolute, relative: relativePath.replaceAll('\\', '/') };
 }
 
+/** Windows 文件身份不区分大小写，失效检查不能被大小写路径别名绕过。 */
+export function fileIdentityKey(repo, value) {
+  const normalized = repoPath(repo, value).relative;
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
 /** 判定实际绝对路径仍位于指定仓库内。 */
 function staysWithin(base, target) {
   const rel = relative(base, target);

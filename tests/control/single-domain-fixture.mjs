@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 
 /** 写入测试用领域资料并返回实际文件内容身份。 */
 async function putIdentity(repo, path, content) {
@@ -27,7 +28,11 @@ export async function writeSingleDomainFixture(repo, work, stage) {
   if (stage !== 'V2') {
     const template = fileURLToPath(new URL('../../skills/adaptive-layout-implementation/assets/layout-spec-template.yaml', import.meta.url));
     const content = (await readFile(template, 'utf8')).replace('id: example-page', `id: ${JSON.stringify(work.visual.objectId)}`);
-    document.layoutSpecRef = await putIdentity(repo, `.workflow-control/domain/${work.workItemId}-layout.yaml`, content);
+    // 已继承布局确认时沿用其冻结的布局规格，不能用同内容新路径冒充原始确认。
+    const inheritedLayout = work.visual.reuse?.inheritedReviews?.includes('V3Layout');
+    const previousReview = inheritedLayout ? JSON.parse(await readFile(resolve(repo, work.visual.reviews.V3Layout.path), 'utf8')) : null;
+    document.layoutSpecRef = previousReview?.layoutSpecRef ?? await putIdentity(repo, `.workflow-control/domain/${work.workItemId}-layout.yaml`, content);
+    attachFlutterDesignFixture(repo, work, document);
   }
   work.visual.domainEvidenceRef = await putIdentity(repo, `.workflow-control/domain/${work.workItemId}-${stage}.json`, `${JSON.stringify(document, null, 2)}\n`);
   return work.visual.domainEvidenceRef;

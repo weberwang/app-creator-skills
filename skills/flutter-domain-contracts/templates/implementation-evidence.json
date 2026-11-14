@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0", "workItemId": "replace-work-item", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "implementationId": "native-heading",
+  "designReconstructionRef": {"path": "design/decomposition.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "sourceRefs": [{"path": "lib/features/home/heading.dart", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"}],
+  "method": "source-inspection",
+  "executionRef": {"path": "evidence/source-observations.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "observations": []
+}

@@ -1,6 +1,6 @@
 import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, STAGES, TRANSITIONS, workCategory } from './constants.mjs';
 import { readFileSync } from 'node:fs';
-import { repoPath, stackProfileLocation, WorkflowError } from './io.mjs';
+import { repoPath, fileIdentityKey, stackProfileLocation, WorkflowError } from './io.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
 import { validateProductionScope } from './production-scope.mjs';
 
@@ -202,10 +202,10 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
       if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError(`视觉目标重新绑定已作废引用：${ref.path}`);
     }
   }
-  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef]) {
+  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.domainEvidenceRef]) {
     if (ref && !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('visual 场景证据引用必须绑定 SHA-256');
     if (ref?.path && repo) repoPath(repo, ref.path, 'visual 场景证据引用');
-    if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError(`视觉清单重新绑定已作废引用：${ref.path}`);
+    if (ref?.path && work.invalidatedRefs?.some((item) => repo ? fileIdentityKey(repo, item.path) === fileIdentityKey(repo, ref.path) : item.path === ref.path)) throw new WorkflowError(`视觉清单重新绑定已作废引用：${ref.path}`);
   }
   if (work.assetReviewRef && !/^[a-f0-9]{64}$/.test(work.assetReviewRef.sha256 ?? '')) throw new WorkflowError('assetReviewRef 必须绑定 SHA-256');
   if (work.transitionHistory !== undefined && !Array.isArray(work.transitionHistory)) throw new WorkflowError('Work Item.transitionHistory 必须为数组');

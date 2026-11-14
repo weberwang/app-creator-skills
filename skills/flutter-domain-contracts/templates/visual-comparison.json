@@ -1,0 +1,6 @@
+{
+  "schemaVersion": "1.0", "workItemId": "replace-work-item", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "designReconstructionRef": {"path": "design/decomposition.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "implementationEvidenceRefs": [],
+  "cases": []
+}

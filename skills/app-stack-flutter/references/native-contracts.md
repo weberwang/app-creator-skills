@@ -337,12 +337,12 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 5. 选择 Code Sketch 时，由 Flutter Engineer 在生产骨架实现中性草图并执行关系测试；需要截图时由用户人工检查。直接实现路线保留相应真实功能和结构验证。
 6. 公共 V1 功能行为经实际验证后，按需调用 `flutter-hifi-mockup` 生成、评审并由用户冻结高保真目标。
 7. 对冻结目标与语义合同/sketch spec 做合同回对。任何范围、状态、导航、滚动、断点、无障碍或 ownership 变化都返回更新并重审。
-8. 需要资产时调用 `flutter-asset-atlas`，在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
+8. 根据 V2 目标按[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项拆解、规划素材及原生实现，再在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
 
 <a id="mode-flutter-ux-ui-quality--完成条件"></a>
 #### 完成条件
 
-页面按实际范围提交结构、功能、已确认目标及适用资产证据，分别报告[三类验收结论](../../app-creator-workflow/references/verification.md#三类验收结论)。V5 在同阶段核对受影响关键元素的基准目标、正式源配置与实际 Widget 运行值，再检查已声明适配；仅明确要求 `exact` 时才强制 fidelity validator 和完整同视口 parity。独立 Visual QA、Golden、静态合同或截图采集均不能替代用户对实际组合画面的人工确认；没有人工确认时记录视觉待确认。低保真几何不能覆盖已冻结的正式目标。
+页面按实际范围提交结构、功能、已确认目标及适用资产证据，分别报告[三类验收结论](../../app-creator-workflow/references/verification.md#三类验收结论)。V5 核对当前正式组合与目标，绑定视口、状态、语言、文字倍率和适配条件。`usability` 仍须还原布局、层级、形状、排版及视觉特征；仅 `exact` 强制完整像素级矩阵。独立 Visual QA、Golden、功能测试、静态合同、截图采集或摘要均不能替代用户对实际组合画面的人工确认；没有人工确认时记录视觉待确认。低保真几何不能覆盖已冻结的正式目标。
 <!-- native-source:flutter-ux-ui-quality:end -->
 
 
@@ -534,25 +534,25 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-asset-atlas--flutter-asset-atlas"></a>
 ### Flutter Asset Atlas
 
-高保真目标冻结并通过合同回对后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 完成 ownership、覆盖审计、编号确认和生产。`docs/design/pages/<page-name>/asset-manifest.md` 是 ownership、覆盖审计、编号映射与资产结论的唯一权威；design decision 只链接它。拆解采用已有明确规格、用户确认的图上标注或明确授权的自动分析结果；未经授权不自动分析截图，缺少关键边界时记录待定并集中澄清，不将估计标为已确认目标。
+高保真目标冻结并通过合同回对后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 和[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)完成逐项覆盖审计、拆解确认和生产规格。可见元素以编号标注或源图区域定位，关联唯一设计项、目标、状态、真实父子与参照、实现方式、组件或素材、消费者和设计依据；抽象 Widget 树不能代替拆解。素材清单承载素材来源与消费关系，设计还原合同承载各设计项的机器可核对映射，二者引用同一事实。拆解采用已有明确规格、用户确认的图上标注或明确授权的自动分析结果；未经授权不自动分析截图，缺少关键边界时记录待定并集中澄清，不将估计标为已确认目标。
 
 <a id="mode-flutter-asset-atlas--流程"></a>
 #### 流程
 
 1. 验证冻结目标路径、candidate ID、SHA-256、用户确认、全局方向和页面决策。
 2. Asset planning agent 只读执行 ownership-first decomposition、全视觉覆盖审计与现有品牌/应用/共享资产复用检查。运行时 data 只记录 renderer、placeholder、loading 和 fallback。
-3. 无 bitmap/exported visual 时，在 manifest 记录 `N/A: no bitmap or exported visual assets` 并结束。
-4. 为每个固定视觉记录 100% match evidence。无法证明完全匹配时必须生产专用资产，不能用近似系统图标或组件替代。
-5. 填写 [asset manifest](../../flutter-asset-atlas/references/asset-manifest-template.md)，再用 `node scripts/render-bitmap-confirmation.js` 从 exact frozen target 生成编号图。Controller 只展示图片并等待用户明确确认。
-6. 确认后由独立 production work node 只处理获批编号：依次选择 reuse、adapt、variant、new generation、atlas、或经明确批准的 target extraction。默认基于已选方向的目标逻辑视口提供精确 `2x` raster；全屏图尺寸等于该视口宽高乘资源密度。
+3. 逐项比较原生、独立图片、共享素材和动态内容；全原生或只需头像等结论必须由每项分析支持，文字及控件也不能一律切图。无 bitmap 时仍完成所有原生设计项的拆解、规格和确认。
+4. 复用组件或素材须以当前目标核对其结构、样式与状态；仅换 Theme、颜色或沿用默认控件不足以证明还原。原生项声明设计元素、尺寸、间距、字体、颜色、边框、形状、状态、实现源码及当前验证依据；不要求为原生文本或按钮制作图片。
+5. 填写 [asset manifest](../../flutter-asset-atlas/references/asset-manifest-template.md) 与设计还原合同；使用目标图编号或可核对的源图区域展示拆解并等待用户确认。V3 仅制定规格，实际素材在 V4 取得、制作和导入。
+6. 确认后由生产执行者只处理获批设计项：依次选择 reuse、adapt、variant、new generation、atlas、或经明确批准的 target extraction。根据当前目标和消费规则声明资源密度与输出尺寸，不以固定密度取代逐项规格。
 7. 需要透明合成时优先原生透明输出；否则记录 mask/removal 方法，清理 alpha、matte、color spill，保留 shadow/glow/translucency，并在 checkerboard、亮/暗和实际背景检查。
-8. 在同一 manifest 记录 source/license、prompt hash、background、logical/output size、Flutter path、loading/error fallback 与 fidelity verdict。
+8. 图片按适用性记录源图位置、源帧或有效范围、独立/共享身份及消费者、输出与逻辑尺寸和密度、背景、透明边距、边缘、切片或帧序；V4 记录实际来源、许可、正式路径、导入验证与适用的 loading/error fallback。测量、估计、适配和用户批准的变更分别标明。
 9. 对照冻结目标、编号图和 manifest 做覆盖与视觉复核；任何映射或边界变化必须重新编号确认。
 
 <a id="mode-flutter-asset-atlas--门禁"></a>
 #### 门禁
 
-用户未确认编号图前不得生成、适配、提取、导出、透明化或切片。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。页面 ownership 未覆盖、资产来源或 license 不清、透明边缘损坏、尺寸不符或 fidelity 未通过时阻断高保真实现。
+用户未确认拆解前不得生成、适配、提取、导出、透明化或切片。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。设计项覆盖缺失、资产来源或许可不清、透明边缘损坏、尺寸不符或当前还原依据缺失时阻断受影响阶段。代表样本确认不代表整页通过，单项替换只改变相应项；目标、拆解、布局、样本、正式资源及 V5 组合各按既有节点确认。发现上游缺失或偏离时 RETURN 到最早受影响阶段，保留历史文件并作废受影响下游引用。
 <!-- native-source:flutter-asset-atlas:end -->
 
 <!-- native-source:flutter-hifi-mockup:start -->

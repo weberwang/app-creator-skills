@@ -9,7 +9,16 @@
   "properties": {
     "schemaVersion": {"const": "1.0"}, "objectId": {"type": "string"}, "candidateId": {"type": "string"},
     "stage": {"enum": ["BASELINE", "V2", "V3", "V4", "V5"]},
-    "purpose": {"enum": ["visual-baseline", "target", "decomposition", "layout", "imported-assets", "runtime-acceptance"]},
+    "purpose": {"enum": ["visual-baseline", "target", "decomposition", "layout", "representative-sample", "design-change", "imported-assets", "runtime-acceptance"]},
+    "scope": {"type": "object", "additionalProperties": false, "required": ["kind", "designItemIds", "conditionIds"], "properties": {
+      "kind": {"enum": ["full-object", "representative-sample", "design-items"]},
+      "designItemIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+      "conditionIds": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+      "properties": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["structure", "size", "spacing", "typography", "color", "border", "shape", "states"]}}
+    }},
+    "designReconstructionRef": {"$ref": "#/properties/referenceTarget"},
+    "comparisonRef": {"$ref": "#/properties/referenceTarget"},
+    "assetReviewRef": {"$ref": "#/properties/referenceTarget"},
     "decision": {"enum": ["APPROVED", "REJECTED"]}, "userMessageRef": {"type": "string", "minLength": 1},
     "workItemId": {"type": "string", "minLength": 1},
     "targetId": {"type": "string", "minLength": 1},

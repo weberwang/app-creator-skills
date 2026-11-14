@@ -18,6 +18,7 @@ import { validateFeatureDependencies, dependencyPath } from './feature-dependenc
 import { engineeringEvidence, assertEngineeringEvidence, unchangedFunctionSource, sameFunctionDependency, sameFunctionDependencies, sameDependencyPath } from './function-evidence.mjs';
 import { freezeDeletionBaseline, validateDeletionBaselineState } from './deletion-baseline.mjs';
 import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
+import { invalidateSingleDomainEvidence } from './visual-domain-invalidation.mjs';
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -405,7 +406,7 @@ async function enterReturn({ repo, workItem, work, from, args }) {
     }
   }
   invalidateReturnGates(work, affected, returnState);
-  invalidateReturnVisual(work, affected, invalidatedRefs);
+  invalidateReturnVisual(repo, work, affected, invalidatedRefs);
   const oldEvidenceRoot = work.evidenceRoot;
   const invalidated = [...new Map(invalidatedRefs.map((item) => [item.path, item])).values()];
   work.returnRecord = { reason, affectedScope: affected, returnState, resolvedAt: null, invalidatedRefs: invalidated, evidenceRoot: oldEvidenceRoot };
@@ -434,7 +435,7 @@ function invalidateReturnGates(work, scope, returnState) {
 }
 
 /** 从最早被影响的视觉阶段回退，并删除该阶段及下游的人工确认引用。 */
-function invalidateReturnVisual(work, scope, invalidatedRefs) {
+function invalidateReturnVisual(repo, work, scope, invalidatedRefs) {
   if (!work.visual) return;
   const scopeName = scope.startsWith('stage:') ? scope.slice('stage:'.length) : scope;
   if (work.workItemType === 'SCENE') {
@@ -442,6 +443,7 @@ function invalidateReturnVisual(work, scope, invalidatedRefs) {
     return;
   }
   if (['implementation', 'engineering'].includes(scopeName)) {
+    invalidateSingleDomainEvidence(repo, work, invalidatedRefs, 'V5');
     const runtimeReview = work.visual.reviews?.V5;
     if (runtimeReview?.path) invalidatedRefs.push({ path: runtimeReview.path, state: 'V5' });
     delete work.visual.reviews?.V5;
@@ -454,6 +456,7 @@ function invalidateReturnVisual(work, scope, invalidatedRefs) {
   const requestedStage = baselineAffected ? 'V0' : scopeName === 'function' ? 'V1' : stageMatch?.[1]?.toUpperCase() ?? 'V2';
   const stageIndex = Math.min(VISUAL_STAGES.indexOf(work.visual.stage), VISUAL_STAGES.indexOf(requestedStage));
   const earliestStage = VISUAL_STAGES[stageIndex];
+  invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earliestStage);
   const clearFrom = Math.max(2, stageIndex);
   const reviewOrder = { V2: 2, V3Decomposition: 3, V3Layout: 3, V4: 4, V5: 5 };
   for (const [name, ref] of Object.entries(work.visual.reviews ?? {})) {

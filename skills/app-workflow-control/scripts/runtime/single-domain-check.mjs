@@ -4,10 +4,11 @@ import { createRequire } from 'node:module';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { spawnSync } from 'node:child_process';
-import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from './io.mjs';
 import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
+import { validateFlutterDesign } from './flutter-design-contract.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -83,8 +84,11 @@ async function validateWeb(repo, work, stage, doc) {
 function validateFlutter(repo, work, stage, doc) {
   if (!['PAGE', 'DISPLAY_LAYER'].includes(work.workItemType)) throw new WorkflowError('Flutter 单目标领域合同仅适用于 PAGE 或 DISPLAY_LAYER');
   if (work.workItemType === 'DISPLAY_LAYER') validateFlutterLayerContext(repo, work, stage, doc);
+  const targetReview = readJson(repo, work.visual.reviews?.V2?.path, 'Flutter V2 目标确认');
+  if (targetReview.scope?.kind !== 'full-object') throw new WorkflowError('Flutter V2 必须确认完整目标范围，样本或单项决定不能提升为整页目标');
   if (stage === 'V2') return;
   const path = identity(repo, doc.layoutSpecRef, 'Flutter 页面布局规格');
+  if (path !== doc.layoutSpecRef.path || work.invalidatedRefs?.some((ref) => fileIdentityKey(repo, ref.path) === fileIdentityKey(repo, path))) throw new WorkflowError('Flutter 布局规格使用非规范路径或 RETURN 已作废引用');
   const yaml = require(resolve(SKILLS_ROOT, 'app-skill-runtime/dependencies.cjs'))('yaml');
   const spec = yaml.parse(readFileSync(repoPath(repo, path).absolute, 'utf8'));
   if (spec?.page?.id !== work.visual.objectId) throw new WorkflowError('Flutter 布局规格未绑定当前页面');
@@ -138,6 +142,8 @@ function validateFlutter(repo, work, stage, doc) {
       }
     }
   }
+  // 两种模式均核验逐项设计还原；exact 额外执行上述完整 fidelity 矩阵。
+  validateFlutterDesign(repo, work, stage, doc);
 }
 
 /** 把显示层的人工确认和运行证据冻结到实际宿主，防止迁移后沿用旧验收。 */

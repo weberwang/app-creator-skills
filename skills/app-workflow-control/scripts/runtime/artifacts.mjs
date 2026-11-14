@@ -21,6 +21,7 @@ import { assertProductionDependencies, validateProductionPackage } from './produ
 import { validateProductionBatchEvidence } from './production-coverage.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { getWorkSource } from './work-source.mjs';
+import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 export { bindWorkSource } from './work-source.mjs';
@@ -291,6 +292,8 @@ export function assertAssetReview(repo, work, target = null) {
   requireText(record.candidateId, 'Asset Review.candidateId');
   validateQualityChecks(repo, record.qualityChecks, 'Asset Review.qualityChecks');
   if (!Array.isArray(record.assets) || !record.assets.length) throw new WorkflowError('Asset Review.assets 必须包含最终资源或原生组件');
+  // Flutter 的资源与组件验收必须消费设计覆盖及当前逐属性观测，文件非空不足以证明还原。
+  if (work.stack === 'flutter') validateFlutterAssetReview(repo, work, record);
   for (const asset of record.assets) {
     requireText(asset.assetId, 'Asset Review asset.assetId');
     if (asset.assetType === 'native-component') {
