@@ -1,6 +1,6 @@
 # Asset Manifest
 
-在 `docs/design/pages/<page-name>/asset-manifest.md` 维护素材来源与制作事实，引用[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)的相同设计项及实现 ID。拆解展示可用编号源图或可核对区域；抽象组件框图不能证明完成，不要求只展示位图编号图。
+在 `docs/design/pages/<page-name>/asset-manifest.md` 维护素材来源与制作事实，引用[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)的相同设计项及实现 ID；直接映射已选 Figma 节点与可核对边界，不机械重画图或重复审批。抽象组件框图不能证明完成。
 
 设计还原合同承载设计项、实现方式、消费者与当前验证的机器映射，本清单登记素材事实，不复制第二份规格或确认状态。无图片可记录 `N/A: no bitmap or exported visual assets`，但仍须完成全部原生项拆解、规格与当前还原验证。
 
@@ -16,12 +16,10 @@
 - Frozen page image path:
 - Frozen page image SHA-256:
 - Design reconstruction path and SHA-256 (`designReconstructionRef`):
-- Numbered overlay path: `.codex-workflow/visuals/pages/<page-name>/bitmap-confirmation-v<version>.png`
-- Overlay version:
-- Overlay SHA-256:
-- Confirmed numbers:
+- 已选 Figma fileKey、nodeId、状态和视口，以及冻结预览的路径与 SHA-256：
+- 编号图、版本和编号（仅实际有此材料时记录，不是额外审批要求）：
 - User decision:
-- 确认用途与 scope：目标／拆解／布局／代表样本／正式资源／V5 完整组合分别记录真实消息；样本和单项替换不提升为整页通过。
+- 确认用途与 scope：用户选稿、代表样本、正式资源与 V5 完整组合分别记录真实消息；设计已表达清楚的拆解与布局不强制重复批准。样本和单项替换不提升为整页通过。
 - Confirmation time:
 - Overall fidelity verdict:
 

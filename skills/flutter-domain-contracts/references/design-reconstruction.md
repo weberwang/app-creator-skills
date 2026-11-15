@@ -1,10 +1,10 @@
 # Flutter 设计拆解与当前还原合同
 
-这是 Flutter PAGE／DISPLAY_LAYER 的正式领域合同。公共控制器在 V3–V5 实际执行 `flutter-design-contract.mjs`；[Schema](design-reconstruction.schema.json)约束冻结计划，[模板](../templates/design-reconstruction.json)提供可执行字段。它补充自适应布局规格，不建立新阶段、逐素材审批或另一套状态机。
+这是 Flutter PAGE／DISPLAY_LAYER 的正式领域合同。公共控制器在 V3–V5 实际执行 `flutter-design-contract.mjs`；[Schema](design-reconstruction.schema.json)约束冻结计划，[模板](../templates/design-reconstruction.json)提供可执行字段。选稿及设计节点身份按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)与公共控制器记录；本合同补充必要的实现映射，不建立新阶段、逐素材审批或另一套状态机。
 
 ## 责任与阶段
 
-V2 已确认设计图是事实源。V3 从图中可见元素推导拆解、布局及实现方案；不能从已有代码反向拼出规格。允许合格原生组件、全原生页面、共享图片和既有组件复用，必须逐项证明当前结构、样式与状态；换 Theme、颜色、默认控件、抽象 Widget 树或职责框图不能单独证明还原。也不能把文字、交互、动态内容全部切成图片。
+V2 用户选定的 Figma 可编辑稿是事实源。V3 从选定节点及其可核对的结构、样式和状态提取交接，不能从已有代码反向拼出规格。清楚表达的结构与布局无需重画图或重复审批；可直接从节点边界提取源区域作为冻结机器事实。允许合格原生组件、全原生页面、共享图片和既有组件复用，必须逐项证明当前结构、样式与状态；仅换 Theme、颜色、默认控件或抽象 Widget 树不能证明还原，也不能把文字与交互全部切图。
 
 `usability` 与 `exact` 均要求布局、层级、形状、排版、视觉特征、状态和当前目标对照；usability 仅省略完整像素级 fidelity 矩阵。功能测试、命令通过、截图采集和摘要匹配均为技术事实，不等于视觉通过。
 
@@ -12,21 +12,21 @@ V3 只冻结拆解与生产规格，不强制已有源码或图片；V4 才取�
 
 ## V3 冻结计划
 
-领域封套 `designReconstructionRef: {path,sha256}` 指向计划 JSON。根记录 `schemaVersion: "1.0"`、`workItemId`、`objectId`、`candidateId`、V2 相同的 `referenceTarget`；显示层另填 `hostId`、`layerType`。实际实现证据放在后续封套，不能为补导入记录改写已批准的计划。
+领域封套 `designReconstructionRef: {path,sha256}` 指向计划 JSON；`figmaDesignRef` 记录选稿的可编辑节点和预览快照身份，`figmaHandoffRef` 将设计项映射回节点并冻结布局和原生计划。根记录 `schemaVersion: "1.0"`、`workItemId`、`objectId`、`candidateId` 和 V2 冻结预览 `referenceTarget`；显示层另填 `hostId`、`layerType`。实际实现证据放在后续封套；预览只冻结当时的显示证据，不取代 Figma 节点作为设计权威。
 
 - `conditions`：唯一 `id`、真实 `stateId`、逻辑 `viewport:{width,height}`、`language`、`textScale`、`adaptation:{platform,orientation,safeArea:{top,right,bottom,left},keyboard}`。默认主目标；其他已分别确认的状态或视口使用 `targetRef`，须出现在领域封套 additionalTargets 中，并由其真实 V2 完整目标确认支持。每个已声明目标都必须进入条件和设计项覆盖，不能只出现在 fidelity 用例中。
-- `elements`：每个可见元素唯一 `id`、`label`、`targetRef`、源图可核对的 `region:{x,y,width,height,unit:"px",frame?}`、适用 `conditionIds`、真实 `parentId`（根为 null）、`layoutReference`（viewport 或另一设计项）、唯一 `implementationId`。源图定位即可，不要求额外制作标注图；若制作标注图，其编号与 ID 对照仍须在计划中可查。
+- `elements`：每个可见元素唯一 `id`、`label`、`targetRef`、可核对的 `region:{x,y,width,height,unit:"px",frame?}`、适用 `conditionIds`、真实 `parentId`（根为 null）、`layoutReference`（viewport 或另一设计项）、唯一 `implementationId`。区域可由实际 Figma 节点边界直接导出并经 handoff 映射到节点，无需另画拆解图；预览区域和节点身份均绑定已选目标。
 - `implementations`：唯一 `id`、`kind`（native／image／shared-image／dynamic）、精确 `designItemIds`、`consumers:[{id,sourcePath,symbol}]`、逐项 `designReason`、`requirements`。一项设计只绑定一个主要实现；一个实现可服务多项设计，但必须穷尽其消费者和状态，不能用“全部原生”取代逐项分析。
 - `requirements`：结构 `structure`、尺寸 `size`、间距 `spacing`、字体 `typography`、颜色 `color`、边框 `border`、形状 `shape`、状态 `states`。每项记录可执行 `value`、`basis`（measured／estimated／adaptation／approved-change）、`reason`。非文字对象的字体等不适用项在 value 内明确 `applicable:false` 和原因，不填无意义占位文本。测量值、估计、适配和用户批准的变化不能互相冒充；批准变化还须 `approvalRef` 指向真实用户决定，逐设计项、属性与条件核对范围。
 - 图片实现另需 `production`：`identity`（independent／shared）、准确 `consumerIds`、`sourceRegion`、正式 `outputPath`、物理 `outputSize`、逻辑 `displaySize`、`density`、`background`、`transparentInsets`、`edgePolicy`；按实际需要补 `effectiveContentBounds`、`slice` 或有序 `frames`。不需要的切片、帧序直接省略。共享图必须有多个真实消费者，来源帧可记在 sourceRegion.frame。源图区域只说明设计来源，V4 再登记实际制作来源。
 
-机器校验唯一身份、映射覆盖、父子关系、状态与参照有效性；人工拆解确认负责判断源图是否真的穷尽可见元素、区域与方案是否正确。不能用“机器通过”冒充该人工结论。
+机器校验唯一身份、映射覆盖、父子关系、状态与参照有效性；设计截图与运行截图默认由用户检查。选稿已经表达清楚的拆解和布局不再重复审批；用户仍需判断设计方案、范围和最终视觉结果，机器通过不能冒充该结论。
 
 ## 确认范围的机器消费
 
-沿用 `visual.reviews` 中 V2、V3Decomposition、V3Layout、V4、V5 节点。确认分别记录 target、decomposition、layout、imported-assets、runtime-acceptance；样本使用 representative-sample，局部替换／设计变化使用 design-change，仍是支持记录，不增加审批节点。
+沿用控制器 `visual.reviews`。Figma 路线使用 V2 目标选定、V4 正式资源和 V5 完整组合确认；稿内已表达清楚的 V3 交接不要求另有 V3Decomposition、V3Layout 两次人工批准。样本及局部设计变化依实际范围记录，不增加逐素材审批；实质改变已选视觉或交互方案时才重新确认。
 
-V3 拆解、V3 布局、V4 正式资源及 V5 完整组合确认必须绑定 `referenceTarget`、`designReconstructionRef`、`scope:{kind:"full-object",designItemIds:[完整集合],conditionIds:[完整集合]}`、真实 `userMessageRef`。布局确认另绑定当前 `layoutSpecRef`；V4 另绑定实际 `assetReviewRef`，从而冻结正式资源、组件及当前报告身份；V5 另绑定当前 `comparisonRef`。控制器消费并精确比对这些集合和引用，拒绝样本范围、子集、重复或额外身份。V2 只确认完整目标，不预造 V3 计划。
+V2 真实用户选稿绑定设计身份和覆盖范围，不预造 V3 计划；V3 handoff 将当前 Figma 设计项、布局及原生计划绑定起来。V4 正式资源和 V5 完整组合确认必须绑定 `referenceTarget`、`designReconstructionRef`、`scope:{kind:"full-object",designItemIds:[完整集合],conditionIds:[完整集合]}` 与真实 `userMessageRef`；V4 另绑定 `assetReviewRef`，V5 另绑定 `comparisonRef`。控制器消费并精确比对集合及引用，样本或局部决定不能提升为完整验收。
 
 单项替换确认使用 `purpose:"design-change"`、`scope.kind:"design-items"`、适用 `designItemIds`、`conditionIds`、`properties`；只有被范围覆盖的 approved-change 属性能引用它。它不能消除其他设计项、检查、状态或整页验收要求。代表样本不能填入完整阶段通过节点；样本通过后仍需正式资源和 V5 全组合验收。
 

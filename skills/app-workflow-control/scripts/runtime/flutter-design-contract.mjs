@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { createRequire } from 'node:module';
 import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from './io.mjs';
 import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
+import { isFigmaApp, readFigmaSnapshot } from './figma-app-contract.mjs';
 
 let validatePlan;
 const PROPERTIES = ['structure', 'size', 'spacing', 'typography', 'color', 'border', 'shape', 'states'];
@@ -136,12 +137,19 @@ function planFor(repo, work, doc) {
   }
   const plan = json(repo, work, doc.designReconstructionRef, '设计拆解');
   check(validatePlan(plan), `设计拆解 Schema 失败：${JSON.stringify(validatePlan.errors)}`);
-  // 设计复用仍使用原始确认拥有者；当前实际组件与运行证据必须重新核验。
-  const owner = work.visual.reuse?.inheritedReviews?.includes('V3Decomposition')
-    ? readJson(repo, work.visual.reviews.V3Decomposition.path).workItemId : work.workItemId;
+  // Figma 方案的交接无需额外 V3 批准；跨工作项复用计划仍须追溯 V2 的真实拥有者。
+  const figma = isFigmaApp(work);
+  const owner = figma ? plan.workItemId : (work.visual.reuse?.inheritedReviews?.includes('V3Decomposition')
+    ? readJson(repo, work.visual.reviews.V3Decomposition.path).workItemId : work.workItemId);
   if (owner !== work.workItemId) {
     assertVisualReuse(repo, work);
-    resolveReuseOwner(repo, work, owner, 'V3Decomposition');
+    resolveReuseOwner(repo, work, owner, figma ? 'V2' : 'V3Decomposition');
+    if (figma) {
+      let source = work;
+      while (source.workItemId !== owner) source = readJson(repo, source.visual.reuse.sourceWorkItemRef.path, '设计计划复用来源');
+      const sourceDoc = json(repo, work, source.visual.domainEvidenceRef, '设计计划来源领域证据');
+      check(sameRef(sourceDoc.designReconstructionRef, doc.designReconstructionRef) && sameRef(sourceDoc.figmaDesignRef, doc.figmaDesignRef), '设计计划未绑定来源已确认的 Figma 方案');
+    }
   }
   context({ ...work, workItemId: owner }, plan, '设计拆解');
   check(sameRef(plan.referenceTarget, doc.referenceTarget), '设计拆解未绑定 V2 目标');
@@ -149,16 +157,27 @@ function planFor(repo, work, doc) {
   const approvedTargets = [plan.referenceTarget];
   for (const extra of doc.additionalTargets ?? []) {
     file(repo, work, extra.referenceTarget, '额外设计目标');
-    const review = json(repo, work, extra.reviewRef, '额外目标确认');
-    if (review.workItemId !== work.workItemId) {
-      assertVisualReuse(repo, work); resolveReuseOwner(repo, work, review.workItemId, 'V2');
-      let source = work;
-      while (source.workItemId !== review.workItemId) source = readJson(repo, source.visual.reuse.sourceWorkItemRef.path, '额外目标拥有者');
-      const sourceDoc = json(repo, work, source.visual.domainEvidenceRef, '额外目标来源领域证据');
-      check(sourceDoc.additionalTargets?.some((entry) => sameRef(entry.referenceTarget, extra.referenceTarget) && sameRef(entry.reviewRef, extra.reviewRef)), '额外目标未绑定复用来源的确认');
+    if (figma) {
+      // 同一 V2 可明确覆盖已选稿的多个状态，核验节点与授权集合而不重复申请逐图确认。
+      const review = json(repo, work, work.visual.reviews?.V2, 'Figma 目标确认');
+      if (review.workItemId !== work.workItemId) resolveReuseOwner(repo, work, review.workItemId, 'V2');
+      context({ ...work, workItemId: review.workItemId }, review, 'Figma 目标确认');
+      check(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.scope?.kind === 'full-object' && review.userMessageRef?.trim() && sameRef(review.figmaDesignRef, doc.figmaDesignRef), '额外 Figma 目标缺少真实用户确认');
+      check(Array.isArray(review.figmaTargetRefs) && review.figmaTargetRefs.some((ref) => sameRef(ref, extra.figmaDesignRef)), '额外 Figma 目标未列入 V2 授权范围');
+      const snapshot = readFigmaSnapshot(repo, extra.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, work });
+      check(sameRef(snapshot.previewRef, extra.referenceTarget), '额外 Figma 目标与冻结预览不一致');
+    } else {
+      const review = json(repo, work, extra.reviewRef, '额外目标确认');
+      if (review.workItemId !== work.workItemId) {
+        assertVisualReuse(repo, work); resolveReuseOwner(repo, work, review.workItemId, 'V2');
+        let source = work;
+        while (source.workItemId !== review.workItemId) source = readJson(repo, source.visual.reuse.sourceWorkItemRef.path, '额外目标拥有者');
+        const sourceDoc = json(repo, work, source.visual.domainEvidenceRef, '额外目标来源领域证据');
+        check(sourceDoc.additionalTargets?.some((entry) => sameRef(entry.referenceTarget, extra.referenceTarget) && sameRef(entry.reviewRef, extra.reviewRef)), '额外目标未绑定复用来源的确认');
+      }
+      context({ ...work, workItemId: review.workItemId }, review, '额外目标确认');
+      check(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.userMessageRef?.trim() && review.scope?.kind === 'full-object' && sameRef(review.referenceTarget, extra.referenceTarget), '额外目标缺少完整范围的真实确认');
     }
-    context({ ...work, workItemId: review.workItemId }, review, '额外目标确认');
-    check(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.userMessageRef?.trim() && review.scope?.kind === 'full-object' && sameRef(review.referenceTarget, extra.referenceTarget), '额外目标缺少完整范围的真实确认');
     check(!approvedTargets.some((ref) => sameRef(ref, extra.referenceTarget)), '额外目标身份重复');
     approvedTargets.push(extra.referenceTarget);
   }
@@ -305,8 +324,11 @@ export function validateFlutterAssetReview(repo, work, record, supplied) {
 /** V3 规划、V4 生产、V5 当前组合分别收口；usability 也必须覆盖已确认设计。 */
 export function validateFlutterDesign(repo, work, stage, doc) {
   const plan = planFor(repo, work, doc);
-  reviewFor(repo, work, doc, plan, 'V3Decomposition', 'decomposition', 'V3');
-  reviewFor(repo, work, doc, plan, 'V3Layout', 'layout', 'V3');
+  // Figma 稿的结构和布局由公共交接合同冻结；不重复要求两张图与两份人工确认。
+  if (!isFigmaApp(work)) {
+    reviewFor(repo, work, doc, plan, 'V3Decomposition', 'decomposition', 'V3');
+    reviewFor(repo, work, doc, plan, 'V3Layout', 'layout', 'V3');
+  }
   if (stage === 'V3') return;
   const reports = implementationEvidence(repo, work, doc, plan);
   const assets = json(repo, work, work.assetReviewRef, '正式资源验收');

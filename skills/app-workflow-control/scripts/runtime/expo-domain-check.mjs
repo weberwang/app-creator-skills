@@ -1,6 +1,7 @@
 import { createRequire } from 'node:module';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { hasPreciseApproval } from './approval.mjs';
+import { isFigmaApp } from './figma-app-contract.mjs';
 
 const require = createRequire(import.meta.url);
 const { validateRelativeLayoutNodes } = require('../../../app-ui-layout/scripts/relative-layout-policy.cjs');
@@ -30,16 +31,24 @@ function readPlatform(repo, doc, identity) {
 }
 
 /** 校验布局源、逻辑坐标和节点父链，并复用公共相对布局策略。 */
-function readLayout(repo, work, doc, profile, identity) {
+function readLayout(repo, work, stage, doc, profile, identity) {
   const layout = readJson(repo, identity(repo, doc.layoutSpecRef, 'Expo 布局规格'), 'Expo 布局规格');
   if (layout.schemaVersion !== '1.0' || layout.objectId !== work.visual.objectId) throw new WorkflowError('Expo 布局规格未绑定当前对象');
   sameRef(repo, layout.platformProfileRef, doc.platformProfileRef, '布局平台配置', identity);
-  sameRef(repo, layout.decompositionRef, work.visual.reviews?.V3Decomposition, '拆解确认', identity);
+  // 同一 Figma 方案直接承接布局，独立的拆解/布局批准并非默认前提。
+  if (isFigmaApp(work)) sameRef(repo, layout.figmaDesignRef, doc.figmaDesignRef, '布局 Figma 设计', identity);
+  else sameRef(repo, layout.decompositionRef, work.visual.reviews?.V3Decomposition, '拆解确认', identity);
   if (layout.unit !== 'logical-pixel' || layout.viewport?.width !== profile.viewport.width || layout.viewport?.height !== profile.viewport.height) throw new WorkflowError('Expo 布局单位或视口与平台配置不一致');
   for (const key of ['safeAreaStrategy', 'keyboardStrategy', 'textScaleStrategy']) requireText(layout[key], `布局 ${key}`);
-  const source = requireFile(repo, layout.sourcePath, 'Expo 正式布局源');
-  const snapshot = identity(repo, doc.layoutSourceRef, 'Expo 正式布局源快照');
-  if (repoPath(repo, source).relative === repoPath(repo, snapshot).relative) throw new WorkflowError('Expo 正式布局源快照不能指向可变的正式源文件');
+  if (isFigmaApp(work) && stage === 'V3') {
+    // 交接阶段只规划设计与约束；真实源码可在 V4 代表组件试接时产生。
+    if (layout.sourcePath !== undefined) repoPath(repo, layout.sourcePath, 'Expo 计划布局源');
+    if (doc.layoutSourceRef !== undefined) identity(repo, doc.layoutSourceRef, 'Expo 已有布局源快照');
+  } else {
+    const source = requireFile(repo, layout.sourcePath, 'Expo 正式布局源');
+    const snapshot = identity(repo, doc.layoutSourceRef, 'Expo 正式布局源快照');
+    if (repoPath(repo, source).relative === repoPath(repo, snapshot).relative) throw new WorkflowError('Expo 正式布局源快照不能指向可变的正式源文件');
+  }
   if (!Array.isArray(layout.nodes) || !layout.nodes.length) throw new WorkflowError('Expo 布局节点不能为空');
   const nodes = new Map();
   for (const node of layout.nodes) {
@@ -92,7 +101,7 @@ function readAssets(repo, work, doc, identity) {
 
 /** 显示层各阶段用户确认必须绑定其实际宿主及窗口类型。 */
 function checkLayerReviews(repo, work, stage, identity) {
-  const names = ['V2', ...(stage !== 'V2' ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
+  const names = ['V2', ...(stage !== 'V2' && !isFigmaApp(work) ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
   for (const name of names) {
     const review = readJson(repo, identity(repo, work.visual.reviews?.[name], `Expo ${name} 显示层确认`), `Expo ${name} 显示层确认`);
     if (review.hostId !== work.visual.hostId || review.layerType !== work.visual.layerType) throw new WorkflowError(`Expo ${name} 显示层确认未绑定当前宿主或层类型`);
@@ -145,8 +154,8 @@ export function validateExpo(repo, work, stage, doc, identity) {
   checkConfirmedRef(repo, work, 'V2', 'platformProfileRef', doc.platformProfileRef, identity);
   if (work.workItemType === 'DISPLAY_LAYER') checkLayerReviews(repo, work, stage, identity);
   if (stage === 'V2') return;
-  readLayout(repo, work, doc, profile, identity);
-  checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
+  readLayout(repo, work, stage, doc, profile, identity);
+  if (!isFigmaApp(work)) checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
   if (stage === 'V3') return;
   readAssets(repo, work, doc, identity);
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);

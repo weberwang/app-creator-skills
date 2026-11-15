@@ -63,8 +63,8 @@ Turn an app idea into a constrained commercial product spec. The output must mak
 4. Define user stories with acceptance criteria, including the value, trust, and perceived-risk conditions that affect first-time adoption; keep them as sections of the product brief.
 5. Define commercial constraints: payment, account, data ownership, privacy, support, and retention.
 6. Record the intended product quality: brand character, interaction tone, visual constraints, and decorations that are justified by the product rather than added for novelty.
-7. Derive a visual expression preset from product category and audience using [../flutter-ux-ui-quality/references/visual-expression-presets.md](../../flutter-ux-ui-quality/references/visual-expression-presets.md). Record preset ID, axis values, and derivation basis in the product brief. Do not lower task-clarity or trust gates; the preset only sets expression ceiling and exploration bias.
-8. 只有视觉签名、表达预算或实现成本存在实质未决取舍时，按预设参考开展轻量视觉讨论，记录实际决定并在产品简报同步结论。已有需求足够明确时直接继续；文字方向是设计输入，正式全局基线在 V1 后按公共 V2 三图规则建立。
+7. 根据产品类别和受众参考 [视觉表达预设](../../flutter-ux-ui-quality/references/visual-expression-presets.md)启发探索；预设不是视觉上限，也不锁定用户未明确约束的信息架构、字体、配色或组件形态。保持任务清晰、无障碍与信任要求。
+8. 只有存在实质未决取舍时开展轻量视觉讨论；需求足够明确时直接按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑候选。正式实现仍需 V1 功能验证，设计提案不强制先建工程；文字方向不单独冻结或要求预先批准。
 9. Write the product brief using [references/product-brief-template.md](../../flutter-product-spec/references/product-brief-template.md). Keep MVP scope, stories, market assumptions and acceptance criteria in that same document unless the user explicitly requests a standalone export.
 
 <a id="mode-flutter-product-spec--output-files"></a>
@@ -76,7 +76,7 @@ Turn an app idea into a constrained commercial product spec. The output must mak
 <a id="mode-flutter-product-spec--gate"></a>
 #### Gate
 
-进入 UX/UI 或技术设计前，明确 MVP 非目标、核心功能验收条件和推导后的视觉表达预设。仅阻断尚未解决的实质需求取舍；已有用户决定可直接复用，不额外要求拷问文件或重复确认。正式全局视觉冻结遵循公共 V1 后 V2 三图基线，文字方向不构成独立冻结门。
+进入 UX/UI 或技术设计前，明确 MVP 非目标、核心功能验收条件和真实硬约束；视觉预设只供按需参考，不预先限制可探索空间。正式视觉方向按 Figma 规则由用户确认冻结，默认精修一份方案；仅用户明确要求比较时才按指定数量制作实质不同方向，已有有效方向的局部增量可复用。
 
 <a id="mode-flutter-product-spec--common-mistakes"></a>
 #### Common Mistakes
@@ -335,8 +335,8 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 3. 按风险决定是否使用 Code Sketch；可直接实现并验证已明确的页面功能。选择草图路线时依据 `flutter-code-sketch/references/code-sketch-level-standard.md` 决定 Full、Lightweight 或 Reuse 并记录理由。
 4. 需要布局合同或选择草图路线时，调用 `adaptive-layout-implementation` 创建 `phase: sketch` 的页面 `layout-spec.yaml`；此阶段不含未来视觉 parity 字段。
 5. 选择 Code Sketch 时，由 Flutter Engineer 在生产骨架实现中性草图并执行关系测试；需要截图时由用户人工检查。直接实现路线保留相应真实功能和结构验证。
-6. 公共 V1 功能行为经实际验证后，按需调用 `flutter-hifi-mockup` 生成、评审并由用户冻结高保真目标。
-7. 对冻结目标与语义合同/sketch spec 做合同回对。任何范围、状态、导航、滚动、断点、无障碍或 ownership 变化都返回更新并重审。
+6. 正式实现的 V1 功能经实际验证后，按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑方向并由用户选择；仅设计提案不以建设运行工程为前置。独立素材按需制作，不能用整页生图替代可编辑稿。
+7. 对选定目标与语义合同及适用布局规则做回对，范围、状态、导航、滚动、断点、无障碍或 ownership 变化时定向更新并重验受影响事实；只有实质改变已选视觉目标或交互方案才要求重新确认。
 8. 根据 V2 目标按[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项拆解、规划素材及原生实现，再在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
 
 <a id="mode-flutter-ux-ui-quality--完成条件"></a>
@@ -500,7 +500,7 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 
 1. 固定当前工作树 diff、`phase: sketch` 的 layout-spec、结构测试输出和截图哈希，并计算 `snapshot-id`；由任务审阅记录 spec hash，禁止把 spec 自身 SHA 写回 spec。
 2. 派发与 producer 不同的只读 Code Sketch Reviewer，按 [审阅 rubric](../../flutter-code-sketch/references/code-sketch-review-rubric.md) 检查语义、状态、导航、滚动、断点、无障碍和系统避让。
-3. 低保真截图只证明功能层级和结构事实，不约束高保真几何。进入高保真阶段后，草图 Golden 必须失效或被高保真证据替换。
+3. 低保真截图供用户查看，正式源与关系测试提供结构事实；草图不约束已选设计的高保真几何。进入正式设计阶段后，草图 Golden 必须失效或被真实目标证据替换。
 4. 审阅不通过时回到同一生产骨架修复并重新计算 snapshot；不得由 producer 自审放行。
 
 <a id="mode-flutter-code-sketch--高保真交接"></a>
@@ -508,7 +508,7 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 
 1. 选择草图路线时，完成 Code Sketch Review 后再交接；其他路线直接以 V1 实际功能验证和页面语义进入 V2，由用户确认视觉目标。
 2. 将冻结目标与已审语义合同及 sketch layout-spec 回对。若范围、状态、导航语义、滚动 owner、断点、无障碍或 data/UI/asset ownership 改变，回到语义/草图阶段更新并重审，不得静默继续。
-3. 完成资产拆解和确认后在同一 Flutter 骨架上实现；仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
+3. 从用户选定的 Figma 节点完成必要资产和布局交接后，在同一 Flutter 骨架上实现；已表达内容不重画或重复批准。仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
 4. 最终通过实际 Widget 关系和功能验证，由用户检查截图；仅明确要求 exact 时执行 fidelity validator 和完整同视口 parity。validator 只证明规格结构与元数据，不证明实际视觉一致。
 
 <a id="mode-flutter-code-sketch--输出"></a>
@@ -534,7 +534,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-asset-atlas--flutter-asset-atlas"></a>
 ### Flutter Asset Atlas
 
-高保真目标冻结并通过合同回对后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 和[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)完成逐项覆盖审计、拆解确认和生产规格。可见元素以编号标注或源图区域定位，关联唯一设计项、目标、状态、真实父子与参照、实现方式、组件或素材、消费者和设计依据；抽象 Widget 树不能代替拆解。素材清单承载素材来源与消费关系，设计还原合同承载各设计项的机器可核对映射，二者引用同一事实。拆解采用已有明确规格、用户确认的图上标注或明确授权的自动分析结果；未经授权不自动分析截图，缺少关键边界时记录待定并集中澄清，不将估计标为已确认目标。
+按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)由用户选定可编辑稿后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 和[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)完成逐项覆盖及生产交接。直接以真实 Figma 节点、状态、结构和可从节点导出的边界定位元素，关联唯一设计项、真实组件或素材及消费者；稿内明确的信息不重复绘图或审批。抽象 Widget 树不能代替设计项覆盖。未经授权不自动分析截图，缺少关键事实时定向补齐，不将估计标为已确认目标。
 
 <a id="mode-flutter-asset-atlas--流程"></a>
 #### 流程
@@ -543,16 +543,16 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 2. Asset planning agent 只读执行 ownership-first decomposition、全视觉覆盖审计与现有品牌/应用/共享资产复用检查。运行时 data 只记录 renderer、placeholder、loading 和 fallback。
 3. 逐项比较原生、独立图片、共享素材和动态内容；全原生或只需头像等结论必须由每项分析支持，文字及控件也不能一律切图。无 bitmap 时仍完成所有原生设计项的拆解、规格和确认。
 4. 复用组件或素材须以当前目标核对其结构、样式与状态；仅换 Theme、颜色或沿用默认控件不足以证明还原。原生项声明设计元素、尺寸、间距、字体、颜色、边框、形状、状态、实现源码及当前验证依据；不要求为原生文本或按钮制作图片。
-5. 填写 [asset manifest](../../flutter-asset-atlas/references/asset-manifest-template.md) 与设计还原合同；使用目标图编号或可核对的源图区域展示拆解并等待用户确认。V3 仅制定规格，实际素材在 V4 取得、制作和导入。
+5. 按需填写 [asset manifest](../../flutter-asset-atlas/references/asset-manifest-template.md) 与设计还原合同；直接引用已选 Figma 节点和已表达的边界与关系，不强制重新画图或重复批准。V3 制定规格，实际素材在 V4 取得、制作和导入。
 6. 确认后由生产执行者只处理获批设计项：依次选择 reuse、adapt、variant、new generation、atlas、或经明确批准的 target extraction。根据当前目标和消费规则声明资源密度与输出尺寸，不以固定密度取代逐项规格。
 7. 需要透明合成时优先原生透明输出；否则记录 mask/removal 方法，清理 alpha、matte、color spill，保留 shadow/glow/translucency，并在 checkerboard、亮/暗和实际背景检查。
 8. 图片按适用性记录源图位置、源帧或有效范围、独立/共享身份及消费者、输出与逻辑尺寸和密度、背景、透明边距、边缘、切片或帧序；V4 记录实际来源、许可、正式路径、导入验证与适用的 loading/error fallback。测量、估计、适配和用户批准的变更分别标明。
-9. 对照冻结目标、编号图和 manifest 做覆盖与视觉复核；任何映射或边界变化必须重新编号确认。
+9. 对照已选 Figma 节点、冻结快照和 manifest 核对覆盖；缺失映射或边界时定向补齐，现有明确节点无需重画编号图或重复批准。实质改变已选视觉目标或交互方案才重新确认；截图默认交用户人工检查。
 
 <a id="mode-flutter-asset-atlas--门禁"></a>
 #### 门禁
 
-用户未确认拆解前不得生成、适配、提取、导出、透明化或切片。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。设计项覆盖缺失、资产来源或许可不清、透明边缘损坏、尺寸不符或当前还原依据缺失时阻断受影响阶段。代表样本确认不代表整页通过，单项替换只改变相应项；目标、拆解、布局、样本、正式资源及 V5 组合各按既有节点确认。发现上游缺失或偏离时 RETURN 到最早受影响阶段，保留历史文件并作废受影响下游引用。
+用户确认 Figma 目标并完成必要交接后才进入正式素材制作；稿内已表达的拆解和布局不重复审批。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。设计项覆盖缺失、素材来源或许可不清、透明边缘损坏、尺寸不符或当前还原依据缺失时阻断受影响阶段。代表样本确认不代表整页通过，单项替换只改变相应项；V4 正式资源和 V5 完整组合仍分别验收。上游缺失或偏离时 RETURN 至最早受影响阶段，保留历史并作废下游引用。
 <!-- native-source:flutter-asset-atlas:end -->
 
 <!-- native-source:flutter-hifi-mockup:start -->
@@ -561,30 +561,30 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-hifi-mockup--flutter-high-fidelity-mockup"></a>
 ### Flutter High-Fidelity Mockup
 
-V1 实际验证功能和页面语义后进入 V2 目标设计；白盒或 Code Sketch 按风险选择，仅选用草图路线时需要相应审阅。视觉目标须由用户确认，不能静默改变已验证语义、状态、导航、滚动、断点、无障碍或 ownership。
+正式实现的 V1 实际验证功能和页面语义；白盒或 Code Sketch 按风险选择。仅设计提案不先建设运行工程。V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑设计并由用户选择，保留业务事实、必要功能、无障碍、平台能力及用户明确锁定的品牌约束；未锁定的布局、层级、字体、配色和组件形态可自主探索。既有代码用于理解功能与实现条件，只有用户明确要求忠实还原时才以现有页面作为主要视觉依据。
 
 <a id="mode-flutter-hifi-mockup--输入"></a>
 #### 输入
 
-- V1 已验证的页面功能与语义合同；仅使用草图路线时提供 Code Sketch Level 与审阅结果。
-- 适用的页面布局合同与真实关系测试；`phase: sketch` 仅表示布局关系数据，不要求草图画面。需要截图时由用户检查。
-- 全局视觉方向、产品/模块范围与页面真实内容要求。
+- 目标用户、主要任务、真实文案、关键状态、页面范围和平台能力；正式实现另需相关 V1 功能证据。
+- 已明确锁定的业务、无障碍、平台及品牌约束与可探索空间；仅采用草图路线时提供相应审阅结果。
+- 项目实际页面与组件作为功能和工程条件参考，不自动限定新设计。
 
 <a id="mode-flutter-hifi-mockup--流程"></a>
 #### 流程
 
-1. 冻结前在对话中临时准备 brief、prompt 和候选；不要把未选方案、prompt 或评审草稿写进仓库。
-2. 方向清楚时生成一个候选；只有用户要求探索或存在实质取舍时生成两到三个。初始化选择竖屏、横屏或双方向，按所选目标逻辑视口和资源密度（默认 2x）确定像素宽高；例如 390×844 对应 780×1688，844×390 对应 1688×780。双方向各自生成并冻结目标，不旋转或拉伸旧图冒充。
-3. 高风险/核心/探索页提供任务层级、状态、无障碍和系统区域的检查要点；由用户检查效果图，未经明确授权不得自动分析截图。
-4. Controller 获得用户明确选择后，把选中图持久化到 `.codex-workflow/visuals/pages/<page-name>/`，计算 SHA-256；随后才在 page design decision 写 candidate ID、hash、确认时间、约束与允许偏差。冻结前 brief/prompt/candidates 保持 transient。
-5. 将冻结目标与已验证语义及适用布局合同回对。范围、状态、导航、滚动 owner、断点、无障碍或 ownership 变化时更新受影响功能并重验；仅草图路线更新草图审阅。
-6. 回对通过后，调用 `flutter-asset-atlas` 完成 bitmap decomposition、覆盖审计、编号图确认和资产生产；`asset-manifest.md` 是明细唯一权威，design decision 只链接。
-7. 在同一生产 Flutter 骨架完成正式实现和可用性验收；仅明确要求 exact 时将同一 layout-spec 升级 `phase: fidelity` 并执行完整 target/Flutter parity。
+1. 读取输入和真实约束，围绕目标用户与主要任务组织内容，不预先要求用户批准文字视觉方案。只有实质改变范围或交互时才重新确认。
+2. 首次定调或实质改版，研究真实内容、硬约束和参考的设计规律，自主选择有依据的方向并在 Figma 精修一份代表页方案；仅用户明确要求比较时才按指定数量制作多方向，保持同任务、主要内容和比较条件并体现实质差异。局部增量复用有效方向，工具不可用时如实说明阻断，不静默回退整页生图。
+3. 用真实可编辑文字、组件、实例、矢量、自动布局及实际绑定变量构成界面，确认字体可用与平台替代；重复项组件化并按职责命名。插画、照片、角色等独立素材按需制作或复用，不把整页图片当作可编辑设计。
+4. 展示实际 Figma 节点链接、对应预览与简短取舍，由用户选择或明确组合；选定后扩展其他页面和关键状态。代理不自动分析设计稿或运行截图，未经明确授权不代写视觉 PASS。
+5. 冻结真实 fileKey、nodeId、状态、视口及对应预览快照和摘要；从所选节点直接提取结构、布局、组件、样式与适配。已表达清楚的信息不重画草图、拆解图或布局图，也不重复批准；缺失部分定向补齐。
+6. V3 声明必要实现及图片生产规格，V4 才按需制作独立素材并接入真实组件；代表组件先试接，再分批扩展，按需登记素材来源与消费者。正式实现继续验证 V1 功能、状态、导航、滚动和无障碍。
+7. 在正式 Flutter 工程完成组件与用户交互并对照所选设计；仅明确要求 exact 时执行完整 fidelity parity。提交当前运行组合及目标条件，由用户人工检查视觉效果；工具成功、截图或测试通过均不等于视觉验收。
 
 <a id="mode-flutter-hifi-mockup--禁止"></a>
 #### 禁止
 
-不得把低保真截图当最终几何蓝图；不得把未实际验证的功能声称为通过；不得在用户冻结前写候选记录；不得在合同回对失败时继续资产或高保真实现；不得把资产 ownership/编号/覆盖明细复制到 design decision。
+不得把低保真截图当最终几何蓝图；不得把未实际验证的功能声称为通过；未选候选可以保留真实节点和预览以供比较，但用户明确确认前不能冒充已选目标；不得在合同回对失败时继续正式素材或实现，也不复制资产 ownership／覆盖明细形成第二份权威。
 <!-- native-source:flutter-hifi-mockup:end -->
 
 

@@ -1,11 +1,11 @@
 # 页面设计决策
 
-每个页面只维护 `docs/design/pages/<page-name>/design-decision.md`。未冻结的 brief、prompt、候选和评审草稿只在对话中存在。
+页面设计决策按需引用现有控制器工作项与[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)，不创建第二套状态或重复批准。候选的真实节点和预览可供用户比较；未选择不能标为正式目标。
 
 ## 语义合同与功能验证
 
 - 页面 / 状态 / 模块：
-- V1 功能验证结果与范围；Code Sketch 按需使用，若使用记录 Level（Full / Lightweight / Reuse）与理由：
+- 正式实现的 V1 功能验证结果与范围（仅设计提案不强制先建运行工程）；Code Sketch 按需使用，若使用记录 Level 与理由：
 - 范围、内容优先级、状态、交互、导航与结果：
 - 滚动 owner、断点/重排、系统避让、无障碍：
 - data/UI/asset ownership 边界：
@@ -15,7 +15,8 @@
 ## 高保真冻结
 
 - 全局方向：
-- 冻结图路径 / candidate ID / SHA-256 / `目标逻辑视口 × 资源密度（默认 2x）` 尺寸：
+- 所选 Figma fileKey／nodeId／节点链接／candidate ID／状态／视口：
+- 真实预览快照路径及 SHA-256；设计节点结构冻结记录与摘要：
 - 用户确认时间：
 - 必须遵守的视觉约束 / 允许偏差：
 - 参考条件（语言、真实文案、内容状态、安全区；画布与资源密度沿用冻结图记录）：

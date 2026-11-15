@@ -1,14 +1,218 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "可跨同项目同技术栈工作项复用的视觉基线",
-  "description": "保留三张同条件候选；仅用户选择的一张必须五项均通过。",
+  "description": "游戏保留三候选；非游戏App默认一个精修Figma方案，用户明确要求时多方案，局部增量复用有效方向。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "baselineId", "projectId", "stack", "candidates", "selectedCandidateId", "selectionReviewRef"],
+  "required": [
+    "schemaVersion",
+    "baselineId",
+    "projectId",
+    "stack",
+    "candidates",
+    "selectedCandidateId",
+    "selectionReviewRef"
+  ],
   "properties": {
-    "schemaVersion": {"const": "1.0"}, "baselineId": {"type": "string"}, "projectId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"]},
-    "selectedCandidateId": {"type": "string"},
-    "candidates": {"type": "array", "minItems": 3, "maxItems": 3, "items": {"type": "object", "additionalProperties": false, "required": ["candidateId", "path", "qualityChecks"], "properties": {"candidateId": {"type": "string"}, "path": {"type": "string"}, "qualityChecks": {"$ref": "human-review.schema.json#/properties/qualityChecks"}}}},
-    "selectionReviewRef": {"$ref": "work-item.schema.json#/$defs/visualFileIdentity"}
-  }
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "baselineId": {
+      "type": "string"
+    },
+    "projectId": {
+      "type": "string"
+    },
+    "stack": {
+      "enum": [
+        "unity",
+        "cocos",
+        "phaser",
+        "threejs",
+        "flutter",
+        "expo",
+        "esp32",
+        "nodejs",
+        "roblox"
+      ]
+    },
+    "selectedCandidateId": {
+      "type": "string"
+    },
+    "candidates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "candidateId",
+          "path",
+          "qualityChecks"
+        ],
+        "properties": {
+          "candidateId": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "qualityChecks": {
+            "$ref": "human-review.schema.json#/properties/qualityChecks"
+          },
+          "figmaSnapshotRef": {
+            "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+          },
+          "directionSourceRef": {
+            "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+          }
+        }
+      }
+    },
+    "selectionReviewRef": {
+      "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+    },
+    "designRoute": {
+      "const": "figma-app"
+    },
+    "exploration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "initial",
+            "redesign",
+            "increment"
+          ]
+        },
+        "requestedCount": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "userMessageRef": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sourceBaselineRef": {
+          "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+        },
+        "changeScope": {
+          "const": "local"
+        },
+        "changeReason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "combination": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "candidateId",
+        "path",
+        "qualityChecks",
+        "figmaSnapshotRef",
+        "sourceCandidateIds",
+        "userMessageRef"
+      ],
+      "properties": {
+        "candidateId": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "qualityChecks": {
+          "$ref": "human-review.schema.json#/properties/qualityChecks"
+        },
+        "figmaSnapshotRef": {
+          "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+        },
+        "sourceCandidateIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "userMessageRef": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": [
+          "designRoute"
+        ],
+        "properties": {
+          "designRoute": {
+            "const": "figma-app"
+          }
+        }
+      },
+      "then": {
+        "required": [
+          "exploration"
+        ],
+        "properties": {
+          "stack": {
+            "enum": [
+              "flutter",
+              "expo",
+              "esp32"
+            ]
+          },
+          "candidates": {
+            "items": {
+              "required": [
+                "figmaSnapshotRef"
+              ]
+            }
+          }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "exploration": {
+                  "not": {
+                    "required": [
+                      "requestedCount"
+                    ]
+                  }
+                }
+              }
+            },
+            "then": {
+              "properties": {
+                "candidates": {
+                  "minItems": 1,
+                  "maxItems": 1
+                }
+              }
+            }
+          }
+        ]
+      },
+      "else": {
+        "properties": {
+          "candidates": {
+            "minItems": 3,
+            "maxItems": 3
+          }
+        }
+      }
+    }
+  ]
 }

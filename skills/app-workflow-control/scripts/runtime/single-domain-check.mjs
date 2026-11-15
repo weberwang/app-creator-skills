@@ -9,6 +9,7 @@ import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { validateFlutterDesign } from './flutter-design-contract.mjs';
+import { isFigmaApp, validateFigmaAppStage } from './figma-app-contract.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -104,6 +105,7 @@ function validateFlutter(repo, work, stage, doc) {
     // 其他视口的目标必须有各自真实确认，不能把一张主目标冒充全部状态。
     for (const extra of doc.additionalTargets ?? []) {
       const path = identity(repo, extra.referenceTarget, 'Flutter 额外视觉目标');
+      if (isFigmaApp(work)) { approved.set(path, extra.referenceTarget.sha256); continue; }
       const review = readJson(repo, identity(repo, extra.reviewRef, 'Flutter 额外目标确认'), 'Flutter 额外目标确认');
       if (work.workItemType === 'DISPLAY_LAYER' && (review.hostId !== work.visual.hostId || review.layerType !== work.visual.layerType)) throw new WorkflowError('Flutter 额外目标确认未绑定显示层当前宿主或层类型');
       if (review.workItemId !== work.workItemId) {
@@ -148,7 +150,7 @@ function validateFlutter(repo, work, stage, doc) {
 
 /** 把显示层的人工确认和运行证据冻结到实际宿主，防止迁移后沿用旧验收。 */
 function validateFlutterLayerContext(repo, work, stage, doc) {
-  const names = ['V2', ...(stage !== 'V2' ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
+  const names = ['V2', ...(stage !== 'V2' && !isFigmaApp(work) ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
   let runtimeReview;
   for (const name of names) {
     const path = identity(repo, work.visual.reviews?.[name], `${name} 显示层确认`);
@@ -177,13 +179,19 @@ function validateFlutterLayerContext(repo, work, stage, doc) {
 async function run(repo, work, stage) {
   if (!['V2', 'V3', 'V4', 'V5'].includes(stage)) throw new WorkflowError('单目标领域检查只适用于 V2–V5');
   const doc = readEnvelope(repo, work, stage);
+  validateFigmaAppStage(repo, work, stage, doc);
+  /** 当前阶段的领域引用不可重新使用 RETURN 已撤销的历史证据。 */
+  const currentIdentity = (root, ref, label) => {
+    if (ref?.path && work.invalidatedRefs?.some((item) => fileIdentityKey(root, item.path) === fileIdentityKey(root, ref.path))) throw new WorkflowError(`${label} 使用 RETURN 已作废证据`);
+    return identity(root, ref, label);
+  };
   if (work.stack === 'roblox') return (await import('./roblox-domain-check.mjs')).validateRobloxLayer(repo, work, stage, doc);
   if (work.stack === 'unity') return validateUnity(repo, work, stage, doc);
   if (WEB_PREFIX[work.stack]) return validateWeb(repo, work, stage, doc);
   if (work.stack === 'flutter') return validateFlutter(repo, work, stage, doc);
-  if (work.stack === 'expo') return (await import('./expo-domain-check.mjs')).validateExpo(repo, work, stage, doc, identity);
+  if (work.stack === 'expo') return (await import('./expo-domain-check.mjs')).validateExpo(repo, work, stage, doc, currentIdentity);
   // 非视觉技术栈不安装 UI 校验器，只有 ESP32 领域验证才加载其依赖。
-  if (work.stack === 'esp32') return (await import('./esp32-domain-check.mjs')).validateEsp32(repo, work, stage, doc, identity);
+  if (work.stack === 'esp32') return (await import('./esp32-domain-check.mjs')).validateEsp32(repo, work, stage, doc, currentIdentity);
   throw new WorkflowError('单目标领域合同不支持当前技术栈');
 }
 

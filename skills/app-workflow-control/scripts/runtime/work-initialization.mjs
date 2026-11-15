@@ -29,6 +29,7 @@ async function initializeWorkLocked({ repo, args }) {
   const workTarget = repoPath(repo, workPath, 'Work Item 输出路径');
   if (existsSync(workTarget.absolute)) throw new WorkflowError(`拒绝覆盖现有 Work Item：${workPath}`, 'ALREADY_EXISTS');
   const visualType = ['SCENE', 'PAGE', 'DISPLAY_LAYER'].includes(type);
+  if ((args['design-route'] !== undefined || args['design-intent'] !== undefined) && (!['flutter', 'expo', 'esp32'].includes(stack) || !['PAGE', 'DISPLAY_LAYER'].includes(type))) throw new WorkflowError('设计路线和用途仅适用于非游戏 App 页面与显示层');
   const integrationPurpose = type === 'INTEGRATION' ? (args['integration-purpose'] ?? 'feature') : undefined;
   if (integrationPurpose !== undefined) requireOneOf(integrationPurpose, ['feature', 'final'], '--integration-purpose');
   if (type !== 'INTEGRATION' && args['integration-purpose'] !== undefined) throw new WorkflowError('只有 INTEGRATION 可以使用 --integration-purpose');
@@ -64,6 +65,7 @@ async function initializeWorkLocked({ repo, args }) {
       objectId: args['object-id'] ?? id,
       stageModel: 'function-first-v1',
       stage: 'V0',
+      ...(['flutter', 'expo'].includes(stack) || args['design-route'] || args['design-intent'] ? { designRoute: args['design-route'] ?? 'figma-app', designIntent: args['design-intent'] ?? 'implementation' } : {}),
       ...(type === 'DISPLAY_LAYER' ? { hostId: args['host-id'], layerType: args['layer-type'] } : {}),
       ...(type === 'SCENE' ? { targets: [] } : { reviews: {} }),
     } } : {}),

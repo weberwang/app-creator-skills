@@ -25,7 +25,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 2. 按[还原依据与变更边界](references/relative-layout.md#还原依据与变更边界)复用有效设计稿与现有布局规格，区分已确认目标、测量值、估计值及适配规则；按影响补齐，不另建布局源或逐项审批。按[UI 相对布局与定位](references/relative-layout.md)建立布局树和约束：标明容器层级、参照、对齐、间距、可伸缩/固定尺寸、滚动范围、遮挡关系、键盘/手柄焦点顺序。
    按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)把布局树落实到本栈实际节点、Widget 或 DOM，区分显示挂载、功能归属与渲染顺序。V3 先按[节点最小化](../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)判断同一操作的视觉与交互能否共用节点，再按[随动与父子关系](../app-domain-toolkit/references/reference-domain-display-ownership.md#随动与父子关系)为确需分开的元素确定父级。V5 按确认结构还原并验证移动后的相对位置与命中。
 3. Unity、Cocos、Phaser、Three.js 按[静态文本的可见表现](../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)为静态文本选择位图字体或独立文字图片，Flutter、Expo 使用各自本栈原生文本规范。按[文本宽度、缩放与换行](references/relative-layout.md#文本宽度缩放与换行)保持确认的阅读尺寸与断行，声明适配策略。读取当前栈原生模式引用的 `references/text-layout.md`，核实所选路线的排版能力，再落实断点、安全区、多语言、阅读尺寸放大和最小交互尺寸。
-4. 用最短、最长、空、错误和加载内容填充布局，检查截断、换行、溢出、按钮遮挡和视觉优先级退化。
+4. 用最短、最长、空、错误和加载内容核对可测的截断、换行、溢出及实际命中；视觉优先级和设计截图默认交用户人工检查，未经明确授权不自动分析截图。
 5. 在目标运行环境先核对同条件的设计目标、正式源值与运行值，再检查适用视口和内容适配及触控/鼠标/键盘导航；两类结果分别记录，修复偏差来源，不对单张截图加偏移或隐式改变设计目标。
 6. 交付布局规则、断点/内容矩阵、导航顺序、运行验证矩阵和需用户人工判断的视觉点。
 
@@ -40,7 +40,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。
 - 游戏普通屏幕 UI 必须落实[双轴停靠或原生容器排布](references/relative-layout.md#游戏-ui-的停靠与原生机制)；原生能表达时使用原生机制，位置与尺寸分别确定控制者，并核对正式源与运行属性。
 - Unity/Creator/Web UI、Flutter Widget 与 Expo React Native 的布局系统并不相同；只使用当前栈匹配的原生适配模式。
-- V3 的真实父子、布局参照和状态变化从 V2 已确认设计推导并逐项映射设计元素，抽象结构框图不足以证明素材拆解；已有组件必须证明当前结构、样式和状态适配目标。Flutter 的 `usability` 也须还原布局、层级、形状、排版和视觉特征，完整像素级矩阵仅按 `exact` 要求执行。
+- 非游戏 App 按[Figma App 设计流程](references/figma-app-design.md)从已选可编辑节点提取真实父子、布局参照、状态及适配；已表达清楚的信息不重画一套图或重复审批。逐项映射设计与实际消费者，抽象结构框图不足以证明还原；已有组件须证明当前结构、样式和状态符合目标。Flutter 的 `usability` 仍须还原布局、层级、形状、排版和视觉特征，完整像素级矩阵仅按 `exact` 要求执行。
 - 效果图供目标确认，不能把按钮、动态文案和交互状态烘焙成不可访问的背景图。
 
 ## 交付

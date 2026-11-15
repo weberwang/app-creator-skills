@@ -12,6 +12,7 @@ import { minimalPng, validManifest } from '../../skills/cocos-game-asset-integra
 import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 
 import { createFixture, put, readWork, putJson, createQualityChecks, reviewRecord, putVisualReview, frozenReview, bindImplementation, submitPassingUnits, bindEvidence, runEngineeringStage, readyForRelease, approveRelease } from './controller-fixture.mjs';
 
@@ -533,6 +534,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
     stack: work.stack, candidates: baselineCandidates, selectedCandidateId: 'direction-a',
     selectionReviewRef: await frozenReview(fixture.repo, baselinePath),
   }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
+  attachFigmaBaselineFixture(fixture.repo, work);
   await putJson(fixture.repo, fixture.workPath, work);
 
   work.globalState = 'REVIEW';

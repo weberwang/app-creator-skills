@@ -22,6 +22,7 @@ import { validateProductionBatchEvidence } from './production-coverage.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { getWorkSource } from './work-source.mjs';
 import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
+import { isFigmaApp, isDesignProposal, validateFigmaBaseline, selectedFigmaCandidate } from './figma-app-contract.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 export { bindWorkSource } from './work-source.mjs';
@@ -327,6 +328,14 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
   }
   const record = readFrozenVisualBaseline(repo, work.globalVisualBaselineRef);
   if (record.schemaVersion !== VERSION || record.baselineId === undefined || record.projectId !== work.projectId || record.stack !== work.stack) throw new WorkflowError('视觉基线版本、项目或技术栈错绑');
+  if (isFigmaApp(work)) {
+    validateFigmaBaseline(repo, work, record);
+    for (const candidate of record.candidates) validateQualityChecks(repo, candidate.qualityChecks, 'Figma 方向质量', { requirePass: candidate.candidateId === record.selectedCandidateId });
+    const chosen = selectedFigmaCandidate(record);
+    validateQualityChecks(repo, chosen.qualityChecks, '选定 Figma 方向质量');
+    validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireQuality: true, requireTarget: true });
+    return;
+  }
   if (!Array.isArray(record.candidates) || record.candidates.length !== 3) throw new WorkflowError('首次全局视觉基线必须有三张候选');
   if (new Set(record.candidates.map((candidate) => candidate.candidateId)).size !== 3) throw new WorkflowError('三张视觉候选必须各自有唯一身份');
   for (const candidate of record.candidates) {
@@ -426,7 +435,7 @@ export function assertVisualReview(repo, work, stage) {
     requireText(work.visual.candidateId, 'visual.candidateId');
     validateHumanReview(repo, reviews.V2, { objectId: work.visual.objectId, stage: 'V2', purpose: 'target', candidateId: work.visual.candidateId, requireTarget: true, requireQuality: true });
   }
-  if (stage === 'V3') {
+  if (stage === 'V3' && !isFigmaApp(work)) {
     validateHumanReview(repo, reviews.V3Decomposition, { objectId: work.visual.objectId, stage: 'V3', purpose: 'decomposition', candidateId: work.visual.candidateId, requireTarget: true });
     validateHumanReview(repo, reviews.V3Layout, { objectId: work.visual.objectId, stage: 'V3', purpose: 'layout', candidateId: work.visual.candidateId, requireTarget: true });
   }
@@ -449,7 +458,7 @@ export function assertVisualReview(repo, work, stage) {
 
 /** 验证单目标对象的人工确认、目标图和拆解确认链的实际文件身份。 */
 function assertSingleVisualIdentity(repo, work, stage) {
-  const names = stage === 'V2' ? ['V2'] : ['V2', 'V3Decomposition', 'V3Layout', ...(stage === 'V5' ? ['V5'] : [])];
+  const names = stage === 'V2' ? ['V2'] : ['V2', ...(!isFigmaApp(work) ? ['V3Decomposition', 'V3Layout'] : []), ...(stage === 'V5' ? ['V5'] : [])];
   const reviews = work.visual.reviews ?? {};
   let frozenTarget = null;
   for (const name of names) {
@@ -517,6 +526,13 @@ export function assertReadyToPass(repo, work) {
 
 /** 最终整项关闭必须完成所有用户可见对象的 V5 展示与人工验收。 */
 export function assertFinalCompletion(repo, work) {
+  if (isDesignProposal(work)) {
+    if (work.visual.stage !== 'V2') throw new WorkflowError('仅设计提案只允许在 V2 完成，不代表工程或 V5 通过');
+    assertGates(work, ['F0', 'F1']);
+    validateGlobalBaseline(repo, work, { required: true });
+    assertVisualReview(repo, work, 'V2');
+    return;
+  }
   if (work.visual && work.visual.stage !== 'V5') throw new WorkflowError('最终关闭前，可见 PAGE/SCENE/DISPLAY_LAYER 必须到达 V5');
   assertReadyToPass(repo, work);
   if (work.workItemType === 'RELEASE') {

@@ -1,5 +1,6 @@
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { hasPreciseApproval } from './approval.mjs';
+import { isFigmaApp } from './figma-app-contract.mjs';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -24,16 +25,23 @@ function readBoard(repo, doc, identity) {
 }
 
 /** 检查页面布局树的真实几何、父子关系和确认来源。 */
-function readLayout(repo, work, doc, board, identity) {
+function readLayout(repo, work, stage, doc, board, identity) {
   const layout = readJson(repo, identity(repo, doc.layoutSpecRef, 'ESP32 布局规格'), 'ESP32 布局规格');
   if (layout.schemaVersion !== '1.0' || layout.objectId !== work.visual.objectId) throw new WorkflowError('ESP32 布局规格未绑定当前对象');
   sameRef(repo, layout.boardProfileRef, doc.boardProfileRef, '布局设备配置', identity);
   if (layout.screen?.width !== board.screen.width || layout.screen?.height !== board.screen.height) throw new WorkflowError('ESP32 布局分辨率与设备配置不一致');
-  // 布局确认只冻结正式源的位置，当前版本由工作项独立留存的快照承载。
-  const source = requireFile(repo, layout.sourcePath, 'ESP32 正式布局源');
-  const snapshot = identity(repo, doc.layoutSourceRef, 'ESP32 正式布局源快照');
-  if (repoPath(repo, source).relative === repoPath(repo, snapshot).relative) throw new WorkflowError('ESP32 正式布局源快照不能指向可变的正式源文件');
-  sameRef(repo, layout.decompositionRef, work.visual.reviews?.V3Decomposition, '拆解确认', identity);
+  if (isFigmaApp(work) && stage === 'V3') {
+    // Figma 交接不预设运行源码已完成，设备约束和相对布局仍必须通过。
+    if (layout.sourcePath !== undefined) repoPath(repo, layout.sourcePath, 'ESP32 计划布局源');
+    if (doc.layoutSourceRef !== undefined) identity(repo, doc.layoutSourceRef, 'ESP32 已有布局源快照');
+  } else {
+    const source = requireFile(repo, layout.sourcePath, 'ESP32 正式布局源');
+    const snapshot = identity(repo, doc.layoutSourceRef, 'ESP32 正式布局源快照');
+    if (repoPath(repo, source).relative === repoPath(repo, snapshot).relative) throw new WorkflowError('ESP32 正式布局源快照不能指向可变的正式源文件');
+  }
+  // 采用 Figma 路线时直接关联所选设计，硬件分辨率和布局规则仍独立核验。
+  if (isFigmaApp(work)) sameRef(repo, layout.figmaDesignRef, doc.figmaDesignRef, '布局 Figma 设计', identity);
+  else sameRef(repo, layout.decompositionRef, work.visual.reviews?.V3Decomposition, '拆解确认', identity);
   if (!Array.isArray(layout.nodes) || !layout.nodes.length) throw new WorkflowError('ESP32 布局节点不能为空');
   const nodes = new Map();
   for (const node of layout.nodes) {
@@ -94,7 +102,7 @@ function readAssets(repo, work, doc, identity) {
 
 /** 显示层每次人工确认必须对应实际宿主，不能从另一页面迁移。 */
 function checkLayerReviews(repo, work, stage, identity) {
-  const names = ['V2', ...(stage !== 'V2' ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
+  const names = ['V2', ...(stage !== 'V2' && !isFigmaApp(work) ? ['V3Decomposition', 'V3Layout'] : []), ...(['V4', 'V5'].includes(stage) ? ['V4'] : []), ...(stage === 'V5' ? ['V5'] : [])];
   for (const name of names) {
     const review = readJson(repo, identity(repo, work.visual.reviews?.[name], `ESP32 ${name} 显示层确认`), `ESP32 ${name} 显示层确认`);
     if (review.hostId !== work.visual.hostId || review.layerType !== work.visual.layerType) throw new WorkflowError(`ESP32 ${name} 显示层确认未绑定当前宿主或层类型`);
@@ -144,8 +152,8 @@ export async function validateEsp32(repo, work, stage, doc, identity) {
   checkConfirmedRef(repo, work, 'V2', 'boardProfileRef', doc.boardProfileRef, identity);
   if (work.workItemType === 'DISPLAY_LAYER') checkLayerReviews(repo, work, stage, identity);
   if (stage === 'V2') return;
-  readLayout(repo, work, doc, board, identity);
-  checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
+  readLayout(repo, work, stage, doc, board, identity);
+  if (!isFigmaApp(work)) checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
   if (stage === 'V3') return;
   readAssets(repo, work, doc, identity);
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);

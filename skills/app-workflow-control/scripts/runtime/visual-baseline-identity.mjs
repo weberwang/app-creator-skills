@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { selectedFigmaCandidate } from './figma-app-contract.mjs';
 
 /** 验证已冻结文件引用，确保后续修改无法沿用原始人工确认。 */
 function verifyIdentity(repo, identity, label) {
@@ -17,7 +18,7 @@ export function readFrozenVisualBaseline(repo, ref) {
   const record = readJson(repo, path, 'Global Visual Baseline');
   const reviewPath = verifyIdentity(repo, record.selectionReviewRef, '全局视觉基线选择确认');
   const review = readJson(repo, reviewPath, 'Global Visual Baseline 选择确认');
-  const selected = Array.isArray(record.candidates) ? record.candidates.filter((candidate) => candidate?.candidateId === record.selectedCandidateId) : [];
+  const selected = record.designRoute === 'figma-app' ? [selectedFigmaCandidate(record)].filter(Boolean) : Array.isArray(record.candidates) ? record.candidates.filter((candidate) => candidate?.candidateId === record.selectedCandidateId) : [];
   if (selected.length !== 1 || !review.targetRef || repoPath(repo, review.targetRef).relative !== repoPath(repo, selected[0].path).relative) throw new WorkflowError('视觉基线确认图必须绑定已选择的候选');
   verifyIdentity(repo, { path: review.targetRef, sha256: review.targetSha256 }, '视觉基线已确认候选');
   return record;

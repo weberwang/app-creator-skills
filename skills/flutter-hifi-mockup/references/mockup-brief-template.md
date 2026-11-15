@@ -1,88 +1,29 @@
-# Mockup Brief Template
+# Flutter 可编辑设计输入模板
 
-Fill this transiently in conversation before generating page images or dispatching a visual agent. Do not persist the brief, prompt, candidates, or review drafts. After the user freezes a selection and the image is persisted, write only its ID, hash, decision, constraints, and confirmation facts to the page design decision.
+按需在已有需求和任务记录中整理输入，信息足够时直接按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作方向，无需先请用户批准文字方案。仅设计提案不强制先建设运行工程；正式实现仍须有关 V1 功能验证。
 
-## Freeze Record
+## 当前页面与约束
 
-- Frozen image path:
-- Source candidate ID:
-- SHA-256:
-- Decoded dimensions: `目标逻辑视口 × 资源密度（默认 2x）`
-- User confirmation time:
+- 目标用户、主要任务、使用情境、页面与实际导航：
+- 真实内容、必要文案、关键状态和期望交互：
+- 已确认业务事实、功能、无障碍、平台与用户锁定品牌要求：
+- 目标平台、视口、方向、语言、文字倍率和适用系统区域：
+- 可探索的结构、布局、字体、配色、留白、组件形态和内容呈现：
+- 已有代码和组件中值得复用的功能与实现条件：
+- 用户明确要求忠实还原现有页面时所提供的依据：
 
-## Module and Page
+不增加无关功能、虚构数据、装饰面板或营销文案；组件、图标、设计系统按目标体验适用性复用，不适合时可制作专属组件。
 
-- Confirmed module scope:
-- Conditional module visual decision:
-- Name:
-- Route or flow:
-- User goal:
-- Business goal:
-- First-value contribution:
-- Safe-to-try condition:
-- UX/UI decision to confirm:
-- Verified function and semantic contract; Code Sketch Level and review only if used:
-- High-fidelity recomposition freedom: exact geometry, containers, whitespace, component silhouettes, image ratios/crops, text-image orientation, and decoration placement
-- Primary action:
-- Secondary actions:
+## 候选与冻结
 
-## Product Context
+首次定调或实质改版默认精修一份有依据的可编辑 Figma 方案；只有用户明确要求比较时才按指定数量制作多方向，保持同任务、主要内容及比较条件并体现实质差异。局部增量可复用有效方向。展示真实节点链接、对应预览与简短说明，由用户确认或明确选择／组合，再扩展其余页面和关键状态。
 
-- Target user:
-- Core promise:
-- Commercial context:
-- Trust requirements:
-- Risk, permission, payment, privacy, or recovery disclosure:
+- 候选身份、Figma fileKey、nodeId、节点链接：
+- 目标状态、视口、语言及文字倍率：
+- 真正展示的预览快照路径及 SHA-256：
+- 用户真实选择消息与适用范围：
+- Figma 结构采集、还原交接与正式消费记录的控制器引用：
 
-## Device Targets
+V3 可直接复用所选节点已表达的组件、层级和布局，不重画草图或拆解图并重复确认；V4 才试接真实组件和实际独立素材。图层保持可编辑，文字、组件、实例、矢量与自动布局按适用性使用，颜色、间距、圆角等变量实际绑定。独立插画、照片和角色等按需生成或复用；不得将整页图片冒充可编辑设计。
 
-- Primary device:
-- Secondary device:
-- Orientation:
-- Exact output size: `目标逻辑视口 × 资源密度（默认 2x）`
-- Safe area or platform constraints:
-
-## Required States
-
-| State | Generate mockup? | Reason |
-|---|---|---|
-| Success | Yes / No | |
-| Loading | Yes / No | |
-| Empty | Yes / No | |
-| Error | Yes / No | |
-| Disabled | Yes / No | |
-| Permission | Yes / No | |
-| Paywall | Yes / No | |
-
-## Visual Direction
-
-- Design system baseline:
-- Visual expression preset ID and axes:
-- Page-type budget dial: full / moderate / dial-down
-- Restatable signature when required:
-- Brand traits:
-- Decoration purpose and limits:
-- Avoid:
-- References:
-- Density:
-- Motion impression:
-
-## Content Requirements
-
-- Realistic user data:
-- Required copy:
-- Icons or imagery:
-- Legal or price text:
-
-## Image Prompt Contract
-
-This brief is planning evidence, not the text sent to the image model. Build the final prompt with [image-prompt-principles.md](./image-prompt-principles.md) and include only:
-
-- the screen outcome and primary task;
-- essential hierarchy and required content;
-- the approved visual signature and a few concrete cues;
-- material scope, state, trust, accessibility, or compositing constraints;
-- viewpoint, frame rule, and required dimensions;
-- only the most likely material failure modes.
-
-Do not include source paths, rationale, requirement mappings, exhaustive component/token specifications, repeated negatives, or decorative adjective stacks. Leave secondary composition and detail open unless frozen evidence makes them non-negotiable.
+缺少 Figma 工具时如实说明受阻步骤，不静默改为整页生图。默认用户人工检查设计稿及运行截图；未经明确授权不得自动分析截图或代写视觉 PASS，也不自动付费、购买素材、发布或运行真机。

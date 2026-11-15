@@ -7,6 +7,7 @@ import { basename, dirname, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import { installSkills } from '../../packages/installer/install-project-skills.mjs';
+import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
 
 /** 写入隔离项目的合成工件，并返回其字节摘要。 */
 function write(repo, path, content) {
@@ -52,6 +53,7 @@ test('Expo 独立安装后可初始化页面并执行公共 V2 阶段门', async
   const review = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId, candidateId: work.visual.candidateId, stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成用户消息', referenceTarget, targetRef: referenceTarget.path, targetSha256: referenceTarget.sha256, platformProfileRef, qualityChecks };
   work.visual.reviews.V2 = write(repo, 'fixture/review-v2.json', review);
   const domain = { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: 'expo', workItemType: 'PAGE', visualStageModel: 'function-first-v1', visualStage: 'V2', objectId: work.visual.objectId, candidateId: work.visual.candidateId, referenceTarget, platformProfileRef };
+  attachFigmaAppFixture(repo, work, domain, { designOnly: true });
   work.visual.domainEvidenceRef = write(repo, 'fixture/domain-v2.json', domain);
   assert.doesNotThrow(() => assertVisualReview(repo, work, 'V2'));
 

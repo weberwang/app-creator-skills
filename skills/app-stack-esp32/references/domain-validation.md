@@ -24,7 +24,7 @@
 
 ## V3：布局及拆解
 
-外层保留 `boardProfileRef` 并增加 `layoutSpecRef` 和 `layoutSourceRef`。后者指向当前工作项留存的正式源版本快照，不能指向可变正式文件。布局 JSON 绑定同一设备配置和当前对象：
+外层保留 `boardProfileRef` 并增加 `layoutSpecRef`。采用 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)时另提供选定节点的 `figmaDesignRef`、必要交接 `figmaHandoffRef`，布局引用同一 `figmaDesignRef`；V3 可仅规划 `sourcePath`，已有 `layoutSourceRef` 时验证其身份，不要求提前实现正式源。V4 起 `layoutSourceRef` 指向当前工作项留存的正式源版本快照，不能指向可变正式文件。非 Figma 设备流程继续按原拆解确认规则。布局 JSON 绑定同一设备配置和当前对象：
 
 ```json
 {
@@ -42,7 +42,7 @@
 }
 ```
 
-`sourcePath` 指向真实存在的正式可编辑布局文件或组件代码，不能越出项目；`layoutSourceRef` 指向从该源实际留存的本工作项不可变快照，必须有非空内容和正确摘要，不得伪造。控制器不要求历史快照与现在的可变正式源字节相同。`decompositionRef` 必须等于工作项的 `visual.reviews.V3Decomposition` 文件身份。`visual.reviews.V3Layout` 必须包含匹配当前规格的 `layoutSpecRef`，V3 及之后每阶段复核；纯实现改动且布局规格和正式源位置未变时，可保留确认，另留当前源码快照并记录当前构建。布局几何、结构、定位或源路径变化须重新确认受影响布局。节点 ID 唯一，宽高为正整数、坐标为整数，父链必须汇入与设备分辨率一致的唯一根节点。
+V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`layoutSourceRef` 指向该源不可变快照，不能越出项目且不得伪造；历史快照无需与后来的可变正式源字节相同。非 Figma 路线的 `decompositionRef` 绑定 `visual.reviews.V3Decomposition`，`visual.reviews.V3Layout` 绑定当前 `layoutSpecRef`；Figma 路线直接引用已选设计及其交接，不要求两份重复人工批准。纯实现改动可保留仍有效设计，另留当前源码快照并记录当前构建；实质改变已选视觉目标或交互方案时重新确认。节点 ID 唯一，宽高为正整数、坐标为整数，父链汇入与真实设备分辨率一致的唯一根节点。
 
 每个节点明确 `positioning` 和 `references`。屏幕根 `parentId` 为 null，引用固定稳定根 `viewport`；不得用真实节点占用该 ID 或声明额外稳定根。普通页面的节点均按相对布局定位，不能声明 `floatingKind`。显示层必须有唯一的浮层本体节点，节点 ID 与工作项 `objectId` 相同、父节点为屏幕根，`floatingKind` 为 `toast`（toast 类型）或 `popup`（其他受支持类型）。仅浮层本体可使用 `absolute`，后代必须使用相对定位且参照留在该本体子树中。布局规格需在项目资料中另行说明关键控件、字体、动态状态、交互范围与坐标语义；控制器的几何检查不证明可读、可点击或画面符合设计。
 
@@ -106,6 +106,6 @@
 
 三项运行文件分别记录实际运行、关键交互和性能/资源检查的原始结果。`environment` 只能为 `host-simulator` 或 `device`；前者不能作为硬件驱动、显示、触控或峰值资源结果。真实设备情形还须设置 `deviceTarget` 为当前工作项 `action.target`，并设置 `approvalUserMessageRef` 与 `action.approval.userMessageRef` 一致；工作项须包含 `device` 动作及控制器已有精确批准。实际操作之前仍需执行控制器的 `check-action`，满足 F0/F1/F2/F4、动作、阶段及目标要求；事后有日志或在 JSON 中写批准不能代替授权。
 
-`visual.reviews.V5` 所指真实用户确认中，`runtimeContextRef` 必须绑定同一个上下文及摘要。显示层上下文另需 `hostId`、`layerType` 和 `interactions`：`open`、`close`、`focus-restore` 各出现一次；每项为 `{"action":"open","status":"PASS","evidenceRef":"REF"}` 或 `{"action":"open","status":"NOT_APPLICABLE","reason":"具体原因"}`。显示层 V2、V3 拆解、V3 布局、V4 和 V5 的人工确认都必须绑定相同宿主与类型。
+`visual.reviews.V5` 所指真实用户确认中，`runtimeContextRef` 必须绑定同一个上下文及摘要。显示层上下文另需 `hostId`、`layerType` 和 `interactions`：`open`、`close`、`focus-restore` 各出现一次；每项为 `{"action":"open","status":"PASS","evidenceRef":"REF"}` 或 `{"action":"open","status":"NOT_APPLICABLE","reason":"具体原因"}`。显示层 V2、V4 和 V5 的人工确认均绑定相同宿主与类型；非 Figma 路线已有的 V3 拆解及布局确认也绑定宿主，Figma 路线不因此增加重复批准。
 
 生成截图或导出画面只提供给用户人工检查；未获得用户视觉确认时保留待确认状态。控制器只能检查文件身份与记录之间的关系，不能证明执行发生、文本正确或用户消息真实，也不能替代硬件测试或人工视觉验收。

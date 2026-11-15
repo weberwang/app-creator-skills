@@ -8,6 +8,8 @@ import test from 'node:test';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { assertVisualReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
+import { validateExpo } from '../../skills/app-workflow-control/scripts/runtime/expo-domain-check.mjs';
+import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
 
 /** 写入隔离项目的合成文件并返回实际字节摘要。 */
 function write(repo, path, content) {
@@ -42,7 +44,9 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const nodes = [{ id: 'screen', parentId: null, x: 0, y: 0, width: 390, height: 844, positioning: 'relative', references: ['viewport'] }];
   if (layer) nodes.push({ id: visual.objectId, parentId: 'screen', x: 10.5, y: 20, width: 300, height: 200, positioning: 'absolute', references: ['screen'], floatingKind: 'popup' });
   nodes.push({ id: 'title', parentId: layer ? visual.objectId : 'screen', x: 8, y: 8, width: 100, height: 20.5, positioning: 'relative', references: [layer ? visual.objectId : 'screen'] });
-  const layout = { schemaVersion: '1.0', objectId: visual.objectId, platformProfileRef, unit: 'logical-pixel', viewport: profile.viewport, sourcePath: 'src/home.tsx', decompositionRef: visual.reviews.V3Decomposition, rootId: 'screen', safeAreaStrategy: '避让系统边界', keyboardStrategy: '按页面滚动', textScaleStrategy: '系统字体缩放', nodes };
+  // 先冻结所选 Figma 的实际节点，再生成引用该设计的原生布局，避免循环引用。
+  attachFigmaAppFixture(repo, work, doc, { designOnly: true, nativeLayout: { nodes } });
+  const layout = { schemaVersion: '1.0', objectId: visual.objectId, platformProfileRef, unit: 'logical-pixel', viewport: profile.viewport, sourcePath: 'src/home.tsx', figmaDesignRef: doc.figmaDesignRef, rootId: 'screen', safeAreaStrategy: '避让系统边界', keyboardStrategy: '按页面滚动', textScaleStrategy: '系统字体缩放', nodes };
   doc.layoutSpecRef = write(repo, 'layout.json', layout);
   visual.reviews.V3Layout = write(repo, 'review-v3-layout.json', { referenceTarget, layoutSpecRef: doc.layoutSpecRef, ...host });
   const resource = write(repo, 'asset.bin', '合成素材');
@@ -60,6 +64,7 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   function save() {
     doc.runtimeContextRef = write(repo, 'runtime.json', runtime);
     visual.reviews.V5 = write(repo, 'review-v5.json', { referenceTarget, runtimeContextRef: doc.runtimeContextRef, ...host });
+    attachFigmaAppFixture(repo, work, doc);
     visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   }
   save();
@@ -75,18 +80,46 @@ test('Expo 页面和显示层分别通过 V2–V5，Web 独立记录其构建和
   assert.equal(validateSingleDomainTarget(web.repo, web.work, 'V5'), true);
 });
 
+test('Expo Figma 布局直接绑定当前设计，V3 无需另画图或重复批准', (t) => {
+  for (const layer of [false, true]) {
+    const f = fixture(t, { stage: 'V3', layer });
+    f.doc.figmaDesignRef = write(f.repo, 'figma-design.json', { nodeId: '1:2' });
+    f.layout.figmaDesignRef = f.doc.figmaDesignRef;
+    delete f.layout.decompositionRef;
+    delete f.layout.sourcePath;
+    delete f.doc.layoutSourceRef;
+    delete f.work.visual.reviews.V3Decomposition;
+    delete f.work.visual.reviews.V3Layout;
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout.json', f.layout);
+    /** 该单元只验证原生适配；Figma 身份与交接由公共合同另行覆盖。 */
+    const identity = (_repo, ref) => {
+      const bytes = readFileSync(join(f.repo, ref.path));
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), ref.sha256);
+      return ref.path;
+    };
+    assert.doesNotThrow(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity));
+    f.layout.figmaDesignRef = write(f.repo, 'other-design.json', { nodeId: '9:9' });
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout-other.json', f.layout);
+    assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /布局 Figma 设计.*当前文件/);
+    f.layout.figmaDesignRef = f.doc.figmaDesignRef;
+    f.layout.unit = 'physical-pixel';
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout-invalid-unit.json', f.layout);
+    assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /单位或视口/);
+  }
+});
+
 test('公共阶段门实际调用 Expo 合同并验证用户确认链', (t) => {
   const f = fixture(t, { stage: 'V2' });
   const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension, index) => ({
     dimension, status: 'PASS', evidenceRef: write(f.repo, `quality/${index}.txt`, '合成人工检查').path,
   }));
-  const review = { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: 'home', targetId: 'home', candidateId: 'candidate-a', stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成用户消息', referenceTarget: f.referenceTarget, targetRef: f.referenceTarget.path, targetSha256: f.referenceTarget.sha256, platformProfileRef: f.doc.platformProfileRef, qualityChecks };
+  const review = { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: 'home', targetId: 'home', candidateId: 'candidate-a', stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成用户消息', referenceTarget: f.referenceTarget, targetRef: f.referenceTarget.path, targetSha256: f.referenceTarget.sha256, platformProfileRef: f.doc.platformProfileRef, figmaDesignRef: f.doc.figmaDesignRef, figmaTargetRefs: [f.doc.figmaDesignRef], scope: { kind: 'full-object', designItemIds: [], conditionIds: [] }, qualityChecks };
   f.work.visual.reviews.V2 = write(f.repo, 'public-v2.json', review);
   f.work.visual.domainEvidenceRef = write(f.repo, 'public-domain-v2.json', f.doc);
   assert.doesNotThrow(() => assertVisualReview(f.repo, f.work, 'V2'));
   review.decision = 'REJECTED';
   f.work.visual.reviews.V2 = write(f.repo, 'public-rejected.json', review);
-  assert.throws(() => assertVisualReview(f.repo, f.work, 'V2'), /未获用户确认/);
+  assert.throws(() => assertVisualReview(f.repo, f.work, 'V2'), /未获用户确认|缺少当前完整 Figma 目标的人工选择/);
 });
 
 test('V2 不依赖未来阶段素材或运行证据，且必须绑定用户确认的平台', (t) => {
@@ -121,7 +154,7 @@ test('V4 资源为空时须说明原因，缺少实际素材文件不能通过',
   f.assets.items = []; f.doc.assetManifestRef = write(f.repo, 'new-assets.json', f.assets); f.save();
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V4'), /无外部资源原因/);
   f.assets.nativeOnlyReason = '仅使用平台控件'; f.doc.assetManifestRef = write(f.repo, 'native-assets.json', f.assets); f.save();
-  f.work.visual.reviews.V4 = write(f.repo, 'new-review-v4.json', { referenceTarget: f.referenceTarget, assetManifestRef: f.doc.assetManifestRef });
+  f.work.visual.reviews.V4 = write(f.repo, 'new-review-v4.json', { referenceTarget: f.referenceTarget, assetManifestRef: f.doc.assetManifestRef, figmaDesignRef: f.doc.figmaDesignRef });
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V4'), true);
 });
 
@@ -146,7 +179,7 @@ test('显示层阶段确认须绑定当前宿主且真实交互逐项有记录',
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /不适用原因/);
   f.runtime.interactions[2].reason = '设备无焦点导航'; f.save();
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
-  f.work.visual.reviews.V3Layout = write(f.repo, 'other-review.json', { hostId: 'other', layerType: 'modal', layoutSpecRef: f.doc.layoutSpecRef });
+  f.work.visual.reviews.V4 = write(f.repo, 'other-review.json', { hostId: 'other', layerType: 'modal', assetManifestRef: f.doc.assetManifestRef, figmaDesignRef: f.doc.figmaDesignRef });
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /显示层确认.*宿主/);
 });
 

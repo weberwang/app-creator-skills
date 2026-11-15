@@ -3,6 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
+import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
 
 /** 写入测试用领域资料并返回实际文件内容身份。 */
 async function putIdentity(repo, path, content) {
@@ -34,6 +35,7 @@ export async function writeSingleDomainFixture(repo, work, stage) {
     document.layoutSpecRef = previousReview?.layoutSpecRef ?? await putIdentity(repo, `.workflow-control/domain/${work.workItemId}-layout.yaml`, content);
     attachFlutterDesignFixture(repo, work, document);
   }
+  attachFigmaAppFixture(repo, work, document);
   work.visual.domainEvidenceRef = await putIdentity(repo, `.workflow-control/domain/${work.workItemId}-${stage}.json`, `${JSON.stringify(document, null, 2)}\n`);
   return work.visual.domainEvidenceRef;
 }

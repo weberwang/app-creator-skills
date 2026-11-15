@@ -1,0 +1,16 @@
+{
+  "targetUsers": "replace-real-target-users",
+  "primaryTask": "replace-real-primary-task",
+  "context": "replace-real-usage-context",
+  "intent": "explore",
+  "realContent": [],
+  "hardConstraints": [],
+  "explorationSpace": [],
+  "qualityPriorities": [
+    "主要任务与信息层级清楚",
+    "真实内容下的字体层级、留白和空间节奏",
+    "组件、图标与关键状态一致",
+    "平台字体、适配和实际实现条件"
+  ],
+  "representativeCases": []
+}

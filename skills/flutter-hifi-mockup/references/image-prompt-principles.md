@@ -1,6 +1,6 @@
 # Image Prompt Principles
 
-Use these principles for page effect images and standalone visual assets.
+Use these principles only when a standalone illustration, photo, character, icon, or other asset is actually needed. Non-game app pages use the [editable Figma design workflow](../../app-ui-layout/references/figma-app-design.md); do not generate a whole-page image as the default design or pass it off as an editable Figma page.
 
 ## Separate Planning From Generation
 
@@ -53,16 +53,6 @@ Before generation, verify that the prompt:
 - contains no duplicated or conflicting constraint;
 - leaves secondary visual decisions open;
 - is the shortest version that preserves correctness.
-
-## Compact Page Pattern
-
-```text
-Design a high-fidelity [page] for [product/user], focused on [primary task] in [state].
-Structure it around [essential regions and hierarchy], using [required content/copy].
-Follow [approved visual direction/signature] with [a few concrete visual cues].
-Keep [critical scope, trust, accessibility, or interaction constraints]; choose secondary composition and decorative details freely within that direction.
-Output [viewpoint, frame rule, and required dimensions]. Avoid only [material failure modes].
-```
 
 ## Compact Asset Pattern
 

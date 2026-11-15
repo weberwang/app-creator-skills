@@ -312,14 +312,59 @@
       "description": "准备候选与实际发布使用不同完成结果，只有RELEASE可设置。"
     },
     "integrationPurpose": {
-      "enum": ["feature", "final"],
+      "enum": [
+        "feature",
+        "final"
+      ],
       "description": "早期功能集成或正式对象组合后的最终回归。"
     },
-    "integrationEvidenceRef": { "$ref": "#/$defs/visualFileIdentity" },
-    "integrationScopeRef": { "$ref": "#/$defs/visualFileIdentity" },
-    "productionScopeRef": { "$ref": "#/$defs/visualFileIdentity" },
-    "productionBatchId": { "type": "string", "minLength": 1 },
-    "productionDependencies": { "type": "array", "items": { "type": "object", "additionalProperties": false, "required": ["batchId", "workItemRef"], "properties": { "batchId": { "type": "string", "minLength": 1 }, "workItemRef": { "type": "object", "additionalProperties": false, "required": ["path"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } } } } },
+    "integrationEvidenceRef": {
+      "$ref": "#/$defs/visualFileIdentity"
+    },
+    "integrationScopeRef": {
+      "$ref": "#/$defs/visualFileIdentity"
+    },
+    "productionScopeRef": {
+      "$ref": "#/$defs/visualFileIdentity"
+    },
+    "productionBatchId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "productionDependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "batchId",
+          "workItemRef"
+        ],
+        "properties": {
+          "batchId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "workItemRef": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              }
+            }
+          }
+        }
+      }
+    },
     "planningRef": {
       "$ref": "#/$defs/refOrNull"
     }
@@ -385,26 +430,50 @@
             "V5"
           ]
         },
-        "stageModel": { "const": "function-first-v1" },
-        "functionBaselineRef": { "$ref": "#/$defs/visualFileIdentity" },
-        "domainEvidenceRef": { "$ref": "#/$defs/visualReviewRef" },
+        "stageModel": {
+          "const": "function-first-v1"
+        },
+        "functionBaselineRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "domainEvidenceRef": {
+          "$ref": "#/$defs/visualReviewRef"
+        },
         "functionDependencies": {
           "type": "array",
           "items": {
-            "type": "object", "additionalProperties": false,
-            "required": ["workItemRef", "caseId", "evidenceRef"],
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "workItemRef",
+              "caseId",
+              "evidenceRef"
+            ],
             "properties": {
-              "workItemRef": { "$ref": "#/$defs/refOrNull" },
-              "caseId": { "type": "string", "minLength": 1 },
-              "evidenceRef": { "$ref": "#/$defs/visualFileIdentity" }
+              "workItemRef": {
+                "$ref": "#/$defs/refOrNull"
+              },
+              "caseId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "evidenceRef": {
+                "$ref": "#/$defs/visualFileIdentity"
+              }
             }
           }
         },
-        "coverageRef": { "$ref": "#/$defs/visualFileIdentity" },
-        "integrationEvidenceRef": { "$ref": "#/$defs/visualReviewRef" },
+        "coverageRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "integrationEvidenceRef": {
+          "$ref": "#/$defs/visualReviewRef"
+        },
         "targets": {
           "type": "array",
-          "items": { "$ref": "#/$defs/visualTarget" }
+          "items": {
+            "$ref": "#/$defs/visualTarget"
+          }
         },
         "hostId": {
           "type": "string",
@@ -485,8 +554,25 @@
                 ]
               }
             },
-            "targetIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } }
+            "targetIds": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
           }
+        },
+        "designRoute": {
+          "const": "figma-app"
+        },
+        "designIntent": {
+          "enum": [
+            "implementation",
+            "proposal"
+          ]
         }
       },
       "additionalProperties": false
@@ -494,87 +580,410 @@
     "visualTarget": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["targetId", "candidateId", "sceneId", "stateId", "viewport", "scope", "referenceTarget", "domainEvidenceRef", "reviews"],
+      "required": [
+        "targetId",
+        "candidateId",
+        "sceneId",
+        "stateId",
+        "viewport",
+        "scope",
+        "referenceTarget",
+        "domainEvidenceRef",
+        "reviews"
+      ],
       "properties": {
-        "targetId": { "type": "string", "minLength": 1 },
-        "candidateId": { "type": "string", "minLength": 1 },
-        "sceneId": { "type": "string", "minLength": 1 },
-        "stateId": { "type": "string", "minLength": 1 },
-        "scope": { "type": "string", "minLength": 1 },
-        "viewport": {
-          "type": "object", "additionalProperties": false, "required": ["width", "height"],
-          "properties": { "width": { "type": "integer", "minimum": 1 }, "height": { "type": "integer", "minimum": 1 } }
+        "targetId": {
+          "type": "string",
+          "minLength": 1
         },
-        "referenceTarget": { "$ref": "#/$defs/visualFileIdentity" },
-        "domainEvidenceRef": { "$ref": "#/$defs/refOrNull" },
-        "assetReviewRef": { "$ref": "#/$defs/visualReviewRef" },
-        "reviews": {
-          "type": "object", "additionalProperties": false,
+        "candidateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sceneId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stateId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1
+        },
+        "viewport": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "width",
+            "height"
+          ],
           "properties": {
-            "V2": { "$ref": "#/$defs/visualReviewRef" },
-            "V3Decomposition": { "$ref": "#/$defs/visualReviewRef" },
-            "V3Layout": { "$ref": "#/$defs/visualReviewRef" },
-            "V4": { "$ref": "#/$defs/visualReviewRef" },
-            "V5": { "$ref": "#/$defs/visualReviewRef" }
+            "width": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "height": {
+              "type": "integer",
+              "minimum": 1
+            }
+          }
+        },
+        "referenceTarget": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "domainEvidenceRef": {
+          "$ref": "#/$defs/refOrNull"
+        },
+        "assetReviewRef": {
+          "$ref": "#/$defs/visualReviewRef"
+        },
+        "reviews": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "V2": {
+              "$ref": "#/$defs/visualReviewRef"
+            },
+            "V3Decomposition": {
+              "$ref": "#/$defs/visualReviewRef"
+            },
+            "V3Layout": {
+              "$ref": "#/$defs/visualReviewRef"
+            },
+            "V4": {
+              "$ref": "#/$defs/visualReviewRef"
+            },
+            "V5": {
+              "$ref": "#/$defs/visualReviewRef"
+            }
           }
         }
       }
     },
-    "visualReviewRef": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/visualFileIdentity" }] },
+    "visualReviewRef": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/visualFileIdentity"
+        }
+      ]
+    },
     "visualFileIdentity": {
-      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
       "properties": {
-        "path": { "type": "string", "minLength": 1 },
-        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
       }
     }
   },
   "allOf": [
     {
-      "if": { "anyOf": [{ "required": ["productionBatchId"] }, { "required": ["productionDependencies"] }] },
-      "then": { "required": ["productionScopeRef"] }
-    },
-    {
-      "if": { "required": ["productionScopeRef"] },
+      "if": {
+        "anyOf": [
+          {
+            "required": [
+              "productionBatchId"
+            ]
+          },
+          {
+            "required": [
+              "productionDependencies"
+            ]
+          }
+        ]
+      },
       "then": {
-        "properties": { "workItemType": { "enum": ["MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION"] } },
-        "if": { "properties": { "workItemType": { "const": "INTEGRATION" }, "integrationPurpose": { "const": "final" } }, "required": ["integrationPurpose"] },
-        "then": { "not": { "anyOf": [{ "required": ["productionBatchId"] }, { "required": ["productionDependencies"] }] } },
-        "else": { "required": ["productionBatchId"] }
+        "required": [
+          "productionScopeRef"
+        ]
       }
     },
     {
-      "if": { "required": ["visual"], "properties": { "visual": { "required": ["reuse"], "properties": { "reuse": { "required": ["targetIds"] } } } } },
-      "then": { "properties": { "workItemType": { "const": "SCENE" }, "visual": { "properties": { "reuse": { "properties": { "impact": { "not": { "const": "target" } } } } } } } }
+      "if": {
+        "required": [
+          "productionScopeRef"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workItemType": {
+            "enum": [
+              "MODULE",
+              "SCENE",
+              "PAGE",
+              "DISPLAY_LAYER",
+              "INTEGRATION"
+            ]
+          }
+        },
+        "if": {
+          "properties": {
+            "workItemType": {
+              "const": "INTEGRATION"
+            },
+            "integrationPurpose": {
+              "const": "final"
+            }
+          },
+          "required": [
+            "integrationPurpose"
+          ]
+        },
+        "then": {
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "productionBatchId"
+                ]
+              },
+              {
+                "required": [
+                  "productionDependencies"
+                ]
+              }
+            ]
+          }
+        },
+        "else": {
+          "required": [
+            "productionBatchId"
+          ]
+        }
+      }
     },
     {
-      "if": { "properties": { "stack": { "const": "nodejs" } }, "required": ["stack"] },
-      "then": { "properties": { "workItemType": { "not": { "enum": ["SCENE", "PAGE", "DISPLAY_LAYER"] } } } }
+      "if": {
+        "required": [
+          "visual"
+        ],
+        "properties": {
+          "visual": {
+            "required": [
+              "reuse"
+            ],
+            "properties": {
+              "reuse": {
+                "required": [
+                  "targetIds"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "workItemType": {
+            "const": "SCENE"
+          },
+          "visual": {
+            "properties": {
+              "reuse": {
+                "properties": {
+                  "impact": {
+                    "not": {
+                      "const": "target"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "workItemType": { "const": "PAGE" } }, "required": ["workItemType"] },
-      "then": { "properties": { "stack": { "enum": ["flutter", "expo", "esp32"] } } }
+      "if": {
+        "properties": {
+          "stack": {
+            "const": "nodejs"
+          }
+        },
+        "required": [
+          "stack"
+        ]
+      },
+      "then": {
+        "properties": {
+          "workItemType": {
+            "not": {
+              "enum": [
+                "SCENE",
+                "PAGE",
+                "DISPLAY_LAYER"
+              ]
+            }
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "workItemType": { "const": "SCENE" } }, "required": ["workItemType"] },
-      "then": { "properties": { "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox"] } } }
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "PAGE"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "properties": {
+          "stack": {
+            "enum": [
+              "flutter",
+              "expo",
+              "esp32"
+            ]
+          }
+        }
+      }
     },
     {
-      "if": { "required": ["visual"] },
-      "then": { "properties": { "visualBaselineRequired": { "const": true } } }
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "SCENE"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "properties": {
+          "stack": {
+            "enum": [
+              "unity",
+              "cocos",
+              "phaser",
+              "threejs",
+              "roblox"
+            ]
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "workItemType": { "const": "INTEGRATION" } }, "required": ["workItemType"] },
-      "then": { "required": ["integrationPurpose"] },
-      "else": { "not": { "anyOf": [{ "required": ["integrationPurpose"] }, { "required": ["integrationEvidenceRef"] }, { "required": ["integrationScopeRef"] }] } }
+      "if": {
+        "required": [
+          "visual"
+        ]
+      },
+      "then": {
+        "properties": {
+          "visualBaselineRequired": {
+            "const": true
+          }
+        }
+      }
     },
     {
-      "if": { "properties": { "integrationPurpose": { "const": "feature" } }, "required": ["integrationPurpose"] },
-      "then": { "properties": { "stageId": { "const": "foundation-engineering" } }, "not": { "anyOf": [{ "required": ["integrationEvidenceRef"] }, { "required": ["integrationScopeRef"] }] } }
+      "if": {
+        "properties": {
+          "workItemType": {
+            "const": "INTEGRATION"
+          }
+        },
+        "required": [
+          "workItemType"
+        ]
+      },
+      "then": {
+        "required": [
+          "integrationPurpose"
+        ]
+      },
+      "else": {
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "integrationPurpose"
+              ]
+            },
+            {
+              "required": [
+                "integrationEvidenceRef"
+              ]
+            },
+            {
+              "required": [
+                "integrationScopeRef"
+              ]
+            }
+          ]
+        }
+      }
     },
     {
-      "if": { "properties": { "integrationPurpose": { "const": "final" } }, "required": ["integrationPurpose"] },
-      "then": { "properties": { "stageId": { "const": "global-integration-validation" } } }
+      "if": {
+        "properties": {
+          "integrationPurpose": {
+            "const": "feature"
+          }
+        },
+        "required": [
+          "integrationPurpose"
+        ]
+      },
+      "then": {
+        "properties": {
+          "stageId": {
+            "const": "foundation-engineering"
+          }
+        },
+        "not": {
+          "anyOf": [
+            {
+              "required": [
+                "integrationEvidenceRef"
+              ]
+            },
+            {
+              "required": [
+                "integrationScopeRef"
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "integrationPurpose": {
+            "const": "final"
+          }
+        },
+        "required": [
+          "integrationPurpose"
+        ]
+      },
+      "then": {
+        "properties": {
+          "stageId": {
+            "const": "global-integration-validation"
+          }
+        }
+      }
     },
     {
       "if": {

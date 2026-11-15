@@ -19,6 +19,7 @@ import { engineeringEvidence, assertEngineeringEvidence, unchangedFunctionSource
 import { freezeDeletionBaseline, validateDeletionBaselineState } from './deletion-baseline.mjs';
 import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
 import { invalidateSingleDomainEvidence } from './visual-domain-invalidation.mjs';
+import { isFigmaApp, isDesignProposal } from './figma-app-contract.mjs';
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -38,7 +39,9 @@ export function checkProtectedAction({ repo, workItem, actionId, effect, target 
     throw new WorkflowError('动作 ID、类型或目标与当前工作项不匹配', 'ACTION_MISMATCH');
   }
   // BLOCKED/RETURN 不能以保留的旧批准绕过工作项恢复要求。
-  if (!['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState)) {
+  const figmaEditing = isFigmaApp(work) && work.visual.stage === 'V2' && ['PROPOSAL', 'REVIEW'].includes(work.globalState) && effect === 'external-write' && /^figma:(?:new:)?[A-Za-z0-9_-]+$/.test(target);
+  // 设计阶段只允许既有精确授权的 Figma 写入；设备、付费和发布仍沿原有执行边界。
+  if (!figmaEditing && !['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState)) {
     throw new WorkflowError('当前工作项尚未到达可执行受保护动作的阶段', 'ACTION_NOT_READY');
   }
   if (effect === 'publish' && (work.workItemType !== 'RELEASE' || work.globalState !== 'RELEASING')) {
@@ -102,12 +105,12 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical
     try { assertGates(work, ['F0', 'F1', 'F2']); }
     catch (error) { blocking.push(error.message); next.push('先记录本次范围、验收与实施方案的实际自评，再开始轻量实施'); }
   }
-  if (['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
+  if (!isDesignProposal(work) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
     next.push('冻结与当前工作项绑定的 Implementation Package');
   }
   const executionStates = ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'COMPLETE'];
   const recoveringImplementation = work.globalState === 'BLOCKED' && work.blockedRecord?.returnState === 'IMPLEMENTING';
-  if (executionStates.includes(work.globalState) || recoveringImplementation) {
+  if (!isDesignProposal(work) && (executionStates.includes(work.globalState) || recoveringImplementation)) {
     try {
       const execution = inspectExecution(repo, work, { requireComplete: work.globalState !== 'IMPLEMENTING' && !recoveringImplementation, historical });
       activeBatch = execution.activeBatch;
@@ -134,7 +137,7 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical
   if (strict) {
     const requiredByState = { INTAKE: ['F0'], BASELINE: ['F1'], PROPOSAL: ['F2'], REVIEW: ['F0', 'F1', 'F2'] };
     for (const gate of requiredByState[work.globalState] ?? []) if (work.gateStatus[gate] !== 'PASS') blocking.push(`${gate} 尚未 PASS`);
-    if (work.globalState === 'REVIEW' && !work.implementationPackageRef) blocking.push('尚未冻结 Implementation Package');
+    if (!isDesignProposal(work) && work.globalState === 'REVIEW' && !work.implementationPackageRef) blocking.push('尚未冻结 Implementation Package');
     if (work.globalState === 'PASSED') {
       try { assertReadyToPass(repo, work); } catch (error) { blocking.push(error.message); }
     }
@@ -258,7 +261,8 @@ export async function transitionWork(args) {
 /** 在工作项锁内执行一次状态迁移，恢复锁保护下的证据状态。 */
 async function transitionWorkLocked({ repo, workItem, to, args }) {
   const work = loadWork(repo, workItem);
-  if (!TRANSITIONS[work.globalState]?.includes(to)) throw new WorkflowError(`拒绝不合法状态迁移：${work.globalState} -> ${to}`, 'INVALID_TRANSITION');
+  const proposalCompletion = isDesignProposal(work) && work.visual.stage === 'V2' && work.globalState === 'PROPOSAL' && to === 'COMPLETE';
+  if (!proposalCompletion && !TRANSITIONS[work.globalState]?.includes(to)) throw new WorkflowError(`拒绝不合法状态迁移：${work.globalState} -> ${to}`, 'INVALID_TRANSITION');
   const from = work.globalState;
   const recoveryState = from === 'BLOCKED' ? work.blockedRecord?.returnState : null;
   assertWorkflowPolicy(work);
@@ -308,7 +312,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     if (work.workItemType === 'RELEASE') {
       // 两类发布交付由同一策略校验；实际发布仍必须经过批准态与真实发布结果。
       assertReleaseTransition(work, { from, to, recoveryState });
-    } else if (from !== 'PASSED' && from !== 'INTEGRATING') {
+    } else if (!proposalCompletion && from !== 'PASSED' && from !== 'INTEGRATING') {
       throw new WorkflowError('仅 PASSED/INTEGRATING 能进入 COMPLETE');
     }
   }
@@ -319,7 +323,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   }
   if (to === 'COMPLETE') {
     // 完成前重验当前执行闭环，避免通过后证据丢失仍写入 COMPLETE。
-    inspectExecution(repo, work, { requireComplete: true });
+    if (!proposalCompletion) inspectExecution(repo, work, { requireComplete: true });
     assertFinalCompletion(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
   }
@@ -650,7 +654,7 @@ function assertFunctionHostResults(repo, work, { historical = false } = {}) {
 
 /** V2 起重验功能来源及 V1 工程记录；仅历史来源可允许业务交付增量变化。 */
 export function assertFunctionBaseline(repo, work, { historical = false } = {}) {
-  if (!work.visual || ['V0', 'V1'].includes(work.visual.stage)) return;
+  if (!work.visual || isDesignProposal(work) || ['V0', 'V1'].includes(work.visual.stage)) return;
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '') || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('缺少有效功能基线或基线内容已变化');
   const snapshot = readJson(repo, ref.path, '功能基线');
@@ -864,6 +868,7 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   const work = loadWork(repo, workItem);
   if (['BLOCKED', 'RETURN'].includes(work.globalState)) throw new WorkflowError('BLOCKED/RETURN 未解决前不能推进视觉阶段');
   if (!work.visual) throw new WorkflowError('当前工作项没有视觉阶段');
+  if (isDesignProposal(work) && work.visual.stage === 'V2') throw new WorkflowError('设计提案在 V2 交付；正式实现须另建具有真实 V1 功能基线的工作项');
   requireOneOf(to, VISUAL_STAGES, '--to');
   const currentIndex = VISUAL_STAGES.indexOf(work.visual.stage);
   if (currentIndex < 0 || VISUAL_STAGES[currentIndex + 1] !== to) throw new WorkflowError(`视觉阶段必须相邻推进：${work.visual.stage} -> ${to}`);
@@ -873,7 +878,7 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   }
   if (work.visual.stage !== 'V1') assertFunctionBaseline(repo, work);
   let functionBaselineRef = null;
-  if (work.visual.stage === 'V1') {
+  if (work.visual.stage === 'V1' && !isDesignProposal(work)) {
     // 功能确认后进入 V2，视觉基线及目标可随后创建或复用。
     functionBaselineRef = await freezeFunctionBaseline(repo, work);
   }

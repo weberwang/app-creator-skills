@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0", "source": "figma-mcp", "projectId": "replace-project", "stack": "flutter", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "fileKey": "replaceActualFileKey", "nodeId": "1:1", "nodeUrl": "https://www.figma.com/design/replaceActualFileKey/Design?node-id=1-1",
+  "stateId": "default", "viewport": {"width": 390, "height": 844}, "language": "zh-CN", "textScale": 1,
+  "previewRef": {"path": "design/figma/selected-preview.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "captureRef": {"path": "design/figma/actual-mcp-structure.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "briefRef": {"path": "design/figma/brief.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "nodes": [], "variables": [], "assets": []
+}

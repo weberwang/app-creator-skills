@@ -1,0 +1,47 @@
+{
+  "schemaVersion": "1.0",
+  "baselineId": "replace-direction-baseline",
+  "projectId": "replace-project",
+  "stack": "flutter",
+  "designRoute": "figma-app",
+  "exploration": {
+    "kind": "initial"
+  },
+  "candidates": [
+    {
+      "candidateId": "direction-a",
+      "path": "design/figma/direction-a.png",
+      "figmaSnapshotRef": {
+        "path": "design/figma/direction-a.json",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "qualityChecks": [
+        {
+          "dimension": "themeFit",
+          "status": "NOT_RUN"
+        },
+        {
+          "dimension": "audienceFit",
+          "status": "NOT_RUN"
+        },
+        {
+          "dimension": "taskReadability",
+          "status": "NOT_RUN"
+        },
+        {
+          "dimension": "viewingComfort",
+          "status": "NOT_RUN"
+        },
+        {
+          "dimension": "artCompletion",
+          "status": "NOT_RUN"
+        }
+      ]
+    }
+  ],
+  "selectedCandidateId": "replace-after-real-user-selection",
+  "selectionReviewRef": {
+    "path": "design/figma/direction-selection.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  }
+}

@@ -9,14 +9,19 @@ import { encodePngRgba } from '../../skills/app-asset-workflow/scripts/png-raste
 import { createHash } from 'node:crypto';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
+import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
 
 /** 所有用户消息与截图均为明确的合成材料，只验证合同规则。 */
 function fixture(t, stage = 'V5', targetBytes = '合成源图') {
   const repo = mkdtempSync(join(tmpdir(), 'flutter-design-contract-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const work = { workItemId: 'design-work', stack: 'flutter', workItemType: 'PAGE', visual: { objectId: 'home', candidateId: 'approved-a', reviews: {} } };
+  const work = { workItemId: 'design-work', projectId: 'test-project', stack: 'flutter', workItemType: 'PAGE', visual: { objectId: 'home', candidateId: 'approved-a', reviews: {} } };
   const doc = { referenceTarget: write(repo, 'target.txt', targetBytes), visualStage: stage, layoutSpecRef: write(repo, 'layout.yaml', '合成布局') };
+  work.visual.reviews.V2 = write(repo, 'figma-target-review.json', { schemaVersion: '1.0', workItemId: work.workItemId,
+    objectId: work.visual.objectId, candidateId: work.visual.candidateId, stage: 'V2', purpose: 'target', decision: 'APPROVED',
+    userMessageRef: 'test-only://selected-target', referenceTarget: doc.referenceTarget, scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
   const data = attachFlutterDesignFixture(repo, work, doc);
+  attachFigmaAppFixture(repo, work, doc);
   return { repo, work, doc, ...data };
 }
 
@@ -57,6 +62,18 @@ test('只有抽象框图或笼统原生声明不能判定 V3 素材拆解完成'
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /Schema/);
 });
 
+test('Flutter 原生合同复用已选 Figma 的交接，不强制另画 V3 两图', (t) => {
+  const f = fixture(t, 'V4');
+  delete f.work.visual.reviews.V3Decomposition;
+  delete f.work.visual.reviews.V3Layout;
+  // 公共 Figma 合同单独验证所选稿及交接；本例仅检查原生领域不要求重复人工节点。
+  assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc));
+  const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V4.path), 'utf8'));
+  review.scope.kind = 'representative-sample';
+  f.work.visual.reviews.V4 = write(f.repo, 'sample-not-complete.json', review);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /完整对象确认/);
+});
+
 test('原生组件只有源码和非空证据，手写 PASS 仍被阻止', (t) => {
   const f = fixture(t, 'V4');
   f.doc.implementationEvidenceRefs = [write(f.repo, 'pretend.json', { sourcePath: 'lib/page.dart', status: 'PASS' })];
@@ -92,11 +109,12 @@ test('V2 样本或单项确认不能成为完整页面的设计目标', (t) => {
   const f = fixture(t, 'V3'); f.work.projectId = 'test-project';
   Object.assign(f.doc, { schemaVersion: '1.0', workItemId: f.work.workItemId, projectId: f.work.projectId, stack: 'flutter', workItemType: 'PAGE',
     objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId, visualStageModel: 'function-first-v1', visualStage: 'V2' });
+  const targetReview = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
   for (const kind of ['representative-sample', 'design-items', 'full-object']) {
-    f.work.visual.reviews.V2 = write(f.repo, `target-${kind}.json`, { referenceTarget: f.doc.referenceTarget, scope: { kind, designItemIds: [], conditionIds: [] } });
+    f.work.visual.reviews.V2 = write(f.repo, `target-${kind}.json`, { ...targetReview, scope: { kind, designItemIds: [], conditionIds: [] } });
     f.work.visual.domainEvidenceRef = write(f.repo, 'v2-domain.json', f.doc);
     if (kind === 'full-object') assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V2'), true);
-    else assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /V2.*完整目标范围/);
+    else assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /V2.*完整目标范围|V2 缺少当前完整 Figma 目标/);
   }
 });
 
@@ -267,12 +285,15 @@ test('Windows 大小写路径别名不能重绑失效证据或冒充独立运行
   assert.throws(() => validateFlutterDesign(g.repo, g.work, 'V5', g.doc), /目标图冒充运行截图/);
 });
 
-test('额外已确认状态目标必须进入拆解和完整组合覆盖', (t) => {
+test('V2 明确覆盖的额外 Figma 状态无需逐图确认，但必须进入设计项覆盖', (t) => {
   const f = fixture(t, 'V3'); const referenceTarget = write(f.repo, 'extra.txt', '另一已确认目标');
-  const reviewRef = write(f.repo, 'extra-target-review.json', { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: f.work.visual.objectId,
-    candidateId: f.work.visual.candidateId, stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: 'test-only://extra', referenceTarget,
-    scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
-  f.doc.additionalTargets = [{ referenceTarget, reviewRef }];
+  f.doc.additionalTargets = [{ referenceTarget }];
+  attachFigmaAppFixture(f.repo, f.work, f.doc, { designOnly: true });
+  const targetReview = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
+  f.work.visual.reviews.V2 = write(f.repo, 'v2-missing-extra.json', { ...targetReview, figmaTargetRefs: [f.doc.figmaDesignRef] });
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /额外 Figma 目标未列入 V2 授权范围/);
+  f.work.visual.reviews.V2 = write(f.repo, 'v2-with-extra.json', targetReview);
+  assert.equal(f.doc.additionalTargets[0].reviewRef, undefined);
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /覆盖遗漏已声明目标/);
   const data = attachFlutterDesignFixture(f.repo, f.work, { ...f.doc, designReconstructionRef: undefined });
   // 新计划必须由真实调用方绑定；测试仅重新冻结合成材料及对应确认。

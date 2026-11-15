@@ -6,6 +6,7 @@ import { advanceVisual, assertFunctionBaseline, completeUnit, refreshFunctionBas
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { createFixture, put, putJson, readWork, bindImplementation, submitPassingUnits, bindEvidence, runEngineeringStage, createQualityChecks, reviewRecord, frozenReview } from './controller-fixture.mjs';
+import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 
 /** 为控制器创建 V1 功能基线及 V5 的可验证执行计划。 */
 async function prepareRegression(t, { commands = ['node --version'], files = ['lib/sample.dart'], changeSource = true, deferStart = false } = {}) {
@@ -37,6 +38,7 @@ async function prepareRegression(t, { commands = ['node --version'], files = ['l
   const baselinePath = 'visual/baseline.json';
   await putJson(fixture.repo, baselinePath, { schemaVersion: '1.0', baselineId: 'base', projectId: work.projectId, stack: work.stack, candidates, selectedCandidateId: 'a', selectionReviewRef: await frozenReview(fixture.repo, reviewPath) });
   work.globalVisualBaselineRef = await frozenReview(fixture.repo, baselinePath);
+  attachFigmaBaselineFixture(fixture.repo, work);
   await putJson(fixture.repo, fixture.workPath, work);
   if (deferStart) return fixture;
   const { packPath, units } = await bindImplementation({ repo: fixture.repo, work, workPath: fixture.workPath, stage: 'V5', commands, unitPaths: files });

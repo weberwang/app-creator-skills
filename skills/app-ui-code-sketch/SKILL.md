@@ -5,7 +5,7 @@ description: "在真实生产骨架上制作低保真Flutter代码草图，校�
 
 # 界面代码草图
 
-先用可运行的Flutter界面验证内容、布局与交互结构，避免高保真视觉投入建立在错误流程或页面骨架上。
+此技能仅在 V1 功能风险需要低保真验证时使用，不是非游戏 App 设计提案、Figma 选稿或正式还原的必经步骤。仅设计提案无需先建立运行工程；默认按[Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)制作可编辑方案。草图只验证其覆盖的行为和语义，不把旧代码、默认组件或草图几何设为设计上限。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 

@@ -12,7 +12,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 ## 状态和边界
 
 - 六个阶段：需求与范围、全局基线、基础工程、场景与页面生产、全局集成验证、发布。全局状态只由控制器校验并按显式命令迁移；`run` 仅推进无需再次执行人工决定的早期安全阶段，停在生产实现或发布边界。
-- `SCENE`、`PAGE`、`DISPLAY_LAYER` 各用独立 Work Item。显示层须设置 `visual.hostId/layerType`。对象按 V0 范围、V1 功能实现与验证、V2 目标、V3 拆解/布局双确认、V4 资源导入、V5 正式组合运行推进。V1 可用直接实现、已有功能或白盒，但须验证实际行为；白盒不是必需品。
+- `SCENE`、`PAGE`、`DISPLAY_LAYER` 各用独立 Work Item，显示层绑定 `visual.hostId/layerType`。Flutter、Expo 默认按 [Figma App 路线](../app-ui-layout/references/figma-app-design.md)推进 V0 范围与探索边界、V1 功能、V2 精修一份方案并由用户确认、V3 必要还原交接、V4 代表组件试接和分批实现、V5 完整运行及人工验收；用户明确要求比较时按指定数量制作实质不同的方向，局部增量复用有效方向。稿中明确的结构不重画或重复批准。ESP32 可显式选择并保留硬件约束；游戏仍执行原有 V3 拆解/布局确认，Node.js 无界面服务不引入 Figma。白盒按风险选用。
   多个 `PAGE` 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择代表页、复用共享部分并按依赖调度；各对象阶段独立，不默认全页同步。实施包内的批次门禁只约束该包的执行单元，不构成不同页面必须同步推进的要求。
   采用白盒时遵循[可辨识的功能原型](../app-creator-workflow/references/readable-functional-prototype.md)，将语义、状态和反馈检查并入现有 V1 验证，明确模拟范围，不新增审批或控制器字段。
 - A0–A6 区分只读调查、规格、原型、生产实现、本地集成、外部状态/设备与发布风险。A4–A6 的外部写入、设备、签名、上传、付费和发布操作必须绑定精确动作、对象与真实用户消息引用。JSON 只追溯决策，不能自行证明身份或授权，也不能让 CLI 执行动作。
@@ -31,8 +31,8 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 - `evidenceRef` → 当前实施包、工作项、技术栈及视觉阶段相同的 Evidence Manifest。每项必须是 profile 所需类别、真实非空文件，且位于当前 `evidenceRoot`。
 - `visual.functionDependencies` → 按行为范围引用同项目同栈的非视觉功能工作项及其实际通过的证据；详见[功能范围与跨对象依赖](references/function-dependencies.md)。未使用共享功能依赖时由当前工作项完成 V1 工程验证；白盒可选。
 - PAGE 和 DISPLAY_LAYER 的 `visual.domainEvidenceRef` → 当前 V2–V5 阶段的实际领域输入；具体合同及技术栈适用性见[单目标领域合同](references/single-target-domain.md)。
-- `globalVisualBaselineRef` → 首次视觉基线，以 `{path,sha256}` 冻结基线文件；基线的 `selectionReviewRef` 同样绑定选择记录及其摘要。首次建立时为同条件三候选、唯一人工选择和五项质量判断；选择记录的 `targetRef/targetSha256` 绑定已选文件的实际内容。基线绑定同一 `projectId/stack`，可供后续工作项复用。仅选中候选须五项全 PASS；其他候选也逐项记录状态。
-- `visual.targets` → SCENE 的全部正式视觉目标，逐项绑定目标 ID、候选、场景/状态/视口、目标文件指纹、领域证据、`reviews` 与 `assetReviewRef`；`coverageRef` 固定全部目标范围。PAGE 和 DISPLAY_LAYER 使用 `visual.reviews`。每项 `reviews` 引用记录确认文件的 `{path,sha256}`；确认记录再绑定实际目标、确认图和 SHA-256，V3 布局另绑定拆解确认。SHA 用于核对内容变化，不证明用户身份；用户确认不能伪造，不能拿一条记录关闭两个步骤。
+- `globalVisualBaselineRef` → 用 `{path,sha256}` 冻结方向及真实选择。非游戏 App 使用 [figma-app-baseline 模板](templates/figma-app-baseline.json)，默认一个精修的可编辑方案；用户明确要求比较时按其数量制作实质不同的方向，并允许明确组合及有效局部复用，每项绑定实际节点快照与预览。游戏使用原 [global-visual-baseline 模板](templates/global-visual-baseline.json)，保持三候选。选择绑定真实用户消息和五项人工判断，结构或工具成功不能生成视觉 PASS。
+- `visual.targets` → SCENE 的完整目标及累计覆盖，继续原领域合同。PAGE／DISPLAY_LAYER 使用 `visual.reviews`；Figma 领域封套以 `figmaDesignRef` 冻结 fileKey、nodeId、状态、视口、结构与预览，V3 的 `figmaHandoffRef` 将节点属性实际对照原生规格，不要求额外 V3 两图或两次批准。同稿状态可用 V2 `figmaTargetRefs` 精确覆盖。V4/V5 仍验当前原生资源和运行材料，样本不提升为整页通过。摘要不证明用户身份或视觉质量。
 - 目标清单、确认链、各栈领域证据和逐视图运行记录的具体字段见[场景多目标记录](references/multi-target-visual.md)。
 - `assetReviewRef` → PAGE/DISPLAY_LAYER 的 V4 已导入素材、技术报告和同一候选的人工结果；SCENE 在各视觉目标下分别绑定素材评审。素材评审及场景 `integrationEvidenceRef` 均记录 `{path,sha256}`，重验文件内容；确认身份仍以真实用户消息为准。AI 位图记录生成来源及去 AI 味审阅；控制器只检查记录和文件，不自动判断图像是否有 AI 味。原生 UI 可以记录真实组件源码与组件检查，不伪造独立位图。
 - `grillingRef` → 仅保存确有实质用户取舍的记录。OPEN 拷问停止相关工作；CLOSED 每项决定需有用户回答和消息引用；没有问题就不建立记录。
@@ -66,6 +66,8 @@ node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo 
 ```
 
 `init` 只生成 Work Item，不覆盖已有记录。PAGE/SCENE/DISPLAY_LAYER 必须建立或复用已确认的全局视觉基线，V1 功能验证不等待选图；无视觉生产的局部工程任务使用非视觉工作项，不要求视觉基线。
+
+Flutter/Expo 的页面默认 `visual.designRoute: figma-app`；ESP32 可用 `--design-route figma-app`。仅设计提案用 `--design-intent proposal`，不要求先建运行工程，在 V2 人工选定后可从 PROPOSAL 完成设计交付，不能进入正式实现或被当作 V5 工程完成。正式实现仍需真实 V1 功能基线。Figma 工具与技能按当前宿主实际能力使用，不新增外部、付费或真机授权。
 
 需要机器核对复杂游戏或 App 的增量范围时，先按[生产范围模板](templates/production-scope.json)准备项目内总范围；生产工作项在 `init` 追加 `--production-scope <项目相对范围 JSON> --production-batch <批次 ID>`，有前置批次时另附 `--production-dependencies <前置引用 JSON>`，最终 `INTEGRATION --integration-purpose final` 只追加相同 `--production-scope`。本批证据及最终覆盖要求见[分批生产](../app-domain-toolkit/references/incremental-production.md#按需绑定机器范围)；未绑定范围的普通任务不产生额外记录。
 

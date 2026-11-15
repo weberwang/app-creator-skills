@@ -1,0 +1,506 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "非游戏 App 的可编辑 Figma 设计冻结",
+  "description": "快照保存实际节点和预览，结构校验与人工视觉结论分开；不授权外部操作。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "source",
+    "projectId",
+    "stack",
+    "objectId",
+    "candidateId",
+    "fileKey",
+    "nodeId",
+    "nodeUrl",
+    "stateId",
+    "viewport",
+    "language",
+    "textScale",
+    "previewRef",
+    "captureRef",
+    "briefRef",
+    "nodes",
+    "variables",
+    "assets"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "source": {
+      "const": "figma-mcp"
+    },
+    "projectId": {
+      "$ref": "#/$defs/text"
+    },
+    "stack": {
+      "enum": [
+        "flutter",
+        "expo",
+        "esp32"
+      ]
+    },
+    "objectId": {
+      "$ref": "#/$defs/text"
+    },
+    "candidateId": {
+      "$ref": "#/$defs/text"
+    },
+    "fileKey": {
+      "$ref": "#/$defs/text"
+    },
+    "nodeId": {
+      "$ref": "#/$defs/text"
+    },
+    "nodeUrl": {
+      "type": "string",
+      "pattern": "^https://(www\\.)?figma\\.com/design/"
+    },
+    "stateId": {
+      "$ref": "#/$defs/text"
+    },
+    "viewport": {
+      "$ref": "#/$defs/size"
+    },
+    "language": {
+      "$ref": "#/$defs/text"
+    },
+    "textScale": {
+      "type": "number",
+      "exclusiveMinimum": 0
+    },
+    "previewRef": {
+      "$ref": "#/$defs/ref"
+    },
+    "captureRef": {
+      "$ref": "#/$defs/ref"
+    },
+    "briefRef": {
+      "$ref": "#/$defs/ref"
+    },
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/node"
+      }
+    },
+    "variables": {
+      "type": "array",
+      "minItems": 3,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "value"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/text"
+          },
+          "name": {
+            "$ref": "#/$defs/text"
+          },
+          "kind": {
+            "enum": [
+              "color",
+              "spacing",
+              "radius"
+            ]
+          },
+          "value": {}
+        }
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "role",
+          "nodeIds",
+          "sourceRef"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/$defs/text"
+          },
+          "role": {
+            "enum": [
+              "illustration",
+              "photo",
+              "icon",
+              "texture",
+              "character"
+            ]
+          },
+          "nodeIds": {
+            "$ref": "#/$defs/ids"
+          },
+          "sourceRef": {
+            "$ref": "#/$defs/ref"
+          }
+        }
+      }
+    },
+    "hardware": {
+      "type": "object",
+      "required": [
+        "boardProfileRef",
+        "colorFormat",
+        "inputMethods",
+        "fonts",
+        "resourceBudget"
+      ],
+      "properties": {
+        "boardProfileRef": {
+          "$ref": "#/$defs/ref"
+        },
+        "colorFormat": {
+          "$ref": "#/$defs/text"
+        },
+        "inputMethods": {
+          "$ref": "#/$defs/ids"
+        },
+        "fonts": {
+          "$ref": "#/$defs/ids"
+        },
+        "resourceBudget": {
+          "type": "object",
+          "required": [
+            "flashBytes",
+            "ramBytes"
+          ],
+          "properties": {
+            "flashBytes": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "ramBytes": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "psramBytes": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "ids": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/$defs/text"
+      }
+    },
+    "ref": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "path",
+        "sha256"
+      ],
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/text"
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
+    },
+    "size": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "width",
+        "height"
+      ],
+      "properties": {
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "node": {
+      "type": "object",
+      "required": [
+        "id",
+        "type",
+        "name",
+        "parentId",
+        "x",
+        "y",
+        "width",
+        "height"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/text"
+        },
+        "name": {
+          "$ref": "#/$defs/text"
+        },
+        "type": {
+          "enum": [
+            "FRAME",
+            "COMPONENT",
+            "COMPONENT_SET",
+            "INSTANCE",
+            "TEXT",
+            "VECTOR",
+            "RECTANGLE",
+            "ELLIPSE",
+            "LINE",
+            "GROUP",
+            "BOOLEAN_OPERATION"
+          ]
+        },
+        "parentId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "layoutMode": {
+          "enum": [
+            "HORIZONTAL",
+            "VERTICAL",
+            "GRID",
+            "NONE"
+          ]
+        },
+        "characters": {
+          "$ref": "#/$defs/text"
+        },
+        "font": {
+          "type": "object",
+          "required": [
+            "family",
+            "platformFamily",
+            "available",
+            "size"
+          ],
+          "properties": {
+            "family": {
+              "$ref": "#/$defs/text"
+            },
+            "platformFamily": {
+              "$ref": "#/$defs/text"
+            },
+            "available": {
+              "const": true
+            },
+            "size": {
+              "type": "number",
+              "exclusiveMinimum": 0
+            },
+            "style": {
+              "$ref": "#/$defs/text"
+            },
+            "substitutionReason": {
+              "$ref": "#/$defs/text"
+            }
+          }
+        },
+        "properties": {
+          "type": "object"
+        },
+        "bindings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "field",
+              "variableId"
+            ],
+            "properties": {
+              "field": {
+                "$ref": "#/$defs/text"
+              },
+              "variableId": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        },
+        "repeatKey": {
+          "$ref": "#/$defs/text"
+        },
+        "componentId": {
+          "$ref": "#/$defs/text"
+        },
+        "positioningReason": {
+          "$ref": "#/$defs/text"
+        },
+        "imageFills": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "assetId"
+            ],
+            "properties": {
+              "assetId": {
+                "$ref": "#/$defs/text"
+              }
+            }
+          }
+        }
+      }
+    },
+    "handoff": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schemaVersion",
+        "workItemId",
+        "objectId",
+        "candidateId",
+        "figmaDesignRef",
+        "layoutSpecRef",
+        "nativePlanRef",
+        "mappings",
+        "adaptationRules",
+        "unresolved"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "const": "1.0"
+        },
+        "workItemId": {
+          "$ref": "#/$defs/text"
+        },
+        "objectId": {
+          "$ref": "#/$defs/text"
+        },
+        "candidateId": {
+          "$ref": "#/$defs/text"
+        },
+        "hostId": {
+          "$ref": "#/$defs/text"
+        },
+        "layerType": {
+          "$ref": "#/$defs/text"
+        },
+        "figmaDesignRef": {
+          "$ref": "#/$defs/ref"
+        },
+        "layoutSpecRef": {
+          "$ref": "#/$defs/ref"
+        },
+        "nativePlanRef": {
+          "$ref": "#/$defs/ref"
+        },
+        "mappings": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": [
+              "designItemId",
+              "nodeId",
+              "stateId",
+              "viewport"
+            ],
+            "properties": {
+              "designItemId": {
+                "$ref": "#/$defs/text"
+              },
+              "nodeId": {
+                "$ref": "#/$defs/text"
+              },
+              "stateId": {
+                "$ref": "#/$defs/text"
+              },
+              "viewport": {
+                "$ref": "#/$defs/size"
+              },
+              "figmaDesignRef": {
+                "$ref": "#/$defs/ref"
+              },
+              "nativeStyle": {
+                "type": "object"
+              },
+              "textNodeId": {
+                "$ref": "#/$defs/text"
+              },
+              "adaptations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "property",
+                    "reason",
+                    "approvalRef"
+                  ],
+                  "properties": {
+                    "property": {
+                      "enum": [
+                        "size",
+                        "spacing",
+                        "typography",
+                        "color",
+                        "border",
+                        "shape"
+                      ]
+                    },
+                    "reason": {
+                      "$ref": "#/$defs/text"
+                    },
+                    "approvalRef": {
+                      "$ref": "#/$defs/ref"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "adaptationRules": {
+          "$ref": "#/$defs/ids"
+        },
+        "unresolved": {
+          "type": "array",
+          "maxItems": 0
+        }
+      }
+    }
+  }
+}

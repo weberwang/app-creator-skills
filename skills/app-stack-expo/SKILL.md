@@ -11,6 +11,8 @@ description: 规划、开发或交付采用 Expo 的 React Native 应用时使�
 
 先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用六阶段、工作项、证据和 V0–V5。应用页面使用 `PAGE`，独立瞬态层使用 `DISPLAY_LAYER` 并绑定实际页面宿主；业务能力使用 `MODULE`，不使用游戏 `SCENE`。Android、iOS 只处理实际选定的平台；Web 为按需目标，服务端 API 使用其实际服务端工作项。
 
+页面和显示层默认按 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)制作可编辑方向并由用户选择；从选稿直接提取已表达的布局、组件与状态，缺失才定向补齐。仅设计提案不强制运行工程；正式实现仍验证相关功能、真实组件、平台适配及用户视觉结果。
+
 结合 `package.json` 的 Expo 与 React Native 依赖、应用配置及真实入口识别工程；`package.json` 或 `app.json` 单独存在不足以证明 Expo。沿用项目锁定的 Expo SDK、React Native、React、Node 和包管理器，先核实依赖与目标平台兼容。新项目优先评估 Expo Router，现有项目保留其实际导航方案。
 
 按任务读取：

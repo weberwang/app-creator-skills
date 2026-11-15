@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
+import { validateEsp32 } from '../../skills/app-workflow-control/scripts/runtime/esp32-domain-check.mjs';
 
 /** 写入当前测试独占的真实文件并返回摘要引用。 */
 function write(repo, path, content) {
@@ -61,6 +62,40 @@ test('ESP32 页面可分别校验 V2 至 V5 阶段材料', (t) => {
   for (const stage of ['V2', 'V3', 'V4', 'V5']) {
     const f = fixture(t, { stage });
     assert.equal(validateSingleDomainTarget(f.repo, f.work, stage), true);
+  }
+});
+
+test('ESP32 可选 Figma 路线复用已选设计，仍核对实际屏幕与资源预算', async (t) => {
+  for (const layer of [false, true]) {
+    const f = fixture(t, { stage: 'V3', layer });
+    f.work.visual.designRoute = 'figma-app';
+    f.doc.figmaDesignRef = write(f.repo, 'figma-design.json', { nodeId: '1:2' });
+    f.layout.figmaDesignRef = f.doc.figmaDesignRef;
+    delete f.layout.decompositionRef;
+    const sourceRef = f.doc.layoutSourceRef;
+    delete f.layout.sourcePath;
+    delete f.doc.layoutSourceRef;
+    delete f.work.visual.reviews.V3Decomposition;
+    delete f.work.visual.reviews.V3Layout;
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout.json', f.layout);
+    /** 本地身份替身只验证领域适配，设备操作与视觉通过均未执行。 */
+    const identity = (_repo, ref) => {
+      const bytes = readFileSync(join(f.repo, ref.path));
+      assert.equal(createHash('sha256').update(bytes).digest('hex'), ref.sha256);
+      return ref.path;
+    };
+    await assert.doesNotReject(() => validateEsp32(f.repo, f.work, 'V3', f.doc, identity));
+    f.layout.screen.width = 319;
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout-wrong-screen.json', f.layout);
+    await assert.rejects(() => validateEsp32(f.repo, f.work, 'V3', f.doc, identity), /分辨率/);
+    f.layout.screen.width = 320;
+    f.layout.sourcePath = 'ui.c';
+    f.doc.layoutSourceRef = sourceRef;
+    f.doc.layoutSpecRef = write(f.repo, 'figma-layout-ok.json', f.layout);
+    f.assets.layoutSpecRef = f.doc.layoutSpecRef;
+    f.assets.items[0].flashBytes = 101;
+    f.doc.assetManifestRef = write(f.repo, 'figma-assets-over-budget.json', f.assets);
+    await assert.rejects(() => validateEsp32(f.repo, f.work, 'V4', f.doc, identity), /超出 Flash 预算/);
   }
 });
 

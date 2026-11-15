@@ -30,6 +30,6 @@
 
 项目按需声明 `pubspec.yaml` 内资源资产，按页面/功能的归属整理 `assets/`；源素材与运行正式资源分开保存。Flutter 经约束实现关系与文本，而特定品牌插画、照片、Texture 或需要蒙版的独特形状可由登记的 bitmap 组件提供。说明载入密度、透明性、合成背景、运行时重裁/主题适配策略和发布许可。不能在不了解生成与许可时默认选用网络素材。
 
-V3 依据已确认目标逐项分析可见元素及状态，维护[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)中的定位、实现选择、结构、规格和消费关系；抽象组件框图与仅换色不能证明还原。组件复用需核对当前目标的结构、样式和状态；原生文字和控件保留语义，不将界面全部切图。V4 才取得或制作、导入正式资源并验证实际来源与加载；无图片页面仍须完成逐项原生设计分析。
+默认按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)以真实任务与内容制作可编辑方向，现有代码用于理解功能和约束，用户探索时不默认忠实还原现有页面。V3 引用已选节点及[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项关联实现、结构和消费关系，稿内已表达清楚的部分不重画或重复批准。抽象框图与仅换色不能证明还原；V4 才制作、导入独立素材并验证真实来源与加载。无图片页面仍需逐项原生设计依据。
 
 来源：`flutter-hifi-mockup/references/image-prompt-principles.md`、`flutter-hifi-mockup/references/mockup-review-rubric.md`、`flutter-ux-ui-quality/references/visual-expression-presets.md`、`skills/app-stack-flutter/references/native-contracts.md#mode-flutter-asset-atlas`。

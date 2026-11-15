@@ -10,17 +10,18 @@ import { assertVisualReview } from '../../skills/app-workflow-control/scripts/ru
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { advanceVisual, assertFunctionBaseline, completeUnit, initializeWork, inspectWork, loadWork, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+import { attachFigmaBaselineFixture, attachFigmaAppFixture, writeFigmaFixture } from './figma-app-fixture.mjs';
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 const expectedReviews = {
-  implementation: ['V2', 'V3Decomposition', 'V3Layout'],
-  assets: ['V2', 'V3Decomposition', 'V3Layout'],
-  layout: ['V2', 'V3Decomposition'],
+  implementation: ['V2'],
+  assets: ['V2'],
+  layout: ['V2'],
   target: [],
 };
-const expectedStages = { implementation: 'V3', assets: 'V3', layout: 'V2', target: 'V2' };
+const expectedStages = { implementation: 'V3', assets: 'V3', layout: 'V3', target: 'V2' };
 
 /** 创建隔离的合成协议夹具；夹具记录不代表真实用户审阅或视觉验收。 */
 async function createFixture({ id, stack = 'flutter', type = 'PAGE', projectId = 'project-a', objectId = 'object-a', hostId, layerType } = {}) {
@@ -148,6 +149,7 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
 
   work.globalState = 'REVIEW';
   work.globalVisualBaselineRef = await frozenReview(fixture.repo, baselinePath);
+  attachFigmaBaselineFixture(fixture.repo, work);
   work.visual.stage = 'V5';
   work.visual.candidateId = 'direction-a';
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' };
@@ -342,14 +344,14 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
   domain.layerType = 'popup';
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
-  assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /宿主或层类型/);
+  assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /宿主或层类型|设计确认未绑定显示层宿主/);
   work.visual.layerType = 'modal';
   domain.layerType = 'modal';
   work.visual.hostId = 'host-b';
   domain.hostId = 'host-b';
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
-  assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /宿主或层类型/);
+  assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /宿主或层类型|设计确认未绑定显示层宿主/);
 
   // 更换宿主后须使用新上下文，不能仅修改外层字段或沿用旧确认。
   for (const name of ['V2', 'V3Decomposition', 'V3Layout', 'V4', 'V5']) {
@@ -360,6 +362,12 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
     await putJson(fixture.repo, path, review);
     work.visual.reviews[name] = await frozenReview(fixture.repo, path);
   }
+  assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /还原交接未绑定当前显示层宿主/);
+  const handoff = JSON.parse(await readFile(resolve(fixture.repo, domain.figmaHandoffRef.path), 'utf8'));
+  handoff.hostId = 'host-b';
+  domain.figmaHandoffRef = writeFigmaFixture(fixture.repo, 'proof/new-host-handoff.json', handoff);
+  await putJson(fixture.repo, domainPath, domain);
+  work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
   assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /运行上下文 hostId/);
   const runtimePath = domain.runtimeContextRef.path;
   const context = JSON.parse(await readFile(resolve(fixture.repo, runtimePath), 'utf8'));
@@ -377,6 +385,7 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
   // 测试使用新的宿主设计合同和当前实现/对照，旧宿主证据不能充作新宿主结论。
   delete domain.designReconstructionRef;
   attachFlutterDesignFixture(fixture.repo, work, domain);
+  attachFigmaAppFixture(fixture.repo, work, domain);
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
   assert.doesNotThrow(() => assertVisualReview(fixture.repo, work, 'V5'));
@@ -408,7 +417,7 @@ test('当前功能已重验时允许复用同对象未改变的旧视觉目标',
   assert.equal(result.status, 'PASS');
   const reused = loadWork(fixture.repo, fixture.targetPath);
   assert.deepEqual(reused.visual.reviews.V2, fixture.source.visual.reviews.V2);
-  assert.deepEqual(reused.visual.reviews.V3Layout, fixture.source.visual.reviews.V3Layout);
+  assert.equal(reused.visual.reviews.V3Layout, undefined);
 });
 
 test('四种影响范围只继承各自允许的基线与 V2/V3 确认', async (t) => {
@@ -750,9 +759,11 @@ test('RETURN visual:V2/V3 清理失效继承后，恢复 REVIEW 仍可验证来�
       assert.deepEqual(Object.keys(returned.visual.reviews).sort(), [...scenario.retained].sort());
       assert.doesNotThrow(() => assertVisualReuse(fixture.repo, returned));
 
-      returned.visual.reviews[scenario.invalidatedReview] = { path: fixture.source.visual.reviews[scenario.invalidatedReview].path };
-      assert.throws(() => assertVisualReuse(fixture.repo, returned), /RETURN 已作废引用/);
-      delete returned.visual.reviews[scenario.invalidatedReview];
+      if (scenario.invalidatedReview) {
+        returned.visual.reviews[scenario.invalidatedReview] = { path: fixture.source.visual.reviews[scenario.invalidatedReview].path };
+        assert.throws(() => assertVisualReuse(fixture.repo, returned), scenario.stage === 'V2' ? /RETURN 已作废引用/ : /未声明为可继承确认/);
+        delete returned.visual.reviews[scenario.invalidatedReview];
+      }
       returned.gateStatus.F2 = 'PASS';
       await putJson(fixture.repo, fixture.targetPath, returned);
 

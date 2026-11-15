@@ -1,6 +1,7 @@
 import { readJson, repoPath, WorkflowError } from './io.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { readFrozenVisualBaseline } from './visual-baseline-identity.mjs';
+import { isFigmaApp } from './figma-app-contract.mjs';
 
 const REVIEW_NAMES = Object.freeze({
   implementation: ['V2', 'V3Decomposition', 'V3Layout'],
@@ -49,7 +50,7 @@ export function assertVisualReuse(repo, work, visited = new Set()) {
     return;
   }
 
-  const allowed = new Set(REVIEW_NAMES[reuse.impact]);
+  const allowed = new Set(isFigmaApp(work) ? (reuse.impact === 'target' ? [] : ['V2']) : REVIEW_NAMES[reuse.impact]);
   const inherited = reuse.inheritedReviews;
   if (!Array.isArray(inherited) || new Set(inherited).size !== inherited.length) {
     throw new WorkflowError('visual.reuse.inheritedReviews 必须是无重复的阶段列表');

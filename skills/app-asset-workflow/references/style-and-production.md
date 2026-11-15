@@ -19,6 +19,8 @@ style recipe 至少约定：
 
 ## 三候选选择
 
+本节固定三候选仅适用于游戏视觉基线；Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)精修一份可编辑方案，只有用户明确要求比较时才按指定数量制作多方向，局部增量复用有效方向；ESP32 按硬件约束可采用同路。非游戏 App 不以整页生图作为默认设计路径。
+
 生成前核对[产品市场调研与设计依据](../../app-creator-workflow/references/professional-conventions.md#product-market-research)，确认实际来源、竞品对比和当前视觉 brief 的对应关系；缺失时先补齐调研再生成。三张候选共用同一产品定位与调研结论。
 
 全局首次恰好三张候选，题材内容、构图任务、视口和制作预算保持一致，差异集中于可比较的视觉方向。每张保留主题贴合、受众适配、任务可读、观看舒适和美术完成度五项结果，未审为 NOT_RUN；最终选中候选必须五项均经有效人工确认。候选不能替用户选择，也不能用更细致的渲染掩盖任务不可读。

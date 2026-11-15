@@ -1,16 +1,16 @@
 # Visual Expression Presets
 
-Derive a visual expression budget from product category and audience. Use it to raise or lower exploration bias and signature strength. Never lower the task-clarity, hierarchy, accessibility, or trust-evidence gates.
+Use these presets only as optional inspiration for the product and audience. They do not lock layout, information architecture, fonts, colors, whitespace, or component shape unless the user has explicitly locked them. Keep business facts, task clarity, accessibility, actual platform capability, and confirmed brand constraints.
 
 ## Derivation
 
-1. Map the product to one preset below using category first, then audience modifiers.
-2. Apply audience modifiers only when they change an axis by one step.
-3. Record the result in `docs/product/product-brief.md`.
+1. When useful, compare product and audience with the examples below; a preset is not mandatory.
+2. Apply audience considerations only when supported by actual requirements.
+3. Record meaningful constraints in the existing product brief without creating a separate approval.
 4. 仅视觉签名、表达预算或实现成本存在实质未决取舍时开展轻量讨论，将实际决定写入 `docs/product/grilling-log.md` 并在产品简报同步结论。需求已明确时直接继续，不创建额外确认门。
-5. 文字方向按需定义一至三套，作为设计输入，不形成独立正式冻结。V1 功能验证后，首次建立或替换全局基线时，按[公共视觉流程](../../app-asset-workflow/SKILL.md)生成恰好三张同条件真实候选，经用户对已展示图片作出唯一选择后记录公共基线；已有有效基线直接复用。方向说明只引用该记录，不另建权威基线。
+5. 文字方向仅按需作为设计输入，不形成独立冻结或预先批准。首次定调／实质改版按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认精修一份可编辑方案；只有用户明确要求比较时才按指定数量制作多方向，保持相同任务、内容及比较条件并体现实质差异。已有有效方向的局部增量可复用。用户观看节点链接和预览后确认或明确选择／组合，控制器记录实际决定。
 
-Task clarity is a hard floor for every preset. Presets change expression ceiling, three-direction distribution, review thresholds, and scoring weights only.
+Task clarity and accessibility remain requirements. Presets do not define an expression ceiling, required direction count, review threshold, or mandatory score.
 
 ## Preset Catalog
 
@@ -35,31 +35,21 @@ Apply at most two modifiers:
 | 高风险决策（资金、健康、法律） | `trust_priority` → `high`; do not raise `wow_requirement` above `hero-pages` |
 | 首次转化强依赖情绪或品味证明 | `wow_requirement` → at least `hero-pages`; for visual-led/entertainment keep `required` |
 
-Clamp every axis to the nearest allowed value. If modifiers conflict with `trust-critical`, keep trust and signature ceilings of that preset.
+Treat every axis and audience modifier as an optional hypothesis; actual constraints come from confirmed product facts and the user's explicit decisions.
 
 ## Global Freeze Signature Rule
 
-A restatable visual signature is required before freezing the selected global direction when any of the following is true after modifiers:
+A restatable visual signature can help explain a candidate when it is relevant to the product:
 
 - `wow_requirement` is `required`
 - `wow_requirement` is `hero-pages`
 - `signature_strength` is `medium–high` or `high`
 
-Only `trust-critical` with `wow_requirement: none` and `signature_strength` at most `low–medium` may freeze without a hero-level signature, but the selected direction must still include the distinctive-but-trustworthy trait required by its three-direction mix. If the user answers “no” to the restatable-signature confirmation when this rule applies, do not freeze; iterate directions.
+This is not a separate freeze gate or a mandatory preapproval. Users select or explicitly combine the actual Figma directions; only unresolved material tradeoffs need discussion.
 
-## Three-Direction Distribution
+## Direction Exploration
 
-正式公共三图候选按当前预设保持有意义的方向分布，并使用相同目标内容、提示条件和示例数据生成真实图片；文字整理可提前按需进行，不能以文字方向代替三图选择，也不能让三张候选收敛成近似方案。
-
-| Preset | Required direction mix |
-|---|---|
-| `trust-critical` | 2 credible/calm directions + 1 distinctive-but-trustworthy signature direction |
-| `utility` | 1 clarity-first + 1 distinctive professional signature + 1 warmer or more modern alternative |
-| `consumer-brand` | 1 trustworthy commerce + 1 brand-forward signature + 1 higher-energy conversion direction |
-| `lifestyle` | 1 high-memory signature + 1 high-emotion/lifestyle + 1 calmer credible alternative |
-| `entertainment` | at least 2 high-memory or high-energy directions; forbid three muted utility looks |
-| `visual-led` | at least 2 imagery-led or composition-led directions with unmistakable signatures |
-| `balanced-default` | 1 signature-forward + 1 emotion-forward + 1 credible baseline |
+非游戏 App 首次定调或实质改版默认精修一份可编辑 Figma 方案；只有用户明确要求比较时才按指定数量制作多方向。多个方向保持相同核心任务、主要内容和视口等比较条件，在布局、层级、排版、形态或交互呈现上有实质区别，不只换颜色；可以参考类别差异而不套用固定风格。用户确认后再扩展其他页面和关键状态。
 
 ## Scoring Weights
 
@@ -81,11 +71,11 @@ Start from the product preset, then dial per page type:
 
 | Page type | Budget dial |
 |---|---|
-| 首页、首次价值页、付费墙、品牌落地、高价值内容详情 | use full preset budget; `wow_requirement` pages must show a restatable signature moment |
+| 首页、首次价值页、付费墙、品牌落地、高价值内容详情 | 根据真实任务和用户需要考虑更强的视觉表达，不把预设变为强制门槛 |
 | 浏览型内容流、数据总览、对话主界面 | keep signature, moderate decoration |
 | 设置、表单、权限、账户、错误恢复、法律协议 | dial down decoration and wow; keep system consistency and task clarity |
 
-The reviewed semantic contract and Code Sketch lock scope, structure, states, and interactions without locking final geometry. On full-budget pages, composition, hero treatment, material, and imagery may express the preset signature without changing product meaning.
+Confirmed business scope, necessary functions, states, and interactions remain constraints. The semantic contract and optional Code Sketch do not lock information architecture, visual hierarchy, layout, component shape, or final geometry unless the user explicitly does so. Composition, imagery, and component treatment may be explored without adding unsupported features.
 
 ## Light Visual Interrogation
 
@@ -101,29 +91,21 @@ The reviewed semantic contract and Code Sketch lock scope, structure, states, an
 
 ## Global Direction Freeze Gate
 
-正式冻结只使用公共 V1 后 V2 三图基线门；文字方向说明、预设和成本结论均为其输入，不单独冻结。既有有效公共基线直接复用。
+正式冻结使用公共控制器的用户选稿记录及真实 Figma 节点和冻结预览；文字方向、预设和成本说明不是独立冻结门。正式实现须验证相关 V1 功能，仅设计提案不强制先建工程。既有有效方向的局部增量可复用。
 
-建立或替换公共基线时，核对下列内容并在一次实际图片选择中记录相关决定：
+建立或替换公共基线时，在一次实际 Figma 节点选择中记录相关决定：
 
 1. Selected global direction.
 2. Accept or reject the direction's visual signature and implementation-cost commitment.
 3. Restatable signature when the Global Freeze Signature Rule applies.
 4. `pin`, `raise`, `loosen`, or no expression-budget override.
-5. 对已展示的三张候选作出唯一选择，并引用公共基线身份。
+5. 对实际展示的方向作出选择或明确组合，并引用公共基线与选定节点身份。
 
-核对产品简报、实际讨论、市场依据和预设。只有新出现且影响范围、成本或验收的冲突才补充讨论；其余直接按公共门继续。`docs/design/global-design-freeze.md` 如确有审阅需要，仅汇总所选方向并引用公共候选/选择记录；不得独立批准文字方向或替代真实候选图。
+核对产品简报、实际讨论和设计依据；只有影响范围、成本或验收的实质冲突才补充讨论。按需汇总所选方向并引用公共候选／选择记录，不得独立批准文字方向或以图片替代可编辑节点。
 
 ## Conditional Module Visual Decision
 
-Run only when function/page refinement exposes a new visual outcome, page/state selection, expression budget, signature, implementation, asset, or maintenance-cost decision. Ask one question at a time and confirm:
-
-1. The module's visual outcome and the user perception it must create.
-2. Which pages and states require effect images in this module.
-3. The page-type budget and signature expectation for those pages.
-4. Accepted custom-component, motion, bitmap-asset, implementation, and maintenance cost.
-5. Explicit shared understanding that the effect images will follow the frozen global direction without changing module scope.
-
-Record actual answers and confirmation in `docs/product/grilling-log.md` and the module scope file. When existing global and page constraints already settle these points, continue without a gate record.
+当页面细化出现确需用户决定的范围、交互、预算或成本实质取舍时，只讨论相关问题并沿用现有记录。信息足够时直接在 Figma 探索，不要求用户先批准文字方向、不按页面或素材逐项审批；独立图片仅在确有需要时生成或复用。
 
 ## Review Threshold
 

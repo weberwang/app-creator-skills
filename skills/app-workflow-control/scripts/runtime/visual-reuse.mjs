@@ -4,6 +4,7 @@ import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { assertFunctionBaseline, inspectVisualReuseSource, loadWork, response } from './workflow.mjs';
 import { withWorkLock } from './work-lock.mjs';
 import { assertVisualReuse } from './visual-reuse-binding.mjs';
+import { isFigmaApp } from './figma-app-contract.mjs';
 
 const IMPACT_REVIEWS = Object.freeze({
   implementation: ['V2', 'V3Decomposition', 'V3Layout'],
@@ -33,7 +34,8 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
     assertFunctionBaseline(repo, work);
     assertSourceReviews(repo, source, impact);
 
-    const inheritedReviews = [...IMPACT_REVIEWS[impact]];
+    // Figma 已选稿直接承载结构与布局，复用不要求伪造两份历史 V3 批准。
+    const inheritedReviews = isFigmaApp(work) ? (impact === 'target' ? [] : ['V2']) : [...IMPACT_REVIEWS[impact]];
     const sceneTargets = work.workItemType === 'SCENE' && impact !== 'target';
     const selectedTargets = sceneTargets && targetIds ? source.visual.targets.filter((target) => targetIds.includes(target.targetId)) : source.visual?.targets;
     const inheritedPaths = [source.globalVisualBaselineRef.path, ...(sceneTargets
@@ -64,7 +66,7 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
     }
     // 局部继承时仍有新目标或未选择目标，必须让它们先经过本批 V2 确认。
     const partialScene = targetIds !== undefined;
-    work.visual.stage = partialScene ? 'V2' : IMPACT_STAGE[impact];
+    work.visual.stage = partialScene ? 'V2' : isFigmaApp(work) && impact !== 'target' ? 'V3' : IMPACT_STAGE[impact];
     work.visual.reuse = {
       sourceWorkItemRef: { path: sourcePath }, impact, reason, inheritedReviews,
       ...(targetIds ? { targetIds: [...targetIds] } : {}),

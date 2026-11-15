@@ -12,7 +12,7 @@ import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
@@ -112,7 +112,7 @@ async function lintPackage(repo) {
   const schemaFiles = [
     'work-item.schema.json', 'implementation-package.schema.json', 'execution-result.schema.json',
     'evidence-manifest.schema.json', 'human-review.schema.json', 'grilling-record.schema.json',
-    'asset-review.schema.json', 'global-visual-baseline.schema.json', 'release-result.schema.json',
+    'asset-review.schema.json', 'global-visual-baseline.schema.json', 'figma-app-design.schema.json', 'release-result.schema.json',
     'release-preparation.schema.json', 'work-plan.schema.json', 'execution-report.schema.json',
     'production-scope.schema.json', 'production-coverage.schema.json',
   ];
@@ -121,7 +121,7 @@ async function lintPackage(repo) {
     try { JSON.parse(readFileSync(path, 'utf8')); }
     catch (error) { throw new WorkflowError(`schema ${file} 无效或缺失：${error.message}`, 'PACKAGE_INVALID'); }
   }
-  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json', 'production-scope.json', 'production-coverage.json'];
+  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'figma-app-baseline.json', 'figma-app-brief.json', 'figma-app-design.json', 'figma-app-handoff.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json', 'production-scope.json', 'production-coverage.json'];
   for (const file of templateFiles) {
     const path = resolve(skillRoot, 'templates', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }

@@ -1,0 +1,7 @@
+{
+  "schemaVersion": "1.0", "workItemId": "replace-work-item", "objectId": "replace-page", "candidateId": "replace-candidate",
+  "figmaDesignRef": {"path": "design/figma/selected.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "layoutSpecRef": {"path": "design/layout-spec.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "nativePlanRef": {"path": "design/native-restoration-plan.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "mappings": [], "adaptationRules": [], "unresolved": []
+}

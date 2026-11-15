@@ -1,6 +1,6 @@
 # Mockup Review Rubric
 
-The user checks image appearance. Automated image inspection requires explicit user authorization; technical checks cannot replace the user's visual assessment.
+The user checks design and runtime image appearance. The visual questions below are prompts for the user; the agent may inspect editable node properties and other measurable facts, but must not analyze screenshots without explicit authorization. Technical checks cannot replace the user's visual assessment.
 
 ## Verdict
 
@@ -11,11 +11,11 @@ The user checks image appearance. Automated image inspection requires explicit u
 - Signature moment present when required: Yes / No / N/A
 - Select / Reject / Needs iteration:
 - Selected direction:
-- Visual direction: 1 / 2 / 3
+- 用户选择的实际 Figma 方向、节点链接和范围（可明确组合；不预设固定数量）:
 - Review-only interactive prototype: N/A / path or URL
 - UX/UI confirmed: Yes / No
-- V1 function and semantic verification completed: Yes / No; Code Sketch review if used: Pass / N/A
-- Decoded dimensions verified as `目标逻辑视口 × 资源密度（默认 2x）`: Yes / No
+- Formal implementation: V1 function and semantic verification completed with actual scope; design-only proposal does not require a running project. Code Sketch review applies only when used.
+- 节点视口和真实预览快照尺寸、状态、语言与倍率：
 - Reason:
 
 ## Review Checks
@@ -30,12 +30,12 @@ The user checks image appearance. Automated image inspection requires explicit u
 - Reusable system decisions can be tokenized where appropriate, while deliberate hero moments and brand signatures may remain authored exceptions.
 - It has a recognizable product character and at least one purposeful compositional or visual signature beyond stock platform components when the active expression preset and page-type dial require it.
 - It covers required content and state.
-- It preserves the reviewed semantic contract's functional meaning and information priority; it is not penalized for changing low-fidelity geometry, containers, whitespace, image composition, or decoration placement.
+- It preserves confirmed business facts, required functions, states, and interaction outcomes; unlocked information architecture, hierarchy, geometry, containers, whitespace, image composition, and decoration may be explored.
 - It avoids generic AI UI patterns: random gradients, meaningless glass cards, fake charts, filler avatars, decorative labels.
 - Decorations, material, texture, shadow, custom illustration, and motion serve hierarchy, feedback, storytelling, or the documented product character, and stay within the page's expression budget. Do not penalize expressive treatment merely for being non-standard or insufficiently restrained.
 - It respects platform constraints, safe areas, touch targets, and text scaling.
 - It does not imply features outside MVP scope.
-- The generated file decodes to exactly `目标逻辑视口 × 资源密度（默认 2x）`.
+- The selected Figma frame binds to the actual viewport, and its frozen preview records the real dimensions; image asset density is checked only when relevant.
 - Required illustrations, photos, logos, textures, screenshots, and generated bitmaps are identified in the page asset manifest.
 
 ## Findings

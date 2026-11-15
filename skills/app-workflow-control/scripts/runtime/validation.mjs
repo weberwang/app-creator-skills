@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { repoPath, fileIdentityKey, stackProfileLocation, WorkflowError } from './io.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
 import { validateProductionScope } from './production-scope.mjs';
+import { isFigmaApp, isDesignProposal } from './figma-app-contract.mjs';
 
 /** 明确允许的 Work Item 字段，错误字段名应尽早中断。 */
 const WORK_FIELDS = new Set([
@@ -66,6 +67,9 @@ function validateVisual(work) {
     return;
   }
   if (!work.visual || typeof work.visual !== 'object') throw new WorkflowError('SCENE/PAGE/DISPLAY_LAYER 必须定义 visual 身份');
+  if (work.visual.designRoute !== undefined && (work.visual.designRoute !== 'figma-app' || !isFigmaApp(work))) throw new WorkflowError('Figma 设计路线仅用于非游戏 App PAGE/DISPLAY_LAYER');
+  if (work.visual.designIntent !== undefined && (!isFigmaApp(work) || !['implementation', 'proposal'].includes(work.visual.designIntent))) throw new WorkflowError('designIntent 仅用于 Figma App 的 implementation/proposal');
+  if (isDesignProposal(work) && (!['V0', 'V1', 'V2'].includes(work.visual.stage) || ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState))) throw new WorkflowError('仅设计提案不得推进正式实现或冒充 V5 工程完成');
   if (work.visual.stageModel !== 'function-first-v1') throw new WorkflowError('视觉阶段缺少 function-first-v1 语义标记，旧工作项不能按新阶段解释');
   requireText(work.visual.objectId, 'visual.objectId');
   requireOneOf(work.visual.stage, VISUAL_STAGES, 'visual.stage');
