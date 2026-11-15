@@ -97,6 +97,8 @@ for (const stack of STACKS) {
     for (const [source, section] of [
       ['app-creator-workflow/SKILL.md', 'explore'],
       ['app-creator-workflow/references/workflow.md', 'explore'],
+      // V0 摘要与实施入口须接入同一人工确认约定，不能只保留方案展示入口。
+      ['app-creator-workflow/references/workflow.md', 'sequence'],
       ['app-creator-workflow/references/professional-execution.md', 'explore'],
       ['app-creator-workflow/references/handoffs.md', 'roles'],
       ['app-creator-workflow/references/readable-functional-prototype.md', 'handoff'],

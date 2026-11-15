@@ -13,7 +13,7 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 当前视觉设计稿完成后、提交用户确认前，按[单次用户视角审查](references/art-review.md#当前设计稿的单次用户视角审查)核对真实内容、可编辑结构及可测事实。设计稿截图与运行截图默认交用户人工检查；未经明确授权不得自动分析截图或代写视觉 PASS。代理结构检查不代替人工视觉确认。
 
-游戏方案探索按[关卡与场景设计交接](../app-domain-toolkit/references/game-design-exploration.md#handoff)在相关 V1 实现前制作关键视角概念图，由场景设计师提供空间、镜头、地标与玩法约束，并遵守当前宿主生图技能及委派规则。这类图用于探索，沿用生成前约束与人工看图，不提前冻结全局风格、不执行正式资源批量生产；V1 后按实际约束修订并转入下述正式生产闭环。
+复杂游戏空间在生图前，先按[空间方案与结构检查](../app-domain-toolkit/references/game-design-exploration.md#sequence)由关卡／场景设计职责确定结构草案、尺度规则和镜头依据，不能从产品功能清单直接生图。沿用同一场景规格制作本批关键视角概念图，偏离依据时按原方案处理，不倒推玩法；遵守当前宿主生图技能及图片委派规则。这类图用于探索，沿用生成前约束与人工看图，不提前冻结全局风格或批量生产正式资源；按[关卡与场景设计交接](../app-domain-toolkit/references/game-design-exploration.md#handoff)在 V1 验证后修订并转入下述正式生产闭环。
 
 涉及 UI 的拆解、布局图和正式组合时，按[UI 相对布局与定位](../app-ui-layout/references/relative-layout.md)维护布局关系与浮层本体的适用边界，按[还原依据与变更边界](../app-ui-layout/references/relative-layout.md#还原依据与变更边界)区分已确认目标、测量、估计和适配；素材制作不能静默改变已确认的视觉目标。
 

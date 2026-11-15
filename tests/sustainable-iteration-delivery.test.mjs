@@ -80,12 +80,25 @@ function checkIterationRules(root) {
   assert.deepEqual([...stages.matchAll(/^\| (V\d) \|/gm)].map((match) => match[1]), ['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
   const assets = read(root, 'app-asset-workflow/SKILL.md');
   const production = extractMarkdownSection(assets, '生产闭环');
-  assert.match(production, /3\. \*\*明确资产角色\*\*[\s\S]*先确认拆解图，再单独确认布局图[\s\S]*4\. \*\*代表样本与真实组件试接\*\*/);
-  assert.match(production, /V3 拆解与布局分别确认后，在 V4 前段/);
+  const assetRoles = production.match(/^\d+\. \*\*明确资产角色\*\*：(.+)$/m)?.[1];
+  assert.ok(assetRoles, '生产闭环缺少资产角色与交接说明');
+  // 游戏保留原确认合同；App 复用已选 Figma 结构，不能以通用旧断言恢复重复审批。
+  assert.match(assetRoles, /游戏按\[多张场景设计稿\]\(references\/multi-image-scene-design\.md\).*原有拆解／布局确认/);
+  assert.match(assetRoles, /非游戏 App 从 V2 已选 Figma 节点提取/);
+  assert.match(assetRoles, /不再机械绘图或重复确认/);
+  const gameStages = extractMarkdownSection(read(root, 'app-asset-workflow/references/multi-image-scene-design.md'), '拆解、实现与验收');
+  assert.match(gameStages, /V2 目标、V3 拆解和布局确认、V4 资源验收与 V5 正式场景验证/);
+  const sampleStep = production.match(/^\d+\. \*\*代表样本与真实组件试接\*\*：(.+)$/m)?.[1];
+  assert.ok(sampleStep, '生产闭环缺少代表样本试接步骤');
+  assert.match(sampleStep, /V3 交接完成后，在 V4 前段/);
   const sample = extractMarkdownSection(assets, '代表性接入与分批协作');
   assert.match(sample, /真实原生组件、父子关系和代表性数据/);
-  assert.match(sample, /不新增阶段、控制器字段或独立审批/);
-  assert.match(sample, /未验证范围/);
+  assert.match(sample, /不新增阶段、控制器字段或逐素材审批/);
+  assert.match(sample, /游戏正式样本生产沿用原 V3 拆解与布局确认/);
+  assert.match(sample, /非游戏 App 以已选 Figma 稿和必要交接为依据.*不重复画图和批准/);
+  // 未决结果只阻断依赖它的扩展；技术检查不能自动形成用户批准或视觉通过。
+  assert.match(sample, /必要人工确认待定时，暂停依赖该结果的批量扩展，继续不受影响的工作/);
+  assert.match(assets, /真实用户消息只记录来源，不能由代理伪造批准/);
   assert.match(sample, /样本及单批通过不替代 V5/);
   assert.match(sample, /单写者/);
   assert.match(sample, /用户人工视觉验收/);
