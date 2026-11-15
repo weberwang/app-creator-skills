@@ -31,8 +31,10 @@ test('三栈项目模板先验证功能并声明完整 V0–V5', async () => {
     const design = templates.CORE_TEMPLATES['visual-design.md'];
     const tdd = templates.CORE_TEMPLATES['TDD.md'];
     const assets = templates.OPTIONAL_TEMPLATES.assets['asset-license-register.md'];
-    assert.match(design, /V1 实现并验证相关功能（白盒按需使用）→ V2/);
-    assert.match(tdd, /当前功能切片可直接实现或按需使用白盒，在 V1 验证相关行为后/);
+    // 世界场景按实际维度验证，UI 不因项目使用 3D 而被强制增加白模步骤。
+    assert.match(design, /3D 世界先白模，2D／UI 原型按需；世界场景先完成整体空间人工确认，纯 UI 沿原流程/);
+    assert.match(tdd, /世界场景在整体空间人工确认后进入正式生产，纯 UI 沿原流程/);
+    assert.doesNotMatch(design, /UI 原型按需）→ 本批整体空间人工确认/);
     assert.doesNotMatch(tdd, /不得注册正式入口或实现正式场景功能/);
     assert.match(assets, /V0→V1→V2→V3→V4→V5/);
     const manifest = JSON.parse(templates.OPTIONAL_TEMPLATES.assets['visual-assets.json']);

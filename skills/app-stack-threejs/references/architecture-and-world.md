@@ -14,7 +14,7 @@
 
 ## 世界空间 vs HUD
 
-V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用可识别的简单几何或现有模型、名称与状态标记区分玩家、交互目标和环境，并通过实际 HUD/DOM 呈现操作反馈。复用现有世界交互和路由接口；体验界面不依赖调试标签才能理解，碰撞代理和坐标等调试信息可按需显示。临时对象与模拟数据只证明实际验证的范围，不等待 V2 正式风格。
+3D 世界的 V1 按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)在正式 Scene 用基础几何或有效已有模型搭建白模，接入实际 Camera、角色尺度和必要通行／交互；UI／HUD 原型按风险选择。按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)表达对象用途、状态与操作反馈，复用现有世界交互和路由接口，调试信息按需显示。本批整体场景人工确认后交接正式模型并试接替换；临时对象与模拟数据只证明实际验证范围，不等待 V2 正式美术。
 
 按[世界树与 HUD 显示结构](../../threejs-game-ui-layout/references/display-object-layering.md#世界树与-hud-显示结构)分别交付 Object3D 世界树和实际 HUD/DOM 树，说明挂载、组合、输入及资源释放责任，不能以代码目录或单一场景图代替全部显示结构。
 

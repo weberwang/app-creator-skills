@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "world3d-scene.schema.json",
+  "title": "无图 3D 世界场景阶段合同",
+  "description": "冻结可追溯的三维空间、运行、人工确认和模型交接；结构合法不证明真实运行或视觉已通过。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "designRoute", "workItemId", "projectId", "stack", "objectId", "candidateId", "stage", "scopeIds", "spatialSpecRef", "blockoutRef", "blockoutRunRef"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "designRoute": { "const": "world-3d" },
+    "workItemId": { "type": "string", "minLength": 1 },
+    "projectId": { "type": "string", "minLength": 1 },
+    "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox"] },
+    "objectId": { "type": "string", "minLength": 1 },
+    "candidateId": { "type": "string", "minLength": 1 },
+    "stage": { "enum": ["V1", "V2", "V3", "V4", "V5"] },
+    "scopeIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+    "spatialSpecRef": { "$ref": "#/$defs/frozenRef" },
+    "blockoutRef": { "$ref": "#/$defs/frozenRef" },
+    "blockoutRunRef": { "$ref": "#/$defs/frozenRef" },
+    "reviewRef": { "$ref": "#/$defs/frozenRef" },
+    "spaceApprovalRef": { "$ref": "#/$defs/frozenRef" },
+    "directionRef": { "$ref": "#/$defs/frozenRef" },
+    "directionApprovalRef": { "$ref": "#/$defs/frozenRef" },
+    "functionBaselineRef": { "$ref": "#/$defs/frozenRef" },
+    "modelSpecRef": { "$ref": "#/$defs/frozenRef" },
+    "sampleRef": { "$ref": "#/$defs/frozenRef" },
+    "formalSceneRef": { "$ref": "#/$defs/frozenRef" },
+    "formalRunRef": { "$ref": "#/$defs/frozenRef" },
+    "displayApprovalRef": { "$ref": "#/$defs/frozenRef" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "stage": { "enum": ["V2", "V3", "V4", "V5"] } }, "required": ["stage"] },
+      "then": {
+        "properties": { "reviewRef": true, "spaceApprovalRef": true, "directionRef": true, "directionApprovalRef": true, "functionBaselineRef": true },
+        "required": ["reviewRef", "spaceApprovalRef", "directionRef", "directionApprovalRef", "functionBaselineRef"]
+      }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["V3", "V4", "V5"] } }, "required": ["stage"] },
+      "then": { "properties": { "modelSpecRef": true }, "required": ["modelSpecRef"] }
+    },
+    {
+      "if": { "properties": { "stage": { "enum": ["V4", "V5"] } }, "required": ["stage"] },
+      "then": { "properties": { "sampleRef": true }, "required": ["sampleRef"] }
+    },
+    {
+      "if": { "properties": { "stage": { "const": "V5" } }, "required": ["stage"] },
+      "then": {
+        "properties": { "formalSceneRef": true, "formalRunRef": true, "displayApprovalRef": true },
+        "required": ["formalSceneRef", "formalRunRef", "displayApprovalRef"]
+      }
+    }
+  ],
+  "$defs": {
+    "frozenRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "type": "string", "minLength": 1 },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

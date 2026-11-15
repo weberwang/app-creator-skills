@@ -178,7 +178,7 @@ function stageTargets(repo, work, stage, { inherited = [] } = {}) {
 
 test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改共享源后历史确认仍可追溯', async (t) => {
   const repo = temporaryProject(t);
-  const init = async (id) => (await initializeWork({ repo, args: { id, stack: 'unity', type: 'SCENE', objective: '合成场景测试', 'project-id': 'p1', 'object-id': 'Main' } })).metadata.workItemPath;
+  const init = async (id) => (await initializeWork({ repo, args: { id, stack: 'unity', type: 'SCENE', 'design-route': 'game-ui', objective: '合成场景测试', 'project-id': 'p1', 'object-id': 'Main' } })).metadata.workItemPath;
   const sourcePath = await init('first');
   await runV1(repo, sourcePath, '首批场景源码');
   let source = loadWork(repo, sourcePath);

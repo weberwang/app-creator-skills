@@ -18,7 +18,7 @@ function fixture(t) {
     put(baselinePath, { schemaVersion: '1.0', objectId });
     const functionBaselineRef = identity(baselinePath);
     const path = `${objectId}/work.json`;
-    put(path, { ...project, workItemId: objectId, workItemType: 'SCENE', globalState: 'COMPLETE', visual: { objectId, stage: 'V5', functionBaselineRef, functionDependencies: [{ caseId: 'start-battle' }] } });
+    put(path, { ...project, workItemId: objectId, workItemType: 'SCENE', globalState: 'COMPLETE', visual: { objectId, designRoute: 'game-ui', stage: 'V5', functionBaselineRef, functionDependencies: [{ caseId: 'start-battle' }] } });
     return { objectId, workItemRef: identity(path), functionBaselineRef };
   });
   const work = { ...project, workItemId: 'integration', workItemType: 'INTEGRATION', integrationPurpose: 'final', evidenceRef: { path: 'final/manifest.json' } };

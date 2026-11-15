@@ -18,6 +18,6 @@ Three.js 技能区分真实三维世界与固定 HUD/页面，不能套用二维
 
 场景或弹出层加载遵循[统一加载与过渡显示](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：复用应用宿主上的同一加载服务与显示层，区分 Loader 完成、场景图挂载、必要数据及首个可显示布局；场景退出清理更新与输入，共享纹理、材质和几何按实际消费者释放。
 
-各技术栈统一使用 V0–V5：V1 先验证功能，白盒可选；V2 视觉目标、V3 拆解布局、V4 正式资源、V5 运行验收。
+各技术栈共用 V0–V5：V1 先验证功能，世界场景按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)落实搭建、整体确认和正式交接；UI 保留原图片与布局流程。
 
 来源：`skills/threejs-game-architecture/references/project-structure.md`、`skills/app-stack-threejs/references/native-contracts.md#mode-threejs-game-model-pipeline`、`skills/app-stack-threejs/references/native-contracts.md#mode-threejs-game-asset-integration`、`skills/threejs-game-architecture/references/production-build.md`。

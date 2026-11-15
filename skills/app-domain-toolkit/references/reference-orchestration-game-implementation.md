@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一使用 V0–V5；V1 是功能实现与验证，白盒可选，正式功能不必等待视觉目标。
+各技术栈统一使用 V0–V5；V1 按[内容分流](game-design-exploration.md#implementation-routes)验证功能，3D 世界先白模，2D／UI 的额外原型按需；整体人工确认后正式生产。下文图片／拆解机器要求仍按[工具边界](game-design-exploration.md#tooling-boundary)如实执行，不把新说明视为机器已支持。
 
 ## 游戏实现规则
 
@@ -22,9 +22,11 @@
 
 ## G1 强制实施序列
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
-3. 每个场景 Work Item 在公共 V1 完成当前功能范围的实际验证，白盒按需选择；公共 V2 确认 scene master/reference target、宿主上下文和视觉合同，公共 V3 先完成拆解确认，再完成布局确认，公共 V4 完成正式资源验收。
+3. 每个场景 Work Item 在公共 V1 完成当前功能范围的实际验证，原型按上述内容分流；公共 V2 确认 scene master/reference target、宿主上下文和视觉合同，公共 V3 先完成拆解确认，再完成布局确认，公共 V4 完成正式资源验收。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -54,6 +56,8 @@
 
 ## 单场景完成闭环
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 每个 `SCENE` 聚合自身完成事实：公共 V1 实际验证当前功能，公共 V2 确认视觉目标与还原草案，公共 V3 确认拆解及布局，公共 V4 验收正式资源，公共 V5 完成正式组合及运行验收。modal/popup 等 `DISPLAY_LAYER` 建立独立 Work Item 和实施包；其上下文和宿主分别验证，不能由宿主确认替代。
@@ -63,6 +67,8 @@
 场景和显示层分别记录 `functional_status`、`resource_status`、`integration_status`、`lifecycle_cleanup_status` 和 `verification_status`。这些字段是领域完成事实，不得冒充或驱动全局状态。显示层复用公共 V0–V5 对象阶段及当前 Work Item 的适用 F0–F4 门禁，不建立第二套全局状态机；只有功能、资源、宿主集成、生命周期清理和验证五项均关闭、所有资源归属明确且证据绑定当前候选时，显示层或场景整体才完成。
 
 ## 场景与显示层效果图产物
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -78,13 +84,15 @@
 
 ## 增量流程
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 1. 冻结玩家行为、模块契约、所有权、验收、服务复用和 V0 类型。模块边界变化先查事实，仅实质取舍触发模块审计和 grilling；带外部副作用的动作按当前 Work Item 的精确授权与 F4 要求处理。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-2. 公共 V1 定义并实际验证状态、输入、规则和反馈；可以直接实现正式功能，也可按需使用低保真草图或白盒，不以白盒为必经门。指定效果图还原时，公共 V2 生成或接收并确认 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认仅接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
+2. 公共 V1 定义并实际验证状态、输入、规则和反馈；可以直接实现正式功能，也可按需使用低保真草图或白盒，2D／UI 不强制三维白模。指定效果图还原时，公共 V2 生成或接收并确认 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认仅接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -93,7 +101,7 @@
 > 适用技术栈：cocos、phaser、threejs。
 
 原子部件数量、重复实例、独立位图与图集限制和热区合同按[效果图拆分规范](./reference-asset-effect-image-splitting.md)执行。标注图右侧栏包含该图的原子图片要求，左侧原图只保留框和编号/placement 标记。
-7. 公共 V1 可直接实现并验证功能，白盒按需选择；公共 V5 按公共 V3 拆解与布局、公共 V4 正式资源组合正式 Scene，由玩法和美术协作完成结构化接入、动态验收和低保真清理；正式资源绑定场景/覆盖区域，效果图模式以不可变 fidelity case 绑定双方 SHA 与同条件证据。
+7. 公共 V1 可直接实现并验证功能，原型按上述内容分流；公共 V5 按公共 V3 拆解与布局、公共 V4 正式资源组合正式 Scene，由玩法和美术协作完成结构化接入、动态验收和低保真清理；正式资源绑定场景/覆盖区域，效果图模式以不可变 fidelity case 绑定双方 SHA 与同条件证据。
 8. F0 校验任务范围与流程，F1 校验当前候选与既定规格一致，F2 由独立 QA、玩法、技术或视觉角色检查领域质量，F3 只验证当前候选的工程证据，F4 按当前 Work Item 核对受保护动作的具体授权与结果。功能与视觉阶段的 `USER_DECISION` 不能替代专业缺陷修复。
 
 ## 受控并行实现
@@ -109,6 +117,8 @@
 参考与运行图在相同视口、运行时动态设备像素比（封顶 2）、状态、轨迹、语言、随机种子和时间点采集，并记录实际有效 DPR、ROI、验证模式、稳定帧和遮罩。默认 `usability` 使用代表性视口和关键状态，完整 viewport、ROI/叠加/像素差及全矩阵仅在 `exact` 或明确需求时作为严格证据；生成式、动画与 VFX 不能只用像素差判断。明显越界、裁切、关键遮挡、不可读或交互失效不得通过；静态高保真、资源齐全、源码检查和构建成功不能单独证明游戏性。
 
 ## 回退
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

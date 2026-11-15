@@ -9,9 +9,11 @@ import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/v
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
 /** 构建隔离项目并通过正式 init 接口建立类型有效的 Work Item。 */
-export async function createFixture({ id = 'sample', stack = 'flutter', type = 'FOUNDATION', releaseIntent, objective = '建立一项可验证交付' } = {}) {
+export async function createFixture({ id = 'sample', stack = 'flutter', type = 'FOUNDATION', releaseIntent, designRoute, objective = '建立一项可验证交付' } = {}) {
   const repo = await mkdtemp(resolve(tmpdir(), 'app-workflow-'));
-  const result = await initializeWork({ repo, args: { id, stack, type, objective, ...(releaseIntent ? { 'release-intent': releaseIntent } : {}) } });
+  // 既有场景夹具覆盖图片确认链，显式标注为纯界面；世界场景由专用夹具提供真实空间依据。
+  const route = type === 'SCENE' ? designRoute ?? 'game-ui' : designRoute;
+  const result = await initializeWork({ repo, args: { id, stack, type, objective, ...(route ? { 'design-route': route } : {}), ...(releaseIntent ? { 'release-intent': releaseIntent } : {}) } });
   return { repo, workPath: result.metadata.workItemPath, result };
 }
 

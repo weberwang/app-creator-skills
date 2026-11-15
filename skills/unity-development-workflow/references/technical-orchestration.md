@@ -33,9 +33,9 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 ## 场景 V0-V5
 
-每个 `SCENE` 和 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求常规确认；V2–V5 按[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)推进。V2 确认真实目标图；V3 先后独立确认拆解图和布局图；V4 验收正式资源生产与导入，可展示临时组合预览；V4 可生产资源级 Prefab；正式宿主 Scene/场景装配 Prefab/UI 接入及布局校准在 V5，实际运行交付经用户确认后闭合。`stageReviews` 只保存 V2–V5 的视觉用户确认，不能用技术 PASS、初始授权或沉默替代人工确认。
+图片目标的 `SCENE` 和 `DISPLAY_LAYER` 的 V0 作内部识别与分流，V2–V5 按[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)推进：V2 确认目标图、V3 先后确认拆解图和布局图。3D 世界可显式采用公共[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，以真实白模、联合单次审查及用户空间／方向确认、模型规格和正式资源证据推进，不走 V3 双图；旧 Unity 原生图片工具若不支持无图合同，如实报告限制。V4 可生产资源级 Prefab 和临时预览，正式宿主接入与布局校准在 V5；实际运行交付仍由用户确认，技术 PASS、初始授权或沉默不能代替。
 
-场景按 `V0 内部分流 → V1 功能验证（白盒可选）→ V2 视觉目标 → V3 拆解与布局确认 → V4 正式资源生产与导入验收 → V5 正式实现与运行验收` 闭环。视觉任务读取[视觉工作流](./visual-workflow.md)和[场景闭环](./scene-loop.md)。全局基线首次建立时生成三张同条件候选并记录五项质量结果，唯一人工选择的候选五项均须 `PASS`；有效选择证据可跨 Work 复用。动画素材制作前须先说明设计理念和动作方案、取得确认，完成后仍须验收真实素材。
+3D 世界按 `V0 空间与内容需求 → V1 白模及功能验证 → 联合单次审查与人工确认 → V2 方向 → V3 模型规格 → V4 样本／资源导入 → V5 正式替换、运行与人工显示确认` 推进；2D 图片目标及 UI 继续原 V0–V5 目标图、拆解／布局和资源流程。仅图片／UI 路线首次全局基线采用三候选和既有质量判断；`world-3d` 使用已确认方向依据，不要求虚构图片。视觉任务读取[视觉工作流](./visual-workflow.md)和[场景闭环](./scene-loop.md)。动画素材制作前须先说明设计理念和动作方案、取得确认，完成后仍须验收真实素材。
 
 公共资源按[登记与使用规则](./shared-asset-usage.md)从功能/场景规划贯穿 V1-V5：早期识别共享候选，V3 先查项目资源总表再选择复用或统一生产，V4 用真实产物复核；资源交接时由指定单写者同步登记，场景/显示层记录实际消费关系，替换后只重验受影响消费者。
 
@@ -43,8 +43,8 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 屏幕 UI 的 V3–V5 沿用原生布局计划；V5 按[布局控制权与真实组件快照](./ui-layout-runtime.md)回读位置、宽度、高度的实际写入者和同批几何，并显式运行原生布局报告检查。Unity 原生合同可用 `uiLayoutPlanRef` 与 `uiLayoutMeasurementRef` 引用计划和报告，但公共控制器当前不自动执行该布局引用链检查。uGUI 与 UI Toolkit 分别按原生机制取证，不以计划、静态参数或测试夹具代替运行事实。
 
-- V1 实现并验证玩法契约，白盒按需使用；V2 确认视觉目标及 Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；视觉任务同时明确主题、受众、核心循环、体验目标、观看情境及关键反馈意图。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。
-- V3 按[文本与色彩拆分路线](./visual-decomposition-routes.md)完整识别位图中的独立部件：低显著性文字优先系统文本，简单填充优先原生绘制，明显美术特征保留独立资产，功能与状态联动保持完整。冻结节点职责、实际层级依赖、语义分组与布局合同，再分别冻结视觉来源和 Scene/Prefab/UI 装配；同时记录组件状态、Importer/GUID/地址约定、适用九宫格的源图尺寸/Unity border/内容内边距、动作意图时间轴/事件及资产生产者和用户必须决定的视觉边界。屏幕 UI 使用[节点树与组件分组规则](./ui-layout-and-hierarchy.md)。
+- V1 实现并验证玩法契约；3D 世界先搭建或复用有效白模，2D／UI 的额外原型按需。V2 确认视觉目标及适用的 Scene/Prefab/UI 结构、稳定节点 ID、宿主上下文、响应式布局、安全区、多语言文本策略和验收轨迹；`world-3d` 使用空间与方向依据。屏幕 UI 继续按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定定位。
+- 图片／UI 路线 V3 按[文本与色彩拆分路线](./visual-decomposition-routes.md)识别独立部件，冻结节点职责、实际层级依赖、语义分组、布局和视觉来源；屏幕 UI 使用[节点树与组件分组规则](./ui-layout-and-hierarchy.md)。`world-3d` 按公共合同记录模型及模块接口，不要求图片拆解／布局图确认。
 - V4 验证正式资源生产、实际 Importer 回读、资源级序列化引用和导入结果；可生产并验证资源级 Prefab、提供临时组合预览，不在本阶段实施正式宿主 Scene/场景装配 Prefab/UXML 或校准布局。不得以灰盒或整张效果图冒充正式资源。
 - V5 在 Editor/PlayMode 中完成正式接入、交互轨迹、清理、Console、响应式与性能证据；美术质量五项逐项通过，并按适用性验收正常游玩、重复反馈、事件峰值和同屏叠加。动态证据与人工显示确认通过公共 Evidence Manifest 的 `art-experience-acceptance` 条目绑定当前工作项/候选/场景；机器参数不能代替视觉确认。场景只闭环自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item 和 Implementation Package，其 `hostSceneId` 只表示上下文，未完成不阻断宿主场景 V5。
 

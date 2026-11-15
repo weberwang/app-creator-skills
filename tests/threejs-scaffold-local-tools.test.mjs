@@ -16,6 +16,19 @@ function project(t) {
   return root;
 }
 
+/** 空目录和尚不存在的子目录都应能初始化，且不需要放宽业务文件覆盖保护。 */
+test('Three.js 脚手架支持空目录和新目录', (t) => {
+  const empty = project(t);
+  assert.equal(createGame(empty), empty);
+  const parent = project(t);
+  const fresh = join(parent, 'new-game');
+  assert.equal(createGame(fresh), fresh);
+  for (const root of [empty, fresh]) {
+    assert.ok(existsSync(join(root, 'src/main.ts')));
+    assert.ok(existsSync(join(root, 'src/game-runtime.mjs')));
+  }
+});
+
 /** 已安装的技能、Git 元数据和忽略文件不得阻断脚手架，也不得被覆盖。 */
 test('Three.js 脚手架保留本地技能及 Git 元数据', (t) => {
   const root = project(t);

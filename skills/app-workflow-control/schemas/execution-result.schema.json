@@ -11,6 +11,7 @@
     "workItemId": {"type": "string"}, "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"]},
     "implementationPackageRef": {"type": "string"}, "unitId": {"type": "string"}, "sequence": {"type": "integer", "minimum": 1}, "exitCode": {"type": "integer"},
     "hostId": {"type": "string", "minLength": 1}, "layerType": {"type": "string", "minLength": 1},
+    "sampleEvidenceRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "files": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "deletedFiles": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "commandOutputs": {"type": "array", "minItems": 1, "items": {"type": "object", "additionalProperties": false, "required": ["command", "exitCode", "outputFile"], "properties": {"command": {"type": "string"}, "exitCode": {"type": "integer"}, "outputFile": {"type": "string"}}}}

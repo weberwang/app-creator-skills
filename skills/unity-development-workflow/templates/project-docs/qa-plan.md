@@ -30,7 +30,7 @@
 
 ## 人工试玩与调参闭环
 
-涉及人工试玩或调参时，按[试玩与调参](../../../app-domain-toolkit/references/game-content-playtesting.md#playtest)复用现有记录，分别填写观察、体验反馈和调整假设；尚未取得的结论保持未确认。
+涉及人工试玩或调参时，按[试玩与调参](../../../app-domain-toolkit/references/game-content-playtesting.md#playtest)复用现有记录，分别填写观察、体验反馈和调整假设；空间与必要功能验证后按[联合单次审查](../../../app-domain-toolkit/references/game-design-exploration.md#review)交用户修改或确认，尚未取得的结论保持未确认，不自动复审。
 
 | 试玩版本/条件/任务 | 客观观察及原始证据 | 体验反馈 | 调整假设/参数版本 | 复验结果 | 未确认项 |
 | --- | --- | --- | --- | --- | --- |

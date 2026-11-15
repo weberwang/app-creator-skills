@@ -23,12 +23,16 @@ import { inspectProductionDependencySource } from './production-dependency-inspe
 import { getWorkSource } from './work-source.mjs';
 import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
 import { isFigmaApp, isDesignProposal, validateFigmaBaseline, selectedFigmaCandidate } from './figma-app-contract.mjs';
+import { isWorld3D, assertWorld3DShape, validateWorld3DStage, validateWorld3DBaseline, validateWorld3DModel, collectWorld3DReferences } from './world3d-contract.mjs';
+import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from './scene-design-contract.mjs';
+import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
+import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 export { bindWorkSource } from './work-source.mjs';
 
 const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits', 'productionScopeRef', 'productionBatchId', 'productionDependencies']);
-const UNIT_FIELDS = new Set(['unitId', 'sequence', 'type', 'owner', 'paths', 'resultPath', 'acceptanceCommands', 'parallelGroup', 'dependsOn']);
+const UNIT_FIELDS = new Set(['unitId', 'sequence', 'type', 'owner', 'paths', 'resultPath', 'acceptanceCommands', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
 
 /** 跨栈美术检查记录的固定维度，便于直接比较候选和实装资源。 */
 export const ART_QUALITY_DIMENSIONS = Object.freeze([
@@ -76,6 +80,7 @@ export function loadPackage(repo, work) {
   assertUniqueResultPaths(repo, pack.executionUnits);
   assertResultPathsAvoidReservedFiles(repo, work, pack.executionUnits);
   buildExecutionBatches(pack.executionUnits, { repo });
+  validateSamplePlan(repo, work, pack, { validateGlobalBaseline });
   assertWorkflowPolicy(work, pack);
   return pack;
 }
@@ -141,6 +146,7 @@ export function collectWorkReferencePaths(work, repo) {
   collect(work.visual?.integrationEvidenceRef);
   collect(work.visual?.functionBaselineRef);
   collect(work.visual?.domainEvidenceRef);
+  if (repo) paths.push(...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work));
   for (const dependency of work.visual?.functionDependencies ?? []) {
     for (const reference of [dependency.workItemRef, dependency.evidenceRef]) if (reference?.path) paths.push(dependencyPath(repo, reference.path));
   }
@@ -152,6 +158,9 @@ export function collectWorkReferencePaths(work, repo) {
   }
   for (const reference of work.invalidatedRefs ?? []) collect(reference);
   for (const reference of work.returnRecord?.invalidatedRefs ?? []) collect(reference);
+  // 无图场景的源、确认及运行记录也属于保护对象，不能被单元结果覆盖。
+  if (repo && isWorld3D(work)) paths.push(...collectWorld3DReferences(repo, work));
+  if (repo && isWorld2D(work)) paths.push(...collectSceneDesignReferences(repo, work));
   return paths;
 }
 
@@ -194,6 +203,7 @@ export function validateUnitResult(repo, work, pack, unit, result, { historical 
     const root = repoPath(repo, work.evidenceRoot).relative;
     if (!pathMatch(path, `${root}/**`)) throw new WorkflowError('验收命令输出文件必须保存在当前 evidenceRoot');
   }
+  validateSampleResult(repo, work, unit, result);
   return result;
 }
 
@@ -297,6 +307,11 @@ export function assertAssetReview(repo, work, target = null) {
   if (work.stack === 'flutter') validateFlutterAssetReview(repo, work, record);
   for (const asset of record.assets) {
     requireText(asset.assetId, 'Asset Review asset.assetId');
+    if (asset.assetType === 'model') {
+      if (target || !isWorld3D(work)) throw new WorkflowError('模型资产评审只适用于 world-3d 世界资源，不能代替 HUD 或图片素材');
+      validateWorld3DModel(repo, work, asset);
+      continue;
+    }
     if (asset.assetType === 'native-component') {
       requireText(asset.output, '原生组件产物');
       requireNonEmptyFile(repo, asset.output, '原生组件产物');
@@ -328,6 +343,8 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
   }
   const record = readFrozenVisualBaseline(repo, work.globalVisualBaselineRef);
   if (record.schemaVersion !== VERSION || record.baselineId === undefined || record.projectId !== work.projectId || record.stack !== work.stack) throw new WorkflowError('视觉基线版本、项目或技术栈错绑');
+  if (isWorld3D(work)) return validateWorld3DBaseline(repo, work, record);
+  if (record.designRoute === 'world-3d') throw new WorkflowError('2D／UI 不得引用无图 3D 方向基线绕过图片候选');
   if (isFigmaApp(work)) {
     validateFigmaBaseline(repo, work, record);
     for (const candidate of record.candidates) validateQualityChecks(repo, candidate.qualityChecks, 'Figma 方向质量', { requirePass: candidate.candidateId === record.selectedCandidateId });
@@ -414,6 +431,20 @@ export function assertGates(work, gates) {
 /** 视觉人工确认按唯一对象与阶段绑定，V3 拆解和布局必须分别确认。 */
 export function assertVisualReview(repo, work, stage) {
   if (!work.visual) return;
+  if (isWorld2D(work)) validateWorld2DDesign(repo, work, { requireConfirmation: true });
+  if (isWorld3D(work)) {
+    assertWorld3DShape(work);
+    const contract = validateWorld3DStage(repo, work, stage, { validateEvidence, validateAssetReview: assertAssetReview });
+    // UI 目标沿原合同验收，工程包与原生回调始终绑定真实世界宿主。
+    validateWorldHud(repo, work, stage, {
+      validateGlobalBaseline,
+      validateDomainTarget: (root, _hud, target, phase) => validateDomainTarget(root, work, target, phase),
+      validateAssetReview: (root, _hud, target) => assertAssetReview(root, work, target),
+      manifest: ['V4', 'V5'].includes(stage) ? validateEvidence(repo, work, { requireEngineering: true, requireVisual: stage === 'V5' }).manifest : undefined,
+      visualCategories: stage === 'V5' ? loadProfile(repo, work.stack).evidenceRequirements.visual : undefined,
+    });
+    return contract;
+  }
   if (work.workItemType === 'SCENE') {
     const manifest = ['V4', 'V5'].includes(stage)
       ? validateEvidence(repo, work, { requireEngineering: true, requireVisual: stage === 'V5' }).manifest : undefined;
@@ -502,6 +533,8 @@ export function assertReadyToPass(repo, work) {
   if (work.visual?.stage === 'V1') {
     assertGates(work, ['F0', 'F1', 'F2', 'F3']);
     const { manifest } = validateEvidence(repo, work, { requireEngineering: true, requireVisual: false });
+    if (isWorld3D(work)) validateWorld3DStage(repo, work, 'V1', { validateEvidence, validateAssetReview: assertAssetReview });
+    if (isWorld2D(work)) validateWorld2DDesign(repo, work);
     validateProductionBatchEvidence(repo, work, manifest);
     return;
   }

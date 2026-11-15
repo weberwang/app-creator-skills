@@ -1,5 +1,7 @@
 # 单目标领域合同
 
+本页的 PAGE／DISPLAY_LAYER 和原图片场景领域门保持；显式 3D 世界使用[无图场景合同](world3d-scenes.md)的冻结源、模型及运行链，不借此取消 UI 原生领域校验。
+
 Roblox 使用 SCENE 和独立 DISPLAY_LAYER，不使用 PAGE。显示层公共包装沿用下述身份、冻结引用与宿主字段，另以 `robloxEvidenceRef: {path,sha256}` 关联[Roblox 原生合同](../../roblox-domain-contracts/references/domain-validation.md)。V2–V5 分别验证目标上下文、布局、正式资源和当前运行组合；V1 及非视觉模块由公共工程证据入口验证原生执行记录，不能只靠材料类别或离线校验通过。结构、工程与用户人工显示结论分别记录，工具和本地保存通道未实测时保留未验证。
 
 Expo PAGE 和 DISPLAY_LAYER 使用同一公共阶段与证据容器，默认采用[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)并由独立 Expo 领域校验器处理 React Native 布局、资源和运行记录。按 [Expo 领域证据合同](../../expo-domain-contracts/references/domain-validation.md)逐阶段绑定平台、设计、正式源和当前宿主；V2 不提前要求 V3–V5 产物，V3 不强制提前实现正式组件。原生与 Web、开发与发布构建分别记录，不借浏览器截图或手写 PASS 代替原生运行与用户视觉确认。

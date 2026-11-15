@@ -5,11 +5,13 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 # 游戏与应用统一编排
 
+关卡／场景设计与正式三维制作可按需委派给[两个专属子代理](references/specialist-agents.md)，沿用原阶段与人工确认；配置随技能分发，在 Codex 项目中显式激活，不强制普通任务创建代理。
+
 游戏大场景、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据，先完成可验证路径再按需要推进下一批；小范围修改沿用已有任务。
 
 App 多页面按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择本批路径与代表页：统一视觉方向后，默认优先让代表页完成 V2–V5，再复用共享方案推进其余页面；依赖明确且所有权互斥时可提前并行。各 `PAGE` 独立记录阶段和验收，不默认所有页面同步推进，也不将代表页 V5 设为无关页面的前置门。
 
-从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)明确关卡设计师、场景设计师的职责：从产品／玩法约束形成结构草案、尺度及环境规则，推敲布局、体块和镜头并检查结构后，再制作本批关键视角概念图，不从功能清单直接生图。设计持续迭代，每轮等待用户修改或确认，不自动定稿、关闭或推进依赖未确认方案的工作；沿用同一场景规格及已有人工确认环节。探索归入需求／基线和对象 V0，相关 V1 验证并修订方案后再进入正式视觉制作，不要求先做完全部关卡或正式美术，不增加阶段或逐图审批。
+从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡／场景职责先形成结构、尺度与镜头依据，仅记录前期内容需求，不逐物件拆图生图。按[3D、2D 与 UI 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式工程白模搭建与 V1 功能验证，2D 使用平面布局和占位资源，UI 保持原流程；概念图可选。本批整体场景单次审查并经人工修改或确认后，再明确正式方向和生产交接、试接代表模块及分批替换。不自动确认或关闭设计任务，不等待全游戏设计完毕；实际机器合同缺口按该规范说明，不伪造阶段通过。
 
 游戏包含声音反馈时，由 [app-audio](../app-audio/SKILL.md) 按[音效设计与生产](../app-audio/references/sfx-production.md#design)从本批事件确定声音风格、分层和代表样本，再交接受控变体、动态混音及情境试听返修。影响机制理解的样本可在 V1 前探索，V1 验证真实触发；纯音频任务沿用模块／资源实施单元，不要求视觉设计稿或 V2/V3 确认。
 
@@ -53,8 +55,8 @@ App 多页面按[多页面推进顺序](../app-domain-toolkit/references/increme
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
 3. 明确目标、非目标、文件/对象所有权与可观察验收；先只读补事实。出现确实需要用户取舍的缺口时进入 [grilling](../grilling/SKILL.md)，继续不依赖该决定的工作，不能把正常实现变成逐步审批。
    包含客户端界面的新项目初始化时询问用户支持的界面语言：默认简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可按需追加；给出默认选项并等待用户选择，已有明确语言决定时不重复询问。将确认的语言清单和默认显示语言写入项目配置并用于各栈实现、字体与验证；默认显示语言必须在清单内。语言选择未答复时继续不依赖该选择的工作，不能把预选项当作确认。既有项目沿用其已确认的语言范围，不因局部修复重问或擅自扩展。
-4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 先验证相关功能，白盒按需选择，不等待正式视觉完成。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
-5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)及本栈规范，从 V0/V1 明确宿主、内容和显示职责，白盒可选。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认使用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)；ESP32 可在设备限制内采用，游戏保留原有三候选视觉和素材流程。仅设计提案不强制先建设运行工程，正式实现仍须完成相关 V1 功能验证。Node.js 无界面服务不引入 Figma。已有有效方向和未受影响确认按语义复用，当前功能验证、V4 接入与 V5 实际运行／人工验收仍独立完成。
+4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 先验证相关功能，3D 世界按上述分流先搭建或复用有效白模，其他内容按风险选择原型，不等待正式美术。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
+5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)及本栈规范，从 V0/V1 明确宿主、内容和显示职责，原型方式按上述内容分流。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认使用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)；ESP32 可在设备限制内采用，游戏图片目标及 UI 保留相应三候选和素材规则，不用其替代 3D 白模与模型交接。仅设计提案不强制先建设运行工程，正式实现仍须完成相关 V1 功能验证。Node.js 无界面服务不引入 Figma。已有有效方向和未受影响确认按语义复用，当前功能验证、V4 接入与 V5 实际运行／人工验收仍独立完成。
    代理可按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对真实设计节点与可测事实；未经明确授权不得自动分析设计稿或运行截图，截图交用户检查。非游戏 App 的 V3 从所选稿提取必要还原交接，表达清楚时不重画拆解图、布局图或重复要求人工批准；V4 前段按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)试接实际组件，再分批扩展。共享文件和原生编辑器保持单写者。
 6. 实施后按[验证与交付](references/verification.md)先推荐 T0–T3 的理由、覆盖与命令，再自动执行；记录真实结果。失败优先 repair/revalidate，仅上游目标或范围真实失效才显式 return。
    按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)沉淀必要回归测试，更新受影响的当前项目说明并处理临时实现；按[精简交付](references/output-files.md#精简交付)简短反馈，不默认生成独立报告，不增加状态或审批。
@@ -92,7 +94,7 @@ Cocos、Phaser、Three.js 的编排任务按需要读取以下公共资料，同
 
 ## 交接与状态
 
-V1 采用白盒、临时资源或白模时，读取[可辨识的功能原型](references/readable-functional-prototype.md)，让对象、任务、可操作状态和反馈可理解；复用实际机制，以已有功能验证记录承载结果。白盒仍可选，不提前进行正式美术验收。
+V1 采用白盒、临时资源或白模时，读取[可辨识的功能原型](references/readable-functional-prototype.md)，让对象、任务、可操作状态和反馈可理解；3D 世界先搭建或复用有效白模，2D／UI 按风险选择。复用实际机制和已有功能验证记录，不提前进行正式美术验收。
 
 实施包、单元结果和证据格式以控制器的 schemas/templates 为准，不手写另一套近似字段。角色职责与交接见[协作边界](references/handoffs.md)；涉及策划、业务/玩法、动态反馈、音频、数值或动画时读取[领域生产交接](references/domain-production.md)。公共流程只规定“必须证明什么”；如何读取引擎对象、布局、输入、资源、构建及性能由各技术技能规定。
 

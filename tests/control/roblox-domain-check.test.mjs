@@ -12,6 +12,7 @@ async function controllerFixture(t, options = {}) {
   const created = await initializeWork({ repo, args: {
     id: work.workItemId, stack: 'roblox', type: work.workItemType, objective: '验证 Roblox 公共门合成分派',
     'project-id': work.projectId, 'object-id': 'object-a',
+    ...(work.workItemType === 'SCENE' ? { 'design-route': 'game-ui' } : {}),
     ...(work.workItemType === 'INTEGRATION' ? { 'integration-purpose': 'feature' } : {}),
   } });
   const initialized = loadWork(repo, created.metadata.workItemPath);

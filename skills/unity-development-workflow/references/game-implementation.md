@@ -6,7 +6,7 @@
 2. A3 前冻结 Implementation Package。包只包含当前阶段需要的 `SHARED`、`MODULE`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION` 或 `RELEASE` 单元；每个单元的非空 `acceptanceCommands`、业务身份、顺序与停止条件在冻结时确定。
 3. `SHARED` 只承载启动、Composition Root、日志、时间/随机、输入抽象、存档接口、公共安全区和测试入口等真正共享能力；安全区由 HUD/页面与独立显示层共同消费。其他没有两个稳定消费者的代码不提前上移。
 4. `MODULE` 保持场景无关，纯规则与 Unity 表现分离；Runtime asmdef 不引用 Editor。
-5. `SCENE`/`DISPLAY_LAYER` 在 V3 分别确认拆解与布局图，V4 生产、导入并验收正式资源，可生产资源级 Prefab、做临时组合预览；正式宿主 Scene/场景装配 Prefab/UI 接入和布局校准安排在 V5。跨场景导航、Build Settings、Addressables 全局配置和共享存档迁移留给 `INTEGRATION`。
+5. 图片／UI 路线的 `SCENE`/`DISPLAY_LAYER` 在 V3 分别确认拆解与布局图；3D 世界可显式采用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，在整体空间和方向人工确认后交接模型规格，无需 V3 双图。V4 生产、导入并验收正式资源，可生产资源级 Prefab、做临时组合预览；正式宿主 Scene/场景装配 Prefab/UI 接入和布局校准安排在 V5。跨场景导航、Build Settings、Addressables 全局配置和共享存档迁移留给 `INTEGRATION`。旧 Unity 原生图片工具不支持新合同时如实报告，不伪造工件。
 6. 进入 `IMPLEMENTING` 时由控制面在实际 `evidenceRoot` 创建 `execution-state.json`。各单元实际结果绑定 Work、实施包、`moduleId`/`scopeId`/`sceneId`/`layer`/`host`、计划顺序和验收命令；真实 `files` 及命令 `outputFile` 限定在 `evidenceRoot`。`unit-check --result <json>` 只核对结果与顺序，不运行命令、不改写实施包中的 `unit.status`；进入 `VALIDATING` 时重新校验 `execution-state.units` 中全部单元。
 7. 实施后审计实际 diff，确认 `.meta` 配对、文件/对象所有权和计划一致；推荐并自动执行适用测试。
 7. 失败只按证据 `repair`、`revalidate` 或最小范围 `return`，不得自动回滚共享工作区。
@@ -17,7 +17,7 @@
 
 玩家可见的 uGUI/TMP、UI Toolkit 文本及奖励反馈按[游戏内文案](./game-copy.md)消费当前确认的可见表达、状态、本地化键和真实数据，V4 资源预览与 V5 正式组合/运行保持同一来源。图标、数字与符号优先，必要语义完整；不得把 GDD/brief 的规则说明、设计理由或验收字段直接绑定到画面。
 
-场景和显示层沿用 V3 的[文本与色彩拆分路线](./visual-decomposition-routes.md)，按独立编号接入系统文本、原生填充与图片部件；原功能组件统一管理热区、显隐、本地化、进度和状态。实际 renderer 必须保留已确认效果，不以默认字体或纯色近似静默替换，文字、填充与装饰共用实际布局和裁切边界。
+图片目标的场景和显示层沿用 V3 的[文本与色彩拆分路线](./visual-decomposition-routes.md)，按独立编号接入系统文本、原生填充与图片部件；原功能组件统一管理热区、显隐、本地化、进度和状态。`world-3d` 场景使用已确认空间和模型接口，内部 UI 仍遵守自己的图片／布局合同。实际 renderer 保持已确认效果，文字、填充与装饰共用实际布局和裁切边界。
 
 公共资源按[登记与使用](./shared-asset-usage.md)从总表绑定实际身份，装配合同同步 `resourceId`、路径/GUID 与消费节点。共享字体、贴图和材质保留单一来源，本地状态作用于本地实例；新增、移除或替换引用时同步消费关系，公共源变化由所有者更新并重验实际受影响组合。
 

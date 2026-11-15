@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "1.0",
+  "designRoute": "world-3d",
+  "baselineId": "replace-with-baseline-id",
+  "projectId": "replace-with-project-id",
+  "stack": "unity",
+  "directionRef": { "path": "docs/replace-visual-direction.md", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "selectionReviewRef": { "path": "docs/replace-direction-confirmation.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }
+}

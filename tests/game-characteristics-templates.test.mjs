@@ -79,6 +79,10 @@ for (const [stack, skill] of Object.entries(STACKS)) {
       verifyReference(project, path, fragment);
       if (name !== 'GDD.md') verifyReference(project, path, 'regression');
       for (const contentFragment of contentFragments) verifyReference(project, path, contentFragment, 'game-content-playtesting.md');
+      // 从实际生成文档可发现对应分流、替换交接及单次审查，不能仅检查源模板存在。
+      for (const fragment of ({ 'GDD.md': ['implementation-routes'], 'TDD.md': ['production-handoff', 'tooling-boundary'], 'qa-plan.md': ['review'] })[name]) {
+        verifyReference(project, path, fragment, 'game-design-exploration.md');
+      }
       if (stack === 'unity') {
         // 源模板相对路径与生成文档路径不同，两者都必须可解析到已安装规范。
         const source = join(root, skill, 'templates/project-docs', name);

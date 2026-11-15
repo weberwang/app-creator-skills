@@ -27,6 +27,7 @@ const expectedStages = { implementation: 'V3', assets: 'V3', layout: 'V3', targe
 async function createFixture({ id, stack = 'flutter', type = 'PAGE', projectId = 'project-a', objectId = 'object-a', hostId, layerType } = {}) {
   const repo = await mkdtemp(resolve(tmpdir(), 'visual-reuse-'));
   const args = { id, stack, type, objective: `验证 ${id} 的视觉控制协议`, 'project-id': projectId, 'object-id': objectId };
+  if (type === 'SCENE') args['design-route'] = 'game-ui';
   if (type === 'DISPLAY_LAYER') Object.assign(args, { 'host-id': hostId ?? 'host-a', 'layer-type': layerType ?? 'modal' });
   const result = await initializeWork({ repo, args });
   return { repo, workPath: result.metadata.workItemPath };
@@ -586,7 +587,7 @@ test('单目标确认记录原地变化后不能借原路径复用', async (t) =
 test('多目标来源绑定逐视图校验，不能错绑清单、确认或继承 V4', async (t) => {
   const fixture = await createFixture({ id: 'scene-source', stack: 'cocos', type: 'SCENE', objectId: 'scene' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
-  const targetInit = await initializeWork({ repo: fixture.repo, args: { id: 'scene-target', stack: 'cocos', type: 'SCENE', objective: '验证多目标来源', 'project-id': 'project-a', 'object-id': 'scene' } });
+  const targetInit = await initializeWork({ repo: fixture.repo, args: { id: 'scene-target', stack: 'cocos', type: 'SCENE', 'design-route': 'game-ui', objective: '验证多目标来源', 'project-id': 'project-a', 'object-id': 'scene' } });
   const source = loadWork(fixture.repo, fixture.workPath);
   const work = loadWork(fixture.repo, targetInit.metadata.workItemPath);
   source.globalState = 'COMPLETE';
@@ -617,7 +618,7 @@ test('多目标来源绑定逐视图校验，不能错绑清单、确认或继�
   middle.visual.stage = 'V5';
   const middlePath = targetInit.metadata.workItemPath;
   await putJson(fixture.repo, middlePath, middle);
-  const thirdInit = await initializeWork({ repo: fixture.repo, args: { id: 'scene-third', stack: 'cocos', type: 'SCENE', objective: '验证多级来源', 'project-id': 'project-a', 'object-id': 'scene' } });
+  const thirdInit = await initializeWork({ repo: fixture.repo, args: { id: 'scene-third', stack: 'cocos', type: 'SCENE', 'design-route': 'game-ui', objective: '验证多级来源', 'project-id': 'project-a', 'object-id': 'scene' } });
   const third = loadWork(fixture.repo, thirdInit.metadata.workItemPath);
   third.globalVisualBaselineRef = structuredClone(middle.globalVisualBaselineRef);
   third.visual.coverageRef = structuredClone(middle.visual.coverageRef);

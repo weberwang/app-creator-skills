@@ -4,7 +4,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈共用 V0–V5：V0 范围、V1 功能与适用空间验证、V2 正式视觉方向／目标、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 

@@ -5,9 +5,15 @@ description: "把三维对象需求转成可控几何、清楚层级、目标面
 
 # 三维几何建模
 
+有界制作可交[专属模型代理 app_3d_model_creator](../app-creator-workflow/references/specialist-agents.md)，主代理保留整合与正式引擎交接责任，不新增审批或逐物件代理。
+
 将模型简报落成在目标视角下可读、结构正确且满足运行预算的几何资产，减少导出后修复和引擎侧猜测。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
+
+3D 世界整体白模和方向确认后的正式模型任务，按[生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)先制作并试接代表模块，再按本批规格制作或复用其余模型。独立模型和不改变空间的局部修订沿用自身范围，不重建整场景。
+
+整体制作或模块／组团制作按[场景制作单元](../app-domain-toolkit/references/game-design-exploration.md#scene-production-units)选择：整体空间依据统一，Blender 文件组织、导出单元和引擎实例分别按用途安排，保留必要的接口与独立变化边界。
 
 ## 输入
 
@@ -24,7 +30,7 @@ description: "把三维对象需求转成可控几何、清楚层级、目标面
 
 ## 关键边界
 
-- 本入口负责几何与场景结构；UV、贴图绘制、绑定动画和各引擎导入流程分别由对应能力处理。
+- 本入口负责几何与场景结构；UV 和材质槽的制作及交接按所选原生模式划分，贴图绘制、绑定动画和引擎导入由对应能力处理。
 - 不假设任何DCC或插件已安装；栈特定工作区与导出格式按原生适配执行。
 
 ## 交付

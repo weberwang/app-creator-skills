@@ -8,6 +8,7 @@ import test from 'node:test';
 import { validateEvidence, validateGlobalBaseline, validateHumanReview, validateUnitResult, hasPreciseApproval } from '../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { repoPath } from '../skills/app-workflow-control/scripts/runtime/io.mjs';
 import { initializeWork } from '../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { attachFigmaBaselineFixture } from './control/figma-app-fixture.mjs';
 
 /** 在独立临时项目中建立有效工作项，并在测试后清理。 */
 async function fixture(t, { id = 'boundary', stack = 'flutter', projectId = 'shared-project', type = 'FOUNDATION' } = {}) {
@@ -120,6 +121,8 @@ test('同项目同技术栈视觉基线可跨工作项复用，错项目或错�
     selectionReviewRef: { path: selectionReview, sha256: createHash('sha256').update(readFileSync(join(first.repo, selectionReview))).digest('hex') },
   }));
   second.globalVisualBaselineRef = { path: baselinePath, sha256: createHash('sha256').update(readFileSync(join(first.repo, baselinePath))).digest('hex') };
+  // Flutter 按现行 Figma 路线复用可编辑方向，不能以旧游戏三候选合同代替。
+  attachFigmaBaselineFixture(first.repo, second);
   assert.doesNotThrow(() => validateGlobalBaseline(first.repo, second));
 
   assert.throws(() => validateGlobalBaseline(first.repo, { ...second, projectId: 'different-project' }), /项目或技术栈错绑/);

@@ -114,14 +114,14 @@ async function lintPackage(repo) {
     'evidence-manifest.schema.json', 'human-review.schema.json', 'grilling-record.schema.json',
     'asset-review.schema.json', 'global-visual-baseline.schema.json', 'figma-app-design.schema.json', 'release-result.schema.json',
     'release-preparation.schema.json', 'work-plan.schema.json', 'execution-report.schema.json',
-    'production-scope.schema.json', 'production-coverage.schema.json',
+    'production-scope.schema.json', 'production-coverage.schema.json', 'world3d-scene.schema.json', 'world2d-scene.schema.json',
   ];
   for (const file of schemaFiles) {
     const path = resolve(skillRoot, 'schemas', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }
     catch (error) { throw new WorkflowError(`schema ${file} 无效或缺失：${error.message}`, 'PACKAGE_INVALID'); }
   }
-  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'figma-app-baseline.json', 'figma-app-brief.json', 'figma-app-design.json', 'figma-app-handoff.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json', 'production-scope.json', 'production-coverage.json'];
+  const templateFiles = ['work-item.json', 'implementation-package.json', 'evidence-manifest.json', 'grilling-record.json', 'asset-review.json', 'global-visual-baseline.json', 'figma-app-baseline.json', 'figma-app-brief.json', 'figma-app-design.json', 'figma-app-handoff.json', 'human-review.json', 'execution-result.json', 'release-result.json', 'release-preparation.json', 'work-plan.json', 'execution-report.json', 'production-scope.json', 'production-coverage.json', 'world3d-scene.json', 'world3d-visual-baseline.json', 'world2d-scene.json'];
   for (const file of templateFiles) {
     const path = resolve(skillRoot, 'templates', file);
     try { JSON.parse(readFileSync(path, 'utf8')); }

@@ -4,7 +4,7 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-各技术栈统一使用 V0–V5；V1 验证功能且白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 全局视觉控制约束
 
@@ -50,6 +50,8 @@
 
 ## 三候选生成与人工冻结门
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 生成方向候选前，先按[产品市场调研](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对来源、竞品对比及其与当前视觉 brief 的设计依据；缺失时由产品策划补齐后再生成。
@@ -82,6 +84,8 @@
 | 正式冻结 | `globalVisualBaselineSelectionRef`、冻结正文、真实风格指纹、primary anchor/selected candidate | global-static-baseline-frozen | 只写状态字段 |
 
 ## 全局视觉冻结表
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -211,6 +215,8 @@ V5 为每个生产包提交多资源联系表，并至少生成一张同屏组�
 
 ## 基线变更提案
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 禁止直接修改冻结基线。变更提案必须建立 Change Request，列出新旧基线、原因、影响、需要失效的高影响操作批准/证据、迁移计划、成本与重新执行 V3 拆解图确认的要求；V2/V3 使用 `AUTO` 或 `USER_DECISION` 记录，不写操作审批 pending。无副作用本地集成不因 A4 等级标签额外等待批准，外部写入、付费、真机、破坏性或外部删除、发布才进入精确操作批准。
@@ -249,6 +255,8 @@ V5 为每个生产包提交多资源联系表，并至少生成一张同屏组�
 ```
 
 ## 生成前全局基线硬门
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

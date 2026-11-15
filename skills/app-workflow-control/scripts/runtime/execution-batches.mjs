@@ -64,6 +64,13 @@ export function createExecutionPlanSnapshot(pack, { repo } = {}) {
       acceptanceCommands: [...unit.acceptanceCommands],
       parallelGroup: unit.parallelGroup ?? null,
       dependsOn: unit.dependsOn === undefined ? [] : [...unit.dependsOn],
+      // 显式样本关系是冻结执行计划的一部分，不能启动后删除或替换。
+      ...(unit.sampleRole !== undefined ? {
+        sampleRole: unit.sampleRole,
+        sampleScopeIds: Array.isArray(unit.sampleScopeIds) ? [...unit.sampleScopeIds] : unit.sampleScopeIds,
+        sampleBasisRef: unit.sampleBasisRef ? { ...unit.sampleBasisRef } : unit.sampleBasisRef,
+        ...(unit.sampleDecisionRequired !== undefined ? { sampleDecisionRequired: unit.sampleDecisionRequired } : {}),
+      } : {}),
     })),
     batches,
   };

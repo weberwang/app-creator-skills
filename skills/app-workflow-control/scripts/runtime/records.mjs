@@ -13,10 +13,11 @@ import { inspectPendingRegressionExecution, inspectWork, loadWork, response } fr
 import { withWorkLock } from './work-lock.mjs';
 import { freezeProductionDependencies } from './production-scope.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
+import { assertNoSampleControlAliases, collectSampleControlReferences } from './production-samples.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
-const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn']);
-const REPORT_FIELDS = new Set(['files', 'deletedFiles', 'commandOutputs', 'evidence', 'hostId', 'layerType']);
+const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
+const REPORT_FIELDS = new Set(['files', 'deletedFiles', 'commandOutputs', 'evidence', 'hostId', 'layerType', 'sampleEvidenceRef']);
 const REPORT_COMMAND_FIELDS = new Set(['command', 'exitCode', 'outputFile']);
 const REPORT_EVIDENCE_FIELDS = new Set(['category', 'path', 'targetId']);
 const GATE_ASSESSMENT_FIELDS = new Set(['status', 'reason']);
@@ -59,6 +60,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     manifestPath,
     `${evidenceRoot}/execution-state.json`,
     ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative),
+    ...plan.executionUnits.map((unit) => unit.sampleBasisRef?.path).filter(Boolean),
     ...plan.executionUnits.map((unit) => `${evidenceRoot}/unit-${unit.unitId}.json`),
   ];
   assertUnitPathsAvoidRecords(plan.executionUnits, protectedPaths);
@@ -78,6 +80,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
       acceptanceCommands: [...entry.acceptanceCommands],
       ...(entry.parallelGroup !== undefined ? { parallelGroup: entry.parallelGroup } : {}),
       ...(entry.dependsOn !== undefined ? { dependsOn: [...entry.dependsOn] } : {}),
+      ...(entry.sampleRole !== undefined ? { sampleRole: entry.sampleRole, sampleScopeIds: [...entry.sampleScopeIds], sampleBasisRef: { ...entry.sampleBasisRef }, ...(entry.sampleDecisionRequired !== undefined ? { sampleDecisionRequired: entry.sampleDecisionRequired } : {}) } : {}),
     };
     return unit;
   });
@@ -210,6 +213,13 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
   ].map(pathKey));
   if (forbiddenRecords.has(pathKey(sourcePath))) throw new WorkflowError('Execution Report 不能复用 Work Item、计划、实施包、执行状态、结果或 manifest 路径');
   forbiddenRecords.add(pathKey(sourcePath));
+  // 尚未生成结果时也保护样本封套及其确认，不能将其登记为交付、命令输出或原始证据。
+  if (report.sampleEvidenceRef?.path) {
+    const projected = { ...pack, executionUnits: [{ ...unit, resultPath: sourcePath }] };
+    const controls = collectSampleControlReferences(repo, work, projected);
+    for (const path of controls) forbiddenRecords.add(pathKey(path));
+    assertNoSampleControlAliases(repo, [...report.files, ...report.commandOutputs.map((entry) => entry.outputFile), ...report.evidence.map((entry) => entry.path)], controls);
+  }
   validateNoRecordSelfReferences(repo, report, forbiddenRecords);
 
   validateManifestNoSelfReferences(repo, manifest, forbiddenRecords, work.evidenceRoot);
@@ -239,6 +249,7 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     ...(work.workItemType === 'DISPLAY_LAYER' ? { hostId: report.hostId, layerType: report.layerType } : {}),
     files: [...report.files],
     ...(report.deletedFiles === undefined ? {} : { deletedFiles: [...report.deletedFiles] }),
+    ...(report.sampleEvidenceRef === undefined ? {} : { sampleEvidenceRef: { ...report.sampleEvidenceRef } }),
     commandOutputs: report.commandOutputs.map((entry) => ({ ...entry })),
   };
   // 正式校验器核对文件所有权、命令顺序、退出码和非空输出；这里不执行命令。
@@ -315,6 +326,12 @@ function validatePlanShape(plan) {
     if (unit.type !== undefined && !UNIT_TYPES.includes(unit.type)) throw new WorkflowError(`executionUnits[${index}].type 无效：${unit.type}`);
     if (unit.parallelGroup !== undefined) requireSafeText(unit.parallelGroup, `executionUnits[${index}].parallelGroup`);
     if (unit.dependsOn !== undefined) requireStringArray(unit.dependsOn, `executionUnits[${index}].dependsOn`);
+    if (unit.sampleRole !== undefined) {
+      if (!['sample', 'batch'].includes(unit.sampleRole)) throw new WorkflowError(`executionUnits[${index}].sampleRole 无效`);
+      requireStringArray(unit.sampleScopeIds, `executionUnits[${index}].sampleScopeIds`, { nonEmpty: true });
+      validateFrozenRefShape(unit.sampleBasisRef, `executionUnits[${index}].sampleBasisRef`);
+    } else if (['sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired'].some((key) => unit[key] !== undefined)) throw new WorkflowError(`executionUnits[${index}] 缺少 sampleRole`);
+    if (unit.sampleDecisionRequired !== undefined && typeof unit.sampleDecisionRequired !== 'boolean') throw new WorkflowError(`executionUnits[${index}].sampleDecisionRequired 必须为布尔值`);
   }
   if (plan.gateAssessments !== undefined) {
     assertObjectFields(plan.gateAssessments, new Set(GATE_KEYS), 'Work Plan.gateAssessments');
@@ -358,6 +375,7 @@ function validateReportShape(report) {
   assertObjectFields(report, REPORT_FIELDS, 'Execution Report');
   if (report.hostId !== undefined) requireSafeText(report.hostId, 'Execution Report.hostId');
   if (report.layerType !== undefined) requireSafeText(report.layerType, 'Execution Report.layerType');
+  if (report.sampleEvidenceRef !== undefined) validateFrozenRefShape(report.sampleEvidenceRef, 'Execution Report.sampleEvidenceRef');
   requireStringArray(report.files, 'Execution Report.files');
   if (report.deletedFiles !== undefined) requireStringArray(report.deletedFiles, 'Execution Report.deletedFiles');
   if (!report.files.length && !report.deletedFiles?.length) throw new WorkflowError('Execution Report 必须包含变更或删除文件');
@@ -375,6 +393,13 @@ function validateReportShape(report) {
     requireSafeText(entry.path, `evidence[${index}].path`);
     if (entry.targetId !== undefined) requireSafeText(entry.targetId, `evidence[${index}].targetId`);
   }
+}
+
+/** 用户记录的样本引用只允许规范路径与实际内容摘要。 */
+function validateFrozenRefShape(value, label) {
+  assertObjectFields(value, new Set(['path', 'sha256']), label);
+  requireSafeText(value.path, `${label}.path`);
+  if (!/^[a-f0-9]{64}$/.test(value.sha256 ?? '')) throw new WorkflowError(`${label}.sha256 必须为小写 SHA-256`);
 }
 
 /** 确认既有 Evidence Manifest 仍绑定本次冻结计划。 */

@@ -4,9 +4,11 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-各技术栈统一使用 V0–V5；V1 验证功能且白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 游戏感质量硬门
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -21,6 +23,8 @@
 游戏感必须同时符合“游戏美术体验与质量契约”（见本栈配套资料）的主题、受众、可读性、观看舒适与完成度要求。判断依据来自当前项目 brief，不把更亮、更复杂或更强烈的反馈当作统一质量标准。
 
 ## 门禁原则
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -82,6 +86,8 @@ V3 或对应 F2 发现下列任一结构无法支持游戏感时，提交“结�
 
 ## V3 领域质量检查
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 V3 的游戏感检查只补充当前拆解和布局方案的领域事实：核心玩具、第一视觉焦点、行动召唤、状态反馈、适用的奖励期待、页面差异、沉浸完整性及静态美术质量必须有可观察证据。静态舒适度不代表持续游玩通过；动态刺激与重复反馈在 V5 验收。拆解确认和布局确认是两个独立的用户确认门，分别由对应合同记录；本文件不新增方向候选或额外确认门。
@@ -91,6 +97,8 @@ V3 的游戏感检查只补充当前拆解和布局方案的领域事实：核�
 自动路径记录 `AUTO`；需要用户选择时记录 `USER_DECISION` 结论并回写权威工件。修改后按控制面重跑受影响的 F0-F3；实质取舍仍未解决时保持 `USER_INPUT_REQUIRED`，不得准备操作审批 pending。
 
 ## 核心审核项与评分
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -302,6 +310,8 @@ V3 的游戏感检查只补充当前拆解和布局方案的领域事实：核�
 
 ## 游戏感领域审核输出模板
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 ```md
@@ -338,6 +348,8 @@ V3 的游戏感检查只补充当前拆解和布局方案的领域事实：核�
 | V5 持续观看/重复/叠加（V3 不适用） | | | | | |
 
 ## 结构与结论
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 - 退 V2 的结构问题：无 / 构图 / 信息层级 / 资源槽 / 页面模板 / 布局几何
 - 结构修订包：

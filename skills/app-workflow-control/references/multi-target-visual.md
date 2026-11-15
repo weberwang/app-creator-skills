@@ -1,5 +1,15 @@
 # 场景多目标记录
 
+本页管理原图片视觉目标；显式 `world-3d` 世界使用[无图场景合同](world3d-scenes.md)，不建立根级世界图片 targets 或世界的双 V3 图稿确认。2D、UI 和既有图片路线继续执行本页要求。
+
+3D 世界中的常驻 HUD 仍属于真实宿主场景，并按[同场景常驻 HUD](world3d-scenes.md#persistent-hud)在 `visual.hud` 引用本页图片目标、领域材料与人工确认；根级世界合同继续处理模型。此处 HUD 沿用本页流程，不作为瞬态层或新增场景。
+
+游戏二维世界使用默认 `world-2d`，在原图片链之外，以 `visual.sceneDesignRef` 引用[二维空间合同](../schemas/world2d-scene.schema.json)中的现有空间规格、布局源、运行、联合单次审查与人工空间决定。V1→V2 前检查设计前置，后续核对其冻结版本；不能把只确认图片覆盖范围的 `coverageRef` 自动解释为空间确认。同一次真实用户消息明确覆盖二者时可复用。纯界面 `SCENE` 显式用 `game-ui`，PAGE／DISPLAY_LAYER 继续原流程。
+
+二维合同的 `spatialSpecRef` 指向原空间规格的结构化事实：当前工作项／项目／栈／场景身份、`dimension:2`、单位、覆盖范围、区域身份、二维角色尺度及目标视口；`layoutRef` 绑定实际平面／占位／Tilemap 布局源。`layoutRunRef` 位于本次 V1 证据根，记录 `phase:layout`、真实引擎会话、时间及同一布局版本，并引用命令原始输出及镜头、导航、碰撞、交互的适用检查。镜头不可省略，其余不适用项写明原因；控制记录不能当原始输出，不要求为二维制作三维白模。
+
+V1 可以先进入搭建与验证，功能通过时必须有上述事实。进入 V2 前，`reviewRef` 绑定已有一轮 `scene-design-review`（`rounds:1`、完成状态、空间／布局／运行依据及已处理的阻断问题），`spaceApprovalRef` 引用整体空间的已有用户决定（V2、`purpose:space-baseline`、`decision:APPROVED`、真实消息、空间对象及布局／运行／审查依据）。身份、文件及摘要均须匹配当前版本；该封套只引用现有记录，不另建审批。后续功能重验保留有效空间根与版本；空间变化回 V1，更新本轮问题处理及必要的人工确认。仅 V2 方向返修、V3 以后或纯工程返修不自动重开未受影响的空间审查与确认。共同方法见[单次审查](../../app-domain-toolkit/references/game-design-exploration.md#review)。
+
 Roblox 场景目标沿用当前数组与公共确认链，`domainEvidenceRef` 仍使用现有路径引用。领域包装绑定目标、候选、场景/状态、视口及冻结目标，再通过带摘要的 `robloxEvidenceRef` 关联[本栈原生材料](../../roblox-domain-contracts/references/domain-validation.md)。Place 是正式工程宿主，一个 Place 可承载多个功能或数据关卡，不按关卡数量机械建场景；当前 Studio、Edit 与 Client/Server 运行上下文分别核对。
 
 一个 `SCENE` 工作项使用 `visual.objectId` 标识正式场景、`visual.stage` 记录共同阶段，并通过 `visual.targets` 登记一张或多张正式目标图。不要为每张目标另建场景或复制正式资源。V0、功能验证 V1 和 V2 初期可无视觉目标；离开 V2 前至少规划并确认一个目标。

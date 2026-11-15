@@ -25,6 +25,8 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 游戏方案阶段先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)核对创意与核心循环的完整体验推演，记录具体问题、依据及后续验证问题。相关机制实现前核对方案问题的处理去向，V1 与后续真实参与者观察继续验证已交接的假设。
 
+本批关卡／场景按内容分流完成搭建与必要功能验证后、交用户确认整体场景前，按[方案单次审查](../app-domain-toolkit/references/game-design-exploration.md#review)联合核对玩法与空间依据、尺度、镜头和覆盖风险；3D 核对白模运行，2D 核对平面布局及占位，UI 保持原流程。与同一方案的当前稿审查合并，修改后等待人工反馈，不自动再审或确认；正式模型替换后仍复验受影响功能和用户显示，不将概念图或代理审查当作运行证据。
+
 当前视觉设计稿完成后，按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对需求、可编辑节点和可测结构事实；设计稿截图与运行截图默认由用户检查，未获明确授权不得自动分析或代写视觉 PASS。已有这轮记录时沿用，不借换代理或修改版本重开；后续工程验证及人工显示确认分别记录。
 
 1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。

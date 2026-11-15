@@ -10,6 +10,7 @@
   "properties": {
     "hostId": {"type": "string", "minLength": 1},
     "layerType": {"type": "string", "minLength": 1},
+    "sampleEvidenceRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "files": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "deletedFiles": {"type": "array", "items": {"type": "string", "minLength": 1}},
     "commandOutputs": {

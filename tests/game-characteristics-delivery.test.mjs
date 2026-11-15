@@ -29,7 +29,9 @@ const RULES = [
   { path: EXPLORATION, entries: {
     'app-product-planning': 'explore',
     'app-gameplay-development': 'handoff',
-    'app-asset-workflow': 'handoff',
+    'app-asset-workflow': 'production-handoff',
+    // QA 的设计后审查须能按游戏栈选读同一规范，并验证真实审查锚点。
+    'app-quality-review': 'review',
   } },
 ];
 
@@ -39,7 +41,9 @@ function checkLink(root, source, section = '', target = RULE) {
   const links = [...readFileSync(file, 'utf8').matchAll(/\[[^\]]+\]\(([^)]+)\)/g)];
   assert.ok(links.some(([, href]) => {
     const [path, fragment = ''] = href.split('#');
-    return resolve(dirname(file), path) === resolve(root, target) && fragment === section;
+    // 仅含锚点的链接指向当前文件，而不是当前文件所在目录。
+    const linkedFile = path ? resolve(dirname(file), path) : file;
+    return resolve(linkedFile) === resolve(root, target) && fragment === section;
   }), `${source} 缺少专项链接或锚点错误`);
   assert.ok(extractMarkdownSection(readFileSync(join(root, target), 'utf8'), section).trim());
 }
@@ -96,6 +100,7 @@ for (const stack of STACKS) {
     // 设计职责、原型验证和正式多视图制作都必须能接回同一份探索规范。
     for (const [source, section] of [
       ['app-creator-workflow/SKILL.md', 'explore'],
+      ['app-creator-workflow/SKILL.md', 'implementation-routes'],
       ['app-creator-workflow/references/workflow.md', 'explore'],
       // V0 摘要与实施入口须接入同一人工确认约定，不能只保留方案展示入口。
       ['app-creator-workflow/references/workflow.md', 'sequence'],
@@ -103,7 +108,29 @@ for (const stack of STACKS) {
       ['app-creator-workflow/references/handoffs.md', 'roles'],
       ['app-creator-workflow/references/readable-functional-prototype.md', 'handoff'],
       ['app-asset-workflow/references/multi-image-scene-design.md', 'explore'],
+      ['app-asset-workflow/references/multi-image-scene-design.md', 'implementation-routes'],
+      ['app-asset-workflow/SKILL.md', 'production-handoff'],
+      // 从实际规范入口可追踪到机器合同限制，不能只验证新锚点存在。
+      [EXPLORATION, 'tooling-boundary'],
     ]) checkLink(root, source, section, EXPLORATION);
+    const exploration = readFileSync(join(root, EXPLORATION), 'utf8');
+    const routes = extractMarkdownSection(exploration, 'implementation-routes');
+    const routeRows = [...routes.matchAll(/^\| (3D 世界场景|2D 世界场景|UI[^|]*) \|(.+)$/gm)];
+    assert.equal(routeRows.length, 3, '3D、2D 与 UI 均须有独立的可安装分流');
+    // 只检查各路线的关键区别，其他工作流约束继续由原有章节和合同承载。
+    assert.match(routeRows[0][2], /白模[\s\S]*人工确认后/);
+    assert.match(routeRows[1][2], /平面布局[\s\S]*不强制制作三维白模/);
+    assert.match(routeRows[2][2], /不增加世界场景白模步骤/);
+    const handoff = extractMarkdownSection(exploration, 'production-handoff');
+    // 分开核对真实触发、样本与整批验收，避免依赖一整句固定表述。
+    assert.match(handoff, /整体空间人工确认完成后[\s\S]*等待用户确认正式视觉方向/);
+    const sample = handoff.match(/^\| 代表样本 \|(.+)$/m)?.[1] ?? '';
+    assert.match(sample, /试接[\s\S]*样本合格后再分批/);
+    const batch = handoff.match(/^\| 分批制作与导入 \|(.+)$/m)?.[1] ?? '';
+    assert.match(batch, /V4 完成时[\s\S]*本批模型[\s\S]*证据/);
+    const tooling = extractMarkdownSection(exploration, 'tooling-boundary');
+    assert.match(tooling, /不能将 3D 伪装成 Figma App/);
+    assert.match(tooling, /缺少适用表达[\s\S]*受阻阶段/);
     // 声明的按需参考丢失必须报错，不能悄悄退回源仓库或当作可选检查跳过。
     for (const rule of RULES) {
       const missing = resolve(root, rule.path);

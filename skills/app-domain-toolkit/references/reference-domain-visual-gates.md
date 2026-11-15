@@ -2,9 +2,11 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一按 V0–V5 推进；V1 先验证功能，白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 视觉生产硬门
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -23,6 +25,8 @@ V4 `production_contract_audit` 必须逐部件核对实际输出和 `component_u
 Spine 换皮的 `spine_batch_acceptance` 只表示局部批次生产锁定。它必须核对批次 revision、实际审阅图、候选 Cell 和 Region 顺序，但不构成公共控制器的动作批准、不计为场景 V3 拆解确认，也不得绕过 V5 运行态证据。
 
 ## 图片优先的确认方式
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

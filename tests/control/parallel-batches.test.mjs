@@ -125,6 +125,18 @@ test('串行、双单元并行、串行批次按计划依次开放且允许 B �
   assert.deepEqual((await readExecutionState(context)).activeBatch, []);
 });
 
+test('代表样本先于批量单元登记完成，不推断实际制作时间', async (t) => {
+  const units = [unit('sample', 1), unit('batch', 2, { dependsOn: ['sample'] })];
+  const context = await startWork(units);
+  t.after(() => rm(context.repo, { recursive: true, force: true }));
+  const [sampleResult, batchResult] = await Promise.all(units.map((target) => writePassingResult(context, target)));
+  await assert.rejects(completeUnit({ repo: context.repo, workItem: context.workPath, resultPath: batchResult }), /不属于当前批次/);
+  await completeUnit({ repo: context.repo, workItem: context.workPath, resultPath: sampleResult });
+  assert.deepEqual((await readExecutionState(context)).activeBatch, ['batch']);
+  await completeUnit({ repo: context.repo, workItem: context.workPath, resultPath: batchResult });
+  assert.deepEqual((await readExecutionState(context)).activeBatch, []);
+});
+
 test('拒绝并行路径冲突、glob、非法依赖、交错组、重复 ID 和共享单元', async (t) => {
   const base = [unit('foundation', 1)];
   const cases = [

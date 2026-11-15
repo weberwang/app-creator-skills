@@ -2,9 +2,11 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一使用 V0–V5；V1 是功能实现与验证，白盒可选，正式功能不必等待视觉目标。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 视觉质量门
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -19,6 +21,8 @@
 场景视觉与功能生命周期沿用当前场景 Work Item 的 V0→V1→V2→V3→V4→V5 阶段；本领域只补充视觉质量事实。V3 依次完成拆解确认和布局确认，V4 完成正式资源验收，V5 直接消费 V3 布局与 V4 正式资源，完成运行态视觉接入和功能/视觉联合复验。全局基线、基础工程和集成入口以控制面文档为准。
 
 ## 路径
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -57,6 +61,8 @@
 生成式位图生产合同贯穿 V3、V4、V5：`independent-production` 与 `generate-now` 不推断具体生成器；每个区域必须完成 `state_analysis`，并让 `expected_assets` 逐唯一 `component_id × required state_id` 对应独立位图。V4 必须审计 `production_contract_audit` 及逐部件 `component_usages`，V5 再绑定 F3 runtime replay、非空 freshness-bound fidelity cases、实际消费及无未批准替换。
 
 ## 失效与返回
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

@@ -2,9 +2,11 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一按 V0–V5 推进；V1 先验证功能，白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+各技术栈统一按 V0–V5 推进；V1 先验证功能，3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界和 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型；V2–V5 依当前合同完成视觉目标、交接、资源导入和运行验收。现有机器字段及图像工件要求按[工具边界](game-design-exploration.md#tooling-boundary)执行，无法满足时保留阻断。
 
 ## 结构化 Schema
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -26,6 +28,8 @@
 效果图 Evidence 还必须绑定 `scene_reconstruction_contract`：冻结 target 条件、完整 composition、逐区域视觉事实、runtime fidelity obligations、目标绑定 layout/responsive、默认可用性验证或明确选择的精确模式、预声明容差和完整实现计划。V5 fidelity case 按 `visual_validation.mode` 取证：默认 `usability` 关注布局关系和可用性；项目已声明的关键几何容差在 `usability` 中仍须按现有校验入口核对；只有明确选择 `exact` 时才要求完整逐 region 测量矩阵及严格像素差异、side-by-side/overlay/diff。
 
 ## 场景还原 schema 与验证命令
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

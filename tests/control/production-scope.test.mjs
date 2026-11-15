@@ -204,6 +204,22 @@ test('批次证据拒绝漏步骤、错状态转移、冒用旧实施包或缺�
   assert.throws(() => validateProductionBatchEvidence(f.repo, f.work, f.manifest), /内容已变化/);
 });
 
+test('二维与三维审批记录即使改用 record 后缀也不能冒充运行输出', (t) => {
+  for (const designRoute of ['world-2d', 'world-3d']) {
+    const f = fixture(t);
+    const approval = f.write(`evidence/first/${designRoute}.record`, {
+      schemaVersion: '1.0', workItemId: f.work.workItemId, projectId: f.work.projectId,
+      stack: f.work.stack, objectId: f.work.visual.objectId,
+      stage: 'V2', purpose: 'space-baseline', decision: 'APPROVED', userMessageRef: 'test-only://human',
+      subjectRef: { path: 'spec/space.json', sha256: 'a'.repeat(64) }, basisRefs: [],
+    });
+    f.coverage.cases[0].evidenceRef = approval;
+    f.saveCoverage();
+    f.manifest.items.push({ category: 'tests', status: 'PASS', path: approval.path });
+    assert.throws(() => validateProductionBatchEvidence(f.repo, f.work, f.manifest), /独立于控制记录/, designRoute);
+  }
+});
+
 test('批次不能以清单、计划或总范围等控制文件冒充运行原始输出', (t) => {
   const f = fixture(t);
   const fake = f.write('evidence/first/manifest.json', { status: 'PASS' });
@@ -261,7 +277,7 @@ function finalFixture(t, options) {
     f.work.productionScopeRef = f.ref;
   }
   const baseline = f.write('final/baseline.json', { objectId: f.objectId });
-  const source = { ...f.work, workItemId: 'current-work', globalState: 'COMPLETE', visual: { objectId: f.objectId, stage: 'V5', functionBaselineRef: baseline, ...(options?.app ? {} : { targets: [{ targetId: 'entrance' }, { targetId: 'battle' }] }) } };
+  const source = { ...f.work, workItemId: 'current-work', globalState: 'COMPLETE', visual: { objectId: f.objectId, stage: 'V5', functionBaselineRef: baseline, ...(options?.app ? {} : { designRoute: 'game-ui', targets: [{ targetId: 'entrance' }, { targetId: 'battle' }] }) } };
   const sourceRef = f.write('final/source.json', source);
   const entry = { objectId: f.objectId, workItemRef: sourceRef, functionBaselineRef: baseline };
   const objects = [entry];

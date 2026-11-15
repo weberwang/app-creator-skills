@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { selectedFigmaCandidate } from './figma-app-contract.mjs';
+import { world3dFile } from './world3d-contract.mjs';
 
 /** 验证已冻结文件引用，确保后续修改无法沿用原始人工确认。 */
 function verifyIdentity(repo, identity, label) {
@@ -18,6 +19,13 @@ export function readFrozenVisualBaseline(repo, ref) {
   const record = readJson(repo, path, 'Global Visual Baseline');
   const reviewPath = verifyIdentity(repo, record.selectionReviewRef, '全局视觉基线选择确认');
   const review = readJson(repo, reviewPath, 'Global Visual Baseline 选择确认');
+  if (record.designRoute === 'world-3d') {
+    // 三维方向确认冻结规格文件，无需伪造候选图片；完整人工语义由路线合同核对。
+    world3dFile(repo, record.directionRef, '3D 方向依据');
+    world3dFile(repo, review.subjectRef, '3D 基线选择依据');
+    if (repoPath(repo, review.subjectRef.path).relative !== repoPath(repo, record.directionRef.path).relative || review.subjectRef.sha256 !== record.directionRef.sha256) throw new WorkflowError('3D 基线确认未绑定当前方向依据');
+    return record;
+  }
   const selected = record.designRoute === 'figma-app' ? [selectedFigmaCandidate(record)].filter(Boolean) : Array.isArray(record.candidates) ? record.candidates.filter((candidate) => candidate?.candidateId === record.selectedCandidateId) : [];
   if (selected.length !== 1 || !review.targetRef || repoPath(repo, review.targetRef).relative !== repoPath(repo, selected[0].path).relative) throw new WorkflowError('视觉基线确认图必须绑定已选择的候选');
   verifyIdentity(repo, { path: review.targetRef, sha256: review.targetSha256 }, '视觉基线已确认候选');

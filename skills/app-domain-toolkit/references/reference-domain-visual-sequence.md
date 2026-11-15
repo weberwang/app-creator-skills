@@ -4,9 +4,11 @@
 
 本顺序适用于声明视觉依赖的基础包和视觉任务；纯工程基础包可先按当前工作项完成。示例中的确认枚举属于本栈领域视觉合同，不是公共控制器字段；动作及状态按公共规范执行。
 
-各技术栈统一按 V0–V5 推进；V1 先验证功能，白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 弹窗工作项与场景解耦
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

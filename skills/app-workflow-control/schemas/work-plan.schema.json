@@ -21,8 +21,20 @@
           "acceptanceCommands": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
           "type": {"enum": ["SHARED", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
           "parallelGroup": {"type": "string", "minLength": 1},
-          "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
-        }
+          "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "sampleRole": {"enum": ["sample", "batch"]},
+          "sampleScopeIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+          "sampleBasisRef": {"$ref": "#/$defs/frozenRef"},
+          "sampleDecisionRequired": {"type": "boolean"}
+        },
+        "dependentRequired": {
+          "sampleRole": ["sampleScopeIds", "sampleBasisRef"],
+          "sampleScopeIds": ["sampleRole"], "sampleBasisRef": ["sampleRole"], "sampleDecisionRequired": ["sampleRole"]
+        },
+        "allOf": [
+          {"if": {"required": ["sampleRole"], "properties": {"sampleRole": {"const": "sample"}}}, "then": {"properties": {"sampleDecisionRequired": true}, "required": ["sampleDecisionRequired"]}},
+          {"if": {"required": ["sampleRole"], "properties": {"sampleRole": {"const": "batch"}}}, "then": {"not": {"properties": {"sampleDecisionRequired": true}, "required": ["sampleDecisionRequired"]}}}
+        ]
       }
     },
     "gateAssessments": {
@@ -36,6 +48,7 @@
     }
   },
   "$defs": {
+    "frozenRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "assessment": {
       "type": "object",
       "additionalProperties": false,

@@ -21,7 +21,7 @@ function fixture(t) {
   const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion']
     .map((dimension) => ({ dimension, status: 'PASS', evidenceRef: 'quality.txt' }));
   put('quality.txt', '真实测试证据');
-  const work = { workItemId: 'scene-task', stack: 'cocos', workItemType: 'SCENE', visual: { objectId: 'scene', stageModel: 'function-first-v1', targets: [] } };
+  const work = { workItemId: 'scene-task', stack: 'cocos', workItemType: 'SCENE', visual: { objectId: 'scene', designRoute: 'game-ui', stageModel: 'function-first-v1', targets: [] } };
   const manifest = { workItemId: 'scene-task', stack: 'cocos', visualStage: 'V5', items: [] };
   const visualCategories = ['runtime-layout', 'runtime-interaction'];
   for (const targetId of ['left', 'right']) {

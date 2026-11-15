@@ -2,6 +2,8 @@ import { readJson, repoPath, WorkflowError } from './io.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { readFrozenVisualBaseline } from './visual-baseline-identity.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
+import { isWorld3D } from './world3d-contract.mjs';
+import { isWorld2D, validateWorld2DDesign } from './scene-design-contract.mjs';
 
 const REVIEW_NAMES = Object.freeze({
   implementation: ['V2', 'V3Decomposition', 'V3Layout'],
@@ -16,6 +18,9 @@ export function assertVisualReuse(repo, work, visited = new Set()) {
   if (visited.has(work?.workItemId)) throw new WorkflowError('视觉复用来源链存在循环');
   visited.add(work?.workItemId);
   if (reuse === undefined) return;
+  // 复用不能代替当前空间确认；普通 V1 搭建入口仍允许尚未产生布局运行记录。
+  if (isWorld2D(work)) validateWorld2DDesign(repo, work, { requireConfirmation: !['V0', 'V1'].includes(work.visual.stage) });
+  if (isWorld3D(work)) throw new WorkflowError('world-3d 不允许手写旧视觉复用批准链');
 
   // 目标由调用方先行校验；RETURN 恢复中的内存过渡态会先解析记录、后写入新状态。
   if (!work || typeof work !== 'object' || Array.isArray(work) || !work.visual) {
@@ -27,6 +32,7 @@ export function assertVisualReuse(repo, work, visited = new Set()) {
   const sourcePath = repoPath(repo, reuse.sourceWorkItemRef?.path, 'visual.reuse.sourceWorkItemRef.path').relative;
   const source = readJson(repo, sourcePath, '视觉复用来源 Work Item');
   validateWork(source, { repo });
+  if ((source.visual?.designRoute ?? null) !== (work.visual?.designRoute ?? null)) throw new WorkflowError('不同设计路线不能继承视觉批准');
   assertSameVisualIdentity(work, source);
   // 每一跳都独立核验来源身份、允许继承的阶段和完成状态。
   assertVisualReuse(repo, source, visited);

@@ -436,6 +436,12 @@
         "functionBaselineRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
+        "modelBaselineRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "sceneDesignRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
         "domainEvidenceRef": {
           "$ref": "#/$defs/visualReviewRef"
         },
@@ -473,6 +479,18 @@
           "type": "array",
           "items": {
             "$ref": "#/$defs/visualTarget"
+          }
+        },
+        "hud": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["scopeIds"],
+          "properties": {
+            "scopeIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
+            "globalVisualBaselineRef": { "$ref": "#/$defs/visualFileIdentity" },
+            "targets": { "type": "array", "items": { "$ref": "#/$defs/visualTarget" } },
+            "coverageRef": { "$ref": "#/$defs/visualFileIdentity" },
+            "integrationEvidenceRef": { "$ref": "#/$defs/visualFileIdentity" }
           }
         },
         "hostId": {
@@ -566,7 +584,12 @@
           }
         },
         "designRoute": {
-          "const": "figma-app"
+          "enum": [
+            "figma-app",
+            "world-2d",
+            "game-ui",
+            "world-3d"
+          ]
         },
         "designIntent": {
           "enum": [
@@ -692,6 +715,56 @@
     }
   },
   "allOf": [
+    {
+      "if": { "required": ["visual"], "properties": { "visual": { "required": ["designRoute"], "properties": { "designRoute": { "const": "world-2d" } } } } },
+      "else": { "properties": { "visual": { "not": { "required": ["sceneDesignRef"] } } } }
+    },
+    {
+      "if": { "required": ["visual"], "properties": { "visual": { "required": ["designRoute"], "properties": { "designRoute": { "enum": ["world-2d", "world-3d", "game-ui"] } } } } },
+      "then": { "properties": { "workItemType": { "const": "SCENE" }, "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox"] }, "visual": { "properties": { "designIntent": { "const": "implementation" } } } } }
+    },
+    {
+      "if": { "required": ["visual"], "properties": { "visual": { "required": ["designRoute"], "properties": { "designRoute": { "enum": ["world-2d", "game-ui"] } } } } },
+      "then": { "properties": { "assetReviewRef": { "type": "null" }, "visual": { "properties": { "domainEvidenceRef": { "type": "null" } } } } }
+    },
+    {
+      "if": { "required": ["visual"], "properties": { "visual": { "required": ["designRoute"], "properties": { "designRoute": { "const": "figma-app" } } } } },
+      "then": { "properties": { "workItemType": { "enum": ["PAGE", "DISPLAY_LAYER"] }, "stack": { "enum": ["flutter", "expo", "esp32"] } } }
+    },
+    {
+      "if": {
+        "required": ["visual"],
+        "properties": {
+          "visual": {
+            "required": ["designRoute"],
+            "properties": { "designRoute": { "const": "world-3d" } }
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "workItemType": { "const": "SCENE" },
+          "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox"] },
+          "visual": {
+            "properties": {
+              "targets": { "maxItems": 0 },
+              "reviews": { "maxProperties": 0 },
+              "designIntent": { "const": "implementation" }
+            },
+            "not": {
+              "anyOf": [
+                { "required": ["coverageRef"] },
+                { "required": ["integrationEvidenceRef"] },
+                { "required": ["reuse"] }
+              ]
+            },
+            "if": { "required": ["stage"], "properties": { "stage": { "enum": ["V2", "V3", "V4", "V5"] } } },
+            "then": { "required": ["candidateId"] }
+          }
+        }
+      },
+      "else": { "properties": { "visual": { "not": { "anyOf": [{ "required": ["modelBaselineRef"] }, { "required": ["hud"] }] } } } }
+    },
     {
       "if": {
         "anyOf": [
@@ -868,6 +941,7 @@
         ]
       },
       "then": {
+        "required": ["visual"],
         "properties": {
           "stack": {
             "enum": [
@@ -877,6 +951,17 @@
               "threejs",
               "roblox"
             ]
+          },
+          "visual": {
+            "required": ["designRoute"],
+            "properties": { "designRoute": { "enum": ["world-2d", "world-3d", "game-ui"] } },
+            "if": { "properties": { "designRoute": { "enum": ["world-2d", "game-ui"] } }, "required": ["designRoute"] },
+            "then": {
+              "required": ["targets"],
+              "not": { "anyOf": [{ "required": ["candidateId"] }, { "required": ["reviews"] }] },
+              "if": { "properties": { "stage": { "enum": ["V3", "V4", "V5"] } }, "required": ["stage"] },
+              "then": { "properties": { "targets": { "minItems": 1 } } }
+            }
           }
         }
       }

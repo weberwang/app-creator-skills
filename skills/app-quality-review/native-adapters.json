@@ -122,6 +122,12 @@
       "onDemand": true
     },
     {
+      "id": "game-design-exploration",
+      "path": "../app-domain-toolkit/references/game-design-exploration.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "quality-verification",
       "path": "../app-domain-toolkit/references/quality-verification.md",
       "stacks": [

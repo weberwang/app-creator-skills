@@ -27,7 +27,7 @@ async function fixture(t) {
     assert.ok(basename(actual).startsWith('incremental-visual-'));
     rmSync(actual, { recursive: true, force: true });
   });
-  const args = { stack: 'cocos', type: 'SCENE', objective: '合成场景增量合同', 'project-id': 'project-a', 'object-id': 'scene' };
+  const args = { stack: 'cocos', type: 'SCENE', 'design-route': 'game-ui', objective: '合成场景增量合同', 'project-id': 'project-a', 'object-id': 'scene' };
   const first = await initializeWork({ repo, args: { ...args, id: 'first' } });
   const second = await initializeWork({ repo, args: { ...args, id: 'second' } });
   const source = loadWork(repo, first.metadata.workItemPath);

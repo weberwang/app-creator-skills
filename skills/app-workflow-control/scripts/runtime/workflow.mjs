@@ -16,10 +16,16 @@ import { assertWorkflowPolicy, workflowMode } from './task-policy.mjs';
 import { assertReleaseTransition } from './release-policy.mjs';
 import { validateFeatureDependencies, dependencyPath } from './feature-dependencies.mjs';
 import { engineeringEvidence, assertEngineeringEvidence, unchangedFunctionSource, sameFunctionDependency, sameFunctionDependencies, sameDependencyPath } from './function-evidence.mjs';
-import { freezeDeletionBaseline, validateDeletionBaselineState } from './deletion-baseline.mjs';
+import { freezeDeletionBaseline } from './deletion-baseline.mjs';
+import { inspectExecution, validateExecutionState } from './execution-state.mjs';
 import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
 import { invalidateSingleDomainEvidence } from './visual-domain-invalidation.mjs';
 import { isFigmaApp, isDesignProposal } from './figma-app-contract.mjs';
+import { isWorld3D, validateWorld3DDesignPreflight, world3dModelArchiveEvidenceRoot } from './world3d-contract.mjs';
+import { invalidateWorld3DEvidence, invalidateWorld3DVisual, assertFunctionDesignRoute } from './world3d-lifecycle.mjs';
+import { isWorld2D, validateWorld2DDesign, freezeWorld2DDesign, assertFrozenWorld2DDesign, invalidateSceneDesign } from './scene-design-contract.mjs';
+import { captureWorldHudAssets, isWorldHudReturn } from './world3d-hud.mjs';
+import { freezeSampleResult } from './production-samples.mjs';
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -153,63 +159,6 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical
   return { status: blocking.length ? 'BLOCKED' : 'PASS', blocking, next: [...new Set(next)], activeBatch };
 }
 
-/** 校验当前有序执行计划，返回尚未闭合的首个单元。 */
-function inspectExecution(repo, work, { requireComplete = false, historical = false } = {}) {
-  const pack = loadPackage(repo, work);
-  const statePath = `${work.evidenceRoot}/execution-state.json`;
-  const state = readJson(repo, statePath, 'Execution State');
-  const activeBatch = validateExecutionState(repo, work, pack, state, { requireComplete, historical });
-  return { pack, state, activeBatch };
-}
-
-/** 校验运行时状态、冻结计划、当前批次和全部已通过单元的真实结果。 */
-function validateExecutionState(repo, work, pack, state, { requireComplete = false, historical = false } = {}) {
-  if (state.schemaVersion !== VERSION || state.workItemId !== work.workItemId || state.stack !== work.stack || state.implementationPackageRef !== work.implementationPackageRef.path) {
-    throw new WorkflowError('Execution State 未绑定当前工作项和实施包');
-  }
-  if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') {
-    if (!state.integrationScopeRef || state.integrationScopeRef.path !== work.integrationScopeRef?.path || state.integrationScopeRef.sha256 !== work.integrationScopeRef?.sha256) throw new WorkflowError('最终集成范围与开始实施时冻结的范围不一致');
-    validateIntegrationScope(repo, work);
-  }
-  const plan = createExecutionPlanSnapshot(pack, { repo });
-  if (JSON.stringify(state.executionPlan) !== JSON.stringify(plan)) throw new WorkflowError('冻结的执行计划与当前实施包不匹配');
-  validateDeletionBaselineState(state, plan.batches);
-  if (!Array.isArray(state.units) || state.units.length !== pack.executionUnits.length) throw new WorkflowError('Execution State 与实施包的执行单元数量不一致');
-  for (const [index, unit] of pack.executionUnits.entries()) {
-    const resultState = state.units[index];
-    if (resultState.unitId !== unit.unitId || resultState.sequence !== unit.sequence || !['PENDING', 'PASS'].includes(resultState.status)) {
-      throw new WorkflowError(`Execution State 单元次序或状态无效：${unit.unitId}`);
-    }
-  }
-  // 仅当前首个未闭合批次允许组内部分 PASS；所有后续批次必须保持 PENDING。
-  let firstIncompleteBatchSeen = false;
-  for (const batch of plan.batches) {
-    const statuses = batch.unitIds.map((unitId) => state.units.find((unit) => unit.unitId === unitId).status);
-    if (!statuses.every((status) => status === 'PASS')) {
-      if (firstIncompleteBatchSeen && statuses.some((status) => status === 'PASS')) {
-        throw new WorkflowError(`未来执行批次不能预先登记 PASS：${batch.unitIds.join(', ')}`);
-      }
-      firstIncompleteBatchSeen = true;
-      continue;
-    }
-    if (firstIncompleteBatchSeen) throw new WorkflowError(`未来执行批次不能预先登记 PASS：${batch.unitIds.join(', ')}`);
-  }
-  for (const [index, unit] of pack.executionUnits.entries()) {
-    const resultState = state.units[index];
-    if (resultState.status === 'PASS') {
-      const resultPath = requireFile(repo, unit.resultPath, '执行单元结果');
-      const result = readJson(repo, resultPath, 'Execution Unit Result');
-      validateUnitResult(repo, work, pack, unit, result, { historical });
-    }
-  }
-  const activeBatch = expectedActiveBatch(plan.batches, state.units);
-  if (!Array.isArray(state.activeBatch) || JSON.stringify(state.activeBatch) !== JSON.stringify(activeBatch)) {
-    throw new WorkflowError('Execution State.activeBatch 与已完成结果不一致');
-  }
-  if (requireComplete && activeBatch.length) throw new WorkflowError(`仍有执行批次未完成：${activeBatch.join(', ')}`);
-  return activeBatch;
-}
-
 /** 按结果中的 unitId 提交当前批次成员，整批通过后才开放下一批。 */
 export async function completeUnit(args) {
   return withWorkLock(args.repo, args.workItem, () => completeUnitLocked(args));
@@ -235,7 +184,8 @@ async function completeUnitLocked({ repo, workItem, resultPath }) {
   validateUnitResult(repo, work, pack, unit, result);
   const previousState = JSON.parse(JSON.stringify(state));
   const stateIndex = state.units.findIndex((entry) => entry.unitId === unit.unitId);
-  state.units[stateIndex] = { ...state.units[stateIndex], status: 'PASS' };
+  const sampleSnapshot = freezeSampleResult(repo, work, unit, result);
+  state.units[stateIndex] = { ...state.units[stateIndex], status: 'PASS', ...(sampleSnapshot ? { sampleSnapshot } : {}) };
   state.activeBatch = expectedActiveBatch(state.executionPlan.batches, state.units);
   if (JSON.stringify(state.activeBatch) !== JSON.stringify(activeBatch)) freezeDeletionBaseline(repo, pack, state);
   work.revision += 1;
@@ -397,6 +347,7 @@ async function enterReturn({ repo, workItem, work, from, args }) {
   const affected = args['affected-scope'];
   requireText(reason, '--reason');
   requireText(affected, '--affected-scope');
+  if (/^hud:/i.test(affected) && !isWorld3D(work)) throw new WorkflowError('hud 影响域仅用于 world-3d 的常驻界面');
   const returnState = inferReturnState(affected, work.stageId);
   const invalidatedRefs = [...(work.invalidatedRefs ?? [])];
   for (const name of ['implementationPackageRef', 'evidenceRef', 'planningRef']) {
@@ -434,16 +385,22 @@ function invalidateReturnGates(work, scope, returnState) {
     : returnState === 'PROPOSAL' ? ['F2', 'F3', 'F4']
       : ['F3', 'F4'];
   if (['requirements', 'requirements-scope'].includes(scopeName)) gates = ['F0', 'F1', 'F2', 'F3', 'F4'];
-  if (/^visual(?::V[1-3])?$/i.test(scope) || scope === 'function' || scope.startsWith('page:') || scope.startsWith('scene:')) gates = ['F2', 'F3', 'F4'];
+  if (/^visual(?::V[1-3])?$/i.test(scope) || /^hud:V[23]$/i.test(scope) || scope === 'function' || scope.startsWith('page:') || scope.startsWith('scene:')) gates = ['F2', 'F3', 'F4'];
   for (const gate of gates) work.gateStatus[gate] = 'NOT_RUN';
 }
 
 /** 从最早被影响的视觉阶段回退，并删除该阶段及下游的人工确认引用。 */
 function invalidateReturnVisual(repo, work, scope, invalidatedRefs) {
   if (!work.visual) return;
+  if (isWorld3D(work)) {
+    const earliest = invalidateWorld3DVisual(repo, work, scope, invalidatedRefs);
+    if (earliest && VISUAL_STAGES.indexOf(earliest) <= 1) invalidateFunctionBaseline(work, invalidatedRefs);
+    return;
+  }
   const scopeName = scope.startsWith('stage:') ? scope.slice('stage:'.length) : scope;
   if (work.workItemType === 'SCENE') {
     invalidateSceneVisual(work, scope, scopeName, invalidatedRefs);
+    if (['requirements', 'requirements-scope', 'global-baseline', 'function'].includes(scopeName) || /^visual(?::V[0-5])?$/i.test(scope) || scope.startsWith('scene:')) invalidateSceneDesign(repo, work, invalidatedRefs, work.visual.stage);
     return;
   }
   if (['implementation', 'engineering'].includes(scopeName)) {
@@ -553,6 +510,7 @@ function invalidateFunctionBaseline(work, invalidatedRefs) {
 export function inferReturnState(scope, stageId) {
   if (/^visual:V0$/i.test(scope)) return 'BASELINE';
   if (/^visual(?::V[1-5])?$/i.test(scope)) return 'REVIEW';
+  if (/^hud:V[2-5]$/i.test(scope)) return 'REVIEW';
   const direct = {
     requirements: 'BASELINE', 'global-baseline': 'BASELINE',
     proposal: 'PROPOSAL', design: 'PROPOSAL',
@@ -612,10 +570,17 @@ function collectFunctionFiles(repo, work) {
 }
 
 /** 在进入视觉设计前固化功能验证；外部来源必须是已验证的非视觉工作项。 */
-async function freezeFunctionBaseline(repo, work) {
+async function freezeFunctionBaseline(repo, work, sceneDesignBaseline = null) {
   assertGates(work, ['F0', 'F1']);
   const dependencies = work.visual.functionDependencies ?? [];
+  if (isWorld3D(work) && dependencies.length) throw new WorkflowError('3D 世界须直接验证本场景白模，不能以模块功能依赖替代本次 V1');
   const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId };
+  if (work.visual.designRoute) snapshot.designRoute = work.visual.designRoute;
+  if (isWorld3D(work)) {
+    snapshot.world3dBlockoutEvidenceRoot = work.evidenceRoot;
+    const contract = readJson(repo, work.visual.domainEvidenceRef.path, 'V1 白模合同');
+    snapshot.world3dBlockoutRefs = Object.fromEntries(['spatialSpecRef', 'blockoutRef', 'blockoutRunRef'].map((name) => [name, contract[name]]));
+  }
   if (work.workItemType === 'DISPLAY_LAYER') Object.assign(snapshot, { hostId: work.visual.hostId, layerType: work.visual.layerType });
   if (dependencies.length) {
     if (!['REVIEW', 'PASSED'].includes(work.globalState)) throw new WorkflowError('引用功能证据时须先完成当前工作项范围复核');
@@ -635,6 +600,13 @@ async function freezeFunctionBaseline(repo, work) {
     snapshot.work = structuredClone(work);
     snapshot.files = collectFunctionFiles(repo, work);
     snapshot.engineeringEvidence = engineeringEvidence(repo, work);
+  }
+  // 世界场景在进入正式方向阶段前复用已有单次审查及人工空间决定，功能 PASS 本身不代替确认。
+  if (isWorld3D(work)) validateWorld3DDesignPreflight(repo, work);
+  if (isWorld2D(work)) {
+    // 只更新功能依赖时沿用已核验的原空间根，不能用当前阶段目录重绑旧布局运行。
+    if (sceneDesignBaseline) { assertFrozenWorld2DDesign(repo, work, sceneDesignBaseline); Object.assign(snapshot, { sceneDesignEvidenceRoot: sceneDesignBaseline.sceneDesignEvidenceRoot, sceneDesignRefs: sceneDesignBaseline.sceneDesignRefs }); }
+    else Object.assign(snapshot, freezeWorld2DDesign(repo, work));
   }
   const path = `${work.evidenceRoot}/function-baseline-r${work.revision + 1}.json`;
   if (existsSync(repoPath(repo, path).absolute)) throw new WorkflowError('功能基线文件已存在，拒绝覆盖');
@@ -658,6 +630,8 @@ export function assertFunctionBaseline(repo, work, { historical = false } = {}) 
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '') || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('缺少有效功能基线或基线内容已变化');
   const snapshot = readJson(repo, ref.path, '功能基线');
+  assertFunctionDesignRoute(work, snapshot);
+  if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, snapshot);
   if (snapshot.schemaVersion !== VERSION || snapshot.workItemId !== work.workItemId || snapshot.projectId !== work.projectId || snapshot.stack !== work.stack || snapshot.objectId !== work.visual.objectId) throw new WorkflowError('功能基线工作项、项目或对象身份错绑');
   if (work.workItemType === 'DISPLAY_LAYER' && (snapshot.hostId !== work.visual.hostId || snapshot.layerType !== work.visual.layerType)) throw new WorkflowError('显示层宿主或类型已变化，必须重新验证功能');
   if (snapshot.mode === 'dependencies') {
@@ -709,6 +683,8 @@ function assertRecoverableLocalBaseline(repo, work) {
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('旧功能基线身份无效，不能恢复实施');
   const old = readJson(repo, ref.path, '旧功能基线');
+  assertFunctionDesignRoute(work, old);
+  if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, old);
   if (!['local', 'local-regression'].includes(old.mode) || old.workItemId !== work.workItemId || old.projectId !== work.projectId || old.stack !== work.stack || old.objectId !== work.visual.objectId || (work.visual.functionDependencies ?? []).length) throw new WorkflowError('功能基线或功能依赖已改变，不能恢复实施');
   const scope = functionScope(repo, old);
   if (!Array.isArray(scope) || !scope.length || scope.some((item) => !Array.isArray(item.files) || !item.files.length || !Array.isArray(item.commands) || !item.commands.length)) throw new WorkflowError('原功能范围无效，不能恢复实施');
@@ -755,6 +731,12 @@ async function refreshLocalFunctionBaseline(repo, work, old, oldRef, spec) {
     for (const file of addedFiles) deliveryFiles.add(file);
   }
   const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, mode: 'local-regression', functionScope: nextScope, work: structuredClone(work), files: collectFunctionFiles(repo, work), engineeringEvidence: engineeringEvidence(repo, work) };
+  if (work.visual.designRoute) snapshot.designRoute = work.visual.designRoute;
+  if (isWorld3D(work)) {
+    snapshot.world3dBlockoutEvidenceRoot = old.world3dBlockoutEvidenceRoot ?? old.work.evidenceRoot;
+    snapshot.world3dBlockoutRefs = old.world3dBlockoutRefs;
+  }
+  if (isWorld2D(work)) Object.assign(snapshot, { sceneDesignEvidenceRoot: old.sceneDesignEvidenceRoot, sceneDesignRefs: old.sceneDesignRefs });
   if (work.workItemType === 'DISPLAY_LAYER') Object.assign(snapshot, { hostId: work.visual.hostId, layerType: work.visual.layerType });
   const path = `${work.evidenceRoot}/function-baseline-r${work.revision + 1}.json`;
   if (existsSync(repoPath(repo, path).absolute)) throw new WorkflowError('功能基线文件已存在，拒绝覆盖');
@@ -762,6 +744,7 @@ async function refreshLocalFunctionBaseline(repo, work, old, oldRef, spec) {
   work.invalidatedRefs ??= [];
   work.invalidatedRefs.push({ path: oldRef.path, state: 'V1' });
   work.visual.functionBaselineRef = fileDigest(repo, path);
+  if (isWorld3D(work)) invalidateWorld3DEvidence(repo, work, work.invalidatedRefs, 'V5');
   // 运行确认针对旧组合，需重审；目标、布局与资源确认仍可保留。
   if (work.visual.reviews?.V5?.path) work.invalidatedRefs.push({ path: work.visual.reviews.V5.path, state: 'V5' });
   if (work.visual.reviews) delete work.visual.reviews.V5;
@@ -785,6 +768,8 @@ export async function refreshFunctionBaseline({ repo, workItem, specPath }) {
     const oldRef = work.visual.functionBaselineRef;
     if (!oldRef?.path || fileDigest(repo, oldRef.path).sha256 !== oldRef.sha256) throw new WorkflowError('旧功能基线身份无效，不能直接重绑');
     const old = readJson(repo, oldRef.path, '旧功能基线');
+    assertFunctionDesignRoute(work, old);
+    if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, old);
     if (old.workItemId !== work.workItemId || old.objectId !== work.visual.objectId || old.projectId !== work.projectId || old.stack !== work.stack) throw new WorkflowError('旧功能基线身份不匹配');
     if (old.mode === 'dependencies' && !sameFunctionDependencies(repo, old.dependencies, work.visual.functionDependencies)) throw new WorkflowError('当前功能依赖已被直接修改，不能重绑');
     const spec = readJson(repo, specPath, '功能重验规格');
@@ -828,7 +813,7 @@ export async function refreshFunctionBaseline({ repo, workItem, specPath }) {
       }
     }
     if (!changed) throw new WorkflowError('不能沿用全部旧功能证据冒充新验证记录');
-    const nextRef = await freezeFunctionBaseline(repo, candidate);
+    const nextRef = await freezeFunctionBaseline(repo, candidate, old);
     const invalidated = work.invalidatedRefs ??= [];
     invalidated.push({ path: oldRef.path, state: 'V1' });
     for (const name of ['implementationPackageRef', 'evidenceRef', 'planningRef']) {
@@ -896,8 +881,14 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   }
   const previousState = work.globalState;
   const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, planningRef: work.planningRef ?? null, revision: work.revision };
+  if (isWorld3D(work) && work.visual.stage === 'V4') {
+    // 复用现有阶段归档冻结试接来源，V5 不能重绑资源评审来绕过 V4 工程验证。
+    archive.world3dModelBaseline = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, evidenceRoot: world3dModelArchiveEvidenceRoot(repo, work), assetReviewRef: work.assetReviewRef, domainEvidenceRef: work.visual.domainEvidenceRef };
+    archive.world3dHudAssets = captureWorldHudAssets(work);
+  }
   const archivePath = `${work.evidenceRoot}/archive-${work.visual.stage}-${work.revision + 1}.json`;
   if (work.implementationPackageRef || work.evidenceRef) await atomicWriteJson(repo, archivePath, archive);
+  if (archive.world3dModelBaseline) work.visual.modelBaselineRef = fileDigest(repo, archivePath);
   if (work.implementationPackageRef?.path) (work.invalidatedRefs ??= []).push({ path: work.implementationPackageRef.path, state: work.visual.stage });
   if (work.evidenceRef?.path) (work.invalidatedRefs ??= []).push({ path: work.evidenceRef.path, state: work.visual.stage });
   if (work.planningRef?.path) (work.invalidatedRefs ??= []).push({ path: work.planningRef.path, state: work.visual.stage });
@@ -906,7 +897,8 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   work.implementationPackageRef = null;
   work.evidenceRef = null;
   work.planningRef = null;
-  work.assetReviewRef = to === 'V5' ? work.assetReviewRef : null;
+  // HUD 局部返工沿用已核验的世界模型，当前界面仍需自己的资源与组合验收。
+  work.assetReviewRef = to === 'V5' || isWorldHudReturn(work) ? work.assetReviewRef : null;
   // 设计阶段不需要伪造编译；新正式资源/运行阶段需各自冻结新的实施包和结果。
   if (['V2', 'V4', 'V5'].includes(to)) {
     // V4 与 V5 各自有独立执行闭环，切换时不复用前一阶段的 execution-state。

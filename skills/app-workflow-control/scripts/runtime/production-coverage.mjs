@@ -2,6 +2,10 @@ import { closeSync, existsSync, openSync, readFileSync, readSync, statSync } fro
 import { readJson, repoPath, WorkflowError } from './io.mjs';
 import { productionIdentity, validateProductionScope } from './production-scope.mjs';
 import { getWorkSource } from './work-source.mjs';
+import { isWorld3D, world3dScopeIds, collectWorld3DReferences } from './world3d-contract.mjs';
+import { isWorld2D, collectSceneDesignReferences } from './scene-design-contract.mjs';
+import { collectWorldHudReferences } from './world3d-hud.mjs';
+import { collectSampleReferences, collectSampleControlReferences } from './production-samples.mjs';
 
 /** 规范化项目相对路径，避免 Windows 大小写差异改变证据身份。 */
 function pathKey(repo, path) {
@@ -65,10 +69,26 @@ function reservedEvidencePaths(repo, work) {
     add(`${work.evidenceRoot}/execution-state.json`);
   }
   for (const dependency of work.productionDependencies ?? []) add(dependency.workItemRef?.path);
+  for (const path of collectSampleControlReferences(repo, work)) add(path);
   const visual = work.visual;
-  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
+  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'modelBaselineRef', 'sceneDesignRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
   for (const ref of Object.values(visual?.reviews ?? {})) add(ref?.path);
-  for (const target of visual?.targets ?? []) {
+  const controlReferences = [...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work)];
+  if (isWorld3D(work) || isWorld2D(work)) controlReferences.push(...(isWorld3D(work) ? collectWorld3DReferences(repo, work) : collectSceneDesignReferences(repo, work)));
+  if (controlReferences.length) {
+    // 嵌套审查、确认和观测封套不能再登记成原始日志，真实引擎原始输出仍可复用。
+    for (const path of controlReferences) {
+      try {
+        const absolute = repoPath(repo, path).absolute;
+        // 控制记录不限扩展名；大场景和模型不在这里整份解析，控制封套的上限由遍历器校验。
+        if (!existsSync(absolute) || statSync(absolute).size > 5 * 1024 * 1024) continue;
+        const value = readJson(repo, path, '空间引用');
+        if (isProductionControlValue(value)) add(path);
+      } catch { /* 缺失记录由对应阶段门拒绝，不能扩大原始证据授权。 */ }
+    }
+  }
+  for (const key of ['globalVisualBaselineRef', 'coverageRef', 'integrationEvidenceRef']) add(visual?.hud?.[key]?.path);
+  for (const target of [...(visual?.targets ?? []), ...(visual?.hud?.targets ?? [])]) {
     for (const key of ['referenceTarget', 'domainEvidenceRef', 'assetReviewRef']) add(target[key]?.path);
     for (const ref of Object.values(target.reviews ?? {})) add(ref?.path);
   }
@@ -78,6 +98,16 @@ function reservedEvidencePaths(repo, work) {
     for (const unit of pack.executionUnits ?? []) add(unit.resultPath);
   }
   return paths;
+}
+
+/** 空间、样本与人工决定只说明控制事实，不能充当独立运行原始输出。 */
+function isProductionControlValue(value) {
+  return value?.schemaVersion === '1.0' && Boolean(
+    ['world-2d', 'world-3d'].includes(value.designRoute) ||
+    ['scene-design-review', 'world-3d-design-review', 'production-sample'].includes(value.kind) ||
+    value.subjectRef || value.commandEvidenceRef || (value.userMessageRef && (value.decision || value.humanStatus)) ||
+    [2, 3].includes(value.dimension) || Array.isArray(value.models),
+  );
 }
 
 /** 识别完整控制记录结构，同时保留普通 JSON 应用日志和命令输出。 */
@@ -94,7 +124,7 @@ function isControlRecord(path) {
   const manifest = Array.isArray(value.items) && typeof value.implementationPackageRef === 'string' && typeof value.stack === 'string';
   const execution = typeof value.implementationPackageRef === 'string' && Array.isArray(value.units) && value.executionPlan && typeof value.executionPlan === 'object';
   const result = typeof value.implementationPackageRef === 'string' && typeof value.unitId === 'string' && Number.isInteger(value.sequence) && Array.isArray(value.files) && Array.isArray(value.commandOutputs);
-  return Boolean(work || manifest || execution || result);
+  return Boolean(work || manifest || execution || result || isProductionControlValue(value));
 }
 
 /** 只接受当前工作项证据根内登记为 PASS 的真实、非空原始文件。 */
@@ -184,7 +214,7 @@ export function validateProductionIntegrationScope(repo, work, integrationScope)
     if (source.projectId !== work.projectId || source.stack !== work.stack || source.workItemType !== object.workItemType || source.visual?.objectId !== object.objectId) throw new WorkflowError(`生产对象 ${object.objectId} 与当前工作项不一致`);
     if (object.workItemType === 'DISPLAY_LAYER' && (source.visual.hostId !== object.hostId || source.visual.layerType !== object.layerType)) throw new WorkflowError(`生产对象 ${object.objectId} 的宿主或类型与总范围不一致`);
     if (!source.productionScopeRef || source.productionScopeRef.sha256 !== work.productionScopeRef.sha256 || pathKey(repo, source.productionScopeRef.path) !== pathKey(repo, work.productionScopeRef.path)) throw new WorkflowError(`生产对象 ${object.objectId} 未绑定当前冻结的生产总范围`);
-    if (object.workItemType === 'SCENE' && !equalIds(source.visual?.targets?.map((item) => item.targetId), object.targetIds)) throw new WorkflowError(`生产对象 ${object.objectId} 的累计目标未覆盖总范围`);
+    if (object.workItemType === 'SCENE' && !equalIds(isWorld3D(source) ? world3dScopeIds(repo, source) : source.visual?.targets?.map((item) => item.targetId), object.targetIds)) throw new WorkflowError(`生产对象 ${object.objectId} 的累计目标未覆盖总范围`);
   }
   const scopeCases = new Map(integrationScope.cases.map((entry) => [entry.caseId, entry]));
   for (const [caseId, wanted] of expectedCasesMap) {

@@ -35,7 +35,7 @@
 
 ## 关卡与内容设计
 
-涉及关卡或内容时，按[关卡生产](../../../app-domain-toolkit/references/game-content-playtesting.md#levels)记录当前范围，复用既有设计与编号；不要求增加不适用的内容。
+涉及关卡或内容时，按[关卡生产](../../../app-domain-toolkit/references/game-content-playtesting.md#levels)记录当前范围，复用既有设计与编号；按[内容分流](../../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分 3D 白模、2D 平面占位及原 UI 流程，前期只记录内容需求，不逐物件拆图生图，不要求增加不适用内容。
 
 | 内容/关卡与目标 | 既有机制 | 难度/教学意图 | 完成/失败/检查点/恢复 | 数据来源 | 可观察验收 |
 | --- | --- | --- | --- | --- | --- |

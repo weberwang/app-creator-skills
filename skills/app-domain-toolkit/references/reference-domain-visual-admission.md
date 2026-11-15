@@ -2,15 +2,19 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一按 V0–V5 推进；V1 先验证功能，白盒可选，V2–V5 依次完成视觉目标、拆解布局、资源导入和运行验收。
+V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
 
 ## 任务范围与显式批准
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
 视觉验收通过 `visual_validation.mode` 区分 `usability` 与 `exact`，默认使用 `usability`。普通候选的位置、尺寸、边距、换行和几何变化须符合已声明适配或已确认目标容差，并检查越界、裁切、关键遮挡、不可读及交互失效；effect-image 也不自动切换到 `exact`。只有用户明确要求像素级还原或项目合同明确指定时才使用 `exact`，并启用严格容差、全视口/全状态矩阵和完整差异证据。V3 拆解、布局父子关系、顺序和内部几何一致性仍需保持。
 
 ## 弹窗工作项与场景解耦
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -22,6 +26,8 @@
 
 ## 实施顺序状态硬门
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 `highFidelityPrerequisite` 是 SCENE/DISPLAY_LAYER 必填、其他类型必须为 null 的严格 nullable 字段，引用当前单元所属 Work Item 的 V3 方案。SCENE 引用场景工作项证据；DISPLAY_LAYER 引用独立弹窗工作项证据，并额外以 scene/layer/host 身份绑定宿主上下文图。两者不得共用一个实施包，也不要求使用同一 `evidenceFile`；必要业务字段缺失、任务归属不符或文件缺失均拒绝；摘要不参与验收。
@@ -32,11 +38,15 @@
 
 ## 状态、阶段与停止门
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 效果图还原是当前场景实现 Work Item 内的可选视觉模式；foundation-only 基础实施完成后进入场景 V2，由 V2 生成或接收并冻结 `scene_reconstruction_contract`、scene master/reference target、必需宿主上下文图和初步还原草案，再进入 V3 拆解确认门。工作项按统一阶段和当前全局状态向前推进：缺字段、格式、路径或可补证据问题先在当前阶段原地修复，上游事实未变的机器验证失败只重验当前门。只有上游事实失效、任务范围真实变化，或继续推进会绕过硬门并使下游无效，才使用 `RETURN` 回到最早受影响阶段；普通候选身份变化不触发回退。
 
 ## V0/V1/V2/V3/V4/V5 机器状态依赖
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -58,6 +68,8 @@ V4 资源验收通过后，V5 直接激活正式实施包并读取当前 V3 拆�
 
 ## 全局视觉冻结与实施顺序
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 任务范围和工程基线完成后，纯工程 foundation-only 包可先完成 `SHARED` 最小项目骨架和 `MODULE` 场景无关基础模块；只有具有视觉合同或资产生产依赖的基础包才需先建立全局基线 brief，生成恰好三张同条件候选效果图并同屏交给人工，人工选择确认一张后以 `globalVisualBaselineSelectionRef` 正式冻结 `visual_baseline`。公共 V1 功能验证后各场景进入公共 V2；此视觉阶段生成或接收并冻结当前场景的 scene master/reference target、必需 transient display-layer 宿主上下文图、`scene_reconstruction_contract` 和初步还原草案，集合按 scene/state 分项而非一张合并图；随后该场景才在 V3 完成拆解图确认与生产方案。
@@ -72,6 +84,8 @@ V4 资源验收通过后，V5 直接激活正式实施包并读取当前 V3 拆�
 
 ## 高保真前置
 
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 公共 V3→公共 V4 是同一场景 Work Item 的阶段推进。V3 拆解与布局确认、V4 正式资源证据、V5 运行态证据分别写入同一 `workItemId` 的不可变阶段引用；公共 V5 正式组合实施包进入 `IMPLEMENTING` 前必须消费当前 Work Item 的 V3/V4 证据。阶段实施序列完成只表示当前包完成，只有当前 Work Item 的公共 V5 运行态联合验收证据闭合后才允许场景 `COMPLETE`。
@@ -81,6 +95,8 @@ V4 资源验收通过后，V5 直接激活正式实施包并读取当前 V3 拆�
 SCENE 与 DISPLAY_LAYER 分别绑定各自 Work Item 的 V3 证据，使用独立 `evidenceFile`，不共用同一证据包或同一文件；各自的 scene/layer/host 及任务归属必须一致，candidate/diff/target 摘要仅作可选追踪。必要业务字段、格式、路径、越界或缺文件错误先 `repair` 并重验当前门；上游事实未变但机器证据过期/失败时为 `revalidate`。只有上游事实失效、任务范围真实变化或硬门将被绕过才 `return` 到最早受影响阶段；普通候选身份变化不触发回退。
 
 ## 视觉阶段 Schema
+
+> 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
 > 适用技术栈：cocos、phaser、threejs。
 

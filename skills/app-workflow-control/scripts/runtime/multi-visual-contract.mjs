@@ -91,6 +91,9 @@ function validateReview(repo, work, target, name, validateReuseReview) {
   return review;
 }
 
+// 制作样本复用同一确认链核验，避免在批量前另写一套更弱的人工判断规则。
+export { validateReview as validateSceneReviewRecord, validateCoverage as validateSceneCoverageRecord };
+
 /** 逐目标核对工作项身份、已冻结图像及各阶段确认；栈专用合同由调用方注入校验。 */
 export function validateMultiVisualStage(repo, work, stage, { validateDomainTarget, validateAssetReview, validateReuseReview, validateReuseCoverage, manifest, visualCategories } = {}) {
   if (work?.workItemType !== 'SCENE' || !work.visual) throw new WorkflowError('多目标视觉合同仅适用于 SCENE 工作项');

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "title": "可跨同项目同技术栈工作项复用的视觉基线",
-  "description": "游戏保留三候选；非游戏App默认一个精修Figma方案，用户明确要求时多方案，局部增量复用有效方向。",
+  "description": "图片游戏保留三候选；Figma保持选稿流程；world-3d以冻结方向规格和真实人工选择交接。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -9,8 +9,6 @@
     "baselineId",
     "projectId",
     "stack",
-    "candidates",
-    "selectedCandidateId",
     "selectionReviewRef"
   ],
   "properties": {
@@ -73,7 +71,10 @@
       "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
     },
     "designRoute": {
-      "const": "figma-app"
+      "enum": [
+        "figma-app",
+        "world-3d"
+      ]
     },
     "exploration": {
       "type": "object",
@@ -147,6 +148,9 @@
           "minLength": 1
         }
       }
+    },
+    "directionRef": {
+      "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
     }
   },
   "allOf": [
@@ -157,61 +161,104 @@
         ],
         "properties": {
           "designRoute": {
-            "const": "figma-app"
+            "const": "world-3d"
           }
         }
       },
       "then": {
         "required": [
-          "exploration"
+          "directionRef"
         ],
         "properties": {
           "stack": {
             "enum": [
-              "flutter",
-              "expo",
-              "esp32"
+              "unity",
+              "cocos",
+              "phaser",
+              "threejs",
+              "roblox"
             ]
           },
-          "candidates": {
-            "items": {
-              "required": [
-                "figmaSnapshotRef"
-              ]
-            }
-          }
+          "candidates": false,
+          "selectedCandidateId": false,
+          "exploration": false,
+          "combination": false
+        }
+      },
+      "else": {
+        "required": [
+          "candidates",
+          "selectedCandidateId"
+        ],
+        "properties": {
+          "directionRef": false
         },
         "allOf": [
           {
             "if": {
+              "required": [
+                "designRoute"
+              ],
               "properties": {
-                "exploration": {
-                  "not": {
-                    "required": [
-                      "requestedCount"
-                    ]
-                  }
+                "designRoute": {
+                  "const": "figma-app"
                 }
               }
             },
             "then": {
+              "required": [
+                "exploration"
+              ],
+              "properties": {
+                "stack": {
+                  "enum": [
+                    "flutter",
+                    "expo",
+                    "esp32"
+                  ]
+                },
+                "candidates": {
+                  "items": {
+                    "required": [
+                      "figmaSnapshotRef"
+                    ]
+                  }
+                }
+              },
+              "allOf": [
+                {
+                  "if": {
+                    "properties": {
+                      "exploration": {
+                        "not": {
+                          "required": [
+                            "requestedCount"
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "then": {
+                    "properties": {
+                      "candidates": {
+                        "minItems": 1,
+                        "maxItems": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            },
+            "else": {
               "properties": {
                 "candidates": {
-                  "minItems": 1,
-                  "maxItems": 1
+                  "minItems": 3,
+                  "maxItems": 3
                 }
               }
             }
           }
         ]
-      },
-      "else": {
-        "properties": {
-          "candidates": {
-            "minItems": 3,
-            "maxItems": 3
-          }
-        }
       }
     }
   ]

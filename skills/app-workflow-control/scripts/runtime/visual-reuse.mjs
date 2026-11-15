@@ -5,6 +5,7 @@ import { assertFunctionBaseline, inspectVisualReuseSource, loadWork, response } 
 import { withWorkLock } from './work-lock.mjs';
 import { assertVisualReuse } from './visual-reuse-binding.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
+import { isWorld3D } from './world3d-contract.mjs';
 
 const IMPACT_REVIEWS = Object.freeze({
   implementation: ['V2', 'V3Decomposition', 'V3Layout'],
@@ -28,6 +29,9 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
   return withWorkLock(repo, targetPath, async () => {
     const work = loadWork(repo, targetPath);
     const source = loadWork(repo, sourcePath);
+    // 本路线复用资产和有效规格，但不把旧图片批准或其他工作项的人工确认自动搬入。
+    if (isWorld3D(work) || isWorld3D(source)) throw new WorkflowError('world-3d 不支持自动继承阶段批准，请在当前场景合同明确引用有效资源并确认当前范围');
+    if ((work.visual?.designRoute ?? null) !== (source.visual?.designRoute ?? null)) throw new WorkflowError('不同设计路线不能继承视觉批准');
     assertVisualReuse(repo, source);
     validateSource(work, source, sourcePath, targetPath);
     validateSelectedTargets(work, source, impact, targetIds);

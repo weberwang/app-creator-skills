@@ -4,7 +4,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈共用 V0–V5：V0 范围、V1 功能与适用空间验证、V2 正式视觉方向／目标、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 
@@ -825,17 +825,17 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 <a id="mode-threejs-game-model-pipeline--blender-模型生成"></a>
 #### Blender 模型生成
 
-用户要求生成新模型时，在当前资源或场景 Work Item 内按 **参考与多视图 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。读取 [Blender 模型生产合同](../../threejs-game-model-pipeline/references/blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD、碰撞代理和静态导出由 [`threejs-game-3d-modeling`](#mode-threejs-game-3d-modeling) 负责。该建模技能按既有 `gpt-6.1-sol` / `max` 配置委派实际 Blender MCP 制作；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
+用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](../../threejs-game-model-pipeline/references/blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD、碰撞代理和静态导出由 [`threejs-game-3d-modeling`](#mode-threejs-game-3d-modeling) 负责。该建模技能按既有 `gpt-6.1-sol` / `max` 配置委派实际 Blender MCP 制作；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
 
 贴图、烘焙、绑定/动画或接入任务先读取[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
 
-该路线复用 V2 参考、V3 拆解、V4 正式资源生产与验收，不创建独立聊天或第二套阶段。人工确认当前模型与贴图候选后才可作为已验收资源进入接入环节；自动静态检查不替代人工审查。截图、渲染及真机验收按用户当前明确授权执行。
+图片路线复用 V2 参考、V3 拆解；world-3d 以已确认空间及模型规格交接，在 V4 先制作、导入和试接代表模块，复用既有样本审阅及覆盖范围的真实用户决定，必要判断待定时暂停相关扩展，再分批制作并完成本工作项声明的整批资源验收；V5 替换并复验正式组合。均不创建第二套阶段或逐模型审批。V4 导入及临时试接可提供实际样本供人工审阅；作为已验收资源并进入正式场景前，须复用覆盖本范围的真实用户确认，未确认时等待用户决定。自动静态检查不替代人工审查。截图、渲染及真机验收按用户当前明确授权执行。
 
 <a id="mode-threejs-game-model-pipeline--模型接入与优化"></a>
 #### 模型接入与优化
 
 1. V2 确定世界尺度、轴向、pivot、包围盒、动画命名、PBR 风格、灯光和三维预算；效果图只是目标视角的参考。交互世界必须交付模型/关卡数据、碰撞代理及可观察状态，不能整屏贴图伪装关卡。
-2. V3 拆解角色、环境、交互件、特效与 HUD。三维对象记录 parent、TRS、单位、相机、材质、碰撞和可见性；二维布局 JSON 只约束 HUD 和固定视角标注，不能证明三维空间正确。
+2. V3 图片路线按原合同拆解角色、环境、交互件、特效与 HUD；world-3d 按已确认空间交接模型及替换接口，HUD 仍走原 UI 规则。三维对象记录 parent、TRS、单位、相机、材质、碰撞和可见性；二维布局 JSON 只约束 HUD 和固定视角标注，不能证明三维空间正确。
 3. V4 资源清单逐项记录 GLB 路径与可选追踪摘要、来源/许可、triangles、draw calls、material/texture、纹理维度/显存估算、骨骼/clip、LOD、碰撞代理和解码依赖。纹理磁盘体积不能替代 GPU 内存预算，生成图片也不能作为已生成模型的证据。
 4. 使用 GLTFLoader 加载，按实际资产扩展注册 KTX2/meshopt/Draco；部署 decoder/transcoder 并验证 CSP、路径与失败提示。颜色纹理按颜色空间处理，法线/粗糙度等数据纹理不作为 sRGB；不盲目覆盖加载器已设置的材质。
 5. 每实例拥有 AnimationMixer 与角色状态；SkinnedMesh 克隆使用 SkeletonUtils.clone，clip/mixer 时间用于表现，伤害/奖励由玩法状态驱动。切换停止 action 并 uncacheRoot，释放独占 geometry/material/texture；ImageBitmap 和共享纹理由资产所有权管理。

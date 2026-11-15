@@ -4,7 +4,7 @@
 
 涉及场景切换或弹出层加载时读取[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，复用项目场景与资源加载入口，明确全局视图跨场景的归属、Prefab 实例销毁和资源依赖释放；资源加载完成与场景运行就绪分别验证。
 
-V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用 Creator 节点、Label 和可复用 Prefab 表达对象名称、可操作状态与操作反馈，文案遵循项目已选语言。沿用实际场景输入与功能接口，可按需隐藏碰撞框等调试标记，不强制另做一套体验系统。临时节点与资源标明用途，模拟数据和占位通路只证明实际覆盖范围。
+2D、UI 与其他非空间任务的 V1 白盒按风险选择；3D 世界按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)搭建或复用本批有效白模并验证。采用功能原型时按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)用 Creator 节点、Label 和可复用 Prefab 表达对象名称、可操作状态与操作反馈，文案遵循项目已选语言。沿用实际场景输入与功能接口，可按需隐藏碰撞框等调试标记，不强制另做一套体验系统。临时节点与资源标明用途，模拟数据和占位通路只证明实际覆盖范围。
 
 代码结构之外，正式 Scene/Prefab 还须按[显示结构与层级](../../cocos-game-ui-layout/references/display-object-layering.md#scene-与-prefab-显示结构)组织世界、Canvas、页面/HUD、导航和瞬态层的实际挂载、输入及生命周期；在已有技术设计与 V3 材料中落实，不另建结构审批链。
 
@@ -16,7 +16,7 @@ V1 白盒按风险选择；采用时按[可辨识的功能原型](../../app-crea
 
 ## 视觉资产路线
 
-V2 起先定义正式视觉目标，再把图片的外观和程序行为拆成独立交付单元；V1 可选功能原型不等待正式视觉。独立图片、可复用资源与 Creator 原生节点/Label/运行逻辑分别标记，并绑定实际 Node 或 Prefab 消费者。仅在目标视觉可以被具体 Creator UI 组件或 shader 真实还原时选择原生绘制。不要把整个页面或效果图单图铺在 Scene 中作为实施完成。
+图片与 UI 路线从 V2 正式视觉目标出发，把图片外观和程序行为拆成独立交付单元；V1 功能验证不等待正式视觉。3D 世界可使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，在整体空间和方向人工确认后，按[Cocos 模型工作流](../../cocos-game-3d-modeling/references/workflow-integration.md)交接代表模块、分批导入与正式替换，不强制拆图或逐对象生图。独立图片、可复用资源与 Creator 原生节点/Label/运行逻辑分别标记，并绑定实际 Node 或 Prefab 消费者。仅在目标视觉可以被具体 Creator UI 组件或 shader 真实还原时选择原生绘制。不要把整个页面或效果图单图铺在 Scene 中作为实施完成。
 
 图像资产核对目标组件状态、有效主体边界、纹理分辨率、导入类型、透明度、边缘、颜色与状态变化。普通图片可直接展示真实候选供用户检查；引擎资源导入和视觉显示验收分别进行。复杂透明边缘、玻璃、发光或半透明边缘应保留适当遮罩或重新创作，不能阈值抠除。
 

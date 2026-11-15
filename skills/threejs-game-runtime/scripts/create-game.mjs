@@ -26,7 +26,11 @@ export function createGame(target) {
   assertEmptyProject(destination);
   mkdirSync(destination, { recursive: true });
   const scripts = dirname(fileURLToPath(import.meta.url));
-  cpSync(join(scripts, '../assets/starter'), destination, { recursive: true, force: false, errorOnExist: true });
+  const starter = join(scripts, '../assets/starter');
+  // 根目录已存在并可能承载本地元数据，逐项复制只拒绝真正的业务目标冲突。
+  for (const name of readdirSync(starter)) {
+    cpSync(join(starter, name), join(destination, name), { recursive: true, force: false, errorOnExist: true });
+  }
   cpSync(join(scripts, 'game-runtime.mjs'), join(destination, 'src/game-runtime.mjs'), { force: false, errorOnExist: true });
   return destination;
 }

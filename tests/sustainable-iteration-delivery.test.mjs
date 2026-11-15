@@ -82,8 +82,10 @@ function checkIterationRules(root) {
   const production = extractMarkdownSection(assets, '生产闭环');
   const assetRoles = production.match(/^\d+\. \*\*明确资产角色\*\*：(.+)$/m)?.[1];
   assert.ok(assetRoles, '生产闭环缺少资产角色与交接说明');
-  // 游戏保留原确认合同；App 复用已选 Figma 结构，不能以通用旧断言恢复重复审批。
-  assert.match(assetRoles, /游戏按\[多张场景设计稿\]\(references\/multi-image-scene-design\.md\).*原有拆解／布局确认/);
+  // 游戏 UI 与图片目标保留原合同；3D 世界模型交接不等同于逐物件切图。
+  assert.match(assetRoles, /图片视觉目标.*\[多张场景设计稿\]\(references\/multi-image-scene-design\.md\).*拆解／布局确认/);
+  assert.match(assetRoles, /3D 世界模型按已确认场景.*生产交接.*替换规格/);
+  assert.match(assetRoles, /游戏 UI 保持原有设计、拆解与布局规则/);
   assert.match(assetRoles, /非游戏 App 从 V2 已选 Figma 节点提取/);
   assert.match(assetRoles, /不再机械绘图或重复确认/);
   const gameStages = extractMarkdownSection(read(root, 'app-asset-workflow/references/multi-image-scene-design.md'), '拆解、实现与验收');
@@ -94,7 +96,8 @@ function checkIterationRules(root) {
   const sample = extractMarkdownSection(assets, '代表性接入与分批协作');
   assert.match(sample, /真实原生组件、父子关系和代表性数据/);
   assert.match(sample, /不新增阶段、控制器字段或逐素材审批/);
-  assert.match(sample, /游戏正式样本生产沿用原 V3 拆解与布局确认/);
+  assert.match(sample, /3D 世界在本批整体白模场景与正式视觉方向经人工确认.*试接代表模块/);
+  assert.match(sample, /游戏图片路线及 UI 沿用原 V3 拆解与布局确认/);
   assert.match(sample, /非游戏 App 以已选 Figma 稿和必要交接为依据.*不重复画图和批准/);
   // 未决结果只阻断依赖它的扩展；技术检查不能自动形成用户批准或视觉通过。
   assert.match(sample, /必要人工确认待定时，暂停依赖该结果的批量扩展，继续不受影响的工作/);

@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { isWorld3D, world3dScopeIds } from './world3d-contract.mjs';
 import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 
@@ -182,6 +183,7 @@ export function validateProductionScope(repo, work) {
     if (!object || object.workItemType !== work.workItemType || !batch.objectIds.includes(object.objectId)) throw new WorkflowError('工作项视觉对象或类型不在当前生产批次');
     if (object.workItemType === 'DISPLAY_LAYER' && (work.visual.hostId !== object.hostId || work.visual.layerType !== object.layerType)) throw new WorkflowError('工作项显示层宿主或类型与生产总范围不一致');
     if (object.workItemType === 'SCENE' && (work.visual.targets ?? []).some((target) => !object.targetIds.includes(target.targetId))) throw new WorkflowError('工作项场景目标超出生产总范围');
+    if (isWorld3D(work) && work.visual.domainEvidenceRef?.path && world3dScopeIds(repo, work).some((id) => !object.targetIds.includes(id))) throw new WorkflowError('3D 场景空间覆盖超出生产总范围');
   }
   return { ...result, batch };
 }

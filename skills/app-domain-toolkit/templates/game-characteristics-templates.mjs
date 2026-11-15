@@ -10,7 +10,7 @@ export const GAME_CHARACTERISTICS_TEMPLATE_SECTIONS = Object.freeze({
 
 ## 关卡与内容设计
 
-涉及关卡或内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)记录当前范围，复用既有设计与编号；不要求增加不适用的内容。
+涉及关卡或内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)记录当前范围，复用既有设计与编号；按[内容分流](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分 3D 白模、2D 平面占位及原 UI 流程，前期只记录内容需求，不逐物件拆图生图，不要求增加不适用内容。
 
 | 内容/关卡与目标 | 既有机制 | 难度/教学意图 | 完成/失败/检查点/恢复 | 数据来源 | 可观察验收 |
 | --- | --- | --- | --- | --- | --- |
@@ -25,7 +25,7 @@ export const GAME_CHARACTERISTICS_TEMPLATE_SECTIONS = Object.freeze({
 
 ## 内容生产与试玩计划
 
-涉及内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)、[专项工具选择](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#tools)和[人工试玩](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)选择适用检查与任务，复用现有计划和证据。
+涉及内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)、[专项工具选择](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#tools)和[人工试玩](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)选择适用检查与任务，复用现有计划和证据。本批整体场景经人工确认后按[正式生产交接](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#production-handoff)试接代表模块并分批替换；现有机器路线的缺口按[工具合同边界](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#tooling-boundary)保留待定，不伪造工件通过。
 
 | 内容数据/编辑器入口与消费者 | 自动检查及覆盖边界 | 人工试玩任务 | 受影响回归及证据 |
 | --- | --- | --- | --- |
@@ -40,7 +40,7 @@ export const GAME_CHARACTERISTICS_TEMPLATE_SECTIONS = Object.freeze({
 
 ## 人工试玩与调参闭环
 
-涉及人工试玩或调参时，按[试玩与调参](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)复用现有记录，分别填写观察、体验反馈和调整假设；尚未取得的结论保持未确认。
+涉及人工试玩或调参时，按[试玩与调参](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)复用现有记录，分别填写观察、体验反馈和调整假设；空间与必要功能验证后按[联合单次审查](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#review)交用户修改或确认，尚未取得的结论保持未确认，不自动复审。
 
 | 试玩版本/条件/任务 | 客观观察及原始证据 | 体验反馈 | 调整假设/参数版本 | 复验结果 | 未确认项 |
 | --- | --- | --- | --- | --- | --- |
