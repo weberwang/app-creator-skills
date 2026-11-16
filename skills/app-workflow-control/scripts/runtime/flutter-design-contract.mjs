@@ -7,9 +7,10 @@ import { createRequire } from 'node:module';
 import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from './io.mjs';
 import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
 import { isFigmaApp, readFigmaSnapshot } from './figma-app-contract.mjs';
+import { assertRunnableCommand } from './runnable-command.mjs';
 
 let validatePlan;
-const PROPERTIES = ['structure', 'size', 'spacing', 'typography', 'color', 'border', 'shape', 'states'];
+const PROPERTIES = ['structure', 'size', 'spacing', 'typography', 'color', 'border', 'shape', 'appearance', 'touchTarget', 'states'];
 const imageCache = new Map();
 
 /** 图片解码只核对技术身份和尺寸，绝不据此判断视觉还原通过。 */
@@ -74,6 +75,7 @@ function rawObservations(repo, work, doc, implementation, report) {
   if (report.method !== 'source-inspection') {
     const capture = json(repo, work, raw.commandCaptureRef, '原始测量命令采集');
     check(capture.schemaVersion === 'command-capture-v1' && capture.exitCode === 0 && typeof capture.command === 'string' && capture.command.trim(), '原始测量缺少成功命令采集');
+    assertRunnableCommand(capture.command, 'Flutter 原始测量命令');
     let output;
     try { output = JSON.parse(capture.stdout); } catch { check(false, '原始测量 stdout 必须包含结构化观测'); }
     check(isDeepStrictEqual(output, raw.observations), '原始测量命令输出与观测不一致');
@@ -162,10 +164,10 @@ function planFor(repo, work, doc) {
       const review = json(repo, work, work.visual.reviews?.V2, 'Figma 目标确认');
       if (review.workItemId !== work.workItemId) resolveReuseOwner(repo, work, review.workItemId, 'V2');
       context({ ...work, workItemId: review.workItemId }, review, 'Figma 目标确认');
-      check(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.scope?.kind === 'full-object' && review.userMessageRef?.trim() && sameRef(review.figmaDesignRef, doc.figmaDesignRef), '额外 Figma 目标缺少真实用户确认');
-      check(Array.isArray(review.figmaTargetRefs) && review.figmaTargetRefs.some((ref) => sameRef(ref, extra.figmaDesignRef)), '额外 Figma 目标未列入 V2 授权范围');
+      check(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.scope?.kind === 'full-object' && review.userMessageRef?.trim(), '额外 Figma 目标缺少真实用户确认');
+      check(Array.isArray(review.approvedTargetRefs) && review.approvedTargetRefs.some((ref) => sameRef(ref, extra.referenceTarget)), '额外 Figma 目标未列入 V2 授权范围');
       const snapshot = readFigmaSnapshot(repo, extra.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, work });
-      check(sameRef(snapshot.previewRef, extra.referenceTarget), '额外 Figma 目标与冻结预览不一致');
+      check(sameRef(snapshot.reconstruction?.sourceTargetRef, extra.referenceTarget), '额外 Figma 目标与确认源图不一致');
     } else {
       const review = json(repo, work, extra.reviewRef, '额外目标确认');
       if (review.workItemId !== work.workItemId) {
@@ -219,6 +221,7 @@ function planFor(repo, work, doc) {
     for (const consumer of implementation.consumers) repoPath(repo, consumer.sourcePath, '消费者源码');
     for (const property of PROPERTIES) {
       const requirement = implementation.requirements[property];
+      if (!requirement && property === 'touchTarget') continue;
       if (requirement.basis === 'approved-change') {
         const review = json(repo, work, requirement.approvalRef, '设计变更确认');
         context(work, review, '设计变更确认');
@@ -279,6 +282,7 @@ function implementationEvidence(repo, work, doc, plan) {
     check(['source-inspection', 'layout-test', 'runtime-measurement'].includes(report.method), '实现证据缺少检查方法');
     const expectedKeys = [];
     for (const id of implementation.designItemIds) for (const condition of plan.elements.find((item) => item.id === id).conditionIds) for (const property of PROPERTIES) {
+      if (!implementation.requirements[property] && property === 'touchTarget') continue;
       expectedKeys.push(`${id}/${condition}/${property}`);
       const checks = report.observations?.filter((item) => item.designItemId === id && item.conditionId === condition && item.property === property);
       check(checks?.length === 1 && isDeepStrictEqual(checks[0].value, implementation.requirements[property].value), `${id}/${condition}/${property} 缺少当前还原依据或实际值偏离`);

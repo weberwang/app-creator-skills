@@ -755,6 +755,8 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 
 **交互与命中**。uGUI 优先复用 `Button` 或现有 `Selectable` 控件，由控件管理激活、`interactable` 与导航。保留实际命中所需 `Graphic` 的 `raycastTarget`，关闭无需独立拾取的装饰图层射线检测。小图标在控件 `RectTransform` 的有效命中范围内保持原尺寸。UI Toolkit 优先用 `Button` 和相应表单控件，使用布局或内边距定义可点范围。无需被指针拾取的纯装饰元素可设 `PickingMode.Ignore`，独立操作仍保留自己的控件与焦点。[uGUI Graphic](https://docs.unity3d.com/Packages/com.unity.ugui@2.0/api/UnityEngine.UI.Graphic.html) · [UI Toolkit PickingMode](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/UIElements.PickingMode.Ignore.html)
 
+按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)回读实际 Scene/Prefab 或 UXML 的父子、布局及输入配置，并在适用的运行采集中核对 HUD 与相机画面的遮挡、焦点及支持的输入；世界空间按相机与对象关系检查。结构和运行证据不代替用户视觉确认。
+
 **uGUI 按钮单节点**。V3 拆解和布局时，按钮主图与命中可共用同一个 `RectTransform`，且图片无需独立定位、裁切或动画时，优先在同一 GameObject 上挂载 `Button` 和 `Image`。按需用同节点 `Image` 承担射线命中并设为 `Button.targetGraphic`。需要独立排版的图标、文字或视觉层继续作为子节点，按钮仍拥有激活与焦点。V5 按确认后的单节点结构还原，迁移已有图片引用后再移除冗余子节点，并核对实际命中及状态过渡。[Selectable.targetGraphic](https://docs.unity3d.com/Packages/com.unity.ugui@2.0/api/UnityEngine.UI.Selectable.html#UnityEngine_UI_Selectable_targetGraphic)
 
 文本任务必须先读取 [UniText 安装检查与固定 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)，先评估 UniText 并按[完整还原标准](../../unity-development-workflow/references/visual-decomposition-routes.md#完整还原的判断标准)核实路线，未核实则待验证；安装异常时由用户选择修复或回退 TMP；再读[文本组件属性与配置](text-layout.md)，按实际组件版本配置基准字号、断行、适配与尺寸所有权，检查真实字形。

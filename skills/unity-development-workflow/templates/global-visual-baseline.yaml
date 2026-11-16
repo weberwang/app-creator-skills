@@ -1,4 +1,6 @@
 # 待确认模板；三张真实候选、人工选择与冻结正文就绪后，编译为 JSON 并绑定选择引用。
+# 共同条件只固定玩法、视角、状态、内容与预算；造型、比例、材质和 UI 语言由各方向独立定义，完整写入各自生成提示词。
+# 人工比较弱化配色、隐藏名称后是否仍能区分；文件与提示词检查不代替实际可读性、差异和质量判断。
 schemaVersion: "1.0"
 baselineId: global-visual-v1
 producerWorkItemId: WI-GLOBAL-VISUAL

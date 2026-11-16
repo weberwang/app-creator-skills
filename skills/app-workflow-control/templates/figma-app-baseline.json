@@ -10,9 +10,9 @@
   "candidates": [
     {
       "candidateId": "direction-a",
-      "path": "design/figma/direction-a.png",
-      "figmaSnapshotRef": {
-        "path": "design/figma/direction-a.json",
+      "path": "design/candidates/direction-a.png",
+      "visualSourceRef": {
+        "path": "design/candidates/direction-a-source.json",
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
       },
       "qualityChecks": [
@@ -39,7 +39,7 @@
       ]
     }
   ],
-  "selectedCandidateId": "replace-after-real-user-selection",
+  "selectedCandidateId": "",
   "selectionReviewRef": {
     "path": "design/figma/direction-selection.json",
     "sha256": "0000000000000000000000000000000000000000000000000000000000000000"

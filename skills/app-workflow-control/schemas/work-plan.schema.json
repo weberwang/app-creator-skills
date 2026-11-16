@@ -18,7 +18,7 @@
           "unitId": {"type": "string", "minLength": 1, "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}$"},
           "owner": {"type": "string", "minLength": 1},
           "paths": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
-          "acceptanceCommands": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+          "acceptanceCommands": {"type": "array", "minItems": 1, "items": {"type":"string","minLength":1,"pattern":"^(?!\\s*(?:<[^>\\r\\n]+>|[Tt][Oo][Dd][Oo]|[Tt][Bb][Dd]|待填写|待执行|待运行|待补充|占位命令)\\s*$)(?![\\s\\S]*<(?:执行|运行|填写|替换|实际|真实|必须|检查|命令|command|cmd|check|test|path|file)[^>\\r\\n]*>)[\\s\\S]*\\S[\\s\\S]*$"}},
           "type": {"enum": ["SHARED", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
           "parallelGroup": {"type": "string", "minLength": 1},
           "dependsOn": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},

@@ -41,16 +41,25 @@ test('实现 RETURN 后新封套不能引用旧还原记录或旧组合对照', 
   const newDoc = JSON.parse(await readFile(resolve(f.repo, freshEnvelope.path), 'utf8'));
   assert.throws(() => validateFlutterDesign(f.repo, returned, 'V5', newDoc), /实现证据.*RETURN 已作废/);
   // 换新实现证据后独立检验组合对照，不能被前一个错误掩盖。
-  const oldReport = JSON.parse(await readFile(resolve(f.repo, newDoc.implementationEvidenceRefs[0].path), 'utf8'));
-  const raw = JSON.parse(await readFile(resolve(f.repo, oldReport.executionRef.path), 'utf8'));
-  assert.ok(invalid.has(oldReport.executionRef.path));
-  newDoc.implementationEvidenceRefs = [writeDesignFixture(f.repo, 'fresh-report-with-old-output.json', oldReport)];
+  const reports = [];
+  for (const ref of newDoc.implementationEvidenceRefs) {
+    const report = JSON.parse(await readFile(resolve(f.repo, ref.path), 'utf8'));
+    const raw = JSON.parse(await readFile(resolve(f.repo, report.executionRef.path), 'utf8'));
+    assert.ok(invalid.has(report.executionRef.path));
+    reports.push({ report, raw });
+  }
+  // 页面背景和标题均为独立实现；只刷新其中一份会先被完整覆盖门拒绝。
+  newDoc.implementationEvidenceRefs = reports.map(({ report }) => writeDesignFixture(f.repo, `fresh-${report.implementationId}-with-old-output.json`, report));
   assert.throws(() => validateFlutterDesign(f.repo, returned, 'V5', newDoc), /检查原始输出.*RETURN 已作废/);
-  oldReport.executionRef = writeDesignFixture(f.repo, 'fresh-output.json', raw);
-  newDoc.implementationEvidenceRefs = [writeDesignFixture(f.repo, 'fresh-report.json', oldReport)];
+  newDoc.implementationEvidenceRefs = reports.map(({ report, raw }) => {
+    report.executionRef = writeDesignFixture(f.repo, `fresh-${report.implementationId}-output.json`, raw);
+    return writeDesignFixture(f.repo, `fresh-${report.implementationId}-report.json`, report);
+  });
   const asset = JSON.parse(await readFile(resolve(f.repo, returned.assetReviewRef.path), 'utf8'));
-  asset.assets[0].implementationEvidenceRef = newDoc.implementationEvidenceRefs[0];
-  asset.assets[0].componentEvidenceRef = newDoc.implementationEvidenceRefs[0].path;
+  for (const [index, ref] of newDoc.implementationEvidenceRefs.entries()) {
+    asset.assets[index].implementationEvidenceRef = ref;
+    asset.assets[index].componentEvidenceRef = ref.path;
+  }
   returned.assetReviewRef = writeDesignFixture(f.repo, 'fresh-asset-review.json', asset);
   const review = JSON.parse(await readFile(resolve(f.repo, returned.visual.reviews.V4.path), 'utf8'));
   review.assetReviewRef = returned.assetReviewRef;

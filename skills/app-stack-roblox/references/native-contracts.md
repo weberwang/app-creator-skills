@@ -55,6 +55,8 @@
 
 按[内容与地形](content.md#gui-与世界)明确 `ScreenGui`、安全区、父子关系、位置参照、层序、真实输入及 Edit 模板与 PlayerGui 运行克隆。世界空间使用 studs 和相机，不混作屏幕布局单位。按[文本布局](text-layout.md)验证实际字体、换行、目标语言与视口；正式显示和可读性由用户人工检查。
 
+按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)核对正式 GuiObject 与运行克隆的父子、容器及输入；在适用客户端运行证据中检查 HUD 与相机画面的遮挡，世界对象按空间和相机关系处理。
+
 普通 GuiObject 必须按真实父级或允许的参照相对停靠；原生可表达时使用 `UDim2`、`AnchorPoint` 或父容器的 `UIListLayout`/`UIGridLayout`，列表项与其 Flex 尺寸权限按[屏幕 GUI 合同](../../roblox-domain-contracts/references/domain-validation.md#屏幕-gui-的相对停靠)回读。`ScreenGui` 自身以实际 `ScreenInsets` 绑定视口边界；其子项分别声明位置和双轴尺寸控制者。不得用未验证的相对标记、锚点原点或固定屏幕坐标代替停靠规则；兄弟参照才使用已绑定正式源码的共享计算，实际受控行为记录触发、独占与恢复。V3 冻结计划，V4/V5 校验同一正式源及客户端属性；一次快照不能证明多尺寸运行或视觉通过。
 <!-- native-source:roblox-game-ui-layout:end -->
 

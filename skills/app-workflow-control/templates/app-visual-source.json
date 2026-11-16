@@ -1,0 +1,15 @@
+{
+  "schemaVersion": "1.0",
+  "projectId": "replace-project",
+  "stack": "flutter",
+  "candidateId": "replace-candidate",
+  "version": "replace-generation-version",
+  "origin": "generated",
+  "generationMethod": "imagegen",
+  "imageRef": {"path": "design/candidates/replace-image.png", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "briefRef": {"path": "design/brief.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000"},
+  "prompt": "replace-with-actual-full-prompt",
+  "generationInputs": null,
+  "generator": "replace-with-actual-generator",
+  "generatorVersion": "replace-with-actual-version-or-not-provided"
+}

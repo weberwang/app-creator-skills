@@ -25,11 +25,11 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 游戏方案阶段先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)核对创意与核心循环的完整体验推演，记录具体问题、依据及后续验证问题。相关机制实现前核对方案问题的处理去向，V1 与后续真实参与者观察继续验证已交接的假设。
 
-本批关卡／场景按内容分流完成搭建与必要功能验证后、交用户确认整体场景前，按[方案单次审查](../app-domain-toolkit/references/game-design-exploration.md#review)联合核对玩法与空间依据、尺度、镜头和覆盖风险；3D 核对白模运行，2D 核对平面布局及占位，UI 保持原流程。与同一方案的当前稿审查合并，修改后等待人工反馈，不自动再审或确认；正式模型替换后仍复验受影响功能和用户显示，不将概念图或代理审查当作运行证据。
+本批关卡／场景按内容分流完成搭建与必要功能验证后、交用户确认整体场景前，按[方案单次审查](../app-domain-toolkit/references/game-design-exploration.md#review)联合核对玩法与空间依据、尺度、镜头和覆盖风险；3D 核对白模运行，2D 核对平面布局及占位，UI 保持原流程。与同一方案的当前稿审查合并，修改后先定向复验失败项及实际变化的行为、语义和结构，再等待人工反馈；不自动重复全量审美评议或代为确认。正式模型替换后仍复验受影响功能和用户显示，不将概念图或代理审查当作运行证据。
 
 当前视觉设计稿完成后，按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对需求、可编辑节点和可测结构事实；设计稿截图与运行截图默认由用户检查，未获明确授权不得自动分析或代写视觉 PASS。已有这轮记录时沿用，不借换代理或修改版本重开；后续工程验证及人工显示确认分别记录。
 
-1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及界面美术时，将[无文字意图可读性](../app-asset-workflow/references/interface-intent.md)纳入已有人工审阅。
+1. 按[增量变化影响](../app-creator-workflow/references/professional-conventions.md#incremental-change-impact)确定实际影响与重验范围，按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)确认被测快照、目标平台和可复用运行实例；把功能、布局/无障碍、性能、资源、存档/网络等风险映射到具体检查项。涉及可见内容时，按[有界复核](../app-asset-workflow/references/interface-intent.md#bounded-review)沿主任务完整推演一次，并选一个适用高压或异常情境，主动检查能力语义、真实父子边界、内容空间及视觉一致性；合入已有单次审查和交付检查，不新增报告或审查轮次。可测结构与合同由代理检查，实际画面及无文字意图可读性按原人工规则验收。
 2. 先跑最小冒烟和关键路径，再扩展边界/状态组合；自动化用例引用已有测试、断言及原始结果，手工检查或缺陷复现才补充必要前置、步骤、预期与实际，不逐条抄写通过用例。涉及素材分批接入时按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)检查，V4 样本试接不代替 V5 正式组合按适用范围的完整回归。游戏任务按[QA 用例映射](../app-domain-toolkit/references/game-characteristics.md#qa)追踪特点、规则来源、功能/对象和验证结果，复用 V1 专项证据，在 V5 与最终集成重验实际受影响组合及完整游玩周期；不对普通应用或服务器套用游戏检查。
 3. 性能检查按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)选取相关指标，记录源／资源快照、设备、构建及采样模式、场景／负载、缓存条件、预热、采样窗口和原始数据；与基线及预算同条件比较，分别覆盖适用的冷／热路径、首次／缓存命中与反复进出，不凭一次波动或平均 FPS 推断改善。优化后检查成本转移、副作用和功能回归，区分目标达成、相对改善、无可辨收益、退化与未验证。
 4. 按[架构模块契约](../app-creator-workflow/references/professional-conventions.md#architecture-module-contracts)审查实际改动的退化及必要局部重构；将发现按影响、频率、可绕过性和证据可信度分级，并按[质量证据与返修复验约定](../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)分开记录观察事实、推测根因与建议修复。

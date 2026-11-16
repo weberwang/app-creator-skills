@@ -2,6 +2,10 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { isDeepStrictEqual } from 'node:util';
 import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from './io.mjs';
+import { readAppVisualSource } from './app-visual-source.mjs';
+import { validateFigmaNodeProperties } from './figma-design-properties.mjs';
+import { validateFigmaNativeFacts } from './figma-native-facts.mjs';
+export { extractFigmaNodeStyle } from './figma-design-properties.mjs';
 
 /** 非游戏 App 默认采用 Figma；ESP32 显式选择该路线，游戏及无界面服务保持原合同。 */
 export function isFigmaApp(work) {
@@ -46,96 +50,13 @@ function ids(actual, expected, label) {
   insist(Array.isArray(actual) && new Set(actual).size === actual.length && isDeepStrictEqual([...actual].sort(), [...expected].sort()), `${label} 覆盖不完整或身份重复`);
 }
 
-/** 找到源节点的真实祖先，允许原生实现省略纯组织容器，禁止映到无关分支。 */
-function containsNode(nodes, ancestorId, childId) {
-  let current = nodes.find((node) => node.id === childId);
-  const seen = new Set();
-  while (current && !seen.has(current.id)) {
-    if (current.id === ancestorId) return true;
-    seen.add(current.id); current = nodes.find((node) => node.id === current.parentId);
-  }
-  return false;
-}
-
-/** 导出供原生交接消费的实际样式事实，不能把这些计划值当作运行观测。 */
-export function extractFigmaNodeStyle(node) {
-  const result = {};
-  for (const key of ['fill', 'spacing', 'radius', 'insets', 'colors', 'border', 'shape']) if (node.properties && Object.hasOwn(node.properties, key)) result[key] = node.properties[key];
-  if (node.type === 'TEXT') result.typography = { family: node.font.platformFamily, size: node.font.size, ...(node.font.weight !== undefined ? { weight: node.font.weight } : {}), ...(node.font.lineHeight !== undefined ? { lineHeight: node.font.lineHeight } : {}), ...(node.font.letterSpacing !== undefined ? { letterSpacing: node.font.letterSpacing } : {}) };
-  return result;
-}
-
-/** 将明确源事实与原生要求逐属性对照，避免旧代码规格仅换一个 nodeId 即通过。 */
-function nativeFacts(repo, work, doc, handoff, approved, plan) {
-  const used = new Set();
-  const byId = new Map(handoff.mappings.map((mapping) => [mapping.designItemId, mapping]));
-  for (const mapping of handoff.mappings) {
-    const target = approved.find(({ ref }) => sameFigmaRef(repo, ref, mapping.figmaDesignRef ?? doc.figmaDesignRef));
-    const node = target.snapshot.nodes.find((item) => item.id === mapping.nodeId);
-    const key = `${target.ref.path}:${target.ref.sha256}:${node.id}`;
-    insist(!used.has(key), '不同设计项不能全部指向同一个无关节点'); used.add(key);
-    const element = plan.elements?.find((item) => item.id === mapping.designItemId);
-    if (!element) {
-      const native = plan.nodes.find((item) => item.id === mapping.designItemId);
-      for (const property of ['x', 'y', 'width', 'height']) insist(native[property] === node[property], `原生布局 ${mapping.designItemId}.${property} 未按 Figma 节点还原`);
-      const expectedStyle = extractFigmaNodeStyle(node);
-      insist(isDeepStrictEqual(native.designProperties ?? mapping.nativeStyle, expectedStyle), `原生布局 ${mapping.designItemId} 字体、颜色或形态未从 Figma 提取`);
-      if (native.parentId !== null) {
-        const parent = byId.get(native.parentId);
-        insist(parent && containsNode(target.snapshot.nodes, parent.nodeId, node.id), '原生父子关系未按 Figma 真实结构还原');
-      }
-      continue;
-    }
-    insist(sameFigmaRef(repo, element.targetRef, target.snapshot.previewRef), '原生设计项未绑定对应状态的 Figma 目标');
-    if (element.parentId !== null) {
-      const parent = byId.get(element.parentId);
-      insist(parent && containsNode(target.snapshot.nodes, parent.nodeId, node.id), '原生设计项父子关系偏离 Figma');
-    }
-    const implementation = plan.implementations.find((item) => item.id === element.implementationId);
-    insist(implementation, '设计项缺少真实原生实现');
-    const requirements = implementation.requirements;
-    const textNodes = target.snapshot.nodes.filter((item) => item.type === 'TEXT' && containsNode(target.snapshot.nodes, node.id, item.id));
-    const text = mapping.textNodeId ? textNodes.find((item) => item.id === mapping.textNodeId) : textNodes.length === 1 ? textNodes[0] : null;
-    const facts = { size: { width: node.width, height: node.height }, spacing: node.properties?.insets, typography: text ? {
-      family: text.font.platformFamily, size: text.font.size, weight: text.font.weight, lineHeight: text.font.lineHeight, letterSpacing: text.font.letterSpacing,
-    } : null, color: node.properties?.colors, border: node.properties?.border, shape: node.properties?.shape };
-    for (const property of ['size', 'spacing', 'typography', 'color', 'border', 'shape']) {
-      const expected = requirements[property];
-      if (expected?.value?.applicable === false) {
-        insist((property === 'typography' && !text) || (property === 'border' && node.properties?.border?.width === 0), `Figma ${property} 实际适用，不能以不适用绕过`);
-        continue;
-      }
-      if (isDeepStrictEqual(expected?.value, facts[property])) continue;
-      // 已有明确的局部变更决定可解释平台替代，不新增逐属性审批节点。
-      const adaptation = mapping.adaptations?.find((item) => item.property === property);
-      insist(expected?.basis === 'approved-change' && expected.approvalRef && adaptation && typeof adaptation.reason === 'string' && adaptation.reason.trim() && sameFigmaRef(repo, adaptation.approvalRef, expected.approvalRef), `Figma ${mapping.designItemId}.${property} 与原生要求不一致或缺少真实提取事实`);
-      const decision = frozen(repo, adaptation.approvalRef, '已有设计变更决定', work);
-      insist(decision.decision === 'APPROVED' && decision.userMessageRef?.trim() && Array.isArray(decision.scope?.designItemIds) && decision.scope.designItemIds.includes(element.id) && Array.isArray(decision.scope.properties) && decision.scope.properties.includes(property), '平台替代超出已有明确决定范围');
-    }
-    const layout = node.layoutMode ?? target.snapshot.nodes.find((item) => item.id === node.parentId)?.layoutMode;
-    const relation = { VERTICAL: 'column', HORIZONTAL: 'row', GRID: 'grid', NONE: 'none' }[layout];
-    insist(requirements.structure.value.layout === relation || (node.type === 'TEXT' && requirements.structure.value.layout === 'leaf'), '原生结构关系未从 Figma 自动布局提取');
-    const conditionIds = element.conditionIds ?? [];
-    insist(conditionIds.every((id) => {
-      const condition = plan.conditions.find((item) => item.id === id);
-      return condition && condition.stateId === target.snapshot.stateId && isDeepStrictEqual(condition.viewport, target.snapshot.viewport) && condition.language === target.snapshot.language && condition.textScale === target.snapshot.textScale;
-    }), '原生适用状态、视口、语言或文字倍率未绑定 Figma');
-  }
-  for (const target of approved) for (const node of target.snapshot.nodes) {
-    if (node.visible === false || !['TEXT', 'VECTOR', 'RECTANGLE', 'ELLIPSE', 'LINE', 'BOOLEAN_OPERATION', 'INSTANCE'].includes(node.type)) continue;
-    const covered = handoff.mappings.some((mapping) => {
-      if (!sameFigmaRef(repo, mapping.figmaDesignRef ?? doc.figmaDesignRef, target.ref)) return false;
-      if (mapping.nodeId === node.id) return true;
-      const owner = target.snapshot.nodes.find((item) => item.id === mapping.nodeId);
-      if (!containsNode(target.snapshot.nodes, owner.id, node.id)) return false;
-      if (['COMPONENT', 'INSTANCE'].includes(owner.type)) return true;
-      const element = plan.elements?.find((item) => item.id === mapping.designItemId);
-      const implementation = element && plan.implementations.find((item) => item.id === element.implementationId);
-      const texts = target.snapshot.nodes.filter((item) => item.type === 'TEXT' && containsNode(target.snapshot.nodes, owner.id, item.id));
-      return node.type === 'TEXT' && implementation?.requirements.typography.value.applicable !== false && implementation && (mapping.textNodeId === node.id || (texts.length === 1 && texts[0].id === node.id));
-    });
-    insist(covered, `Figma 可见元素 ${node.id} 缺少原生设计项覆盖`);
-  }
+/** 空容器不能冒充真实设计输入；零值和布尔值仍可表达有效的平台或业务约束。 */
+function hasBriefValue(value) {
+  if (typeof value === 'string') return Boolean(value.trim());
+  if (typeof value === 'number') return Number.isFinite(value);
+  if (typeof value === 'boolean') return true;
+  if (Array.isArray(value)) return value.some(hasBriefValue);
+  return value !== null && typeof value === 'object' && Object.values(value).some(hasBriefValue);
 }
 
 /** 核验真实内容与探索约束；已有代码仅作为实现条件，不默认冻结视觉。 */
@@ -143,8 +64,9 @@ function briefFor(repo, ref, work) {
   const brief = frozen(repo, ref, '设计输入', work);
   for (const key of ['targetUsers', 'primaryTask', 'context']) insist(typeof brief[key] === 'string' && brief[key].trim(), `设计输入缺少 ${key}`);
   insist(['explore', 'reproduce'].includes(brief.intent), '设计输入须区分探索与忠实还原');
-  for (const key of ['realContent', 'hardConstraints', 'explorationSpace']) insist(Array.isArray(brief[key]), `设计输入缺少 ${key}`);
-  insist(brief.realContent.length > 0, '不能以虚构内容或装饰面板填充提案');
+  for (const key of ['realContent', 'hardConstraints', 'explorationSpace', 'keyStates', 'platformConstraints']) insist(Array.isArray(brief[key]), `设计输入缺少 ${key}`);
+  insist(brief.realContent.length > 0 && brief.keyStates.length > 0 && brief.platformConstraints.length > 0, '设计任务书必须包含真实内容、关键状态和平台约束');
+  for (const key of ['realContent', 'hardConstraints', 'explorationSpace', 'keyStates', 'platformConstraints']) insist(brief[key].every(hasBriefValue), `设计输入 ${key} 包含空内容，须补充真实依据或移除无用条目`);
   if (brief.intent === 'reproduce') figmaFile(repo, brief.existingVisualRef, '明确还原依据', work);
   return brief;
 }
@@ -189,7 +111,8 @@ export function readFigmaSnapshot(repo, ref, { projectId, stack, objectId, candi
     insist(typeof node.id === 'string' && node.id.trim(), '实际图层必须有唯一节点 ID');
     insist(typeof node.name === 'string' && node.name.trim() && !/^(Frame|Rectangle|Group|Text)\s*\d*$/i.test(node.name), '图层必须按实际职责命名');
     insist(['FRAME', 'COMPONENT', 'COMPONENT_SET', 'INSTANCE', 'TEXT', 'VECTOR', 'RECTANGLE', 'ELLIPSE', 'LINE', 'GROUP', 'BOOLEAN_OPERATION'].includes(node.type), '设计不能由整页图片节点冒充可编辑界面');
-    for (const key of ['x', 'y', 'width', 'height']) insist(Number.isFinite(node[key]) && (!['width', 'height'].includes(key) || node[key] > 0), `节点 ${node.id} 尺寸无效`);
+    for (const key of ['x', 'y']) insist(Number.isFinite(node[key]), `节点 ${node.id} 坐标无效`);
+    validateFigmaNodeProperties(node);
     const seen = new Set([node.id]); let current = node;
     while (current !== root) { insist(nodes.has(current.parentId) && !seen.has(current.parentId), '节点父链脱离根或成环'); seen.add(current.parentId); current = nodes.get(current.parentId); }
     const children = snapshot.nodes.filter((item) => item.parentId === node.id);
@@ -205,24 +128,25 @@ export function readFigmaSnapshot(repo, ref, { projectId, stack, objectId, candi
       insist(typeof binding.field === 'string' && binding.field.trim() && node.properties && Object.hasOwn(node.properties, binding.field) && variable && isDeepStrictEqual(node.properties[binding.field], variable.value), '变量必须绑定到真实节点属性，不能只创建未使用 token');
       usedVariables.add(variable.id);
     }
-    for (const image of node.imageFills ?? []) {
-      const asset = snapshot.assets.find((item) => item.id === image.assetId);
-      insist(asset && asset.nodeIds.includes(node.id) && ['illustration', 'photo', 'icon', 'texture', 'character'].includes(asset.role), '图片须属于独立素材范围，不能嵌入整页 UI 效果图');
+    const imagePaints = [...(node.imageFills ?? [])];
+    /** 同时检查原始 Figma 填充与规范化填充，不能通过不同字段绕开独立素材约束。 */
+    const appendPaints = (value) => {
+      for (const paint of Array.isArray(value) ? value : [value]) if (paint && typeof paint === 'object' && paint.type === 'IMAGE') imagePaints.push(paint);
+    };
+    appendPaints(node.fills); appendPaints(node.properties?.fill);
+    for (const image of imagePaints) {
+      const assets = snapshot.assets.filter((item) => (!image.assetId || item.id === image.assetId) && (!image.imageHash || item.imageHash === image.imageHash));
+      const asset = assets.length === 1 ? assets[0] : null;
+      insist(asset && (image.assetId || image.imageHash) && asset.nodeIds.includes(node.id) && ['illustration', 'photo', 'icon', 'texture', 'character'].includes(asset.role), '图片须属于唯一独立素材范围，不能嵌入整页 UI 效果图');
       const independentFullImage = ['photo', 'texture'].includes(asset.role) && snapshot.nodes.some((other) => other !== node && ['TEXT', 'VECTOR', 'INSTANCE', 'COMPONENT'].includes(other.type));
       insist(node !== root && (node.width * node.height < root.width * root.height * 0.9 || independentFullImage), '整页图片不能冒充可编辑设计');
+      insist(asset.sourceRef.sha256 !== snapshot.reconstruction?.sourceTargetRef?.sha256 && asset.sourceRef.sha256 !== snapshot.previewRef.sha256, '效果图或重建预览不能作为整页背景素材');
       figmaFile(repo, asset.sourceRef, '独立素材来源', work);
     }
   }
   for (const group of repeats.values()) if (group.length > 1) insist(group.every((node) => node.type === 'INSTANCE' && typeof node.componentId === 'string' && node.componentId === group[0].componentId), '重复元素须使用共享组件实例');
-  for (const kind of ['color', 'spacing', 'radius']) insist(snapshot.variables.some((item) => item.kind === kind && usedVariables.has(item.id)), `${kind} 变量没有实际绑定`);
   for (const variable of snapshot.variables) insist(usedVariables.has(variable.id), '存在未绑定的装饰性变量');
   return snapshot;
-}
-
-/** 用户明确要求多方案时比较真实结构与排版，不能以换色凑数。 */
-function directionKey(snapshot) {
-  // 属性与节点返回顺序不构成新方向，比较可测的结构和排版事实。
-  return JSON.stringify(snapshot.nodes.map((node) => ({ type: node.type, parent: snapshot.nodes.find((item) => item.id === node.parentId)?.type, x: node.x, y: node.y, width: node.width, height: node.height, layoutMode: node.layoutMode, font: node.font ? Object.fromEntries(Object.entries(node.font).sort(([left], [right]) => left.localeCompare(right))) : undefined, radius: node.properties?.radius })).map((item) => JSON.stringify(item)).sort());
 }
 
 /** 用户可选一个方向或明确组合；组合稿单独冻结，不计作额外探索候选。 */
@@ -231,7 +155,7 @@ export function selectedFigmaCandidate(record) {
 }
 
 /** 非游戏默认单一精修方案，多方案必须有用户明确要求；游戏保留三候选。 */
-export function validateFigmaBaseline(repo, work, record, visited = new Set()) {
+function validateFigmaDirectBaseline(repo, work, record, visited = new Set()) {
   insist(record.designRoute === 'figma-app', '非游戏 App 基线必须声明 Figma 路线');
   const versionKey = createHash('sha256').update(JSON.stringify(record)).digest('hex');
   insist(visited.size < 64 && !visited.has(versionKey), '方向复用形成循环或来源过深'); visited.add(versionKey);
@@ -261,7 +185,8 @@ export function validateFigmaBaseline(repo, work, record, visited = new Set()) {
   if (exploration.kind !== 'increment' && snapshots.length > 1) {
     const first = snapshots[0];
     for (const snapshot of snapshots.slice(1)) insist(isDeepStrictEqual(snapshot.viewport, first.viewport) && snapshot.stateId === first.stateId && snapshot.language === first.language && snapshot.textScale === first.textScale && sameFigmaRef(repo, snapshot.briefRef, first.briefRef), '方向候选必须使用相同任务、内容及比较条件');
-    insist(new Set(snapshots.map(directionKey)).size === snapshots.length, '方向候选不能只替换颜色');
+    // 相同预览文件字节属于同一产物；视觉语言是否实质不同仍由人工比较。
+    insist(new Set(snapshots.map((snapshot) => snapshot.previewRef.sha256)).size === snapshots.length, '多个方向不能引用完全相同的预览');
   }
   const selected = selectedFigmaCandidate(record);
   insist(selected, '须选定一个方向或先形成用户明确选定的组合节点');
@@ -277,21 +202,95 @@ export function validateFigmaBaseline(repo, work, record, visited = new Set()) {
   insist(sameFigmaRef(repo, { path: review.targetRef, sha256: review.targetSha256 }, selectedSnapshot.previewRef), '方向选择预览错绑');
 }
 
+/** 图片方向在重建前即可选择；同条件核对不将图片文件当作视觉质量结论。 */
+export function validateFigmaBaseline(repo, work, record, visited = new Set()) {
+  if (work.visual?.designSource?.kind === 'figma-direct') {
+    insist(work.visual.designSource.userMessageRef?.trim() && work.visual.designSource.scope?.trim(), '其他路线须记录真实用户指令及范围');
+    return validateFigmaDirectBaseline(repo, work, record, visited);
+  }
+  insist(record.designRoute === 'figma-app', '非游戏 App 基线必须声明 Figma 路线');
+  const versionKey = createHash('sha256').update(JSON.stringify(record)).digest('hex');
+  insist(visited.size < 64 && !visited.has(versionKey), '方向复用形成循环或来源过深'); visited.add(versionKey);
+  const exploration = record.exploration;
+  insist(exploration && ['initial', 'redesign', 'increment'].includes(exploration.kind), '缺少方向探索范围');
+  let expected = 1;
+  if (exploration.requestedCount !== undefined) {
+    insist(Number.isInteger(exploration.requestedCount) && exploration.requestedCount > 0 && exploration.userMessageRef?.trim(), '自定义候选数量须来自用户明确指定');
+    expected = exploration.requestedCount;
+  }
+  let inherited;
+  if (exploration.kind === 'increment') {
+    const source = frozen(repo, exploration.sourceBaselineRef, '已确认方向来源', work);
+    validateFigmaBaseline(repo, work, source, visited);
+    insist(source.projectId === record.projectId && source.stack === record.stack, '局部增量方向来源项目或技术栈不一致');
+    inherited = selectedFigmaCandidate(source); expected = 1;
+  }
+  insist(Array.isArray(record.candidates) && record.candidates.length === expected, `当前探索须提供 ${expected} 个方向`);
+  ids(record.candidates.map((item) => item.candidateId), [...new Set(record.candidates.map((item) => item.candidateId))], '方向候选');
+  const sources = record.candidates.map((candidate) => {
+    const source = readAppVisualSource(repo, candidate.visualSourceRef, work, { file: figmaFile, validateBrief: briefFor });
+    insist(source.candidateId === candidate.candidateId && candidate.path === source.imageRef.path, '候选未绑定真实效果图来源');
+    return source;
+  });
+  if (sources.length > 1) {
+    // 相同字节的图片不能充当不同候选；视觉差异仍须由用户实际比较。
+    insist(new Set(sources.map((source) => source.imageRef.sha256)).size === sources.length, '多个方向不能引用完全相同的图片');
+    for (const source of sources.slice(1)) insist(sameFigmaRef(repo, source.briefRef, sources[0].briefRef), '方向候选必须使用相同任务和比较条件');
+  }
+  if (inherited) {
+    const candidate = record.candidates[0];
+    insist(sameFigmaRef(repo, candidate.directionSourceRef ?? candidate.visualSourceRef, inherited.visualSourceRef), '局部增量必须沿用已确认方向');
+    if (!sameFigmaRef(repo, candidate.visualSourceRef, inherited.visualSourceRef)) insist(exploration.changeScope === 'local' && exploration.changeReason?.trim(), '新增局部目标须说明变更范围与依据');
+  }
+  const selected = selectedFigmaCandidate(record);
+  insist(selected, '须先由用户选择效果图');
+  if (selected === record.combination) {
+    insist(exploration.kind !== 'increment' && selected.userMessageRef?.trim(), '组合须有用户明确决定');
+    insist(Array.isArray(selected.sourceCandidateIds) && selected.sourceCandidateIds.length > 0 && new Set(selected.sourceCandidateIds).size === selected.sourceCandidateIds.length && selected.sourceCandidateIds.every((id) => record.candidates.some((item) => item.candidateId === id)), '组合来源须精确绑定本轮候选');
+  }
+  const selectedSource = selected === record.combination ? readAppVisualSource(repo, selected.visualSourceRef, work, { file: figmaFile, validateBrief: briefFor }) : sources[record.candidates.indexOf(selected)];
+  insist(selectedSource && selectedSource.candidateId === selected.candidateId && selectedSource.imageRef.path === selected.path, '选定方向未绑定真实图片');
+  const review = frozen(repo, record.selectionReviewRef, '方向人工选择', work);
+  insist(review.decision === 'APPROVED' && review.userMessageRef?.trim() && sameFigmaRef(repo, { path: review.targetRef, sha256: review.targetSha256 }, selectedSource.imageRef) && sameFigmaRef(repo, review.visualSourceRef, selected.visualSourceRef), '方向选择必须由真实用户消息绑定选定效果图及来源任务书');
+}
+
+/** 绑定已确认的源图、忠实还原授权和真实重建方式；预览仍仅是结构采集资料。 */
+function validateReconstruction(repo, work, snapshot, target, sourceRefs) {
+  const reconstruction = snapshot.reconstruction;
+  insist(reconstruction && sameFigmaRef(repo, reconstruction.sourceTargetRef, target) && sameFigmaRef(repo, reconstruction.authorizationRef, work.visual.reviews?.V2), '重建未绑定源效果图和忠实还原授权');
+  insist(fileIdentityKey(repo, snapshot.previewRef.path) !== fileIdentityKey(repo, target.path), '重建预览须保存为独立文件，不能复用源效果图路径');
+  insist(['use_figma-plugin', 'figma-agent'].includes(reconstruction.method) && typeof reconstruction.toolName === 'string' && reconstruction.toolName.trim(), '必须区分 Figma Agent 与 Plugin API 的实际重建方式');
+  const source = readAppVisualSource(repo, reconstruction.visualSourceRef, work, { file: figmaFile, validateBrief: briefFor });
+  insist(sourceRefs.some((ref) => sameFigmaRef(repo, ref, reconstruction.visualSourceRef)) && sameFigmaRef(repo, source.imageRef, target) && sameFigmaRef(repo, source.briefRef, snapshot.briefRef), '重建来源未获授权或与确认效果图、设计任务书不一致');
+}
+
 /** Figma 设计与正式原生合同连接；已表达的结构直接交接，不再读取重复 V3 批准图。 */
 export function validateFigmaAppStage(repo, work, stage, doc) {
   if (!isFigmaApp(work)) return null;
   const snapshot = readFigmaSnapshot(repo, doc.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, work });
-  insist(sameFigmaRef(repo, snapshot.previewRef, doc.referenceTarget), '当前目标未绑定选定 Figma 节点的冻结预览');
   const review = frozen(repo, work.visual.reviews?.V2, 'V2 Figma 目标确认', work);
-  insist(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.userMessageRef?.trim() && review.scope?.kind === 'full-object' && sameFigmaRef(repo, review.figmaDesignRef, doc.figmaDesignRef), 'V2 缺少当前完整 Figma 目标的人工选择');
+  insist(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.userMessageRef?.trim() && review.scope?.kind === 'full-object', 'V2 缺少当前完整目标的人工选择');
+  const direct = work.visual?.designSource?.kind === 'figma-direct';
+  if (direct) {
+    insist(work.visual.designSource.userMessageRef?.trim() && work.visual.designSource.scope?.trim(), '其他路线须记录真实用户指令及范围');
+    insist(sameFigmaRef(repo, snapshot.previewRef, doc.referenceTarget) && sameFigmaRef(repo, review.figmaDesignRef, doc.figmaDesignRef), '直接 Figma 路线须确认实际节点及预览');
+  } else {
+    insist(sameFigmaRef(repo, review.referenceTarget, doc.referenceTarget) && sameFigmaRef(repo, { path: review.targetRef, sha256: review.targetSha256 }, doc.referenceTarget), 'V2 确认未绑定源效果图');
+    insist(review.rebuildAuthorization?.scope === 'faithful' && review.rebuildAuthorization?.userMessageRef?.trim(), '缺少按已确认效果图忠实重建的明确授权');
+    validateReconstruction(repo, work, snapshot, doc.referenceTarget, [review.visualSourceRef]);
+  }
   if (work.workItemType === 'DISPLAY_LAYER') insist(review.hostId === work.visual.hostId && review.layerType === work.visual.layerType, '设计确认未绑定显示层宿主');
   const approved = [{ ref: doc.figmaDesignRef, snapshot }];
   for (const extra of doc.additionalTargets ?? []) {
     const target = readFigmaSnapshot(repo, extra.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, work });
-    insist(sameFigmaRef(repo, target.previewRef, extra.referenceTarget), '额外状态未绑定实际 Figma 预览');
+    if (direct) insist(sameFigmaRef(repo, target.previewRef, extra.referenceTarget), '额外状态未绑定实际 Figma 预览');
+    else {
+      insist(review.approvedTargetRefs?.some((ref) => sameFigmaRef(repo, ref, extra.referenceTarget)), '额外状态源效果图不在人工确认范围');
+      validateReconstruction(repo, work, target, extra.referenceTarget, review.approvedVisualSourceRefs ?? []);
+    }
     approved.push({ ref: extra.figmaDesignRef, snapshot: target });
   }
-  if (approved.length > 1) ids(review.figmaTargetRefs?.map((ref) => `${ref.path}:${ref.sha256}`), approved.map(({ ref }) => `${ref.path}:${ref.sha256}`), '同稿状态授权');
+  if (direct && approved.length > 1) ids(review.figmaTargetRefs?.map((ref) => `${ref.path}:${ref.sha256}`), approved.map(({ ref }) => `${ref.path}:${ref.sha256}`), '同稿状态授权');
   if (work.stack === 'esp32') for (const { snapshot } of approved) {
     const board = frozen(repo, doc.boardProfileRef, 'ESP32 实际硬件', work);
     const hardware = snapshot.hardware;
@@ -317,11 +316,11 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
   if (doc.designReconstructionRef) {
     const plan = frozen(repo, doc.designReconstructionRef, 'Flutter 原生计划', work);
     ids(handoff.mappings.map((item) => item.designItemId), plan.elements.map((item) => item.id), '设计项交接');
-    nativeFacts(repo, work, doc, handoff, approved, plan);
+    validateFigmaNativeFacts(repo, work, doc, handoff, approved, plan, { sameRef: sameFigmaRef, readFrozen: frozen, assert: insist });
   } else {
     const layout = frozen(repo, handoff.nativePlanRef, '原生布局交接', work);
     ids(handoff.mappings.map((item) => item.designItemId), layout.nodes?.map((item) => item.id) ?? [], '原生布局节点交接');
-    nativeFacts(repo, work, doc, handoff, approved, layout);
+    validateFigmaNativeFacts(repo, work, doc, handoff, approved, layout, { sameRef: sameFigmaRef, readFrozen: frozen, assert: insist });
   }
   for (const name of ['V4', ...(stage === 'V5' ? ['V5'] : [])]) if (['V4', 'V5'].includes(stage)) {
     const actual = frozen(repo, work.visual.reviews?.[name], `${name} 当前组合确认`, work);

@@ -106,15 +106,19 @@ test('只有空类源码并复制目标观测，不能通过原生还原检查',
 });
 
 test('V2 样本或单项确认不能成为完整页面的设计目标', (t) => {
-  const f = fixture(t, 'V3'); f.work.projectId = 'test-project';
+  const f = fixture(t, 'V3', encodePngRgba(390, 844, Buffer.alloc(390 * 844 * 4))); f.work.projectId = 'test-project';
   Object.assign(f.doc, { schemaVersion: '1.0', workItemId: f.work.workItemId, projectId: f.work.projectId, stack: 'flutter', workItemType: 'PAGE',
     objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId, visualStageModel: 'function-first-v1', visualStage: 'V2' });
   const targetReview = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
   for (const kind of ['representative-sample', 'design-items', 'full-object']) {
     f.work.visual.reviews.V2 = write(f.repo, `target-${kind}.json`, { ...targetReview, scope: { kind, designItemIds: [], conditionIds: [] } });
+    // 合成样例更新选稿范围时，重建来源也必须绑定该次明确授权。
+    const snapshot = JSON.parse(readFileSync(join(f.repo, f.doc.figmaDesignRef.path), 'utf8'));
+    snapshot.reconstruction.authorizationRef = f.work.visual.reviews.V2;
+    f.doc.figmaDesignRef = write(f.repo, `target-${kind}-snapshot.json`, snapshot);
     f.work.visual.domainEvidenceRef = write(f.repo, 'v2-domain.json', f.doc);
     if (kind === 'full-object') assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V2'), true);
-    else assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /V2.*完整目标范围|V2 缺少当前完整 Figma 目标/);
+    else assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /V2.*完整目标范围|V2 缺少当前完整目标/);
   }
 });
 
@@ -216,6 +220,10 @@ test('表达式或动态布局可用真实形状的测量输出，无需为验�
   const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V4.path), 'utf8'));
   review.assetReviewRef = f.work.assetReviewRef; f.work.visual.reviews.V4 = write(f.repo, 'measured-assets-review.json', review);
   assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc));
+  capture.command = '<执行某项检查>'; raw.commandCaptureRef = write(f.repo, 'placeholder-measurement-command.json', capture);
+  report.executionRef = write(f.repo, 'placeholder-measurement.json', raw); f.doc.implementationEvidenceRefs[0] = write(f.repo, 'placeholder-measured-report.json', report);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /实际可复跑命令|命令占位/);
+  capture.command = 'fvm dart run tool/measure_design.dart';
   capture.stdout = 'PASS'; raw.commandCaptureRef = write(f.repo, 'bad-measurement-command.json', capture);
   report.executionRef = write(f.repo, 'bad-measurement.json', raw); f.doc.implementationEvidenceRefs[0] = write(f.repo, 'bad-measured-report.json', report);
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /stdout 必须包含结构化观测/);
@@ -290,7 +298,7 @@ test('V2 明确覆盖的额外 Figma 状态无需逐图确认，但必须进入�
   f.doc.additionalTargets = [{ referenceTarget }];
   attachFigmaAppFixture(f.repo, f.work, f.doc, { designOnly: true });
   const targetReview = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
-  f.work.visual.reviews.V2 = write(f.repo, 'v2-missing-extra.json', { ...targetReview, figmaTargetRefs: [f.doc.figmaDesignRef] });
+  f.work.visual.reviews.V2 = write(f.repo, 'v2-missing-extra.json', { ...targetReview, approvedTargetRefs: [f.doc.referenceTarget] });
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /额外 Figma 目标未列入 V2 授权范围/);
   f.work.visual.reviews.V2 = write(f.repo, 'v2-with-extra.json', targetReview);
   assert.equal(f.doc.additionalTargets[0].reviewRef, undefined);

@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, rm, utimes } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { advanceVisual, assertFunctionBaseline, completeUnit, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
@@ -29,7 +30,7 @@ async function prepareRegression(t, { commands = ['node --version'], files = ['l
   const dimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
   const candidates = [];
   for (const candidateId of ['a', 'b', 'c']) {
-    const path = await put(fixture.repo, `visual/${candidateId}.png`, `合成候选 ${candidateId}`);
+    const path = await put(fixture.repo, `visual/${candidateId}.png`, syntheticDesignPng(candidateId));
     candidates.push({ candidateId, path, qualityChecks: candidateId === 'a' ? checks : dimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })) });
   }
   const target = await frozenReview(fixture.repo, candidates[0].path);

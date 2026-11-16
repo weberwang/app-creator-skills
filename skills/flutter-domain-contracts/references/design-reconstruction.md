@@ -4,7 +4,7 @@
 
 ## 责任与阶段
 
-V2 用户选定的 Figma 可编辑稿是事实源。V3 从选定节点及其可核对的结构、样式和状态提取交接，不能从已有代码反向拼出规格。清楚表达的结构与布局无需重画图或重复审批；可直接从节点边界提取源区域作为冻结机器事实。允许合格原生组件、全原生页面、共享图片和既有组件复用，必须逐项证明当前结构、样式与状态；仅换 Theme、颜色、默认控件或抽象 Widget 树不能证明还原，也不能把文字与交互全部切图。
+V2 默认先分析、生图及用户确认效果图，再按明确授权忠实重建可编辑 Figma。原效果图是确认的视觉目标，真实节点是结构与规格的提取来源，两者用转换及冻结引用关联。源图已确认且授权忠实还原时，结构核对完成即可继续 V3，不重复要求确认同一目标的新预览；重建预览未经人工检查仍保持未检查。V3 从真实节点提取交接，不能从已有代码反向拼规格；清楚表达的结构与布局无需重画或重复审批。允许合格原生组件、全原生页面、共享图片及组件复用，逐项证明当前结构、样式和状态，仅换 Theme、颜色或默认控件不能证明还原。
 
 `usability` 与 `exact` 均要求布局、层级、形状、排版、视觉特征、状态和当前目标对照；usability 仅省略完整像素级 fidelity 矩阵。功能测试、命令通过、截图采集和摘要匹配均为技术事实，不等于视觉通过。
 
@@ -12,13 +12,21 @@ V3 只冻结拆解与生产规格，不强制已有源码或图片；V4 才取�
 
 ## V3 冻结计划
 
-领域封套 `designReconstructionRef: {path,sha256}` 指向计划 JSON；`figmaDesignRef` 记录选稿的可编辑节点和预览快照身份，`figmaHandoffRef` 将设计项映射回节点并冻结布局和原生计划。根记录 `schemaVersion: "1.0"`、`workItemId`、`objectId`、`candidateId` 和 V2 冻结预览 `referenceTarget`；显示层另填 `hostId`、`layerType`。实际实现证据放在后续封套；预览只冻结当时的显示证据，不取代 Figma 节点作为设计权威。
+领域封套 `designReconstructionRef: {path,sha256}` 指向计划 JSON；`figmaDesignRef` 冻结重建节点、原始采集和独立预览，`figmaHandoffRef` 将设计项映射到节点并冻结布局及原生计划。根记录 `schemaVersion: "1.0"`、`workItemId`、`objectId`、`candidateId` 与 V2 已确认原效果图 `referenceTarget`；显示层另填宿主和层类型。快照的 `reconstruction` 绑定源图、真实还原授权及执行方式。重建预览不替换源图身份，修改产物后生成新冻结版本并更新受影响引用，保留历史确认。
 
 - `conditions`：唯一 `id`、真实 `stateId`、逻辑 `viewport:{width,height}`、`language`、`textScale`、`adaptation:{platform,orientation,safeArea:{top,right,bottom,left},keyboard}`。默认主目标；其他已分别确认的状态或视口使用 `targetRef`，须出现在领域封套 additionalTargets 中，并由其真实 V2 完整目标确认支持。每个已声明目标都必须进入条件和设计项覆盖，不能只出现在 fidelity 用例中。
 - `elements`：每个可见元素唯一 `id`、`label`、`targetRef`、可核对的 `region:{x,y,width,height,unit:"px",frame?}`、适用 `conditionIds`、真实 `parentId`（根为 null）、`layoutReference`（viewport 或另一设计项）、唯一 `implementationId`。区域可由实际 Figma 节点边界直接导出并经 handoff 映射到节点，无需另画拆解图；预览区域和节点身份均绑定已选目标。
 - `implementations`：唯一 `id`、`kind`（native／image／shared-image／dynamic）、精确 `designItemIds`、`consumers:[{id,sourcePath,symbol}]`、逐项 `designReason`、`requirements`。一项设计只绑定一个主要实现；一个实现可服务多项设计，但必须穷尽其消费者和状态，不能用“全部原生”取代逐项分析。
 - `requirements`：结构 `structure`、尺寸 `size`、间距 `spacing`、字体 `typography`、颜色 `color`、边框 `border`、形状 `shape`、状态 `states`。每项记录可执行 `value`、`basis`（measured／estimated／adaptation／approved-change）、`reason`。非文字对象的字体等不适用项在 value 内明确 `applicable:false` 和原因，不填无意义占位文本。测量值、估计、适配和用户批准的变化不能互相冒充；批准变化还须 `approvalRef` 指向真实用户决定，逐设计项、属性与条件核对范围。
 - 图片实现另需 `production`：`identity`（independent／shared）、准确 `consumerIds`、`sourceRegion`、正式 `outputPath`、物理 `outputSize`、逻辑 `displaySize`、`density`、`background`、`transparentInsets`、`edgePolicy`；按实际需要补 `effectiveContentBounds`、`slice` 或有序 `frames`。不需要的切片、帧序直接省略。共享图必须有多个真实消费者，来源帧可记在 sourceRegion.frame。源图区域只说明设计来源，V4 再登记实际制作来源。
+
+节点提取使用[本地提取器](../scripts/extract-figma-plan.mjs)，在项目根执行 `node .agents/skills/flutter-domain-contracts/scripts/extract-figma-plan.mjs <冻结快照JSON> <实际映射JSON> <新版本计划输出> <新版本交接映射输出>`；参数替换为真实项目路径。映射声明真实消费者、节点、状态及 native／image／shared-image／dynamic 路线，图片实现补生产规格并保留 `sourceAssets` 的实际来源。快照路径及摘要必须匹配；输出拒绝覆盖已有冻结文件。`requirements.appearance` 同时保留 `raw` 原属性和 `normalized` 值，其余需求从同一真实节点提取，不能由旧代码反向拼出。
+
+带可见填充、边框、效果或部分透明度的容器也须映射，包括真实页面背景；仅映射子文字不能丢掉父容器的视觉表现。纯组织层可省略，但须保留最近已映射祖先及坐标转换依据；不确定的旋转／变换明确阻断，不能静默改变层级或坐标。
+
+逐角数据保留为 topLeft／topRight／bottomRight／bottomLeft 并交接 `BorderRadius.only`，例如 20／20／0／0 不统一归零、不塞进 kind。排版明确逻辑像素、源行高 PIXELS／PERCENT／AUTO 与 Flutter 行高倍率，字距按源单位换算；AUTO 保留自动语义。渐变保留 stops、颜色和变换，图片填充保留 scaleMode 及变换，透明度与边框独立交接，不删字段迁就 Schema。视觉轮廓与触控容器分别映射并核对包围关系，例如 44 高输入框可置于真实 48 高命中容器内；零尺寸 SVG 路径定位到具体节点修复并重新采集，不能静默跳过或反复重建整页。
+
+Figma `LINE` 的本地高度为零、长度在 width，方向由 rotation 表达；V3 的 `requirements.size` 原样保留此事实，`shape.flutter.geometry` 标记按真实长度与旋转派生，不能伪造源路径。`region` 优先采用实际 `absoluteRenderBounds` 与根 `absoluteBoundingBox` 换算；没有这两项时，以实际中心描边、旋转及 NONE／ROUND／SQUARE 线帽计算可见包围范围，不以描边厚度替换源节点高度。可见特效或其他线帽需要实际渲染边界；旋转祖先目前无法可靠推导，不能将估计冒充测量。
 
 机器校验唯一身份、映射覆盖、父子关系、状态与参照有效性；设计截图与运行截图默认由用户检查。选稿已经表达清楚的拆解和布局不再重复审批；用户仍需判断设计方案、范围和最终视觉结果，机器通过不能冒充该结论。
 
@@ -41,6 +49,8 @@ V2 真实用户选稿绑定设计身份和覆盖范围，不预造 V3 计划；V
 source-inspection 的每条原始观测提供 `bindings:[{pointer,sourcePath,start,end,encoding}]`，指向当前正式源码中可复算的字面量；start/end 为 UTF-16 字符偏移，end 不含末端，pointer 为观测对象内 JSON 指针。可定位整个值（pointer 为空串），或完整覆盖所有叶值。encoding 为 json 时重新解析源码片段，为 text 时读取片段原文；校验器重新读取实际源码并比对 observed，不能用空 Widget 加复制计划通过。变量或表达式无法以字面量复算时，应从真实布局测试或运行测量取值，不强迫应用为验收新增无效常量。source-inspection 只证明声明的源属性事实，定位是否属于生效的真实组件仍需代码审查；它不自动证明运行显示效果。
 
 layout-test／runtime-measurement 的原始观测另含 `commandCaptureRef`，指向 `command-capture-v1` 的真实成功命令采集；stdout 必须为结构化原始观测数组，与报告逐条一致。保留真实命令、退出码与原始输出，不允许任意文本日志冒充属性观测。记录本身的真实性仍须可追溯，控制器不替代执行环境的信任边界。
+
+命令必须可实际复跑，不能填写 `<执行某项检查>`、TODO 或路径占位；失败保留真实非零退出码与输出，不将未执行记录补成通过。结构通过、工程通过、源图确认及运行视觉验收分别报告，不能相互替代。
 
 图片报告另记录 `imported:{assetRef,provenanceRef,importEvidenceRef,production,consumerIds}`。正式资源路径必须等于冻结 outputPath，实际生产参数与消费者须与计划一致；实际来源及导入加载原始输出分别可读且摘要匹配。格式解码、Alpha、有效内容、边缘、切片、加载回读等适用技术检查继续遵循素材和 Flutter 原生规则，不由字段相等代替真实执行。
 

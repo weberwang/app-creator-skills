@@ -108,6 +108,8 @@
               "color",
               "border",
               "shape",
+              "appearance",
+              "touchTarget",
               "states"
             ]
           }
@@ -132,6 +134,25 @@
     "userMessageRef": {
       "type": "string",
       "minLength": 1
+    },
+    "rebuildAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "userMessageRef"],
+      "properties": {
+        "scope": {"const": "faithful"},
+        "userMessageRef": {"type": "string", "minLength": 1}
+      }
+    },
+    "approvedTargetRefs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/properties/referenceTarget"}
+    },
+    "visualSourceRef": {"$ref": "#/properties/referenceTarget"},
+    "approvedVisualSourceRefs": {
+      "type": "array", "minItems": 1,
+      "items": {"$ref": "#/properties/referenceTarget"}
     },
     "workItemId": {
       "type": "string",

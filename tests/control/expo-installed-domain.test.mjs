@@ -1,17 +1,18 @@
 /** 在实际安装闭包中验证 Expo 页面公共阶段门与平台证据连接。 */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { installSkills } from '../../packages/installer/install-project-skills.mjs';
 import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
 
 /** 写入隔离项目的合成工件，并返回其字节摘要。 */
 function write(repo, path, content) {
-  const bytes = Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
+  const bytes = Buffer.isBuffer(content) ? content : Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
   mkdirSync(dirname(join(repo, path)), { recursive: true });
   writeFileSync(join(repo, path), bytes);
   return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
@@ -29,6 +30,8 @@ test('Expo 独立安装后可初始化页面并执行公共 V2 阶段门', async
 
   installSkills({ projectRoot: repo, stacks: ['expo'] });
   const skills = join(repo, '.agents', 'skills');
+  // 仅复用本地已安装的工具依赖，测试不联网安装；正式控制代码仍全部从安装副本读取。
+  symlinkSync(fileURLToPath(new URL('../../node_modules', import.meta.url)), join(skills, 'app-skill-runtime', 'node_modules'), process.platform === 'win32' ? 'junction' : 'dir');
   const runtime = join(skills, 'app-workflow-control', 'scripts', 'runtime');
   const { initializeWork, loadWork } = await import(pathToFileURL(join(runtime, 'workflow.mjs')).href);
   const { loadProfile } = await import(pathToFileURL(join(runtime, 'validation.mjs')).href);
@@ -42,7 +45,7 @@ test('Expo 独立安装后可初始化页面并执行公共 V2 阶段门', async
   assert.equal(work.workItemType, 'PAGE');
 
   // 此处用户确认与截图均为隔离测试材料，不代表真实项目的视觉验收。
-  const referenceTarget = write(repo, 'fixture/target.png', '合成目标图');
+  const referenceTarget = write(repo, 'fixture/target.png', syntheticDesignPng('installed-expo-target'));
   const platform = { schemaVersion: '1.0', platform: 'android', viewport: { width: 390, height: 844 }, safeArea: { top: 24, right: 0, bottom: 16, left: 0 }, fontScale: 1, expoSdkVersion: 'fixture', reactNativeVersion: 'fixture' };
   const platformProfileRef = write(repo, 'fixture/platform.json', platform);
   const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension, index) => ({

@@ -10,28 +10,28 @@
       "qualityChecks": [
         {
           "dimension": "themeFit",
-          "status": "PASS",
-          "evidenceRef": "art/reviews/a-theme.md"
+          "status": "NOT_RUN",
+          "evidenceRef": ""
         },
         {
           "dimension": "audienceFit",
-          "status": "PASS",
-          "evidenceRef": "art/reviews/a-audience.md"
+          "status": "NOT_RUN",
+          "evidenceRef": ""
         },
         {
           "dimension": "taskReadability",
-          "status": "PASS",
-          "evidenceRef": "art/reviews/a-readability.md"
+          "status": "NOT_RUN",
+          "evidenceRef": ""
         },
         {
           "dimension": "viewingComfort",
-          "status": "PASS",
-          "evidenceRef": "art/reviews/a-comfort.md"
+          "status": "NOT_RUN",
+          "evidenceRef": ""
         },
         {
           "dimension": "artCompletion",
-          "status": "PASS",
-          "evidenceRef": "art/reviews/a-completion.md"
+          "status": "NOT_RUN",
+          "evidenceRef": ""
         }
       ]
     },
@@ -98,7 +98,7 @@
       ]
     }
   ],
-  "selectedCandidateId": "candidate-a",
+  "selectedCandidateId": "",
   "selectionReviewRef": {
     "path": "art/reviews/baseline-human-review.json",
     "sha256": "0000000000000000000000000000000000000000000000000000000000000000"

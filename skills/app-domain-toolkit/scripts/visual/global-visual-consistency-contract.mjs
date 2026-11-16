@@ -6,6 +6,7 @@
  * 这样场景主图、显示层上下文图和原子资产会共享同一套身份，而不会各自
  * 创建新的状态机或局部风格真值。
  */
+import { validateGenerationPromptProjection } from './generation-prompt.mjs';
 
 /** 全局静态基线唯一允许的冻结状态。它不是 V3 方向冻结状态。 */
 export const GLOBAL_VISUAL_BASELINE_STATUS = "global-static-baseline-frozen";
@@ -36,7 +37,7 @@ export function normalizeGlobalVisualPath(value) {
 function readEvidencePath(value) {
   if (nonEmptyString(value)) return value.trim();
   if (!isObject(value)) return "";
-  return value.path ?? value.file ?? value.evidence ?? value.evidence_path ?? "";
+  return value.path ?? value.file ?? value.original_file ?? value.originalFile ?? value.source_file ?? value.sourceFile ?? value.evidence ?? value.evidence_path ?? "";
 }
 
 /**
@@ -147,6 +148,54 @@ export function validateGlobalStyleReferenceInputs(inputs, baseline, options = {
   return [...new Set(errors)];
 }
 
+/** 核对用途标注与既有原图、风格图清单；两组各有顺序，不推断组间发送顺序。 */
+function validateGenerationReferenceMapping(inputs, record) {
+  const issues = [];
+  const groups = [
+    { name: 'reference_inputs', declared: record.reference_inputs, actual: record.actual_reference_inputs },
+    { name: 'style_reference_inputs', declared: record.style_reference_inputs, actual: record.actual_style_reference_inputs },
+  ];
+  /** 使用既有路径归一规则，既有输入可以是路径字符串或具有路径字段的对象。 */
+  const paths = (items) => items.map((item) => normalizeGlobalVisualPath(readEvidencePath(item)));
+  for (const group of groups) {
+    if (group.declared !== undefined && !Array.isArray(group.declared)) issues.push(`${group.name} 必须是数组`);
+    if (group.actual !== undefined && !Array.isArray(group.actual)) issues.push(`actual_${group.name} 必须是数组`);
+    if (Array.isArray(group.declared) && Array.isArray(group.actual) && JSON.stringify(paths(group.declared)) !== JSON.stringify(paths(group.actual))) issues.push(`actual_${group.name} 与 ${group.name} 的身份或顺序不一致`);
+    const current = Array.isArray(group.actual) ? group.actual : group.declared;
+    group.paths = Array.isArray(current) ? paths(current) : null;
+    if (group.paths?.some((path) => !path)) issues.push(`${group.name} 包含无法确定身份的参考输入`);
+    group.annotated = [];
+  }
+  const references = inputs?.references;
+  if (!Array.isArray(references) || references.length === 0) return issues;
+  const counts = new Map();
+  for (const item of references) {
+    const path = normalizeGlobalVisualPath(item?.ref);
+    if (path) counts.set(path, (counts.get(path) ?? 0) + 1);
+  }
+  for (const item of references) {
+    const path = normalizeGlobalVisualPath(item?.ref);
+    if (!path) continue;
+    const role = typeof item.role === 'string' ? item.role.trim().toLowerCase() : '';
+    const requested = role === 'style' || role === 'style-anchor' ? 1 : role === 'source-target' || role === 'source-detail' ? 0 : -1;
+    const matches = groups.flatMap((group, index) => group.paths?.includes(path) ? [index] : []);
+    if (matches.length > 1 && counts.get(path) === 1) {
+      // 同一实际附件可同时作为原图和风格锚点，不要求重复传图或重复标注。
+      for (const index of matches) groups[index].annotated.push(path);
+    } else if (requested >= 0) {
+      const group = groups[requested];
+      if (group.paths && !group.paths.includes(path)) issues.push(`${group.name} 未包含标注参考 ${item.id ?? path}`);
+      else if (group.paths) group.annotated.push(path);
+      else if (matches.length === 1) groups[matches[0]].annotated.push(path);
+    } else if (matches.length === 1) groups[matches[0]].annotated.push(path);
+    else if (matches.length > 1) issues.push(`参考 ${item.id ?? path} 同时属于两组，请明确原图或风格角色`);
+    else if (groups.every((group) => group.paths)) issues.push(`参考 ${item.id ?? path} 不属于已记录的输入`);
+    // 缺失另一组真实记录时，未知引用保持未验证，不能猜测来源或虚构顺序。
+  }
+  for (const group of groups) if (group.paths && JSON.stringify(group.annotated) !== JSON.stringify(group.paths)) issues.push(`${group.name} 与参考用途标注的身份或组内顺序不一致`);
+  return issues;
+}
+
 /**
  * 校验 generated effect image 的全局生成身份和实际发送的约束。
  */
@@ -171,6 +220,10 @@ export function validateGlobalVisualGenerationRecord(record, context = {}) {
   if (record.global_visual_consistency_prompt !== GLOBAL_VISUAL_CONSISTENCY_PROMPT) errors.push(`${label}.generation_record.global_visual_consistency_prompt 必须使用 canonical 全局一致性提示词`);
   if (record.style_drift_policy !== GLOBAL_VISUAL_STYLE_DRIFT_POLICY) errors.push(`${label}.generation_record.style_drift_policy 必须为 forbid`);
   const fullPrompt = readActualFullPrompt(record);
+  if (record.generationInputs != null) {
+    errors.push(...validateGenerationPromptProjection(record.generationInputs, fullPrompt).map((issue) => `${label}.generation_record：${issue}`));
+    errors.push(...validateGenerationReferenceMapping(record.generationInputs, record).map((issue) => `${label}.generation_record：${issue}`));
+  }
   if (!nonEmptyString(fullPrompt)) errors.push(`${label}.generation_record.full_prompt 必须记录实际发送的完整提示词`);
   else {
     if (!fullPrompt.includes(GLOBAL_VISUAL_CONSISTENCY_PROMPT)) errors.push(`${label}.generation_record.full_prompt 缺少全局视觉一致性 canonical 段`);

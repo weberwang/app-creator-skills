@@ -3,7 +3,22 @@
   "primaryTask": "replace-real-primary-task",
   "context": "replace-real-usage-context",
   "intent": "explore",
+  "scopeNote": "按本次增量选填分析深度，已有有效依据直接引用；这些输入不是生图提示词，应按用途提炼可见内容后发送。",
+  "behaviorContext": {
+    "usagePressure": null,
+    "operationSteps": [],
+    "frequencyRiskAndTiming": [],
+    "existingProposedAndUnverifiedCapabilities": []
+  },
+  "visualDirection": {
+    "positioningAndIntendedFeeling": null,
+    "decisionsWithReasons": [],
+    "referenceObservationsAndSources": [],
+    "keyTradeoffs": []
+  },
   "realContent": [],
+  "keyStates": [],
+  "platformConstraints": [],
   "hardConstraints": [],
   "explorationSpace": [],
   "qualityPriorities": [

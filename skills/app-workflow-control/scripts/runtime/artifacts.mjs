@@ -15,6 +15,7 @@ import { validateSceneReuseReview, validateSceneReuseCoverage } from './visual-r
 import { dependencyPath } from './feature-dependencies.mjs';
 import { hasPreciseApproval } from './approval.mjs';
 import { validateCommandCapture } from './command-capture.mjs';
+import { assertRunnableCommand } from './runnable-command.mjs';
 import { validateDeletedFiles } from './deletion-baseline.mjs';
 import { validateRobloxEngineeringEvidence } from './roblox-domain-check.mjs';
 import { assertProductionDependencies, validateProductionPackage } from './production-scope.mjs';
@@ -69,7 +70,7 @@ export function loadPackage(repo, work) {
     if (!Array.isArray(unit.paths) || !unit.paths.length) throw new WorkflowError(`executionUnits[${index}].paths 不能为空`);
     unit.paths = unit.paths.map((path) => assertOwnedPath(repo, work, profile, path));
     if (!Array.isArray(unit.acceptanceCommands) || !unit.acceptanceCommands.length) throw new WorkflowError(`executionUnits[${index}].acceptanceCommands 不能为空`);
-    unit.acceptanceCommands.forEach((command) => requireText(command, `executionUnits[${index}].acceptanceCommands`));
+    unit.acceptanceCommands.forEach((command) => assertRunnableCommand(command, `executionUnits[${index}].acceptanceCommands`));
     const resultPath = repoPath(repo, unit.resultPath, `executionUnits[${index}].resultPath`).relative;
     unit.resultPath = resultPath;
     const evidenceRoot = repoPath(repo, work.evidenceRoot, 'Work Item.evidenceRoot').relative;
@@ -195,6 +196,7 @@ export function validateUnitResult(repo, work, pack, unit, result, { historical 
     throw new WorkflowError('验收命令实际输出必须与声明命令一一对应');
   }
   for (const [index, entry] of result.commandOutputs.entries()) {
+    assertRunnableCommand(entry.command, `commandOutputs[${index}].command`);
     if (entry.command !== unit.acceptanceCommands[index]) throw new WorkflowError(`第 ${index + 1} 项验收命令与 Implementation Package 不匹配`);
     if (entry.exitCode !== 0) throw new WorkflowError(`第 ${index + 1} 项验收命令失败`);
     requireText(entry.outputFile, `commandOutputs[${index}].outputFile`);
@@ -251,7 +253,7 @@ function requireKinds(required, items, label) {
 }
 
 /** 校验人工验收记录绑定唯一对象、阶段与用户消息来源。 */
-export function validateHumanReview(repo, ref, { objectId, stage, purpose, candidateId, requireTarget = false, requireQuality = false } = {}) {
+export function validateHumanReview(repo, ref, { objectId, stage, purpose, candidateId, requireTarget = false, requireQuality = false, allowUnreviewedQuality = false } = {}) {
   if (!ref?.path) throw new WorkflowError(`${purpose} 尚未记录人工验收`);
   const record = readJson(repo, ref.path, `${purpose}人工记录`);
   if (record.schemaVersion !== VERSION || record.objectId !== objectId || record.stage !== stage || record.purpose !== purpose) {
@@ -260,7 +262,7 @@ export function validateHumanReview(repo, ref, { objectId, stage, purpose, candi
   requireOneOf(record.decision, ['APPROVED', 'REJECTED'], `${purpose}.decision`);
   requireText(record.userMessageRef, `${purpose}.userMessageRef`);
   if (candidateId !== undefined && record.candidateId !== candidateId) throw new WorkflowError(`${purpose}.candidateId 未绑定已选候选`);
-  if (requireQuality || record.qualityChecks !== undefined) validateQualityChecks(repo, record.qualityChecks, `${purpose}.qualityChecks`);
+  if (requireQuality || record.qualityChecks !== undefined) validateQualityChecks(repo, record.qualityChecks, `${purpose}.qualityChecks`, { requirePass: !allowUnreviewedQuality });
   if (record.decision !== 'APPROVED') throw new WorkflowError(`${purpose} 未获用户确认`);
   if (requireTarget) {
     requireText(record.targetRef, `${purpose}.targetRef`);
@@ -347,10 +349,10 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
   if (record.designRoute === 'world-3d') throw new WorkflowError('2D／UI 不得引用无图 3D 方向基线绕过图片候选');
   if (isFigmaApp(work)) {
     validateFigmaBaseline(repo, work, record);
-    for (const candidate of record.candidates) validateQualityChecks(repo, candidate.qualityChecks, 'Figma 方向质量', { requirePass: candidate.candidateId === record.selectedCandidateId });
+    for (const candidate of record.candidates) validateQualityChecks(repo, candidate.qualityChecks, 'Figma 方向质量', { requirePass: false });
     const chosen = selectedFigmaCandidate(record);
-    validateQualityChecks(repo, chosen.qualityChecks, '选定 Figma 方向质量');
-    validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireQuality: true, requireTarget: true });
+    validateQualityChecks(repo, chosen.qualityChecks, '选定 Figma 方向质量', { requirePass: false });
+    validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireTarget: true, allowUnreviewedQuality: true });
     return;
   }
   if (!Array.isArray(record.candidates) || record.candidates.length !== 3) throw new WorkflowError('首次全局视觉基线必须有三张候选');
@@ -464,7 +466,7 @@ export function assertVisualReview(repo, work, stage) {
   validateSingleDomainTarget(repo, work, stage);
   if (stage === 'V2') {
     requireText(work.visual.candidateId, 'visual.candidateId');
-    validateHumanReview(repo, reviews.V2, { objectId: work.visual.objectId, stage: 'V2', purpose: 'target', candidateId: work.visual.candidateId, requireTarget: true, requireQuality: true });
+    validateHumanReview(repo, reviews.V2, { objectId: work.visual.objectId, stage: 'V2', purpose: 'target', candidateId: work.visual.candidateId, requireTarget: true, requireQuality: !isFigmaApp(work), allowUnreviewedQuality: isFigmaApp(work) });
   }
   if (stage === 'V3' && !isFigmaApp(work)) {
     validateHumanReview(repo, reviews.V3Decomposition, { objectId: work.visual.objectId, stage: 'V3', purpose: 'decomposition', candidateId: work.visual.candidateId, requireTarget: true });
@@ -497,7 +499,7 @@ function assertSingleVisualIdentity(repo, work, stage) {
     if (!path) throw new WorkflowError(`${name} 尚未记录人工验收`);
     verifySingleVisualFile(repo, reviews[name], `${name} 确认记录`);
     const purpose = { V2: 'target', V3Decomposition: 'decomposition', V3Layout: 'layout', V5: 'runtime-acceptance' }[name];
-    const review = validateHumanReview(repo, reviews[name], { objectId: work.visual.objectId, candidateId: work.visual.candidateId, stage: name.startsWith('V3') ? 'V3' : name, purpose, requireTarget: true, requireQuality: name === 'V2' });
+    const review = validateHumanReview(repo, reviews[name], { objectId: work.visual.objectId, candidateId: work.visual.candidateId, stage: name.startsWith('V3') ? 'V3' : name, purpose, requireTarget: true, requireQuality: name === 'V2' && !isFigmaApp(work), allowUnreviewedQuality: name === 'V2' && isFigmaApp(work) });
     let expectedOwner = work.workItemId;
     if (review.workItemId !== work.workItemId && ['V2', 'V3Decomposition', 'V3Layout'].includes(name) && work.visual.reuse?.inheritedReviews?.includes(name)) {
       expectedOwner = resolveReuseOwner(repo, work, review.workItemId, name);

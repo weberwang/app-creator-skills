@@ -19,7 +19,7 @@
 <!-- native-source:expo-workflow:start -->
 ## mode-expo-workflow
 
-以公共控制器为唯一状态机，页面使用 `PAGE`，独立弹窗使用 `DISPLAY_LAYER` 并绑定宿主，业务与平台适配使用 `MODULE`。V0 明确用户、任务、硬约束和探索空间，V1 验证功能、导航与状态；V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑候选并由用户选稿；V3 从选稿提取必要交接，已表达的布局不重画或重复批准；V4 试接真实组件并导入适用素材；V5 核验正式组合和用户视觉结果。仅设计提案不强制先建运行工程。
+以公共控制器为唯一状态机，页面使用 `PAGE`，独立弹窗使用 `DISPLAY_LAYER` 并绑定宿主，业务与平台适配使用 `MODULE`。V0 明确用户、任务、硬约束和探索空间，V1 验证功能、导航与状态；V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成代表页效果图并由用户选稿，再按授权忠实重建可编辑 Figma；V3 从真实重建节点提取必要交接，保留源图确认与转换关系，已表达的布局不重画或重复批准；V4 试接真实组件并导入适用素材；V5 核验正式组合和用户视觉结果。仅设计提案不强制先建运行工程。
 
 按[显示与资源](display-and-assets.md)处理页面及弹窗，并按 [Expo 领域证据](../../expo-domain-contracts/references/domain-validation.md)提交阶段输入；不预造未来阶段文件。Web 仅在实际目标包含时进入其适用测试，不能用 Web 结果证明原生运行。
 <!-- native-source:expo-workflow:end -->
@@ -52,6 +52,8 @@
 ## mode-expo-ui-layout
 
 使用 React Native 真实组件树和逻辑像素，明确父级、Flexbox 排列、相对参照、尺寸、安全区、滚动及层序。覆盖支持方向、代表性宽高、键盘焦点、系统字体缩放、长短文案、辅助功能与返回行为；原生 Modal 先核对窗口层级和全局加载覆盖。[显示与资源](display-and-assets.md)列出页面和显示层规则。
+
+按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)回读实际组件与可用运行证据，核对内容撑高、输入命中、键盘与焦点变化后的阅读和滚动；用户视觉结论单独记录。
 
 V3 从已选 Figma 可编辑节点取得实际父子、布局、样式及状态，按[公共相对布局](../../app-ui-layout/references/relative-layout.md)补齐平台约束，不强制重新绘图或对已明确内容重复批准。V4 真实组件实现，V5 绑定当前平台运行与人工确认。Flutter Widget、DOM 节点和浏览器截图不作为 React Native 原生结构或运行证明。[领域证据](../../expo-domain-contracts/references/domain-validation.md)明确引用格式。
 

@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -32,7 +33,7 @@ function write(repo, path, contents) {
 function fixture(t, { stack = 'flutter', type = 'PAGE', stage = 'V2' } = {}) {
   const repo = mkdtempSync(join(tmpdir(), 'single-domain-test-'));
   t.after(() => rmSync(repo, { recursive: true, force: true }));
-  const referenceTarget = write(repo, 'target.txt', '测试目标内容');
+  const referenceTarget = write(repo, 'target.png', syntheticDesignPng('single-domain-target'));
   write(repo, 'v2-review.json', { schemaVersion: '1.0', referenceTarget, scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
   const visual = { objectId: 'example-page', candidateId: 'candidate-a', stage, reviews: { V2: { path: 'v2-review.json' } } };
   if (type === 'DISPLAY_LAYER') Object.assign(visual, { objectId: 'dialog', hostId: 'host', layerType: 'modal' });
@@ -50,6 +51,14 @@ function fixture(t, { stack = 'flutter', type = 'PAGE', stage = 'V2' } = {}) {
     }
     work.visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   } };
+}
+
+/** 负例只变更确认范围时，同步冻结重建关系，以便实际到达待检查的范围门。 */
+function bindTestAuthorization(f, label) {
+  const snapshot = JSON.parse(readFileSync(join(f.repo, f.doc.figmaDesignRef.path), 'utf8'));
+  snapshot.reconstruction.authorizationRef = f.work.visual.reviews.V2;
+  f.doc.figmaDesignRef = write(f.repo, `${label}-snapshot.json`, snapshot);
+  f.save();
 }
 
 /** 使用项目提供的真实布局模板，避免仅断言外层字段。 */
@@ -135,7 +144,7 @@ test('Flutter fidelity 对照目标与实际截图和测量文件均须有效', 
 test('Flutter fidelity 多视口分别绑定已确认目标，拒绝未经确认的目标', (t) => {
   const f = fixture(t, { stage: 'V5' }); f.doc.visualValidationMode = 'exact';
   const spec = addFidelityLayout(f);
-  const secondTarget = write(f.repo, 'second-target.txt', '合成的第二视口目标');
+  const secondTarget = write(f.repo, 'second-target.png', syntheticDesignPng('second-target', 844, 390));
   const secondReview = write(f.repo, 'second-review.json', {
     schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
     stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] },
@@ -171,7 +180,7 @@ test('Flutter 显示层额外目标确认不能跨宿主或层类型复用', (t)
     f.work.visual.reviews[name] = write(f.repo, `${name}.json`, { referenceTarget: f.referenceTarget, hostId: 'host', layerType: 'modal', ...(name === 'V2' ? { scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } } : {}), ...(name === 'V5' ? { runtimeContextRef } : {}) });
   }
   f.doc.runtimeContextRef = runtimeContextRef;
-  const target = write(f.repo, 'extra-target.txt', '额外目标');
+  const target = write(f.repo, 'extra-target.png', syntheticDesignPng('extra-target', 844, 390));
   const review = { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
     stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] }, hostId: 'host', layerType: 'modal',
     referenceTarget: target, targetRef: target.path, targetSha256: target.sha256 };
@@ -181,10 +190,10 @@ test('Flutter 显示层额外目标确认不能跨宿主或层类型复用', (t)
   assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
   const selected = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
   selected.hostId = 'other-host';
-  f.work.visual.reviews.V2 = write(f.repo, 'wrong-host-review.json', selected); f.save();
+  f.work.visual.reviews.V2 = write(f.repo, 'wrong-host-review.json', selected); bindTestAuthorization(f, 'wrong-host');
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /设计确认未绑定显示层宿主/);
   selected.hostId = 'host'; selected.layerType = 'popup';
-  f.work.visual.reviews.V2 = write(f.repo, 'wrong-layer-review.json', selected); f.save();
+  f.work.visual.reviews.V2 = write(f.repo, 'wrong-layer-review.json', selected); bindTestAuthorization(f, 'wrong-layer');
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /设计确认未绑定显示层宿主/);
 });
 
@@ -202,7 +211,7 @@ test('人工确认 schema 接受显示层宿主和运行上下文身份', () => 
 test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目标', async (t) => {
   const f = fixture(t, { stage: 'V5' }); f.doc.visualValidationMode = 'exact';
   const spec = addFidelityLayout(f);
-  const secondTarget = write(f.repo, 'reuse-target.txt', '已确认的合成额外视口');
+  const secondTarget = write(f.repo, 'reuse-target.png', syntheticDesignPng('reuse-target', 844, 390));
   const secondReview = write(f.repo, 'reuse-review.json', {
     schemaVersion: '1.0', workItemId: 'source-work', objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
     stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成原始确认', scope: { kind: 'full-object', designItemIds: [], conditionIds: [] },
@@ -217,12 +226,17 @@ test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目�
   const source = JSON.parse(readFileSync(join(f.repo, created.metadata.workItemPath), 'utf8'));
   source.globalState = 'COMPLETE'; source.visual.stage = 'V5'; source.visual.candidateId = f.work.visual.candidateId;
   source.visual.reviews.V2 = write(f.repo, 'source-v2-review.json', { referenceTarget: f.referenceTarget, scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } });
-  const baselineCandidate = write(f.repo, 'baseline-candidate.txt', '合成视觉候选');
+  const baselineCandidate = write(f.repo, 'baseline-candidate.png', syntheticDesignPng('baseline-candidate'));
   const baselineReview = write(f.repo, 'baseline-review.json', { targetRef: baselineCandidate.path, targetSha256: baselineCandidate.sha256 });
   source.globalVisualBaselineRef = write(f.repo, 'baseline.json', { schemaVersion: '1.0', projectId: f.work.projectId, stack: 'flutter', selectedCandidateId: 'a', candidates: [{ candidateId: 'a', path: baselineCandidate.path }], selectionReviewRef: baselineReview });
-  source.visual.domainEvidenceRef = write(f.repo, 'source-domain.json', { additionalTargets: f.doc.additionalTargets });
+  // 来源确认须实际冻结图片、任务书及忠实还原授权，不能用空的范围对象冒充。
+  const sourceDoc = { ...f.doc, workItemId: source.workItemId, visualStage: 'V2', additionalTargets: structuredClone(f.doc.additionalTargets) };
+  attachFigmaAppFixture(f.repo, source, sourceDoc, { designOnly: true });
+  source.visual.domainEvidenceRef = write(f.repo, 'source-domain.json', sourceDoc);
   write(f.repo, created.metadata.workItemPath, source);
   f.work.globalVisualBaselineRef = { ...source.globalVisualBaselineRef };
+  f.work.visual.designRoute = source.visual.designRoute;
+  f.work.visual.designSource = structuredClone(source.visual.designSource);
   f.work.visual.reviews.V2 = source.visual.reviews.V2;
   f.work.visual.reuse = { sourceWorkItemRef: { path: created.metadata.workItemPath }, impact: 'implementation', reason: '目标未变化', inheritedReviews: ['V2'] };
   attachFlutterDesignFixture(f.repo, f.work, f.doc);
@@ -231,16 +245,17 @@ test('Flutter fidelity 可以沿已验证的 V2 来源链复用额外视口目�
 
   // 沿来源 V2 复用也必须明确覆盖额外状态，不能借方向批准扩大范围。
   const selected = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
-  selected.figmaTargetRefs = [selected.figmaDesignRef];
-  f.work.visual.reviews.V2 = write(f.repo, 'source-v2-incomplete.json', selected); f.save();
-  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /同稿状态授权.*覆盖不完整/);
+  selected.approvedTargetRefs = [f.referenceTarget];
+  selected.approvedVisualSourceRefs = [selected.visualSourceRef];
+  f.work.visual.reviews.V2 = write(f.repo, 'source-v2-incomplete.json', selected); bindTestAuthorization(f, 'incomplete');
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /额外状态源效果图.*范围/);
 });
 
 test('目标内容变化后不能继续引用原有确认', (t) => {
   const f = fixture(t); f.save();
-  writeFileSync(join(f.repo, 'target.txt'), '已更换的目标');
+  writeFileSync(join(f.repo, f.referenceTarget.path), '已更换的目标');
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /目标.*内容/);
-  f.doc.referenceTarget = write(f.repo, 'target.txt', '新目标'); f.save();
+  f.doc.referenceTarget = write(f.repo, 'new-target.png', syntheticDesignPng('new-target')); f.save();
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V2'), /V2 目标.*内容|未绑定/);
 });
 

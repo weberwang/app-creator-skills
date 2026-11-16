@@ -74,6 +74,18 @@
     "previewRef": {
       "$ref": "#/$defs/ref"
     },
+    "reconstruction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["sourceTargetRef", "authorizationRef", "visualSourceRef", "method", "toolName"],
+      "properties": {
+        "sourceTargetRef": {"$ref": "#/$defs/ref"},
+        "authorizationRef": {"$ref": "#/$defs/ref"},
+        "visualSourceRef": {"$ref": "#/$defs/ref"},
+        "method": {"enum": ["use_figma-plugin", "figma-agent"]},
+        "toolName": {"$ref": "#/$defs/text"}
+      }
+    },
     "captureRef": {
       "$ref": "#/$defs/ref"
     },
@@ -89,7 +101,6 @@
     },
     "variables": {
       "type": "array",
-      "minItems": 3,
       "items": {
         "type": "object",
         "required": [
@@ -139,6 +150,7 @@
               "character"
             ]
           },
+          "imageHash": {"$ref": "#/$defs/text"},
           "nodeIds": {
             "$ref": "#/$defs/ids"
           },
@@ -295,7 +307,10 @@
         },
         "height": {
           "type": "number",
-          "exclusiveMinimum": 0
+          "minimum": 0
+        },
+        "rotation": {
+          "type": "number"
         },
         "layoutMode": {
           "enum": [
@@ -328,7 +343,18 @@
             },
             "size": {
               "type": "number",
-              "exclusiveMinimum": 0
+              "exclusiveMinimum": 0,
+              "description": "Figma 字号，单位为源设计像素。"
+            },
+            "lineHeight": {
+              "oneOf": [
+                {"type": "object", "required": ["unit"], "properties": {"unit": {"const": "AUTO"}}, "additionalProperties": false},
+                {"type": "object", "required": ["unit", "value"], "properties": {"unit": {"enum": ["PIXELS", "PERCENT"]}, "value": {"type": "number", "exclusiveMinimum": 0}}, "additionalProperties": false}
+              ]
+            },
+            "letterSpacing": {
+              "type": "object", "required": ["unit", "value"], "additionalProperties": false,
+              "properties": {"unit": {"enum": ["PIXELS", "PERCENT"]}, "value": {"type": "number"}}
             },
             "style": {
               "$ref": "#/$defs/text"
@@ -382,7 +408,10 @@
             }
           }
         }
-      }
+      },
+      "allOf": [
+        {"if": {"properties": {"type": {"const": "LINE"}}, "required": ["type"]}, "then": {"required": ["rotation"], "properties": {"height": {"const": 0}}}, "else": {"properties": {"height": {"exclusiveMinimum": 0}}}}
+      ]
     },
     "handoff": {
       "type": "object",

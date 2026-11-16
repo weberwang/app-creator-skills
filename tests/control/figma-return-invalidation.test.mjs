@@ -7,6 +7,7 @@ import { invalidateSingleDomainEvidence } from '../../skills/app-workflow-contro
 import { validateFigmaAppStage } from '../../skills/app-workflow-control/scripts/runtime/figma-app-contract.mjs';
 import { attachFigmaAppFixture, figmaSnapshotFixture, writeFigmaFixture as write } from './figma-app-fixture.mjs';
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
+import { encodePngRgba } from '../../skills/app-asset-workflow/scripts/png-raster.mjs';
 
 /** 仅生成隔离的本地协议测试数据，不表示 Figma 执行或真实人工确认。 */
 function fixture(t, stack) {
@@ -14,7 +15,7 @@ function fixture(t, stack) {
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   const work = { workItemId: 'work-a', projectId: 'project-a', stack, workItemType: 'PAGE',
     visual: { objectId: 'home', candidateId: 'candidate-a', stage: 'V5', reviews: {}, ...(stack === 'esp32' ? { designRoute: 'figma-app' } : {}) } };
-  const referenceTarget = write(repo, 'design/target.png', '合成目标图，不表示真实视觉验收');
+  const referenceTarget = write(repo, 'design/target.png', encodePngRgba(2, 2, Buffer.alloc(16)));
   const doc = { referenceTarget, visualStage: 'V3', layoutSpecRef: write(repo, 'design/layout.json', { nodes: [
     { id: 'screen', parentId: null, x: 0, y: 0, width: 390, height: 844 },
     { id: 'title', parentId: 'screen', x: 16, y: 32, width: 240, height: 48 },
@@ -56,7 +57,7 @@ for (const stack of ['flutter', 'expo', 'esp32']) {
 
 test('V2 RETURN 作废主目标和额外目标的节点及采集引用，保留全部历史目标图', (t) => {
   const f = fixture(t, 'expo');
-  const extraPreview = write(f.repo, 'design/extra.png', '合成的另一个目标图');
+  const extraPreview = write(f.repo, 'design/extra.png', encodePngRgba(2, 2, Buffer.alloc(16, 1)));
   const extra = figmaSnapshotFixture(f.repo, f.work, { prefix: 'design/extra', previewRef: extraPreview, stateId: 'expanded' });
   f.doc.additionalTargets = [{ referenceTarget: extraPreview, figmaDesignRef: extra.ref }];
   f.work.visual.domainEvidenceRef = write(f.repo, 'domain/with-extra.json', f.doc);

@@ -55,6 +55,8 @@ SDK/组件的独立文件职责按[公共 SDK 规范](../../app-domain-toolkit/r
 
 按[显示与资源](display-and-assets.md)和[文本布局](text-layout.md)以实际屏幕像素与 LVGL 对象树实现布局。保留真实父级、定位参照、对齐/间距、尺寸、滚动、层序和输入所有者；按键/旋钮使用明确焦点路径，触控有真实命中区与坐标变换。不套用浏览器 DPR、Flutter 安全区或游戏 Camera。
 
+按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)核对实际屏幕、输入及资源预算约束与 LVGL 正式对象；设备回读与显示确认须按既有授权执行，不能由主机测试代替，也不自动运行真机。
+
 使用[公共相对布局](../../app-ui-layout/references/relative-layout.md)，普通控件相对容器，浮层例外不扩展到其内部控件。极值文案、缺字、数值变化、加载/错误与重入纳入测试。V3 的拆解、布局和正式源、V5 的实际对象回读与人工确认按[领域合同](domain-validation.md)提交。
 <!-- native-source:esp32-ui-layout:end -->
 

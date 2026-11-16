@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { encodePngRgba } from '../../skills/app-asset-workflow/scripts/png-raster.mjs';
+import { extractFlutterNodeFacts } from '../../skills/app-workflow-control/scripts/runtime/figma-design-properties.mjs';
 
 /** 写入明确标记的合成协议材料，绝不代表真实应用或用户视觉验收。 */
 export function writeDesignFixture(repo, path, value) {
@@ -33,23 +34,37 @@ export function attachFlutterDesignFixture(repo, work, doc) {
   const base = `design-fixture/${work.workItemId}`;
   const host = work.workItemType === 'DISPLAY_LAYER' ? { hostId: work.visual.hostId, layerType: work.visual.layerType } : {};
   const identity = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, candidateId: work.visual.candidateId, ...host };
+  const source = { id: 'fixture-heading', type: 'TEXT', name: '源图标题', x: 16, y: 32, width: 240, height: 48,
+    font: { family: 'Noto Sans', platformFamily: 'Noto Sans', available: true, size: 18, weight: 500, lineHeight: { unit: 'PERCENT', value: 140 }, letterSpacing: { unit: 'PIXELS', value: 0 } },
+    properties: { insets: { top: 8, right: 8, bottom: 8, left: 8 }, colors: { background: '#ffffff', foreground: '#222222' }, border: { width: 0, color: '#00000000' }, shape: { kind: 'rectangle', radius: 0 } } };
   const requirements = Object.fromEntries(Object.entries({
     structure: { widget: 'Text', layout: 'column', children: [] }, size: { width: 240, height: 48 },
-    spacing: { top: 8, right: 8, bottom: 8, left: 8 }, typography: { family: 'Noto Sans', size: 18, weight: 500, lineHeight: 1.4, letterSpacing: 0 },
-    color: { background: '#ffffff', foreground: '#222222' }, border: { width: 0, color: '#00000000' },
-    shape: { kind: 'rectangle', radius: 0 }, states: { ids: ['default'], rules: { default: '显示当前标题' } },
+    ...extractFlutterNodeFacts(source), states: { ids: ['default'], rules: { default: '显示当前标题' } },
   }).map(([key, value]) => [key, { value, basis: 'measured', reason: '合成测试目标的固定规格' }]));
+  const rootSource = { id: 'fixture-root', type: 'FRAME', name: '页面', x: 0, y: 0, width: 390, height: 844,
+    layoutMode: 'VERTICAL', properties: { fill: '#ffffff', spacing: 16, radius: 12 } };
+  const rootRequirements = Object.fromEntries(Object.entries({
+    structure: { widget: 'Page', layout: 'column', children: ['heading'] },
+    ...extractFlutterNodeFacts(rootSource, source), states: { ids: ['default'], rules: { default: '显示当前标题' } },
+  }).map(([key, value]) => [key, { value, basis: 'measured', reason: '合成测试目标的页面与背景规格' }]));
   const plan = { ...identity, referenceTarget: doc.referenceTarget,
     conditions: [{ id: 'default-phone', stateId: 'default', viewport: { width: 390, height: 844 }, language: 'zh-CN', textScale: 1,
       adaptation: { platform: 'android', orientation: 'portrait', safeArea: { top: 24, right: 0, bottom: 24, left: 0 }, keyboard: 'hidden' } }],
-    elements: [{ id: 'heading', label: '源图标题', targetRef: doc.referenceTarget, region: { x: 16, y: 32, width: 240, height: 48, unit: 'px' }, conditionIds: ['default-phone'], parentId: null, layoutReference: 'viewport', implementationId: 'native-heading' }],
-    implementations: [{ id: 'native-heading', kind: 'native', designItemIds: ['heading'], consumers: [{ id: 'heading-widget', sourcePath: `${base}/heading.dart`, symbol: 'Heading' }], designReason: '标题为可访问动态文字，原生组件按当前设计设置几何和字体', requirements }],
+    elements: [{ id: 'heading', label: '源图标题', targetRef: doc.referenceTarget, region: { x: 16, y: 32, width: 240, height: 48, unit: 'px' }, conditionIds: ['default-phone'], parentId: 'screen', layoutReference: 'screen', implementationId: 'native-heading' },
+      { id: 'screen', label: '页面背景', targetRef: doc.referenceTarget, region: { x: 0, y: 0, width: 390, height: 844, unit: 'px' }, conditionIds: ['default-phone'], parentId: null, layoutReference: 'viewport', implementationId: 'native-screen' }],
+    implementations: [{ id: 'native-heading', kind: 'native', designItemIds: ['heading'], consumers: [{ id: 'heading-widget', sourcePath: `${base}/heading.dart`, symbol: 'Heading' }], designReason: '标题为可访问动态文字，原生组件按当前设计设置几何和字体', requirements },
+      { id: 'native-screen', kind: 'native', designItemIds: ['screen'], consumers: [{ id: 'page-widget', sourcePath: `${base}/screen.dart`, symbol: 'Page' }], designReason: '页面组件负责已确认的背景和布局', requirements: rootRequirements }],
   };
   for (const [index, extra] of (doc.additionalTargets ?? []).entries()) {
     const condition = { ...structuredClone(plan.conditions[0]), id: `extra-${index}`, targetRef: extra.referenceTarget, viewport: { width: 844, height: 390 } };
     condition.adaptation.orientation = 'landscape'; plan.conditions.push(condition);
-    const element = { ...structuredClone(plan.elements[0]), id: `heading-extra-${index}`, targetRef: extra.referenceTarget, conditionIds: [condition.id] };
-    plan.elements.push(element); plan.implementations[0].designItemIds.push(element.id);
+    const root = { ...structuredClone(plan.elements[1]), id: `screen-extra-${index}`, targetRef: extra.referenceTarget, region: { x: 0, y: 0, width: condition.viewport.width, height: condition.viewport.height, unit: 'px' }, conditionIds: [condition.id], implementationId: `native-screen-extra-${index}` };
+    const element = { ...structuredClone(plan.elements[0]), id: `heading-extra-${index}`, targetRef: extra.referenceTarget, conditionIds: [condition.id], parentId: root.id, layoutReference: root.id };
+    const implementation = structuredClone(plan.implementations[1]); implementation.id = root.implementationId; implementation.designItemIds = [root.id];
+    // 多视口的独立页面实现需要独立源码，避免观测夹具互相覆盖并使摘要失效。
+    implementation.consumers = [{ id: `page-widget-extra-${index}`, sourcePath: `${base}/screen-extra-${index}.dart`, symbol: `PageExtra${index}` }];
+    implementation.requirements.size.value = { ...condition.viewport }; implementation.requirements.structure.value.children = [element.id];
+    plan.elements.push(element, root); plan.implementations[0].designItemIds.push(element.id); plan.implementations.push(implementation);
   }
   // 原始 V3 复用计划保持身份；仅在测试确有继承确认时沿用来源冻结计划。
   const inherited = work.visual.reuse?.inheritedReviews?.includes('V3Decomposition');

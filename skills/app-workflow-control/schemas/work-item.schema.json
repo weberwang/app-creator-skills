@@ -596,6 +596,17 @@
             "implementation",
             "proposal"
           ]
+        },
+        "designSource": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind"],
+          "properties": {
+            "kind": {"enum": ["imagegen", "figma-direct"]},
+            "userMessageRef": {"type": "string", "minLength": 1},
+            "scope": {"type": "string", "minLength": 1}
+          },
+          "allOf": [{"if": {"properties": {"kind": {"const": "figma-direct"}}, "required": ["kind"]}, "then": {"required": ["userMessageRef", "scope"]}}]
         }
       },
       "additionalProperties": false

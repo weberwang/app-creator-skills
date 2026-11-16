@@ -5,15 +5,18 @@ import { mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { assertVisualReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
 import { validateExpo } from '../../skills/app-workflow-control/scripts/runtime/expo-domain-check.mjs';
-import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
+import { attachFigmaAppFixture, attachFigmaLineFixture } from './figma-app-fixture.mjs';
+import { validateFigmaAppStage } from '../../skills/app-workflow-control/scripts/runtime/figma-app-contract.mjs';
+import { extractFlutterPlan } from '../../skills/app-workflow-control/scripts/runtime/flutter-plan-extractor.mjs';
 
 /** 写入隔离项目的合成文件并返回实际字节摘要。 */
 function write(repo, path, content) {
-  const bytes = Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
+  const bytes = Buffer.isBuffer(content) ? content : Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
   mkdirSync(dirname(join(repo, path)), { recursive: true });
   writeFileSync(join(repo, path), bytes);
   return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
@@ -33,7 +36,7 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const work = { workItemId: 'work-a', projectId: 'project-a', stack: 'expo', workItemType: layer ? 'DISPLAY_LAYER' : 'PAGE', stageId: 'scene-production', visual };
   if (layer) Object.assign(visual, { hostId: 'host-a', layerType: 'modal' });
   const host = layer ? { hostId: visual.hostId, layerType: visual.layerType } : {};
-  const referenceTarget = write(repo, 'target.png', '合成目标');
+  const referenceTarget = write(repo, 'target.png', syntheticDesignPng('expo-target'));
   const profile = { schemaVersion: '1.0', platform, viewport: { width: 390, height: 844 }, safeArea: { top: 24, right: 0, bottom: 16, left: 0 }, fontScale: 1, expoSdkVersion: 'fixture', reactNativeVersion: 'fixture' };
   const platformProfileRef = write(repo, 'platform.json', profile);
   visual.reviews.V2 = write(repo, 'review-v2.json', { referenceTarget, platformProfileRef, ...host });
@@ -80,6 +83,54 @@ test('Expo 页面和显示层分别通过 V2–V5，Web 独立记录其构建和
   assert.equal(validateSingleDomainTarget(web.repo, web.work, 'V5'), true);
 });
 
+test('Expo 将 Figma 直线绘制边界交接到原生布局，保留源几何且拒绝伪造样式', (t) => {
+  const f = fixture(t, { stage: 'V3' });
+  const { bounds } = attachFigmaLineFixture(f.repo, f.work, f.doc, f.layout, { rotation: 90 });
+  f.save();
+  assert.deepEqual(bounds, { x: 119.5, y: 50, width: 1, height: 100, origin: { x: 0.5, y: 100 } });
+  assert.doesNotThrow(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc));
+  assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V3'), true);
+  // 样式只放在已有交接映射也能通过，不需要重复写入布局节点。
+  assert.equal(f.layout.nodes.find((node) => node.id === 'separator').designProperties, undefined);
+  const handoff = JSON.parse(readFileSync(join(f.repo, f.doc.figmaHandoffRef.path), 'utf8'));
+  const mapping = handoff.mappings.find((item) => item.designItemId === 'separator');
+  assert.equal(mapping.nativeStyle.designFacts.raw.other.rotation, 90);
+  mapping.nativeStyle.designFacts.raw.other.rotation = 0;
+  f.doc.figmaHandoffRef = write(f.repo, 'line/wrong-style.json', handoff);
+  f.work.visual.domainEvidenceRef = write(f.repo, 'line/wrong-domain.json', f.doc);
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V3'), /字体、颜色或形态/);
+  // 非直线仍须正尺寸，局部适配器也不能被零高普通文本绕过。
+  f.layout.nodes.find((node) => node.id === 'title').height = 0;
+  f.doc.layoutSpecRef = write(f.repo, 'line/invalid-text-layout.json', f.layout);
+  const identity = (_repo, ref) => {
+    const bytes = readFileSync(join(f.repo, ref.path));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), ref.sha256);
+    return ref.path;
+  };
+  assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /布局节点 height 无效/);
+});
+
+test('Figma 直线交接允许独立冻结的布局规格和原生计划', (t) => {
+  const f = fixture(t, { stage: 'V3' });
+  attachFigmaLineFixture(f.repo, f.work, f.doc, f.layout);
+  f.save();
+  const snapshot = JSON.parse(readFileSync(join(f.repo, f.doc.figmaDesignRef.path), 'utf8'));
+  const handoff = JSON.parse(readFileSync(join(f.repo, f.doc.figmaHandoffRef.path), 'utf8'));
+  const request = { workItemId: f.work.workItemId, objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+    referenceTarget: f.doc.referenceTarget, figmaDesignRef: f.doc.figmaDesignRef, conditionId: 'main', stateRule: '当前状态可见',
+    adaptation: { platform: 'android', orientation: 'portrait', safeArea: { top: 24, right: 0, bottom: 16, left: 0 }, keyboard: 'hidden' },
+    mappings: handoff.mappings.map((mapping) => ({ designItemId: mapping.designItemId, nodeId: mapping.nodeId, implementationId: `impl-${mapping.designItemId}`,
+      label: mapping.designItemId, widget: 'NativeView', kind: 'native', designReason: '真实设计节点', consumers: [{ id: mapping.designItemId, sourcePath: 'src/home.tsx', symbol: 'Home' }] })) };
+  const extracted = extractFlutterPlan(snapshot, request);
+  f.doc.designReconstructionRef = write(f.repo, 'line/separate-native-plan.json', extracted.plan);
+  handoff.nativePlanRef = f.doc.designReconstructionRef;
+  handoff.mappings = extracted.mappings;
+  f.doc.figmaHandoffRef = write(f.repo, 'line/separate-handoff.json', handoff);
+  f.work.visual.domainEvidenceRef = write(f.repo, 'line/separate-domain.json', f.doc);
+  assert.notEqual(f.doc.designReconstructionRef.path, f.doc.layoutSpecRef.path);
+  assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V3'), true);
+});
+
 test('Expo Figma 布局直接绑定当前设计，V3 无需另画图或重复批准', (t) => {
   for (const layer of [false, true]) {
     const f = fixture(t, { stage: 'V3', layer });
@@ -110,16 +161,13 @@ test('Expo Figma 布局直接绑定当前设计，V3 无需另画图或重复批
 
 test('公共阶段门实际调用 Expo 合同并验证用户确认链', (t) => {
   const f = fixture(t, { stage: 'V2' });
-  const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension, index) => ({
-    dimension, status: 'PASS', evidenceRef: write(f.repo, `quality/${index}.txt`, '合成人工检查').path,
-  }));
-  const review = { schemaVersion: '1.0', workItemId: f.work.workItemId, objectId: 'home', targetId: 'home', candidateId: 'candidate-a', stage: 'V2', purpose: 'target', decision: 'APPROVED', userMessageRef: '合成用户消息', referenceTarget: f.referenceTarget, targetRef: f.referenceTarget.path, targetSha256: f.referenceTarget.sha256, platformProfileRef: f.doc.platformProfileRef, figmaDesignRef: f.doc.figmaDesignRef, figmaTargetRefs: [f.doc.figmaDesignRef], scope: { kind: 'full-object', designItemIds: [], conditionIds: [] }, qualityChecks };
-  f.work.visual.reviews.V2 = write(f.repo, 'public-v2.json', review);
+  // 复用同一次源图确认及忠实重建授权，不为通过阶段门伪造第二次预览选稿。
+  const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
   f.work.visual.domainEvidenceRef = write(f.repo, 'public-domain-v2.json', f.doc);
   assert.doesNotThrow(() => assertVisualReview(f.repo, f.work, 'V2'));
   review.decision = 'REJECTED';
   f.work.visual.reviews.V2 = write(f.repo, 'public-rejected.json', review);
-  assert.throws(() => assertVisualReview(f.repo, f.work, 'V2'), /未获用户确认|缺少当前完整 Figma 目标的人工选择/);
+  assert.throws(() => assertVisualReview(f.repo, f.work, 'V2'), /未获用户确认|人工选择|确认|选稿/);
 });
 
 test('V2 不依赖未来阶段素材或运行证据，且必须绑定用户确认的平台', (t) => {

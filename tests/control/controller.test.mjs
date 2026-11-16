@@ -4,6 +4,7 @@ import { readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { advanceVisual, checkProtectedAction, completeUnit, initializeWork, inspect, refreshFunctionBaseline } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { assertOwnedPath, loadProfile, pathMatch } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { transitionWork, inferReturnState } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
@@ -517,7 +518,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
   const selectedChecks = await createQualityChecks(fixture.repo, 'visual/reviews/baseline-selected');
   const baselineCandidates = [];
   for (const candidateId of ['direction-a', 'direction-b', 'direction-c']) {
-    const path = await put(fixture.repo, `visual/candidates/${candidateId}.png`, `${candidateId} 的合成设计候选材料`);
+    const path = await put(fixture.repo, `visual/candidates/${candidateId}.png`, syntheticDesignPng(candidateId));
     baselineCandidates.push({
       candidateId, path,
       qualityChecks: candidateId === 'direction-a' ? selectedChecks : qualityDimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })),
@@ -548,7 +549,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
   assert.equal(work.evidenceRef, null);
   assert.equal(work.globalState, 'PROPOSAL');
   work.visual.candidateId = 'direction-a';
-  const target = await put(fixture.repo, 'visual/home-target.png', '合成 V2 目标材料');
+  const target = await put(fixture.repo, 'visual/home-target.png', syntheticDesignPng('home-target'));
   const v1ReviewPath = '.workflow-control/reviews/home-target.json';
   const v1Checks = await createQualityChecks(fixture.repo, 'visual/reviews/v1');
   await putVisualReview(fixture.repo, v1ReviewPath, { ...reviewRecord({ objectId: 'home-page', candidateId: 'direction-a', stage: 'V2', purpose: 'target', userMessageRef: 'chat://home-target', targetRef: target, qualityChecks: v1Checks }), scope: { kind: 'full-object', designItemIds: [], conditionIds: [] } }, work.workItemId, target);

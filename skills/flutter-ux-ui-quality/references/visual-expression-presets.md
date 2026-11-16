@@ -8,7 +8,7 @@ Use these presets only as optional inspiration for the product and audience. The
 2. Apply audience considerations only when supported by actual requirements.
 3. Record meaningful constraints in the existing product brief without creating a separate approval.
 4. 仅视觉签名、表达预算或实现成本存在实质未决取舍时开展轻量讨论，将实际决定写入 `docs/product/grilling-log.md` 并在产品简报同步结论。需求已明确时直接继续，不创建额外确认门。
-5. 文字方向仅按需作为设计输入，不形成独立冻结或预先批准。首次定调／实质改版按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认精修一份可编辑方案；只有用户明确要求比较时才按指定数量制作多方向，保持相同任务、内容及比较条件并体现实质差异。已有有效方向的局部增量可复用。用户观看节点链接和预览后确认或明确选择／组合，控制器记录实际决定。
+5. 文字方向仅按需作为设计输入，不形成独立冻结或预先批准。首次定调／实质改版按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认先生成并确认一张效果图，再忠实重建可编辑方案；只有用户明确要求比较时才按指定数量制作多方向，保持相同任务、内容及比较条件并体现实质差异。已有有效方向的局部增量可复用。用户观看实际效果图后确认或明确选择／组合，授权忠实重建后结构核对不再重复选稿，重建预览未看仍未检查，控制器记录实际决定。
 
 Task clarity and accessibility remain requirements. Presets do not define an expression ceiling, required direction count, review threshold, or mandatory score.
 
@@ -49,11 +49,11 @@ This is not a separate freeze gate or a mandatory preapproval. Users select or e
 
 ## Direction Exploration
 
-非游戏 App 首次定调或实质改版默认精修一份可编辑 Figma 方案；只有用户明确要求比较时才按指定数量制作多方向。多个方向保持相同核心任务、主要内容和视口等比较条件，在布局、层级、排版、形态或交互呈现上有实质区别，不只换颜色；可以参考类别差异而不套用固定风格。用户确认后再扩展其他页面和关键状态。
+非游戏 App 首次定调或实质改版默认先生成并确认一张效果图，再忠实重建可编辑 Figma 方案；只有用户明确要求比较时才按指定数量制作多方向。多个方向保持相同核心任务、主要内容和视口等比较条件，在布局、层级、排版、形态或交互呈现上有实质区别，不只换颜色；可以参考类别差异而不套用固定风格。用户确认后再扩展其他页面和关键状态。
 
 ## Scoring Weights
 
-Keep the existing score dimensions. Re-weight emphasis when comparing directions:
+Only when comparing directions, use relevant dimensions as optional human discussion prompts; do not require a score, weight, threshold, or additional approval:
 
 | Preset | Raise weight | Do not sacrifice |
 |---|---|---|
@@ -93,7 +93,7 @@ Confirmed business scope, necessary functions, states, and interactions remain c
 
 正式冻结使用公共控制器的用户选稿记录及真实 Figma 节点和冻结预览；文字方向、预设和成本说明不是独立冻结门。正式实现须验证相关 V1 功能，仅设计提案不强制先建工程。既有有效方向的局部增量可复用。
 
-建立或替换公共基线时，在一次实际 Figma 节点选择中记录相关决定：
+建立或替换公共基线时，复用一次真实效果图选择消息及其适用范围，并在忠实重建后关联节点转换引用；原图确认并授权忠实重建后，结构核对即可继续 V3，不新增相同目标的 Figma 预览选稿。仅记录实际涉及的决定：
 
 1. Selected global direction.
 2. Accept or reject the direction's visual signature and implementation-cost commitment.
@@ -105,14 +105,14 @@ Confirmed business scope, necessary functions, states, and interactions remain c
 
 ## Conditional Module Visual Decision
 
-当页面细化出现确需用户决定的范围、交互、预算或成本实质取舍时，只讨论相关问题并沿用现有记录。信息足够时直接在 Figma 探索，不要求用户先批准文字方向、不按页面或素材逐项审批；独立图片仅在确有需要时生成或复用。
+当页面细化出现确需用户决定的范围、交互、预算或成本实质取舍时，只讨论相关问题并沿用现有记录。信息足够时按已选视觉目标及 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)推进：默认效果图先于可编辑重建，有效已确认图可复用；不要求用户先批准文字方向、不按页面或素材逐项审批，独立素材图片仅在确有需要时生成或复用。
 
 ## Review Threshold
 
-Replace “is decoration restrained enough?” with:
+仅当这些问题与当前任务相关时，作为人工检查要点；预设不是验收门，也不自动判定画面质量：
 
-- Does the screen meet the preset’s `signature_strength` and `wow_requirement` for this page type?
+- Does the selected direction express the intended product identity without obscuring the task?
 - Does any expressive treatment harm task clarity, hierarchy, trust evidence, or accessibility?
-- For full-budget pages, flag missing signature, overly safe stock-component composition, or flattened product character as Important when the preset requires wow or high signature.
+- When a distinctive signature is an actual product requirement, discuss whether the presented result expresses it; do not infer a mandatory requirement from a preset alone.
 
 Penalize purposeless noise and generic AI decoration. Do not penalize purposeful signature strength required by the preset.

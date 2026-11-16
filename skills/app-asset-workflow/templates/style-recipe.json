@@ -1,7 +1,10 @@
 {
-  "purpose": "制作资料，不替代控制器基线与人工确认记录",
+  "purpose": "制作资料，不替代控制器基线与人工确认记录；candidateDirections 按需逐方向描述轮廓、比例、材质纹理、明暗阴影边缘、功能色、UI图标及制作路线，选定后其余字段描述选中方向",
   "visualSignature": [],
   "audienceAndTask": "",
+  "directionBasisAndTradeoffs": [],
+  "hardConstraints": [],
+  "explorationSpace": [],
   "silhouetteAndProportion": "",
   "paletteAndFunctionalColors": [],
   "materialAndLighting": "",
@@ -10,6 +13,7 @@
   "seriesInvariants": [],
   "referenceUses": [],
   "nativeVsBitmap": "",
+  "candidateDirections": [],
   "representativeAssetId": "",
   "outOfScope": []
 }

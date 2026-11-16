@@ -5,6 +5,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { assertVisualReuse, resolveReuseOwner, validateSceneReuseCoverage, validateSceneReuseReview } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse-binding.mjs';
 import { assertVisualReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
@@ -129,7 +130,7 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
   const baseChecks = await qualityChecks(fixture.repo, 'proof/baseline');
   const candidates = [];
   for (const candidateId of ['direction-a', 'direction-b', 'direction-c']) {
-    const path = await put(fixture.repo, `proof/candidates/${candidateId}.txt`, `${candidateId} 合成候选\n`);
+    const path = await put(fixture.repo, `proof/candidates/${candidateId}.png`, syntheticDesignPng(candidateId));
     candidates.push({
       candidateId, path,
       qualityChecks: candidateId === 'direction-a' ? baseChecks : qualityDimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })),
@@ -155,7 +156,7 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
   work.visual.candidateId = 'direction-a';
   work.gateStatus = { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' };
 
-  const targetRef = await put(fixture.repo, 'proof/target.txt', 'V2 合成目标\n');
+  const targetRef = await put(fixture.repo, 'proof/target.png', syntheticDesignPng('reuse-target'));
   const layerContext = work.workItemType === 'DISPLAY_LAYER' ? { hostId: work.visual.hostId, layerType: work.visual.layerType } : {};
   const v1Checks = await qualityChecks(fixture.repo, 'proof/v1');
   const v1Path = '.workflow-control/reviews/v1.json';
@@ -363,9 +364,21 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
     await putJson(fixture.repo, path, review);
     work.visual.reviews[name] = await frozenReview(fixture.repo, path);
   }
+  // 新宿主的目标确认生成新身份，重建关系须指向它，才能独立检查后续宿主交接。
+  const snapshot = JSON.parse(await readFile(resolve(fixture.repo, domain.figmaDesignRef.path), 'utf8'));
+  snapshot.reconstruction.authorizationRef = work.visual.reviews.V2;
+  domain.figmaDesignRef = writeFigmaFixture(fixture.repo, 'proof/new-host-design.json', snapshot);
+  for (const name of ['V4', 'V5']) {
+    const review = JSON.parse(await readFile(resolve(fixture.repo, work.visual.reviews[name].path), 'utf8'));
+    review.figmaDesignRef = domain.figmaDesignRef;
+    work.visual.reviews[name] = writeFigmaFixture(fixture.repo, `proof/new-host-${name}.json`, review);
+  }
+  await putJson(fixture.repo, domainPath, domain);
+  work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
   assert.throws(() => assertVisualReview(fixture.repo, work, 'V5'), /还原交接未绑定当前显示层宿主/);
   const handoff = JSON.parse(await readFile(resolve(fixture.repo, domain.figmaHandoffRef.path), 'utf8'));
   handoff.hostId = 'host-b';
+  handoff.figmaDesignRef = domain.figmaDesignRef;
   domain.figmaHandoffRef = writeFigmaFixture(fixture.repo, 'proof/new-host-handoff.json', handoff);
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
@@ -570,7 +583,7 @@ test('拒绝源 Work Item 中伪造或身份错绑的 V2 确认', async (t) => {
 
 test('已确认的单目标画面被原地替换后不能继承旧确认', async (t) => {
   const fixture = await createPair(t, { impactId: 'changed-target' });
-  await put(fixture.repo, 'proof/target.txt', '用户确认后被替换的目标');
+  await put(fixture.repo, 'proof/target.png', '用户确认后被替换的目标');
   await assert.rejects(reuseVisualReviews({ repo: fixture.repo, workItem: fixture.targetPath,
     sourceWorkItem: fixture.workPath, impact: 'implementation', reason: '目标图已变更' }), /内容已变化/);
 });
@@ -670,7 +683,7 @@ test('PAGE 多级复用逐跳绑定原始确认并拒绝祖先异常及图片替
   assert.throws(() => assertVisualReuse(fixture.repo, third), /来源必须已完成/);
   middle.globalState = 'COMPLETE';
   await putJson(fixture.repo, fixture.targetPath, middle);
-  await put(fixture.repo, 'proof/target.txt', '替换后的目标');
+  await put(fixture.repo, 'proof/target.png', '替换后的目标');
   assert.throws(() => assertVisualReview(fixture.repo, third, 'V3'), /内容已变化/);
 });
 

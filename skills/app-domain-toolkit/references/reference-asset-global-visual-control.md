@@ -60,11 +60,11 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-使用相同 brief、目标视口、参考输入和实际生成条件生成恰好三张候选效果图，并将三张图同屏交给人工比较；候选必须关联实际图片和 generated generation record 文件，不要求摘要。`global-visual-baseline-selection/1.1` 证据还必须绑定生产者 Work Item、brief、generation batch、唯一候选 ID、唯一 `SINGLE_HUMAN`/`CONFIRMED` 选择、selectedCandidateId、决定记录文件、确认时间和用户原文。候选生成记录仍使用 `global-visual-baseline-candidate-generation/1.0`；决定文件使用 `global-visual-baseline-selection-decision/1.1`。
+使用相同 brief、目标视口、任务内容、代表状态、示例数值和可比制作预算生成恰好三张候选效果图，并将三张图同屏交给人工比较。共用空间／内容参考只锁定已确认事实，不要求三张共用同一种美术造型或美术参考；方向专用参考注明用途。每个方向先按[候选定义](../../app-asset-workflow/references/style-and-production.md#三候选选择)独立约定轮廓、角色与物件比例、材质纹理、明暗阴影边缘、功能色、UI 图标及可实现制作路线，再编写完整独立的提示词；不能大段共享“圆润、可爱、低模”等造型词后只换配色、光照或方向名。候选必须关联实际图片和 generated generation record 文件，不要求摘要。`global-visual-baseline-selection/1.1` 证据还必须绑定生产者 Work Item、brief、generation batch、唯一候选 ID、唯一 `SINGLE_HUMAN`/`CONFIRMED` 选择、selectedCandidateId、决定记录文件、确认时间和用户原文。候选生成记录仍使用 `global-visual-baseline-candidate-generation/1.0`；决定文件使用 `global-visual-baseline-selection-decision/1.1`。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-三候选使用相同的玩家可见表达与示例数值，实际提示词按“效果图文案约束”（见本栈配套资料）分离内部 brief 与可见文字。不得将核心循环、玩法介绍或验收说明当作界面文字绘制；该检查纳入下述玩法可读人工评估，未完成时不声称画面通过。
+三候选使用相同的玩家可见表达与示例数值，实际提示词按“效果图文案约束”（见本栈配套资料）分离内部 brief 与可见文字，落实场景线索、语义承载与真实状态。不得将核心循环、玩法介绍、白模调试标签或验收说明当作界面文字绘制。下述人工比较同时询问“弱化配色、隐藏候选名称后，是否仍能辨认各方向”；不要求另做一套图或新增批准，不因提示词不同宣布风格差异成立。玩法可读与风格差异未获实际人工判断时如实待定。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -138,7 +138,7 @@ V0 识别范围与已有视觉偏好，V1 先实现并验证相关功能，白�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-每个 AI 生成包按固定顺序保存以下内容，不得只保留最终提示词：
+选定方向后的系列生产包按固定顺序保存以下内容，不得只保留最终提示词。首次方向探索尚无冻结的统一造型，不套用同一风格前缀；各候选按其独立视觉语言写完整提示词，共同玩法与比较条件保持一致：
 
 > 适用技术栈：cocos、phaser、threejs。
 

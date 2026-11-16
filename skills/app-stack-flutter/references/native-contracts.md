@@ -43,49 +43,41 @@
 <a id="mode-flutter-product-spec--overview"></a>
 #### Overview
 
-Turn an app idea into a constrained commercial product spec. The output must make scope, users, value, and acceptance criteria testable before UX or code work starts.
+按[公共策划范围](../../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)处理新产品定义或既有 Flutter 产品增量，让本次范围、用户结果及验收可观察；普通增量不重写无关产品，不默认变成商业策划或 MVP。
 
 <a id="mode-flutter-product-spec--inputs"></a>
 #### Inputs
 
-- App idea or business goal.
-- 已有需求和用户决定；仅存在影响范围、成本或验收的实质未决项时，补充 `docs/product/grilling-log.md` 中对应的讨论结论。
-- Target market or audience, if known.
-- Platform assumptions: Flutter mobile first unless the user states otherwise.
-- Monetization intent, if known.
+- 本次目标、现有需求、相关产品规格与真实用户决定；影响范围、成本或体验的实质未决取舍沿用现有决定记录。
+- 真实目标用户、设备平台和使用情境；商业模式或市场假设仅在已确认范围涉及这些事项时使用。
 
 <a id="mode-flutter-product-spec--process"></a>
 #### Process
 
-1. State assumptions and ask only for information that changes MVP scope.
-2. Identify target users, painful jobs, high-value moments, and the first value the user must receive after starting.
-3. Split MVP from later features.
-4. Define user stories with acceptance criteria, including the value, trust, and perceived-risk conditions that affect first-time adoption; keep them as sections of the product brief.
-5. Define commercial constraints: payment, account, data ownership, privacy, support, and retention.
-6. Record the intended product quality: brand character, interaction tone, visual constraints, and decorations that are justified by the product rather than added for novelty.
-7. 根据产品类别和受众参考 [视觉表达预设](../../flutter-ux-ui-quality/references/visual-expression-presets.md)启发探索；预设不是视觉上限，也不锁定用户未明确约束的信息架构、字体、配色或组件形态。保持任务清晰、无障碍与信任要求。
-8. 只有存在实质未决取舍时开展轻量视觉讨论；需求足够明确时直接按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑候选。正式实现仍需 V1 功能验证，设计提案不强制先建工程；文字方向不单独冻结或要求预先批准。
-9. Write the product brief using [references/product-brief-template.md](../../flutter-product-spec/references/product-brief-template.md). Keep MVP scope, stories, market assumptions and acceptance criteria in that same document unless the user explicitly requests a standalone export.
+1. 区分新产品和既有产品增量，记录已确认事实、假设与变化范围；只就影响范围、成本或体验的实质取舍澄清。
+2. 新产品按实际需求明确目标用户、主要任务、价值与可观察验收；既有增量只补受影响行为、状态、依赖与回归条件，直接复用有效依据。仅用户明确采用 MVP 范围时区分 MVP 与后续项。
+3. 付款、账户、隐私、支持、留存与其他商业条件仅在真实任务涉及或已有项目要求时核对，不为非商业增量创造商业能力或假设。市场验证仅在实际范围内设计。
+4. 适用可见内容时在已有记录中交接品牌、交互语义、视觉方向、使用状态和平台约束；[视觉表达预设](../../flutter-ux-ui-quality/references/visual-expression-presets.md)仅供按需参考，不选择预设或不填预设字段均不是缺陷。
+5. 只有存在实质未决取舍时讨论；需求足够明确时按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认先生成代表页效果图、用户选图后忠实重建可编辑稿。正式实现仍需 V1 功能验证，设计提案不强制先建工程；文字方向不单独冻结或要求预先批准。
+6. 新产品需要产品简报时可按需使用[产品简报模板](../../flutter-product-spec/references/product-brief-template.md)；既有增量直接更新现有规格的受影响部分。已有事实直接引用，不为格式另建完整简报、矩阵或讨论记录。
 
 <a id="mode-flutter-product-spec--output-files"></a>
 #### Output Files
 
-- `docs/product/product-brief.md`
-- `docs/product/grilling-log.md`（仅实际发生讨论时更新）
+- 新产品：任务实际需要时交付产品简报；已有产品：更新现有规格或任务约定中的受影响部分。
+- 有真实讨论且现有流程要求记录时，更新对应已有决定记录；不为普通任务创建占位文件。
 
 <a id="mode-flutter-product-spec--gate"></a>
 #### Gate
 
-进入 UX/UI 或技术设计前，明确 MVP 非目标、核心功能验收条件和真实硬约束；视觉预设只供按需参考，不预先限制可探索空间。正式视觉方向按 Figma 规则由用户确认冻结，默认精修一份方案；仅用户明确要求比较时才按指定数量制作实质不同方向，已有有效方向的局部增量可复用。
+进入受影响的 UX/UI 或技术设计前，明确本次目标、必要约束、验收与回归；MVP 非目标仅在采用 MVP 范围时适用。视觉预设只供按需参考，不预先限制可探索空间。正式视觉方向按 Figma 规则由用户确认冻结，默认先生成并确认一张代表页效果图，再忠实重建 Figma；仅用户明确要求比较时才按指定数量制作实质不同方向，已有有效方向的局部增量可复用。
 
 <a id="mode-flutter-product-spec--common-mistakes"></a>
 #### Common Mistakes
 
-- Writing a feature catalog without user value, a first-value moment, or a safe reason to try the product.
-- Allowing "nice to have" items into MVP.
-- Missing account, privacy, or monetization assumptions for a commercial app.
-- Treating visual polish as a substitute for clear value, reliable feedback, and trust.
-- Leaving the visual expression preset blank, or using "restrained" as a universal default instead of deriving axes from category and audience.
+- 以功能清单替代实际用户结果和可观察验收，或将既有产品增量重写为商业 MVP。
+- 涉及账户、隐私或商业能力时忽略真实约束；在无此需求时擅自添加这些能力。
+- 以视觉修饰代替清晰价值、真实反馈和必要信任；无依据地把预设或“克制”当成全部产品的默认限制。
 - 对需求已经明确的任务强制重复视觉拷问，或把文字方向当作公共正式视觉基线。
 <!-- native-source:flutter-product-spec:end -->
 
@@ -335,7 +327,7 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 3. 按风险决定是否使用 Code Sketch；可直接实现并验证已明确的页面功能。选择草图路线时依据 `flutter-code-sketch/references/code-sketch-level-standard.md` 决定 Full、Lightweight 或 Reuse 并记录理由。
 4. 需要布局合同或选择草图路线时，调用 `adaptive-layout-implementation` 创建 `phase: sketch` 的页面 `layout-spec.yaml`；此阶段不含未来视觉 parity 字段。
 5. 选择 Code Sketch 时，由 Flutter Engineer 在生产骨架实现中性草图并执行关系测试；需要截图时由用户人工检查。直接实现路线保留相应真实功能和结构验证。
-6. 正式实现的 V1 功能经实际验证后，按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑方向并由用户选择；仅设计提案不以建设运行工程为前置。独立素材按需制作，不能用整页生图替代可编辑稿。
+6. 正式实现的 V1 功能经实际验证后，按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再按授权忠实重建可编辑方向；仅设计提案不以建设运行工程为前置。独立素材按需制作，不能用整页生图替代可编辑稿。
 7. 对选定目标与语义合同及适用布局规则做回对，范围、状态、导航、滚动、断点、无障碍或 ownership 变化时定向更新并重验受影响事实；只有实质改变已选视觉目标或交互方案才要求重新确认。
 8. 根据 V2 目标按[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项拆解、规划素材及原生实现，再在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
 
@@ -357,6 +349,8 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 **交互与命中**。优先使用 `IconButton`、按钮或表单 Widget，将激活、禁用、焦点与反馈留给该控件。图标尺寸与按钮约束分别配置，按当前 Material 版本和实际布局测量触控范围。卡片或列表项有独立操作时，可用 `Row` 组织主内容入口与独立 `IconButton`，保持区域和语义分离。自定义手势按 `GestureDetector` 的布局尺寸、`behavior` 和手势竞争处理。改变 `behavior` 不会扩大布局边界，也不能解决父子识别器竞争。滚动接管后应取消点击反馈。[IconButton](https://api.flutter.dev/flutter/material/IconButton-class.html) · [GestureDetector](https://api.flutter.dev/flutter/widgets/GestureDetector-class.html)
 
 文本任务必须读取[Flutter 文本属性与配置](text-layout.md)，落实真实宽度约束、Text 行模式、TextScaler、有界字号能力缺口及正文行数继承检查。
+
+按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)核对实际 Widget 父子、约束、滚动与命中，并在适用 Widget 测试或运行证据中覆盖长文、大字、键盘和焦点变化；测试结果与用户视觉确认分别记录。
 
 每个页面只维护一个 `docs/design/pages/<page-name>/layout-spec.yaml`。以 `phase: sketch` 表达语义结构与关系证据，不要求草图画面；仅明确要求 exact 时把同一文件升级为 `phase: fidelity`。`phase` 不是运行时状态或合并信号。
 
@@ -508,7 +502,7 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 
 1. 选择草图路线时，完成 Code Sketch Review 后再交接；其他路线直接以 V1 实际功能验证和页面语义进入 V2，由用户确认视觉目标。
 2. 将冻结目标与已审语义合同及 sketch layout-spec 回对。若范围、状态、导航语义、滚动 owner、断点、无障碍或 data/UI/asset ownership 改变，回到语义/草图阶段更新并重审，不得静默继续。
-3. 从用户选定的 Figma 节点完成必要资产和布局交接后，在同一 Flutter 骨架上实现；已表达内容不重画或重复批准。仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
+3. 从已确认原图对应的真实 Figma 重建节点完成必要资产和布局交接后，在同一 Flutter 骨架上实现；已表达内容不重画或重复批准。仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
 4. 最终通过实际 Widget 关系和功能验证，由用户检查截图；仅明确要求 exact 时执行 fidelity validator 和完整同视口 parity。validator 只证明规格结构与元数据，不证明实际视觉一致。
 
 <a id="mode-flutter-code-sketch--输出"></a>
@@ -534,7 +528,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-asset-atlas--flutter-asset-atlas"></a>
 ### Flutter Asset Atlas
 
-按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)由用户选定可编辑稿后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 和[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)完成逐项覆盖及生产交接。直接以真实 Figma 节点、状态、结构和可从节点导出的边界定位元素，关联唯一设计项、真实组件或素材及消费者；稿内明确的信息不重复绘图或审批。抽象 Widget 树不能代替设计项覆盖。未经授权不自动分析截图，缺少关键事实时定向补齐，不将估计标为已确认目标。
+按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)由用户确认原效果图并授权忠实重建可编辑稿后，依据 [bitmap decomposition standard](../../flutter-asset-atlas/references/bitmap-decomposition-standard.md) 和[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)完成逐项覆盖及生产交接。直接以真实 Figma 节点、状态、结构和可从节点导出的边界定位元素，关联唯一设计项、真实组件或素材及消费者；稿内明确的信息不重复绘图或审批。抽象 Widget 树不能代替设计项覆盖。未经授权不自动分析截图，缺少关键事实时定向补齐，不将估计标为已确认目标。
 
 <a id="mode-flutter-asset-atlas--流程"></a>
 #### 流程
@@ -552,7 +546,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-asset-atlas--门禁"></a>
 #### 门禁
 
-用户确认 Figma 目标并完成必要交接后才进入正式素材制作；稿内已表达的拆解和布局不重复审批。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。设计项覆盖缺失、素材来源或许可不清、透明边缘损坏、尺寸不符或当前还原依据缺失时阻断受影响阶段。代表样本确认不代表整页通过，单项替换只改变相应项；V4 正式资源和 V5 完整组合仍分别验收。上游缺失或偏离时 RETURN 至最早受影响阶段，保留历史并作废下游引用。
+用户确认效果图、授权忠实重建并完成结构及规格交接后才进入正式素材制作；稿内已表达的拆解和布局不重复审批。不得从代表性 runtime data 生产像素，不得把页面截图作为默认生产资产。设计项覆盖缺失、素材来源或许可不清、透明边缘损坏、尺寸不符或当前还原依据缺失时阻断受影响阶段。代表样本确认不代表整页通过，单项替换只改变相应项；V4 正式资源和 V5 完整组合仍分别验收。上游缺失或偏离时 RETURN 至最早受影响阶段，保留历史并作废下游引用。
 <!-- native-source:flutter-asset-atlas:end -->
 
 <!-- native-source:flutter-hifi-mockup:start -->
@@ -561,7 +555,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-hifi-mockup--flutter-high-fidelity-mockup"></a>
 ### Flutter High-Fidelity Mockup
 
-正式实现的 V1 实际验证功能和页面语义；白盒或 Code Sketch 按风险选择。仅设计提案不先建设运行工程。V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作可编辑设计并由用户选择，保留业务事实、必要功能、无障碍、平台能力及用户明确锁定的品牌约束；未锁定的布局、层级、字体、配色和组件形态可自主探索。既有代码用于理解功能与实现条件，只有用户明确要求忠实还原时才以现有页面作为主要视觉依据。
+正式实现的 V1 实际验证功能和页面语义；白盒或 Code Sketch 按风险选择。仅设计提案不先建设运行工程。V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再忠实重建可编辑设计，保留业务事实、必要功能、无障碍、平台能力及用户明确锁定的品牌约束；未锁定的布局、层级、字体、配色和组件形态可自主探索。既有代码用于理解功能与实现条件，只有用户明确要求忠实还原时才以现有页面作为主要视觉依据。
 
 <a id="mode-flutter-hifi-mockup--输入"></a>
 #### 输入
@@ -574,9 +568,9 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 #### 流程
 
 1. 读取输入和真实约束，围绕目标用户与主要任务组织内容，不预先要求用户批准文字视觉方案。只有实质改变范围或交互时才重新确认。
-2. 首次定调或实质改版，研究真实内容、硬约束和参考的设计规律，自主选择有依据的方向并在 Figma 精修一份代表页方案；仅用户明确要求比较时才按指定数量制作多方向，保持同任务、主要内容和比较条件并体现实质差异。局部增量复用有效方向，工具不可用时如实说明阻断，不静默回退整页生图。
+2. 首次定调或实质改版，研究真实内容、硬约束和参考的设计规律，将布局、字体、配色、比例、组件形态和留白交给 imagegen 探索，先制作一张专业代表页效果图；仅用户明确要求比较时才按指定数量制作多方向，保持同任务、主要内容和比较条件并体现实质差异。局部增量复用有效方向，生图或重建工具不可用／额度不足时如实记录阻塞，不用其他产物冒充完成。
 3. 用真实可编辑文字、组件、实例、矢量、自动布局及实际绑定变量构成界面，确认字体可用与平台替代；重复项组件化并按职责命名。插画、照片、角色等独立素材按需制作或复用，不把整页图片当作可编辑设计。
-4. 展示实际 Figma 节点链接、对应预览与简短取舍，由用户选择或明确组合；选定后扩展其他页面和关键状态。代理不自动分析设计稿或运行截图，未经明确授权不代写视觉 PASS。
+4. 展示实际效果图供用户选择或明确组合；原图确认并授权忠实重建后，核对节点、交付链接及重建预览即可提取 V3，不重复选稿，不将未看新预览填为视觉通过。代理不自动分析设计稿或运行截图，未经明确授权不代写视觉 PASS。
 5. 冻结真实 fileKey、nodeId、状态、视口及对应预览快照和摘要；从所选节点直接提取结构、布局、组件、样式与适配。已表达清楚的信息不重画草图、拆解图或布局图，也不重复批准；缺失部分定向补齐。
 6. V3 声明必要实现及图片生产规格，V4 才按需制作独立素材并接入真实组件；代表组件先试接，再分批扩展，按需登记素材来源与消费者。正式实现继续验证 V1 功能、状态、导航、滚动和无障碍。
 7. 在正式 Flutter 工程完成组件与用户交互并对照所选设计；仅明确要求 exact 时执行完整 fidelity parity。提交当前运行组合及目标条件，由用户人工检查视觉效果；工具成功、截图或测试通过均不等于视觉验收。

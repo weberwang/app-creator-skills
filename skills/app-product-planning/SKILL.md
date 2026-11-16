@@ -28,6 +28,7 @@ description: "为游戏、应用或服务器制定产品与服务范围，或为
 1. 判断工作模式：新产品定义读取目标用户与问题；既有产品策划读取GDD/规则和当前任务，只打开相关章节；明确的市场验证任务额外识别待验证的市场假设。
 2. 按[策划范围与验收约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)区分已确认事实、证据、假设和未决事项；记录本次变化的用户目标与触发场景，不改写既有已确认设计。
 3. 为目标变化写出可观察结果。仅在相关时描述应用关键任务流或游戏核心循环，不为局部功能增量重写无关产品循环。游戏新项目或机制变化按[游戏特点识别](../app-domain-toolkit/references/game-characteristics.md#identify)在现有 GDD 中关联实际特点、规则、风险与验收预期，交接 V1 优先验证项及 QA 用例；混合类型按机制组合，既有事实直接复用。
+   有可见内容时按[共同体验与视觉依据](../app-asset-workflow/references/interface-intent.md#design-basis)在本批已有规格中补齐用户行为、压力、适用状态及约束，核实已有能力与遗漏冲突；说明关键方案如何服务主任务及其代价，形成可执行视觉方向和制作输入。源事实、代理选择与待验证假设分开；默认自行完成有依据的设计判断，实质范围、成本或体验取舍才澄清，不把基础设计问题交给用户发现。
    创意与核心循环方案形成后，先按[玩家视角方案审查](../app-domain-toolkit/references/game-characteristics.md#player-review)推演首次接触、完整周期与连续重复的体验，在相关实现和正式视觉制作前修正方案问题，并将关键假设交给 V1 与真实参与者观察。记录写入当前 GDD 或方案评审，使用现有 F1/F2。
 4. 按[策划范围与验收约定](../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)整理新产品必要能力与不做项，或既有策划中受影响的规则、内容、状态、依赖和回归条件。涉及游戏关卡、波次、谜题或任务内容时，按[关卡与内容生产](../app-domain-toolkit/references/game-content-playtesting.md#levels)明确本批目标、机制依赖、难度来源和完成/失败/恢复，沿用现有 GDD 清单，不把每关机械拆成场景或新增机制。
    从零复杂游戏或空间关系实质变化时，向[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)交接体验目标、核心行为、功能关系、解锁进程与本批范围；先形成空间草案、尺度和镜头依据，仅记录内容需求，概念图可选，不逐物件拆图生图。3D 在正式工程白模搭建与 V1 验证，2D 用平面布局及占位资源，UI 沿原流程；本批整体场景单次审查后等待人工修改或确认，再进入依赖该基线的正式资产生产。依据留在原 GDD／场景规格，局部修改复用有效设计。

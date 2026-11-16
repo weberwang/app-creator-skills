@@ -6,6 +6,7 @@ import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { advanceVisual, completeUnit, initializeWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
@@ -318,8 +319,9 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
   work.visual.stage = 'V4';
   work.visual.candidateId = 'candidate-v3';
   // 阶段归档测试仍须提供可追溯的 V2/V3 确认，不能绕过上游图像绑定。
-  const targetPath = await put(fixture.repo, 'reviews/target.png', '真实目标内容');
-  const targetSha = createHash('sha256').update('真实目标内容').digest('hex');
+  const targetBytes = syntheticDesignPng('records-target');
+  const targetPath = await put(fixture.repo, 'reviews/target.png', targetBytes);
+  const targetSha = createHash('sha256').update(targetBytes).digest('hex');
   const referenceTarget = { path: targetPath, sha256: targetSha };
   for (const [name, stage, purpose] of [['V2', 'V2', 'target'], ['V3Decomposition', 'V3', 'decomposition'], ['V3Layout', 'V3', 'layout']]) {
     const picturePath = name === 'V2' ? targetPath : await put(fixture.repo, `reviews/${name}.png`, name);

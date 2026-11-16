@@ -14,6 +14,7 @@ import { withWorkLock } from './work-lock.mjs';
 import { freezeProductionDependencies } from './production-scope.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { assertNoSampleControlAliases, collectSampleControlReferences } from './production-samples.mjs';
+import { assertRunnableCommand } from './runnable-command.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
@@ -323,6 +324,7 @@ function validatePlanShape(plan) {
     requireSafeText(unit.owner, `executionUnits[${index}].owner`);
     requireStringArray(unit.paths, `executionUnits[${index}].paths`, { nonEmpty: true });
     requireStringArray(unit.acceptanceCommands, `executionUnits[${index}].acceptanceCommands`, { nonEmpty: true });
+    for (const command of unit.acceptanceCommands) assertRunnableCommand(command, `executionUnits[${index}].acceptanceCommands`);
     if (unit.type !== undefined && !UNIT_TYPES.includes(unit.type)) throw new WorkflowError(`executionUnits[${index}].type 无效：${unit.type}`);
     if (unit.parallelGroup !== undefined) requireSafeText(unit.parallelGroup, `executionUnits[${index}].parallelGroup`);
     if (unit.dependsOn !== undefined) requireStringArray(unit.dependsOn, `executionUnits[${index}].dependsOn`);
@@ -382,7 +384,7 @@ function validateReportShape(report) {
   if (!Array.isArray(report.commandOutputs)) throw new WorkflowError('Execution Report.commandOutputs 必须为数组');
   for (const [index, entry] of report.commandOutputs.entries()) {
     assertObjectFields(entry, REPORT_COMMAND_FIELDS, `commandOutputs[${index}]`);
-    requireSafeText(entry.command, `commandOutputs[${index}].command`);
+    assertRunnableCommand(entry.command, `commandOutputs[${index}].command`);
     if (!Number.isSafeInteger(entry.exitCode)) throw new WorkflowError(`commandOutputs[${index}].exitCode 必须为整数`);
     requireSafeText(entry.outputFile, `commandOutputs[${index}].outputFile`);
   }

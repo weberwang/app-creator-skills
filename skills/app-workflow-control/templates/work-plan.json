@@ -4,7 +4,7 @@
       "unitId": "unit-feature",
       "owner": "main-agent",
       "paths": ["src/feature/example.ts"],
-      "acceptanceCommands": ["<填写适用于当前技术栈的真实验收命令>"]
+      "acceptanceCommands": []
     }
   ],
   "gateAssessments": {

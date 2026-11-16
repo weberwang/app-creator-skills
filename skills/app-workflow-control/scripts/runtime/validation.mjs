@@ -75,6 +75,10 @@ function validateVisual(work) {
   if (work.workItemType === 'SCENE' && (!gameScene || !['world-2d', 'world-3d', 'game-ui'].includes(route))) throw new WorkflowError('游戏 SCENE 必须明确 world-2d、world-3d 或 game-ui 设计路线');
   if (!gameScene && route !== undefined && (route !== 'figma-app' || !isFigmaApp(work))) throw new WorkflowError('Figma 设计路线仅用于非游戏 App PAGE/DISPLAY_LAYER；世界和游戏界面路线仅用于游戏 SCENE');
   if (work.visual.designIntent !== undefined && (gameScene ? work.visual.designIntent !== 'implementation' : !isFigmaApp(work) || !['implementation', 'proposal'].includes(work.visual.designIntent))) throw new WorkflowError('designIntent 仅允许 Figma App 的 implementation/proposal 或游戏 SCENE 的 implementation');
+  if (work.visual.designSource !== undefined) {
+    if (!isFigmaApp(work) || !['imagegen', 'figma-direct'].includes(work.visual.designSource?.kind)) throw new WorkflowError('designSource 仅允许 Figma App 的有效设计来源');
+    if (work.visual.designSource.kind === 'figma-direct' && (!work.visual.designSource.userMessageRef?.trim() || !work.visual.designSource.scope?.trim())) throw new WorkflowError('其他设计路线必须记录真实用户指令及范围');
+  }
   if (isDesignProposal(work) && (!['V0', 'V1', 'V2'].includes(work.visual.stage) || ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState))) throw new WorkflowError('仅设计提案不得推进正式实现或冒充 V5 工程完成');
   if (work.visual.stageModel !== 'function-first-v1') throw new WorkflowError('视觉阶段缺少 function-first-v1 语义标记，旧工作项不能按新阶段解释');
   requireText(work.visual.objectId, 'visual.objectId');

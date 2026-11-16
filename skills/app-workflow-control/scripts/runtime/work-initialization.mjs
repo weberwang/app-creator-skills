@@ -20,8 +20,17 @@ function validateDesignOptions(args) {
   const type = args.type ?? 'FOUNDATION';
   const route = args['design-route'];
   const intent = args['design-intent'];
+  const designSource = args['design-source'];
   const appVisual = ['flutter', 'expo', 'esp32'].includes(stack) && ['PAGE', 'DISPLAY_LAYER'].includes(type);
   const gameScene = ['unity', 'cocos', 'phaser', 'threejs', 'roblox'].includes(stack) && type === 'SCENE';
+  if (designSource !== undefined || args['design-source-message'] !== undefined || args['design-source-scope'] !== undefined) {
+    if (!appVisual || (stack === 'esp32' && route !== 'figma-app')) throw new WorkflowError('设计来源仅适用于 Figma App 路线');
+    requireOneOf(designSource ?? 'imagegen', ['imagegen', 'figma-direct'], '--design-source');
+    if (designSource === 'figma-direct') {
+      requireText(args['design-source-message'], '--design-source-message');
+      requireText(args['design-source-scope'], '--design-source-scope');
+    } else if (args['design-source-message'] !== undefined || args['design-source-scope'] !== undefined) throw new WorkflowError('仅明确选择其他路线时记录来源指令及范围');
+  }
   if (route !== undefined) {
     requireOneOf(route, ['figma-app', 'world-2d', 'world-3d', 'game-ui'], '--design-route');
     if (['world-2d', 'world-3d', 'game-ui'].includes(route) && !gameScene) throw new WorkflowError(`${route} 设计路线仅适用于游戏 SCENE`);
@@ -90,7 +99,7 @@ async function initializeWorkLocked({ repo, args }) {
       ...(type === 'SCENE'
         ? { designRoute: args['design-route'] ?? 'world-2d', ...(args['design-intent'] !== undefined ? { designIntent: args['design-intent'] } : {}) }
         : ['flutter', 'expo'].includes(stack) || args['design-route'] || args['design-intent']
-          ? { designRoute: args['design-route'] ?? 'figma-app', designIntent: args['design-intent'] ?? 'implementation' } : {}),
+          ? { designRoute: args['design-route'] ?? 'figma-app', designIntent: args['design-intent'] ?? 'implementation', designSource: args['design-source'] === 'figma-direct' ? { kind: 'figma-direct', userMessageRef: args['design-source-message'], scope: args['design-source-scope'] } : { kind: 'imagegen' } } : {}),
       ...(type === 'DISPLAY_LAYER' ? { hostId: args['host-id'], layerType: args['layer-type'] } : {}),
       ...(type === 'SCENE' ? (args['design-route'] === 'world-3d' ? {} : { targets: [] }) : { reviews: {} }),
     } } : {}),

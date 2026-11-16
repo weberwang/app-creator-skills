@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "App 效果图来源及修订记录",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "stack", "candidateId", "version", "origin", "imageRef", "briefRef"],
+  "properties": {
+    "schemaVersion": {"const": "1.0"},
+    "projectId": {"type": "string", "minLength": 1},
+    "stack": {"enum": ["flutter", "expo", "esp32"]},
+    "candidateId": {"type": "string", "minLength": 1},
+    "version": {"type": "string", "minLength": 1},
+    "origin": {"enum": ["generated", "provided"]},
+    "imageRef": {"$ref": "#/$defs/ref"},
+    "briefRef": {"$ref": "#/$defs/ref"},
+    "prompt": {"type": "string", "minLength": 1},
+    "generationInputs": {"type": ["object", "null"]},
+    "generationMethod": {"enum": ["imagegen", "custom"]},
+    "generator": {"type": "string", "minLength": 1},
+    "generatorVersion": {"type": "string", "minLength": 1},
+    "sourceMessageRef": {"type": "string", "minLength": 1},
+    "sourceScope": {"type": "string", "minLength": 1},
+    "revisionOf": {"$ref": "#/$defs/ref"},
+    "feedbackMessageRef": {"type": "string", "minLength": 1}
+  },
+  "$defs": {"ref": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}},
+  "allOf": [
+    {"if": {"properties": {"origin": {"const": "generated"}}, "required": ["origin"]}, "then": {"required": ["prompt", "generator", "generatorVersion", "generationMethod"]}, "else": {"required": ["sourceMessageRef"]}},
+    {"if": {"properties": {"generationMethod": {"const": "custom"}}, "required": ["generationMethod"]}, "then": {"required": ["sourceMessageRef", "sourceScope"]}},
+    {"if": {"required": ["revisionOf"]}, "then": {"required": ["feedbackMessageRef"]}, "else": {"not": {"required": ["feedbackMessageRef"]}}}
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "purpose": "单素材生产支持资料；Flutter V3 必须同时使用 flutter-domain-contracts 的 design-reconstruction 合同与模板，必填生产规格不能以 null 通过。V4 才生产和导入，最终验收使用控制器 asset-review 模板。测量、估计、适配与批准变更分别记录。",
+  "purpose": "单素材生产支持资料；interactionContext 仅在适用时记录承载面、朝向、空间归属、触发范围及显示状态，不新增门禁。Flutter V3 必须同时使用 flutter-domain-contracts 的 design-reconstruction 合同与模板，必填生产规格不能以 null 通过。V4 才生产和导入，最终验收使用控制器 asset-review 模板。测量、估计、适配与批准变更分别记录。",
   "designItemIds": [],
   "implementationId": "",
   "designReconstructionRef": null,
@@ -8,6 +8,7 @@
   "featureIds": [],
   "role": "",
   "states": [],
+  "interactionContext": null,
   "route": "native-or-bitmap-or-vector-or-3d",
   "consumer": "",
   "sourcePath": "",
@@ -29,6 +30,7 @@
   "pivotSliceOrFrames": "",
   "licenseAndSource": "",
   "prompt": "",
+  "generationInputs": null,
   "technicalChecks": [],
   "knownDefects": []
 }

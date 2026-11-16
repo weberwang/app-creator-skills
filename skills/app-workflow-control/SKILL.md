@@ -12,7 +12,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 ## 状态和边界
 
 - 六个阶段：需求与范围、全局基线、基础工程、场景与页面生产、全局集成验证、发布。全局状态只由控制器校验并按显式命令迁移；`run` 仅推进无需再次执行人工决定的早期安全阶段，停在生产实现或发布边界。
-- `SCENE`、`PAGE`、`DISPLAY_LAYER` 各用独立 Work Item，显示层绑定 `visual.hostId/layerType`。Flutter、Expo 默认按 [Figma App 路线](../app-ui-layout/references/figma-app-design.md)推进 V0 范围与探索边界、V1 功能、V2 精修一份方案并由用户确认、V3 必要还原交接、V4 代表组件试接和分批实现、V5 完整运行及人工验收；用户明确要求比较时按指定数量制作实质不同的方向，局部增量复用有效方向。稿中明确的结构不重画或重复批准。ESP32 可显式选择并保留硬件约束；游戏图片路线仍执行原有 V3 拆解/布局确认，3D 世界使用下述显式路线，Node.js 无界面服务不引入 Figma。通用额外白盒按风险选用，world-3d 必须有本场景有效白模运行。
+- `SCENE`、`PAGE`、`DISPLAY_LAYER` 各用独立 Work Item，显示层绑定 `visual.hostId/layerType`。Flutter、Expo 默认按 [Figma App 路线](../app-ui-layout/references/figma-app-design.md)推进 V0 范围与探索边界、V1 功能、V2 分析、生图、用户选图及忠实重建 Figma、V3 必要还原交接、V4 代表组件试接和分批实现、V5 完整运行及人工验收；用户明确要求比较时按指定数量制作实质不同的方向，局部增量复用有效方向。稿中明确的结构不重画或重复批准。ESP32 可显式选择并保留硬件约束；游戏图片路线仍执行原有 V3 拆解/布局确认，3D 世界使用下述显式路线，Node.js 无界面服务不引入 Figma。通用额外白盒按风险选用，world-3d 必须有本场景有效白模运行。
   多个 `PAGE` 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择代表页、复用共享部分并按依赖调度；各对象阶段独立，不默认全页同步。实施包内的批次门禁只约束该包的执行单元，不构成不同页面必须同步推进的要求。
   采用白盒时遵循[可辨识的功能原型](../app-creator-workflow/references/readable-functional-prototype.md)，将语义、状态和反馈检查并入现有 V1 验证，明确模拟范围，不新增审批或控制器字段。
 - A0–A6 区分只读调查、规格、原型、生产实现、本地集成、外部状态/设备与发布风险。A4–A6 的外部写入、设备、签名、上传、付费和发布操作必须绑定精确动作、对象与真实用户消息引用。JSON 只追溯决策，不能自行证明身份或授权，也不能让 CLI 执行动作。
@@ -37,15 +37,15 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 - `evidenceRef` → 当前实施包、工作项、技术栈及视觉阶段相同的 Evidence Manifest。每项必须是 profile 所需类别、真实非空文件，且位于当前 `evidenceRoot`。
 - `visual.functionDependencies` → 按行为范围引用同项目同栈的非视觉功能工作项及其实际通过的证据；详见[功能范围与跨对象依赖](references/function-dependencies.md)。未使用共享功能依赖时由当前工作项完成 V1 工程验证；原型按上述内容分流，不能以模块依赖代替 3D 本场景白模验证。
 - PAGE 和 DISPLAY_LAYER 的 `visual.domainEvidenceRef` → 当前 V2–V5 阶段的实际领域输入；具体合同及技术栈适用性见[单目标领域合同](references/single-target-domain.md)。
-- `globalVisualBaselineRef` → 用 `{path,sha256}` 冻结方向及真实选择。非游戏 App 使用 [figma-app-baseline 模板](templates/figma-app-baseline.json)，默认一个精修的可编辑方案；用户明确要求比较时按其数量制作实质不同的方向，并允许明确组合及有效局部复用，每项绑定实际节点快照与预览。游戏图片路线使用原 [global-visual-baseline 模板](templates/global-visual-baseline.json)，保持三候选及五项人工判断；world-3d 使用[无图方向模板](templates/world3d-visual-baseline.json)。选择绑定真实用户消息，结构或工具成功不能生成视觉 PASS。
-- `visual.targets` → 二维世界及游戏 UI 的完整图片目标与累计覆盖，继续原领域合同；world-3d 改用其场景合同。PAGE／DISPLAY_LAYER 使用 `visual.reviews`；Figma 领域封套以 `figmaDesignRef` 冻结 fileKey、nodeId、状态、视口、结构与预览，V3 的 `figmaHandoffRef` 将节点属性实际对照原生规格，不要求额外 V3 两图或两次批准。同稿状态可用 V2 `figmaTargetRefs` 精确覆盖。V4/V5 仍验当前原生资源和运行材料，样本不提升为整页通过。摘要不证明用户身份或视觉质量。
+- `globalVisualBaselineRef` → 用 `{path,sha256}` 冻结方向及真实选择。非游戏 App 使用 [figma-app-baseline 模板](templates/figma-app-baseline.json)，默认一张代表页效果图，用户确认后重建可编辑 Figma；用户明确要求比较时按其数量制作实质不同的方向，并允许明确组合及有效局部复用，每项绑定冻结原图、来源与真实选稿依据；选中目标再关联重建节点。游戏图片路线使用原 [global-visual-baseline 模板](templates/global-visual-baseline.json)，保持三候选及五项人工判断；world-3d 使用[无图方向模板](templates/world3d-visual-baseline.json)。选择绑定真实用户消息，结构或工具成功不能生成视觉 PASS。
+- `visual.targets` → 二维世界及游戏 UI 的完整图片目标与累计覆盖，继续原领域合同；world-3d 改用其场景合同。PAGE／DISPLAY_LAYER 使用 `visual.reviews`；Figma 领域封套以 `figmaDesignRef` 冻结 fileKey、nodeId、状态、视口、结构与预览，V3 的 `figmaHandoffRef` 将节点属性实际对照原生规格，不要求额外 V3 两图或两次批准。同稿状态可用 V2 `approvedTargetRefs` 精确覆盖已确认源图。V4/V5 仍验当前原生资源和运行材料，样本不提升为整页通过。摘要不证明用户身份或视觉质量。
 - 目标清单、确认链、各栈领域证据和逐视图运行记录的具体字段见[场景多目标记录](references/multi-target-visual.md)。
 - `assetReviewRef` → PAGE/DISPLAY_LAYER 的 V4 已导入素材、技术报告和同一候选的人工结果；图片 SCENE 在各视觉目标下分别绑定素材评审，world-3d 在工作项根绑定模型评审。素材评审及图片场景 `integrationEvidenceRef` 均记录 `{path,sha256}`，重验文件内容；确认身份仍以真实用户消息为准。AI 位图记录生成来源及去 AI 味审阅；控制器只检查记录和文件，不自动判断图像是否有 AI 味。原生 UI 可以记录真实组件源码与组件检查，不伪造独立位图。
 - `grillingRef` → 仅保存确有实质用户取舍的记录。OPEN 拷问停止相关工作；CLOSED 每项决定需有用户回答和消息引用；没有问题就不建立记录。
 
 项目路径以 `/` 表示并相对 `--repo`；绝对路径、路径穿越、跨工作栈或跨执行单元改动会被拒绝。工作项的 `allowedPaths/forbiddenPaths` 是项目范围唯一授权来源，profile 中 `runtimeRoots` 仅提供初始化建议目录。
 
-机器输出不证明命令曾运行。每项执行结果必须列出确实修改且存在的单元文件、与计划命令逐一对应的退出码和非空命令输出文件；`unit-check` 只校验结果，不执行命令。`status` 和 `check` 也只读。`check` 与 `run` 遇到阻断时返回非零状态。
+机器输出不证明命令曾运行。每项执行结果必须列出确实修改且存在的单元文件、与冻结计划一致的实际可复跑命令、真实退出码和非空原始输出文件；占位命令如 `<执行某项检查>`、TODO 在计划、结果和采集入口均被拒绝。静默成功用真实 `command-capture-v1` 保存 command、exitCode、stdout、stderr，不伪造一行成功日志。`unit-check` 只校验结果，不执行命令；`status` 和 `check` 也只读，阻断返回非零状态。
 
 `run` 的 STOPPED 表示控制器没有执行实际工作，不代表新增人工审批。已获当前任务授权的代理应继续明确的实施和显式迁移；只有真实缺少事实、实质取舍或受保护动作授权时，才向用户询问。
 
@@ -75,6 +75,8 @@ node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo 
 
 Flutter/Expo 的页面默认 `visual.designRoute: figma-app`；ESP32 可用 `--design-route figma-app`。仅设计提案用 `--design-intent proposal`，不要求先建运行工程，在 V2 人工选定后可从 PROPOSAL 完成设计交付，不能进入正式实现或被当作 V5 工程完成。正式实现仍需真实 V1 功能基线。Figma 工具与技能按当前宿主实际能力使用，不新增外部、付费或真机授权。
 
+App 初始化默认 `visual.designSource.kind:imagegen`，V2 实际检查[效果图来源](templates/app-visual-source.json)、可解码图片及摘要、任务书和真实选稿，缺失时不放行。用户明确要求直接 Figma 时，初始化使用 `--design-source figma-direct --design-source-message <真实消息引用> --design-source-scope <实际范围>`；其他生图工具按来源记录的 custom 路线绑定指令，不凭工具可用改变默认。源图确认与忠实重建授权绑定同一 `visualSourceRef`；可编辑载体结构通过后继续 V3，新预览未人工检查仍保持未检查，V4/V5 独立验收。
+
 无图 3D 世界使用 `init --design-route world-3d --type SCENE`，不支持仅设计提案冒充运行，也不自动迁移已有图片工作项。完整字段见[场景 Schema](schemas/world3d-scene.schema.json)，阶段资料由现有记录维护，不由 `run` 生成批准。
 
 需要机器核对复杂游戏或 App 的增量范围时，先按[生产范围模板](templates/production-scope.json)准备项目内总范围；生产工作项在 `init` 追加 `--production-scope <项目相对范围 JSON> --production-batch <批次 ID>`，有前置批次时另附 `--production-dependencies <前置引用 JSON>`，最终 `INTEGRATION --integration-purpose final` 只追加相同 `--production-scope`。本批证据及最终覆盖要求见[分批生产](../app-domain-toolkit/references/incremental-production.md#按需绑定机器范围)；未绑定范围的普通任务不产生额外记录。
@@ -87,7 +89,7 @@ Flutter/Expo 的页面默认 `visual.designRoute: figma-app`；ESP32 可用 `--d
 
 可在准备阶段提前登记受保护动作及目标，不必为完成本地准备提前取得批准。实际执行外部写入、设备、签名、上传、付费、破坏性操作或发布前，先核对用户明确授权，并对每个受保护效果运行 `check-action`；动作 ID、效果和目标必须与记录及批准一致，F4 必须通过。发布还须先进入 `RELEASING`。该命令只读、不执行动作，也不能自行验证用户身份或阻止调用者绕过检查；执行者仍须遵守明确授权边界。
 
-原图片及 Figma 路线当前功能 V1 验证后，视觉增量用 `reuse-visual` 校验来源并引用未变化的基线和 V2/V3 确认；同项目、技术栈、对象、候选及显示层宿主必须匹配，源工作项须 COMPLETE/V5。布局变化重新确认布局，目标变化重新确认目标；当前 V4/V5 和工程证据仍独立产生。完整规则见[统一流程](../app-creator-workflow/references/workflow.md#视觉确认的增量复用)。
+原图片及 Figma 路线当前功能 V1 验证后，视觉增量用 `reuse-visual` 校验来源并引用未变化的基线和 V2/V3 确认；同项目、技术栈、对象、候选及显示层宿主必须匹配，完整阶段继承的源工作项须 COMPLETE/V5；仅复用已确认效果图时按原图来源及授权范围核对，不要求先有 V5。布局变化重新确认布局，目标变化重新确认目标；当前 V4/V5 和工程证据仍独立产生。完整规则见[统一流程](../app-creator-workflow/references/workflow.md#视觉确认的增量复用)。
 
 使用 [templates/](templates) 中同名合同记录真实实施包、结果、人工阶段确认、全局基线、素材评审和拷问。不要在已通过的证据里放模板占位符。
 

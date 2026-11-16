@@ -8,10 +8,13 @@ import { dirname, join } from 'node:path';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateEsp32 } from '../../skills/app-workflow-control/scripts/runtime/esp32-domain-check.mjs';
+import { validateFigmaAppStage } from '../../skills/app-workflow-control/scripts/runtime/figma-app-contract.mjs';
+import { attachFigmaAppFixture, attachFigmaLineFixture } from './figma-app-fixture.mjs';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 
 /** 写入当前测试独占的真实文件并返回摘要引用。 */
 function write(repo, path, content) {
-  const bytes = Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
+  const bytes = Buffer.isBuffer(content) ? content : Buffer.from(typeof content === 'string' ? content : JSON.stringify(content));
   mkdirSync(dirname(join(repo, path)), { recursive: true });
   writeFileSync(join(repo, path), bytes);
   return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
@@ -63,6 +66,39 @@ test('ESP32 页面可分别校验 V2 至 V5 阶段材料', (t) => {
     const f = fixture(t, { stage });
     assert.equal(validateSingleDomainTarget(f.repo, f.work, stage), true);
   }
+});
+
+test('ESP32 按像素网格包络 Figma 直线，V2 源几何与 V3 原生容器保持可追溯', async (t) => {
+  const f = fixture(t, { stage: 'V3' });
+  f.work.visual.designRoute = 'figma-app';
+  f.board.inputMethods = ['touch']; f.board.fonts = ['Noto Sans']; f.board.resourceBudget = { flashBytes: 1024, ramBytes: 512 };
+  f.doc.boardProfileRef = write(f.repo, 'line/board.json', f.board);
+  f.layout.boardProfileRef = f.doc.boardProfileRef;
+  f.doc.referenceTarget = write(f.repo, 'line/target.png', syntheticDesignPng('esp32-line'));
+  f.work.visual.reviews.V2 = write(f.repo, 'line/review-v2.json', { referenceTarget: f.doc.referenceTarget, boardProfileRef: f.doc.boardProfileRef });
+  attachFigmaAppFixture(f.repo, f.work, f.doc, { designOnly: true, nativeLayout: { nodes: f.layout.nodes } });
+  const { bounds } = attachFigmaLineFixture(f.repo, f.work, f.doc, f.layout);
+  f.save();
+  // 源线宽仍为 1，整数容器向外覆盖 149.5–150.5；偏移由真实源点推导。
+  assert.deepEqual(bounds, { x: 120, y: 149, width: 100, height: 2, origin: { x: 0, y: 1 } });
+  assert.doesNotThrow(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc));
+  assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V3'), true);
+  const handoff = JSON.parse(readFileSync(join(f.repo, f.doc.figmaHandoffRef.path), 'utf8'));
+  const mapping = handoff.mappings.find((item) => item.designItemId === 'separator');
+  assert.equal(mapping.nativeStyle.designFacts.normalized.border.width.value, 1);
+  assert.equal(mapping.nativeStyle.designFacts.raw.other.rotation, 0);
+  mapping.nativeStyle.designFacts.raw.other.rotation = 90;
+  f.doc.figmaHandoffRef = write(f.repo, 'line/wrong-style.json', handoff);
+  f.work.visual.domainEvidenceRef = write(f.repo, 'line/wrong-domain.json', f.doc);
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V3'), /字体、颜色或形态/);
+  f.layout.nodes.find((node) => node.id === 'title').height = 0;
+  f.doc.layoutSpecRef = write(f.repo, 'line/invalid-text-layout.json', f.layout);
+  const identity = (_repo, ref) => {
+    const bytes = readFileSync(join(f.repo, ref.path));
+    assert.equal(createHash('sha256').update(bytes).digest('hex'), ref.sha256);
+    return ref.path;
+  };
+  await assert.rejects(() => validateEsp32(f.repo, f.work, 'V3', f.doc, identity), /布局节点 height 无效/);
 });
 
 test('ESP32 可选 Figma 路线复用已选设计，仍核对实际屏幕与资源预算', async (t) => {

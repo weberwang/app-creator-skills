@@ -5,6 +5,7 @@ import { collectWorkReferencePaths, loadPackage } from './runtime/artifacts.mjs'
 import { repoPath, WorkflowError } from './runtime/io.mjs';
 import { pathMatch } from './runtime/validation.mjs';
 import { inspectWork, loadWork } from './runtime/workflow.mjs';
+import { assertRunnableCommand } from './runtime/runnable-command.mjs';
 
 /** 显式运行当前批次冻结命令，并将原始输出与退出码写入不可覆盖的采集文件。 */
 function captureCommand(args) {
@@ -20,6 +21,7 @@ function captureCommand(args) {
   const unit = pack.executionUnits.find((item) => item.unitId === args[5]);
   const index = Number(args[7]);
   if (!unit || !Number.isSafeInteger(index) || index < 1 || index > unit.acceptanceCommands.length) throw new WorkflowError('无效的命令序号');
+  const command = assertRunnableCommand(unit.acceptanceCommands[index - 1], '待采集命令');
   const output = repoPath(repo, args[9], '命令输出路径');
   if (!pathMatch(output.relative, `${repoPath(repo, work.evidenceRoot).relative}/**`)) throw new WorkflowError('命令输出必须位于 evidenceRoot');
   const key = (path) => process.platform === 'win32' ? path.toLowerCase() : path;
@@ -28,7 +30,6 @@ function captureCommand(args) {
   mkdirSync(dirname(output.absolute), { recursive: true });
   // 先独占创建输出，确保不会执行命令后才发现已有记录被覆盖。
   const descriptor = openSync(output.absolute, 'wx', 0o600);
-  const command = unit.acceptanceCommands[index - 1];
   let result;
   try {
     const options = { cwd: repo, windowsHide: true, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 };

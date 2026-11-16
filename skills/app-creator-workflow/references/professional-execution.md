@@ -28,11 +28,11 @@
 
 业务任务范围遵守[本地工具目录隔离](workflow.md#本地工具目录与项目范围)：普通源码/变更扫描、候选基线、工作量与提交判断排除项目根 `.agents/`，不因本地技能安装/更新要求业务返工。规范与工具仍从实际安装位置读取，工具自检不等于业务代码扫描；有效业务记录不得转存到该目录隐藏。
 
-涉及可见内容设计时，在草图、效果图、生图提示词或组件实现之前按[内容与装饰筛选](../../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)确定应保留的元素。生成图片前同时应用[图片制作约束](../../app-asset-workflow/references/style-and-production.md#生成前约束)，在现有规格和提示词中明确可见内容、视觉签名和排除项。
+涉及可见内容设计时，先按共同权威[体验与视觉依据](../../app-asset-workflow/references/interface-intent.md#design-basis)复用或补齐本批行为、压力、状态、平台、关键取舍与可执行方向，区分硬约束和探索空间；局部任务不重做全产品分析。在草图、效果图、生图提示词或组件实现之前按[内容与装饰筛选](../../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)明确判断、线索、行动、反馈及精确信息，再决定文字、承载位置和状态显隐。生成图片前同时应用[图片制作约束](../../app-asset-workflow/references/style-and-production.md#生成前约束)，将适用分析转成当次实际发送的独立完整提示词，在原记录保留选择理由及来源；共用任务与视角不等于共用美术造型，不把白模调试说明绘入正式稿。代理检查输入与技术事实，画面可读性、风格差异和视觉质量按既有人工及截图授权规则判断。
 
 公共状态和转移以 [控制面](../../app-workflow-control/SKILL.md) 与 [六阶段及对象流程](workflow.md) 为准。六阶段为需求与范围、全局基线、基础工程、场景/页面/显示层生产、全局集成验证、发布；全局状态只能通过控制器支持的显式迁移。`run` 只自动推进满足门禁的安全早期阶段，在生产实现、发布和人工决定边界停止。
 
-可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V5 是对象进度，不是第二套全局状态。V1 按上述 3D／2D／UI 分流验证功能，游戏图片目标及 UI 沿用适用候选与拆解／布局合同，3D 模型交接不得绕过现有机器门。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)完成 V2 选稿和 V3 还原交接；ESP32 可按实际硬件约束采用。设计稿已清楚表达的结构与布局无须重复绘图或审批；V4 在正式工程试接并导入适用素材，V5 验收当前运行组合。仅设计提案不强制建设运行工程；正式实现仍须相关 V1 功能验证。阶段确认记录对象、用途、真实用户消息及适用范围；技术通过不代替人工显示确认。
+可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V5 是对象进度，不是第二套全局状态。V1 按上述 3D／2D／UI 分流验证功能，游戏图片目标及 UI 沿用适用候选与拆解／布局合同，3D 模型交接不得绕过现有机器门。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)在 V2 内完成分析、生图、用户选图及忠实重建，再提取 V3 规格；原图确认及忠实重建授权有效时不重复选稿；ESP32 可按实际硬件约束采用。设计稿已清楚表达的结构与布局无须重复绘图或审批；V4 在正式工程试接并导入适用素材，V5 验收当前运行组合。仅设计提案不强制建设运行工程；正式实现仍须相关 V1 功能验证。阶段确认记录对象、用途、真实用户消息及适用范围；技术通过不代替人工显示确认。
 
 只在需要用户对产品目标、行为、预算、视觉方向或其他实质取舍作决定时使用 [Grilling Record](../../app-workflow-control/schemas/grilling-record.schema.json)，并通过 Work Item 的 `grillingRef` 绑定。OPEN 的问题阻止其影响范围；回答、决定和 `userMessageRef` 必须来自实际用户消息。没有待决取舍时不要制造拷问或审批记录。
 
@@ -70,6 +70,6 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 
 截图可以采集并附上检查点，但默认由用户人工检查显示效果；代理不得自动分析截图并据此判为视觉通过。只有用户明确要求自动视觉验证时才执行该分析，并且结果仍不能伪装成用户确认。
 
-视觉设计稿的[单次用户视角审查](../../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)只自动核对可测设计结构、真实文本和已知需求；设计稿截图及运行截图默认均由用户人工检查，只有明确授权自动视觉分析才可分析。代理评议不得冒充人工确认，也不因修改稿自动重启审查次数。
+视觉设计稿的[单次用户视角审查](../../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)合入[主任务与适用异常推演](../../app-asset-workflow/references/interface-intent.md#bounded-review)，自动部分只核对可测设计结构、真实文本和已知需求，发现问题先诊断并定向修改；修复后自主复验失败项和实际变化的行为、语义与结构，不等待用户另行要求。设计稿截图及运行截图默认均由用户人工检查，只有明确授权自动视觉分析才可分析。代理评议不得冒充人工确认，也不因修改稿自动重启全量审美评议。
 
 未经用户明确要求，不自动提交或推送 Git。收尾按[精简交付](output-files.md#精简交付)简短反馈，不默认生成交付报告。各专业 Skill 只补充本栈的技术执行和证据要求，不重写这些公共职责。
