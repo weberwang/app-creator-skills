@@ -12,6 +12,8 @@
 
 UniText 通过统一 JSON 文案绑定更新内容，语言/参数变化由绑定触发刷新，不在每帧重复解析文件。测量使用该版本真实布局结果，核对实际字形边界、行数、基线、行高与容器；不得以 TMP 的 `ForceMeshUpdate`、`textInfo` 或 `fontSizeMin` 当作 UniText 已支持的 API。系统字体的跨设备差异与 WebGL 随包字体要求按安装检查记录。
 
+S00 同时实现[同源编辑器预览](../../unity-development-workflow/references/text-and-localization.md#编辑器预览)：非 Play Mode 在正式 Scene/Prefab 中选择所选语言、设置样例参数并自动刷新真实文本与图片文字，沿用运行时 JSON、适配与布局。预览不覆盖序列化文案键或运行时语言偏好；后续目标使用该入口核对字形、效果、排版和内容变化，运行验收与用户显示确认另行完成。
+
 ## uGUI 与 TextMeshPro（用户选择的回退）
 
 下表代码属性按 TMP 3.0 API 核实；包版本不同时读取该版本 API，不能据此保留旧接口兼容层。
