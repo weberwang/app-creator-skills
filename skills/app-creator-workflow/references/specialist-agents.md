@@ -15,11 +15,11 @@
 node .agents/skills/app-creator-workflow/scripts/install-specialist-agents.mjs --project .
 ```
 
-维护本仓库用 `node skills/app-creator-workflow/scripts/install-specialist-agents.mjs --project .`。脚本只创建项目内两份角色；相同内容复用，不同内容或链接路径拒绝覆盖，两份先完整预检。不修改全局配置、项目 `config.toml`、模型、推理强度、权限或 MCP 设置。更新技能后若副本不同，先核对来源和差异再按已有授权同步，不自动覆盖用户定制。
+维护本仓库用 `node skills/app-creator-workflow/scripts/install-specialist-agents.mjs --project .`。脚本只创建项目内两份角色；相同内容复用，不同内容或链接路径拒绝覆盖，两份先完整预检。模型与推理强度只在这两份角色配置中声明，不修改全局配置、项目 `config.toml`、宿主默认模型、默认推理强度、权限或 MCP 设置。更新技能后若副本不同，先核对来源和差异再按已有授权同步，不自动覆盖用户定制。
 
 配置先完整暂存，再用同卷硬链接独占发布；文件系统不支持时明确失败，不降级为覆盖写入。
 
-按 [Codex 官方格式](https://learn.chatgpt.com/docs/agent-configuration/subagents)，独立 TOML 以 `name`、`description`、`developer_instructions` 定义，由项目 `.codex/agents/` 加载。本配置不固定模型与推理强度，继承宿主解析结果，不提升权限。已有会话不能假设热加载成功：新会话加载后核对实际可用角色列表；若其他配置层已有同名角色，核对实际来源，不静默覆盖。
+按 [Codex 官方格式](https://learn.chatgpt.com/docs/agent-configuration/subagents)，独立 TOML 以 `name`、`description`、`developer_instructions` 定义，由项目 `.codex/agents/` 加载。两个角色均使用 `model = "gpt-6.1-sol"` 和 `model_reasoning_effort = "xhigh"`，权限仍继承宿主，不提升权限。已有会话不能假设热加载成功：新会话加载后核对实际可用角色列表；若其他配置层已有同名角色，核对实际来源，不静默覆盖。
 
 ## 委派与生命周期
 

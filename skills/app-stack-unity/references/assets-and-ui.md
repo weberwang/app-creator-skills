@@ -40,7 +40,7 @@ V0 识别显示范围、宿主和职责；V1 验证路由、交互及关闭恢�
 
 Unity 的资源像素、Sprite 导入密度、UI 原生尺寸、Canvas／Panel 单位和屏幕像素分别核对。Web 共享合同的运行 DPR 封顶与图片生产 DPR 字段不作为 Unity 原生尺寸必填项；实际采用的 UI 路线决定原生尺寸及坐标换算。普通图片保持换算后的源逻辑尺寸，九宫格只改变显示框，不能通过节点或中间祖先整体缩放改变固定角边。
 
-运行时 UI 默认 uGUI + TextMeshPro；需要编辑器扩展时默认 UI Toolkit。按已有项目选择一条 UI 技术路线，屏幕空间布局记录目标分辨率、CanvasScaler 或 PanelSettings、安全区、摄像机、输入坐标转换、显示方向、文本和目标平台预算。World Space UI 单独采用对应的世界空间设计，不套用屏幕布局数据。
+运行时 UI 默认 uGUI + UniText；按[安装检查与 JSON 绑定](../../unity-development-workflow/references/text-and-localization.md)实施，安装异常时由用户选择修复或回退 TMP。编辑器扩展默认 UI Toolkit。屏幕空间布局记录目标分辨率、CanvasScaler 或 PanelSettings、安全区、摄像机、输入坐标转换、显示方向、文本和目标平台预算。World Space UI 单独采用对应的世界空间设计，不套用屏幕布局数据。
 
 记录可复核的节点与组件层级、父子依赖、锚点、Pivot、字体、文本溢出策略、组件状态、资源槽和交互所有者。只有确有使用证据才引入九宫格、Atlas、Addressables、TMP 字体表或响应式断点；不能根据静态图推断实际组件尺寸。
 

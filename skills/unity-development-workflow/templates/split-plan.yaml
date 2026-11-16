@@ -125,7 +125,7 @@ annotatedPreview:
       bounds: {x: 80, y: 80, width: 256, height: 128}
       label: "[02][REUSE] 竞技场徽标"
       productionRoute: REUSE
-      brief: 框选已登记竞技场徽标，复用现有资源文件而不取效果图像素
+      brief: 框选已登记且确认无需翻译的竞技场品牌徽标，复用现有资源文件而不取效果图像素
       parentElementId: node.arena-root
       semanticGrouping:
         kind: part
@@ -143,7 +143,7 @@ annotatedPreview:
         nativeSuitability:
           eligible: false
           primitiveBasis: [TEXT]
-          reason: 徽标静态外观不满足 Unity 原生资格。
+          reason: 已确认无需翻译的品牌图形保留完整造型；其余文案沿用统一 JSON，并按完整还原能力确定原生或图片；未核实则待验证。
           evidence:
             type: visual-route-analysis
             path: Artifacts/Visual/Routes/arena-logo.yaml
@@ -399,7 +399,7 @@ items:
       nativeSuitability:
         eligible: false
         primitiveBasis: [TEXT]
-        reason: 徽标静态外观不满足 Unity 原生资格。
+        reason: 已确认无需翻译的品牌图形保留完整造型；其余文案沿用统一 JSON，并按完整还原能力确定原生或图片；未核实则待验证。
         evidence:
           type: visual-route-analysis
           path: Artifacts/Visual/Routes/arena-logo.yaml

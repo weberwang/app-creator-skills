@@ -60,14 +60,14 @@ V2 为视觉 Work Item 补充主题、目标受众、核心循环、体验目标
 
 每个布局计划分别用 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef` 的 `{path}` 指向目标工程的真实工件；路径不替代确认事实，也不得为填字段而新造人工审批。已有 `APPROVED` 拆解及 `USER`/`ASSET_MAP` 确认沿用原记录；Prefab 结构按同一 V3 事实核对，不增加确认门；装配引用从 V5 起纳入检查。`hierarchyRelation` 仅使用 `PARENT_CHILD`，同级节点共享同一实际父节点 ID；`semanticGrouping` 只记录语义归属，整体组合关系使用 `centerAlignment.memberIds`，不因此创建层级。根几何 `viewport`/`safe-area` 是既有逻辑根参照，不假定存在同名 GameObject；除此之外的业务 `parentElementId` 必须是真实直接父节点 ID。
 
-文本节点只登记冻结目标实际存在的玩家可见文字、数值及其来源，不从 GDD 追加说明。图内拆解标注属于审阅辅助层，不能成为正式界面的说明面板；原子资源继续忠实还原所属区域，不能借文案精简删改冻结文字，也不能把动态数值或本地化文本烘焙进固定图片。
+文本节点只登记冻结目标实际存在的玩家可见文字、数值及其来源，不从 GDD 追加说明。图内拆解标注属于审阅辅助层，不能成为正式界面的说明面板；原子资源继续忠实还原所属区域，不能借文案精简删改冻结文字，也固定本地化文案按文字路线从 JSON 生成语言/状态图片，动态数值与插值保持可组合或可更新，不能固化为不变结果。
 
 屏幕 UI 的 `layoutBinding.uiLayout` 必须说明分组依据、布局控制者、尺寸、溢出、安全区和命中策略。先按[节点树规则](./ui-layout-and-hierarchy.md)判断组件根与子节点；底板可兼任根，功能父级与位置参照分别记录。场景 UI 相对场景内容区域大小停靠，弹窗内部默认有底板时相对底板、无底板时相对屏幕。机器引用使用 `positionReferenceId`，`constraints` 与 `resizePolicy` 补充边界理由和重算策略。拆解确认后按[机器布局包](./ui-layout-plan.md)派生并检查严格/组合居中、参照依赖和显式越界，布局图消费同一派生结果；不得用效果图距离或元素类型代替依赖证据。
 
 - 目标节点、路径、bounds、逻辑尺寸、Pivot、PPU、Border、透明、色彩空间和状态；
 - TextureImporter/SpriteAtlas/Addressables/字体/材质/模型导入约定；
 - 资源来源、许可、Unity GUID、复用理由和替换策略；
-- 静态特色外观的独立生产结论，以及[文字路线](./visual-decomposition-routes.md#文字路线判定)和[填充路线](./visual-decomposition-routes.md#色彩填充路线判定)的显著性、变化/复用需求与替代依据；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持，并完整实现方案要求保留的外观与状态；`REUSE` 的精确 GUID、源路径、实际 Importer 设置和消费节点；
+- 非文字静态特色外观的独立生产结论，文字保留 JSON 与统一绑定，原生效果无法还原时直接图片生产，以及[文字路线](./visual-decomposition-routes.md#文字路线判定)和[填充路线](./visual-decomposition-routes.md#色彩填充路线判定)的显著性、变化/复用需求与替代依据；`UNITY_NATIVE` 只能由文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据支持，并完整实现方案要求保留的外观与状态；`REUSE` 的精确 GUID、源路径、实际 Importer 设置和消费节点；
 - 基础几何资格只用于 UI/布局、技术占位、碰撞和非模型资产的原生渲染用途，不允许把正式可见 3D 模型从 `MODEL_3D` 改为 Unity 创建；建模、贴图、绑定和动作按[3D 生产流程](./3d-asset-workflow.md)分配，不能按图片或原生体块路径替代；
 - Scene/Prefab/UXML/UIDocument/Canvas/Transform 的结构化装配；单区域不得使用 `COMPOSITE` 或整屏截图，`fullScreenCapture` 必须为 `false`；
 - 图片框选与图内中文标注的 annotated preview、内部完整覆盖记录和生产/验证责任。
@@ -106,7 +106,9 @@ modal、popup、drawer、toast 等显示层在自己的 `DISPLAY_LAYER` Work Ite
 
 ### 文本与响应式合同
 
-程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目确认的语言清单覆盖；逐语言声明 single-line 或 wrap，禁止截断。uGUI/TMP 的源字体、String Tables、静态图集、绑定器及可选动态回退按[字体图集流程](./tmp-font-atlas-workflow.md)接入。实测必须覆盖 TMP/UI Toolkit 字体回退、字形、基线、容器边界和命中区域，合同与证据通过 `responsiveContractRef` 和 `contractVersions` 绑定。
+文字路线依据[完整还原标准及三种判定结果](visual-decomposition-routes.md#完整还原的判断标准)，逐项核对当前实现的字形、效果、排版和适用变化。V3 记录可追溯的能力依据与待验证项，不能仅因设计稿看起来复杂就归图片，或仅因插件支持某项效果就归原生；V4/V5 对实际组合继续核对，显示效果由用户人工确认。尚未核实的路线不得伪记为已验证通过；已确认不能完整还原时直接图片生产。
+
+文本沿[固定 JSON 与统一绑定](text-and-localization.md)覆盖项目语言，逐语言声明 single-line 或 wrap，禁止截断。原生路线实测实际字体回退、字形、基线与容器；用户选择 TMP 后才执行[字体图集流程](tmp-font-atlas-workflow.md)。图片路线核对真实图片/字形资源、JSON 文案键及语言/状态映射、内容与边界，并实测切换或组合更新；不以原生字体组件属性代替图片证据。两条路线均覆盖命中、参数及生命周期变化，人工显示确认单独记录；合同与证据通过 `responsiveContractRef` 和 `contractVersions` 绑定。
 
 ## 失效规则
 

@@ -144,6 +144,8 @@ App 多页面按[多页面推进顺序](skills/app-domain-toolkit/references/inc
 
 ## 验证与验收
 
+Unity 运行时文本及国际化默认使用 [UniText](skills/unity-development-workflow/references/text-and-localization.md)。具体实施前核查插件安装、依赖、编译与实际绑定能力；安装不正确时由用户选择修复或回退 TMP。翻译统一读取[固定 JSON 模板](skills/unity-development-workflow/assets/localization-catalog-template.json)，所有面向用户的文案消费者只绑定文案键和参数，禁止按语言条件内联翻译；TMP 回退沿用同一配置源。
+
 - 普通文案、注释或查询直接完成；局部模块修复可使用轻量流程，普通功能与跨模块任务按实际范围推进。
 - 助手根据影响推荐 T0–T3 验证等级，并自动执行已授权的测试与检查，报告真实结果和未执行项。
 - 截图默认由用户人工检查。Flutter 默认按可用性验收，仅明确选择 `exact` 时要求完整精确还原对照。

@@ -14,9 +14,11 @@ description: 在已选用 Unity 的游戏或交互项目中制定与实现 Unity
 
 先读 [`app-creator-workflow`](../app-creator-workflow/SKILL.md) 与 [`app-workflow-control`](../app-workflow-control/SKILL.md)。确认当前项目实际 Unity 版本与已有布局，再按任务读取 [工程与架构](references/engineering.md)、[场景、UI 与资源](references/assets-and-ui.md) 或 [验证与环境](references/verification.md)。
 
-Unity 6 与 URP 是此规范的默认起点；尊重项目已安装版本和配置。运行时 UI 默认 uGUI 与 TextMeshPro，编辑器新工具默认 UI Toolkit。不能把 Unity 目录或序列化语义用于其他技术栈。
+Unity 6 与 URP 是此规范的默认起点；尊重项目已安装版本和配置。运行时 UI 默认 uGUI，文字默认先评估 UniText，文本及国际化按[安装检查与 JSON 配置](../unity-development-workflow/references/text-and-localization.md)实施；安装不正确时由用户选择修复或回退 TMP。文字按[完整还原标准](../unity-development-workflow/references/visual-decomposition-routes.md#完整还原的判断标准)核实后定路线：已验证完整则原生，已确认不能则直接图片，尚未核实则待验证，文案仍读取固定 JSON 模板并按语言/状态绑定；所有文案消费者不按语言判断选择翻译，不限组件或显示位置。编辑器新工具默认 UI Toolkit。不能把 Unity 目录或序列化语义用于其他技术栈。
 
 Sprite 的 Pixels Per Unit 默认 `100`，uGUI 新建 Canvas 的参考像素单位默认 `100`；覆盖条件与导入回读要求见[默认像素单位](references/assets-and-ui.md#默认像素单位)。
+
+国际化初始化必须在 `foundation-engineering` / S00 完成：UniText 安装与能力检查、正式 JSON 文案加载/校验、启动语言和统一绑定均须有真实基础运行证据，按 [S00 验收条件](../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)核对。该职责适用于单场景及全部文案消费者，不延后到 HUD 或 V5。
 
 插件执行按任务路由给可用的 Unity CLI、Unity MCP 与框架专项能力；先确认目标工程、活动 Editor 和实时可用命令。规范中列出的插件/工具能力不能视为当前已经连接或已经验证。
 

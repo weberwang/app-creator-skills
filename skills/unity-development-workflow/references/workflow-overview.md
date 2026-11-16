@@ -8,14 +8,16 @@
 
 | 阶段 | 主要产物 | Unity 完成事实 |
 | --- | --- | --- |
-| 需求与范围 | Work Item、目标、范围、验收、风险 | 项目路径和需求边界明确 |
-| 全局基线 | GDD/TDD、技术/视觉基线、平台集合 | Unity/包/渲染管线/输入/存档/资源策略已冻结 |
-| 基础工程 | SHARED/MODULE 实施包 | asmdef、Composition Root、测试入口和最小可构建骨架有效 |
-| 场景与弹窗生产 | SCENE/DISPLAY_LAYER 实施包与 V0-V5 证据 | 场景只闭环玩法、画面和常驻 HUD；瞬态显示层独立验收 |
-| 全局集成验证 | INTEGRATION 单元和联合证据 | 导航、存档、音频、平台适配、性能与回归绑定同一候选 |
-| 发布 | 独立 RELEASE Work Item | 候选包、合规、回滚和精确外部操作批准 |
+| 需求与范围 | Work Item、目标、范围、验收、风险和项目语言清单 | 项目路径、支持语言、默认语言和需求边界明确 |
+| 全局基线 | GDD/TDD、技术/视觉基线、平台集合 | 冻结 Unity/包/渲染管线/输入/存档/资源策略，以及 UniText、JSON 正式源、唯一初始化入口、语言策略和绑定接口 |
+| 基础工程 | S00 与 SHARED/MODULE 实施包 | asmdef、Composition Root、测试入口和最小骨架有效；UniText 检查、JSON 加载/校验/索引、启动语言及统一绑定在实际宿主通过基础验收 |
+| 场景与弹窗生产 | SCENE/DISPLAY_LAYER 实施包与 V0-V5 证据 | 所有实际文案消费者复用 S00 能力并验证键、参数和生命周期；场景闭环自身玩法与画面，瞬态显示层独立验收 |
+| 全局集成验证 | INTEGRATION 单元和联合证据 | 导航、存档、音频、平台适配、性能及全部语言/文案消费者回归绑定同一候选 |
+| 发布 | 独立 RELEASE Work Item | 候选包含正式文案与字体资源，收口已验证平台及未覆盖项；合规、回滚和精确外部操作批准完整 |
 
 内部 G0-G3 可作为里程碑标签：G0 对应基线，G1 对应基础工程/场景生产，G2 对应全局集成验证，G3 对应发布。它们不是另一套状态机。
+
+国际化按[初始化时机与阶段职责](text-and-localization.md#初始化时机与阶段职责)执行：S00 必须完成可运行基础能力，不等待 HUD、正式视觉稿或 V5；以 [S00 国际化验收条件](foundation-workflow.md#国际化基础能力验收)核对实际安装、配置到文本的运行链路。单场景同样适用，S00 的代表性验证不代替最终全部消费者覆盖。
 
 ## 阶段任务
 
@@ -29,7 +31,7 @@
 
 场景使用 V0-V5。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系必须有显式节点事实和真实的定位、布局、交互、状态、裁切或复用依赖；没有这些依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。屏幕 UI 的 V3 布局字段按[节点树规则](./ui-layout-and-hierarchy.md)冻结。
 
-视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 记录精确 GUID、源路径、实际 Importer 设置和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
+视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。文字沿用统一 JSON，默认先评估 UniText，并按[完整还原标准](visual-decomposition-routes.md#完整还原的判断标准)确定原生、图片或待验证，非文字的静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 记录精确 GUID、源路径、实际 Importer 设置和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
 
 基础几何资格按[路线边界](./visual-decomposition-routes.md)限制在 UI/布局、技术占位、碰撞及非模型资产的原生渲染用途；新增正式可见 3D 模型必须走 `MODEL_3D` 和 Blender MCP，不能用 `UNITY_NATIVE` 绕过。3D 贴图、绑定、动画同样走[3D 流程](./3d-asset-workflow.md)，角色与 Unity 导入使用该流程引用的共同交接。
 

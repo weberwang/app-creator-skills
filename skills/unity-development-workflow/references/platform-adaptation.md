@@ -29,7 +29,7 @@ G0 确定目标平台、S00/G1 选择主开发平台、G2 完成各平台适配�
 
 每个场景和独立 `DISPLAY_LAYER` 用 `responsiveContractRef` 与 `contractVersions` 记录来源。运行时读取真实 Unity 事实：Screen/GameView、backbuffer 或 RenderTexture 尺寸，Camera `pixelRect`/`orthographicSize`/projection，CanvasScaler 或 PanelSettings，`Screen.safeArea`，实际方向与连续 resize，EventSystem/InputSystem 命中，截图和状态轨迹。按用户要求和实际完成情况验收；未影响已确认目标及适配规则的普通实现修复，无需重复确认未受影响的决定，目标或适配依据变化时更新受影响合同。公共控制器按其合同核对冻结目标和人工确认引用的内容摘要，摘要不证明用户身份；缺少必要实测时，V5/PASS 必须失败或保持 `NOT_RUN`。
 
-UI/2D 位图生产默认 `sourceScale=1`，不把固定 Web DPR 带入运行时；运行时按平台、Canvas/Panel、Camera 与动态分辨率实际值布局。程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目确认的语言清单覆盖；逐语言声明 single-line/wrap，禁止截断，并验证 TMP/UI Toolkit 的字体回退、字形、基线和容器边界。
+UI/2D 位图生产默认 `sourceScale=1`，不把固定 Web DPR 带入运行时；运行时按平台、Canvas/Panel、Camera 与动态分辨率实际值布局。文字按[完整还原标准](visual-decomposition-routes.md#完整还原的判断标准)核实能力，沿[统一 JSON](text-and-localization.md)覆盖项目语言。原生检查字体回退、字形、基线与容器；图片检查语言/状态资源、内容、尺寸和切换/组合更新，不向 Image 套用原生文本属性。均遵守已声明单行/换行与边界。WebGL 原生文字随包提供字体，不依赖系统字体；图片路线核对随包或正式加载的图片/字形资产；TMP 仅作为用户选择的回退。
 
 ### Android
 

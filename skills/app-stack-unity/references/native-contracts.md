@@ -84,7 +84,7 @@
 <a id="mode-unity-game-architecture--unity-游戏技术架构"></a>
 ### Unity 游戏技术架构
 
-建立可维护、可测试、可构建的技术边界，并让 S00 只承载确有复用证据的全局骨架。
+建立可维护、可测试、可构建的技术边界；S00 承载项目级启动基础能力，业务复用能力仅在有真实消费者证据时上移。
 
 <a id="mode-unity-game-architecture--输入与决策"></a>
 #### 输入与决策
@@ -99,9 +99,9 @@
 项目创建与 Editor/构建操作交给 `unity:new-unity-project`、`unity:unity-cli`；UPM 交给 `unity:unity-package-management`；BiRP→URP 和 Render Graph 专项分别交给 `unity:migrate-birp-to-urp`、`unity:validate-urp-render-graph-renderer-feature`。本角色只决定架构、预算、依赖和验收边界，不重复维护插件操作步骤。
 
 1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建；采用 SDK 时按[统一初始化合同](../../unity-development-workflow/references/sdk-initialization.md)登记唯一入口、真实前置、完成信号、失败隔离和重试所有者。
-2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。
-3. 只将至少两个场景共同需要的能力上移 Foundation/Shared；为公共接口建立消费者和变更影响清单。
-4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建；平台服务通过接口隔离，不为未选择平台增加实现。已采用 SDK 的统一初始化只投递各自独立任务，不作为首帧或场景启动屏障。
+2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。文本按 [UniText 与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)设计统一加载、语言服务与绑定，实施前检查安装，异常时由用户选择修复或回退 TMP，所有文案消费者均不按语言判断翻译。
+3. 国际化是 S00 必需的项目级启动能力，单场景也必须完成；其余业务复用能力仅在至少两个场景共同需要时上移 Foundation/Shared，为公共接口建立消费者和变更影响清单，不为国际化伪造第二个场景。
+4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建，按 [S00 国际化验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)完成 UniText 检查、正式 JSON 加载/校验/索引、启动语言解析及统一绑定；不等视觉稿、HUD 或 V5。平台服务通过接口隔离，不为未选择平台增加实现；无关 SDK 独立启动，不阻塞首帧，但本地化内容须在文案服务就绪后显示。
 5. 为所有可见 Scene、常驻 HUD 和独立 DISPLAY_LAYER 定义唯一 Unity 原生响应式合同，冻结 Camera、Screen/Game View、CanvasScaler 或 PanelSettings、安全区、输入坐标、resize/orientation、文本、资源分辨率、性能预算和代表性视口。UI/2D 位图默认 `sourceScale=1` 只表示生产像素密度，不是固定运行时 DPR；运行时以平台、Canvas/Panel、Camera、Render Scale、动态分辨率和 Importer 实测为准。
 6. 场景 Implementation Package 只包含 `SCENE`，弹窗包只包含 `DISPLAY_LAYER`；`hostSceneId` 只绑定公开接口和运行上下文，不表示所有权或完成依赖。Scene/Prefab/UXML/UIDocument 装配与视觉资源来源分别建模，禁止用整屏复合图代替结构。
 7. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$app-3d-modeling`、`$app-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
@@ -144,7 +144,7 @@ Editor/Scene/Prefab 操作交给 `unity:unity-cli`；新增显示元素和动态
 2. 表现前建立图片、模型、贴图、动画、VFX、字体和音频依赖；查询登记并复用有效产物，合成效果图交给视觉资源角色，不自行裁切。生产级模型和贴图需求分别交给 `$app-3d-modeling` 与 `$app-3d-texturing`；原生 2D 骨骼与动画交给 [`$app-character-rigging`](#mode-unity-game-2d-rigging)。消费已独立验收的角色 Prefab、视角/方向规则、Animator 参数、动作事件和挂点合同，负责触发与战斗逻辑；不在场景中私改骨架、网格、权重或共享 Clip，接口不足时退回资产角色修复。玩法拥有权威状态、命中/伤害判定、事件语义、数值和动作触发；把已确定的事件及参数交给 [`$app-feedback`](#mode-unity-game-juice) 设计反馈映射。表现层消费事件，不能成为玩法判定来源；顿帧、击退等改变规则或玩家控制的行为由玩法/数值角色确定。
 3. 遵守 asmdef 和 TDD 边界，分离纯规则、状态、输入、场景表现、Unity 生命周期和平台服务；数值读取可审阅配置。
 4. 纯规则可与资源制作并行；正式场景只接入已登记、审查、授权和 Unity 验证通过的资源。场景只实现自身玩法、画面与常驻 HUD；modal、popup、drawer、toast 使用独立 DISPLAY_LAYER Work Item 和包，`hostSceneId` 仅用于公开接口与上下文接线，弹窗未完成不阻断宿主场景 V5。
-5. 2D/UI 场景必须消费响应式合同与平台目标：按现有项目选择 uGUI CanvasScaler、UI Toolkit PanelSettings 或 Camera 路线，并从唯一入口幂等重排；交互内容保持在安全区，左右或上下边带只接入已登记的纯视觉背景。移动端另处理刘海/挖孔、系统栏、旋转、软键盘和触控手势，Windows 另处理窗口缩放、焦点与键鼠/手柄切换。程序化文本默认实现 `zh-CN`，英语 `en` 等其他语言按项目选择实现，逐语言遵守单行/换行合同并禁止截断；玩家可见表达、真实数据绑定、代表值和本地化边界检查按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)执行，不把内部 GDD 或设计描述绑定为界面文案。
+5. 2D/UI 场景必须消费响应式合同与平台目标：按实际项目选择 uGUI CanvasScaler、UI Toolkit PanelSettings 或 Camera 路线，并从唯一入口幂等重排；交互内容保持在安全区，左右或上下边带只接入已登记的纯视觉背景。移动端另处理刘海/挖孔、系统栏、旋转、软键盘和触控手势，Windows 另处理窗口缩放、焦点与键鼠/手柄切换。文本先按 [UniText 安装检查与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)实施，覆盖项目语言，逐语言遵守单行/换行合同且禁止截断；所有文案消费者仅绑定文案键与真实参数，禁止按语言分支内联翻译。玩家可见表达、真实数据绑定、代表值和本地化边界检查按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)执行，不把内部 GDD 或设计描述绑定为界面文案。
 6. 3D 场景只消费按共同交接由建模、贴图、绑定、动画及指定集成单写者交付、通过独立 QA 的版本化资源级 Prefab；按稳定资源 ID/GUID/地址接线，不在场景或运行时脚本中复制、覆盖或临时修改 Mesh、UV、Material、Texture、LOD、骨骼和材质槽。碰撞、交互挂点或 Animator 接口不满足玩法时，提交可复现需求并退回资产所有者修复。
 7. 研发阶段仅在 Editor/EditMode/PlayMode 与 Game View 模拟中验证重开、暂停恢复、参考分辨率、输入映射、资源失败、离线和适用的存档异常；未经明确授权不安装或启动 Standalone/Player、真机或等价设备。
 8. 提交变更路径、测试、构建日志、Editor 固定机位截图、正式资源、限制和阻断项；开发者不能完成自己的独立 F2 审查。设备证据只在独立发布 Work Item 获明确授权后产生。
@@ -236,7 +236,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 - **时间与暂停**：按反馈通道声明使用缩放时间或非缩放时间，以及暂停、顿帧和 UI 交互时的行为。不得让一个短暂反馈意外改变全局 `Time.timeScale`；修改全局时间的玩法规则由玩法角色持有。
 - **对象生命周期**：对象池复用前清除旧动画、计时器、协程、事件订阅和临时状态；释放后不得继续播放或影响新实例。选择适合项目实现的清理方式并在实际对象池轨迹验证。
 
-反馈设计需服从[美术质量契约](../../unity-development-workflow/references/art-quality-contract.md)的可读性与观看舒适要求。HUD、Toast、奖励浮字等若含玩家可见文字，按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)消费已冻结表达与真实事件数据，不添加未批准的解释语句，并保留图标控件的项目级无障碍名称。需要制作不同动画路线时，按[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)明确资产负责人；生产级模型与贴图 Skill 不承担动画生产。
+反馈设计需服从[美术质量契约](../../unity-development-workflow/references/art-quality-contract.md)的可读性与观看舒适要求。所有玩家可见反馈文字（包括但不限于 HUD、Toast 和奖励浮字）先按 [UniText 与固定 JSON](../../unity-development-workflow/references/text-and-localization.md)检查并绑定，再按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)消费已冻结表达与真实事件数据，不添加未批准的解释语句，并保留图标控件的项目级无障碍名称。需要制作不同动画路线时，按[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)明确资产负责人；生产级模型与贴图 Skill 不承担动画生产。
 <!-- native-source:unity-game-juice:end -->
 
 
@@ -296,7 +296,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-qa-performance--执行与交接"></a>
 #### 执行与交接
 
-测试、构建、Editor/Player 日志和 Profiler 入口使用 `unity:unity-cli`；Web、音频、TMP 与具体渲染问题分别路由到 `unity:optimize-web`、`unity:optimize-audio`、`unity:optimize-text-mesh-pro` 及适用的 URP 专项 Skill。本角色负责测试矩阵、证据真实性、预算判定和独立放行，不复制专项调优教程。
+测试、构建、Editor/Player 日志和 Profiler 入口使用 `unity:unity-cli`；Web、音频与渲染问题按需使用 `unity:optimize-web`、`unity:optimize-audio` 和适用的 URP 专项 Skill。文本先按 UniText 与 JSON 方案核验，仅用户选择 TMP 回退后使用 `unity:optimize-text-mesh-pro`。本角色负责测试矩阵、证据真实性、预算判定和独立放行，不复制专项调优教程。
 
 1. 在 QA 计划中预先定义 EditMode、PlayMode、场景主路径、模块边界和用户批准的目标平台。设备用例与档位只能提前规划；G2 `PASS` 前禁止安装或启动任何 Standalone/Player、真机或等价设备，也禁止采集设备视觉、输入、生命周期、性能或稳定性结果。
 2. 按 `unity:unity-cli` 当前规则运行测试并等待任务终态；记录版本、用例数、失败详情与原始日志。
@@ -306,7 +306,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 6. 对 `$app-3d-modeling` 交付物独立检查来源版本、拓扑/法线/切线、比例轴向、材质槽、LOD、BlendShape 目标几何、Collider、Prefab 引用和架构预算；角色骨架/权重与动作按下述专用流程验收，模型生产代理的自检不能替代 QA。
 7. 对 `$app-3d-texturing` 交付物独立检查 UV 密度/重叠/Padding、Bake 射线与接缝、PBR 通道/颜色空间/法线方向、URP Shader/Importer/Material 映射、Mip/Streaming、纹理内存和授权证据。
 8. 研发期 3D 验收使用 Unity Editor 覆盖中性光、掠射光、正反面、近远景、LOD 切换、动画变形与目标场景光照；批准平台实机转台、设备性能和稳定性只在 G2 `PASS` 后的 G3 执行。
-9. 程序化文本对项目所选语言（默认 `zh-CN`，英语 `en` 可选）分别验证真实字形、字体回退、基线、`single-line`/`wrap` 策略和容器适配，任何语言都不得截断。按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)使用实际必要翻译中占用空间最长的文本与合理边界输入检查换行、容器适配和截断；验证可见内容与真实数据/显示条件一致，并保留必要条件和后果。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
+9. 文本先按[完整还原标准](../../unity-development-workflow/references/visual-decomposition-routes.md#完整还原的判断标准)核对四维能力和原生/图片/待验证结论，不以 Schema、组件存在或构建通过代替实际证据；再按 [UniText 与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)检查插件安装证据、正式配置加载、键与参数覆盖、启动语言及切换；检查所有受影响的文案消费者无语言分支翻译。对所选语言按实际路线验证：原生核对字体回退、字形、基线和容器，图片核对真实资源及 JSON 键/语言/状态映射、内容与边界；均检查已声明的单行/换行及变化更新，任何语言都不得截断。按[游戏内文案指导](../../unity-development-workflow/references/game-copy.md)使用实际必要翻译中占用空间最长的文本与合理边界输入检查换行、容器适配和截断；验证可见内容与真实数据/显示条件一致，并保留必要条件和后果。场景证据只覆盖自身常驻 HUD；modal、popup、drawer、toast 必须使用独立 DISPLAY_LAYER 候选与打开→交互→关闭→恢复轨迹，宿主场景截图不能替代。
 10. G2 为每个批准模块生成唯一 `modules.acceptance-complete` PASS 报告，并为每个批准平台生成唯一 `platforms.adaptation-complete` PASS 报告。G3 只能在该 G2 结果有效时，为每个平台冻结候选主制品并执行“平台设备档位 × 全部批准场景”笛卡尔积；每个用例绑定所属平台制品哈希。没有完整模块、平台、设备矩阵或真机证据时使用 `NOT_RUN` 或 `BLOCKED`，不得报告通过。
 
 开发者自测可作为输入，不能替代独立 QA 批准。
@@ -757,7 +757,7 @@ V0-V5 是场景与资源生产阶段；A0-A6 只表示动作风险。F2 记录�
 
 **uGUI 按钮单节点**。V3 拆解和布局时，按钮主图与命中可共用同一个 `RectTransform`，且图片无需独立定位、裁切或动画时，优先在同一 GameObject 上挂载 `Button` 和 `Image`。按需用同节点 `Image` 承担射线命中并设为 `Button.targetGraphic`。需要独立排版的图标、文字或视觉层继续作为子节点，按钮仍拥有激活与焦点。V5 按确认后的单节点结构还原，迁移已有图片引用后再移除冗余子节点，并核对实际命中及状态过渡。[Selectable.targetGraphic](https://docs.unity3d.com/Packages/com.unity.ugui@2.0/api/UnityEngine.UI.Selectable.html#UnityEngine_UI_Selectable_targetGraphic)
 
-文本任务必须读取[Unity 文本组件属性与配置](text-layout.md)，按实际 TMP 包或 UI Toolkit/Unity 版本保持确认基准，配置固定字号或已声明的单行有界缩小、上下限、正文换行与尺寸所有权，并检查真实字形而非只看溢出模式。
+文本任务必须先读取 [UniText 安装检查与固定 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)，先评估 UniText 并按[完整还原标准](../../unity-development-workflow/references/visual-decomposition-routes.md#完整还原的判断标准)核实路线，未核实则待验证；安装异常时由用户选择修复或回退 TMP；再读[文本组件属性与配置](text-layout.md)，按实际组件版本配置基准字号、断行、适配与尺寸所有权，检查真实字形。
 
 Sprite 导入与 uGUI Canvas 按[默认像素单位](assets-and-ui.md#默认像素单位)执行：Sprite PPU 默认 `100`，新建 Canvas 的参考像素单位默认 `100`；明确覆盖时记录尺度约定，导入后回读实际配置。
 
@@ -780,7 +780,7 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 
 按[2D 动画岗位协作](../../unity-development-workflow/references/2d-animation-collaboration.md)消费动画质量负责人的风格与动作标杆，以及 TA 的数据／导入约束；向骨骼角色交付部件与变体映射，向 TA 提供对账和诊断所需的来源与导入事实。图像缺陷由本角色返修，公共导入工具缺陷交 TA；双方不直接修改骨架或动画资产。
 
-具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；本地化/TMP、URP 后处理和 Shader Graph 分别使用对应 `unity:*` Skill。本角色只维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
+具体 Unity 操作使用插件专项：UI 先交给 `unity:ui` 路由并保持 UniText/JSON 方案；Sprite、Atlas、Tilemap、像素渲染分别使用 `unity:sprite-editor`、`unity:manage-sprite-atlas`、适用的 `unity:tilemap-*` 与 `unity:2d-pixel-perfect`；TMP 专项仅在用户选择回退后使用，Localization 仅消费 JSON 派生表；URP 后处理和 Shader Graph 使用对应 `unity:*` Skill。本角色维护视觉基线、拆解、来源/装配决策、资源身份和验收证据。
 
 <a id="mode-unity-game-visual-assets--v0-v5"></a>
 #### V0-V5
@@ -797,17 +797,17 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 #### 生产规则
 
 - 当前阶段内先内部完成分析、技术记录、布局决策和提示词，直接交付真实候选供用户检查，不等待常规文字方案确认；动画正式素材遵循[动画意图合同](../../unity-development-workflow/references/animation-intent-contract.md)，先说明设计理念与动作方案并取得用户明确确认再制作。同目标返修直接展示前后对照。V3、V4 等实际阶段确认与父图/视频专项确认仍保留，详见[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)。
-- 生成全局方向图、场景效果图或宿主上下文图前，按[游戏内文案](../../unity-development-workflow/references/game-copy.md)列明允许的可见文字、图标和示例数值，内部规格不得绘入画面；候选共用同一内容。冻结后按目标拆解，不从策划说明追加文字，也不擅自删改冻结文字；动态/本地化文本由真实数据与文本节点呈现。
+- 生成全局方向图、场景效果图或宿主上下文图前，按[游戏内文案](../../unity-development-workflow/references/game-copy.md)列明允许的可见文字、图标和示例数值，内部规格不得绘入画面；候选共用同一内容。冻结后按目标拆解，不从策划说明追加文字，也不擅自删改冻结文字；文案语义来自 JSON 与真实数据，原生或图片表现按文字路线接入。
 - 静态资源以画廊或可放大的 V2 相关区域/输出对照直接交付，透明资源并排给深浅底预览；V4/V5 按[组合对照交付](../../unity-development-workflow/references/visual-workflow.md#v4-正式资源生产与导入验收)提供 V2 与当前实际 Unity 组合并列对照及已知未还原项。完整来源与工程结果内部保存，预览成功不代表用户已验收显示效果。
 - V3 用户侧拆解说明只展示图片框选和图内中文标注，不输出文本段落、表格或清单。在冻结的 V2 效果图上逐项框选并绑定稳定编号，用引线说明用途、来源、关系、装配和生产边界；结构化合同内部保存。遵守[图片框选与标注交付](../../unity-development-workflow/references/visual-workflow.md#图片框选与标注交付)。
 - 参考图和高保真图用于保留目标内容、构图、轮廓、配色、材质、光影及视觉层级；禁止裁切、抠取、放大或轻微修饰后充当 Sprite/纹理，也禁止整图铺底冒充结构化实现。该限制只约束资产取得方式，不要求放弃目标特征。
 - 图片生成或编辑委派给图片子代理；V2 确认后的部件生产、编辑与返修，任务包必须包含可读取的原始 V2 目标图、稳定编号、相关部件区域说明、所含特征及状态。按实际部件明确构图、主要轮廓与比例、关键颜色、材质、层次、透明/不透明区域和文本留白；还原任务不能只写“风格参考”并放弃构图或外形约束，不得无依据改色、删去装饰或把目标特征写进禁止项。返修仍携带 V2，旧生成图仅作辅助，注明其中须保留与纠正的内容；完整实际提示词随生产记录保存。首次 V2 效果图生成沿用上方方向图与文案规则。
 - 生成后及透明处理、尺寸归一化后，核对独立源素材的主体、轮廓、颜色、完整性、有效内容边界及透明/不透明区域是否满足任务；已有确认 V2 的部件生产与返修还须对照该图，并记录证据与缺陷。文件存在、尺寸正确、有 Alpha、成功导入只证明工程事实，不能据此宣告资源合格；例如目标不透明内板被生成为透明开口，即使 PNG 技术检查通过也属于生产失败。缺陷交回相应生产环节修复，不能靠缩放、移动节点或提高容差掩盖。此检查遵守[源素材与运行截图边界](../../unity-development-workflow/references/art-quality-contract.md#追溯与检查边界)，不代替人工阶段验收。
 - 生成式透明位图如果先产出不透明单一纯色背景 PNG，使用公共 `app-asset-workflow/scripts/remove-background-local.mjs` 从画布边缘执行纯色去背景，调用方式见[素材技术处理](../../app-asset-workflow/references/technical-processing.md)；显式记录背景色、容差、源/输出位置、删除像素和深浅底预览，只有 `PASS` 输出才能进入 Unity 导入。工具自行生成的 SHA 不参与验收。该脚本不得用于参考图抠取，也不适合复杂背景、毛发、玻璃、发光或半透明边缘。
-- 文字与填充先按[视觉显著性](../../unity-development-workflow/references/visual-decomposition-routes.md#完整拆解与视觉显著性)判断：低显著性文字优先系统文本，简单填充/规则边框优先原生绘制；明显字形、材质、纹理和光影保留独立资产，有风格的重复表面优先复用贴图。拆开来源仍由原组件统一管理交互、布局、本地化和动态状态，不静默简化已确认效果。
-- 静态特色外观优先交付独立图片、模型、材质或 VFX；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V2 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内普通实现修复无需重复确认未受影响的决定；目标或布局依据变化时更新受影响合同，冻结目标及人工确认引用按公共控制器核对内容身份与摘要，摘要不证明用户身份。
+- 文字按[完整还原标准](../../unity-development-workflow/references/visual-decomposition-routes.md#完整还原的判断标准)核对字形、效果、排版及语言/内容变化：已验证完整还原则原生，已确认不能还原则直接图片，尚未核实则待验证，不凭生图外观或效果名称定性；始终保持 JSON 与统一绑定。填充按[视觉显著性](../../unity-development-workflow/references/visual-decomposition-routes.md#完整拆解与视觉显著性)判断，简单填充/规则边框优先原生绘制，非文字材质、纹理和光影按实际来源登记。拆开来源仍由原组件统一管理交互、布局、本地化和动态状态，不静默简化已确认效果。
+- 非文字静态特色外观优先交付独立图片、模型、材质或 VFX，文字效果无法原生还原时直接采用图片路线，固定文案按 JSON 生成语言/状态变体，动态内容保持可组合或可更新；程序化路线只用于文本、动态数据、布局、基础几何、进度、粒子/Shader 等具有资格证据的内容，实际 renderer 必须保留 V2 要求的外观与状态。`REUSE` 记录实际源路径、Unity GUID、许可、Importer、消费节点和相关验证证据，除身份外还须按[路线判定](../../unity-development-workflow/references/visual-decomposition-routes.md)核对实际轮廓、比例和材质，主题或风格相似不足以证明合格。目标内普通实现修复无需重复确认未受影响的决定；目标或布局依据变化时更新受影响合同，冻结目标及人工确认引用按公共控制器核对内容身份与摘要，摘要不证明用户身份。
 - UI/2D 位图默认以目标最大显示尺寸的 `sourceScale=1` 规划源像素密度，像素美术或已批准平台预算可明确覆盖。它不是浏览器 DPR；运行时缩放必须读取 CanvasScaler、PanelSettings、Camera、Screen、动态分辨率和 Importer 的真实配置。SpriteAtlas、压缩、MipMap、Read/Write、色彩空间和 Addressables 仍由 Unity 平台预算决定。
-- 程序化文本默认覆盖 `zh-CN`，英语 `en` 等其他语言按项目选择覆盖，逐语言声明 `single-line` 或 `wrap`，验证 TMP/UI Toolkit 字体回退、真实字形宽度、基线和容器；禁止截断。
+- 文本保持统一 JSON 文案配置，默认先评估 UniText，最终按完整还原能力确定原生、图片或待验证，语言按项目选择覆盖；逐语言声明 `single-line` 或 `wrap`，按实际路线验证内容、排版、容器与更新：原生检查真实字体与字形，图片检查资源及语言/状态映射，不把原生字体属性套到 Image；禁止截断，不以 TMP 专项报告替代 UniText 证据。
 - 独立 DISPLAY_LAYER 在宿主上下文中验证打开、交互、关闭和焦点/输入/底层状态恢复；其失败或延期不回写为宿主场景未完成。
 - 研发阶段只做 Editor/Game View/PlayMode 视觉验证。未经用户明确要求，不启动 Standalone/Player 或真机。
 

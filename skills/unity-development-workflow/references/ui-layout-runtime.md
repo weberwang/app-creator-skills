@@ -42,6 +42,12 @@ Toolkit 只读加载场景，从实际 Screen/Canvas/Panel 取得同批 viewport
 
 非活动节点保留组件实际配置，`positionWriters/widthWriters/heightWriters` 为空；无可用几何时记录空矩形和 `INACTIVE`，不伪造正尺寸或零边距。父节点不活动时后代不能自称活动。
 
+## 文本与世界文字的取证边界
+
+UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)验证所有消费者，不能把本页几何报告作为插件安装、配置加载或语言切换证据。当前 uGUI 测量器以 RectTransform 为目标，支持默认显示器的 Screen Space Overlay/Camera Canvas；不要求 TMP，可测 UniText 容器几何，但组件快照只覆盖布局与图片配置，没有文本内容、字体、字形和语言绑定。
+
+独立 UniTextWorld 的 MeshRenderer 不属于上述 Canvas 测量范围，World Space Canvas 也不能用该屏幕几何工具证明通过。分别核对真实文字组件、内容、语言、字体及世界布局，沿当前工作项记录实际证据。Game View 最终帧可以拍到世界文字，但 UI 覆盖统计只识别 Canvas/UIDocument，不能证明全部世界文字已覆盖；`NO_RUNTIME_UI_FOUND` 或部分覆盖标记不等于最终帧未拍到文字。目标截图和可读性、遮挡等显示效果仍由用户人工确认。
+
 ## 外部写入登记的边界
 
 uGUI 目标或 UIDocument 上的 `LayoutWriterRegistration` 只登记取证事实，不执行布局。每项绑定真实 `Behaviour writer`、SCRIPT/ANIMATION、负责的属性；UI Toolkit 还用 `elementName` 绑定具体元素。采集器核对真实组件身份与 `isActiveAndEnabled`，禁用组件不计作有效写入者。

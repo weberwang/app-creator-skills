@@ -13,7 +13,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 ## 最短流程
 
-1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](./unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](./workflow-overview.md)、[@Unity 执行契约](./unity-plugin-execution.md)、[项目发现](./project-discovery.md)、[3D 资源工作流](./3d-asset-workflow.md)、[模块规划](./module-planning.md)、[SDK 统一初始化](./sdk-initialization.md)、[产物存放与证据边界](./artifact-storage.md)、[响应式 UI 合同](./responsive-ui-contract.md)、[屏幕 UI 布局与节点树](./ui-layout-and-hierarchy.md)、[TMP 多语言字体图集](./tmp-font-atlas-workflow.md)、[视觉工作流](./visual-workflow.md)、[美术质量合同](./art-quality-contract.md)、[动画意图合同](./animation-intent-contract.md)、[九宫格 UI 合同](./nine-slice-ui.md)、[布局校准](./layout-calibration.md)、[游戏实现](./game-implementation.md)与[交付](./delivery.md)。
+1. 读取 Work Item、当前阶段、工程基线和适用门禁；先按[Unity 插件能力路由](./unity-plugin-routing.md)选择插件 Skill，再按需读取[工作流总览](./workflow-overview.md)、[@Unity 执行契约](./unity-plugin-execution.md)、[项目发现](./project-discovery.md)、[3D 资源工作流](./3d-asset-workflow.md)、[模块规划](./module-planning.md)、[SDK 统一初始化](./sdk-initialization.md)、[产物存放与证据边界](./artifact-storage.md)、[响应式 UI 合同](./responsive-ui-contract.md)、[屏幕 UI 布局与节点树](./ui-layout-and-hierarchy.md)、[UniText 与固定 JSON 文案](./text-and-localization.md)、[视觉工作流](./visual-workflow.md)、[美术质量合同](./art-quality-contract.md)、[动画意图合同](./animation-intent-contract.md)、[九宫格 UI 合同](./nine-slice-ui.md)、[布局校准](./layout-calibration.md)、[游戏实现](./game-implementation.md)与[交付](./delivery.md)。
 2. 以“需求与范围 → 全局基线 → 基础工程 → 场景与弹窗生产 → 全局集成验证 → 发布”展示项目进度。纯局部任务只建立一个 Work Item，并直接落到最早受影响阶段，不强制重走无关阶段。
 3. A3 生产实现前明确 Implementation Package 的基线、文件所有权、Unity 对象所有权、执行单元、非空 `acceptanceCommands` 和停止条件。进入 `IMPLEMENTING` 后由控制面创建 `evidenceRoot/execution-state.json`；单元结果记录真实证据并绑定计划顺序，`unit-check` 只校验结果，不运行验收命令。
 4. 实施后记录候选差异，推荐 T0-T3 测试等级后自动执行；证据失败优先原地 `repair`，上游事实未变时 `revalidate`，仅在上游失效、范围真实变化或将绕过硬门时 `return`。`RETURN` 由 `affectedScope` 推导恢复点并归档执行状态，不手选恢复状态。
@@ -22,6 +22,8 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 图片与动画采用[图片优先的确认方式](../../unity-domain-contracts/references/simplified-workflow.md#图片优先的确认方式)：阶段内技术分析、布局决策和制作参数内部维护，直接展示真实候选；已有阶段或专项交付确认后不再请求文字复述确认，同目标返修直接展示前后对照。玩家画面按[游戏内文案](./game-copy.md)维护同一可见表达，内部规格、效果图与运行数据来源分清归属。
 
 ## Unity 原生执行约束
+
+- 国际化按[阶段职责与启动顺序](text-and-localization.md#初始化时机与阶段职责)执行，S00 按[基础能力验收](foundation-workflow.md#国际化基础能力验收)完成真实 UniText 检查、JSON 加载与统一绑定；不等待正式视觉稿、某个 HUD 或 V5。就绪前只约束依赖本地化内容的显示，无关 SDK 继续独立启动。
 
 - 首次建立工程、规划模块或新增目录时遵守[项目结构约束](./project-structure.md)，目录映射、asmdef、场景生命周期与所有权在 TDD 和实施包中保持一致。
 - Unity 写入前发现实例，按规范化项目路径绑定唯一 Editor，并等待导入、编译和域重载稳定；写后复读目标对象、Console、Scene/Prefab、Importer、GUID 与登记结果。切换场景及其他可能触发保存提示的命令之前，先按[场景保存前置检查](./scene-save-recovery.md)只检查当前任务修改的场景，并通过 Unity 场景保存命令保存。
@@ -64,7 +66,7 @@ Unity 原生 2D 骨骼、蒙皮和角色动画交给 [`$app-character-rigging`](
 
 ## 工具入口
 
-游戏运行时 UI 路线确定为 uGUI + TextMeshPro，使用 Canvas/RectTransform 与 Prefab，安全区复用 `SafeAreaRectTransform`；新增编辑器工具使用 UI Toolkit。按[插件能力路由](./unity-plugin-routing.md)选择对应操作技能。
+游戏运行时 UI 使用 uGUI，文字先评估 UniText 并按[完整还原标准](visual-decomposition-routes.md#完整还原的判断标准)核实原生、图片或待验证，先按[文本与 JSON 国际化](text-and-localization.md)检查安装，异常时由用户选择修复或回退 TMP。使用 Canvas/RectTransform 与 Prefab，安全区复用 `SafeAreaRectTransform`；新增编辑器工具使用 UI Toolkit。按[插件能力路由](./unity-plugin-routing.md)选择对应操作技能。
 
 V4/V5 涉及正式资源或序列帧交接时，按[加载与序列帧合同](./resource-loading-and-frame-handoff.md)在唯一资源总表声明 `loading`，由 `uwt_inspect_resource_handoff` 读取实际路径、动态键、Clip/帧身份及消费者。实施包绑定 `resourceHandoff` 后，交付必须消费当前 `resourceHandoffInspectionRef`；不默认 Resources、不强制 Addressables，不把普通 address 当作加载证明。
 

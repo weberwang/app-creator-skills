@@ -813,9 +813,6 @@
               },
               "distinctiveVisual": {
                 "properties": {
-                  "isDistinctive": {
-                    "const": false
-                  },
                   "assetFirstDecision": {
                     "const": "NATIVE_ALLOWED"
                   }
@@ -1003,7 +1000,7 @@
             ]
           },
           "then": {
-            "not": {
+            "if": {
               "properties": {
                 "selectedRoute": {
                   "const": "UNITY_NATIVE"
@@ -1012,6 +1009,30 @@
               "required": [
                 "selectedRoute"
               ]
+            },
+            "then": {
+              "description": "显著外观只有独立文字且原语仅为 TEXT 时可采用 Unity 原生文本路线，非文字效果不得借此绕过素材约束。",
+              "required": [
+                "elementType",
+                "nativeSuitability"
+              ],
+              "properties": {
+                "elementType": {
+                  "const": "text"
+                },
+                "nativeSuitability": {
+                  "required": [
+                    "primitiveBasis"
+                  ],
+                  "properties": {
+                    "primitiveBasis": {
+                      "const": [
+                        "TEXT"
+                      ]
+                    }
+                  }
+                }
+              }
             }
           }
         }

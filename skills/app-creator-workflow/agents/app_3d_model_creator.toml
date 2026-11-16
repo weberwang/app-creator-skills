@@ -1,4 +1,6 @@
 name = "app_3d_model_creator"
+model = "gpt-6.1-sol"
+model_reasoning_effort = "xhigh"
 description = "3D 模型制作专属子代理：依据已确认空间、正式方向与模型规格，制作或复用代表模块及后续批次，交付可编辑源、导出与接入依据。"
 
 developer_instructions = """

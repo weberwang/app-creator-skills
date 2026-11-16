@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0",
+  "languages": ["zh-CN", "en"],
+  "defaultLanguage": "zh-CN",
+  "entries": [
+    {
+      "key": "hud.score",
+      "parameters": ["value"],
+      "values": [
+        {"locale": "zh-CN", "text": "分数：{value}"},
+        {"locale": "en", "text": "Score: {value}"}
+      ]
+    },
+    {
+      "key": "common.confirm",
+      "parameters": [],
+      "values": [
+        {"locale": "zh-CN", "text": "确认"},
+        {"locale": "en", "text": "Confirm"}
+      ]
+    }
+  ]
+}

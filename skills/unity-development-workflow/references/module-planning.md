@@ -17,6 +17,8 @@
 - `INTEGRATION`：跨场景入口、Build Settings、Addressables、共享配置与联合验证，强制串行。
 - `RELEASE`：独立 Work Item，处理候选包和获批外部动作。
 
+国际化初始化在 `foundation-engineering` / S00 分配给真实的 Foundation 启动职责及 SHARED/MODULE 单元，按[阶段职责](text-and-localization.md#初始化时机与阶段职责)完成 UniText 检查、正式 JSON 加载和统一绑定。`INTEGRATION` 负责后续全部消费者与跨对象回归，不把初始配置或绑定实现延后到最终集成；单场景也适用，不伪造共享消费者。
+
 `ProjectSettings/`、`Packages/`、共享 asmdef、场景列表、输入资产和全局 Addressables 不能分配给并行单元。`Assets` 资源与 `.meta` 必须同属一个单元；Prefab Variant 与基础 Prefab、Scene 与其共享 SubScene/资源的并行修改要显式证明互斥。
 
 `unit.status` 只是冻结实施包中的计划快照，不作为实际完成状态，也不会被 `unit-check` 改写。`execution-state.units` 记录实际激活顺序和完成结果；每个结果绑定 Work Item、实施包、单元业务身份（`moduleId`、`scopeId`、`sceneId`、`layer`、`host`）及验收命令。所有单元完成后由 `VALIDATING` 重新校验执行状态，不得以修改计划状态代替结果证据。

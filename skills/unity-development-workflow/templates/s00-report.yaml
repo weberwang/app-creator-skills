@@ -15,7 +15,8 @@ moduleManifest:
   type: module-manifest
   path: Artifacts/Planning/module-manifest.yaml
 scope:
-  - 启动、场景加载、输入、配置、存档、UI Toolkit、日志与测试骨架
+  - 启动、场景加载、输入、配置、存档、uGUI/UniText、日志与测试骨架
+  - UniText 安装与能力检查、正式 JSON 加载校验与索引、启动语言及统一绑定的真实运行验收
 sharedCapabilities:
   - id: foundation.scene-loading
     usedByScenes:
@@ -27,6 +28,13 @@ qualityReports:
   - type: quality-report
     path: Artifacts/Quality/s00-baseline.yaml
     subjectId: qa.s00-baseline
+    subjectVersion: foundation-v1
+    sourceRevision: working-tree-snapshot-20260727
+    buildVersion: 0.1.0-dev.0
+  # 此处只引用项目实际产生的报告；模板路径不是已执行或通过的证据。
+  - type: quality-report
+    path: Artifacts/Quality/s00-localization.yaml
+    subjectId: qa.s00-localization
     subjectVersion: foundation-v1
     sourceRevision: working-tree-snapshot-20260727
     buildVersion: 0.1.0-dev.0

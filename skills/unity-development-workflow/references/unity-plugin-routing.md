@@ -8,7 +8,7 @@
 
 ## 核心路由
 
-游戏运行时 UI 采用 uGUI + TextMeshPro：Canvas/RectTransform 管理布局、Prefab 承载界面组件、`SafeAreaRectTransform` 管理安全区。未指定技术的运行时菜单、HUD、弹窗按此路线进入 `unity:ui-ugui`；新增编辑器窗口和工具进入 `unity:ui-uitk`。
+游戏运行时 UI 使用 uGUI，文字默认先评估 UniText，按[完整还原标准](visual-decomposition-routes.md#完整还原的判断标准)核实路线，未核实则待验证：先按[文本与 JSON 国际化](text-and-localization.md)检查插件，安装不正确时由用户选择修复或回退 TMP。Canvas/RectTransform 管理布局、Prefab 承载组件、`SafeAreaRectTransform` 管理安全区。运行时菜单、HUD、弹窗进入 `unity:ui-ugui` 时保持 UniText 与 JSON 绑定要求，不接受专项技能隐含的 TMP 默认；新增编辑器工具进入 `unity:ui-uitk`。
 
 | 请求 | 使用的 Unity 插件 Skill |
 | --- | --- |
@@ -17,14 +17,14 @@
 | 新建项目 | `unity:new-unity-project` |
 | UPM 包发现、安装、升级、移除 | `unity:unity-package-management` |
 | 查询具体资产或场景对象 | `unity:generate-editor-search-query` |
-| 运行时菜单、HUD、弹窗、布局 | `unity:ui` → `unity:ui-ugui`，文本使用 TextMeshPro |
+| 运行时菜单、HUD、弹窗、布局 | `unity:ui` → `unity:ui-ugui`，文字先评估 UniText，核实能力后选原生或图片，未核实则待验证 |
 | 新增编辑器窗口和工具 UI | `unity:ui` → `unity:ui-uitk` |
 | 2D 像素渲染、Sprite、Atlas、Tilemap | `unity:2d-pixel-perfect`、`unity:sprite-editor`、`unity:manage-sprite-atlas` 与适用的 `unity:tilemap-*` |
 | Unity 原生 2D 骨骼、蒙皮与角色动画 | 本仓库 [`unity-game-2d-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-2d-rigging) 编排；Editor、包、Sprite 元数据及图集复用对应 `unity:*` 技能，骨骼与动画 API 缺口按项目版本验证 |
 | 2D 动画公共工具、资产校验、批量对账与回归 | 本仓库 [`unity-game-2d-animation-ta`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-2d-animation-ta) 负责技术管线；实际 Unity 操作复用插件与 Toolkit，角色资产仍归骨骼／视觉，质量负责人与独立 QA 按[岗位协作](./2d-animation-collaboration.md)交接 |
 | 3D 模型几何、拓扑、法线、UV、LOD、碰撞代理，以及 PBR 材质节点、绘制、烘焙、通道打包与贴图导出 | 按[3D 资源工作流](./3d-asset-workflow.md)通过 Blender MCP 生产，并按[模型与贴图共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交接；`unity:unity-cli` 只负责模型/纹理导入器、Material/Renderer、资源级 Prefab 和运行验证 |
 | 3D 角色骨架、蒙皮、控制 Rig、动作与曲线烘焙 | [`unity-game-3d-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-rigging) 与 [`unity-game-3d-animation`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-animation) 使用 Blender MCP 生产；按[角色共同交接](./3d-character-handoff.md)和[角色导入合同](./3d-character-unity-import.md)，由 `unity:unity-cli` 接入 Avatar、Clips、Animator、蒙皮 Renderer 与 Prefab 并验证 |
-| 本地化、TMP 字体与 CJK 回退 | `unity:localization`、`unity:optimize-text-mesh-pro` |
+| 文本与国际化 | 先读 [UniText 与固定 JSON](text-and-localization.md)；`unity:localization` 只用于 JSON 派生表接入，`unity:optimize-text-mesh-pro` 仅用于已选择的 TMP 回退 |
 | AudioMixer 路由与音频性能 | `unity:audio-setup-mixers`、`unity:optimize-audio` |
 | URP 迁移、后处理、Shader Graph、Render Graph 审查 | `unity:migrate-birp-to-urp`、`unity:urp-postprocessing`、`unity:shader-graph-create-custom-node`、`unity:validate-urp-render-graph-renderer-feature` |
 | NavMesh、3D 物理碰撞 | `unity:initialize-ai-navigation`、`unity:physics-3d-collision` |

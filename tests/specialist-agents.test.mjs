@@ -21,14 +21,16 @@ function project(t) {
   return root;
 }
 
-test('两份项目配置与唯一维护源一致，继承宿主模型和权限', () => {
+test('两份项目配置与唯一维护源一致，固定专属模型和推理强度并继承宿主权限', () => {
   for (const name of SPECIALIST_AGENTS) {
     const canonical = readFileSync(join(CANONICAL, `${name}.toml`), 'utf8');
     assert.equal(readFileSync(join(SOURCE_ROOT, '.codex/agents', `${name}.toml`), 'utf8'), canonical);
     assert.ok(canonical.includes(`name = "${name}"`));
     assert.match(canonical, /description = ".+"/);
     assert.match(canonical, /developer_instructions = """[\s\S]+"""/);
-    assert.doesNotMatch(canonical, /^(model|model_reasoning_effort|sandbox_mode|approval_policy|mcp_servers)\s*=/m);
+    assert.match(canonical, /^model = "gpt-6\.1-sol"$/m);
+    assert.match(canonical, /^model_reasoning_effort = "xhigh"$/m);
+    assert.doesNotMatch(canonical, /^(sandbox_mode|approval_policy|mcp_servers)\s*=/m);
     assert.match(canonical, /人工/);
     assert.match(canonical, /唯一写者/);
     assert.match(canonical, /image_generator/);

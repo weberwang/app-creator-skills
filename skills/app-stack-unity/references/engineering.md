@@ -8,6 +8,8 @@
 
 目录约定采用资源类型与代码职责边界；项目可以使用已成形的其他布局，但在技术设计中记录唯一映射，不为套模板搬迁已有文件。推荐把入口/基础设施、已稳定复用模块、场景玩法、表现层和 Editor 工具分开。`Shared` 仅收纳至少两个真实消费者共同需要的能力，不预建空壳。
 
+国际化属于 Foundation 的项目级启动职责，在 `foundation-engineering` / S00 完成 UniText 检查、正式 JSON 加载与校验、语言服务及统一绑定，不以多场景共享为前置。按[初始化时机与阶段职责](../../unity-development-workflow/references/text-and-localization.md#初始化时机与阶段职责)确定启动顺序，并满足 [S00 国际化验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)；有真实多个消费者时再登记相应 Shared 复用关系。
+
 程序集按编译与测试边界设置，依赖保持无环，通常是 `Presentation → Gameplay → Foundation`。玩法规则不依赖 UI、场景表现或 Editor；平台服务以接口隔离。Editor 与 EditMode/PlayMode 测试不进入正常 Runtime/Player 程序集。
 
 多场景应用为持久服务与可切换内容明确生命周期、加载顺序和卸载清理。每个活动显示/输入上下文只能有一个 Camera、AudioListener、EventSystem 或 UI Toolkit 输入路由所有者。弹窗与抽屉按 `DISPLAY_LAYER` 单独记录和交付，公共 `visual.hostId` 表示运行上下文与接线位置，不改变显示层资源的独立归属。

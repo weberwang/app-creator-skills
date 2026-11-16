@@ -165,7 +165,7 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs。
 
-- 所有静态文案按[静态文本的可见表现](ui-copy-principles.md#静态文本的可见表现)选择 `bitmap-text` 或独立 `image-text`。固定本地化文案可按语言和预定义状态交付图片变体，逐一登记资源与可访问语义，并实测切换。动态数值、用户输入和运行时插值不烘焙为固定图片，按其实际渲染路线更新与排版。位图字形和效果依赖按图片合同登记。
+- Cocos、Phaser、Three.js 静态文案按[静态文本的可见表现](ui-copy-principles.md#静态文本的可见表现)选择 `bitmap-text` 或独立 `image-text`；仅上述三栈的固定本地化文案可按语言和预定义状态交付图片变体，逐一登记资源与可访问语义，并实测切换。Unity 按 [UniText 与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)实施，不套用强制位图要求；无法完整还原的文字效果直接图片生产，按 JSON 文案的语言/状态绑定，动态内容保持可更新。动态数值、用户输入和运行时插值不烘焙为固定图片，按其实际渲染路线更新与排版。位图字形和效果依赖按图片合同登记。
 
 > 适用技术栈：cocos、phaser、threejs。
 
