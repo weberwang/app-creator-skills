@@ -37,6 +37,7 @@ description: "将界面需求整理为可测量的层级、信息优先级、断
 
 - 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
+- 弹窗与 Toast 按[公共设计顺序](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在全局视觉设计稿冻结后，先确定所需弹窗公共方案、再设计 Toast。统一公共外壳、字体、色彩、间距、动效及适配规则，业务结构按需变体；复用公共组件，各自验证实际宿主组合。
 - 全部 UI 均遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。
 - 游戏普通屏幕 UI 必须落实[双轴停靠或原生容器排布](references/relative-layout.md#游戏-ui-的停靠与原生机制)；原生能表达时使用原生机制，位置与尺寸分别确定控制者，并核对正式源与运行属性。
 - Unity/Creator/Web UI、Flutter Widget 与 Expo React Native 的布局系统并不相同；只使用当前栈匹配的原生适配模式。

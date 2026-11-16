@@ -16,7 +16,7 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 各技术栈的 DISPLAY_LAYER 功能证据还须绑定单一实际宿主与层类型：直接实现时每个功能执行结果记录 `hostId`、`layerType`；共享功能来源的行为证据也记录相同字段。宿主或类型变化后须针对新上下文重新验证原功能范围并更新基线，不能复用旧宿主的业务通过记录。不同宿主可以共用实现，但各自的验证证据必须与实际宿主一致。
 
-公共 Toast 按[前置视觉任务](../../app-domain-toolkit/references/ui-copy-principles.md#toast-前置视觉任务)在业务模块之前完成独立 DISPLAY_LAYER 的 V0–V5。先用可运行的实际宿主验证 Toast 自身显示、动画和生命周期，再实现业务消费者。前置顺序与组件交付引用记入项目实施计划，`visual.functionDependencies` 继续仅引用满足本节合同的非视觉 MODULE 或 feature INTEGRATION。Toast 使用自己的显示层工作项和视觉证据，后续宿主接入按实际组合验证。
+弹窗与 Toast 按[弹窗公共设计方案](../../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在全局视觉设计稿冻结后，先确定所需弹窗公共方案、再设计 Toast，各自使用可运行的实际宿主实现与验收独立 DISPLAY_LAYER 的 V0–V5，再接入业务。设计方案明确且各自阶段条件满足后可并行实现，Toast 不等待所有业务弹窗 V5；早期业务功能实施及 V1 不等待公共显示层视觉交付，避免阻断全局视觉设计稿冻结所需的功能验证。设计顺序与组件交付引用记入项目实施计划，不作为 `visual.functionDependencies` 的功能来源；该字段继续仅引用满足本节合同的非视觉 MODULE 或 feature INTEGRATION。各显示层保留自己的工作项和视觉证据，后续宿主接入按实际组合验证。
 
 ## 导航框架与共享路由
 
