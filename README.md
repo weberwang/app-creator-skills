@@ -13,7 +13,7 @@
 - **按需处理音频**：非游戏客户端按[App 音频工作流](skills/app-domain-toolkit/references/app-audio.md)区分提示、播放、录音／语音和平台通知，无需求则跳过；游戏按[音效生产流程](skills/app-audio/references/sfx-production.md)设计与制作适用素材。分别记录文件技术、实际运行与用户听感，不默认增加声音或后台能力。
 - **组织跨场景功能**：明确导航框架、主页、共享路由和弹窗的职责，复用共享实现并验证实际组合。
 - **持续交付**：支持局部修复、功能增量、质量审核、项目整理和发布准备，保留继续工作所需的有效记录。
-- **接入渠道**：按已选目标执行 [CrazyGames、微信／抖音小游戏及移动商店接入](skills/app-release/references/channel-platform-integration.md)，区分平台 SDK、原生构建、合规资料与实际上线。
+- **接入渠道**：按已选目标执行 [CrazyGames、微信／抖音小游戏、TapTap 及移动商店接入](skills/app-release/references/channel-platform-integration.md)，区分平台 SDK、原生构建、合规资料与实际上线；[TapTap 使用官方 CLI](skills/app-release/references/channel-platforms/taptap.md)管理资料、素材、包体、审核、测试及运营。
 
 这是技能、工具和工作流集合。引擎、SDK、素材工具及实际运行环境按所选技术栈另行准备；安装技能后，再由助手检查当前任务所需的环境。
 

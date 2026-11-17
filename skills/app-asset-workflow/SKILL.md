@@ -9,7 +9,7 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 接入 [app-creator-workflow](../app-creator-workflow/SKILL.md) 的全局基线与 V0–V5，按[公共执行规范](../app-creator-workflow/references/professional-execution.md)交接；状态与记录归 [app-workflow-control](../app-workflow-control/SKILL.md)。显示设计或可见表现新增及修改从本次 V0 定义范围；已有有效目标与素材可复用，不强制重新生图。正式实现须完成相关 V1 功能验证：3D 世界场景按[实现分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界及 UI 按原流程选择占位与验证方式。仅设计提案不强制先建设运行工程，但不能冒充已验证的 3D 白模。V2 冻结用户实际选择的目标。去 AI 味是设计与生产质量问题，不是可由一个提示词、滤镜或检测分数保证的结果。
 
-场景、页面、HUD、弹出层、素材和交互显示对象共用[体验、视觉方向与意图表达](references/interface-intent.md#design-basis)这一权威：按本批真实行为、压力和状态形成方向，区分硬约束、方向与探索空间，再确定信息、空间归属及必要文字。每次生图按[制作输入与发送前检查](references/style-and-production.md#生成前约束)将适用分析转成真实提示词，后台细节留在工程规格；检查纳入现有审阅。正式页面保留必要文案与无障碍标签。
+场景、页面、HUD、弹出层、素材和交互显示对象共用[体验、视觉方向与意图表达](references/interface-intent.md#design-basis)这一权威：市场、竞品、受众与参考分析必须按[统一要求](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或核实复用，缺失或变化部分先补齐；再按本批真实行为、压力和状态形成方向，区分硬约束、方向与探索空间，确定信息、空间归属及必要文字。每次生图按[制作输入与发送前检查](references/style-and-production.md#生成前约束)将适用分析转成真实提示词，后台细节留在工程规格；检查纳入现有审阅。正式页面保留必要文案与无障碍标签。
 
 当前视觉设计稿完成后、提交用户确认前，按[单次用户视角审查](references/art-review.md#当前设计稿的单次用户视角审查)核对真实内容、可编辑结构及可测事实。设计稿截图与运行截图默认交用户人工检查；未经明确授权不得自动分析截图或代写视觉 PASS。代理结构检查不代替人工视觉确认。
 

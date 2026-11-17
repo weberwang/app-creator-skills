@@ -54,7 +54,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-生成方向候选前，先按[产品市场调研](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对来源、竞品对比及其与当前视觉 brief 的设计依据；缺失时由产品策划补齐后再生成。
+生成方向候选前，必须按[通用分析的统一执行要求](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对市场、竞品、受众与参考四项分析及其与当前视觉 brief 的对应关系；有效结论核实后复用，缺失或变化部分由产品策划与视觉制作按职责补齐后再生成。
 
 全局视觉基线必须从“游戏美术体验与质量契约”（见本栈配套资料）规定的结构化视觉 brief 开始。`brief.path` 指向符合 “`game-art-brief.schema.json`”（见本栈配套资料） 的 JSON 实际文件，记录生产者 Work Item、brief ID、主题、受众、核心循环、体验目标、观看情境、视觉层级和三层刺激预算。字段齐全不能证明方向合理；用户未确认的受众偏好明确写为待验证假设。
 

@@ -1,11 +1,13 @@
 ---
 name: app-release
-description: "为游戏或应用准备可追溯候选版本，核对第三方配置及正式环境，组织商店文案和展示素材，并整理性能与图集选择。"
+description: "为游戏或应用准备可追溯候选版本，核对第三方配置及正式环境，组织商店文案和展示素材，并通过 TapTap CLI 处理已选渠道的资料、包体、测试与运营任务。"
 ---
 
 # 候选交付与发布准备
 
-目标包含 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，先按[渠道平台接入](references/channel-platform-integration.md)核对已选宿主、地区、应用身份、引擎路线及实际能力，再只读取对应平台专项。需求期安排渠道确认、基础工程打通最小产物、功能期完成适配、最终集成逐渠道验证；发布准备核对当前候选与资料，不把上传／提审／审核通过当作上线。
+目标包含 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 时，先按[渠道平台接入](references/channel-platform-integration.md)核对已选宿主、地区、应用身份、引擎路线及实际能力，再只读取对应平台专项。需求期安排渠道确认、基础工程打通最小产物、功能期完成适配、最终集成逐渠道验证；发布准备核对当前候选与资料，不把上传／提审／审核通过当作上线。
+
+TapTap 的创建游戏、资料与资质、素材和包体、审核发布、测试计划、数据、评价及社区运营按[TapTap CLI 专项](references/channel-platforms/taptap.md)执行。直接复用官方 CLI 与当前版本随包技能，先发现命令并核实 schema，再在已授权范围内操作；CLI 管理不替代游戏内 SDK 接入。
 
 同一导出方案支持多平台宿主时，按[运行时平台选择](references/channel-platform-integration.md#导出方案与运行时平台选择)复用同一产物，运行时识别平台后仅加载对应 SDK；发布矩阵仍分别记录各宿主的实际验证，平台判断不代替专用引擎适配或原生打包。
 

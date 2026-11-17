@@ -1,5 +1,7 @@
 # 风格与制作规范
 
+定义视觉方向或生成素材前，必须按[通用分析的统一执行要求](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对市场、竞品、受众与参考分析。已有有效结论核实来源时效、版本和本批适用性后直接引用，只补查缺失或变化部分；四项依据不全时先补齐，再推进依赖它的制作。此要求覆盖下述各制作路线，不因候选数量、是否生图或使用 Figma 而省略。
+
 ## 视觉签名不是关键词堆叠
 
 从产品主题、目标用户、核心操作和实际观看尺寸出发，确定能复述的两个或三个视觉特征。例如“倾斜切角的厚纸剪影、有限双色印刷、关键信息使用大留白”，比“高级、精美、电影感、8K”更能约束一致性。具体风格由项目选择，不统一规定极简、低饱和、写实或手绘。
@@ -23,7 +25,7 @@ style recipe 至少约定：
 
 本节固定三候选用于适用的游戏图片视觉基线路线；3D 世界按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)完成本批整体白模和人工确认，再按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)确定方向与模型依据。游戏 UI 保持原路线。Flutter、Expo 默认按 [Figma App 流程](../../app-ui-layout/references/figma-app-design.md)先生成一张代表页效果图、人工选稿后忠实重建 Figma；只有用户要求比较时才按指定数量制作多方向，已有有效确认图可复用。ESP32 按硬件约束可采用同路。效果图不是正式整屏背景，重建预览未人工检查时不得登记视觉通过。
 
-生成前核对[产品市场调研与设计依据](../../app-creator-workflow/references/professional-conventions.md#product-market-research)，确认实际来源、竞品对比和当前视觉 brief 的对应关系；缺失时先补齐调研再生成。三张候选共用同一产品定位与调研结论。
+生成前按上述统一要求核对四项分析及其与当前视觉 brief 的对应关系；三张候选共用同一产品定位与已完成或有效复用的分析结论。
 
 采用本图片路线时，全局首次恰好三张候选，题材内容、构图任务、视口和制作预算保持一致，差异集中于可比较的视觉方向。每张保留主题贴合、受众适配、任务可读、观看舒适和美术完成度五项结果，未审为 NOT_RUN；最终选中候选必须五项均经有效人工确认。候选不能替用户选择，也不能用更细致的渲染掩盖任务不可读。
 

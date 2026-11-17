@@ -13,7 +13,7 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 
 ## 输入
 
-已选 CrazyGames、微信／抖音小游戏、Google Play 或 App Store 时，按[渠道接入任务](../app-release/references/channel-platform-integration.md#接入任务与完成条件)验证最小目标产物、配置、统一平台识别与 SDK 选择／初始化入口；同一导出方案支持多宿主时复用产物，仅加载实际选中 SDK，未知／冲突环境不猜选。优先暴露引擎适配和宿主差异，不将本地构建等同于真实宿主或商店验证。
+已选 CrazyGames、微信／抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道接入任务](../app-release/references/channel-platform-integration.md#接入任务与完成条件)验证最小目标产物、配置、统一平台识别与 SDK 选择／初始化入口；同一导出方案支持多宿主时复用产物，仅加载实际选中 SDK，未知／冲突环境不猜选。TapTap 管理任务先核实官方 CLI、账号及应用上下文，CLI 可用性和真实产物运行分别验证。优先暴露引擎适配和宿主差异，不将本地构建等同于真实宿主或商店验证。
 
 微信小游戏与 CrazyGames 按[SDK 复用接入](../app-release/references/channel-sdk-reuse.md#接入正式工程)复用当前引擎的加载、初始化及渠道专属具名能力实现，项目只补配置、唯一入口接线与业务消费；不重写适配，不用通用转发替代具体方法，也不重新包装引擎基础接口。
 

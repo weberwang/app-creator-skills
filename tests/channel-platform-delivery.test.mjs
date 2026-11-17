@@ -9,7 +9,7 @@ import { installSkills, SOURCE_ROOT, STACKS } from '../packages/installer/instal
 import { extractMarkdownSection, markdownProse } from '../skills/app-skill-runtime/native-contracts.mjs';
 
 const COMMON = 'app-release/references/channel-platform-integration.md';
-const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'google-play', 'app-store']
+const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
 const MAX = 'app-domain-toolkit/references/reference-ad-applovin-max-contract.md';
 const MAX_STACKS = new Set(['cocos', 'phaser', 'threejs']);
@@ -67,6 +67,10 @@ for (const stack of STACKS) {
       const reference = loaded.resources.find((entry) => entry.path === COMMON && !entry.fragment);
       assert.equal(reference?.available, true, `${stack} 的渠道参考不可发现`);
       assert.equal(reference.kind, 'public-reference');
+      // 管理端资料跨栈分发不代表这些栈都具备 TapTap 客户端发布能力。
+      const taptap = loaded.resources.find((entry) => entry.path === 'app-release/references/channel-platforms/taptap.md');
+      assert.equal(taptap?.available, true, `${stack} 的 TapTap CLI 专项不可发现`);
+      assert.equal(taptap.kind, 'public-reference');
       assert.ok(!loaded.documents.some((entry) => PLATFORMS.includes(entry.path)), '未选渠道不应自动展开所有平台正文');
       assert.ok(!loaded.documents.some((entry) => /^app-stack-/.test(entry.path) && !entry.path.startsWith(`app-stack-${stack}/`)), '单栈模式不应加载其他栈原生手册');
       if (!['cocos', 'phaser'].includes(stack)) assert.ok(!loaded.documents.some((entry) => entry.path === COMMON), '非直接引用的总规范应按需读取');

@@ -1,6 +1,6 @@
 # 渠道平台接入
 
-用于已选择 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 的游戏／应用。渠道是分发宿主或商店，不等于引擎技术栈、操作系统或广告聚合网络；同一项目可有多个渠道候选，但不默认全部接入。沿用六阶段、现有 MODULE／INTEGRATION／RELEASE 和[任务最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，不增加状态机、审批层或控制器字段。
+用于已选择 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 的游戏／应用。渠道是分发宿主或商店，不等于引擎技术栈、操作系统或广告聚合网络；同一项目可有多个渠道候选，但不默认全部接入。沿用六阶段、现有 MODULE／INTEGRATION／RELEASE 和[任务最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，不增加状态机、审批层或控制器字段。
 
 ## 确认渠道与实现路线
 
@@ -11,10 +11,13 @@
 | CrazyGames | 平台承载的 Web 游戏，区分 Basic Launch 与 Full Launch | [CrazyGames](channel-platforms/crazygames.md) |
 | 微信小游戏 | 微信小游戏工程及其实际宿主，不是普通网页或小程序页面工程 | [微信小游戏](channel-platforms/wechat-minigame.md) |
 | 抖音小游戏 | 对应小游戏工程、接入宿主及适用引擎路线 | [抖音小游戏](channel-platforms/douyin-minigame.md) |
+| TapTap | 开发者中心支持的实际游戏形态与包体；通过官方 CLI 管理资料、包体、审核、测试和运营 | [TapTap CLI](channel-platforms/taptap.md) |
 | Google Play | Android 应用／游戏商店候选 | [Google Play](channel-platforms/google-play.md) |
 | App Store | 已选 Apple 平台的原生商店候选 | [App Store](channel-platforms/app-store.md) |
 
-Unity／Cocos 先按锁定引擎版本核对官方 Web、小游戏适配或原生导出路线。Cocos 使用 Creator 自身对应平台构建，不强套 WebView 包装。Phaser／Three.js 的 Web 产物用于适用的浏览器渠道；进入小游戏须先证实平台适配器及 DOM、网络、音频、资源等运行能力，进入移动商店按本栈已确认的原生宿主路线验证。Flutter／Expo 的 Android／iOS 路线不自动产生微信／抖音小游戏，Web 导出也不自动成为合格游戏。Roblox Place、ESP32 固件和 Node.js 服务不因共享本规范而获得这五个平台的客户端发布能力；服务端只承担已确认的登录、支付或其他接口职责。
+Unity／Cocos 先按锁定引擎版本核对官方 Web、小游戏适配或原生导出路线。Cocos 使用 Creator 自身对应平台构建，不强套 WebView 包装。Phaser／Three.js 的 Web 产物用于适用的浏览器渠道；进入小游戏须先证实平台适配器及 DOM、网络、音频、资源等运行能力，进入移动商店按本栈已确认的原生宿主路线验证。Flutter／Expo 的 Android／iOS 路线不自动产生微信／抖音小游戏，Web 导出也不自动成为合格游戏。Roblox Place、ESP32 固件和 Node.js 服务不因共享本规范而获得所列渠道的客户端发布能力；服务端只承担已确认的登录、支付或其他接口职责。
+
+TapTap 先通过 CLI 查询目标应用当前支持的包体类型，再匹配真实引擎产物；CLI 可上传某种文件不证明该工程已支持对应宿主。管理端 CLI 与客户端 SDK 分开交付：不把 TapTap 凭据放入游戏，不为管理端操作添加运行时渠道选择器或空 SDK 适配器。按专项串联命令发现、身份定位、资料／包体、审核与按需运营，普通渠道接入不自动开通小游戏或其他服务。
 
 官方包体／分包、工具与 SDK、目标 API、系统版本、资质、支付及审核要求会变化。实际接入与提审时查当前官方文档和对应后台，记录来源 URL、核对日期、适用版本／地区／终端和结论；本专项的资料核对日期为 2026-11-10，不把该日期当作持续有效的政策保证。
 
@@ -40,7 +43,7 @@ Unity／Cocos 先按锁定引擎版本核对官方 Web、小游戏适配或原�
 
 接入过程按[工具与能力核实](../../app-domain-toolkit/references/tool-capability-verification.md)分别证明指导资料、工具连接、实际操作和真实结果；Skill、开发工具或依赖已下载，不等于已有广告桥接、专用导出器或业务能力通过。候选准备按[实际构建输出绑定](release-readiness.md#实际构建输出与候选绑定)选择当前导出产物，避免旧包参与宿主验证。
 
-- 复用[独立 SDK 管理](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)：业务依赖登录、广告、支付、存储等稳定能力接口；每个渠道适配器独立管理宿主 API、初始化、回调和错误映射。只实现实际需求，不为五个平台预建一套空管理器。
+- 复用[独立 SDK 管理](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)：业务依赖登录、广告、支付、存储等稳定能力接口；每个渠道适配器独立管理宿主 API、初始化、回调和错误映射。只实现实际需求，不为所有渠道预建一套空管理器；仅使用管理端 CLI 的任务不增加客户端 SDK。
 - 构建时确定导出方案、支持平台范围与环境；支持同包复用时由运行时平台判断选择配置和 SDK，确需专用工程时分别导出。按实际平台隔离应用 ID、广告位、包标识和入口，原生插件遵守真实打包边界。未选中平台不导入有副作用的 SDK，不向网页注入 `wx`／`tt` 替身冒充正式能力；不支持时返回明确受限结果，测试替身只用于测试。客户端公开配置与服务端秘密分开，AppSecret、会话密钥、私钥、商店 API 凭据不进入客户端包或日志。
 - 渠道 SDK 的真实初始化前置按锁定版本遵守，依赖它的调用须等其就绪；单 SDK 失败不阻断无关模块，不设置等待全部 SDK 的屏障或无限加载页。超时／失败明确恢复或限制对应能力，不能将超时视为初始化成功。平台加载事件是遥测，[应用内加载显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)和[系统启动屏](../../app-domain-toolkit/references/system-launch-screen.md)仍由各自所有者管理，不以事件上报代替内容可用。
 - 按实际宿主映射前后台、暂停、恢复、音频与输入；广告展示、系统窗口和业务暂停分别持有原因，恢复时不能误解除其他暂停。退出、重进或实例重建后，阻止旧回调回写失效页面／实例；已受理的交易和奖励由独立业务所有者按请求／交易身份核验并幂等结算，页面离开不等于取消订单，不能丢弃可信迟到通知。登录结果按当前身份和请求关联处理，不恢复已过期会话。不得把所有宿主的生命周期强行映射为同一个厂商事件。

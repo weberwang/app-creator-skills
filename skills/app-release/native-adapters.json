@@ -103,6 +103,12 @@
       "onDemand": true
     },
     {
+      "id": "taptap-cli",
+      "path": "references/channel-platforms/taptap.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "release",
       "path": "../app-domain-toolkit/references/release.md",
       "stacks": [

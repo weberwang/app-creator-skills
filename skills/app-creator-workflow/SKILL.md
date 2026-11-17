@@ -15,13 +15,13 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡／场景职责先形成结构、尺度与镜头依据，仅记录前期内容需求，不逐物件拆图生图。按[3D、2D 与 UI 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式工程白模搭建与 V1 功能验证，2D 使用平面布局和占位资源，UI 保持原流程；概念图可选。本批整体场景单次审查并经人工修改或确认后，再明确正式方向和生产交接、试接代表模块及分批替换。不自动确认或关闭设计任务，不等待全游戏设计完毕；实际机器合同缺口按该规范说明，不伪造阶段通过。
 
-可见内容先按共同权威[体验、视觉方向与意图表达](../app-asset-workflow/references/interface-intent.md#design-basis)，从本批真实用户行为、使用压力和适用状态形成有依据的视觉方向，区分硬约束、方向与探索空间，再决定文字、美术及制作输入。游戏在原方案确定判断、场景线索、行动、反馈及必要精确信息，区分世界物件、地面区域、角色附属、场景浮层和 HUD，交接真实状态显隐。白模调试标签不直接继承为正式画面。需要多方向比较时，按[候选视觉语言与生成约束](../app-asset-workflow/references/style-and-production.md)分别定义造型、比例、材质、明暗边缘、功能色、UI 图标与制作路线，沿用当前路线的候选数量；实际可读性和风格差异仍由用户判断。
+可见内容必须先按[通用分析的统一执行要求](references/professional-conventions.md#product-market-research)完成市场、竞品、受众与参考分析，已有有效结论核实后复用，只补查缺失或变化部分；再按共同权威[体验、视觉方向与意图表达](../app-asset-workflow/references/interface-intent.md#design-basis)，从本批真实用户行为、使用压力和适用状态形成有依据的视觉方向，区分硬约束、方向与探索空间，决定文字、美术及制作输入。游戏在原方案确定判断、场景线索、行动、反馈及必要精确信息，区分世界物件、地面区域、角色附属、场景浮层和 HUD，交接真实状态显隐。白模调试标签不直接继承为正式画面。需要多方向比较时，按[候选视觉语言与生成约束](../app-asset-workflow/references/style-and-production.md)分别定义造型、比例、材质、明暗边缘、功能色、UI 图标与制作路线，沿用当前路线的候选数量；实际可读性和风格差异仍由用户判断。
 
 游戏包含声音反馈时，由 [app-audio](../app-audio/SKILL.md) 按[音效设计与生产](../app-audio/references/sfx-production.md#design)从本批事件确定声音风格、分层和代表样本，再交接受控变体、动态混音及情境试听返修。影响机制理解的样本可在 V1 前探索，V1 验证真实触发；纯音频任务沿用模块／资源实施单元，不要求视觉设计稿或 V2/V3 确认。
 
 非游戏客户端仅在已确认需求包含声音时，按[App 音频工作流](../app-domain-toolkit/references/app-audio.md)区分提示音、内容播放、录音／语音及平台通知；先出本批方案并验证代表用例，再复用到实际消费者。无需求则跳过，不默认添加界面音效或背景音乐；音频功能不强制制作素材，前后台策略按用途决定。沿用当前栈真实能力，不调用未声明的 `app-audio` 原生模式；纯音频不新增视觉阶段。
 
-选定 CrazyGames、微信小游戏、抖音小游戏、Google Play 或 App Store 时，按[渠道平台接入](../app-release/references/channel-platform-integration.md)从需求、架构和基础工程安排实际适配任务，按本批能力验证并在最终候选逐渠道核对；普通项目不默认启用全部渠道，宿主 SDK 与 MAX 原生方案分别适用，不另建发布状态机。
+选定 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道平台接入](../app-release/references/channel-platform-integration.md)从需求、架构和基础工程安排实际适配任务，按本批能力验证并在最终候选逐渠道核对；TapTap 的开发者中心管理与运营按 [CLI 专项](../app-release/references/channel-platforms/taptap.md)执行。普通项目不默认启用全部渠道，宿主 SDK 与 MAX 原生方案分别适用，不另建发布状态机。
 
 以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素设计或可见表现，就从本次增量的 V0 开始；纯非视觉修改按实际影响处理，不重做无关宿主或全项目阶段。
 

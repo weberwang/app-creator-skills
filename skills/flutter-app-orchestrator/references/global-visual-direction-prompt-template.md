@@ -1,6 +1,6 @@
 # 全局视觉方向定位模板
 
-定义方向前，先按[产品市场调研](../../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或复核产品简报的 Market evidence，核对来源、竞品对比和设计依据；缺失时由产品策划补齐后再填写本模板。
+定义方向前，必须按[通用分析的统一执行要求](../../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或复核市场、竞品、受众与参考四项分析，将结论及来源关联产品简报的 Market evidence 与当前设计依据；有效结论核实后复用，缺失或变化部分由产品策划与视觉制作按职责补齐后再填写本模板。
 
 本模板仅按需整理设计输入，不要求用户先批准文字方向。首次定调或实质改版按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认由 imagegen 先生成一张专业代表页效果图，用户选图后忠实重建可编辑 Figma；只有用户明确要求比较时才按指定数量制作多方向，保持同任务、主要内容和视口并体现实质差异。展示真实效果图，由用户确认或明确选择／组合；原图确认并授权忠实还原后，结构核对即可继续 V3，不重复确认重建预览；局部增量复用有效方向。正式实现仍需 V1 功能验证，仅设计提案无需先建工程。
 
