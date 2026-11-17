@@ -19,11 +19,11 @@ description: "按已确认的玩法规则实现游戏状态、输入响应、实
 
 业务功能实施及 V1 不等待弹窗或 Toast 视觉交付，先提供当前用例必需的最小反馈。全局视觉设计稿冻结后按[弹窗公共设计方案](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)先确定所需弹窗公共方案、再设计 Toast，各自实现与验收后供业务接入，或复用已有有效组件；正式提示接入沿用统一接口、文案映射和生命周期，按当前实际宿主验证组合。
 
-1. 先定位玩法状态的唯一权威来源、输入入口、场景生命周期、存档接口和既有事件总线，复用已存在的实体与组件。
+1. 先定位玩法状态的唯一权威来源、输入入口、场景生命周期、存档接口和既有事件总线，复用已存在的实体与组件。按[稳定机制与内容装配](../app-creator-workflow/references/readable-functional-prototype.md#mechanism-content-assembly)区分规则组件、配置驱动内容与固定制作部分，先实现本批必要机制及数据消费，再接入正式表现，不等待图片拆解后逐关重建玩法或固定实例布局。
 2. 把规则写成状态表或前置条件—动作—结果：明确合法状态、边界数值、顺序、取消/重复输入及同时事件的优先级。
 3. 将输入采集、规则判定、状态变更、表现反馈和持久化分层；玩法真值只在权威逻辑中更新，动画与特效不反向驱动判定。
-   涉及新关卡或空间关系实质变化时，实施前读取[关卡与场景方案交接](../app-domain-toolkit/references/game-design-exploration.md#handoff)，消费结构草案与内容需求，3D 在同一正式工程先搭建或复用白模，2D 按平面布局及占位资源验证，UI 保持原流程；概念图可选。在 V1 按[本批可玩范围](../app-creator-workflow/references/readable-functional-prototype.md#大场景本批可玩范围与交接)验证路线、尺度、镜头和交互假设，覆盖已实现邻区连接及正式配置驱动的代表动态内容，并将实际约束与未实现边界交回两类设计职责；本批整体场景审查与人工确认后再安排模型或二维正式资源生产，不等待全世界及未来区域完成。
-4. 按单一玩法切片实施：先打通进入条件、主路径、失败/退出路径，再接入输入映射、音画反馈和局部提示。涉及关卡内容时按[内容生产](../app-domain-toolkit/references/game-content-playtesting.md#levels)核对正式数据/编辑器入口和实际消费者；需要批量或专用检查时按[工具选择](../app-domain-toolkit/references/game-content-playtesting.md#tools)复用现有能力，再补最小项目脚本。
+   涉及新的空间方案或空间、路线、镜头关系实质变化时，实施前读取[关卡与场景方案交接](../app-domain-toolkit/references/game-design-exploration.md#handoff)，消费结构草案与内容需求，3D 在同一正式工程先搭建或复用白模，2D 按平面布局及占位资源验证，UI 保持原流程；概念图可选。在 V1 按[本批可玩范围](../app-creator-workflow/references/readable-functional-prototype.md#大场景本批可玩范围与交接)验证路线、尺度、镜头和交互假设，覆盖已实现邻区连接及正式配置驱动的代表动态内容，并将实际约束与未实现边界交回两类设计职责；本批整体场景审查与人工确认后再安排模型或二维正式资源生产，不等待全世界及未来区域完成。仅新增关卡数据时复用有效宿主、组件及空间约束，按新增风险补充验证，不逐关重走空间设计与美术生产。
+4. 按单一玩法切片实施：先打通进入条件、主路径、失败/退出路径，再接入输入映射、音画反馈和局部提示。涉及关卡或配置驱动内容时按[内容生产](../app-domain-toolkit/references/game-content-playtesting.md#levels)核对正式数据/编辑器入口、配置实际生效及本批类别的创建与关键交互覆盖，复用有效证据；需要批量或专用检查时按[工具选择](../app-domain-toolkit/references/game-content-playtesting.md#tools)复用现有能力，再补最小项目脚本。
 5. 为关键状态转移补确定性测试或可重复手工步骤，覆盖极值、快速重复、暂停恢复、销毁/重载和存档回读。按[游戏 V1 专项验证](../app-domain-toolkit/references/game-characteristics.md#v1)从实际机制选择用例，优先验证最大不确定性，并将规则、对象、用例及真实结果交给 QA；3D 世界按前述白模路径，其他原型按风险选择，不等待正式美术。正式资源或实现调整时按[回归清单](../app-domain-toolkit/references/game-characteristics.md#regression)核对实际影响并复验，保留未受影响证据。
 6. 提交改动范围、状态/事件变化、可复现操作、实际验证输出及未覆盖风险；用户可感知的手感和画面仍交独立验收。
 
