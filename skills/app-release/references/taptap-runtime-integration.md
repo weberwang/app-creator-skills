@@ -40,7 +40,7 @@ TapTap 先纳入[全渠道 SDK 分类与多选确认](channel-sdk-selection.md)�
 | 登录 | 原生授权、账号绑定、静默恢复、取消／失效／退出；小游戏 `login` code 交服务端 `code2Session`，不把临时凭证当业务会话 | [登录](https://developer.taptap.cn/docs/sdk/taptap-login/features/)、[小游戏登录态](https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/login-management/) |
 | 实名认证／防沉迷 | 登录依赖、认证结果、账号切换、可玩时段、年龄与消费限制；有版号／暂无版号的开通路线分别核对 | [合规认证](https://developer.taptap.cn/docs/sdk/anti-addiction/features/) |
 | 正版／DLC | 启动校验、购买资格、查询和购买 DLC、权益更新；买断和消耗品内购不是同一能力 | [正版验证](https://developer.taptap.cn/docs/sdk/) |
-| 广告 | 按宿主选择 Tap 平台接口或 Dirichlet／TapADN；预加载与展示分离，无填充／失败立即返回，奖励只由有效完成结果幂等结算 | [广告路线](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
+| 广告 | 统一采用已选 Dirichlet 聚合，按[引擎与宿主](taptap-ad-integration.md)核对官方支持和已交付的适配；预加载与展示分离，奖励只由有效完成结果幂等结算 | [Dirichlet 聚合](https://ssp.dirichlet.cn/docs/dirichlet/)、[宿主广告路线](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
 | 内购 | 原生 Tap Payment／Unity Purchasing 与小游戏虚拟支付分别接线；商品、未完成订单、验单、补单、退款和权益同步归订单服务 | [原生内购](https://developer.taptap.cn/docs/sdk/tap-iap/overview/)、[小游戏支付](https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/payment/payment/) |
 | 云存档 | 创建／更新／删除／查询／下载；明确本地与云端冲突、存档版本、跨设备身份及失败恢复，不以最后一个回调盲目覆盖 | [云存档](https://developer.taptap.cn/docs/sdk/tap-cloudsave/features/) |
 | 排行榜／成就 | 提交成绩、查询与显示；成就解锁／增量和回调；榜单／成就 ID、素材及反作弊按业务定义 | [排行](https://developer.taptap.cn/docs/sdk/leaderboard/features/)、[成就](https://developer.taptap.cn/docs/sdk/achievement/features/) |

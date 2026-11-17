@@ -12,7 +12,7 @@
 | --- | --- |
 | 微信渠道 | 登录与账号、必要授权、平台广告、虚拟／米大师支付、分享／邀请、关系链与群能力、客服／订阅、平台排行与用户云存储、开放数据通信、渠道事件与平台统计 |
 | CrazyGames 渠道 | Ad、Banner、Game 平台事件与邀请、User、Data 平台存档、Analytics 订单上报、Store |
-| TapTap | Unity 官方 C# 模块、Tap 小游戏具名 TypeScript 能力，以及 Node.js 服务端协议；登录、合规、变现、存档／排行／成就、社区和运营按[实际覆盖](taptap-runtime-integration.md#能力选择与完成条件)选择，不预建未支持语言的空桥接 |
+| TapTap | Unity 官方 C# 模块、Tap 小游戏具名 TypeScript 能力，以及 Node.js 服务端协议；登录、合规、变现、存档／排行／成就、社区和运营按[实际覆盖](taptap-runtime-integration.md#能力选择与完成条件)选择；广告统一采用 Dirichlet 聚合，按[引擎与宿主路线](taptap-ad-integration.md)核对，不预建未支持语言的空桥接 |
 | Google Play | Android 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；Billing、Play Games Services 等商店原生能力另列实际覆盖 |
 | App Store | iOS 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；StoreKit、Sign in with Apple 等商店原生能力另列实际覆盖 |
 | 引擎基础能力 | 网络、文件、音频、渲染、普通输入、设备／系统信息及通用本地存储；渠道层不重新封装 |

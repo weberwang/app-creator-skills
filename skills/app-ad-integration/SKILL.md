@@ -11,14 +11,14 @@ description: "规划广告展示位置、频次、同意与失败回退，并在
 
 ## 输入
 
-- 已确认广告需求及目标渠道。受支持的 Android／iOS 原生聚合在 AdMob 与 AppLovin MAX 中显式二选一，复用[按引擎的移动 SDK 实现](../app-domain-toolkit/references/mobile-sdk-integration.md)；固定七项网络仅约束 MAX；CrazyGames、微信／抖音小游戏按[渠道平台规范](../app-release/references/channel-platform-integration.md#隐私与商业能力)使用对应平台广告，未选能力不接入。[归因与广告直接启动和调用](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)
+- 已确认广告需求及目标渠道。明确采用对应移动原生聚合路线时，在 AdMob 与 AppLovin MAX 中显式二选一，复用[按引擎的移动 SDK 实现](../app-domain-toolkit/references/mobile-sdk-integration.md)；固定七项网络仅约束 MAX。TapTap 广告统一采用 Dirichlet 聚合，CrazyGames、微信／抖音小游戏按[渠道平台规范](../app-release/references/channel-platform-integration.md#隐私与商业能力)使用对应平台广告，未选能力不接入。[归因与广告直接启动和调用](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)
 - 目标平台和各渠道适用的广告格式；广告类型/变现目标；隐私同意和地区要求；页面/关卡节奏及测试广告标识。
 
 ## 共用操作步骤
 
 广告属于当前[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)的一部分；先将适用广告格式、供应商、依赖和互斥合并进本批多选清单，复用用户已有明确决定。待选项未确认时只准备方案，不安装／复制广告 SDK 或接初始化与业务；确认后与其他已选 SDK 统一安排接入，运行时仍独立初始化。
 
-TapTap 广告先按[运行时与宿主路线](../app-release/references/taptap-runtime-integration.md)和[广告开通材料](../app-release/references/taptap-materials-policy.md)区分平台接口、H5／星火／制造及 Dirichlet／TapADN。只有明确选择本页移动原生聚合路线时才执行 AdMob／MAX 二选一；不为 TapTap 项目自动改用这两者，不把 Tap 小游戏代码当已实现的 APK 联盟桥接。缺少非个性化配置或授权依据时限制受影响请求，不能以开通账户或测试填充推定满足。
+TapTap 广告统一采用用户已确定的 Dirichlet 聚合，按[引擎与宿主适配路线](../app-release/references/taptap-ad-integration.md)接入真实聚合 SDK 或受支持的 Tap 小游戏媒体接口，材料按[广告开通](../app-release/references/taptap-materials-policy.md)核实；H5／星火／制造的平台接口存在不代表已支持聚合。无需再询问聚合方案，也不为 TapTap 广告改用 AdMob／MAX 或套用 MAX 固定七网络；不把 Tap 小游戏代码当已实现的 APK 聚合桥接。缺少宿主支持、非个性化配置或授权依据时限制受影响请求，继续独立工作。
 
 1. 列出横幅、插页、激励广告等候选广告位，标明触发条件、离开/关闭行为、奖励结果和不能插入的高风险操作时刻。
 2. 按[归因与广告直接启动和调用](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)独立启动广告 SDK，业务触发时直接调用广告能力。不因普通接入擅自新增 CMP；已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。实际授权限制按[隐私流程与 SDK 解耦](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)复用现有授权来源，通过策略接口接收用户同意、可用地区及儿童/隐私限制，不默认新增隐私弹窗或同意管理业务；授权缺失只限制需要授权的能力，广告业务层不自行管理隐私交互或同意状态；明确采用 SDK 内建隐私流程时，通过独立隐私能力与适配器按官方路径执行并同步真实状态，不把 SDK 状态作为应用授权的唯一权威。初始化本身需要授权时也须等待，未同意时不加载需要同意的跟踪/广告请求，撤回时阻止新请求并处理在途任务。

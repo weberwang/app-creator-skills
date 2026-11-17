@@ -168,6 +168,7 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
     'skills/app-release/assets/channel-sdks/nodejs/taptap/index.mjs',
     'skills/app-release/assets/channel-sdks/nodejs/taptap/signature.mjs',
     'skills/app-release/references/taptap-runtime-integration.md',
+    'skills/app-release/references/taptap-ad-integration.md',
     'skills/app-release/references/taptap-materials-policy.md',
     'skills/app-release/references/channel-sdk-selection.md',
     'skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs',

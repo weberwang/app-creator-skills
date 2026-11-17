@@ -91,7 +91,7 @@ TapTap 渠道后台以[官方 CLI](https://developer.taptap.cn/v3/cli/)为实现
 
 ## 隐私与商业能力
 
-TapTap 按[运行时专项](taptap-runtime-integration.md)分别选择平台广告、Dirichlet／TapADN、原生内购、小游戏虚拟支付和买断／DLC，按[材料政策](taptap-materials-policy.md)核实资格。下文 AdMob／MAX 二选一仅适用于实际采用该移动原生聚合方案的项目，不取代 TapTap 已确认路线；TapDB 与已有分析／归因也按实际消费者避免重复采集和上报。
+TapTap 广告统一采用 [Dirichlet／TapADN 聚合方案](https://ssp.dirichlet.cn/docs/dirichlet/)，按[引擎与宿主适配](taptap-ad-integration.md)接入 Unity 官方聚合插件、小游戏接口或各引擎真实原生桥接；不再将非聚合作为候选。宿主尚无已证实的聚合路线时记录缺口，不自动替换供应商。原生内购、小游戏虚拟支付和买断／DLC 仍按[运行时专项](taptap-runtime-integration.md)及[材料政策](taptap-materials-policy.md)核实。下文 AdMob／MAX 二选一仅适用于实际采用该移动原生聚合方案的项目，不取代 TapTap 已确认路线；TapDB 与已有分析／归因也按实际消费者避免重复采集和上报。
 
 隐私指引、权限用途、数据声明及实际 SDK 行为须一致，按[隐私解耦规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)处理。平台明确要求的必要授权与业务交互须在当前接入方案中明确并满足，不能用“默认不新增隐私流程”跳过；未满足时限制对应能力或阻断相关候选，不伪造用户同意，也不扩建无关隐私中心。拒绝、未决定、撤回及读取失败按适用接口验证，平台授权、系统权限和应用同意分别记录。
 

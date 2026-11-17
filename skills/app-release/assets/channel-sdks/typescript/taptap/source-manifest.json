@@ -19,6 +19,8 @@
     "leaderboard": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/leaderboard-tutorial/"
   },
   "limitations": [
+    "广告为 Cocos、Phaser、Three.js 已适配的真实小游戏宿主接口封装；统一使用 Dirichlet 聚合，媒体开通、广告位资格及实际展示另行核实，不提供 APK 原生聚合桥接。",
+    "广告用途授权与非个性化策略由项目按实际宿主落实；现有接口封装不能证明这些限制已满足。",
     "分享事件文档的标题与示例调用名、参数互相矛盾，不臆造回调约定。",
     "小游戏数据上报的具名 API 尚未核实，不沿用微信方法。",
     "激励广告关闭回调没有展示身份，无法从接口证明跨请求异常迟到重复关闭的归属；失败展示隔离至收到其关闭事件，若始终无关闭回调则不能安全恢复。",

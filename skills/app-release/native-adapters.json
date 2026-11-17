@@ -121,6 +121,12 @@
       "onDemand": true
     },
     {
+      "id": "taptap-ad-integration",
+      "path": "references/taptap-ad-integration.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo"],
+      "onDemand": true
+    },
+    {
       "id": "taptap-materials-policy",
       "path": "references/taptap-materials-policy.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "nodejs"],

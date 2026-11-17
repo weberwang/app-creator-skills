@@ -9,8 +9,8 @@
 | 主体认证 | 个人的姓名、地址、身份证明和联系方式；企业的营业执照、认证公函、联系方式等，以当前表单为准 | 缺项检查与材料整理；已有认证直接复用 | [开发者入驻](https://developer.taptap.cn/docs/store/) |
 | 应用与登录 | 正确应用身份、包名／签名等配置，后台开通登录及账号权限；不因接登录单独索要收款材料 | SDK、授权登录、会话、退出和账号绑定；真实 ID 缺失时不能假称联调通过 | [登录](https://developer.taptap.cn/docs/sdk/taptap-login/features/) |
 | 实名／防沉迷 | 后台开通对应方案；有版号时完成中宣部系统注册、接口测试／审核和凭证配置；无版号按相应方案办理 | 登录依赖、认证／可玩时段／年龄／消费控制、测试账号路径 | [合规认证](https://developer.taptap.cn/docs/sdk/anti-addiction/features/) |
-| H5／星火／制造广告 | 完成认证与财务主体、收款账户和开户行等信息，申请广告开通 | 真实平台广告接口、展示与奖励规则、无填充和失败恢复 | [广告开通](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
-| APK／Tap 小游戏广告 | 按 Dirichlet／TapADN 对应入驻、账户、应用及广告位要求核实；不套用 H5 开通表单 | 已核实宿主的适配代码；未交付原生联盟桥接时明确缺口，不改用 MAX 冒充 | [广告路线](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
+| H5／星火／制造广告 | 完成认证与财务主体、收款账户和开户行等信息，申请广告开通；核实所选 Dirichlet 聚合是否支持该宿主 | 按[引擎与宿主路线](taptap-ad-integration.md)准备真实聚合适配及展示、奖励、失败恢复；宿主支持未知时记录缺口 | [广告开通](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
+| APK／Tap 小游戏广告 | 按 Dirichlet 聚合对应入驻、账户、应用及广告位要求核实；不套用 H5 开通表单 | 按[引擎与宿主路线](taptap-ad-integration.md)复用可用聚合适配；未交付桥接或宿主聚合支持未知时明确缺口 | [Dirichlet 聚合](https://ssp.dirichlet.cn/docs/dirichlet/)、[广告路线](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/) |
 | Android 原生内购 | 营业执照、法人及必要受益人／管理员证件、版号、软著、适用授权、联系方式、结算账户；二级商户开户、审核与签约 | 支付 UI、订单／履约／补单／退款接口；商品和真实账户需开通后联调 | [创建商户](https://developer.taptap.cn/docs/sdk/tap-iap/create-merchant/) |
 | 微信 App 支付 | 额外提供微信开放平台 AppID、已开放下载的商店页和游戏／支付截图，管理员完成扫码、验证及签约；当前指南要求上线后申请。未上线可先按条件开通支付宝 | 共用内购接入代码、支付页面及截图采集准备；实际画面由用户人工检查 | [商户申请细则](https://developer.taptap.cn/docs/sdk/tap-iap/create-merchant/) |
 | 小游戏虚拟支付 | 认证个体工商户或企业、实名、版号／软著、提现账户、管理员及协议签约；确认目标应用有权限 | 商品、服务端签名／验单、幂等发货和沙箱接线 | [虚拟支付](https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/payment/payment/) |

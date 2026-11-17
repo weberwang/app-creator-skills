@@ -14,8 +14,12 @@ const SDK_SELECTION = 'app-release/references/channel-sdk-selection.md';
 const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
 /** TapTap 运行时与材料规范必须随单栈分发，链接不能只在维护仓库成立。 */
-const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md']
+const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md', 'taptap-ad-integration.md']
   .map((name) => `app-release/references/${name}`);
+/** 广告适配只面向真实客户端栈，不向服务端或设备端声明可运行能力。 */
+const TAPTAP_AD_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo']);
+/** 发布和广告入口共同发现同一份按引擎接入规范。 */
+const TAPTAP_AD = 'app-release/references/taptap-ad-integration.md';
 const MAX = 'app-domain-toolkit/references/reference-ad-applovin-max-contract.md';
 const MAX_STACKS = new Set(['cocos', 'phaser', 'threejs']);
 const ENTRIES = [
@@ -86,6 +90,9 @@ for (const stack of STACKS) {
           assert.ok(!loaded.documents.some((entry) => entry.path === path), '未选 TapTap 时不自动展开运行时手册');
         }
       }
+      const tapAd = loaded.resources.find((entry) => entry.path === TAPTAP_AD);
+      assert.equal(Boolean(tapAd?.available), TAPTAP_AD_STACKS.has(stack), `${stack} 的 TapTap 广告路由必须符合客户端范围`);
+      assert.ok(!loaded.documents.some((entry) => entry.path === TAPTAP_AD), '未选择 TapTap 广告时只发现路径，不自动展开正文');
       assert.ok(!loaded.documents.some((entry) => PLATFORMS.includes(entry.path)), '未选渠道不应自动展开所有平台正文');
       assert.ok(!loaded.documents.some((entry) => /^app-stack-/.test(entry.path) && !entry.path.startsWith(`app-stack-${stack}/`)), '单栈模式不应加载其他栈原生手册');
       if (!['cocos', 'phaser'].includes(stack)) assert.ok(!loaded.documents.some((entry) => entry.path === COMMON), '非直接引用的总规范应按需读取');
@@ -100,6 +107,8 @@ for (const stack of STACKS) {
         assert.match(loaded.when, /不使用此模式/);
         assert.ok(loaded.resources.some((entry) => entry.path === COMMON && entry.available), '渠道广告规则必须可按需找到');
         assert.ok(loaded.resources.some((entry) => entry.path === MAX && entry.available), '保留实际采用 MAX 时的原有合同');
+        assert.ok(loaded.resources.some((entry) => entry.path === TAPTAP_AD && entry.available), '广告入口必须能按需发现本引擎的 TapTap 路线');
+        assert.ok(!loaded.documents.some((entry) => entry.path === TAPTAP_AD), 'MAX 原生模式不得自动加载 TapTap 广告规范');
         assert.ok(extractMarkdownSection(readFileSync(join(root, MAX), 'utf8'), '非个性化广告请求').trim());
       }
     }
@@ -111,5 +120,15 @@ for (const stack of STACKS) {
     try {
       assert.throws(() => loadNativeMode({ skillsRoot: root, stack, capability: 'app-release', sourceSkill: routes[0].sourceSkill }), /不存在/);
     } finally { renameSync(hidden, current); }
+
+    if (TAPTAP_AD_STACKS.has(stack)) {
+      // 已声明的广告资料缺失时必须暴露安装损坏，不能借用维护仓库兜底。
+      const adCurrent = join(root, TAPTAP_AD);
+      const adHidden = `${adCurrent}.temporarily-unavailable`;
+      renameSync(adCurrent, adHidden);
+      try {
+        assert.throws(() => loadNativeMode({ skillsRoot: root, stack, capability: 'app-release', sourceSkill: routes[0].sourceSkill }), /不存在/);
+      } finally { renameSync(adHidden, adCurrent); }
+    }
   });
 }
