@@ -4,14 +4,18 @@
 
 ## 工具与身份
 
+开发者中心管理统一通过[官方 TapTap CLI](https://developer.taptap.cn/v3/cli/)实现，直接复用其内置 Skill、命令、上传任务与错误处理，不为已覆盖能力另写 HTTP 客户端、登录流程、上传器或浏览器自动化。CLI 未覆盖的能力先记录缺口，再按用户所需操作核实官方支持途径；确需账号持有人处理的证件、签约或授权继续交人工，不以非公开接口绕过限制。
+
 运行时 SDK 在执行接入前先按[全渠道分类与多选确认](../channel-sdk-selection.md)列出本次宿主的必接依据与可选能力，等待整套范围确认后统一按语言／引擎复用。APK 合规义务不等于无条件使用 TapTap 登录，PC、小游戏、H5 与 TapPlay 的必接不同；广告、支付、存档、社交和运营能力的依赖、材料及代码缺口一并展示。CLI 管理任务按已有授权独立推进，不把 CLI 授权当作 SDK 选择或后台商业服务开通授权。
 
 先检查当前环境是否已有 `taptap-cli`，复用已有安装和登录状态；没有时按[官方安装说明](https://developer.taptap.cn/v3/cli/)安装，然后重新检查版本。全局安装会修改本机环境，遵守项目环境约束；不要在项目依赖或客户端包内保存 CLI 凭据。
 
 ```text
 taptap-cli version
+taptap-cli doctor --offline --json
 taptap-cli auth status
 taptap-cli skills list
+taptap-cli skills read taptap-cli
 taptap-cli --help
 ```
 
@@ -22,6 +26,8 @@ npm i -g @taptap/cli --registry=https://registry.npmjs.org/
 未登录时使用 `taptap-cli auth login --no-wait --json` 获取授权链接，由账号持有人完成授权，再按返回的 resume 参数继续；不要猜测授权完成或在日志、仓库、工单中保存令牌、cookie、设备码及敏感材料。登录状态、权限及服务不可用分别处理；不得切换账号或绕过权限来继续。
 
 CLI 内置 Skill 与安装版本对应。按任务用 `taptap-cli skills read <skill-name>` 读取对应能力；再用 `taptap-cli <service> --help`、`taptap-cli <service> <method> --help` 和 `taptap-cli schema <service> <method>` 核对当前方法、参数、风险和返回值。文中示例的尖括号是待替换的真实值；遇到当前版本没有的方法，记录受限项并查官方资料，不自行编造命令。不要自动更新 CLI 或同步安装其他全局工具。
+
+`doctor --offline --json` 仅诊断本地环境，不能证明账号权限或远端业务可用；仍须通过真实只读查询确认目标。后续命令在当前帮助支持时使用 `--json` 获取结构化结果，保留脱敏输出与退出码，不依赖终端展示文本编写解析器。
 
 先查询当前账号可访问主体，再按主体查询游戏；明确目标后在后续命令中传入真实 `--dev-id` 和 `--app-id`，不依赖历史上下文猜测或从多个同名候选中擅自选择。
 
@@ -60,6 +66,8 @@ taptap-cli upload ./icon.png --dev-id <developerId> --app-id <appId> --idempoten
 ## 包体与测试入口
 
 读取 `taptap-package-management` 和目标命令 schema，先查询 `package-management get-available-package-types`，只处理当前应用实际返回的类型。未列出或权限不足时核实原因，不换其他类型试探。核对候选文件、签名、包名、版本及当前应用身份并关联同一发布候选；实际上传和绑定分别属于外部写入。
+
+`package-management get-or-create-mini-app` 会创建开放平台 Client 并开通 TapDB，不是只读查询或普通上传前置。只有小游戏接口明确因未开通而失败，且用户明确要求开通这些能力时才按当前 schema 调用；不得为消除报错自动执行。
 
 ```text
 taptap-cli schema package-management get-available-package-types
@@ -115,9 +123,17 @@ taptap-cli schema player-feedback list-player-reviews
 taptap-cli community-management list-community-moments --dev-id <developerId> --app-id <appId> --page 1 --page-size 20
 ```
 
+## 接入现有发布工作流
+
+继续使用[发布准备与实际上线](../../../app-creator-workflow/references/workflow.md#发布准备与实际上线)的既有合同，不新增 TapTap 专用状态机或控制器字段。CLI 负责实际后台操作，工作流控制器只核对任务、授权及证据，不因选中渠道或进入 RELEASE 自动调用外部写入。
+
+- 检查与候选准备沿用 `releaseIntent=prepare`。在当前发布材料关联 CLI 版本、真实开发者／应用身份、候选校验值、包体／版本标识、实际命令及脱敏结果；`release-preparation` 引用既有交付材料与检查证据，不用 dry-run、上传成功或预检通过填报已上线。
+- 实际发布沿用 `releaseIntent=publish`、F4 与已授权的准确目标。执行后查询实际发布状态，确认真实版本及可见结果，再按现有 `release-result` 记录真实 `releaseIdentifier` 和证据；审核中、定时待生效或结果未知时不能提前登记发布完成。
+- 渠道管理证据与游戏内 SDK、真实宿主、真机及人工视觉结论分别记录。缺少账号、权限或外部操作授权时，继续完成可独立准备的文案、材料和本地候选，明确尚未执行的具体操作。
+
 ## 官方资料
 
-资料核对：2026-11-16。能力、授权和字段可能随 CLI 与后台变化，执行时以当前版本的帮助、schema、随包 Skill 和官方页面为准。
+资料核对：2026-11-17。能力、授权和字段可能随 CLI 与后台变化，执行时以当前版本的帮助、schema、随包 Skill 和官方页面为准。
 
 - [CLI 概览](https://developer.taptap.cn/v3/cli/)与[命令参考](https://developer.taptap.cn/v3/cli/command-reference/)。
 - [创建游戏](https://developer.taptap.cn/v3/cli/skills/taptap-publish-game/)、[资料与版本](https://developer.taptap.cn/v3/cli/skills/taptap-app-edit/)、[上架资质](https://developer.taptap.cn/v3/cli/skills/taptap-qualification/)、[素材库](https://developer.taptap.cn/v3/cli/skills/taptap-asset-library/)、[包体管理](https://developer.taptap.cn/v3/cli/skills/taptap-package-management/)。

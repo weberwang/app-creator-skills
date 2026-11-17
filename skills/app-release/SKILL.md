@@ -9,7 +9,7 @@ description: "为游戏或应用准备可追溯候选版本，核对第三方配
 
 SDK 统一遵守[必须项与可选多选确认](references/channel-sdk-selection.md)：规格期集中展示所有已选渠道的必接依据、可选能力和依赖／材料／代码缺口，等待用户确认整套范围后再统一接入。发布准备核对实际依赖与该确认一致；已有明确选择沿用，未回复不代选，渠道确定不等于选择全部 SDK。
 
-TapTap 的创建游戏、资料与资质、素材和包体、审核发布、测试计划、数据、评价及社区运营按[TapTap CLI 专项](references/channel-platforms/taptap.md)执行。游戏内登录、合规、商业与生态能力按[运行时与语言代码复用](references/taptap-runtime-integration.md)实施，开发者证件、资质、商户及签约按[材料与政策](references/taptap-materials-policy.md)核查。直接复用官方 CLI 与当前版本随包技能，先发现命令并核实 schema，再在已授权范围内操作；CLI 管理不替代游戏内 SDK 接入。
+TapTap 渠道后台操作统一使用[官方 CLI](https://developer.taptap.cn/v3/cli/)，创建游戏、资料与资质、素材和包体、审核发布、测试计划、数据、评价及社区运营按[TapTap CLI 专项](references/channel-platforms/taptap.md)执行。先读取当前安装版本的内置技能并核实 schema，直接执行官方命令，不为已覆盖能力另写 HTTP 客户端或浏览器自动化。游戏内登录、合规、商业与生态能力按[运行时与语言代码复用](references/taptap-runtime-integration.md)实施，开发者证件、资质、商户及签约按[材料与政策](references/taptap-materials-policy.md)核查；CLI 管理不替代游戏内 SDK 接入。
 
 同一导出方案支持多平台宿主时，按[运行时平台选择](references/channel-platform-integration.md#导出方案与运行时平台选择)复用同一产物，运行时识别平台后仅加载对应 SDK；发布矩阵仍分别记录各宿主的实际验证，平台判断不代替专用引擎适配或原生打包。
 
