@@ -23,7 +23,7 @@ TapTap 先纳入[全渠道 SDK 分类与多选确认](channel-sdk-selection.md)�
 
 | 工程／语言 | 复用资源与边界 |
 | --- | --- |
-| Unity C# | [Unity 源码](../assets/channel-sdks/unity/)直接调用官方 TapSDK 类型，按模块编译符号隔离；Core／Login 及实际选用模块通过官方 UPM 包引入，不复制厂商 SDK。以模块来源清单锁定版本和平台；Unity 不存在官方 Share 模块时不伪造分享封装 |
+| Unity C# | [Unity 源码](../assets/channel-sdks/unity/)直接调用官方 TapSDK 类型，按模块编译符号隔离；Core／Login 及实际选用模块通过官方 UPM 包引入。广告另用[官方 Unity 聚合 SDK 的可复用封装](taptap-ads-usage.md#unity-使用)，不把通用 TapSDK 当广告 SDK。以模块来源清单锁定版本和平台；Unity 不存在官方 Share 模块时不伪造分享封装 |
 | Cocos Creator TypeScript | Tap 小游戏使用[本引擎接口](../assets/channel-sdks/typescript/engines/cocos/)及[共享 Tap 实现](../assets/channel-sdks/typescript/taptap/)；前提是 Creator 的实际小游戏导出和宿主已验证。原生 APK／iOS 需要真实 Java／Swift／Objective-C 桥接，不能拿小游戏 `tap` API 代替 |
 | Phaser／Three.js TypeScript | 分别使用[Phaser 接口](../assets/channel-sdks/typescript/engines/phaser/)／[Three.js 接口](../assets/channel-sdks/typescript/engines/threejs/)和共享 Tap 实现；必须先证实无 DOM/BOM 的小游戏 VM 可运行实际产物。普通 H5、WebView 和 Tap 小游戏分别判定，不能注入假的 `tap` 对象冒充支持 |
 | Node.js JavaScript／TypeScript | [服务端协议源码](../assets/channel-sdks/nodejs/)负责登录凭证交换、已核实协议的签名／验签、回调解析及解密。源文件仅在服务端使用；导入不启动服务，不自动存储账号、发货或注册路由 |

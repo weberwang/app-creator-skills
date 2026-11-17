@@ -12,7 +12,7 @@
 | --- | --- |
 | 微信渠道 | 登录与账号、必要授权、平台广告、虚拟／米大师支付、分享／邀请、关系链与群能力、客服／订阅、平台排行与用户云存储、开放数据通信、渠道事件与平台统计 |
 | CrazyGames 渠道 | Ad、Banner、Game 平台事件与邀请、User、Data 平台存档、Analytics 订单上报、Store |
-| TapTap | Unity 官方 C# 模块、Tap 小游戏具名 TypeScript 能力，以及 Node.js 服务端协议；登录、合规、变现、存档／排行／成就、社区和运营按[实际覆盖](taptap-runtime-integration.md#能力选择与完成条件)选择；广告统一采用 Dirichlet 聚合，按[引擎与宿主路线](taptap-ad-integration.md)核对，不预建未支持语言的空桥接 |
+| TapTap | Unity 官方 C# 模块、Tap 小游戏具名 TypeScript 能力，以及 Node.js 服务端协议；广告统一采用 Dirichlet 聚合，已有[Unity 官方聚合封装及三引擎 Android 接线](taptap-ads-usage.md)。登录、合规、存档／排行／成就、社区和运营按[实际覆盖](taptap-runtime-integration.md#能力选择与完成条件)选择，不预建未支持语言的空桥接 |
 | Google Play | Android 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；Billing、Play Games Services 等商店原生能力另列实际覆盖 |
 | App Store | iOS 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；StoreKit、Sign in with Apple 等商店原生能力另列实际覆盖 |
 | 引擎基础能力 | 网络、文件、音频、渲染、普通输入、设备／系统信息及通用本地存储；渠道层不重新封装 |
@@ -36,6 +36,8 @@ TypeScript 三引擎分别定义 `engines/<engine>/channel-capabilities.ts`，�
 ## 接入正式工程
 
 执行本节复制源码、安装官方依赖或接线前，先完成[集中 SDK 分类与多选确认](channel-sdk-selection.md)。工具支持某能力或本目录已有实现不代表用户已选择；仍有待选项时整批接入先等待，不先复制必接或推荐 SDK。确认后按当前引擎统一接入必接项、已选项及必要依赖，未选项不引入官方依赖或初始化副作用；已有明确范围不重复询问。
+
+先按真实引擎、版本和导出目标检查已安装的官方 SDK；缺少的由实施代理按官方安装方式下载／解析并导入正式工程，随后复制本工作流封装并接线。TapTap 广告按[引擎下载映射](taptap-ad-integration.md#按引擎下载并使用官方-sdk)执行。下列安装器仅复制自有源码，不能代替厂商 SDK 获取；接入完成需有真实依赖版本、安装／导入位置及编译或构建证据。
 
 在项目根目录执行已安装脚本，`--engine` 只选实际引擎：
 

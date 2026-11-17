@@ -160,6 +160,10 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
   catalog.stacks.unity.capabilitySkills.push('app-release');
   const paths = [
     'skills/app-release/scripts/install-channel-sdks.mjs',
+    'skills/app-release/scripts/install-taptap-ads.mjs',
+    'skills/app-release/scripts/taptap-project-files.mjs',
+    'skills/app-skill-runtime/unity-source-output.mjs',
+    'skills/app-release/scripts/download-taptap-ads-sdk.mjs',
     'skills/app-release/assets/channel-sdks/unity/WechatMinigameChannel.cs',
     'skills/app-release/assets/channel-sdks/typescript/crazygames-channel.ts',
     'skills/app-release/assets/channel-sdks/typescript/taptap/api.ts',
@@ -169,6 +173,11 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
     'skills/app-release/assets/channel-sdks/nodejs/taptap/signature.mjs',
     'skills/app-release/references/taptap-runtime-integration.md',
     'skills/app-release/references/taptap-ad-integration.md',
+    'skills/app-release/references/taptap-ads-usage.md',
+    'skills/app-domain-toolkit/assets/mobile-sdks/dirichlet/source-manifest.json',
+    'skills/app-domain-toolkit/assets/mobile-sdks/unity/DirichletManager.cs',
+    'skills/app-domain-toolkit/assets/mobile-sdks/dirichlet/typescript/dirichlet-sdk.ts',
+    'skills/app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/core/org/appcreator/dirichlet/DirichletAndroidVendor.java',
     'skills/app-release/references/taptap-materials-policy.md',
     'skills/app-release/references/channel-sdk-selection.md',
     'skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs',

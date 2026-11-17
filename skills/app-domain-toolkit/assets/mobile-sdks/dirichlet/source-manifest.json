@@ -1,0 +1,46 @@
+{
+  "sdk": "Dirichlet / TapADN 聚合",
+  "version": "5.3.3.0",
+  "verifiedAt": "2026-11-17",
+  "sources": {
+    "overview": "https://ssp.dirichlet.cn/docs/dirichlet/",
+    "downloads": "https://ssp.dirichlet.cn/docs/resource-download/",
+    "unity": "https://ssp.dirichlet.cn/docs/dirichlet-mediation-sdk/dirichlet-mediation-sdk-guide-unity/",
+    "android": "https://ssp.dirichlet.cn/docs/dirichlet-mediation-sdk/dirichlet-sdk-guide/",
+    "privacy": "https://ssp.dirichlet.cn/docs/personalized/"
+  },
+  "artifacts": {
+    "unity": {
+      "file": "dirichlet_mediation_unity_5.3.3.0.unitypackage",
+      "url": "https://tapad-platform.tapimg.com/sdk/unity/dirichlet_mediation_unity_5.3.3.0.unitypackage",
+      "sha256": "77cf22602a8c0caa3c6ae544405886bdec1382f6f8d3d2fbfb84e34cb9d3c996"
+    },
+    "unityIos": {
+      "version": "5.3.0.1",
+      "file": "dirichlet_mediation_unity_5.3.0.1.unitypackage",
+      "url": "https://tapad-platform.tapimg.com/sdk/unity/dirichlet_mediation_unity_5.3.0.1.unitypackage",
+      "sha256": "325df4ae3545d0581c74bb133693c112aee92967941d30312320c3684f882ece"
+    },
+    "android": {
+      "file": "dirichlet_ad_mediation_5.3.3.0.zip",
+      "url": "https://tapad-platform.tapimg.com/sdk/dirichlet_mediation/dirichlet_ad_mediation_5.3.3.0.zip",
+      "sha256": "a9128f0af8290f8a15dad237525b25f017c7b0bc48fa6515a6ee602a5993c827"
+    }
+  },
+  "coverage": {
+    "unityNative": "官方 Unity 聚合 C# 接口，复用 IMobileAds；实际平台与隐私前置由项目核实",
+    "cocosNative": "Android SDK 核心及本引擎 JSB 桥",
+    "phaserNative": "Android SDK 核心及 Capacitor 插件，本引擎独立入口",
+    "threejsNative": "Android SDK 核心及 Capacitor 插件，本引擎独立入口",
+    "minigameTypeScript": "复用 app-release 的现有 Tap 小游戏具名接口，不另造广告宿主"
+  },
+  "limitations": [
+    "奖励回调只保证当前原生/JS 所有者存活时关联原请求；WebView 或应用进程销毁后的持久化重放与业务发奖由项目另行实现。",
+    "Android/TypeScript 关闭后未获得可信奖励终态的记录保留至结算，累计到 128 条时限制新展示，不以超时或未验证回调推定完成。",
+    "Unity iOS 按官方手册选用 5.3.0.1，Android 选用 5.3.3.0；各平台单独锁定下载版本，不以资源页最新版本覆盖平台支持条件。",
+    "不分发官方二进制；下载器只获取与引擎匹配的固定官方包并验证 SHA256。",
+    "Cocos、Phaser 和 Three.js 的原生壳实现当前只交付 Android；iOS 不冒充已实现。",
+    "公开 Unity 小游戏 SDK 2.0.21 固定提交 e491afd44549f387aeb8c0e5e78878af1e1f6716 未找到官方广告文档所示 C# 类型，不能凭文档生成可编译桥。",
+    "编译与替身测试不代表真实宿主、广告填充、后台开通、商业交易或人工视觉验收通过。"
+  ]
+}

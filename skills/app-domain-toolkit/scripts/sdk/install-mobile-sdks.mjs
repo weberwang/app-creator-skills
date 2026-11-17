@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 /** 将移动 SDK 具体实现接入正式工程；不安装供应商包或修改原生宿主配置。 */
 import { existsSync, lstatSync, mkdirSync, readFileSync, readdirSync, unlinkSync, writeFileSync } from 'node:fs';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectEntry } from '../../../app-skill-runtime/direct-entry.mjs';
+import { unitySourceOutput } from '../../../app-skill-runtime/unity-source-output.mjs';
 
 /** 资源随 app-domain-toolkit 安装，脱离维护仓库也可执行。 */
 const SOURCE = fileURLToPath(new URL('../../assets/mobile-sdks/', import.meta.url));
@@ -33,6 +34,8 @@ function destination(project, path) {
 
 /** 只选择当前引擎和一个原生广告 provider，保留所需相对引用。 */
 function selected(name, engine, adProvider) {
+  // Dirichlet 由专用按引擎安装器交付，不能随 AdMob／MAX 顺带复制不完整接线。
+  if (/^unity\/Dirichlet[^/]*\.cs$/.test(name) || /^engines\/[^/]+\/dirichlet-ads\.ts$/.test(name)) return false;
   if (engine === 'unity') return name === 'unity' || name.startsWith('unity/');
   if (engine === 'cocos') {
     if (name !== 'cocos' && !name.startsWith('cocos/')) return false;
@@ -109,7 +112,10 @@ export function planMobileSdkInstallation({ projectRoot, engine, adProvider, out
   const nativeRoot = engine === 'cocos' ? destination(project, nativeOutput) : undefined;
   const entries = collect(engine, adProvider).map((file) => {
     let target;
-    if (engine === 'unity') target = join(targetRoot, file.name.slice('unity/'.length));
+    if (engine === 'unity') {
+      target = join(targetRoot, file.name.slice('unity/'.length));
+      if (file.name.endsWith('.cs')) target = resolve(project, unitySourceOutput({ projectRoot: project, source: file.source, name: basename(file.name), output: target }));
+    }
     else if (engine === 'cocos' && file.name.startsWith('cocos/typescript/')) target = join(targetRoot, 'cocos', file.name.slice('cocos/typescript/'.length));
     else if (engine === 'cocos') target = join(nativeRoot, file.name);
     else target = join(targetRoot, file.name);

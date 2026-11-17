@@ -2,6 +2,25 @@
 
 已选择 TapTap 广告时，统一采用用户已确定的 [Dirichlet 聚合](https://ssp.dirichlet.cn/docs/dirichlet/)，无需再次询问聚合方案。确认实际引擎、目标宿主、广告形式、后台主体与广告位，按下表接线并核对当前官方聚合 SDK、后台配置及所需网络依赖。其他 SDK 的选择仍按原有范围确认；TapTap 广告不自动改用 AdMob／MAX 或套用 MAX 的固定七网络。[广告开通材料](taptap-materials-policy.md)和[渠道隐私与商业规范](channel-platform-integration.md#隐私与商业能力)继续适用。
 
+可复用代码、按引擎安装器、固定官方 SDK 下载器和调用方式见[实际代码接入](taptap-ads-usage.md)。Unity 原生直接使用官方 Unity 聚合 C# SDK；Cocos／Phaser／Three.js 原生复用已交付的 Android 聚合核心与各自宿主桥，不为已有官方 Unity 包另造原生广告桥。
+
+## 按引擎下载并使用官方 SDK
+
+SDK 获取是接入任务的一部分：确认范围后，由实施代理在目标工程实际下载／解析并导入对应官方依赖，再复用工作流封装接线，不能仅交付下载链接、来源清单或自有接口就标记完成。先检查工程已有依赖和插件，符合本次引擎、宿主及聚合方案的直接复用；缺少时按下表获取，不一次下载所有引擎的 SDK。
+
+| 实际工程 | 下载／安装对象与使用方式 |
+| --- | --- |
+| Unity 原生 | 从[官方资源下载](https://ssp.dirichlet.cn/docs/resource-download/)选择 **Unity 聚合 SDK**，核对包内平台支持后导入 Unity 工程，按官方 C# 接口调用；不以 Android AAR、通用 TapSDK 或非聚合 Unity 包替代 |
+| Unity Tap 小游戏 | 按[官方 WebGL 适配](https://developer.taptap.cn/minigameapidoc/dev/engine/unity-adaptation/unity-webGL/)核实官方小游戏 SDK／导出插件；当前已核实公开版本缺少广告 C# 类型，在找到真实可用发布包前保留广告接入缺口，不导入原生 Unity 聚合包冒充支持 |
+| Cocos Creator Tap 小游戏 | 从[官方引擎适配指南](https://developer.taptap.cn/minigameapidoc/dev/engine/Cocos-Laya-Egret/)获取当前 Creator 版本对应的小游戏转换扩展和适配资源，导入并完成实际小游戏构建，再经本引擎渠道接口使用宿主提供的 `tap` 广告能力；类型声明和自有封装不提供宿主运行时 |
+| Cocos Creator 原生 | 按真实 Android／iOS 导出目标，从对应聚合手册获取官方原生 SDK 及所选网络依赖，接入本引擎原生工程，再经具名 JSB 桥调用；不为原生工程下载 Unity 包或小游戏适配包 |
+| Phaser／Three.js | 先确认真实宿主。小游戏仅获取官方已支持该产物的适配资源并使用宿主 API；原生壳按目标平台获取聚合 Android／iOS SDK，经实际壳插件和本引擎能力接口调用。不把 TypeScript 类型包当作广告 SDK，也不下载其他引擎插件凑齐依赖 |
+| Flutter／Expo | 按真实目标平台获取聚合原生 SDK，安装已核实的本栈插件／原生模块或实现桥接；没有对应插件时不能安装 Unity／Cocos 插件后宣称本栈可用 |
+
+获取前根据项目配置确认引擎版本、导出目标和当前已安装依赖，按官方手册选择匹配的发布包、包管理坐标或固定源码版本。保留官方来源、实际解析版本、下载包校验值或锁文件／固定提交，并核对安装位置与最终构建引用。能由包管理器获取的依赖使用其正式流程；离线包导入目标工程的正式插件位置，不手工伪造厂商类型或依赖锁记录。
+
+下载与导入完成后，以真实官方依赖执行本引擎类型检查／编译及必要构建，再接通初始化和已选广告能力。缺少下载权限、匹配版本、官方适配或真实桥接时，报告具体缺口并保留未完成状态，不用替身编译、空适配器或其他引擎包替代；后台开通、真实广告请求及真机验收仍按已有授权分别执行。
+
 ## 先确认宿主
 
 依照[官方广告接入指引](https://developer.taptap.cn/minigameapidoc/quick-start/mcp-guide/ad-integration-guide/)，APK 使用 Dirichlet 广告联盟；[Tap 小游戏支持 Dirichlet 聚合](https://developer.taptap.cn/minigameapidoc/tap-operation/operation/monetization-operation/IAA/dirichlet-intro/)，通过小游戏媒体和真实宿主接口接入，不安装 APK 聚合包。H5 小游戏、星火和 TapTap 制造提供开发者中心的平台广告，尚须核实是否支持所选聚合，不能从平台接口或账户开通推断支持。无法确认或不支持时记录该宿主的聚合接入缺口，继续独立工程，不切换其他广告方案绕过。应用身份、账号权限、开放格式及后台开通状态分别核实；普通浏览器、编辑器、其他小游戏宿主或 PC 包不能仅因使用相同引擎而视作已支持。TapTap CLI 管理渠道资料，不是客户端广告 SDK。
@@ -10,14 +29,14 @@
 
 | 引擎与目标 | 接入方式及本工作流实际覆盖 |
 | --- | --- |
-| Unity，原生 APK | 采用官方 [Unity 聚合 SDK](https://ssp.dirichlet.cn/docs/dirichlet-mediation-sdk/dirichlet-mediation-sdk-guide-unity/)，按其实际 C# 接口建立本引擎广告适配和独立初始化管理。工作流现有 [TapSDK Unity 模块](../assets/channel-sdks/unity/TapTap/)不包含联盟广告实现，安装 TapSDK 不代表广告已接通 |
-| Unity，Tap 小游戏 | 按官方 [Unity WebGL 小游戏适配](https://developer.taptap.cn/minigameapidoc/dev/engine/unity-adaptation/unity-webGL/)及[广告指南](https://developer.taptap.cn/minigameapidoc/dev/engine/unity-adaptation/unity-ad/)接入小游戏媒体和真实宿主 C# 接口，核实导出版本及广告位。它与 APK 的 Unity 广告包是不同路线；本工作流当前未交付 Unity 小游戏广告封装 |
+| Unity，原生 APK | 下载官方 [Unity 聚合 SDK](https://ssp.dirichlet.cn/docs/dirichlet-mediation-sdk/dirichlet-mediation-sdk-guide-unity/)，复用已交付的 [DirichletManager](../../app-domain-toolkit/assets/mobile-sdks/unity/DirichletManager.cs)及[广告对象管理](../../app-domain-toolkit/assets/mobile-sdks/unity/DirichletAds.cs)，实现本引擎现有 `IMobileAds`。它独立于通用 TapSDK，直接调用官方聚合 C# 接口 |
+| Unity，Tap 小游戏 | 官方 [Unity WebGL 适配](https://developer.taptap.cn/minigameapidoc/dev/engine/unity-adaptation/unity-webGL/)与[广告指南](https://developer.taptap.cn/minigameapidoc/dev/engine/unity-adaptation/unity-ad/)仍须对照实际发布包。已核实公开 `com.taptap.minigame` 2.0.21 固定提交未包含文档所示广告 C# 类型，当前安装器明确拒绝该路线，不伪造厂商类型或导入原生聚合包冒充支持 |
 | Unity，H5／星火／制造 | 核实当前导出工具、实际宿主官方广告接口和 Unity 绑定是否支持 Dirichlet 聚合；无法确认时记录缺口。不能将 APK 或 Tap 小游戏 SDK 直接视为这些宿主的聚合广告接口 |
 | Cocos Creator，Tap 小游戏 | 按官方 [Cocos 适配指南](https://developer.taptap.cn/minigameapidoc/dev/engine/Cocos-Laya-Egret/)核实引擎版本和小游戏类型，并按 [Dirichlet 小游戏指南](https://ssp.dirichlet.cn/docs/mini-program-guide/)接入小游戏媒体和实际宿主接口；复用 [Cocos 渠道接口](../assets/channel-sdks/typescript/engines/cocos/channel-capabilities.ts)、[Cocos 渠道实现](../assets/channel-sdks/typescript/engines/cocos/taptap-minigame-channel.ts)及共享的 [Tap 具名 API](../assets/channel-sdks/typescript/taptap/api.ts)。工作流封装本身不代表后台开通或宿主联调通过 |
-| Cocos Creator，原生 APK | 核实实际引擎与 Android 聚合 SDK 支持，优先采用官方提供的对应平台聚合 SDK 和引擎插件；没有可用的 Cocos 官方插件时，实现本引擎 TypeScript 到真实原生聚合 SDK 的具名 JSB 桥。现有 `tap.*` 宿主封装不是 APK 联盟桥接；本工作流当前未交付该桥接 |
+| Cocos Creator，原生 APK | 下载 Android 官方聚合 SDK，复用[本引擎入口](../../app-domain-toolkit/assets/mobile-sdks/engines/cocos/dirichlet-ads.ts)、[真实 Android 核心](../../app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/core/)与[Cocos JSB 接线](../../app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/cocos/)，接入正式 Android 工程。iOS 桥接尚未交付 |
 | Phaser，Tap 小游戏 | 先证明实际导出可在小游戏宿主运行，再按实际接口复用 [Phaser 渠道接口](../assets/channel-sdks/typescript/engines/phaser/channel-capabilities.ts)、[Phaser 渠道实现](../assets/channel-sdks/typescript/engines/phaser/taptap-minigame-channel.ts)和共享 Tap API；广告位及联盟资格按真实后台确认 |
 | Three.js，Tap 小游戏 | 先证明实际导出可在小游戏宿主运行，再按实际接口复用 [Three.js 渠道接口](../assets/channel-sdks/typescript/engines/threejs/channel-capabilities.ts)、[Three.js 渠道实现](../assets/channel-sdks/typescript/engines/threejs/taptap-minigame-channel.ts)和共享 Tap API；广告位及联盟资格按真实后台确认 |
-| Phaser／Three.js，原生 APK | 先确认真实原生宿主及其插件机制，再按 Dirichlet 聚合 SDK 建立各引擎的明确能力接口和真实原生桥接；现有小游戏封装、普通网页和 AdMob／MAX 插件均不代表该联盟桥接已交付 |
+| Phaser／Three.js，原生 APK | 下载 Android 官方聚合 SDK；分别复用[Phaser 入口](../../app-domain-toolkit/assets/mobile-sdks/engines/phaser/dirichlet-ads.ts)／[Three.js 入口](../../app-domain-toolkit/assets/mobile-sdks/engines/threejs/dirichlet-ads.ts)、共享[真实 Android 核心](../../app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/core/)与[Capacitor 插件](../../app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/capacitor/)。仅支持实际 Android 原生宿主，iOS 桥接尚未交付 |
 | Cocos／Phaser／Three.js，H5／星火／制造 | 核实实际宿主官方广告接口及真实引擎运行环境是否支持 Dirichlet 聚合；确认后按实际支持分别实现本引擎适配。不能从小游戏 `tap` 对象或普通 Web 运行结果推定聚合可用；工作流未声明这些宿主的完整广告适配覆盖 |
 | Flutter／Expo 原生应用 | 核实目标平台可用的官方聚合插件或原生模块及版本；若缺失则按本栈建立真实桥接。当前工作流未交付 Flutter／Expo 的 Dirichlet 聚合广告桥接 |
 | Node.js、ESP32、Roblox | 不在这些运行时安装 TapTap 客户端广告 SDK；存在真实业务服务端职责时独立处理，不将后台或 CLI 操作视作广告展示 |

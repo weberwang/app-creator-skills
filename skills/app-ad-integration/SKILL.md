@@ -20,6 +20,10 @@ description: "规划广告展示位置、频次、同意与失败回退，并在
 
 TapTap 广告统一采用用户已确定的 Dirichlet 聚合，按[引擎与宿主适配路线](../app-release/references/taptap-ad-integration.md)接入真实聚合 SDK 或受支持的 Tap 小游戏媒体接口，材料按[广告开通](../app-release/references/taptap-materials-policy.md)核实；H5／星火／制造的平台接口存在不代表已支持聚合。无需再询问聚合方案，也不为 TapTap 广告改用 AdMob／MAX 或套用 MAX 固定七网络；不把 Tap 小游戏代码当已实现的 APK 聚合桥接。缺少宿主支持、非个性化配置或授权依据时限制受影响请求，继续独立工作。
 
+广告 SDK 必须按工程实际引擎和导出目标获取并使用：先复用已安装的匹配依赖，缺少时由实施代理下载／安装对应官方 SDK 或引擎插件，再接本引擎接口并以真实依赖编译。TapTap 的具体下载映射见[按引擎获取官方 SDK](../app-release/references/taptap-ad-integration.md#按引擎下载并使用官方-sdk)；复制工作流封装不等于下载或安装厂商 SDK，不以只交链接作为接入完成。
+
+TapTap 直接复用[已交付的聚合广告代码与安装／下载入口](../app-release/references/taptap-ads-usage.md)：Unity 使用官方 Unity 聚合 SDK 的 C# 封装，Cocos／Phaser／Three.js 的 Android 原生目标使用实际聚合核心及对应宿主桥；小游戏复用已有本引擎渠道代码。仅按当前实现的支持范围交付，未交付平台不以文档或类型声明冒充完成。
+
 1. 列出横幅、插页、激励广告等候选广告位，标明触发条件、离开/关闭行为、奖励结果和不能插入的高风险操作时刻。
 2. 按[归因与广告直接启动和调用](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)独立启动广告 SDK，业务触发时直接调用广告能力。不因普通接入擅自新增 CMP；已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。实际授权限制按[隐私流程与 SDK 解耦](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)复用现有授权来源，通过策略接口接收用户同意、可用地区及儿童/隐私限制，不默认新增隐私弹窗或同意管理业务；授权缺失只限制需要授权的能力，广告业务层不自行管理隐私交互或同意状态；明确采用 SDK 内建隐私流程时，通过独立隐私能力与适配器按官方路径执行并同步真实状态，不把 SDK 状态作为应用授权的唯一权威。初始化本身需要授权时也须等待，未同意时不加载需要同意的跟踪/广告请求，撤回时阻止新请求并处理在途任务。
 3. 所有广告请求保持非个性化模式；实际采用 AdMob 时按[AdMob 聚合约定](../app-domain-toolkit/references/reference-ad-admob-contract.md)执行；实际采用 MAX 时按[非个性化广告请求](../app-domain-toolkit/references/reference-ad-applovin-max-contract.md#非个性化广告请求)执行，平台 SDK 广告按其官方配置与合同核实，无法落实或确认时停用对应路径，不把 MAX 参数和回调直接套用。为实际 API 的加载、展示、完成、关闭、跳过、超时和失败建立状态与恢复规则；奖励仅在当前有效的完成结果后幂等发放。

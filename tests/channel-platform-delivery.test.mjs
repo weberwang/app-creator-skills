@@ -14,7 +14,7 @@ const SDK_SELECTION = 'app-release/references/channel-sdk-selection.md';
 const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
 /** TapTap 运行时与材料规范必须随单栈分发，链接不能只在维护仓库成立。 */
-const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md', 'taptap-ad-integration.md']
+const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md', 'taptap-ad-integration.md', 'taptap-ads-usage.md']
   .map((name) => `app-release/references/${name}`);
 /** 广告适配只面向真实客户端栈，不向服务端或设备端声明可运行能力。 */
 const TAPTAP_AD_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo']);
