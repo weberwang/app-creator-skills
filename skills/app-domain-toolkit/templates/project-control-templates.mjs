@@ -27,7 +27,7 @@ export function createPublicProjectTemplates({ stack } = {}) {
     '  首发渠道: 待人工指定',
     '  候选渠道: []',
     'capabilities:',
-    '  # 可选能力默认关闭；只有实际启用时才需要单独评审实现、数据和合规影响。',
+    '  # false 仅表示当前默认未启用，不代表用户已选择或拒绝；渠道 SDK 选择及来源记录在现有需求／实施包。',
     '  登录: false',
     '  云存档: false',
     '  内购: false',

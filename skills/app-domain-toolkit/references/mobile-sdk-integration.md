@@ -6,6 +6,8 @@
 
 本页是 Firebase／AppsFlyer 与 AdMob／MAX 原生聚合的具体路线。已选 TapTap 官方游戏服务、平台广告或 Dirichlet／TapADN 时，先按[TapTap 语言与宿主专项](../../app-release/references/taptap-runtime-integration.md)选择，不因项目导出 Android/iOS 就强制改用本页广告方案；已有统计／归因与新增 TapDB 需要按真实消费者避免重复上报。
 
+本页列出可复用模块，不代表它们都是必接项。先按[SDK 分类与多选确认](../../app-release/references/channel-sdk-selection.md)取得完整选择：未选广告无需二选一，Analytics、Crashlytics、AppsFlyer 可以分别选用。现有整包安装器及广告组合根面向带广告的完整方案；部分选择或不含广告时复用本页独立模块及必要共享代码，按需安装官方包，不调用整包脚本再把完整依赖清单当用户选择。
+
 Unity、Cocos Creator、Phaser、Three.js 的 Android/iOS 项目复用本资源中的具体实现。Firebase 负责统计、事件和异常，AppsFlyer 负责归因与事件；广告顶层聚合在 **AdMob 与 AppLovin MAX 中显式二选一**。这些是引擎原生 SDK 能力，不新增 Google Play 渠道适配层，也不用于微信小游戏或 CrazyGames。
 
 ## 实现与入口
@@ -21,8 +23,10 @@ Phaser 与 Three.js 共用具名的 [Capacitor 实现](../assets/mobile-sdks/cap
 
 ## 接入工作流
 
-1. 确认当前引擎、Android/iOS 导出路线和唯一广告聚合；核实各 SDK 官方支持版本、授权来源、原生自动启动路径及网络 adapter。未使用的能力不启动。
-2. 使用已安装的资源脚本预览，再复制具体实现到正式工程：
+先按[所有渠道 SDK 多选确认](../../app-release/references/channel-sdk-selection.md)展示本批必接项与可选项，确认后再运行本节安装脚本和接线。Google Play／App Store 的广告、统计、异常和归因均不因商店确定而自动启用；AdMob／MAX 顶层互斥，Firebase Analytics、Crashlytics、AppsFlyer 分别选择，选定方案的官方必要依赖一并展示。没有实际回复时等待，不从模板 false、默认广告提供方或依赖已存在推定选择。
+
+1. 确认当前引擎、Android/iOS 导出路线及实际所选能力；选用广告时确定唯一顶层聚合，核实各 SDK 官方支持版本、授权来源、原生自动启动路径及网络 adapter。未使用的能力不启动。
+2. 按选择复制当前引擎的独立模块和必要共享代码；只有带广告的完整组合与整包工具支持范围一致时，才使用下列脚本预览并复制：
 
 ```sh
 node .agents/skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs --project . --engine unity --ad-provider admob --dry-run
@@ -31,7 +35,7 @@ node .agents/skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs --pro
 
 `--engine` 支持 `unity|cocos|phaser|threejs`；`--ad-provider` 必须指定 `admob|max`。默认输出遵循各引擎源码目录，可用 `--output` 指定工程内业务子目录。Cocos 原生源另放 `native/mobile-sdks`，可用 `--native-output` 调整。脚本拒绝越界、链接、元数据目录及不同内容覆盖；重复执行相同安装不重写。维护仓库内把 `.agents/skills/` 换为 `skills/`。
 
-3. 按生成的 `installed-sdk-selection.json` 与引擎 README 安装真实供应商 SDK、所选聚合的网络 adapter，完成 Gradle / Xcode / Unity 配置。脚本只复制自有源码与入口，不自动安装包、不修改原生宿主、不写控制台。Cocos 只复制所选原生 provider；Unity 只启用对应编译符号；Capacitor 入口只加载所选广告插件。
+3. 按已确认清单与引擎 README 安装真实供应商 SDK；使用整包工具时核对其生成的 `installed-sdk-selection.json`，选用广告时再加入所选聚合的网络 adapter，完成 Gradle / Xcode / Unity 配置。脚本只复制自有源码与入口，不自动安装包、不修改原生宿主、不写控制台。Cocos 只复制所选原生 provider；Unity 只启用对应编译符号；Capacitor 入口只加载所选广告插件。
 4. 唯一应用入口注入真实配置和已有授权策略，分别启动所需 SDK；业务调用明确的统计、异常、归因或广告方法，不从场景重建 SDK、不散布厂商 API。原生宿主重建与释放按对应 README 处理。
 5. 先做模块测试和实际供应商依赖编译，再按项目明确授权执行平台验收。记录依赖锁定版本、adapter、宿主配置及未验证项；测试替身通过不代表真实 SDK、原生构建或真机验收通过。
 

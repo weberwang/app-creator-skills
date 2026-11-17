@@ -30,6 +30,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 
 - 涉及性能预算或资源策略时，按[性能预算、定位与优化复验](../app-domain-toolkit/references/performance-optimization.md)在现有方案中明确目标平台、关键流程／负载、预算来源、测量基线、所有者和不可牺牲条件；以瓶颈证据决定缓存、池化、预取或合批等机制，说明时间、内存、加载粒度与维护成本，不默认加入整套优化设施或自拟统一阈值。
 - 第三方 SDK 的文件职责遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)及其中的隐私流程解耦约束，技术栈资料仅补充入口路径和原生要求。
+- 已选渠道先按[SDK 分类与集中选择](../app-release/references/channel-sdk-selection.md)核对必接条件、用户确认的可选项及其真实依赖；有待选项时先规划可独立工作的架构，等待完整选择后在现有 TDD 冻结各引擎／语言的复用映射、材料前置和统一接入范围。AdMob／MAX 的顶层互斥及 Firebase Analytics、Crashlytics、AppsFlyer 的不同用途分别记录，不将默认关闭视为用户拒绝或替用户选择。
 - 已选渠道按[导出方案与运行时平台选择](../app-release/references/channel-platform-integration.md#导出方案与运行时平台选择)确定同包支持范围或必要独立导出，由唯一入口识别宿主并按需加载对应 SDK；再按[SDK 边界](../app-release/references/channel-platform-integration.md#能力适配与-sdk-边界)明确独立适配器、配置隔离与服务端可信边界。平台 SDK 与 MAX 原生方案按实际能力选择，微信内 H5 与微信小游戏分别处理。TapTap 管理端 CLI 与客户端 SDK 分开，管理凭据不进入客户端，CLI 操作不新增运行时适配器。
 - 按[引擎接口与渠道实现](../app-release/references/channel-platform-integration.md#按引擎定义接口与渠道实现)分别定义当前引擎的统一能力接口，每个已选渠道使用独立文件实现；业务只依赖能力接口，唯一装配入口根据实际运行平台选择并注入对应实现。TDD 明确接口、各渠道实现、SDK 管理文件与选择入口的真实路径，禁止将多个渠道 API 堆进同一文件或在业务中散布渠道判断。
 - 微信小游戏、CrazyGames 和已支持的 TapTap 路线复用工作流已维护的具名、强类型渠道专属实现，不把通用 API 转发当作具体实现；网络、文件、音频、渲染、输入及设备等基础接口仍归引擎。TapTap 按[语言与宿主](../app-release/references/taptap-runtime-integration.md#宿主与语言路线)定义 C#、小游戏 TypeScript 与 Node.js 协议边界，交易、账号、奖励及回调持久幂等归真实业务服务。按覆盖清单区分本栈已实现方法、官方不支持项和版本待核实项。
@@ -46,4 +47,4 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 使用共用读取工具：`node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> app-architecture [sourceSkill]`。单模式可省略来源，多模式必须指定清单中的 `sourceSkill`；输出所选章节、直接公共依赖及按需资源路径，不递归加载其他模式。维护本技能仓库时将 `.agents/skills/` 换为 `skills/`。
 若 manifest 未列当前栈，继续使用该栈 `app-stack-*` 中的原生规范/索引及适用公共流程；这本身不代表能力缺失。仅当已声明并选中的原生手册或模式章节未随安装提供时才报告阻断。公共工作流只在 `sharedWorkflows[].stacks` 包含当前栈时读取；`onDemand: true` 的参考按当前任务选择，读取器仅列出路径。不要加载其他栈模式或臆造接口；栈未确认且会影响实现时先澄清。
 
-Android/iOS 游戏工程的 Firebase、AppsFlyer 与 AdMob／MAX 二选一使用[按引擎的移动 SDK 复用](../app-domain-toolkit/references/mobile-sdk-integration.md)，在架构中记录实际依赖、唯一入口与各 SDK 独立状态，不重新编写厂商封装。
+Android/iOS 游戏工程实际选用 Firebase Analytics、Firebase Crashlytics、AppsFlyer 或 AdMob／MAX 时，使用[按引擎的移动 SDK 复用](../app-domain-toolkit/references/mobile-sdk-integration.md)，在架构中记录实际依赖、唯一入口与各 SDK 独立状态，不重新编写厂商封装；未选广告时不强制选择聚合。

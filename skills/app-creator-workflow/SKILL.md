@@ -23,6 +23,8 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 选定 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道平台接入](../app-release/references/channel-platform-integration.md)从需求、架构和基础工程安排实际适配任务，按本批能力验证并在最终候选逐渠道核对；TapTap 的开发者中心管理与运营按 [CLI 专项](../app-release/references/channel-platforms/taptap.md)执行，登录、合规、变现和生态服务按[运行时与语言复用](../app-release/references/taptap-runtime-integration.md)及[材料政策](../app-release/references/taptap-materials-policy.md)进入既有工作项。普通项目不默认启用全部渠道，宿主 SDK 与 MAX 原生方案分别适用，不另建发布状态机。
 
+渠道 SDK 先按[分类、多选确认和统一接入](../app-release/references/channel-sdk-selection.md)汇总本批平台必接、产品功能依赖和可选项，集中展示依赖／互斥、材料及已有实现。存在未决可选项时等待用户明确选择或全部不选，再把必须项、已选项及依赖统一交接；已有完整确认直接复用，等待期间继续不依赖该选择的工作。规划阶段等待选择与运行时 SDK 独立启动分别处理，法定限制和平台必需前置仍须落实。
+
 以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素设计或可见表现，就从本次增量的 V0 开始；纯非视觉修改按实际影响处理，不重做无关宿主或全项目阶段。
 
 默认不编排隐私弹窗、隐私中心及同意管理等业务，仅在用户明确要求或已确认项目需求包含时实施；不擅自删除已有业务。涉及明确纳入范围的隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。

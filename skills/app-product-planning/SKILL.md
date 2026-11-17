@@ -21,7 +21,11 @@ description: "为游戏、应用或服务器制定产品与服务范围，或为
 
 目标涉及 CrazyGames、微信／抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道与实现路线](../app-release/references/channel-platform-integration.md#确认渠道与实现路线)在现有产品范围中明确已选渠道、宿主／终端、地区、主体、商业能力、资质缺口与不做项；基础工程前交接实际接入任务，不默认接入全部平台或无关登录／广告／支付。TapTap 依据[能力与阶段](../app-release/references/taptap-runtime-integration.md#工作项与前置条件)选用实际服务，并将[开发者材料、后台开通与工程实现](../app-release/references/taptap-materials-policy.md)分开交接，已有有效材料直接复用。
 
+按[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)逐渠道区分平台实际必接、已确认业务的必要依赖和可选能力，在现有需求或实施包中同时展示必接依据、可选多选清单、依赖／互斥、材料与实现缺口。有未决选项时等待用户实际选择或明确全部不选，再交接完整清单统一接入；沿用已有完整明确选择，不反复询问或把模板默认值当选择。
+
 - 用户目标与任务范围；现有GDD、设计基准、实现状态和已作出的产品决定；证据或明确标出的假设；平台和团队约束。涉及视觉设计时包含四项分析或有效复用的结论与来源；只有任务包含市场验证时再提供实验样本、渠道和实验限制。
+
+上架国内渠道的游戏，将[首页健康游戏忠告](../app-release/references/channel-platform-integration.md#国内渠道健康游戏忠告)纳入必做范围，交接完整原文、适用发行候选及首页展示与人工验收要求；不放入可选 SDK 清单。
 
 ## 共用操作步骤
 

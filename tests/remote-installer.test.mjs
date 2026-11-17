@@ -169,6 +169,7 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
     'skills/app-release/assets/channel-sdks/nodejs/taptap/signature.mjs',
     'skills/app-release/references/taptap-runtime-integration.md',
     'skills/app-release/references/taptap-materials-policy.md',
+    'skills/app-release/references/channel-sdk-selection.md',
     'skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs',
     'skills/app-domain-toolkit/assets/mobile-sdks/unity/FirebaseAnalyticsManager.cs',
     'skills/app-domain-toolkit/assets/mobile-sdks/cocos/native/ios/providers/admob/ACAdMobBridge.mm',

@@ -14,6 +14,7 @@
 - **组织跨场景功能**：明确导航框架、主页、共享路由和弹窗的职责，复用共享实现并验证实际组合。
 - **持续交付**：支持局部修复、功能增量、质量审核、项目整理和发布准备，保留继续工作所需的有效记录。
 - **接入渠道**：按已选目标执行 [CrazyGames、微信／抖音小游戏、TapTap 及移动商店接入](skills/app-release/references/channel-platform-integration.md)，区分平台 SDK、原生构建、合规资料与实际上线；TapTap 的[运行时能力与语言代码复用](skills/app-release/references/taptap-runtime-integration.md)覆盖 Unity C#、三引擎 Tap 小游戏 TypeScript 和 Node.js 协议，按[材料与政策](skills/app-release/references/taptap-materials-policy.md)核查前置；[官方 CLI](skills/app-release/references/channel-platforms/taptap.md)管理资料、包体、审核、测试及运营。
+- **选择 SDK**：所有渠道先[列必接项、集中多选并等待确认](skills/app-release/references/channel-sdk-selection.md)，再按引擎／语言统一复用代码接入；已有明确选择直接沿用，广告聚合互斥、必要依赖与材料一并说明，未确认不默认安装或接线。
 
 这是技能、工具和工作流集合。引擎、SDK、素材工具及实际运行环境按所选技术栈另行准备；安装技能后，再由助手检查当前任务所需的环境。
 

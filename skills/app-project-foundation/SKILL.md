@@ -15,9 +15,13 @@ description: "为已支持的游戏、应用、ESP32 GUI 或 Node.js 服务器�
 
 已选 CrazyGames、微信／抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道接入任务](../app-release/references/channel-platform-integration.md#接入任务与完成条件)验证最小目标产物、配置、统一平台识别与 SDK 选择／初始化入口；同一导出方案支持多宿主时复用产物，仅加载实际选中 SDK，未知／冲突环境不猜选。TapTap 管理任务先核实官方 CLI、账号及应用上下文，CLI 可用性和真实产物运行分别验证。优先暴露引擎适配和宿主差异，不将本地构建等同于真实宿主或商店验证。
 
-微信小游戏、CrazyGames 和实际支持的 TapTap 路线按[SDK 复用接入](../app-release/references/channel-sdk-reuse.md#接入正式工程)复用当前引擎的加载、初始化及渠道专属具名能力实现，项目只补配置、唯一入口接线与业务消费；不重写适配，不用通用转发替代具体方法，也不重新包装引擎基础接口。TapTap 先按[运行时语言路线](../app-release/references/taptap-runtime-integration.md#宿主与语言路线)区分 Unity、Tap 小游戏和 Node.js 服务端；材料未齐可继续独立实现，真实开通及宿主验证分别记录。
+按[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)先核实必接摘要、可选多选及依赖约束已实际确认；有待选项时，继续只读盘点和不依赖选择的基础工程，暂停本批必接及可选 SDK 的依赖安装、源码复制、初始化与业务接线。范围完整或无适用可选项时，复用已有确认，按依赖顺序统一接入并验证实际所选 SDK。
+
+微信小游戏、CrazyGames 和实际支持的 TapTap 路线按[SDK 复用接入](../app-release/references/channel-sdk-reuse.md#接入正式工程)复用当前引擎的加载、初始化及渠道专属具名能力实现，项目只补配置、唯一入口接线与业务消费；不重写适配，不用通用转发替代具体方法，也不重新包装引擎基础接口。TapTap 先按[运行时语言路线](../app-release/references/taptap-runtime-integration.md#宿主与语言路线)区分 Unity、Tap 小游戏和 Node.js 服务端；选择已确认但材料未齐时可继续独立实现，真实开通及宿主验证分别记录。
 
 - 产品范围、目标平台、仓库和现有运行状态；语言/工具链版本；现有入口、运行时约定、复现步骤及批准的依赖预算。
+
+国内渠道游戏按[首页健康游戏忠告](../app-release/references/channel-platform-integration.md#国内渠道健康游戏忠告)在现有首页／主菜单／大厅安排完整文案与真实挂载，复用当前引擎组件；正式显示随首页既有视觉流程交付，不依赖 SDK 初始化，也不以系统启动屏代替首页。
 
 ## 共用操作步骤
 

@@ -6,6 +6,8 @@
 
 ## 接入与验证
 
+接入前按[全渠道 SDK 分类与多选确认](../channel-sdk-selection.md)集中确定本批范围。必须项随 Basic／Full Launch 及当前 SDK／引擎变化：Basic 的 SDK 可选且不开放变现；Full 按[官方接入要求](https://docs.crazygames.com/requirements/intro/)接 SDK、GameplayStart 及适用广告，已有账号／进度或多人玩法触发的账号与联机要求也属于必接。只有未被当前阶段或已选玩法强制的能力才作为可选项展示，未获资格的变现不列为可直接接入。确认前只做盘点，确认后统一接入本批所需接口。
+
 1. **确认上线阶段**：在现有发布清单明确 Basic Launch 或 Full Launch。按当前规则，Basic Launch 的 SDK 可选且不开放变现；Full Launch 必须完成适用 SDK 接入。不得为验证 Basic 阶段强加广告，或把本地模拟广告当作可正式展示。
 2. **构建与预览**：记录游戏身份、引擎／SDK 版本、Web 入口和相对资源路径，核对当前首玩下载量、总包与文件数量要求；优化有实际测量依据。检查平台嵌入环境、外链／站点锁与域名、跨源资源、支持浏览器、输入、方向、音频解锁及中断恢复，不只验证 localhost。平台预览或 QA 工具结果不能代替尚未执行的目标浏览器／设备结果。
 3. **初始化与事件**：所选 SDK 需要初始化时，完成其真实就绪前置再调用。`gameplayStart`／`gameplayStop` 对应实际开始、继续和业务中断，不能在菜单仍不可玩时提前上报首玩；失焦事件按当前 SDK 官方定义处理，不重复伪报玩法中断。HTML5 等支持的路线按适用要求记录 `loadingStart`／`loadingStop`，不为 Unity 强行调用其 SDK 不支持的加载接口，也不靠上报事件延长加载显示。

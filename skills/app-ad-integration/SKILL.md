@@ -16,6 +16,8 @@ description: "规划广告展示位置、频次、同意与失败回退，并在
 
 ## 共用操作步骤
 
+广告属于当前[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)的一部分；先将适用广告格式、供应商、依赖和互斥合并进本批多选清单，复用用户已有明确决定。待选项未确认时只准备方案，不安装／复制广告 SDK 或接初始化与业务；确认后与其他已选 SDK 统一安排接入，运行时仍独立初始化。
+
 TapTap 广告先按[运行时与宿主路线](../app-release/references/taptap-runtime-integration.md)和[广告开通材料](../app-release/references/taptap-materials-policy.md)区分平台接口、H5／星火／制造及 Dirichlet／TapADN。只有明确选择本页移动原生聚合路线时才执行 AdMob／MAX 二选一；不为 TapTap 项目自动改用这两者，不把 Tap 小游戏代码当已实现的 APK 联盟桥接。缺少非个性化配置或授权依据时限制受影响请求，不能以开通账户或测试填充推定满足。
 
 1. 列出横幅、插页、激励广告等候选广告位，标明触发条件、离开/关闭行为、奖励结果和不能插入的高风险操作时刻。

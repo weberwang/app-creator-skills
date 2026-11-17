@@ -103,6 +103,12 @@
       "onDemand": true
     },
     {
+      "id": "channel-sdk-selection",
+      "path": "references/channel-sdk-selection.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "taptap-cli",
       "path": "references/channel-platforms/taptap.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],

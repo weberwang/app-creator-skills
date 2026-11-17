@@ -9,6 +9,8 @@ import { installSkills, SOURCE_ROOT, STACKS } from '../packages/installer/instal
 import { extractMarkdownSection, markdownProse } from '../skills/app-skill-runtime/native-contracts.mjs';
 
 const COMMON = 'app-release/references/channel-platform-integration.md';
+/** 选择规范必须在已安装项目独立可用，不能只在维护仓库中可见。 */
+const SDK_SELECTION = 'app-release/references/channel-sdk-selection.md';
 const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
 /** TapTap 运行时与材料规范必须随单栈分发，链接不能只在维护仓库成立。 */
@@ -55,7 +57,7 @@ for (const stack of STACKS) {
     installSkills({ projectRoot: project, stacks: [stack] });
     const root = join(project, '.agents/skills');
     const source = join(SOURCE_ROOT, 'skills');
-    for (const file of [COMMON, ...PLATFORMS, ...TAPTAP_REFERENCES]) {
+    for (const file of [COMMON, SDK_SELECTION, ...PLATFORMS, ...TAPTAP_REFERENCES]) {
       assert.deepEqual(readFileSync(join(root, file)), readFileSync(join(source, file)), `${stack} 未分发完整资料：${file}`);
       checkLocalLinks(root, file);
     }
@@ -70,6 +72,10 @@ for (const stack of STACKS) {
       const reference = loaded.resources.find((entry) => entry.path === COMMON && !entry.fragment);
       assert.equal(reference?.available, true, `${stack} 的渠道参考不可发现`);
       assert.equal(reference.kind, 'public-reference');
+      const selection = loaded.resources.find((entry) => entry.path === SDK_SELECTION && !entry.fragment);
+      assert.equal(selection?.available, true, `${stack} 无法发现 SDK 多选确认规范`);
+      assert.equal(selection.kind, 'public-reference');
+      assert.ok(!loaded.documents.some((entry) => entry.path === SDK_SELECTION), '未进入 SDK 选择时不自动展开完整规范');
       // 管理端资料跨栈分发不代表这些栈都具备 TapTap 客户端发布能力。
       const taptap = loaded.resources.find((entry) => entry.path === 'app-release/references/channel-platforms/taptap.md');
       assert.equal(taptap?.available, true, `${stack} 的 TapTap CLI 专项不可发现`);

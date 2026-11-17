@@ -6,6 +6,8 @@
 
 ## 接入与验证
 
+先按[全渠道 SDK 分类与多选确认](../channel-sdk-selection.md)确认整套范围：商店政策及实际功能触发的隐私／内购／登录要求列为必接；AdMob／MAX 顶层聚合互斥可选，Firebase Analytics、Crashlytics、AppsFlyer 分别多选，不因 App Store 分发默认全部安装。StoreKit／Apple 登录等按真实产品功能和适用规则确定，并说明复用缺口；已暂缓工作不自动恢复。未确认不开始 SDK 安装或接线，确认后统一实施并核对 iOS 配置。
+
 1. **身份与原生来源**：核对开发者主体／团队、Bundle ID、版本／构建号、设备族、系统范围及 App Store Connect 记录。Unity／Cocos 使用各自原生导出，Phaser／Three.js 核实本栈原生宿主，Flutter／Expo 按本栈构建；使用 WebView 不自动证明达到审核中的功能完整性／最低功能要求，不另行编造原生功能凑审。
 2. **构建与签名**：锁定实际工具链，核对当前 SDK／上传要求、签名证书、Provisioning Profile、entitlements、能力和依赖；确认归档及交付包中的应用身份和随包资源。证书、私钥与商店凭据只走受控配置；签名、上传、TestFlight 分发均按已有授权范围分别执行。
 3. **隐私与账号**：按实际采集和 SDK 行为填写 App Privacy，核对隐私政策、用途说明、适用 `PrivacyInfo.xcprivacy`、Required Reason API 和第三方 SDK 要求。隐私清单、商店声明与真实授权分别验证，不能相互替代；涉及跟踪时核对 ATT，拒绝不能冒充已授权。存在第三方登录、账号创建或删除时，再按当前审核规则核对 Sign in with Apple 的适用条件与应用内账号删除，不为无此功能的 App 加入无关能力。
