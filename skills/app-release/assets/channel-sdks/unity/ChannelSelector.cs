@@ -3,7 +3,7 @@ using System;
 namespace AppCreator.ChannelSdk
 {
     /// <summary>由应用组合根持有的渠道选择器，复用当前生命周期中的唯一渠道。</summary>
-    public sealed class ChannelSelector : IDisposable
+    public sealed partial class ChannelSelector : IDisposable
     {
         private readonly object gate = new object();
         private IChannelCapabilities current;

@@ -40,6 +40,8 @@
 
 ## 归因与广告直接启动和调用
 
+已选 TapTap 的模块按[运行时与语言专项](../../app-release/references/taptap-runtime-integration.md)复用具体代码，平台广告／Dirichlet／TapADN 不套用下文 AdMob／MAX 二选一。TapSDK 在官方规定的隐私同意后初始化，模块间真实依赖照常满足；法定实名、未成年人可玩时段和消费限制仍须拦截相应游戏服务／交易，“不阻塞”只排除无关等待，不能成为游客绕过或受限时继续游玩的依据。
+
 Unity、Cocos Creator、Phaser、Three.js、Flutter 和 Expo 项目按已确认需求及实际受支持的原生目标接入广告或归因；不声明厂商 SDK 支持全部栈或终端。Unity、Cocos、Phaser、Three.js 的 Android/iOS 复用[移动 SDK 具体实现](mobile-sdk-integration.md)：Firebase Analytics 处理统计与事件，Crashlytics 处理异常，AppsFlyer 处理归因；广告顶层聚合在 AdMob 与 AppLovin MAX 中显式二选一。其他栈按实际依赖核实引擎路线。采用 MAX 时聚合网络为 AppLovin、Google AdMob、Mintegral、Pangle、Unity Ads、DT Exchange（Fyber）和 Verve Group（PubNative）；原生归因使用 AppsFlyer。CrazyGames、微信和抖音小游戏按[渠道平台规范](../../app-release/references/channel-platform-integration.md#隐私与商业能力)使用适用的平台接口，不把 MAX／AppsFlyer 作为通用宿主依赖；ESP32 等仅在平台能力核实后处理明确需求。启动装配入口分别投递已接入 SDK 的任务；每项只等待锁定平台、版本和已采用流程的官方真实前置，不增加无关登录、首屏或归因回调屏障。启用 MAX 内建同意流程时，相关 MMP、分析 SDK 是否等待其结束按官方要求处理；其他无关 SDK 和游戏继续。参考 [Android 官方流程](https://support.applovin.com/en/max/android/overview/terms-and-privacy-policy-flow)与 [iOS 官方流程](https://support.applovin.com/en/max/ios/overview/terms-and-privacy-policy-flow)。
 
 业务触发归因事件或广告请求时调用对应能力接口，应用层不增加无关等待屏障。不因普通 SDK 接入擅自新增隐私业务；项目已采用或官方要求的 CMP（包括 UMP）及其真实前置必须遵守。`hasUserConsent=false` 不证明用户完成选择，也不单独证明所有地区和渠道允许请求。适配器按实际 SDK、隐私与网络条件返回结果；未就绪、无填充、离线或展示失败按既有回退处理，不阻塞调用方，也不伪造成功。

@@ -109,6 +109,18 @@
       "onDemand": true
     },
     {
+      "id": "taptap-runtime",
+      "path": "references/taptap-runtime-integration.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "nodejs"],
+      "onDemand": true
+    },
+    {
+      "id": "taptap-materials-policy",
+      "path": "references/taptap-materials-policy.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "nodejs"],
+      "onDemand": true
+    },
+    {
       "id": "release",
       "path": "../app-domain-toolkit/references/release.md",
       "stacks": [

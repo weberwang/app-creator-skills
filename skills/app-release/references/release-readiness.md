@@ -6,6 +6,8 @@
 
 发布候选中的所有 SDK 同时遵守[隐私流程与 SDK 解耦](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)：核对用途策略、未授权及撤回路径和最终包自动启动配置，缺少实际行为证据时明确标记未验证。
 
+TapTap 候选另外按[材料、开通与政策](taptap-materials-policy.md)核查实际主体、资质、商户／合同、隐私和未成年人限制，并按[运行时与复用代码](taptap-runtime-integration.md)逐项关联官方依赖版本、项目调用及当前证据。代码交付、后台开通、沙箱、真实交易和正式上线各有独立结果；缺少原生桥接或真实宿主证据时不能用 CLI 成功替代。
+
 选定 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 时，按[渠道接入任务](channel-platform-integration.md#接入任务与完成条件)与对应平台专项核对实际工程／包、SDK、环境、资质、隐私、广告、支付和审核访问资料。TapTap 按 CLI 专项关联当前草稿、包体与审核版本，管理操作成功不代表游戏内 SDK 或宿主验证通过。一个平台通过不能覆盖其他终端或宿主，渠道准备、上传、提审、审核结果和正式上线分别记录；不改变本节 prepare／publish 的合同及授权边界。
 
 包含 Android、iOS/iPadOS 目标时，按[系统启动屏制作与交付](../../app-domain-toolkit/references/system-launch-screen.md#任务安排与完成条件)核对设计依据、制作源与所需平台变体，以及最终候选实际包含的原生配置、本地资源、首帧衔接和适用的人工显示结论。生成配置或重新构建后的实际引用与当前制作输入一致。输入未变可复用已有有效证据；品牌开场、引导页、应用内加载页不充当系统启动屏验收，缺少原生运行材料时如实标记未验证，不自动真机验收。

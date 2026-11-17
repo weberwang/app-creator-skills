@@ -1,4 +1,10 @@
-# Android / iOS SDK 复用
+# Google Play / App Store 移动端 SDK 复用
+
+在本工作流的渠道归属中，本页代码属于 Google Play（Android）和 App Store（iOS）发行路线共用的 SDK 复用资源：AdMob／AppLovin MAX 负责广告变现，Firebase Analytics／Crashlytics 负责统计与异常，AppsFlyer 负责归因。底层原生实现按引擎共享，不为两个商店重复维护一套相同厂商代码；各商店候选的配置、隐私声明和验证结果分别记录。
+
+渠道覆盖清单应将两条发行路线记为“已有移动端 SDK 复用代码”，再单独标明 Google Play Billing／Play Games Services、StoreKit／Sign in with Apple 等商店原生能力是否实现；不能因这些原生能力尚未封装，就把 Google Play／App Store 整体记为只有文档或没有复用代码。
+
+本页是 Firebase／AppsFlyer 与 AdMob／MAX 原生聚合的具体路线。已选 TapTap 官方游戏服务、平台广告或 Dirichlet／TapADN 时，先按[TapTap 语言与宿主专项](../../app-release/references/taptap-runtime-integration.md)选择，不因项目导出 Android/iOS 就强制改用本页广告方案；已有统计／归因与新增 TapDB 需要按真实消费者避免重复上报。
 
 Unity、Cocos Creator、Phaser、Three.js 的 Android/iOS 项目复用本资源中的具体实现。Firebase 负责统计、事件和异常，AppsFlyer 负责归因与事件；广告顶层聚合在 **AdMob 与 AppLovin MAX 中显式二选一**。这些是引擎原生 SDK 能力，不新增 Google Play 渠道适配层，也不用于微信小游戏或 CrazyGames。
 

@@ -2,6 +2,8 @@
 
 适用于已选择 Google Play 的 Android 游戏与非游戏 App，先执行[渠道公共规范](../channel-platform-integration.md)。采用当前栈已确认的 Android 原生／宿主构建，网页或小游戏包不直接成为商店候选。
 
+本发行路线已有[移动端 SDK 复用代码](../../../app-domain-toolkit/references/mobile-sdk-integration.md)：AdMob／AppLovin MAX 广告、Firebase Analytics／Crashlytics 统计与异常、AppsFlyer 归因，按实际引擎复用 Android 实现。Google Play Billing、Play Games Services 等商店原生能力单独核查实现状态；不把这些能力的缺口表述成整个 Google Play 渠道没有复用代码。
+
 ## 接入与验证
 
 1. **身份与账号**：核实开发者主体及当前验证／测试资格、应用 `applicationId`、版本名／`versionCode`、目标地区与测试轨道。区分开发包、候选及生产应用身份，不创建临时正式账号或占位商品。Google 登录、成就等 Play Games Services 仅在游戏需求实际包含时接入，普通应用不强制增加游戏服务 SDK。

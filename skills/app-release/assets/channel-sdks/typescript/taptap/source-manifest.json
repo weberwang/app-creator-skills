@@ -1,0 +1,27 @@
+{
+  "name": "TapTap 小游戏宿主 API",
+  "checkedAt": "2026-11-17",
+  "runtime": "Tap 小游戏真实宿主提供 tap；普通 Web/H5 不自动具备本接口",
+  "included": {
+    "login": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/login/tap.login/",
+    "checkSession": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/login/tap.checkSession/",
+    "authorize": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/authorize/tap.authorize/",
+    "getSetting_and_getUserInfo": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/user-info/tap.getUserInfo/",
+    "createUserInfoButton": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/user-info/tap.createUserInfoButton/",
+    "showShareboard": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/share/tap.showShareboard/",
+    "setShareboardHidden": "https://developer.taptap.cn/minigameapidoc/dev/api/open-api/share/tap.setShareboardHidden/",
+    "lifecycle": "https://developer.taptap.cn/minigameapidoc/dev/api/base/app/life-cycle/tap.onShow/",
+    "ads": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/ad/rewarded-video-ad/",
+    "banner": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/ad/banner-ad/",
+    "interstitial": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/ad/interstitial-ad/",
+    "payment": "https://developer.taptap.cn/minigameapidoc/dev/api/payment/tap.requestPaymentGameItem/",
+    "cloudSave": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/cloud-save-tutorial/",
+    "leaderboard": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/leaderboard-tutorial/"
+  },
+  "limitations": [
+    "分享事件文档的标题与示例调用名、参数互相矛盾，不臆造回调约定。",
+    "小游戏数据上报的具名 API 尚未核实，不沿用微信方法。",
+    "激励广告关闭回调没有展示身份，无法从接口证明跨请求异常迟到重复关闭的归属；失败展示隔离至收到其关闭事件，若始终无关闭回调则不能安全恢复。",
+    "未附带官方 SDK 或运行时，项目需验证引擎导出、实际平台能力、授权和素材。"
+  ]
+}

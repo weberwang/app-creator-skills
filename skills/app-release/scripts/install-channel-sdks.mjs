@@ -13,6 +13,7 @@ const OUTPUTS = {
   cocos: 'assets/scripts/platform/channels',
   phaser: 'src/platform/channels',
   threejs: 'src/platform/channels',
+  nodejs: 'src/integrations/taptap',
 };
 
 /** 检查所有已存在的路径段，拒绝通过链接把工程写入重定向到其他目录。 */
@@ -44,7 +45,7 @@ function sourceFiles(root, engine, current = root) {
 
 /** 写入前一次性核对引擎、范围和全部冲突；相同源码可重复接入，已有修改不会被覆盖。 */
 export function planChannelSdkInstallation({ projectRoot, engine, output }) {
-  if (!Object.hasOwn(OUTPUTS, engine)) throw new Error('引擎必须为 unity/cocos/phaser/threejs');
+  if (!Object.hasOwn(OUTPUTS, engine)) throw new Error('引擎必须为 unity/cocos/phaser/threejs/nodejs');
   const project = resolve(projectRoot);
   assertNoLinks(project);
   if (!existsSync(project) || !lstatSync(project).isDirectory()) throw new Error('目标工程必须是已有普通目录');
@@ -53,7 +54,8 @@ export function planChannelSdkInstallation({ projectRoot, engine, output }) {
   if (!local || isAbsolute(local) || local === '..' || local.startsWith(`..${sep}`)) throw new Error('渠道源码必须位于工程内部的独立子目录');
   if (['.git', '.agents'].includes(local.split(sep)[0].toLowerCase())) throw new Error('渠道源码不能写入 Git 元数据或技能安装目录');
   assertNoLinks(destination);
-  const sourceRoot = join(ASSETS, engine === 'unity' ? 'unity' : 'typescript');
+  // 服务端密钥协议不得进入客户端源码，Node.js 使用独立资源树。
+  const sourceRoot = engine === 'nodejs' ? join(ASSETS, 'nodejs', 'taptap') : join(ASSETS, engine === 'unity' ? 'unity' : 'typescript');
   const files = sourceFiles(sourceRoot, engine).map(({ name, source }) => {
     const target = join(destination, name);
     assertNoLinks(target);
@@ -101,7 +103,7 @@ function parseArgs(args) {
   for (let index = 0; index < args.length; index++) {
     const key = args[index];
     if (key === '--dry-run') { options.dryRun = true; continue; }
-    if (!['--project', '--engine', '--output'].includes(key) || !args[index + 1] || args[index + 1].startsWith('--')) throw new Error('用法：--project <工程> --engine <unity|cocos|phaser|threejs> [--output <工程内目录>] [--dry-run]');
+    if (!['--project', '--engine', '--output'].includes(key) || !args[index + 1] || args[index + 1].startsWith('--')) throw new Error('用法：--project <工程> --engine <unity|cocos|phaser|threejs|nodejs> [--output <工程内目录>] [--dry-run]');
     const name = key === '--project' ? 'projectRoot' : key.slice(2);
     if (Object.hasOwn(options, name)) throw new Error(`参数重复：${key}`);
     options[name] = args[++index];

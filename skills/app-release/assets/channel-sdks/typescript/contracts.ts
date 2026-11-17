@@ -1,5 +1,5 @@
 /** 当前适配器可选择的渠道。 */
-export type ChannelPlatform = 'wechat-minigame' | 'crazygames';
+export type ChannelPlatform = 'wechat-minigame' | 'crazygames' | 'taptap-minigame';
 
 /** 表示适配器自身的初始化状态，不代表广告或支付已经可用。 */
 export type ChannelState = 'idle' | 'initializing' | 'ready' | 'failed' | 'disposed';

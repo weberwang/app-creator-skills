@@ -19,7 +19,7 @@ function project(t) {
   return root;
 }
 
-for (const engine of ['unity', 'cocos', 'phaser', 'threejs']) {
+for (const engine of ['unity', 'cocos', 'phaser', 'threejs', 'nodejs']) {
   test(`${engine} 单栈安装后可独立复制渠道源码，保留本引擎接口和共享实现`, async (t) => {
     const root = project(t);
     installSkills({ projectRoot: root, stacks: [engine] });
@@ -30,7 +30,7 @@ for (const engine of ['unity', 'cocos', 'phaser', 'threejs']) {
     assert.equal(existsSync(dry.destination), false);
     const first = installed.installChannelSdks({ projectRoot: root, engine });
     assert.equal(first.changed, true);
-    assert.ok(first.files.length >= 4, '必须分发接口、入口及两个渠道真实实现');
+    assert.ok(first.files.length >= 4, '必须分发本栈的实际协议实现和接入资源');
     for (const file of first.files) {
       assert.deepEqual(readFileSync(file.target), readFileSync(file.source));
       const name = relative(first.destination, file.target).replaceAll('\\', '/');
@@ -39,6 +39,18 @@ for (const engine of ['unity', 'cocos', 'phaser', 'threejs']) {
     assert.equal(installed.installChannelSdks({ projectRoot: root, engine }).changed, false);
   });
 }
+
+test('服务端协议只进入 Node.js 输出，客户端源码不混入服务端凭据交换模块', (t) => {
+  const root = project(t);
+  const server = planChannelSdkInstallation({ projectRoot: root, engine: 'nodejs' });
+  assert.equal(relative(root, server.destination).replaceAll('\\', '/'), 'src/integrations/taptap');
+  assert.ok(server.files.some((file) => file.source.endsWith('.mjs')), '服务端不能只交付声明或文档');
+  for (const engine of ['unity', 'cocos', 'phaser', 'threejs']) {
+    const client = planChannelSdkInstallation({ projectRoot: root, engine });
+    assert.ok(client.files.every((file) => !file.source.replaceAll('\\', '/').includes('/nodejs/')));
+  }
+  assert.ok(server.files.every((file) => !file.source.replaceAll('\\', '/').includes('/typescript/')));
+});
 
 test('发现已有源码差异时在写入前拒绝，保留用户内容', (t) => {
   const root = project(t);

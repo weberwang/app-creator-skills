@@ -1,15 +1,17 @@
 import type { ChannelPlatform } from './contracts';
 import { CrazyGamesChannel, type CrazyGamesOptions } from './crazygames-channel';
 import { WechatMinigameChannel, type WechatMinigameOptions } from './wechat-minigame-channel';
+import { TaptapMinigameChannel, type TaptapMinigameOptions } from './taptap-minigame-channel';
 
 /** 入口返回可按真实渠道区分的具名能力，不把 API 类型擦除为普通 object。 */
-export type SelectedChannel = WechatMinigameChannel | CrazyGamesChannel;
+export type SelectedChannel = WechatMinigameChannel | CrazyGamesChannel | TaptapMinigameChannel;
 
 /** 从构建支持范围和已核实入口线索选择唯一渠道。 */
 export interface ChannelSelection {
   readonly supportedPlatforms: readonly ChannelPlatform[];
   readonly wechat?: WechatMinigameOptions;
   readonly crazygames?: CrazyGamesOptions & { readonly candidate: boolean };
+  readonly taptap?: TaptapMinigameOptions;
 }
 
 /** 引擎入口可注入对应的渠道实现，仍复用同一选择规则。 */
@@ -18,6 +20,8 @@ export interface ChannelFactories {
   wechat(options: WechatMinigameOptions): WechatMinigameChannel;
   /** 创建当前引擎的 CrazyGames 实现，不在创建时加载脚本。 */
   crazygames(options: CrazyGamesOptions): CrazyGamesChannel;
+  /** 创建当前引擎的 Tap 小游戏实现，不在创建时读取宿主。 */
+  taptap(options: TaptapMinigameOptions): TaptapMinigameChannel;
 }
 
 /** 选择结果所依赖的有效配置，避免把可变配置对象本身当作快照。 */
@@ -40,12 +44,17 @@ export interface ChannelSelector {
 function resolveSelection(selection: ChannelSelection): SelectionKey {
   const wechat = selection.wechat?.verifiedMinigame === true;
   const crazygames = selection.crazygames?.candidate === true;
-  if (Number(wechat) + Number(crazygames) !== 1) throw new Error('渠道环境未知或冲突');
-  const platform: ChannelPlatform = wechat ? 'wechat-minigame' : 'crazygames';
+  const taptap = selection.taptap?.verifiedMinigame === true;
+  if (Number(wechat) + Number(crazygames) + Number(taptap) !== 1) throw new Error('渠道环境未知或冲突');
+  const platform: ChannelPlatform = wechat ? 'wechat-minigame' : taptap ? 'taptap-minigame' : 'crazygames';
   if (!selection.supportedPlatforms.includes(platform)) throw new Error('当前构建不支持该渠道');
   if (wechat) {
     const options = selection.wechat as WechatMinigameOptions;
     return { platform, timeoutMs: options.timeoutMs, loader: options.getWechatSdk, allowLocalTesting: false };
+  }
+  if (taptap) {
+    const options = selection.taptap as TaptapMinigameOptions;
+    return { platform, timeoutMs: options.timeoutMs, loader: options.getTapSdk, allowLocalTesting: false };
   }
   const options = selection.crazygames as CrazyGamesOptions;
   return { platform, timeoutMs: options.timeoutMs, loader: options.loadSdk, allowLocalTesting: options.allowLocalTesting === true };
@@ -60,6 +69,7 @@ function sameSelection(left: SelectionKey, right: SelectionKey): boolean {
 export function createChannelSelector(factories: ChannelFactories = {
   wechat: (options) => new WechatMinigameChannel(options),
   crazygames: (options) => new CrazyGamesChannel(options),
+  taptap: (options) => new TaptapMinigameChannel(options),
 }): ChannelSelector {
   let current: SelectedChannel | undefined;
   let key: SelectionKey | undefined;
@@ -75,7 +85,9 @@ export function createChannelSelector(factories: ChannelFactories = {
       if (current?.hasPendingInitialization) throw new Error('旧渠道初始化尚未结束，不能创建新实例');
       const next = nextKey.platform === 'wechat-minigame'
         ? factories.wechat({ ...selection.wechat as WechatMinigameOptions })
-        : factories.crazygames({ ...selection.crazygames as CrazyGamesOptions });
+        : nextKey.platform === 'taptap-minigame'
+          ? factories.taptap({ ...selection.taptap as TaptapMinigameOptions })
+          : factories.crazygames({ ...selection.crazygames as CrazyGamesOptions });
       current = next;
       key = nextKey;
       return next;

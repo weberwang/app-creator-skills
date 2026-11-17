@@ -72,6 +72,8 @@ description: "基于可复现证据审核功能、视觉、无障碍、性能、
 
 ## 交付
 
+已选 TapTap 时，另按[运行时能力完成条件](../app-release/references/taptap-runtime-integration.md#能力选择与完成条件)与[材料和政策](../app-release/references/taptap-materials-policy.md)核对本语言的真实覆盖、服务开通、回调安全、交易／奖励幂等和法定限制，分别报告模拟、官方依赖编译和真实宿主证据；不以存在封装或 CLI 成功推断业务通过。
+
 - 涉及加载显示时按[任务拆解与交接](../app-domain-toolkit/references/reference-domain-display-ownership.md#加载显示任务拆解与交接)核对服务、设计、素材、正式接入及验证的真实交付，按适用范围覆盖消费入口和宿主；跨角色交接时核对责任及相关依赖。加载逻辑或资源导入通过而正式视图缺失时列为交付缺口，人工显示确认缺失时保留待确认，不合并为整项完成。
 - 按[当前项目知识](../app-creator-workflow/references/professional-conventions.md#current-project-knowledge)核对受影响的现行说明与接手入口，引用历史证据但不将其当作当前验证结论。
 - 普通审查按[精简交付](../app-creator-workflow/references/output-files.md#精简交付)反馈结论及必要缺口，快照、复现、性能及复验细节引用已有证据，不重复输出测试矩阵或另写审查报告；不为审查创建网页或启动服务。

@@ -11,6 +11,9 @@ import { extractMarkdownSection, markdownProse } from '../skills/app-skill-runti
 const COMMON = 'app-release/references/channel-platform-integration.md';
 const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
+/** TapTap 运行时与材料规范必须随单栈分发，链接不能只在维护仓库成立。 */
+const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md']
+  .map((name) => `app-release/references/${name}`);
 const MAX = 'app-domain-toolkit/references/reference-ad-applovin-max-contract.md';
 const MAX_STACKS = new Set(['cocos', 'phaser', 'threejs']);
 const ENTRIES = [
@@ -52,7 +55,7 @@ for (const stack of STACKS) {
     installSkills({ projectRoot: project, stacks: [stack] });
     const root = join(project, '.agents/skills');
     const source = join(SOURCE_ROOT, 'skills');
-    for (const file of [COMMON, ...PLATFORMS]) {
+    for (const file of [COMMON, ...PLATFORMS, ...TAPTAP_REFERENCES]) {
       assert.deepEqual(readFileSync(join(root, file)), readFileSync(join(source, file)), `${stack} 未分发完整资料：${file}`);
       checkLocalLinks(root, file);
     }
@@ -71,6 +74,12 @@ for (const stack of STACKS) {
       const taptap = loaded.resources.find((entry) => entry.path === 'app-release/references/channel-platforms/taptap.md');
       assert.equal(taptap?.available, true, `${stack} 的 TapTap CLI 专项不可发现`);
       assert.equal(taptap.kind, 'public-reference');
+      if (!['esp32', 'roblox'].includes(stack)) {
+        for (const path of TAPTAP_REFERENCES.slice(0, 2)) {
+          assert.ok(loaded.resources.some((entry) => entry.path === path && entry.available), `${stack} 无法按需发现 ${path}`);
+          assert.ok(!loaded.documents.some((entry) => entry.path === path), '未选 TapTap 时不自动展开运行时手册');
+        }
+      }
       assert.ok(!loaded.documents.some((entry) => PLATFORMS.includes(entry.path)), '未选渠道不应自动展开所有平台正文');
       assert.ok(!loaded.documents.some((entry) => /^app-stack-/.test(entry.path) && !entry.path.startsWith(`app-stack-${stack}/`)), '单栈模式不应加载其他栈原生手册');
       if (!['cocos', 'phaser'].includes(stack)) assert.ok(!loaded.documents.some((entry) => entry.path === COMMON), '非直接引用的总规范应按需读取');

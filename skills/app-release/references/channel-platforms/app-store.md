@@ -2,6 +2,8 @@
 
 适用于已选择 App Store 的 Apple 平台游戏与非游戏 App，按项目实际 iOS／iPadOS 或其他目标执行[渠道公共规范](../channel-platform-integration.md)。商店分发、TestFlight 和其他分发路线分别确认，不把 Web／小游戏产物或开发构建当作正式候选。
 
+本发行路线已有[移动端 SDK 复用代码](../../../app-domain-toolkit/references/mobile-sdk-integration.md)：AdMob／AppLovin MAX 广告、Firebase Analytics／Crashlytics 统计与异常、AppsFlyer 归因，按实际引擎复用 iOS 实现；其他 Apple 终端须另外核实。StoreKit、Sign in with Apple 等商店原生能力单独核查实现状态；不把这些能力的缺口表述成整个 App Store 渠道没有复用代码。
+
 ## 接入与验证
 
 1. **身份与原生来源**：核对开发者主体／团队、Bundle ID、版本／构建号、设备族、系统范围及 App Store Connect 记录。Unity／Cocos 使用各自原生导出，Phaser／Three.js 核实本栈原生宿主，Flutter／Expo 按本栈构建；使用 WebView 不自动证明达到审核中的功能完整性／最低功能要求，不另行编造原生功能凑审。

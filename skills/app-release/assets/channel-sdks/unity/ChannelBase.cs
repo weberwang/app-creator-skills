@@ -42,6 +42,24 @@ namespace AppCreator.ChannelSdk
             get { lock (gate) { EnsureReady(); if (Platform != "crazygames") throw new InvalidOperationException("当前渠道不支持 CrazyGames 能力。"); int attempt = generation; return new CrazyGamesSdk(() => EnsureAttemptReady(attempt)); } }
         }
 #endif
+#if APP_CREATOR_TAPTAP_CORE
+        /// <summary>只在 TapTap 当前初始化成功后提供具名接口。</summary>
+        public TapTapSdk TapTap
+        {
+            get
+            {
+                lock (gate)
+                {
+                    EnsureReady();
+                    if (!(this is TapTapChannel channel)) throw new InvalidOperationException("当前渠道不支持 TapTap 能力。");
+                    int attempt = generation;
+                    return new TapTapSdk(() => { EnsureAttemptReady(attempt); channel.EnsureServicePermission(); },
+                        () => { EnsureAttemptReady(attempt); channel.EnsureServicePermission(); channel.EnsureAnalyticsPermission(); },
+                        channel, () => EnsureAttemptReady(attempt));
+                }
+            }
+        }
+#endif
 
         /// <summary>按官方 SDK 回调独立初始化，超时不代表真实成功。</summary>
         public Task InitializeAsync()

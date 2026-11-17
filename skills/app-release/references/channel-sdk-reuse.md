@@ -1,17 +1,20 @@
-# 微信小游戏与 CrazyGames SDK 复用
+# 渠道 SDK 与服务端代码复用
 
-用于 Unity、Cocos Creator、Phaser、Three.js 已确认支持的微信小游戏或 CrazyGames 目标。先读[渠道接入规范](channel-platform-integration.md)，将[工作流渠道源码](../assets/channel-sdks/)接入正式工程。每个引擎有明确能力接口，每个渠道有独立具名实现；项目填写配置、安装对应官方 SDK 并接线，不重新编写同一渠道适配。
+用于 Unity、Cocos Creator、Phaser、Three.js 已确认支持的微信小游戏、CrazyGames 或 TapTap 目标，以及 Node.js 的 TapTap 服务端。先读[渠道接入规范](channel-platform-integration.md)，将[工作流渠道源码](../assets/channel-sdks/)接入正式工程。每个引擎有明确能力接口，每个渠道有独立具名实现；项目填写配置、安装对应官方 SDK 并接线，不重新编写同一渠道适配。TapTap 按[宿主、能力与语言专项](taptap-runtime-integration.md)选择 Unity、Tap 小游戏或服务端路线，只有项目实际选中时读取相应模块；普通 H5 和小游戏 API 不混用。
 
 ## 渠道专属范围
 
 所有渠道遵守[SDK 不阻塞应用流程](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#sdk-不阻塞应用流程)：游戏不等待渠道初始化、隐私选择、广告加载或关闭回调。未就绪或受限立即跳过对应可选能力并继续玩法；渠道广告只在当前真实可用时尝试展示，不排队等待，不以关闭代替奖励。确实依赖登录或交易结果的单项业务单独处理结果，不能把它扩大为全局加载或游戏入口屏障。
 
-只封装渠道特定 API，不接管引擎基础能力。Google Play 沿用引擎原生 SDK 路线，不增加独立渠道层。
+只封装渠道特定 API，不接管引擎基础能力。Google Play 与 App Store 已有[移动端 SDK 复用资源](../../app-domain-toolkit/references/mobile-sdk-integration.md)：两条发行路线共用按引擎维护的 AdMob／MAX、Firebase 和 AppsFlyer 实现，不为相同厂商代码重复增加渠道层。商店原生登录、支付和游戏服务的实现状态另行标注，不能据此否认已有移动端代码覆盖。
 
 | 归属 | 能力与边界 |
 | --- | --- |
 | 微信渠道 | 登录与账号、必要授权、平台广告、虚拟／米大师支付、分享／邀请、关系链与群能力、客服／订阅、平台排行与用户云存储、开放数据通信、渠道事件与平台统计 |
 | CrazyGames 渠道 | Ad、Banner、Game 平台事件与邀请、User、Data 平台存档、Analytics 订单上报、Store |
+| TapTap | Unity 官方 C# 模块、Tap 小游戏具名 TypeScript 能力，以及 Node.js 服务端协议；登录、合规、变现、存档／排行／成就、社区和运营按[实际覆盖](taptap-runtime-integration.md#能力选择与完成条件)选择，不预建未支持语言的空桥接 |
+| Google Play | Android 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；Billing、Play Games Services 等商店原生能力另列实际覆盖 |
+| App Store | iOS 发行路线复用 AdMob／MAX 广告、Firebase 统计／异常和 AppsFlyer 归因；StoreKit、Sign in with Apple 等商店原生能力另列实际覆盖 |
 | 引擎基础能力 | 网络、文件、音频、渲染、普通输入、设备／系统信息及通用本地存储；渠道层不重新封装 |
 
 开放数据域只提供平台通信，不包装 Canvas；微信 `wx.cloud` 的通用云数据库、文件和网络能力不在渠道适配范围。官方声明依赖的结构类型不代表这些基础能力存在于公开渠道接口中。CrazyGames 的环境识别、平台配置和支付宿主判断仍按实际平台合同处理，不因此扩展设备能力。
@@ -44,8 +47,11 @@ node .agents/skills/app-release/scripts/install-channel-sdks.mjs --project . --e
 | Unity | `Assets/Scripts/Platform/Channels/` |
 | Cocos | `assets/scripts/platform/channels/` |
 | Phaser、Three.js | `src/platform/channels/` |
+| Node.js | `src/integrations/taptap/`，仅复制服务端资源，不含客户端 SDK |
 
 用 `--output <工程内目录>` 配合既有结构。脚本先检查全部冲突，再复制当前引擎接口、渠道实现及共享具体模块；相同文件可重复接入，已有修改拒绝覆盖。更新时审查差异，把通用修复回收到工作流，不替换项目业务。Unity 只为已安装官方 SDK 配置对应的 `APP_CREATOR_WECHAT_SDK`／`APP_CREATOR_CRAZYGAMES_SDK` 符号。
+
+TapTap 的 Unity 模块使用[本目录接入说明](../assets/channel-sdks/unity/integration.md)中的独立 `APP_CREATOR_TAPTAP_*` 符号；三引擎小游戏选择 `taptap-minigame`，Node.js 只复制服务端协议资源。实际覆盖与调用前置见[TapTap 运行时专项](taptap-runtime-integration.md)，不把管理端 CLI 加入玩家 SDK 选择器。
 
 应用唯一入口持有一个选择器：TypeScript 用本引擎的 `createChannelSelector()`，Unity 用 `new ChannelSelector()`。依据真实引擎／宿主信号及受控配置选择实现；未知、冲突或当前构建不支持时不猜选。只有选中 CrazyGames 后才加载 SDK，再核对官方环境；`local` 只能明确用于测试，`disabled` 不提供商业能力。微信 H5 和小游戏分别识别。
 

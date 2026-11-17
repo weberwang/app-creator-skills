@@ -1,0 +1,25 @@
+{
+  "verifiedOn": "2026-11-17",
+  "implementation": "Node.js ESM 自有代码，使用 Node 内置 crypto 和 fetch；未包含官方 SDK 二进制或源码",
+  "sources": {
+    "s2sSignature": "https://developer.taptap.cn/docs/sdk/common/api/",
+    "reservePhone": "https://developer.taptap.cn/docs/sdk/reserve-phone-authorization/",
+    "roleBinding": "https://developer.taptap.cn/docs/sdk/game-record/server-guide/role-bind/",
+    "directGift": "https://developer.taptap.cn/docs/sdk/instant-gift/guide/",
+    "code2Session": "https://developer.taptap.cn/minigameapidoc/dev/server/login/code2Session/",
+    "stableAccessToken": "https://developer.taptap.cn/minigameapidoc/dev/server/api-call/getStableAccessToken/",
+    "orderDetail": "https://developer.taptap.cn/minigameapidoc/dev/server/payment/order/",
+    "gameItemPayment": "https://developer.taptap.cn/minigameapidoc/dev/api/payment/tap.requestPaymentGameItem/",
+    "userSignature": "https://developer.taptap.cn/minigameapidoc/dev/tutorial/open-capabilities/signature/",
+    "checkSession": "https://developer.taptap.cn/minigameapidoc/dev/server/login/checkSessionKey/",
+    "paymentDelivery": "https://developer.taptap.cn/minigameapidoc/dev/server/payment/goods-deliver-notify/"
+  },
+  "limitations": [
+    "回调仅解析已验签的数据；真实角色、发奖、撤销授权和事件幂等由游戏业务及事务持久化负责",
+    "公共 S2S 签名不能用于小游戏支付消息；AES-CBC 解密丢弃文档约定的 16 字节随机首块，后续明文不受 IV 影响",
+    "checkSessionKey 的 GET 用户态签名原始数据未见官方明确示例，调用方须核实并显式传入 signature",
+    "发货事件验签及订单比对不提供原子幂等发货事务，且未在真实宿主完成验收",
+    "服务端返回的 sessionKey、accessToken 和平台秘密不得发往客户端或写入日志",
+    "只执行离线替身测试，未验证真实平台、外部服务或商业交易"
+  ]
+}

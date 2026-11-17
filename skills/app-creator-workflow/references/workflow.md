@@ -63,7 +63,7 @@ Roblox 根据已确认目标设备、Roblox 客户端支持及实际配置记录
 
 ## 归因与广告
 
-已选微信小游戏或 CrazyGames 时，基础工程按[渠道 SDK 复用](../../app-release/references/channel-sdk-reuse.md)接入当前引擎的渠道专属具名实现，业务按需调用明确的登录、广告、支付、分享和平台数据接口；不逐项目重写，不只做通用转发，也不接管网络、文件、音频、渲染等基础引擎接口。Google Play 按引擎原生 SDK 路线处理，不新增独立渠道层。
+已选微信小游戏、CrazyGames 或受支持的 TapTap 路线时，基础工程按[渠道 SDK 复用](../../app-release/references/channel-sdk-reuse.md)接入当前引擎的渠道专属具名实现，业务按需调用明确的登录、广告、支付、分享和平台数据接口；不逐项目重写，不只做通用转发，也不接管网络、文件、音频、渲染等基础引擎接口。TapTap 按[运行时专项](../../app-release/references/taptap-runtime-integration.md)将开发者材料、后台服务开通和 Unity C#／Tap 小游戏 TypeScript／Node.js 实现分开接线；其他语言的桥接缺口明确记录。Google Play 按引擎原生 SDK 路线处理，不新增独立渠道层。
 
 所有 SDK 统一遵守[SDK 不阻塞应用流程](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#sdk-不阻塞应用流程)：启动入口分别投递即返回，首帧、资源加载、场景切换、结算和继续游戏不等待任何 SDK 或隐私选择。授权不足只跳过相应能力；广告后台预加载，触发展示未就绪立即回退，不设置广告加载页或等待队列，不让广告成为进入下一步的必经条件。
 

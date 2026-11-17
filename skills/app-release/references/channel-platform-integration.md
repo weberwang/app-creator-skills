@@ -11,7 +11,7 @@
 | CrazyGames | 平台承载的 Web 游戏，区分 Basic Launch 与 Full Launch | [CrazyGames](channel-platforms/crazygames.md) |
 | 微信小游戏 | 微信小游戏工程及其实际宿主，不是普通网页或小程序页面工程 | [微信小游戏](channel-platforms/wechat-minigame.md) |
 | 抖音小游戏 | 对应小游戏工程、接入宿主及适用引擎路线 | [抖音小游戏](channel-platforms/douyin-minigame.md) |
-| TapTap | 开发者中心支持的实际游戏形态与包体；通过官方 CLI 管理资料、包体、审核、测试和运营 | [TapTap CLI](channel-platforms/taptap.md) |
+| TapTap | 按 APK／PC／Tap 小游戏／H5 等真实宿主选择 SDK 与商业能力；CLI 管理资料、包体、审核、测试和运营 | [运行时与复用代码](taptap-runtime-integration.md)、[材料与政策](taptap-materials-policy.md)、[CLI](channel-platforms/taptap.md) |
 | Google Play | Android 应用／游戏商店候选 | [Google Play](channel-platforms/google-play.md) |
 | App Store | 已选 Apple 平台的原生商店候选 | [App Store](channel-platforms/app-store.md) |
 
@@ -52,7 +52,7 @@ TapTap 先通过 CLI 查询目标应用当前支持的包体类型，再匹配�
 
 每个实际采用的引擎分别定义本引擎的渠道适配接口，使用本引擎的语言、异步机制、数据类型和生命周期约定。同一引擎内的所有已接入渠道实现统一能力契约；不同引擎不强行共用一份接口源码或 SDK 调用实现。接口按实际需求提供登录、广告、支付、存储、生命周期等能力，可复用已有能力接口并按职责拆分，不要求全部能力集中在一个大接口中。
 
-微信小游戏与 CrazyGames 通过[工作流复用资源](channel-sdk-reuse.md)接入渠道专属 API 的具名、强类型具体实现；加载、初始化、登录、广告、支付、分享及平台数据等由工作流维护，项目按需配置和使用，不逐项目重写，也不用字符串分发／通用反射代替具体封装。网络、文件、音频、渲染、输入、设备等基础接口由引擎提供。各引擎保留独立接口与渠道文件，已证实无引擎依赖的具体实现可以共享；实际能力、授权与前置仍按官方合同。
+微信小游戏、CrazyGames 与已支持的 TapTap 路线通过[工作流复用资源](channel-sdk-reuse.md)接入渠道专属 API 的具名、强类型具体实现；加载、初始化、登录、广告、支付、分享及平台数据等由工作流维护，项目按需配置和使用，不逐项目重写，也不用字符串分发／通用反射代替具体封装。TapTap 按[运行时专项](taptap-runtime-integration.md)分别采用 Unity C#、三引擎 Tap 小游戏 TypeScript 和 Node.js 服务端协议；缺少原生桥接的语言明确标记未支持。网络、文件、音频、渲染、输入、设备等基础接口由引擎提供。各引擎保留独立接口与渠道文件，已证实无引擎依赖的具体实现可以共享；实际能力、授权与前置仍按官方合同。
 
 渠道实现必须分文件：微信小游戏、CrazyGames 等每个已选独立渠道 SDK 各有实现文件，实现本引擎的对应能力接口。禁止在一个文件中用渠道判断分支堆放多个渠道的具体 API、回调和状态。单渠道需要多个能力文件或原生桥接文件时可继续按职责拆分；公共文件仅保存共享契约、类型或无渠道差异的调用工具，不放不同渠道的具体实现。
 
@@ -73,6 +73,8 @@ TapTap 先通过 CLI 查询目标应用当前支持的包体类型，再匹配�
 - **交接与验收**：TDD 和实施包必须记录当前引擎的能力接口路径、每个已选渠道的独立实现路径、SDK 管理文件、唯一选择入口及平台识别依据。定向验证检查文件与依赖边界，并覆盖各支持平台选中正确实现、未选 SDK 未加载、业务经统一接口调用、不支持结果及失败隔离；测试替身和真实宿主结果分别记录。
 
 ## 隐私与商业能力
+
+TapTap 按[运行时专项](taptap-runtime-integration.md)分别选择平台广告、Dirichlet／TapADN、原生内购、小游戏虚拟支付和买断／DLC，按[材料政策](taptap-materials-policy.md)核实资格。下文 AdMob／MAX 二选一仅适用于实际采用该移动原生聚合方案的项目，不取代 TapTap 已确认路线；TapDB 与已有分析／归因也按实际消费者避免重复采集和上报。
 
 隐私指引、权限用途、数据声明及实际 SDK 行为须一致，按[隐私解耦规范](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)处理。平台明确要求的必要授权与业务交互须在当前接入方案中明确并满足，不能用“默认不新增隐私流程”跳过；未满足时限制对应能力或阻断相关候选，不伪造用户同意，也不扩建无关隐私中心。拒绝、未决定、撤回及读取失败按适用接口验证，平台授权、系统权限和应用同意分别记录。
 

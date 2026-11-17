@@ -18,6 +18,10 @@ namespace AppCreator.ChannelSdk
         /// <summary>CrazyGames 就绪后可访问的具名渠道能力。</summary>
         CrazyGamesSdk CrazyGames { get; }
 #endif
+#if APP_CREATOR_TAPTAP_CORE
+        /// <summary>TapTap 就绪后可访问的具名渠道能力。</summary>
+        TapTapSdk TapTap { get; }
+#endif
         /// <summary>只请求本渠道的初始化，重复调用复用当前任务。</summary>
         Task InitializeAsync();
     }

@@ -32,7 +32,7 @@ description: "把已确认的产品需求转成模块边界、数据流、依赖
 - 第三方 SDK 的文件职责遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)及其中的隐私流程解耦约束，技术栈资料仅补充入口路径和原生要求。
 - 已选渠道按[导出方案与运行时平台选择](../app-release/references/channel-platform-integration.md#导出方案与运行时平台选择)确定同包支持范围或必要独立导出，由唯一入口识别宿主并按需加载对应 SDK；再按[SDK 边界](../app-release/references/channel-platform-integration.md#能力适配与-sdk-边界)明确独立适配器、配置隔离与服务端可信边界。平台 SDK 与 MAX 原生方案按实际能力选择，微信内 H5 与微信小游戏分别处理。TapTap 管理端 CLI 与客户端 SDK 分开，管理凭据不进入客户端，CLI 操作不新增运行时适配器。
 - 按[引擎接口与渠道实现](../app-release/references/channel-platform-integration.md#按引擎定义接口与渠道实现)分别定义当前引擎的统一能力接口，每个已选渠道使用独立文件实现；业务只依赖能力接口，唯一装配入口根据实际运行平台选择并注入对应实现。TDD 明确接口、各渠道实现、SDK 管理文件与选择入口的真实路径，禁止将多个渠道 API 堆进同一文件或在业务中散布渠道判断。
-- 微信小游戏与 CrazyGames 复用工作流已维护的具名、强类型渠道专属实现，不把通用 API 转发当作具体实现；网络、文件、音频、渲染、输入及设备等基础接口仍归引擎。按覆盖清单区分本栈已实现方法、官方不支持项和版本待核实项。
+- 微信小游戏、CrazyGames 和已支持的 TapTap 路线复用工作流已维护的具名、强类型渠道专属实现，不把通用 API 转发当作具体实现；网络、文件、音频、渲染、输入及设备等基础接口仍归引擎。TapTap 按[语言与宿主](../app-release/references/taptap-runtime-integration.md#宿主与语言路线)定义 C#、小游戏 TypeScript 与 Node.js 协议边界，交易、账号、奖励及回调持久幂等归真实业务服务。按覆盖清单区分本栈已实现方法、官方不支持项和版本待核实项。
 - 架构图必须反映真实仓库和目标栈，不凭空引入框架、服务或新依赖。
 - 平台/API细节和资源生命周期由当前栈原生适配补齐；未经授权不得修改公共配置或执行迁移写入。
 
