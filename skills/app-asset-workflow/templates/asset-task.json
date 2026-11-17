@@ -1,5 +1,5 @@
 {
-  "purpose": "单素材生产支持资料；interactionContext 仅在适用时记录承载面、朝向、空间归属、触发范围及显示状态，不新增门禁。Flutter V3 必须同时使用 flutter-domain-contracts 的 design-reconstruction 合同与模板，必填生产规格不能以 null 通过。V4 才生产和导入，最终验收使用控制器 asset-review 模板。测量、估计、适配与批准变更分别记录。",
+  "purpose": "单素材生产支持资料；位图的 generationSize 记录生成画布，runtimeSize 记录按实际消费者及密度推导的正式像素尺寸，displaySize 记录逻辑显示尺寸，密度依据放入 designBasis.importDensityAndUnit。导入前实际解码并精确核对 runtimeSize；生成大图须先归一化，不能直接当正式成品。已有原生尺寸合同直接引用，不维护第二份规格；这些支持字段本身不构成机器门禁。interactionContext 仅在适用时记录承载面、朝向、空间归属、触发范围及显示状态，不新增门禁。Flutter V3 必须同时使用 flutter-domain-contracts 的 design-reconstruction 合同与模板，必填生产规格不能以 null 通过。V4 才生产和导入，最终验收使用控制器 asset-review 模板。测量、估计、适配与批准变更分别记录。",
   "designItemIds": [],
   "implementationId": "",
   "designReconstructionRef": null,
@@ -14,6 +14,7 @@
   "sourcePath": "",
   "runtimePath": "",
   "generationSize": { "width": 0, "height": 0 },
+  "runtimeSize": { "width": 0, "height": 0 },
   "displaySize": { "width": 0, "height": 0 },
   "designBasis": {
     "sourceAndVersion": "",

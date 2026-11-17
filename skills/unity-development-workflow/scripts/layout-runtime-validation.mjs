@@ -1,4 +1,4 @@
-import { validateNineSliceDecision } from "./nine-slice-contract.mjs";
+import { validateNineSliceDecision, validateNineSlicePixelMultiplier } from "./nine-slice-contract.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
 import { validateNativePositionSnapshot } from "./layout-native-docking.mjs";
 
@@ -326,6 +326,17 @@ function validateUiSystemSnapshot(node, snapshot, uiSystem, errors, rectTransfor
     if (snapshot.image !== null) errors.push(`UI Toolkit 节点 ${node.id} 不能伪造 uGUI Image 快照。`);
   }
 
+  // 同时检查计划和真实组件，避免将实际切片伪报为 EXPLICIT 或省略尺寸意图来绕过倍率限制。
+  const slicedPlan = node.layoutBinding.uiLayout.imageSizing?.mode === "SLICED";
+  if (uiSystem === "UGUI" && (slicedPlan || snapshot.image?.type === "Sliced")) {
+    errors.push(...validateNineSlicePixelMultiplier(snapshot.image?.pixelsPerUnitMultiplier, `节点 ${node.id} 的 Image.pixelsPerUnitMultiplier`));
+  }
+  const style = snapshot.uiToolkit;
+  const actualToolkitSlice = isRecord(style) && ["sliceLeft", "sliceRight", "sliceTop", "sliceBottom"].some((key) => Number.isFinite(style[key]) && style[key] !== 0);
+  if (uiSystem === "UI_TOOLKIT" && (slicedPlan || actualToolkitSlice)) {
+    errors.push(...validateNineSlicePixelMultiplier(style?.sliceScale, `节点 ${node.id} 的 UI Toolkit sliceScale`));
+  }
+
   if (["STRUCTURE", "TEXT"].includes(node.renderKind) && snapshot.image !== null) {
     errors.push(`${node.renderKind} 节点 ${node.id} 不能伪造 Image 快照。`);
   }
@@ -447,7 +458,6 @@ function validateSlicedSizing(node, snapshot, uiSystem, errors) {
   if (!isRecord(style)) return;
   const actualBorder = [style.sliceLeft, style.sliceBottom, style.sliceRight, style.sliceTop];
   compareSourceAndBorder(node.id, decision, null, actualBorder, errors);
-  if (!Number.isFinite(style.sliceScale) || style.sliceScale <= 0) errors.push(`节点 ${node.id} 的 UI Toolkit sliceScale 必须是有限正数。`);
 }
 
 /** 比较冻结源像素和边框与 Unity 实际读取值，epsilon 仅用于浮点序列化误差。 */

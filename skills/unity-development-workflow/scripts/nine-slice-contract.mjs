@@ -1,3 +1,8 @@
+/** 校验九宫格专用像素倍率；坐标单位换算不属于此倍率。 */
+export function validateNineSlicePixelMultiplier(value, label) {
+  return value === 1 ? [] : [`${label} 必须严格等于数字 1`];
+}
+
 /** 校验同一九宫格声明的源尺寸、边框与目标显示空间。 */
 export function validateNineSliceDecision(decision, targetSize = null) {
   const errors = [];
@@ -40,6 +45,11 @@ export function validateNineSliceProduction(input) {
       if (importer?.textureType !== 'Sprite' || importer.spriteMode !== 'Single' || JSON.stringify(importer.border) !== JSON.stringify(expected)) errors.push(`${name} Sprite Border 与冻结切片不一致`);
     } else if (!importer || (importer.border !== undefined && JSON.stringify(importer.border) !== JSON.stringify(expected))) errors.push(`${name}不适用九宫格却声明了非零边框`);
   }
+  // 实际切片呈现不能通过把计划改为不适用来跳过切片倍率和边框检查。
+  if (item.nineSlice.mode === 'not-applicable' && Array.isArray(placements)
+    && placements.some((placement) => ['UGUI_SLICED', 'UITOOLKIT_SLICED'].includes(placement?.presentation))) {
+    errors.push('不适用九宫格的声明与消费者实际切片呈现冲突');
+  }
   if (item.nineSlice.mode === 'stretch') {
     if (!Array.isArray(placements) || placements.length === 0) errors.push('九宫格缺少实际消费者呈现检查');
     const seen = new Set();
@@ -52,6 +62,9 @@ export function validateNineSliceProduction(input) {
       if (!['SCREEN_PIXELS', 'UNITY_LOGICAL_UNITS'].includes(placement.coordinateSpace) || !Number.isFinite(ratio) || ratio <= 0) errors.push('九宫格消费者必须声明实测坐标空间和源像素转换比例');
       // Border 是源像素；用实际 PPU/Canvas 或 Panel 切片比例转换后才能与显示框比较。
       if (placement.size && Number.isFinite(ratio) && ratio > 0 && (expected[0] * ratio + expected[2] * ratio >= placement.size.width || expected[1] * ratio + expected[3] * ratio >= placement.size.height)) errors.push('九宫格显示框没有正尺寸中心');
+      // 只约束切片倍率本身；Sprite PPU 与屏幕坐标之间仍可能有合法换算。
+      if (placement.presentation === 'UGUI_SLICED') errors.push(...validateNineSlicePixelMultiplier(placement.pixelsPerUnitMultiplier, '消费者 pixelsPerUnitMultiplier'));
+      if (placement.presentation === 'UITOOLKIT_SLICED') errors.push(...validateNineSlicePixelMultiplier(placement.sliceScale, '消费者 sliceScale'));
       // 这里只核对来自 Unity 的几何/组件回读，接缝和角部画质仍需人工检查。
       if (placement.measured !== true || !Array.isArray(binding.consumerNodeIds) || !binding.consumerNodeIds.includes(placement.nodeId) || !['UGUI_SLICED', 'UITOOLKIT_SLICED'].includes(placement.presentation) || JSON.stringify(placement.border) !== JSON.stringify(expected)) errors.push('消费者缺少实际切片呈现或边框回读');
     }

@@ -26,7 +26,7 @@ SPRITE 节点通过 `uiLayout.imageSizing` 明确尺寸意图：
 
 - `NATIVE`：uGUI Image 使用正式 Sprite 的原生尺寸。采集 Sprite.rect、Sprite PPU、Canvas reference PPU、Image.pixelsPerUnit 和实际 RectTransform 本地尺寸。原生宽高按 `sprite.rect / image.pixelsPerUnit` 核对；`pixelsPerUnitMultiplier` 不进入这个 SetNativeSize 换算。屏幕 bounds、节点缩放与本地内容尺寸分开，不以屏幕像素反写 Sprite 尺寸。
 - `EXPLICIT`：明确的设计尺寸/缩放，填写具体 `reason`，防止无意拉伸被包装为适配。
-- `SLICED`：沿既有 `nineSlice` 冻结源尺寸与四边 Border；uGUI 读取实际 Sliced/Image Border，UI Toolkit 读取实际切片样式。切片最小中心与消费者验证仍使用[九宫格合同](./nine-slice-ui.md)。
+- `SLICED`：沿既有 `nineSlice` 冻结源尺寸与四边 Border；uGUI 读取实际 Sliced/Image Border，且 `pixelsPerUnitMultiplier` 必须严格为数字 `1`；UI Toolkit 读取实际切片样式，且 `sliceScale` 必须严格为数字 `1`。该硬约束同时适用于被计划误标为其他尺寸模式的实际切片组件，不允许默认补值或用近似容差放行。切片最小中心与消费者验证仍使用[九宫格合同](./nine-slice-ui.md)。
 
 UI Toolkit 背景图和 VisualElement 的布局尺寸独立，不拥有 uGUI Image/SetNativeSize 语义，不能直接套用 Cocos RAW 或源像素等于逻辑点的规则。纯结构和文字节点不伪造图片尺寸计划。
 
