@@ -6,23 +6,29 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
 /** 构建隔离项目，文件摘要与用户消息均仅用于测试协议。 */
-export function createWorld3DFixture(t, { stack = 'threejs' } = {}) {
-  const repo = mkdtempSync(join(tmpdir(), 'world3d-contract-'));
-  t.after(() => {
+export function createWorld3DFixture(t, { stack = 'threejs', repo: sharedRepo, workItemId = 'world-task', controlPrefix = '' } = {}) {
+  const repo = sharedRepo ?? mkdtempSync(join(tmpdir(), 'world3d-contract-'));
+  if (!sharedRepo) t.after(() => {
     // 只删除本测试创建且确认位于系统临时目录下的独占目录。
     assert.equal(dirname(resolve(repo)), resolve(tmpdir()));
     assert.ok(basename(repo).startsWith('world3d-contract-'));
     rmSync(repo, { recursive: true, force: true });
   });
   const work = {
-    schemaVersion: '1.0', workItemId: 'world-task', projectId: 'world-project',
-    stack, workItemType: 'SCENE', evidenceRoot: '.workflow-control/evidence/world-task',
+    schemaVersion: '1.0', workItemId, projectId: 'world-project',
+    stack, workItemType: 'SCENE', evidenceRoot: `.workflow-control/evidence/${workItemId}`,
     visual: { objectId: 'world-scene', designRoute: 'world-3d', stageModel: 'function-first-v1', stage: 'V1', candidateId: 'world-candidate' },
   };
   const paths = [];
 
+  /** 同项目后批使用独立控制记录；控制器证据目录已按工作项隔离，不重复加前缀。 */
+  function fixturePath(path) {
+    return controlPrefix && !path.startsWith(`${controlPrefix}/`) && !path.startsWith('.workflow-control/') ? `${controlPrefix}/${path}` : path;
+  }
+
   /** 保存指定路径的合成材料并返回真实内容摘要。 */
   function write(path, data) {
+    path = fixturePath(path);
     const bytes = Buffer.isBuffer(data) ? data : Buffer.from(typeof data === 'string' ? data : `${JSON.stringify(data, null, 2)}\n`);
     const full = join(repo, ...path.split('/'));
     mkdirSync(dirname(full), { recursive: true });
@@ -33,6 +39,7 @@ export function createWorld3DFixture(t, { stack = 'threejs' } = {}) {
 
   /** 读取当前文件的内容与实际摘要，供测试构造合法或失效引用。 */
   function identity(path) {
+    path = fixturePath(path);
     const bytes = readFileSync(join(repo, ...path.split('/')));
     return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
   }

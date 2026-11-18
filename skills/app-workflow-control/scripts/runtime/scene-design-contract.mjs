@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { VISUAL_STAGES } from './constants.mjs';
+import { hasWorld3DFileSnapshot, withoutWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
 
 const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 const CHECKS = ['camera', 'navigation', 'collision', 'interaction'];
@@ -42,15 +43,17 @@ function sceneFile(repo, ref, label, work) {
   insist(path === ref.path, `${label} 路径不规范`);
   const key = fileIdentityKey(repo, path);
   insist(!work?.invalidatedRefs?.some((item) => item?.path && fileIdentityKey(repo, item.path) === key), `${label} 使用了已作废引用`);
-  requireFile(repo, path, label);
-  const bytes = readFileSync(repoPath(repo, path, label).absolute);
-  insist(bytes.length > 0 && createHash('sha256').update(bytes).digest('hex') === ref.sha256, `${label} 为空或内容已变化`);
+  if (!hasWorld3DFileSnapshot(repo, ref, label, work)) {
+    requireFile(repo, path, label);
+    const bytes = readFileSync(repoPath(repo, path, label).absolute);
+    insist(bytes.length > 0 && createHash('sha256').update(bytes).digest('hex') === ref.sha256, `${label} 为空或内容已变化`);
+  }
   return path;
 }
 
 /** 读取冻结 JSON，避免由相同路径换绑内容。 */
 function frozenJson(repo, ref, label, work) {
-  return readJson(repo, sceneFile(repo, ref, label, work), label);
+  return withoutWorld3DFileSnapshots(() => readJson(repo, sceneFile(repo, ref, label, work), label));
 }
 
 /** 二维世界无根候选；三维世界仍需核对当前候选。 */
@@ -87,7 +90,7 @@ export function withinEvidenceRoot(repo, path, root, label) {
 
 /** 原始引擎输出不能使用控制、人工决定或空间规格记录自证。 */
 export function rawEvidence(repo, ref, label, work, root, forbiddenRefs = []) {
-  const path = sceneFile(repo, ref, label, work);
+  const path = withoutWorld3DFileSnapshots(() => sceneFile(repo, ref, label, work));
   withinEvidenceRoot(repo, path, root, label);
   const key = fileIdentityKey(repo, path);
   insist(!forbiddenRefs.filter(Boolean).some((item) => item.path && fileIdentityKey(repo, item.path) === key), `${label} 不能引用合同、场景或资产自身`);

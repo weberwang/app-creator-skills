@@ -49,6 +49,12 @@ for (const stack of ['cocos', 'unity', 'threejs']) {
     assert.match(stageGate, /highFidelityPrerequisite/);
     const world = readFileSync(join(root, 'app-workflow-control/references/world3d-scenes.md'), 'utf8');
     assert.ok(extractMarkdownSection(world, 'persistent-hud').trim());
+    assert.ok(extractMarkdownSection(world, 'model-sample-reuse').trim());
+    // 从实际安装目录加载新增运行时，避免源码可用但交付缺失辅助模块。
+    for (const [file, symbol] of [['world3d-file-snapshots.mjs', 'captureWorld3DFileSnapshots'], ['world3d-model-reuse.mjs', 'world3DModelReuse']]) {
+      const runtime = await import(pathToFileURL(join(root, 'app-workflow-control/scripts/runtime', file)).href);
+      assert.equal(typeof runtime[symbol], 'function');
+    }
     const execution = readFileSync(join(root, 'app-workflow-control/references/implementation-execution.md'), 'utf8');
     assert.ok(extractMarkdownSection(execution, 'sample-dependencies').trim());
   });

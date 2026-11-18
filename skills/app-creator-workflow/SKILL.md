@@ -7,7 +7,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 关卡／场景设计按需使用 `app_level_scene_designer`，正式三维几何制作与修改统一使用 `app_3d_model_creator`。[专属代理配置](references/specialist-agents.md)随各自的专业技能分发，在 Codex 项目中显式激活，沿用原阶段与人工确认。
 
-游戏大场景、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据，先完成可验证路径再按需要推进下一批；小范围修改沿用已有任务。
+游戏大场景、长游戏流程、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据。游戏先明确区域／机制／解锁的整体骨架，再按连续可玩路径分批，逐批验证邻区与已有内容衔接，按风险补状态复现、持续运行和长期体验检查；不等待全游戏完成才集成。小范围修改沿用已有任务。
 
 App 多页面按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择本批路径与代表页：统一视觉方向后，默认优先让代表页完成 V2–V5，再复用共享方案推进其余页面；依赖明确且所有权互斥时可提前并行。各 `PAGE` 独立记录阶段和验收，不默认所有页面同步推进，也不将代表页 V5 设为无关页面的前置门。
 
@@ -53,7 +53,7 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 技术方案统一遵循[官方优先、社区其次、最后自研](references/professional-conventions.md#solution-selection)。在全局基线及后续功能增量的实施前完成适用性核实，将来源与取舍写入已有计划，并随实施交接和质量审查核对；不新增状态或审批步骤。
 
-基础工程、插件或 SDK 接入按[工具能力核实](../app-domain-toolkit/references/tool-capability-verification.md)区分资料、连接、执行和真实结果；需要运行时按[统一运行验证](../app-quality-review/references/runtime-validation.md)复用实际实例、执行受影响操作并清理本任务资源。素材生产及复用按[来源与消费者关联](../app-asset-workflow/references/asset-provenance.md)更新现有清单；候选准备按[构建输出绑定](../app-release/references/release-readiness.md#实际构建输出与候选绑定)核对真实输出与当前输入。只对本次适用职责安排任务，不增加必填账本或另一套控制流程。
+基础工程、插件或 SDK 接入按[工具能力核实](../app-domain-toolkit/references/tool-capability-verification.md)区分资料、连接、执行和真实结果；需要运行时按[统一运行验证](../app-quality-review/references/runtime-validation.md)复用实际实例、执行受影响操作并清理本任务资源。素材生产及复用按[来源与消费者关联](../app-asset-workflow/references/asset-provenance.md)更新现有清单，跨设计稿相同元素从设计阶段遵守其中的[共享元素约束](../app-asset-workflow/references/asset-provenance.md#shared-design-elements)；候选准备按[构建输出绑定](../app-release/references/release-readiness.md#实际构建输出与候选绑定)核对真实输出与当前输入。只对本次适用职责安排任务，不增加必填账本或另一套控制流程。
 
 各栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。
 

@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { loadPackage } from './artifacts.mjs';
 import { engineeringEvidence } from './function-evidence.mjs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { hasWorld3DFileSnapshot } from './world3d-file-snapshots.mjs';
 
 /** 区分历史业务交付与不可变验收材料，只允许前者被后续增量修改。 */
 export function assertFunctionSnapshotFiles(repo, source, identities, { historical = false, label = '功能基线' } = {}) {
@@ -13,7 +14,7 @@ export function assertFunctionSnapshotFiles(repo, source, identities, { historic
   };
   const deliveries = new Set();
   const records = new Set();
-  if (historical) {
+  if (historical || source.visual?.designRoute === 'world-3d') {
     const pack = loadPackage(repo, source);
     for (const path of [source.implementationPackageRef.path, source.evidenceRef.path, `${source.evidenceRoot}/execution-state.json`]) records.add(key(path));
     for (const unit of pack.executionUnits) {
@@ -28,6 +29,8 @@ export function assertFunctionSnapshotFiles(repo, source, identities, { historic
   for (const identity of identities) {
     if (!identity || !/^[a-f0-9]{64}$/.test(identity.sha256 ?? '')) throw new WorkflowError(`${label}冻结文件摘要无效`);
     const pathKey = key(identity.path);
+    // 三维白模与正式场景共用路径时，V1 依据由其真实阶段快照验证。
+    if (source.visual?.designRoute === 'world-3d' && !records.has(pathKey) && hasWorld3DFileSnapshot(repo, identity, label, source)) continue;
     // 同时被列为交付和验收输出的文件仍是记录，不能借交付身份跳过校验。
     if (historical && deliveries.has(pathKey) && !records.has(pathKey)) continue;
     const path = requireFile(repo, identity.path, `${label}文件`);

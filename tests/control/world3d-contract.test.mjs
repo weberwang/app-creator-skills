@@ -179,7 +179,7 @@ test('V5 必须绑定正式场景、已验收模型、运行记录和人工显�
   const run = f.read(f.contract.formalRunRef);
   run.modelBindings = [];
   rebind(f, { ...f.contract, formalRunRef: f.write(`${f.work.evidenceRoot}/no-model-binding.json`, run) });
-  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /正式场景消费记录/);
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /正式运行模型绑定.*不能为空/);
   rebind(f, f.contract);
   changeApproval(f, 'displayApprovalRef', { decision: 'PENDING' });
   assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /尚未人工确认/);

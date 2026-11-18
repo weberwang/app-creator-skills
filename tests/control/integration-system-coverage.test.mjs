@@ -7,6 +7,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateIntegrationSystemMappings, validateIntegrationSystemCase } from '../../skills/app-workflow-control/scripts/runtime/integration-system-coverage.mjs';
+import { collectIntegrationSystemSources } from '../../skills/app-workflow-control/scripts/runtime/integration-system-sources.mjs';
+import { validateFinalIntegration, validateIntegrationScope } from '../../skills/app-workflow-control/scripts/runtime/final-integration.mjs';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
 
 const schema = JSON.parse(readFileSync(new URL('../../skills/app-workflow-control/schemas/integration-system-coverage.schema.json', import.meta.url), 'utf8'));
@@ -197,4 +199,138 @@ test('字段、来源上下文、结果文件和遗漏的用例都不允许绕�
   i.result.implementationPackageRef = 'other/pack.json';
   i.put(i.pack.executionUnits[0].resultPath, i.result);
   assert.throws(() => validateIntegrationSystemCase(i.repo, i.work, i.pack, mappings(i).get('final-case'), i.actual, { verifyIdentity: i.verifyIdentity }), /结果身份或状态/);
+});
+
+/** 构造同一世界两批正式来源，历史 V1 包独立冻结，最终验证仍引用当前命令。 */
+function cumulativeFixture(t) {
+  const f = fixture(t, 'unity');
+  f.work.projectId = 'project-a';
+  const unit = [{ unitId: 'scene-unit', acceptanceCommands: ['node --version'] }];
+  /** 为每个场景或历史功能来源建立独立实施包，避免按同名需求合并来源。 */
+  function makePack(id) {
+    const pack = { schemaVersion: '1.0', workItemId: id, stack: 'unity', workItemType: 'SCENE', executionUnits: unit };
+    pack.systemCoverage = createSystemCoverage(f.repo, { workItemId: id, stack: 'unity' }, unit);
+    return { pack, ref: f.put(`sources/${id}-pack.json`, pack) };
+  }
+  const oldV1 = makePack('old-v1');
+  const oldPack = makePack('old');
+  const currentPack = makePack('current');
+  const oldBaseline = f.put('sources/old-baseline.json', { schemaVersion: '1.0', systemCoverageOrigins: [oldV1.ref] });
+  const currentBaseline = f.put('sources/current-baseline.json', { schemaVersion: '1.0' });
+  const base = { projectId: 'project-a', stack: 'unity', workItemType: 'SCENE', globalState: 'COMPLETE' };
+  const old = { ...base, workItemId: 'old', implementationPackageRef: { path: oldPack.ref.path }, visual: { objectId: 'first', stage: 'V5', functionBaselineRef: oldBaseline } };
+  const current = { ...base, workItemId: 'current', implementationPackageRef: { path: currentPack.ref.path }, visual: { objectId: 'first', stage: 'V5', functionBaselineRef: currentBaseline } };
+  const oldRef = f.put('sources/old-work.json', old);
+  const currentRef = f.put('sources/current-work.json', current);
+  f.scope.objects = [{ objectId: 'first', workItemRef: currentRef, functionBaselineRef: currentBaseline }];
+  f.scope.cases = [{ caseId: 'final-case', objectIds: ['first'] }];
+  f.scope.productionSources = [{ workItemRef: oldRef, objectIds: ['first'] }];
+  f.scope.systemCoverageMappings = [];
+  const inspections = [];
+  /** 记录实际调用的校验模式；本夹具以合成结果替代来源检查器。 */
+  const inspect = (repo, source, options) => {
+    assert.equal(repo, f.repo);
+    inspections.push({ workItemId: source.workItemId, ...options });
+    return { status: 'PASS', blocking: [] };
+  };
+  return { ...f, old, oldRef, current, currentRef, oldV1, oldPack, currentPack, inspect, inspections };
+}
+
+/** 按已收集的真实来源包生成最终映射，验证缺项时由正式覆盖检查器拒绝。 */
+function mapCumulativeSources(f, sources) {
+  f.scope.systemCoverageMappings = sources.flatMap(({ packRef, pack, objectIds }) => pack.systemCoverage.requirements
+    .filter((requirement) => requirement.scope === 'current')
+    .map((requirement) => ({
+      sourcePackageRef: packRef, requirementId: requirement.requirementId, moduleIds: [...requirement.moduleIds], objectIds,
+      verifications: [{ caseId: 'final-case', unitId: 'final-unit', command: f.actual.command }],
+    })));
+}
+
+test('未绑定总范围的场景历史来源将旧需求和 V1 原包映射到当前验收命令', (t) => {
+  const f = cumulativeFixture(t);
+  const sources = collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect);
+  assert.deepEqual(sources.map((item) => item.pack.workItemId).sort(), ['current', 'old', 'old-v1']);
+  assert.deepEqual(f.inspections, [
+    { workItemId: 'current', strict: true, historical: false },
+    { workItemId: 'old', strict: true, historical: true },
+  ]);
+  mapCumulativeSources(f, sources);
+  const checks = validateIntegrationSystemMappings(f.repo, f.work, f.scope, { sources, pack: f.pack });
+  assert.doesNotThrow(() => validateIntegrationSystemCase(f.repo, f.work, f.pack, checks.get('final-case'), f.actual, { verifyIdentity: f.verifyIdentity }));
+  f.scope.systemCoverageMappings = f.scope.systemCoverageMappings.filter((mapping) => mapping.sourcePackageRef.path !== f.oldV1.ref.path);
+  assert.throws(() => validateIntegrationSystemMappings(f.repo, f.work, f.scope, { sources, pack: f.pack }), /缺少来源需求/);
+});
+
+test('完整 final 入口检查未绑定范围的历史需求与本次真实命令结果', (t) => {
+  const f = cumulativeFixture(t);
+  const sources = collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect);
+  mapCumulativeSources(f, sources);
+  Object.assign(f.scope, { schemaVersion: '1.0', projectId: f.work.projectId, stack: f.work.stack, workItemId: f.work.workItemId });
+  f.work.evidenceRoot = 'evidence';
+  f.pack.executionUnits[0].paths = ['src/final.mjs'];
+  f.put(f.work.implementationPackageRef.path, f.pack);
+  f.work.integrationScopeRef = f.put('final/scope.json', f.scope);
+  const caseRef = f.put('evidence/final-case.json', {
+    schemaVersion: '1.0', projectId: f.work.projectId, stack: f.work.stack, workItemId: f.work.workItemId,
+    caseId: 'final-case', status: 'PASS', objectIds: ['first'], ...f.actual,
+  });
+  f.work.integrationEvidenceRef = f.put('evidence/final-result.json', {
+    schemaVersion: '1.0', projectId: f.work.projectId, stack: f.work.stack, workItemId: f.work.workItemId,
+    status: 'PASS', objects: f.scope.objects, cases: [{ caseId: 'final-case', objectIds: ['first'], evidenceRef: caseRef }],
+  });
+  f.work.evidenceRef = f.put('evidence/manifest.json', {
+    schemaVersion: '1.0', workItemId: f.work.workItemId, stack: f.work.stack,
+    items: [{ status: 'PASS', path: caseRef.path }, { status: 'PASS', path: f.work.integrationEvidenceRef.path }],
+  });
+  assert.doesNotThrow(() => validateFinalIntegration(f.repo, f.work, f.inspect));
+  f.scope.systemCoverageMappings = f.scope.systemCoverageMappings.filter((mapping) => mapping.sourcePackageRef.path !== f.oldV1.ref.path);
+  f.work.integrationScopeRef = f.put('final/scope.json', f.scope);
+  assert.throws(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }), /缺少来源需求/);
+});
+
+test('未绑定总范围的历史来源必须是当前对象的不同已完成场景', (t) => {
+  const variants = [
+    ['不同项目', (old) => { old.projectId = 'other'; }],
+    ['不同技术栈', (old) => { old.stack = 'cocos'; }],
+    ['其他对象', (old) => { old.visual.objectId = 'other'; }],
+    ['其他类型', (old) => { old.workItemType = 'PAGE'; }],
+    ['同一工作项', (old) => { old.workItemId = 'current'; }],
+    ['空工作项标识', (old) => { old.workItemId = '  '; }],
+    ['已绑定其他范围', (old) => { old.productionScopeRef = { path: 'other.json', sha256: 'a'.repeat(64) }; }],
+    ['尚未完成', (old) => { old.globalState = 'PASSED'; }],
+    ['尚未到 V5', (old) => { old.visual.stage = 'V4'; }],
+    ['仅设计提案', (old) => { old.visual.designIntent = 'proposal'; }],
+  ];
+  for (const [label, mutate] of variants) {
+    const f = cumulativeFixture(t);
+    mutate(f.old);
+    f.scope.productionSources[0].workItemRef = f.put('sources/old-work.json', f.old);
+    assert.throws(() => collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect), /历史来源必须是同项目/, label);
+  }
+  const missing = cumulativeFixture(t);
+  delete missing.scope.productionSources[0].workItemRef.sha256;
+  assert.throws(() => collectIntegrationSystemSources(missing.repo, missing.work, missing.scope, missing.inspect), /必须冻结工作项/);
+  const duplicate = cumulativeFixture(t);
+  duplicate.scope.productionSources.push(structuredClone(duplicate.scope.productionSources[0]));
+  assert.throws(() => collectIntegrationSystemSources(duplicate.repo, duplicate.work, duplicate.scope, duplicate.inspect), /历史场景来源不能重复/);
+  const alias = cumulativeFixture(t);
+  alias.scope.productionSources.push({ workItemRef: alias.put('sources/old-alias.json', alias.old), objectIds: ['first'] });
+  assert.throws(() => collectIntegrationSystemSources(alias.repo, alias.work, alias.scope, alias.inspect), /历史场景来源不能重复/);
+  const current = cumulativeFixture(t);
+  current.scope.productionSources[0].workItemRef = current.currentRef;
+  assert.throws(() => collectIntegrationSystemSources(current.repo, current.work, current.scope, current.inspect), /历史来源必须是同项目/);
+  const changed = cumulativeFixture(t);
+  changed.put('sources/old-work.json', { ...changed.old, changed: true });
+  assert.throws(() => collectIntegrationSystemSources(changed.repo, changed.work, changed.scope, changed.inspect), /内容已变化/);
+});
+
+test('当前和历史场景分别执行严格检查，任何一侧失败均不能被另一侧通过代替', (t) => {
+  for (const failing of ['current', 'old']) {
+    const f = cumulativeFixture(t);
+    assert.throws(() => collectIntegrationSystemSources(f.repo, f.work, f.scope, (repo, source, options) => {
+      assert.equal(options.strict, true);
+      assert.equal(options.historical, source.workItemId === 'old');
+      return source.workItemId === failing ? { status: 'FAIL', blocking: ['合成失败'] } : { status: 'PASS', blocking: [] };
+    }), /严格检查未通过/);
+  }
 });

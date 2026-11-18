@@ -25,6 +25,7 @@ import { getWorkSource } from './work-source.mjs';
 import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
 import { isFigmaApp, isDesignProposal, validateFigmaBaseline, selectedFigmaCandidate } from './figma-app-contract.mjs';
 import { isWorld3D, assertWorld3DShape, validateWorld3DStage, validateWorld3DBaseline, validateWorld3DModel, collectWorld3DReferences } from './world3d-contract.mjs';
+import { hasWorld3DFileSnapshotPath } from './world3d-file-snapshots.mjs';
 import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from './scene-design-contract.mjs';
 import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
@@ -199,7 +200,8 @@ export function validateUnitResult(repo, work, pack, unit, result, { historical 
     const normalized = assertOwnedPath(repo, work, profile, path);
     if (!unit.paths.some((owned) => pathMatch(normalized, owned))) throw new WorkflowError(`执行结果越过单元 ${unit.unitId} 的文件所有权：${normalized}`, 'UNIT_PATH_OUT_OF_SCOPE');
     // 历史业务交付可由后批更名或删除；记录和证据仍按原路径验证。
-    if (!historical || protectedSet.has(key(normalized)) || pathMatch(key(normalized), `${key(work.evidenceRoot)}/**`)) requireFile(repo, path, '执行结果中报告的交付文件');
+    if ((!historical || protectedSet.has(key(normalized)) || pathMatch(key(normalized), `${key(work.evidenceRoot)}/**`)) &&
+        !(historical && isWorld3D(work) && hasWorld3DFileSnapshotPath(repo, normalized, work))) requireFile(repo, path, '执行结果中报告的交付文件');
   });
   validateDeletedFiles(repo, work, pack, unit, result.deletedFiles ?? [], profile, protectedPaths, { historical, deliveredFiles: result.files });
   if (!Array.isArray(result.commandOutputs) || result.commandOutputs.length !== unit.acceptanceCommands.length) {

@@ -3,6 +3,8 @@ import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { withinEvidenceRoot, rawEvidence, runRecord, validateSceneReview, validateSceneApproval } from './scene-design-contract.mjs';
 import { assertFrozenWorldHud, isWorldHudReturn } from './world3d-hud.mjs';
+import { reusedWorld3DAsset, withWorld3DModelReuse, world3DModelReuse } from './world3d-model-reuse.mjs';
+import { collectWorld3DFileSnapshotPaths, hasWorld3DFileSnapshot, withLiveWorld3DFiles, withoutWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
 
 // 路线仅服务真实游戏世界；声明本身不证明场景已搭建或运行。
 const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
@@ -70,15 +72,17 @@ export function world3dFile(repo, ref, label, work) {
   insist(normalized === ref.path, `${label} 路径不规范`);
   const key = fileIdentityKey(repo, normalized);
   insist(!work?.invalidatedRefs?.some((item) => item?.path && fileIdentityKey(repo, item.path) === key), `${label} 使用了已作废引用`);
-  requireFile(repo, normalized, label);
-  const bytes = readFileSync(repoPath(repo, normalized, label).absolute);
-  insist(bytes.length > 0 && createHash('sha256').update(bytes).digest('hex') === ref.sha256, `${label} 为空或内容已变化`);
+  if (!hasWorld3DFileSnapshot(repo, ref, label, work)) {
+    requireFile(repo, normalized, label);
+    const bytes = readFileSync(repoPath(repo, normalized, label).absolute);
+    insist(bytes.length > 0 && createHash('sha256').update(bytes).digest('hex') === ref.sha256, `${label} 为空或内容已变化`);
+  }
   return normalized;
 }
 
 /** 读取经过冻结校验的 JSON，保证内容和工作项引用是同一版本。 */
 function frozenJson(repo, ref, label, work) {
-  return readJson(repo, world3dFile(repo, ref, label, work), label);
+  return withoutWorld3DFileSnapshots(() => readJson(repo, world3dFile(repo, ref, label, work), label));
 }
 
 /** 将领域记录绑定当前项目、场景和候选，避免其他工作项的结果冒用。 */
@@ -116,7 +120,12 @@ export function readWorld3DContract(repo, work, stage) {
   if (STAGES.indexOf(stage) >= 2) required.push('modelSpecRef');
   if (STAGES.indexOf(stage) >= 3) required.push('sampleRef');
   if (STAGES.indexOf(stage) >= 4) required.push('formalSceneRef', 'formalRunRef', 'displayApprovalRef');
-  for (const field of required) world3dFile(repo, record[field], `场景领域合同.${field}`, work);
+  for (const field of required) {
+    const check = () => world3dFile(repo, record[field], `场景领域合同.${field}`, work);
+    // 当前正式场景不能借 V1 白模快照隐藏后续修改；历史整项检查保留原版本。
+    if (field === 'formalSceneRef') withLiveWorld3DFiles(check);
+    else check();
+  }
   return record;
 }
 
@@ -182,9 +191,17 @@ function modelEvidenceRoot(repo, work) {
     const oldContract = frozenJson(repo, baseline.domainEvidenceRef, 'V4 场景领域合同', work);
     identity(oldContract, work, 'V4 场景领域合同');
     insist(oldContract.designRoute === 'world-3d' && oldContract.stage === 'V4' && sameRef(repo, oldContract.sampleRef, review.modelSampleRef), '模型基线代表模块错绑');
+    if (work.visual.stage === 'V5') {
+      // 正式场景不能保留模型身份却换掉试接时的尺寸、接口或方向依据。
+      const current = readWorld3DEnvelope(repo, work);
+      insist(current.stage === 'V5', '正式模型必须绑定当前 V5 封套');
+      insist(sameRef(repo, oldContract.modelSpecRef, current.modelSpecRef) && sameRef(repo, oldContract.directionRef, current.directionRef), 'V5 不能更换 V4 已验收的模型规格或方向');
+    }
     if (work.visual.stage === 'V4') {
       // 仅 HUD 返修可重用历史模型；换模型规格或试接记录仍须重新经过 V4。
-      const current = readWorld3DContract(repo, work, 'V4');
+      // 推进归档时不在白模快照上下文中；这里只比较封套身份，完整合同已由阶段检查验证。
+      const current = readWorld3DEnvelope(repo, work);
+      insist(current.stage === 'V4', 'HUD 返修模型必须绑定当前 V4 封套');
       insist(sameRef(repo, oldContract.modelSpecRef, current.modelSpecRef) && sameRef(repo, oldContract.sampleRef, current.sampleRef), 'HUD 返修不能更换世界模型规格或试接');
     }
   }
@@ -231,6 +248,11 @@ function modelSpec(repo, work, contract, units) {
 
 /** 验证模型源、正式文件、导入及消费者真实记录，拒绝以组件身份伪装模型。 */
 export function validateWorld3DModel(repo, work, asset) {
+  return withWorld3DModelReuse(() => validateWorld3DModelInContext(repo, work, asset));
+}
+
+/** 模型来源可复用已完成试接，但当前业务文件与资源评审仍须逐项有效。 */
+function validateWorld3DModelInContext(repo, work, asset) {
   assertWorld3DShape(work);
   insist(asset?.assetType === 'model', '模型必须声明 model 类型');
   const id = text(asset.assetId, '模型 assetId');
@@ -238,8 +260,12 @@ export function validateWorld3DModel(repo, work, asset) {
   const source = { path: asset.sourceRef, sha256: asset.sourceSha256 };
   const output = { path: asset.output, sha256: asset.outputSha256 };
   const { root } = modelEvidenceRoot(repo, work);
-  world3dFile(repo, source, `${id} 模型来源`, work);
-  world3dFile(repo, output, `${id} 模型产物`, work);
+  withLiveWorld3DFiles(() => {
+    world3dFile(repo, source, `${id} 模型来源`, work);
+    world3dFile(repo, output, `${id} 模型产物`, work);
+  });
+  const reused = reusedWorld3DAsset(repo, work, asset);
+  if (reused) return { source, output, consumer: reused.consumer };
   if (asset.sourceKind === 'ai-generated') {
     world3dFile(repo, { path: asset.generationRecord, sha256: asset.generationRecordSha256 }, `${id} 生成记录`, work);
   }
@@ -248,7 +274,7 @@ export function validateWorld3DModel(repo, work, asset) {
   identity(imported, work, `${id} 导入证据`);
   insist(imported.assetId === id && imported.status === 'PASS', `${id} 导入记录身份或状态错误`);
   text(imported.importer, `${id}.importer`);
-  world3dFile(repo, imported.outputRef, `${id} 导入模型`, work);
+  withLiveWorld3DFiles(() => world3dFile(repo, imported.outputRef, `${id} 导入模型`, work));
   insist(sameRef(repo, imported.outputRef, output), `${id} 导入记录未绑定当前模型`);
   rawEvidence(repo, imported.commandEvidenceRef, `${id} 导入原始记录`, work, root, [source, output, asset.importEvidenceRef, asset.consumerEvidenceRef, work.visual.domainEvidenceRef]);
   const consumer = frozenJson(repo, asset.consumerEvidenceRef, `${id} 消费者证据`, work);
@@ -256,8 +282,8 @@ export function validateWorld3DModel(repo, work, asset) {
   identity(consumer, work, `${id} 消费者证据`);
   insist(consumer.assetId === id && consumer.status === 'PASS', `${id} 消费记录身份或状态错误`);
   text(consumer.nodeId, `${id}.nodeId`);
-  world3dFile(repo, consumer.sceneRef, `${id} 消费场景`, work);
-  world3dFile(repo, consumer.outputRef, `${id} 消费模型`, work);
+  withWorld3DFileSnapshots(repo, work, { stages: ['V4'] }, () => world3dFile(repo, consumer.sceneRef, `${id} 消费场景`, work));
+  withLiveWorld3DFiles(() => world3dFile(repo, consumer.outputRef, `${id} 消费模型`, work));
   insist(sameRef(repo, consumer.outputRef, output), `${id} 消费记录未绑定当前模型`);
   return { source, output, consumer };
 }
@@ -268,6 +294,8 @@ function sampleRecord(repo, work, contract, models, assets, root) {
   withinEvidenceRoot(repo, contract.sampleRef.path, root, '代表模块试接');
   identity(sample, work, '代表模块试接');
   insist(sample.phase === 'sample', '代表模块试接阶段错误');
+  // 复用包装保留当前身份和证据根，旧试接事实由冻结来源的完整历史检查证明。
+  if (world3DModelReuse(repo, work)) return sample;
   const asset = assets.find((item) => item.assetType === 'model' && item.assetId === sample.assetId);
   insist(asset && models.some((item) => item.assetId === sample.assetId), '代表模块不属于当前模型规格与验收清单');
   world3dFile(repo, sample.sceneRef, '代表模块场景', work);
@@ -323,6 +351,11 @@ function validateWorld3DUpstream(repo, work, contract, stage) {
 
 /** V4 样本准备前校验现有 V3 世界依据，不依赖尚未产生的 V4 资源评审。 */
 export function validateWorld3DProductionBasis(repo, work) {
+  return withWorld3DFileSnapshots(repo, work, {}, () => validateWorld3DProductionBasisInContext(repo, work));
+}
+
+/** 在已绑定的 V1 白模版本内检查当前样本生产依据。 */
+function validateWorld3DProductionBasisInContext(repo, work) {
   insist(work.visual?.stage === 'V4', '模型样本准备需要 V4 工作项');
   const contract = readWorld3DEnvelope(repo, work);
   insist(['V3', 'V4'].includes(contract.stage), '模型样本须引用当前 V3 或 V4 封套');
@@ -335,6 +368,11 @@ export function validateWorld3DProductionBasis(repo, work) {
 
 /** 校验当前阶段的空间、人工确认、模型与实际运行链，不替代引擎或人的判断。 */
 export function validateWorld3DStage(repo, work, stage, { validateEvidence, validateAssetReview } = {}) {
+  return withWorld3DModelReuse(() => withWorld3DFileSnapshots(repo, work, {}, () => validateWorld3DStageInContext(repo, work, stage, { validateEvidence, validateAssetReview })));
+}
+
+/** 维持各阶段真实来源，同时只为上游白模和试接使用其冻结字节。 */
+function validateWorld3DStageInContext(repo, work, stage, { validateEvidence, validateAssetReview }) {
   const contract = readWorld3DContract(repo, work, stage);
   const { models } = validateWorld3DUpstream(repo, work, contract, stage);
   let assets;
@@ -351,24 +389,33 @@ export function validateWorld3DStage(repo, work, stage, { validateEvidence, vali
       insist(matches.length === 1, `${model.assetId} 缺少唯一模型验收`);
       validateWorld3DModel(repo, work, matches[0]);
     }
-    sampleRecord(repo, work, contract, models, assets, root);
+    if (stage === 'V5' || (isWorldHudReturn(work) && work.visual.modelBaselineRef)) withWorld3DFileSnapshots(repo, work, { stages: ['V4'] }, () => sampleRecord(repo, work, contract, models, assets, root));
+    else sampleRecord(repo, work, contract, models, assets, root);
   }
   if (stage === 'V5') {
-    const run = runRecord(repo, work, contract.formalRunRef, 'formal', contract.formalSceneRef, work.evidenceRoot, [contract.spatialSpecRef, contract.blockoutRef]);
-    insist(Array.isArray(run.modelBindings), '正式运行记录缺少模型消费绑定');
-    for (const model of models) {
-      const matches = run.modelBindings.filter((item) => item?.assetId === model.assetId);
-      insist(matches.length === 1, `${model.assetId} 正式场景消费记录缺失或重复`);
-      text(matches[0].nodeId, `${model.assetId} 正式场景节点`);
-      world3dFile(repo, matches[0].outputRef, `${model.assetId} 正式消费模型`, work);
-      const asset = assets.find((item) => item.assetType === 'model' && item.assetId === model.assetId);
-      insist(sameRef(repo, matches[0].outputRef, { path: asset.output, sha256: asset.outputSha256 }), `${model.assetId} 正式场景模型版本错绑`);
-    }
-    approval(repo, work, contract.displayApprovalRef, {
-      stage: 'V5', purpose: 'runtime-acceptance', subjectRef: contract.formalSceneRef,
-      basisRefs: [contract.formalRunRef, work.assetReviewRef],
-    });
+    return withLiveWorld3DFiles(() => validateFormalWorld3D(repo, work, contract, models, assets));
   }
+  return contract;
+}
+
+/** 正式组合只读取当前场景和当前模型，历史来源由外层历史上下文保留。 */
+function validateFormalWorld3D(repo, work, contract, models, assets) {
+  const run = runRecord(repo, work, contract.formalRunRef, 'formal', contract.formalSceneRef, work.evidenceRoot, [contract.spatialSpecRef, contract.blockoutRef]);
+  insist(Array.isArray(run.modelBindings), '正式运行记录缺少模型消费绑定');
+  identifiers(run.modelBindings.map((item) => item?.assetId), '正式运行模型绑定');
+  insist(run.modelBindings.length === models.length && run.modelBindings.every((item) => models.some((model) => model.assetId === item.assetId)), '正式运行模型绑定与已验收模型规格不一致');
+  for (const model of models) {
+    const matches = run.modelBindings.filter((item) => item?.assetId === model.assetId);
+    insist(matches.length === 1, `${model.assetId} 正式场景消费记录缺失或重复`);
+    text(matches[0].nodeId, `${model.assetId} 正式场景节点`);
+    world3dFile(repo, matches[0].outputRef, `${model.assetId} 正式消费模型`, work);
+    const asset = assets.find((item) => item.assetType === 'model' && item.assetId === model.assetId);
+    insist(sameRef(repo, matches[0].outputRef, { path: asset.output, sha256: asset.outputSha256 }), `${model.assetId} 正式场景模型版本错绑`);
+  }
+  approval(repo, work, contract.displayApprovalRef, {
+    stage: 'V5', purpose: 'runtime-acceptance', subjectRef: contract.formalSceneRef,
+    basisRefs: [contract.formalRunRef, work.assetReviewRef],
+  });
   return contract;
 }
 
@@ -399,11 +446,12 @@ export function world3dScopeIds(repo, work) {
 export function collectWorld3DReferences(repo, work) {
   if (!isWorld3D(work)) return [];
   const found = new Map();
+  for (const path of collectWorld3DFileSnapshotPaths(repo, work)) found.set(fileIdentityKey(repo, path), path);
   const scanned = new Set();
   const queued = [work.visual?.domainEvidenceRef, work.visual?.modelBaselineRef, work.assetReviewRef, work.globalVisualBaselineRef].map((ref) => ({ ref, control: true }));
   const stringPaths = new Set(['sourceRef', 'output', 'generationRecord', 'evidenceRef']);
   // 只有控制记录需要递归解析；原始场景、模型和运行日志可能是很大的 JSON。
-  const controlKeys = new Set(['domainEvidenceRef', 'modelBaselineRef', 'assetReviewRef', 'globalVisualBaselineRef', 'spatialSpecRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionApprovalRef', 'functionBaselineRef', 'modelSpecRef', 'sampleRef', 'formalRunRef', 'displayApprovalRef', 'runtimeRef', 'importEvidenceRef', 'consumerEvidenceRef', 'selectionReviewRef', 'modelSampleRef']);
+  const controlKeys = new Set(['domainEvidenceRef', 'modelBaselineRef', 'assetReviewRef', 'globalVisualBaselineRef', 'spatialSpecRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionApprovalRef', 'functionBaselineRef', 'modelSpecRef', 'sampleRef', 'formalRunRef', 'displayApprovalRef', 'runtimeRef', 'importEvidenceRef', 'consumerEvidenceRef', 'selectionReviewRef', 'modelSampleRef', 'sourceWorkItemRef']);
   /** 迭代读取 JSON 嵌套记录，避免较深的真实工程记录造成递归栈溢出。 */
   function collect(value) {
     const pending = [{ value, key: '' }];

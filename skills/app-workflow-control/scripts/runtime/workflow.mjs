@@ -9,6 +9,7 @@ import { PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from '
 import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyToPass, assertTransitionInputs, assertVisualReview, bindWorkSource, hasPreciseApproval, loadPackage, requiresProtectedActionApproval, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
 import { validateFinalIntegration, validateIntegrationScope } from './final-integration.mjs';
 import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { captureWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { createExecutionPlanSnapshot, expectedActiveBatch } from './execution-batches.mjs';
 import { withWorkLock } from './work-lock.mjs';
@@ -95,7 +96,13 @@ export function inspectProductionDependencyHistory(repo, source, sourcePath) {
 }
 
 /** 按用途收集诊断，常规检查始终包含当前功能基线。 */
-function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical = false }) {
+function inspectWorkCore(repo, work, options) {
+  if (options.historical && isWorld3D(work)) return withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V1', 'V4', 'V5'] }, () => inspectWorkCoreInContext(repo, work, options));
+  return inspectWorkCoreInContext(repo, work, options);
+}
+
+/** 在适用的来源版本中运行原有只读诊断，不更改最终工作项。 */
+function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, historical = false }) {
   const blocking = [];
   const next = [];
   let activeBatch = null;
@@ -256,6 +263,8 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     inspectExecution(repo, work, { requireComplete: true });
     assertReadyToPass(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
+    // 仅在原阶段全部验证通过时保留可变业务源；审批及原始日志仍按原文件核验。
+    await captureWorld3DFileSnapshots(repo, work);
   }
   // 普通准备不执行受保护动作；发布与关闭前仍须核对精确批准与 F4。
   if (requiresProtectedActionApproval(work, to)) assertGates(work, ['F4']);
@@ -285,6 +294,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     if (!proposalCompletion) inspectExecution(repo, work, { requireComplete: true });
     assertFinalCompletion(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
+    if (isWorld3D(work)) withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V5'] }, () => {});
   }
   let createdExecutionStatePath = null;
   if (to === 'IMPLEMENTING') {
@@ -588,7 +598,10 @@ async function freezeFunctionBaseline(repo, work, sceneDesignBaseline = null) {
   if (sceneDesignBaseline) snapshot.systemCoverageOrigins = functionCoverageOrigins(repo, sceneDesignBaseline);
   if (work.visual.designRoute) snapshot.designRoute = work.visual.designRoute;
   if (isWorld3D(work)) {
+    // V1 已通过但快照缺失或被改写时，不能冻结带缺口的功能基线。
+    withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V1'] }, () => {});
     snapshot.world3dBlockoutEvidenceRoot = work.evidenceRoot;
+    snapshot.world3dSnapshotVersion = '1.0';
     const contract = readJson(repo, work.visual.domainEvidenceRef.path, 'V1 白模合同');
     snapshot.world3dBlockoutRefs = Object.fromEntries(['spatialSpecRef', 'blockoutRef', 'blockoutRunRef'].map((name) => [name, contract[name]]));
   }
@@ -637,6 +650,11 @@ function assertFunctionHostResults(repo, work, { historical = false } = {}) {
 
 /** V2 起重验功能来源及 V1 工程记录；仅历史来源可允许业务交付增量变化。 */
 export function assertFunctionBaseline(repo, work, { historical = false } = {}) {
+  return withWorld3DFileSnapshots(repo, work, { historical }, () => assertFunctionBaselineInContext(repo, work, { historical }));
+}
+
+/** 按冻结的 V1 白模版本核验功能证据，其他工作项仍沿用原有文件校验。 */
+function assertFunctionBaselineInContext(repo, work, { historical = false } = {}) {
   if (!work.visual || isDesignProposal(work) || ['V0', 'V1'].includes(work.visual.stage)) return;
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '') || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('缺少有效功能基线或基线内容已变化');
@@ -669,7 +687,8 @@ export function assertFunctionBaseline(repo, work, { historical = false } = {}) 
     assertGates(original, ['F0', 'F1', 'F2', 'F3']);
     validateEvidence(repo, original, { requireEngineering: true, requireVisual: false, requireAssetImport: false });
   }
-  inspectExecution(repo, original, { requireComplete: true, historical });
+  // V1 文件已由功能快照逐项校验；三维场景允许执行结果引用受控的旧白模版本。
+  inspectExecution(repo, original, { requireComplete: true, historical: historical || isWorld3D(work) });
   assertFunctionHostResults(repo, original, { historical });
 }
 
@@ -746,6 +765,7 @@ async function refreshLocalFunctionBaseline(repo, work, old, oldRef, spec) {
   if (isWorld3D(work)) {
     snapshot.world3dBlockoutEvidenceRoot = old.world3dBlockoutEvidenceRoot ?? old.work.evidenceRoot;
     snapshot.world3dBlockoutRefs = old.world3dBlockoutRefs;
+    snapshot.world3dSnapshotVersion = old.world3dSnapshotVersion;
   }
   if (isWorld2D(work)) Object.assign(snapshot, { sceneDesignEvidenceRoot: old.sceneDesignEvidenceRoot, sceneDesignRefs: old.sceneDesignRefs });
   if (work.workItemType === 'DISPLAY_LAYER') Object.assign(snapshot, { hostId: work.visual.hostId, layerType: work.visual.layerType });
@@ -889,12 +909,13 @@ async function advanceVisualLocked({ repo, workItem, to }) {
     // V4 的执行证据可能在 PASSED 后失效，阶段推进前必须重新核对。
     inspectExecution(repo, work, { requireComplete: true });
     assertVisualReview(repo, work, 'V4');
+    if (isWorld3D(work)) withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V4'] }, () => {});
   }
   const previousState = work.globalState;
   const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, planningRef: work.planningRef ?? null, revision: work.revision };
   if (isWorld3D(work) && work.visual.stage === 'V4') {
     // 复用现有阶段归档冻结试接来源，V5 不能重绑资源评审来绕过 V4 工程验证。
-    archive.world3dModelBaseline = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, evidenceRoot: world3dModelArchiveEvidenceRoot(repo, work), assetReviewRef: work.assetReviewRef, domainEvidenceRef: work.visual.domainEvidenceRef };
+    archive.world3dModelBaseline = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, evidenceRoot: world3dModelArchiveEvidenceRoot(repo, work), assetReviewRef: work.assetReviewRef, domainEvidenceRef: work.visual.domainEvidenceRef, snapshotVersion: '1.0' };
     archive.world3dHudAssets = captureWorldHudAssets(work);
   }
   const archivePath = `${work.evidenceRoot}/archive-${work.visual.stage}-${work.revision + 1}.json`;

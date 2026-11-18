@@ -7,7 +7,7 @@ import { dirname, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { VERSION, VISUAL_STAGES } from './constants.mjs';
 import { bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateUnitResult } from './artifacts.mjs';
-import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, validateWork } from './validation.mjs';
 import { inspectPendingRegressionExecution, inspectWork, loadWork, response } from './workflow.mjs';
 import { withWorkLock } from './work-lock.mjs';
@@ -17,6 +17,7 @@ import { assertNoSampleControlAliases, collectSampleControlReferences } from './
 import { assertRunnableCommand } from './runnable-command.mjs';
 import { validateSystemCoverage, collectSystemCoverageReferences } from './system-coverage.mjs';
 import { readCoveragePlan } from './system-coverage-binding.mjs';
+import { collectWorld3DMutableSourcePaths } from './world3d-file-snapshots.mjs';
 
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments', 'systemCoverage']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
@@ -58,13 +59,15 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   assertNoPriorPackages(repo, work);
 
   const evidenceRoot = repoPath(repo, work.evidenceRoot).relative;
+  // 正式世界源由本批写者继续制作；其冻结证据副本及所有控制记录仍不可覆盖。
+  const mutableWorldSources = new Set(collectWorld3DMutableSourcePaths(repo, work).map((path) => fileIdentityKey(repo, path)));
   const protectedPaths = [
     sourcePath,
     workSourcePath,
     packagePath,
     manifestPath,
     `${evidenceRoot}/execution-state.json`,
-    ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative),
+    ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative).filter((path) => !mutableWorldSources.has(fileIdentityKey(repo, path))),
     ...collectSystemCoverageReferences(plan),
     ...plan.executionUnits.map((unit) => unit.sampleBasisRef?.path).filter(Boolean),
     ...plan.executionUnits.map((unit) => `${evidenceRoot}/unit-${unit.unitId}.json`),
@@ -228,7 +231,9 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     for (const path of controls) forbiddenRecords.add(pathKey(path));
     assertNoSampleControlAliases(repo, [...report.files, ...report.commandOutputs.map((entry) => entry.outputFile), ...report.evidence.map((entry) => entry.path)], controls);
   }
-  validateNoRecordSelfReferences(repo, report, forbiddenRecords);
+  // 只为实际交付放行已分类的世界源；命令输出、证据和报告自身仍不得借用这些路径。
+  const mutableWorldDeliveries = new Set(collectWorld3DMutableSourcePaths(repo, work).map(pathKey));
+  validateNoRecordSelfReferences(repo, report, forbiddenRecords, mutableWorldDeliveries);
 
   validateManifestNoSelfReferences(repo, manifest, forbiddenRecords, work.evidenceRoot);
   const normalizedEvidence = report.evidence.map((entry, index) => {
@@ -263,7 +268,8 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
   // 正式校验器核对文件所有权、命令顺序、退出码和非空输出；这里不执行命令。
   validateUnitResult(repo, work, pack, unit, result);
   for (const path of result.files) {
-    if (forbiddenRecords.has(pathKey(repoPath(repo, path, 'Execution Result.files').relative))) {
+    const key = pathKey(repoPath(repo, path, 'Execution Result.files').relative);
+    if (forbiddenRecords.has(key) && !mutableWorldDeliveries.has(key)) {
       throw new WorkflowError(`Execution Result.files 不能把控制器记录报告为变更文件：${path}`);
     }
   }
@@ -424,7 +430,7 @@ function validateManifestBinding(work, pack, manifest) {
 }
 
 /** 拒绝把 Work Item、报告、计划、结果或清单本身伪装成原始文件。 */
-function validateNoRecordSelfReferences(repo, report, forbiddenRecords) {
+function validateNoRecordSelfReferences(repo, report, forbiddenRecords, mutableWorldDeliveries = new Set()) {
   const filePaths = report.files.map((path, index) => pathKey(repoPath(repo, path, `Execution Report.files[${index}]`).relative));
   const deletedPaths = (report.deletedFiles ?? []).map((path, index) => pathKey(repoPath(repo, path, `Execution Report.deletedFiles[${index}]`).relative));
   const outputPaths = report.commandOutputs.map((entry, index) => pathKey(repoPath(repo, entry.outputFile, `commandOutputs[${index}].outputFile`).relative));
@@ -434,7 +440,7 @@ function validateNoRecordSelfReferences(repo, report, forbiddenRecords) {
   if (new Set(outputPaths).size !== outputPaths.length) throw new WorkflowError('每条验收命令必须提供独立的非空输出文件');
   for (const [index, path] of report.files.entries()) {
     const normalized = repoPath(repo, path, `Execution Report.files[${index}]`).relative;
-    if (forbiddenRecords.has(pathKey(normalized))) throw new WorkflowError(`Execution Report.files 不能引用工作流记录：${path}`);
+    if (forbiddenRecords.has(pathKey(normalized)) && !mutableWorldDeliveries.has(pathKey(normalized))) throw new WorkflowError(`Execution Report.files 不能引用工作流记录：${path}`);
     if (outputPaths.includes(pathKey(normalized)) || evidencePaths.has(pathKey(normalized))) {
       throw new WorkflowError(`Execution Report.files 不能把命令输出或 evidence 报告为实现文件：${path}`);
     }

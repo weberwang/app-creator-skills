@@ -34,6 +34,8 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 游戏与非游戏 App 的 `final` 均先执行[系统覆盖最终闭环](../../app-creator-workflow/references/system-module-coverage.md#最终集成的系统覆盖闭环)：范围必填 `systemCoverageMappings`，逐份来源包核对本批需求、模块和实际消费者，关联最终用例、单元与冻结验收命令。来源包括当前对象包、V1 原包、功能来源重验保留的旧包及共享／生产前批；独立模块用 `systemSources`，总范围中无依赖链的批次用 `productionSources`，不得遗漏已声明批次。开始实施前就严格重验来源，不能只凭 COMPLETE、V5 或同名 case 推断通过。
 
+没有绑定生产总范围的同场景增量，也在同一 `productionSources` 数组显式列出需要保留的前批 `{workItemRef:{path,sha256},objectIds:[实际场景ID]}`。来源须是同项目、同技术栈、同场景的另一个未绑定总范围且已完成 V5 的 `SCENE`；不能引用当前来源自身、重复来源或用一个场景为其他对象背书。旧包与其 V1 来源需求仍逐项映射到当前最终用例及真实命令，最新场景继续执行当前版本检查；历史材料采用其冻结版本检查，不继承旧运行通过。未登记的历史不能由控制器自动发现，需求和前批完整性仍在原有范围审查中核对。`systemSources` 继续只表达非视觉系统，不为保留旧场景新增汇总工作项。
+
 Node.js 无界面服务器采用独立的[模块最终集成证据](../../app-stack-nodejs/references/integration-evidence.md)，来源为同项目、同技术栈已完成的 MODULE，冻结实施包、工程清单和交付文件；不要求 `visual`、V5 或 `functionBaselineRef`。以下显示对象与跨场景音乐规则仅适用于实际视觉栈。
 
 `INTEGRATION` 以 `integrationPurpose` 区分用途：`feature` 是早期功能验证，可以作为 V1 共享来源，不等待场景 V5；`final` 是正式组合后的跨对象回归，不能反向作为 V1 来源。初始化最终集成时使用 `--integration-purpose final`，默认用途为 `feature`。
