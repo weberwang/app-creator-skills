@@ -16,6 +16,8 @@ description: "规划广告展示位置、频次、同意与失败回退，并在
 
 ## 共用操作步骤
 
+激励广告嵌入 HUD、菜单或结算弹窗时，按[游戏界面设计规则及结算示例](../app-ui-layout/SKILL.md#game-ui-design-rules)设计可选入口、入账反馈与区域收起后的排布。奖励判定和发放沿用当前渠道与业务约定。
+
 广告属于当前[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)的一部分；先将适用广告格式、供应商、依赖和互斥合并进本批多选清单，复用用户已有明确决定。待选项未确认时只准备方案，不安装／复制广告 SDK 或接初始化与业务；确认后与其他已选 SDK 统一安排接入，运行时仍独立初始化。
 
 TapTap 广告统一采用用户已确定的 Dirichlet 聚合，按[引擎与宿主适配路线](../app-release/references/taptap-ad-integration.md)接入真实聚合 SDK 或受支持的 Tap 小游戏媒体接口，材料按[广告开通](../app-release/references/taptap-materials-policy.md)核实；H5／星火／制造的平台接口存在不代表已支持聚合。无需再询问聚合方案，也不为 TapTap 广告改用 AdMob／MAX 或套用 MAX 固定七网络；不把 Tap 小游戏代码当已实现的 APK 聚合桥接。缺少宿主支持、非个性化配置或授权依据时限制受影响请求，继续独立工作。
