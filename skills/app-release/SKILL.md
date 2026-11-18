@@ -11,6 +11,8 @@ SDK 统一遵守[必须项与可选多选确认](references/channel-sdk-selectio
 
 TapTap 渠道后台操作统一使用[官方 CLI](https://developer.taptap.cn/v3/cli/)，创建游戏、资料与资质、素材和包体、审核发布、测试计划、数据、评价及社区运营按[TapTap CLI 专项](references/channel-platforms/taptap.md)执行。先读取当前安装版本的内置技能并核实 schema，直接执行官方命令，不为已覆盖能力另写 HTTP 客户端或浏览器自动化。游戏内登录、合规、商业与生态能力按[运行时与语言代码复用](references/taptap-runtime-integration.md)实施，开发者证件、资质、商户及签约按[材料与政策](references/taptap-materials-policy.md)核查；CLI 管理不替代游戏内 SDK 接入。
 
+TapTap 发布准备按[填写信息与资质材料](references/taptap-release-preparation.md)读取本次后台要求，并依据实际游戏内容、已实现功能、当前候选、真实 SDK／数据行为和已有素材，准备可直接使用的填写稿及适用资质材料。覆盖简介、推荐语、开发者的话、展示素材、分发／包体和按需 iOS 配置，以及主体认证、AI 声明、适龄分级、隐私检测与防沉迷证明；已有有效资料直接复用，缺证据的项目列明缺口，不生成合规通过结论或自动写入后台。
+
 同一导出方案支持多平台宿主时，按[运行时平台选择](references/channel-platform-integration.md#导出方案与运行时平台选择)复用同一产物，运行时识别平台后仅加载对应 SDK；发布矩阵仍分别记录各宿主的实际验证，平台判断不代替专用引擎适配或原生打包。
 
 微信小游戏、CrazyGames 使用[渠道 SDK 复用资源](references/channel-sdk-reuse.md)，按当前引擎接入渠道专属 API 的具名、强类型具体实现；登录、广告、支付、分享及平台数据按项目使用，不逐项目重写，也不以通用转发代替。网络、文件、音频、渲染、输入等基础接口由引擎提供。Google Play 沿用引擎原生 SDK 接入。
@@ -34,6 +36,7 @@ TapTap 渠道后台操作统一使用[官方 CLI](https://developer.taptap.cn/v3
 5. 完成提醒后记录每项已选择、明确不做或待决定：已有明确答复时据此冻结最终输入；未答复时保留当前输入，仍按现有授权构建候选并执行必需验证，只暂停依赖未决选择的额外检查或改动。按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)保存实际命令、工具版本、候选位置、输出校验值、警告和构建日志，不把本地开发服务当成发行包。
 6. 验证干净安装、首次启动、核心流程、断网/异常恢复与目标尺寸/包体限制；仅在明确要求兼容/迁移时验证对应升级路径，平台差异分别记录结果。
    面向已选商店或游戏平台交付时，按[商店文案与展示素材制作](references/store-marketing-assets.md#任务安排与完成条件)核对后台字段和槽位，准备可填写文案及所需封面、截图和宣传视频。正式采集绑定稳定版本，成品画面由用户人工确认。仅检查既有候选时核对有效材料与缺口。
+   TapTap 候选同时按[发布准备专项](references/taptap-release-preparation.md)完成当期字段与资质盘点、实际内容填写稿、适用材料及候选一致性核查，将必填缺口、后台审核状态和人工待确认项写入已有发布材料。
 7. 为当前候选记录可恢复的备份和恢复步骤；仅当用户明确要求升级兼容或迁移时，才制定受支持版本范围、迁移、回滚及兼容窗口。不可逆或需外部写入时标记阻断并等待相应授权。
 8. 在已有发布材料中汇总当前范围的结果、候选位置、验证及恢复入口；检查任务可直接交付检查结论，不因清单名称生成空的发布说明或矩阵。实际候选与发布的合同材料仍须齐备，按[发布候选与证据约定](../app-creator-workflow/references/professional-conventions.md#release-candidate-evidence)区分准备与实际上线。
 

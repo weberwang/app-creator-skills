@@ -47,6 +47,10 @@ taptap-cli app analyze-status --dev-id <developerId> --app-id <appId>
 
 ## 游戏、资料与资质
 
+发布准备先按[填写信息与资质材料](../taptap-release-preparation.md)读取目标应用当前模块、必填缺口和资质 assessment，以实际游戏及同一候选准备填写稿、真实展示素材与适用证明，再进入下表相应操作。名称、简介、推荐语、开发者的话、AI 声明、适龄、隐私及防沉迷说明均需有本游戏事实或材料依据；不能沿用另一个游戏、网页示例或模板中的默认结论。
+
+准备材料不等于批准修改后台。`app get-module`／`app analyze-status` 与 `qualification get-assessment`／`qualification get-status` 负责核实当前要求和状态；`app save-changes`、上传、资质提交及正式提审仍只在对应授权内执行。实际提交前回查资料、候选与发布计划，页面当前选中“过审后立即发布”不等于用户已授权上线。
+
 | 任务 | 实施路线 |
 | --- | --- |
 | 创建游戏 | 读取 `taptap-publish-game`，先查询已有游戏避免重复；确认名称、类型、开发角色和包体方向。使用 `schema app create` 与 `app create --data @create-app.json --idempotency-key <key> --dry-run` 预览，实际创建使用相同已核对内容。创建成功只表示草稿已建立。 |

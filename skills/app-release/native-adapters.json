@@ -115,6 +115,12 @@
       "onDemand": true
     },
     {
+      "id": "taptap-release-preparation",
+      "path": "references/taptap-release-preparation.md",
+      "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "taptap-runtime",
       "path": "references/taptap-runtime-integration.md",
       "stacks": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "nodejs"],

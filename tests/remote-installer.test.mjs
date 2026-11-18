@@ -179,6 +179,7 @@ test('远程安装递归保留渠道复用源码和项目接入脚本的真实�
     'skills/app-domain-toolkit/assets/mobile-sdks/dirichlet/typescript/dirichlet-sdk.ts',
     'skills/app-domain-toolkit/assets/mobile-sdks/dirichlet/native/android/core/org/appcreator/dirichlet/DirichletAndroidVendor.java',
     'skills/app-release/references/taptap-materials-policy.md',
+    'skills/app-release/references/taptap-release-preparation.md',
     'skills/app-release/references/channel-sdk-selection.md',
     'skills/app-domain-toolkit/scripts/sdk/install-mobile-sdks.mjs',
     'skills/app-domain-toolkit/assets/mobile-sdks/unity/FirebaseAnalyticsManager.cs',

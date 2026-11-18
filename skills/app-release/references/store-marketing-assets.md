@@ -75,5 +75,6 @@
 - [Google Play 预览素材](https://support.google.com/googleplay/android-developer/answer/9866151?hl=en)：截图、Feature graphic、真实内容及各展示位适用要求。
 - [App Store 产品页](https://developer.apple.com/app-store/product-page/)：截图主旨、展示顺序与本地化；[截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)用于执行时核对目标设备；[预览制作](https://developer.apple.com/app-store/app-previews/)与[预览规格](https://developer.apple.com/help/app-store-connect/reference/app-information/app-preview-specifications/)用于核对设备采集、时长与导出要求。
 - CrazyGames 的填写项、封面和预览视频槽位按[渠道专项](channel-platforms/crazygames.md#填写稿与展示素材)核对。
+- TapTap 的简介、首页推荐语、开发者的话、实际素材槽位及与游戏内容一致的声明／资质材料按[发布准备专项](taptap-release-preparation.md)组织，不将一次后台页面的缺项数量或默认分发状态套到其他候选。
 - 微信小游戏的中文名称、简称、游戏介绍、图标及各组介绍和截图按[发布物料准备](channel-platforms/wechat-minigame.md#发布物料准备)核对。场景与玩法各先写整体介绍，再集中展示截图组，各系统按系统介绍后附一张截图组织。
 - 其他目标商店在实际任务中补充其官方规范，不复用未经核对的 Apple/Google 尺寸或展示限制。

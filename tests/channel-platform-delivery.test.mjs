@@ -14,8 +14,10 @@ const SDK_SELECTION = 'app-release/references/channel-sdk-selection.md';
 const PLATFORMS = ['crazygames', 'wechat-minigame', 'douyin-minigame', 'taptap', 'google-play', 'app-store']
   .map((name) => `app-release/references/channel-platforms/${name}.md`);
 /** TapTap 运行时与材料规范必须随单栈分发，链接不能只在维护仓库成立。 */
-const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md', 'taptap-ad-integration.md', 'taptap-ads-usage.md']
+const TAPTAP_REFERENCES = ['taptap-runtime-integration.md', 'taptap-materials-policy.md', 'channel-sdk-reuse.md', 'taptap-ad-integration.md', 'taptap-ads-usage.md', 'taptap-release-preparation.md']
   .map((name) => `app-release/references/${name}`);
+/** 填写稿与资质准备跨栈分发，按需读取不代表各栈具备客户端发行能力。 */
+const TAPTAP_PREPARATION = 'app-release/references/taptap-release-preparation.md';
 /** 广告适配只面向真实客户端栈，不向服务端或设备端声明可运行能力。 */
 const TAPTAP_AD_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo']);
 /** 发布和广告入口共同发现同一份按引擎接入规范。 */
@@ -84,6 +86,10 @@ for (const stack of STACKS) {
       const taptap = loaded.resources.find((entry) => entry.path === 'app-release/references/channel-platforms/taptap.md');
       assert.equal(taptap?.available, true, `${stack} 的 TapTap CLI 专项不可发现`);
       assert.equal(taptap.kind, 'public-reference');
+      const preparation = loaded.resources.find((entry) => entry.path === TAPTAP_PREPARATION);
+      assert.equal(preparation?.available, true, `${stack} 无法发现 TapTap 填写稿与资质准备规范`);
+      assert.equal(preparation.kind, 'public-reference');
+      assert.ok(!loaded.documents.some((entry) => entry.path === TAPTAP_PREPARATION), '未选择 TapTap 发布准备时不自动展开其完整规范');
       if (!['esp32', 'roblox'].includes(stack)) {
         for (const path of TAPTAP_REFERENCES.slice(0, 2)) {
           assert.ok(loaded.resources.some((entry) => entry.path === path && entry.available), `${stack} 无法按需发现 ${path}`);
@@ -120,6 +126,14 @@ for (const stack of STACKS) {
     try {
       assert.throws(() => loadNativeMode({ skillsRoot: root, stack, capability: 'app-release', sourceSkill: routes[0].sourceSkill }), /不存在/);
     } finally { renameSync(hidden, current); }
+
+    // 发布准备规范是已声明的分发资源，丢失后必须报错而非借用源仓库。
+    const preparation = join(root, TAPTAP_PREPARATION);
+    const hiddenPreparation = `${preparation}.temporarily-unavailable`;
+    renameSync(preparation, hiddenPreparation);
+    try {
+      assert.throws(() => loadNativeMode({ skillsRoot: root, stack, capability: 'app-release', sourceSkill: routes[0].sourceSkill }), /不存在/);
+    } finally { renameSync(hiddenPreparation, preparation); }
 
     if (TAPTAP_AD_STACKS.has(stack)) {
       // 已声明的广告资料缺失时必须暴露安装损坏，不能借用维护仓库兜底。
