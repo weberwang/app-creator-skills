@@ -26,6 +26,7 @@ const DOCUMENTS = [
   'app-asset-workflow/references/interface-intent.md',
   'app-asset-workflow/references/multi-image-scene-design.md',
   'app-domain-toolkit/references/incremental-production.md',
+  'app-workflow-control/references/implementation-execution.md',
 ];
 
 /** 需要通过真实原生读取器验证的执行入口，未声明的模式不凭测试补造。 */
@@ -150,6 +151,7 @@ for (const stack of STACKS) {
     if (stack === 'flutter') {
       // 破坏安装副本的真实锚点，确认断链不会被源仓库或相邻章节静默补齐。
       for (const [path, marker, replacement, entry] of [
+        ['app-domain-toolkit/references/incremental-production.md', '<a id="rolling-delivery-plan"></a>', '', 'app-creator-workflow/SKILL.md'],
         ['app-creator-workflow/references/professional-conventions.md', '<a id="incremental-change-impact"></a>', '', 'app-creator-workflow/SKILL.md'],
         ['app-asset-workflow/SKILL.md', '## 代表性接入与分批协作', '## 已移除样本章节', 'app-creator-workflow/references/workflow.md'],
       ]) {
