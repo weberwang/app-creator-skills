@@ -28,6 +28,7 @@ import { isWorld3D, assertWorld3DShape, validateWorld3DStage, validateWorld3DBas
 import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from './scene-design-contract.mjs';
 import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
+import { validateGeneratedImageReview } from './generated-image-review.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 export { bindWorkSource } from './work-source.mjs';
@@ -327,12 +328,23 @@ export function assertAssetReview(repo, work, target = null) {
     requireText(asset.sourceRef, 'Asset Review asset.sourceRef');
     requireOneOf(asset.sourceKind, ['ai-generated', 'hand-authored', 'licensed', 'existing'], 'Asset Review asset.sourceKind');
     if (asset.sourceKind === 'ai-generated') {
-      requireText(asset.generationRecord, 'AI 图片生成记录');
-      requireNonEmptyFile(repo, asset.generationRecord, 'AI 图片生成记录');
+      const recordPath = verifySingleVisualFile(repo, { path: asset.generationRecord, sha256: asset.generationRecordSha256 }, 'AI 图片生成记录');
+      const approvedSources = target ? [target.referenceTarget] : readApprovedImageSources(repo, work);
+      validateGeneratedImageReview(repo, readJson(repo, recordPath, 'AI 图片生成记录'), asset, {
+        candidateId: record.candidateId, approvedSources,
+        verifyFile: (ref, label) => verifySingleVisualFile(repo, ref, label),
+      });
       validateAntiAiChecks(repo, asset.antiAiChecks, asset.assetId);
     }
   }
   return record;
+}
+
+/** 读取页面当前冻结原图；Figma 的额外状态只允许采用确认记录列明的来源。 */
+function readApprovedImageSources(repo, work) {
+  const path = verifySingleVisualFile(repo, work.visual.reviews?.V2, 'V2 目标确认');
+  const approval = readJson(repo, path, 'V2 目标确认');
+  return [approval.referenceTarget, ...(isFigmaApp(work) ? approval.approvedTargetRefs ?? [] : [])];
 }
 
 /** 技术成果和人的风格检查各有自己的证据，不能以生成成功推断审美通过。 */

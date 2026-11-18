@@ -33,7 +33,10 @@
     "responsiveEvidence": {"$ref": "#/$defs/responsiveEvidence"},
     "uiLayoutMeasurementRef": {
       "type": "object", "additionalProperties": false, "required": ["path"],
-      "properties": {"path": {"type": "string", "minLength": 1}},
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "textEvidencePath": {"type": "string", "minLength": 1}
+      },
       "description": "引用当前evidenceRoot内由Toolkit实际采集的布局与组件同批报告。"
     },
     "resourceHandoffInspectionRef": {

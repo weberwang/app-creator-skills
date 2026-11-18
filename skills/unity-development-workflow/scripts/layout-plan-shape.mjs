@@ -235,7 +235,7 @@ function checkLayoutBinding(value, path, errors) {
 
 /** 检查单个计划节点，targetBounds 是可选派生字段。 */
 function checkNode(value, path, errors) {
-  const keys = new Set(["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding", "targetBounds", "expectedActive", "nineSlice"]);
+  const keys = new Set(["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding", "targetBounds", "expectedActive", "nineSlice", "textStyle"]);
   const required = ["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding"];
   if (!checkObject(value, path, keys, required, errors)) return;
 
@@ -253,6 +253,25 @@ function checkNode(value, path, errors) {
   if (value.targetBounds !== undefined) checkRect(value.targetBounds, `${path}.targetBounds`, errors);
   if (value.expectedActive !== undefined && typeof value.expectedActive !== "boolean") addError(errors, `${path}.expectedActive`, "必须是布尔值");
   if (value.nineSlice !== undefined) checkNineSlice(value.nineSlice, `${path}.nineSlice`, errors);
+  if (value.textStyle !== undefined) {
+    const style = value.textStyle;
+    if (checkObject(style, `${path}.textStyle`, new Set(["source", "attributes"]), ["source", "attributes"], errors)) {
+      checkString(style.source, `${path}.textStyle.source`, errors);
+      if (!Array.isArray(style.attributes) || style.attributes.length === 0) addError(errors, `${path}.textStyle.attributes`, "必须是非空数组");
+      else style.attributes.forEach((attribute, index) => {
+        const attributePath = `${path}.textStyle.attributes[${index}]`;
+        const fields = ["name", "componentType", "propertyPath", "expectedValue"];
+        if (checkObject(attribute, attributePath, new Set(fields), fields, errors)) {
+          for (const field of fields) checkString(attribute[field], `${attributePath}.${field}`, errors);
+          // 保留字体颜色的 Alpha，避免只核对 RGB 导致半透明文字误过。
+          if (attribute.name === "fill") checkString(attribute.expectedValue, `${attributePath}.expectedValue`, errors, null, /^#[0-9A-F]{8}$/);
+        }
+      });
+      if (Array.isArray(style.attributes) && !style.attributes.some((attribute) => attribute?.name === "fill")) {
+        addError(errors, `${path}.textStyle.attributes`, "缺少字体颜色 fill");
+      }
+    }
+  }
 }
 
 /** 检查节点引用的既有九宫格合同，避免运行计划引入另一套字段格式。 */

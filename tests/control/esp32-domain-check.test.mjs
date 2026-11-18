@@ -37,9 +37,10 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   write(repo, 'ui.c', '合成布局源码');
   doc.layoutSourceRef = write(repo, 'snapshots/ui-before.c', '合成布局源码');
   const registrationRef = write(repo, 'asset-registration.c', '合成资源注册');
-  const nodes = [{ id: 'screen', parentId: null, x: 0, y: 0, width: 320, height: 240, positioning: 'relative', references: ['viewport'] }];
-  if (layer) nodes.push({ id: visual.objectId, parentId: 'screen', x: 8, y: 8, width: 200, height: 120, positioning: 'absolute', references: ['screen'], floatingKind: 'popup' });
-  nodes.push({ id: 'title', parentId: layer ? visual.objectId : 'screen', x: 8, y: 8, width: 100, height: 20, positioning: 'relative', references: [layer ? visual.objectId : 'screen'] });
+  const textAppearance = { textFill: '#224466FF', textOpacity: 0.8 };
+  const nodes = [{ id: 'screen', parentId: null, x: 0, y: 0, width: 320, height: 240, positioning: 'relative', references: ['viewport'], textAppearance: null }];
+  if (layer) nodes.push({ id: visual.objectId, parentId: 'screen', x: 8, y: 8, width: 200, height: 120, positioning: 'absolute', references: ['screen'], floatingKind: 'popup', textAppearance: null });
+  nodes.push({ id: 'title', parentId: layer ? visual.objectId : 'screen', x: 8, y: 8, width: 100, height: 20, positioning: 'relative', references: [layer ? visual.objectId : 'screen'], textAppearance });
   const layout = { schemaVersion: '1.0', objectId: visual.objectId, boardProfileRef, screen: { width: 320, height: 240 }, sourcePath: 'ui.c', decompositionRef: visual.reviews.V3Decomposition, rootId: 'screen', nodes };
   doc.layoutSpecRef = write(repo, 'layout.json', layout);
   visual.reviews.V3Layout = write(repo, 'review-V3Layout.json', { referenceTarget, layoutSpecRef: doc.layoutSpecRef, ...host });
@@ -50,6 +51,9 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   const evidence = write(repo, 'run.log', '合成运行、交互与资源证据');
   const build = { schemaVersion: '1.0', sourceRevision: 'fixture-commit', boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, binaryRef: write(repo, 'app.bin', '合成构建产物'), buildLogRef: write(repo, 'build.log', '合成构建输出') };
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, buildIdentityRef: write(repo, 'build.json', build), environment: 'host-simulator', runEvidenceRef: evidence, interactionEvidenceRef: evidence, performanceEvidenceRef: evidence, ...host };
+  const textReadback = { schemaVersion: '1.0', source: 'esp32-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
+    entries: [{ targetPath: doc.layoutSpecRef.path, nodeId: 'title', runtimeNodeId: 'home.title', ...textAppearance }] };
+  runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 同步上下文、V5 用户确认与外层证据，模拟绑定后的最终输入。 */
   function save() {
@@ -58,7 +62,7 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
     visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   }
   save();
-  return { repo, work, doc, board, layout, assets, runtime, build, host, referenceTarget, save };
+  return { repo, work, doc, board, layout, assets, runtime, textReadback, build, host, referenceTarget, save };
 }
 
 test('ESP32 页面可分别校验 V2 至 V5 阶段材料', (t) => {
@@ -66,6 +70,59 @@ test('ESP32 页面可分别校验 V2 至 V5 阶段材料', (t) => {
     const f = fixture(t, { stage });
     assert.equal(validateSingleDomainTarget(f.repo, f.work, stage), true);
   }
+});
+
+test('ESP32 要求冻结文字目标并核对同次运行的颜色与透明度', (t) => {
+  const v3 = fixture(t, { stage: 'V3' });
+  delete v3.layout.nodes[1].textAppearance.textOpacity;
+  v3.doc.layoutSpecRef = write(v3.repo, 'layout.json', v3.layout);
+  v3.save();
+  assert.throws(() => validateSingleDomainTarget(v3.repo, v3.work, 'V3'), /布局文字 title.*缺少有效的文字透明度/);
+  const v5 = fixture(t);
+  v5.textReadback.entries[0].textOpacity = 0.4;
+  v5.runtime.textReadbackRef = write(v5.repo, 'text-readback.json', v5.textReadback);
+  v5.save();
+  assert.throws(() => validateSingleDomainTarget(v5.repo, v5.work, 'V5'), /实际读数.*文字透明度.*不一致/);
+  v5.textReadback.entries[0].textOpacity = 0.8;
+  delete v5.textReadback.entries[0].textFill;
+  v5.runtime.textReadbackRef = write(v5.repo, 'text-readback.json', v5.textReadback);
+  v5.save();
+  assert.throws(() => validateSingleDomainTarget(v5.repo, v5.work, 'V5'), /实际读数.*缺少完整的字体颜色/);
+});
+
+test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) => {
+  const f = fixture(t);
+  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
+  const slice = { implementation: 'project-gui', sourcePath: imageRef.path, sourceSize: { width: 30, height: 24 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
+  f.layout.nodes.find((node) => node.id === 'title').nineSlice = slice;
+  f.doc.layoutSpecRef = write(f.repo, 'layout-slice.json', f.layout);
+  f.work.visual.reviews.V3Layout = write(f.repo, 'review-v3-slice.json', { ...f.host, layoutSpecRef: f.doc.layoutSpecRef });
+  f.assets.layoutSpecRef = f.doc.layoutSpecRef; f.assets.items[0].sourceRef = imageRef;
+  f.doc.assetManifestRef = write(f.repo, 'assets-slice.json', f.assets);
+  f.work.visual.reviews.V4 = write(f.repo, 'review-v4-slice.json', { ...f.host, assetManifestRef: f.doc.assetManifestRef });
+  Object.assign(f.build, { layoutSpecRef: f.doc.layoutSpecRef, assetManifestRef: f.doc.assetManifestRef });
+  Object.assign(f.runtime, { layoutSpecRef: f.doc.layoutSpecRef, assetManifestRef: f.doc.assetManifestRef, buildIdentityRef: write(f.repo, 'build-slice.json', f.build) });
+  f.textReadback.buildIdentityRef = f.runtime.buildIdentityRef;
+  f.textReadback.entries[0].targetPath = f.doc.layoutSpecRef.path;
+  f.runtime.textReadbackRef = write(f.repo, 'text-slice.json', f.textReadback);
+  const sample = { nodeId: 'title', conditionId: 'minimum', runtimeNodeId: 'screen.panel', sourcePath: imageRef.path, sourceSize: slice.sourceSize, border: slice.border,
+    displaySize: slice.minimumSize, scale: 1, transformScaleX: 1, transformScaleY: 1 };
+  f.runtime.nineSliceMeasurements = [sample];
+  /** 使用真实文件摘要替身校验设备领域入口，测试不会启动设备。 */
+  const identity = (_repo, ref) => {
+    const data = readFileSync(join(f.repo, ref.path));
+    assert.equal(createHash('sha256').update(data).digest('hex'), ref.sha256);
+    return ref.path;
+  };
+  async function run() {
+    f.doc.runtimeContextRef = write(f.repo, 'runtime-slice.json', f.runtime);
+    f.work.visual.reviews.V5 = write(f.repo, 'review-v5-slice.json', { runtimeContextRef: f.doc.runtimeContextRef });
+    return validateEsp32(f.repo, f.work, 'V5', f.doc, identity);
+  }
+  await assert.doesNotReject(run);
+  sample.scale = 1.000000001; await assert.rejects(run, /倍率.*严格/);
+  sample.scale = 1; sample.displaySize = { width: 20, height: 7 }; await assert.rejects(run, /中心/);
+  sample.displaySize = { width: 20, height: 17 }; await assert.rejects(run, /最小显示框/);
 });
 
 test('ESP32 按像素网格包络 Figma 直线，V2 源几何与 V3 原生容器保持可追溯', async (t) => {
@@ -253,6 +310,7 @@ test('仅变更实现时保留旧源码快照和布局确认，历史及当前�
 
   const build = { ...f.build, layoutSourceRef: nextSource, sourceRevision: 'fixture-next' };
   const runtime = { ...f.runtime, layoutSourceRef: nextSource, buildIdentityRef: write(f.repo, 'new-build.json', build) };
+  runtime.textReadbackRef = write(f.repo, 'new-text-readback.json', { ...f.textReadback, buildIdentityRef: runtime.buildIdentityRef });
   doc.runtimeContextRef = write(f.repo, 'new-runtime.json', runtime);
   work.visual.reviews.V5 = write(f.repo, 'new-review-V5.json', { referenceTarget: f.referenceTarget, runtimeContextRef: doc.runtimeContextRef });
   work.visual.domainEvidenceRef = write(f.repo, 'new-domain-v5.json', doc);

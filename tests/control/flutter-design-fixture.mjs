@@ -35,6 +35,7 @@ export function attachFlutterDesignFixture(repo, work, doc) {
   const host = work.workItemType === 'DISPLAY_LAYER' ? { hostId: work.visual.hostId, layerType: work.visual.layerType } : {};
   const identity = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, candidateId: work.visual.candidateId, ...host };
   const source = { id: 'fixture-heading', type: 'TEXT', name: '源图标题', x: 16, y: 32, width: 240, height: 48,
+    fills: [{ type: 'SOLID', color: { r: 0.2, g: 0.2, b: 0.2, a: 1 } }], opacity: 1,
     font: { family: 'Noto Sans', platformFamily: 'Noto Sans', available: true, size: 18, weight: 500, lineHeight: { unit: 'PERCENT', value: 140 }, letterSpacing: { unit: 'PIXELS', value: 0 } },
     properties: { insets: { top: 8, right: 8, bottom: 8, left: 8 }, colors: { background: '#ffffff', foreground: '#222222' }, border: { width: 0, color: '#00000000' }, shape: { kind: 'rectangle', radius: 0 } } };
   const requirements = Object.fromEntries(Object.entries({

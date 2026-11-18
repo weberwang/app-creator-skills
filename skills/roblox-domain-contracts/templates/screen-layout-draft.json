@@ -26,6 +26,7 @@
     {
       "id": "button",
       "className": "TextButton",
+      "textStyle": { "color": { "r": 1, "g": 1, "b": 1 }, "transparency": 0 },
       "instancePath": ["game", "StarterGui", "请替换", "请替换"],
       "parentId": "screen-root",
       "positionReferenceId": "screen-root",

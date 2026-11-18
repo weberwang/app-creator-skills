@@ -15,7 +15,7 @@
 | 已确认的非运行成果 | `docs/confirmed/<owner>/<artifact-id>/<version>/` | 已确认效果图、参考目标、拆解图、布局包和设计预览；不随游戏发布，不存运行资源副本或第二套确认状态 |
 | 需要保留的生产源文件 | `assets-source/<owner>/<asset-id>/<version>/` | 用户原始输入、可编辑模型/分层图、原始音频、动画源视频和必要源帧；保留用于重做、抽帧、授权和质量追溯的输入 |
 | 正式游戏资源 | `public/assets/<owner>/` | 当前已验收并被游戏资源清单采用的图片、模型、纹理、音频、字体和图集；按需细分 `images/`、`models/`、`textures/`、`audio/`、`fonts/`、`atlases/` |
-| 项目权威文档与清单 | `docs/` | GDD、TDD、视觉基线、资源清单、来源/许可登记与测试策略；固定文件名沿用[项目交付物规范](../../threejs-game-orchestrator/references/delivery-artifacts.md)，不复制到 confirmed 目录制造第二份权威正文 |
+| 项目权威文档与清单 | `docs/` | GDD、TDD、视觉基线、资源清单、来源/许可登记与测试策略；固定文件名沿用[项目交付物规范](../../app-stack-threejs/references/delivery-artifacts.md)，不复制到 confirmed 目录制造第二份权威正文 |
 | 人工审阅与验证文件 | `evidence/<workItemId>/reviews/<stageId>/<candidateId>/`、`evidence/<workItemId>/validation/<stageId>/<candidateId>/` | 送审候选、未选方案的必要审计文件、截图、录屏、对照图、测试日志及报告；标明真实待确认、失败或已确认状态，证据不因尚未通过而变成临时文件 |
 | 工作流机器记录 | `.workflow-control/` | 工作项、实施包、委派包、变更请求、操作审批账本、执行状态、Result 与 Evidence Manifest；使用控制工具及当前 Schema 的实际路径，不自行另建状态或审批文件 |
 | 受保护的用户确认记录 | `.threejs-workflow/user-resolutions/` | 现有用户确认账本与回执的固定位置；仅由获准的编排/控制入口维护，不复制进领域归档或交给实施代理写入 |

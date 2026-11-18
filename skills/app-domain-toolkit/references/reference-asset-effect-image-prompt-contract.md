@@ -170,6 +170,8 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 记录必须保存实际发送的完整提示词（`full_prompt` 或 `actual_prompt`）和真实 `reference_inputs`，不能在生成后拼一份未实际使用的文本。完整提示词至少可复核地包含 canonical 全局段、当前 region 事实资产段、状态段和 canonical 负向段；透明资产的提示词段按冻结策略生成：纯色背景段只用于符合条件的 `background-removal + hard-edge`，直接 Alpha 需表达透明输出与边缘保留，遮罩合成需分别说明主体和 mask 输入。记录绑定实际目标文件、`region_id`、候选版本与实际 `record_id`；`target_sha256`、`candidate_sha256`、`diff_fingerprint` 仅作可选追踪。`generator`/`generator_version` 必须记录系统按提示词、参考输入、材质、透明需求和已验证能力实际选择的工具身份；未暴露时写 `not-provided`。
 
+公共 V4 资产评审直接使用同一份[正式生图记录](../../app-asset-workflow/references/style-and-production.md#选稿后的正式生图)，并核对实际附件的完整顺序和最终解码尺寸。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 普通非 `effect-image` 生成式位图不要求以上三个重建字段，也不要求冻结效果图作为参考输入；仍须记录实际生成器、版本、提示词、输入、输出和后处理。

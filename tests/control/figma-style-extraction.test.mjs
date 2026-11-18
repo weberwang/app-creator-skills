@@ -25,7 +25,7 @@ function fixture() {
       properties: { shape: { kind: 'rectangle' }, insets: { top: 2, right: 8, bottom: 2, left: 8 }, colors: { background: '#ffffff', foreground: '#222222' }, border: { width: 2, color: '#223344' } } },
     { id: '1:4', name: '输入文字', type: 'TEXT', parentId: '1:3', x: 8, y: 10, width: 120, height: 24, characters: '真实文本',
       font: { family: 'Noto Sans', platformFamily: 'Noto Sans', available: true, size: 24, weight: 500, lineHeight: { unit: 'PIXELS', value: 30 }, letterSpacing: { unit: 'PERCENT', value: 10 } },
-      fills: [{ type: 'SOLID', color: { r: 0.2, g: 0.3, b: 0.4 } }], opacity: 0.75, properties: {} },
+      fills: [{ type: 'SOLID', color: { r: 0.2, g: 0.3, b: 0.4, a: 1 } }], opacity: 0.75, properties: {} },
   ];
   const snapshot = { nodes, assets: [{ id: 'illustration', role: 'illustration', nodeIds: ['1:3'], sourceRef: { path: 'art/illustration.png', sha256: 'c'.repeat(64) } }], stateId: 'default', viewport: { width: 390, height: 844 }, language: 'zh-CN', textScale: 1, reconstruction: { sourceTargetRef } };
   const request = { workItemId: 'wi', objectId: 'home', candidateId: 'a', referenceTarget: sourceTargetRef,
@@ -86,6 +86,35 @@ test('原始或规范化属性被篡改时，Figma 与原生计划比对拒绝',
     const f = fixture(); mutate(f.plan.implementations[0].requirements);
     assert.throws(() => validate(f), /不一致|触控尺寸/);
   }
+});
+
+test('文字目标缺少填色或 Alpha 时停止提取，透明度与背景分别保留', () => {
+  for (const mutate of [
+    (node) => { node.fills = []; },
+    (node) => { delete node.fills[0].color.a; },
+  ]) {
+    const f = fixture(); mutate(f.snapshot.nodes[3]);
+    assert.throws(() => extractFlutterPlan(f.snapshot, f.request), /文字颜色 textFill/);
+  }
+  const f = fixture(); const text = f.snapshot.nodes[3];
+  text.fills[0].opacity = 0.6; delete text.fills[0].color.a;
+  const { plan } = extractFlutterPlan(f.snapshot, f.request);
+  assert.equal(plan.implementations[0].requirements.appearance.value.normalized.textFill[0].opacity, 0.6);
+  assert.equal(plan.implementations[0].requirements.appearance.value.normalized.textOpacity.value, 0.75);
+  delete text.opacity;
+  assert.equal(extractFigmaNodeStyle(text).designFacts.normalized.textOpacity, null);
+  assert.throws(() => extractFlutterPlan(f.snapshot, f.request), /文字透明度 textOpacity/);
+});
+
+test('文字渐变的每个颜色停靠点必须含真实 Alpha', () => {
+  const f = fixture();
+  f.snapshot.nodes[3].fills = [{ type: 'GRADIENT_LINEAR', gradientStops: [
+    { position: 0, color: { r: 0, g: 0, b: 0, a: 1 } },
+    { position: 1, color: { r: 1, g: 1, b: 1 } },
+  ] }];
+  assert.throws(() => extractFlutterPlan(f.snapshot, f.request), /文字颜色 textFill/);
+  f.snapshot.nodes[3].fills[0].gradientStops[1].color.a = 0.5;
+  assert.doesNotThrow(() => extractFlutterPlan(f.snapshot, f.request));
 });
 
 test('有渐变和描边的容器仅映射其文字时不能通过还原检查', () => {

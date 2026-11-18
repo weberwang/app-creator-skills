@@ -104,6 +104,8 @@ function validateRelativeLayoutNodes(nodes, options = {}) {
       errors.push(`${at} 必须提供实际定位参照 references 数组。`);
     } else if (node.mode === "relative" && node.references.length === 0) {
       errors.push(`${at} 相对布局必须绑定父级或明确参照，不能只声明 relative。`);
+    } else if (new Set(node.references).size !== node.references.length) {
+      errors.push(`${at} 同一定位参照只声明一次。`);
     }
   });
 
@@ -140,8 +142,9 @@ function validateRelativeLayoutNodes(nodes, options = {}) {
 /** 游戏位置行为只在受控节点和明确交接范围内接管布局，不作为静态坐标的通用豁免。 */
 function validateGameUiPositionDriver(input, label = "游戏 UI") {
   const errors = [];
-  const { driver, nativeDriver = null, sharedAllowed = false, independent = false, behavior, baseDrivers = [], properties = ["x", "y"] } = input;
-  if (driver === "STATIC") errors.push(`${label} 普通游戏 UI 必须相对停靠，不能使用 STATIC 冻结位置。`);
+  const { driver, nativeDriver = null, sharedAllowed = false, staticAllowed = false, independent = false, behavior, baseDrivers = [], properties = ["x", "y"] } = input;
+  // 仅栈适配器可证明固定父子允许以本地偏移实现，工件名称或固定坐标本身不构成允许条件。
+  if (driver === "STATIC" && !staticAllowed) errors.push(`${label} 普通游戏 UI 必须相对停靠，不能使用 STATIC 冻结位置。`);
   if (independent && driver !== "ANIMATION") errors.push(`${label} 独立定位的游戏浮层必须有受控位置行为，普通弹窗应相对宿主停靠。`);
   if (nativeDriver !== null && driver !== nativeDriver && driver !== "ANIMATION" && !sharedAllowed) {
     errors.push(`${label} 原生布局可表达当前位置关系，必须使用 ${nativeDriver}。`);
@@ -157,7 +160,7 @@ function validateGameUiPositionDriver(input, label = "游戏 UI") {
   for (const key of ["reason", "trigger", "restore_rule"]) if (!isId(behavior[key])) errors.push(`${label} position_behavior.${key} 必须明确声明。`);
   if (!Array.isArray(behavior.properties) || !behavior.properties.length || new Set(behavior.properties).size !== behavior.properties.length || behavior.properties.some((key) => !properties.includes(key))) errors.push(`${label} position_behavior.properties 只能接管本节点的位置属性。`);
   if (!baseDrivers.includes(behavior.restore_driver)) errors.push(`${label} position_behavior.restore_driver 必须返回有效的基础布局驱动。`);
-  else errors.push(...validateGameUiPositionDriver({ driver: behavior.restore_driver, nativeDriver, sharedAllowed, baseDrivers, properties }, `${label} 恢复布局`));
+  else errors.push(...validateGameUiPositionDriver({ driver: behavior.restore_driver, nativeDriver, sharedAllowed, staticAllowed, baseDrivers, properties }, `${label} 恢复布局`));
   return errors;
 }
 

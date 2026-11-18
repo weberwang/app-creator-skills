@@ -1,6 +1,6 @@
 import { deriveSpriteGeometry } from "./sprite-layout-sizing.mjs";
 import { isLayoutContainer } from "./display-node-role.mjs";
-import { describeWidgetAvailability, positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
+import { canUseFixedParentOffset, describeWidgetAvailability, positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
 
 const { validateGameUiPositionDriver } = relativeLayoutPolicy;
@@ -308,6 +308,7 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   const availability = describeWidgetAvailability(node, byId, centerMembers, label);
   const { parentId, referenceId, ancestor: isAncestor, group: isGroupMember, background, reason: widgetUnavailableReason } = availability;
   const structuralAvailability = describeWidgetAvailability(node, byId, centerMembers, label, { ignoreOwnership: true });
+  const fixedParentOffset = canUseFixedParentOffset(node, byId, centerMembers);
 
   // 路径矩阵在 V3 尚不可观察，唯一允许的显式回退须留到 V5 用实际矩阵证实。
   const widgetCandidate = structuralAvailability.reason === null;
@@ -316,8 +317,8 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   }
   const floatingBody = uiLayout.positioning === "absolute" && ["popup", "floating", "toast"].includes(uiLayout.floating_root_kind);
   if (floatingBody && background) throw new TypeError(`${label} 独立浮层本体不能借背景职责豁免相对停靠`);
-  if (explicitDriver === "STATIC" && !background) {
-    throw new TypeError(`${label} 普通 UI 必须相对停靠，不能用 STATIC 固定冻结坐标`);
+  if (explicitDriver === "STATIC" && !background && !fixedParentOffset) {
+    throw new TypeError(`${label} STATIC 要求固定尺寸的直接父子及父级参照，其他普通 UI 必须相对停靠`);
   }
   if (!background && (!isRecord(node.axis_alignment)
     || !["left", "center", "right"].includes(node.axis_alignment.horizontal)
@@ -331,7 +332,7 @@ function deriveNodePlan(node, byId, centerMembers, label) {
     throw new TypeError(`${label}.ui_layout.position_driver 虚拟居中组成员必须使用 SHARED`);
   }
   if (positionDriver === undefined) {
-    positionDriver = owner === "SELF" && widgetUnavailableReason === null ? "WIDGET" : "SHARED";
+    positionDriver = fixedParentOffset ? "STATIC" : owner === "SELF" && widgetUnavailableReason === null ? "WIDGET" : "SHARED";
   }
   if (widgetCandidate && positionDriver === "SHARED" && uiLayout.widget_fallback !== "non-unit-transform") {
     // PARENT/EXTERNAL 是职责标签，不证明可由 Widget 表达的停靠必须改用共享计算。
@@ -355,7 +356,7 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   if (positionDriver === "STATIC" && owner !== "SELF") {
     throw new TypeError(`${label}.ui_layout.position_driver=STATIC 要求 layout_owner=SELF`);
   }
-  if (!background) {
+  if (!background && positionDriver !== "STATIC") {
     const { baseDrivers } = positionBehaviorBaseDrivers(node, byId, centerMembers, label);
     const restoreLayout = positionDriver === "LAYOUT" || (positionDriver === "ANIMATION" && uiLayout.position_behavior?.restore_driver === "LAYOUT" && baseDrivers.includes("LAYOUT"));
     const nativeDriver = restoreLayout ? "LAYOUT" : widgetCandidate ? "WIDGET" : null;
@@ -402,7 +403,7 @@ function deriveNodePlan(node, byId, centerMembers, label) {
   } else if (positionDriver === "ANIMATION") {
     reason = "layout_owner=EXTERNAL 且显式选择 ANIMATION，由外部动画控制位置。";
   } else if (positionDriver === "STATIC") {
-    reason = "节点拥有位置控制权且显式选择 STATIC，位置按冻结几何保持。";
+    reason = background ? "背景按冻结几何保持位置。" : "固定尺寸子项相对固定尺寸直接父级保持本地偏移，不增加布局组件。";
   } else if (isGroupMember) {
     reason = "节点属于图文整体居中组，由共享布局按组合边界计算，避免成员各自居中。";
   } else if (STABLE_ROOTS.has(referenceId)) {

@@ -373,6 +373,10 @@ namespace Project.UnityWorkflow.VisualQA
                 LayoutComponentSnapshot snapshot = request.includeComponentSnapshots
                     ? LayoutComponentSnapshotCollector.CaptureUgui(targetObject, parentObject)
                     : null;
+                if (snapshot != null)
+                {
+                    snapshot.textStyle = LayoutTextStyleCollector.Capture(targetObject, target.textStyle);
+                }
                 AddMeasurement(report, target, NormalizeHierarchyPath(target.objectPath), string.Empty,
                     NormalizeHierarchyPath(target.parentObjectPath), actual, parent, target.referenceId,
                     referencePath, reference, snapshot, !targetActive);
@@ -511,6 +515,10 @@ namespace Project.UnityWorkflow.VisualQA
                 LayoutComponentSnapshot snapshot = request.includeComponentSnapshots
                     ? LayoutComponentSnapshotCollector.CaptureUiToolkit(documentObject, targetElement, target.elementName)
                     : null;
+                if (snapshot != null)
+                {
+                    snapshot.textStyle = LayoutTextStyleCollector.CaptureUiToolkit(targetElement, target.textStyle);
+                }
                 AddMeasurement(report, target, NormalizeHierarchyPath(target.documentPath), target.elementName,
                     target.parentElementName, actual, parent, target.referenceId, referencePath, reference,
                     snapshot, !targetActive);

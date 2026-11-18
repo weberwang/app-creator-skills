@@ -3,9 +3,9 @@
 | 角色 | 适用任务与交接 |
 | --- | --- |
 | `app_level_scene_designer` | 合并关卡与场景职责，持续维护同一空间、尺度、环境和镜头方案，按[核心方法](../../app-domain-toolkit/references/game-design-exploration.md)迭代；联合单次审查后交人工修改或确认，不自行批准或关闭设计任务。 |
-| `app_3d_model_creator` | 场景空间、正式方向和 V3 规格就绪后，按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)和[建模技能](../../app-3d-modeling/SKILL.md)制作或复用代表模块，再按依赖分批；按需读取贴图及本栈 Blender MCP 流程。 |
+| `app_3d_model_creator` | 按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)和[建模技能](../../app-3d-modeling/SKILL.md)制作、修改正式几何及 LOD 网格。场景资源先试接代表模块再分批，工具由本栈原生路线决定。 |
 
-唯一维护源为[设计角色](../agents/app_level_scene_designer.toml)与[模型角色](../agents/app_3d_model_creator.toml)，随公共技能整体安装。项目 `.codex/agents/` 文件是激活副本，维护本仓库时同步生成，不能分别维护两套职责。
+角色配置由所属技能维护和分发。关卡／场景设计的配置在 [`app-gameplay-development`](../../app-gameplay-development/agents/app_level_scene_designer.toml)，正式建模的配置在 [`app-3d-modeling`](../../app-3d-modeling/agents/app_3d_model_creator.toml)。需要使用这些角色的目标项目显式激活后，由 Codex 从该项目的 `.codex/agents/` 加载副本。
 
 ## Codex 项目激活
 
@@ -15,15 +15,15 @@
 node .agents/skills/app-creator-workflow/scripts/install-specialist-agents.mjs --project .
 ```
 
-维护本仓库用 `node skills/app-creator-workflow/scripts/install-specialist-agents.mjs --project .`。脚本只创建项目内两份角色；相同内容复用，不同内容或链接路径拒绝覆盖，两份先完整预检。模型与推理强度只在这两份角色配置中声明，不修改全局配置、项目 `config.toml`、宿主默认模型、默认推理强度、权限或 MCP 设置。更新技能后若副本不同，先核对来源和差异再按已有授权同步，不自动覆盖用户定制。
+脚本只激活所属技能已安装的角色，激活前完整预检适用配置。已有相同内容直接复用。遇到同名自定义配置、链接路径或适用配置缺失时停止并保留原文件。更新技能后若副本不同，先核对来源和差异再按已有授权同步。
 
 配置先完整暂存，再用同卷硬链接独占发布；文件系统不支持时明确失败，不降级为覆盖写入。
 
-按 [Codex 官方格式](https://learn.chatgpt.com/docs/agent-configuration/subagents)，独立 TOML 以 `name`、`description`、`developer_instructions` 定义，由项目 `.codex/agents/` 加载。两个角色均使用 `model = "gpt-6.1-sol"` 和 `model_reasoning_effort = "xhigh"`，权限仍继承宿主，不提升权限。已有会话不能假设热加载成功：新会话加载后核对实际可用角色列表；若其他配置层已有同名角色，核对实际来源，不静默覆盖。
+按 [Codex 官方格式](https://learn.chatgpt.com/docs/agent-configuration/subagents)，独立 TOML 由项目 `.codex/agents/` 加载，角色权限继承宿主。模型和推理强度取自对应角色 TOML，工作流调用时只选角色，不重复指定模型或推理强度。新会话加载后核对实际可用角色及来源。
 
 ## 委派与生命周期
 
-复杂空间任务按需优先使用设计角色，正式三维资源按需使用模型角色；普通局部修改可由主代理处理，不为每个物件创建代理。宿主暂不支持专属类型时，主代理或合适的现有 `worker` 可读取同一配置作为任务职责；若宿主指令要求特定角色，则报告限制，不静默更换类型或模型。
+复杂空间任务按需使用设计角色。正式三维几何的新制、修改及新增 LOD 网格统一由 `app_3d_model_creator` 执行，同一工作项按制作范围组织任务，既有成品直接交接给接入负责人。当前会话未加载模型角色时，报告受影响的制作步骤，并继续可独立完成的规格或接入工作。
 
 任务包沿用[协作与交接](handoffs.md)的目标、允许修改、已定依据、禁止事项、验收、测试等级与命令、受保护操作授权及并行修改说明。同一工作项返修复用原代理，新职责或独立审查使用新上下文；主代理负责整合、状态迁移和交接。
 
@@ -31,10 +31,10 @@ node .agents/skills/app-creator-workflow/scripts/install-specialist-agents.mjs -
 
 单次设计审查、空间／方向确认、样本审阅及最终显示验收均走原流程，可引用已覆盖当前范围的真实消息，不增加审批。未确认取舍保持待定，无依赖工作可继续；截图交用户人工检查，未经授权不自动看图。位图任务仍交 `image_generator`，两个角色不替代生图代理。
 
-同一 Blender 实例／会话、`.blend`、导出路径及正式引擎场景分别明确唯一写者，独立文件也不能无协调地并发操作同一 MCP 会话。模型偏离空间依据交回设计修订，不倒推玩法。2D 与 UI 保留原流程，不新增三维工序。
+制作会话、可编辑源、导出路径和正式引擎场景分别明确唯一写者。使用 Blender 的路线协调实例与 `.blend` 写入，使用 Studio 原生模型的路线协调同一 Studio 会话和模型层级。模型偏离空间依据时交回相应负责人修订。
 
 ## 新会话验证
 
-需要验证激活效果时，在目标项目的新会话中查看实际角色列表，分别发出只读任务包，以两种专属类型调用并等待真实返回；核对设计职责、模型生产前置及人工确认边界。配置存在、安装脚本成功、角色可见和子代理调用完成是不同结论；仅文字回复“可以调用”不能作为调用证据。独立上下文不保证获得配置源文件路径，来源以项目激活副本与唯一维护源核对，不要求代理猜路径。
+需要验证激活效果时，在目标项目的新会话中查看实际角色列表，按已安装的专属类型发出只读任务包并等待真实返回，核对对应职责、生产前置和人工确认边界。配置存在、安装脚本成功、角色可见和子代理调用完成分别记录。配置来源以项目激活副本与所属技能中的源文件核对。
 
 验证工作流时，让主代理根据当前入口为“仍在迭代的空间方案”和“已满足生产前置的代表模型样本”选择角色并实际委派，只演练交接，不执行设计或生产。保留调用类型、返回标识、实际结果和未验证项；安装与文档回归测试不自动启动模型会话。上述验证不构成设计、方向、样本或最终显示的人工确认，也不增加审批。

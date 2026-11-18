@@ -12,6 +12,48 @@ import { makeRuntimeTestSetup } from "./layout-runtime-fixtures.mjs";
 
 const IDENTITY = { a: 1, b: 0, c: 0, d: 1, e: 0, f: 0 };
 
+test("实际 NineSlice 检查源帧、边距、中心和完整缩放链", () => {
+  const setup = makeRuntimeTestSetup();
+  const node = setup.nodes.find((entry) => entry.layout_node_id === "icon");
+  node.render_kind = "sprite";
+  node.nine_slice = { mode: "stretch", reason: "保留边角", source_size: { width: 16, height: 16 }, borders: { left: 4, right: 4, top: 4, bottom: 4 } };
+  node.layout_execution.size_driver = "NINE_SLICE";
+  setup.runtime_registry.get("icon").size_writes[0].driver = "NINE_SLICE";
+  Object.assign(setup.icon, { type: "NineSlice", leftWidth: 4, rightWidth: 4, topHeight: 4, bottomHeight: 4 });
+  Object.assign(setup.icon.frame, { width: 16, height: 16, cutWidth: 16, cutHeight: 16 });
+  let geometry = collectSetupGeometry(setup);
+  const valid = validateSetupGeometry(setup, geometry);
+  assert.equal(valid.valid, true, valid.errors.join("\n"));
+  setup.icon.scaleX = 1.00000001;
+  geometry = collectSetupGeometry(setup);
+  assert.match(validateSetupGeometry(setup, geometry).errors.join("\n"), /缩放必须严格为 1/);
+  setup.icon.scaleX = 1;
+  setup.icon.width = 8;
+  geometry = collectSetupGeometry(setup);
+  assert.match(validateSetupGeometry(setup, geometry).errors.join("\n"), /显示框必须为可拉伸中心/);
+  setup.icon.width = 24;
+  setup.icon.leftWidth = 5;
+  geometry = collectSetupGeometry(setup);
+  assert.match(validateSetupGeometry(setup, geometry).errors.join("\n"), /边距与冻结值不一致/);
+});
+
+test("固定父子直接保留相对位置，实际偏移和父框尺寸受核对", () => {
+  const setup = makeRuntimeTestSetup();
+  const original = collectSetupGeometry(setup);
+  for (const node of setup.nodes.filter((entry) => ["panel", "icon"].includes(entry.layout_node_id))) {
+    node.target_bounds = { ...original.component_snapshots.find((entry) => entry.layout_node_id === node.layout_node_id).actual_bounds };
+  }
+  const icon = setup.nodes.find((entry) => entry.layout_node_id === "icon");
+  icon.layout_execution.position_driver = "STATIC";
+  setup.runtime_registry.get("icon").position_writes[0].driver = "STATIC";
+  const geometry = collectSetupGeometry(setup);
+  const valid = validateSetupGeometry(setup, geometry);
+  assert.equal(valid.valid, true, valid.errors.join("\n"));
+  const snapshot = geometry.component_snapshots.find((entry) => entry.layout_node_id === "icon");
+  snapshot.actual_bounds.x += 2;
+  assert.match(validateSetupGeometry(setup, geometry).errors.join("\n"), /固定父子关系.*本地偏移/);
+});
+
 /** 为单测创建一份隔离的模拟采集数据，不启动 Phaser Scene。 */
 function collectSetupGeometry(setup) {
   return collectPhaserLayoutSnapshot({

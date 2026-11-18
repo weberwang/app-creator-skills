@@ -10,8 +10,9 @@ import { installSkills, SOURCE_ROOT } from '../packages/installer/install-projec
 import YAML from '../skills/app-skill-runtime/yaml.mjs';
 import { createRobloxVisualFixture } from './helpers/roblox-fixture.mjs';
 
-const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'roblox', 'flutter'];
+const STACKS = ['unity', 'cocos', 'phaser', 'threejs', 'roblox', 'flutter', 'expo', 'esp32'];
 const POLICY = 'app-ui-layout/scripts/relative-layout-policy.cjs';
+const NINE_SLICE = 'app-ui-layout/scripts/nine-slice-runtime.cjs';
 
 /** 安装后的导入必须从临时项目解析，不能偷偷使用维护目录的原生模块。 */
 async function importInstalled(skills, path) {
@@ -30,7 +31,15 @@ for (const stack of STACKS) {
     // 安装副本必须与唯一公共实现逐字节一致。
     const digest = (file) => createHash('sha256').update(readFileSync(file)).digest('hex');
     assert.equal(digest(join(skills, POLICY)), digest(join(SOURCE_ROOT, 'skills', POLICY)));
+    assert.equal(digest(join(skills, NINE_SLICE)), digest(join(SOURCE_ROOT, 'skills', NINE_SLICE)));
     for (const other of STACKS.filter((item) => item !== stack)) assert.ok(!existsSync(join(skills, `app-stack-${other}`)));
+
+    if (stack === 'expo' || stack === 'esp32') {
+      // App 领域按栈加载，共享模块必须在单栈安装中独立可解析。
+      const adapter = await importInstalled(skills, `app-workflow-control/scripts/runtime/${stack}-domain-check.mjs`);
+      assert.equal(typeof adapter[stack === 'expo' ? 'validateExpo' : 'validateEsp32'], 'function');
+      return;
+    }
 
     if (roblox) {
       const { validateRobloxVisual } = await importInstalled(skills, 'roblox-domain-contracts/scripts/validate-visual.mjs');

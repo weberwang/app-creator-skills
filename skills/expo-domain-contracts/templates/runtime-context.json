@@ -31,6 +31,10 @@
     "path": "REPLACE",
     "sha256": "REPLACE"
   },
+  "textReadbackRef": {
+    "path": "REPLACE",
+    "sha256": "REPLACE"
+  },
   "interactionEvidenceRef": {
     "path": "REPLACE",
     "sha256": "REPLACE"

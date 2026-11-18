@@ -101,7 +101,7 @@ game-project/
 ## 基础阶段执行与验收
 
 1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
-2. 在对应基础模块完成 Canvas 视口适配、WebGL2 渲染循环、场景控制器切换与清理，以及浏览器音频暂停/恢复；分别遵守[基础显示约束](../../threejs-game-orchestrator/references/game-implementation.md#基础显示约束)和[音频生命周期约束](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-audio--后台暂停与恢复约束)。只有确实采用原生宿主时，才把该宿主的窗口与生命周期要求加入基础包。
+2. 在对应基础模块完成 Canvas 视口适配、WebGL2 渲染循环、场景控制器切换与清理，以及浏览器音频暂停/恢复；分别遵守[基础显示约束](../../app-stack-threejs/references/game-implementation.md#基础显示约束)和[音频生命周期约束](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-audio--后台暂停与恢复约束)。只有确实采用原生宿主时，才把该宿主的窗口与生命周期要求加入基础包。
    已选 Android/iOS 宿主时，同时验证生产 Web 输出、实际 `webDir`、宿主同步与最终原生包内的入口及本地启动资源；回读主题、Manifest 和 launch screen。Web 构建通过不能代替原生包及显示检查，运行或人工检查未执行时标记未验证。
 3. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-architecture-project-structure.md#基础阶段执行与验收)。
 

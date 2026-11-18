@@ -1,5 +1,6 @@
 /** 验证 Roblox 领域证据的身份、来源、路径及真实运行记录约束。 */
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -9,6 +10,7 @@ import { validateRobloxVisual } from '../skills/roblox-domain-contracts/scripts/
 import { captureRef } from '../skills/roblox-domain-contracts/scripts/common.mjs';
 import { validateScreenPlan, validateScreenReadback } from '../skills/roblox-domain-contracts/scripts/screen-layout.mjs';
 import { createRobloxFixture, createRobloxVisualFixture, writeRobloxFixture } from './helpers/roblox-fixture.mjs';
+import { syntheticDesignPng } from './control/visual-image-fixture.mjs';
 
 /** 将当前夹具写入并调用同一正式工程校验入口。 */
 function verify(fixture) {
@@ -259,6 +261,157 @@ function verifyVisual(fixture, stage) {
   fixture.saveVisual();
   return validateRobloxVisual(fixture.repo, fixture.work, { stage, target: fixture.target, envelope: fixture.envelope });
 }
+
+/** 为正式 V4/V5 入口构造同一图片节点的资产、上传源和 Studio 实际回读。 */
+function makeSlicedImageFixture(t, className = 'ImageLabel') {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V5', layer: true });
+  const node = fixture.layout.nodes[1];
+  node.className = className;
+  delete node.textStyle;
+  node.nineSlice = {
+    assetId: '42', sliceScale: 1, sourceSize: { width: 40, height: 30 },
+    imageRectOffset: { x: 0, y: 0 }, imageRectSize: { x: 0, y: 0 },
+    center: { minX: 5, minY: 4, maxX: 34, maxY: 25 },
+    minimumDisplaySize: { width: 12, height: 10 },
+  };
+  fixture.runtime.bindings[1].className = className;
+  const bytes = syntheticDesignPng('slice', 40, 30);
+  const source = { path: `${fixture.work.evidenceRoot}/source.png`, sha256: createHash('sha256').update(bytes).digest('hex') };
+  writeFileSync(join(fixture.repo, source.path), bytes);
+  const path = node.instancePath;
+  const inspection = fixture.capture({ context: 'Edit', toolName: 'execute_luau', targetPath: path,
+    actual: JSON.stringify({ nodes: [{ instancePath: path, className, properties: { Image: 'rbxassetid://42' } }] }) });
+  const availability = fixture.capture({ toolName: 'search_asset', actual: JSON.stringify({ assetId: '42', status: 'available', usable: true, moderation: 'approved' }) });
+  fixture.assets.externalAssets = 'present';
+  fixture.assets.items.push({ id: 'panel-image', kind: 'roblox-asset', nodeId: node.id, instancePath: path,
+    assetId: '42', assetProperty: 'Image', sourceImageRef: source, inspectionRef: inspection.ref, availability: 'available', availabilityRef: availability.ref });
+  for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => {
+    nodes[1].className = className;
+    Object.assign(nodes[1].properties, { Image: 'rbxassetid://42', ScaleType: 'Slice', SliceScale: 1,
+      SliceCenter: structuredClone(node.nineSlice.center), ImageRectOffset: { x: 0, y: 0 }, ImageRectSize: { x: 0, y: 0 },
+      AbsoluteSize: which === 'runtime' ? { x: 12, y: 10 } : { x: 24, y: 18 }, AncestorUIScales: [] });
+  });
+  return fixture;
+}
+
+test('Roblox 九宫格核对计划、实际倍率、源帧和最小显示框', (t) => {
+  for (const className of ['ImageLabel', 'ImageButton']) {
+    const fixture = makeSlicedImageFixture(t, className);
+    const slice = fixture.layout.nodes[1].nineSlice;
+    assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+    slice.sliceScale = 1.0000001;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /倍率.*1/);
+    slice.sliceScale = 1;
+    slice.minimumDisplaySize.width = 11;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /中心/);
+    slice.minimumDisplaySize.width = 12;
+    updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.SliceScale = 0.5; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /SliceScale/);
+    updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.SliceScale = 1; });
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.SliceScale = 1.0000001; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /倍率.*1/);
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.SliceScale = 1; nodes[1].properties.AbsoluteSize = { x: 11, y: 18 }; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /实际显示框/);
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 24, y: 18 }; nodes[1].properties.AncestorUIScales = [{ scale: 0.5 }]; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /UIScale/);
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AncestorUIScales = []; });
+    slice.sourceSize.width = 39;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /实际上传图片尺寸/);
+    slice.sourceSize.width = 40;
+    delete slice.center;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /SliceCenter/);
+  }
+});
+
+test('九宫格实际 Slice 不能通过未声明或遗失回读绕过', (t) => {
+  const fixture = makeSlicedImageFixture(t);
+  delete fixture.layout.nodes[1].nineSlice;
+  assert.throws(() => verifyVisual(fixture, 'V5'), /实际九宫格未绑定冻结规格/);
+});
+
+test('Roblox 九宫格图集源帧按实际区域与上传图尺寸核对', (t) => {
+  const fixture = makeSlicedImageFixture(t);
+  const slice = fixture.layout.nodes[1].nineSlice;
+  slice.sourceSize = { width: 32, height: 20 };
+  slice.imageRectOffset = { x: 8, y: 7 };
+  slice.imageRectSize = { x: 32, y: 20 };
+  slice.center = { minX: 13, minY: 11, maxX: 34, maxY: 22 };
+  for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => {
+    Object.assign(nodes[1].properties, { SliceCenter: structuredClone(slice.center), ImageRectOffset: structuredClone(slice.imageRectOffset), ImageRectSize: structuredClone(slice.imageRectSize) });
+  });
+  assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+  slice.imageRectOffset.x = 9;
+  for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => { nodes[1].properties.ImageRectOffset.x = 9; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /超出实际上传图片尺寸/);
+});
+
+test('最小宽高可来自不同实际视口，缺任一轴保持未验证', (t) => {
+  const fixture = makeSlicedImageFixture(t);
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 12, y: 18 }; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /缺少实际最小宽或最小高/);
+  const raw = JSON.parse(fixture.observation.record.response.content[0].text);
+  const actual = raw.nodes[1];
+  actual.properties.AbsoluteSize = { x: 24, y: 10 };
+  const minimum = fixture.capture({ context: 'Client', toolName: 'execute_luau', targetPath: actual.instancePath,
+    actual: JSON.stringify({ nodes: [actual] }) });
+  fixture.runtime.minimumSliceObservations = [{ nodeId: 'child-a', observationRef: minimum.ref }];
+  assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+  minimum.record.clientId = 'another-client';
+  fixture.runtime.minimumSliceObservations[0].observationRef = writeRobloxFixture(fixture.repo, minimum.ref.path, minimum.record);
+  assert.throws(() => verifyVisual(fixture, 'V5'), /当前客户端/);
+});
+
+test('文字节点在 V3 冻结颜色与透明度，V4 和 V5 均须实际回读', (t) => {
+  for (const className of ['TextLabel', 'TextButton', 'TextBox']) {
+    const fixture = createRobloxVisualFixture(t, { stage: 'V5', layer: true });
+    const child = fixture.layout.nodes[1];
+    child.className = className;
+    fixture.runtime.bindings[1].className = className;
+    for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => { nodes[1].className = className; });
+    assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+    const originalStyle = structuredClone(child.textStyle);
+    delete child.textStyle.transparency;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /transparency/);
+    child.textStyle = structuredClone(originalStyle);
+    delete child.textStyle.color.r;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /color.r/);
+    child.textStyle = structuredClone(originalStyle);
+    updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.TextColor3.r = 0.5; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /TextColor3/);
+    updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.TextColor3.r = 1; });
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.TextTransparency = 0.5; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /TextTransparency/);
+    updateScreenCapture(fixture, 'runtime', (nodes) => { delete nodes[1].properties.TextTransparency; });
+    assert.throws(() => verifyVisual(fixture, 'V5'), /transparency/);
+  }
+});
+
+test('文字样式 schema 要求颜色分量与透明度，非文字节点不受影响', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V3', layer: true });
+  const schema = JSON.parse(readFileSync(new URL('../skills/roblox-domain-contracts/schemas/evidence.schema.json', import.meta.url), 'utf8'));
+  const validate = new Ajv2020({ strict: false }).compile(schema);
+  assert.equal(validate(fixture.layout), true);
+  delete fixture.layout.nodes[1].textStyle.transparency;
+  assert.equal(validate(fixture.layout), false);
+  fixture.layout.nodes[1].textStyle.transparency = 0;
+  delete fixture.layout.nodes[1].textStyle.color.b;
+  assert.equal(validate(fixture.layout), false);
+  fixture.layout.nodes[1].className = 'Frame';
+  delete fixture.layout.nodes[1].textStyle;
+  assert.equal(validate(fixture.layout), true);
+});
+
+test('V4 缺少文字颜色或透明度回读均不能通过', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V4', layer: true });
+  assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'edit', (nodes) => { delete nodes[1].properties.TextColor3; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /color/);
+  updateScreenCapture(fixture, 'edit', (nodes) => {
+    nodes[1].properties.TextColor3 = { r: 1, g: 1, b: 1 };
+    delete nodes[1].properties.TextTransparency;
+  });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /transparency/);
+});
 
 test('V3 普通 GUI 必须声明 AnchorPoint、双轴尺寸控制和唯一位置控制者', (t) => {
   const fixture = createRobloxVisualFixture(t, { stage: 'V3', layer: true });

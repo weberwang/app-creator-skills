@@ -1,5 +1,7 @@
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
+import nineSliceRuntime from "../../app-ui-layout/scripts/nine-slice-runtime.cjs";
 const { validateRelativeLayoutNodes, validateGameUiDockingOffsets } = relativeLayoutPolicy;
+const { validateNineSliceRuntime } = nineSliceRuntime;
 /**
  * Phaser 布局运行快照的纯几何与结构校验。
  *
@@ -586,6 +588,18 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
       : snapshotsById.get(expectedParentId)?.actual_bounds;
     if (!isValidRootBounds(snapshot.logical_parent_bounds)) errors.push(`${itemLabel}.logical_parent_bounds 必须是同空间实测父框`);
     else if (parentBounds && !equalBounds(snapshot.logical_parent_bounds, parentBounds)) errors.push(`${itemLabel}.logical_parent_bounds 与同批实际父框不一致`);
+    if (node.layout_execution.position_driver === "STATIC") {
+      const plannedParent = nodesById.get(expectedParentId)?.target_bounds;
+      const planned = node.target_bounds;
+      const actualParent = snapshot.logical_parent_bounds;
+      const actual = snapshot.actual_bounds;
+      // 固定子项随父级移动，尺寸及相对父框的偏移不可漂移。
+      if (!isValidRootBounds(plannedParent) || !isValidRootBounds(planned) || !isValidRootBounds(actualParent) || !isValidRootBounds(actual)
+        || !["width", "height"].every((axis) => matchesFloat32Budget(actualParent[axis], plannedParent[axis]))
+        || !["x", "y"].every((axis) => matchesFloat32Budget(actual[axis] - actualParent[axis], planned[axis] - plannedParent[axis]))) {
+        errors.push(`${itemLabel} 固定父子关系的父框尺寸或本地偏移与冻结计划不一致`);
+      }
+    }
 
     const referenceBounds = ROOT_IDS.has(expectedReferenceId)
       ? roots?.[expectedReferenceId]
@@ -609,6 +623,26 @@ export function validateLayoutRuntimeSnapshots(nodes, geometry, errors = [], lab
       if (snapshot.visible === false || hasHiddenAncestor) errors.push(`${itemLabel}.effective_visible 不能在自身或已知业务祖先不可见时为 true`);
     }
     validateCapturedFrame(snapshot.frame, errors, itemLabel);
+    if (node.nine_slice?.mode === "stretch") {
+      const actual = snapshot.nine_slice;
+      const source = { width: snapshot.frame?.frame_width, height: snapshot.frame?.frame_height };
+      errors.push(...validateNineSliceRuntime({ sourceSize: source, border: actual?.borders, displaySize: dimensions }, `${itemLabel}.nine_slice`));
+      if (source.width !== node.nine_slice.source_size?.width || source.height !== node.nine_slice.source_size?.height) errors.push(`${itemLabel} 实际九宫格源帧与冻结尺寸不一致`);
+      if (!actual?.borders || ["left", "right", "top", "bottom"].some((side) => actual.borders[side] !== node.nine_slice.borders?.[side])) errors.push(`${itemLabel} 实际九宫格边距与冻结值不一致`);
+      // 真实节点和父容器的缩放严格校验，矩阵误差只用于几何复算。
+      const expectedScales = [];
+      let current = node;
+      const seen = new Set();
+      while (current && !ROOT_IDS.has(current.layout_node_id) && !seen.has(current.layout_node_id)) {
+        seen.add(current.layout_node_id);
+        const measured = snapshotsById.get(current.layout_node_id)?.dimensions;
+        expectedScales.push(measured);
+        current = nodesById.get(current.parent_layout_node_id);
+      }
+      if (!Array.isArray(actual?.scale_path) || actual.scale_path.length < expectedScales.length
+        || actual.scale_path.some((scale) => scale?.x !== 1 || scale?.y !== 1)
+        || expectedScales.some((scale, index) => scale?.scale_x !== actual.scale_path[index]?.x || scale?.scale_y !== actual.scale_path[index]?.y)) errors.push(`${itemLabel} 九宫格节点及父级缩放必须严格为 1`);
+    } else if (snapshot.nine_slice) errors.push(`${itemLabel} 实际 NineSlice 必须绑定冻结九宫格合同`);
   }
   for (const id of componentIds) errors.push(`${label}.component_snapshots 多出布局节点快照：${id}`);
 

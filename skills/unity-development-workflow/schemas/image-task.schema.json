@@ -205,12 +205,16 @@
       "additionalProperties": false,
       "required": [
         "candidateCount",
+        "runtimeWidth",
+        "runtimeHeight",
         "aspectRatio",
         "alphaRequired",
         "targetPath",
         "filename"
       ],
       "properties": {
+        "runtimeWidth": {"type": "integer", "minimum": 1},
+        "runtimeHeight": {"type": "integer", "minimum": 1},
         "candidateCount": {
           "type": "integer",
           "minimum": 1

@@ -23,7 +23,7 @@ export function invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earl
   const envelope = work.visual.domainEvidenceRef;
   if (envelope?.path) invalidatedRefs.push({ path: envelope.path, state: work.visual.stage });
   const figma = isFigmaApp(work);
-  const doc = work.stack === 'flutter' || figma ? frozenJson(repo, envelope) : null;
+  const doc = work.stack === 'flutter' || work.stack === 'esp32' || figma ? frozenJson(repo, envelope) : null;
   if (doc && typeof doc === 'object') {
     const root = repoPath(repo, envelope.path, '历史领域封套').relative;
     const targetKeys = new Set();
@@ -41,6 +41,12 @@ export function invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earl
         return true;
       } catch { return false; }
     };
+    if (work.stack === 'esp32' && !figma) {
+      // 非 Figma 设备流程只追加本次引入的文字读数，保留原有回退范围。
+      add(frozenJson(repo, doc.runtimeContextRef)?.textReadbackRef, 'V5');
+      delete work.visual.domainEvidenceRef;
+      return;
+    }
     const stageIndex = VISUAL_STAGES.indexOf(earliestStage);
     if (figma && stageIndex <= 2) {
       // 仅追溯摘要匹配的实际节点导出；历史截图仍保留为上游目标材料。
@@ -63,7 +69,7 @@ export function invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earl
     }
     if (figma && add(doc.runtimeContextRef, 'V5')) {
       const runtime = frozenJson(repo, doc.runtimeContextRef);
-      for (const key of ['runEvidenceRef', 'interactionEvidenceRef', 'performanceEvidenceRef', 'captureRef', 'captureOutputRef', 'runtimeScreenshotRef']) add(runtime?.[key], 'V5');
+      for (const key of ['runEvidenceRef', 'interactionEvidenceRef', 'performanceEvidenceRef', 'captureRef', 'captureOutputRef', 'runtimeScreenshotRef', 'textReadbackRef']) add(runtime?.[key], 'V5');
       for (const interaction of Array.isArray(runtime?.interactions) ? runtime.interactions : []) add(interaction?.evidenceRef, 'V5');
       if (add(runtime?.buildIdentityRef, 'V5')) {
         const build = frozenJson(repo, runtime.buildIdentityRef);

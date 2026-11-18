@@ -57,7 +57,8 @@ function runtimeFixture(uiSystem, sliced = true) {
       type: sliced ? 'Sliced' : 'Simple', hasBorder: true, preserveAspect: false, border: [8, 8, 8, 8] };
   } else {
     snapshot.uiToolkit = { position: 'Relative', backgroundAssetGuid: 'guid', sliceLeft: sliced ? 8 : 0, sliceBottom: sliced ? 8 : 0,
-      sliceRight: sliced ? 8 : 0, sliceTop: sliced ? 8 : 0, sliceScale: 1 };
+      sliceRight: sliced ? 8 : 0, sliceTop: sliced ? 8 : 0, sliceScale: 1,
+      width: actualRect.width, height: actualRect.height };
   }
   const report = { measurementSource: 'UNITY_EDITOR_LOADED_SCENE', runId: 'synthetic', generatedAtUtc: '2026-11-09T00:00:00Z', frameCount: 1,
     includesComponentSnapshots: true, uiSystem: plan.uiSystem, coordinateSpace: plan.coordinateSpace, stateId: plan.stateId, scenePath: plan.scenePath,
@@ -110,6 +111,9 @@ for (const [system, key, field] of [['UGUI', 'image', 'pixelsPerUnitMultiplier']
     else { snapshot.uiToolkit.sliceLeft = 8; snapshot.uiToolkit.backgroundAssetGuid = ''; }
     snapshot[key][field] = 2;
     assert.match(validateUiLayoutRuntime(plan, report).join('\n'), new RegExp(`${field}.*严格等于数字 1`));
+    snapshot[key][field] = 1;
+    assert.match(validateUiLayoutRuntime(plan, report).join('\n'), /实际切片必须声明 SLICED/);
+    snapshot[key][field] = 2;
     // BACKGROUND 可省略尺寸意图，但真实切片仍须接受同一检查。
     plan.nodes[0].renderKind = 'BACKGROUND';
     delete plan.nodes[0].layoutBinding.uiLayout.imageSizing;
@@ -120,5 +124,17 @@ for (const [system, key, field] of [['UGUI', 'image', 'pixelsPerUnitMultiplier']
     const { plan, report, snapshot } = runtimeFixture(system, false);
     snapshot[key][field] = 2;
     assert.deepEqual(validateUiLayoutRuntime(plan, report), []);
+  });
+
+  test(`${system} 常规运行检查使用实际局部显示框检查切片中心`, () => {
+    const { plan, report, snapshot } = runtimeFixture(system);
+    assert.deepEqual(validateUiLayoutRuntime(plan, report), []);
+    if (system === 'UGUI') {
+      // 两侧各 8 像素，实际 Image PPU 为 2，因此宽 8 的本地框没有中心。
+      snapshot.image.localSize.width = 8;
+    } else {
+      snapshot.uiToolkit.width = 16;
+    }
+    assert.match(validateUiLayoutRuntime(plan, report).join('\n'), /九宫格实际显示框没有正尺寸中心/);
   });
 }

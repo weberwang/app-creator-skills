@@ -164,13 +164,13 @@
 
 - [app-domain-toolkit](../../app-domain-toolkit)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-domain-contracts](../../threejs-domain-contracts)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [threejs-game-3d-modeling](../../threejs-game-3d-modeling)：领域资料、模板和工具依赖；不含独立全局流程入口。
+- Three.js 建模资料见[建模流程](./mcp-modeling-workflow.md)与[模型交接](./model-handoff.md)。
 - [threejs-game-ad-integration](../../threejs-game-ad-integration)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-game-architecture](../../threejs-game-architecture)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-game-asset-integration](../../threejs-game-asset-integration)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-game-juice](../../threejs-game-juice)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [threejs-game-model-pipeline](../../threejs-game-model-pipeline)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [threejs-game-orchestrator](../../threejs-game-orchestrator)：领域资料、模板和工具依赖；不含独立全局流程入口。
+- Three.js 模型管线见[生产与接入合同](./blender-model-production.md)、[GLB 校验器](../scripts/validate-model.mjs)与[清单示例](./model-manifest.example.json)。
+- Three.js 项目编排见[技术编排](./technical-orchestration.md)与[项目文档初始化脚本](../scripts/initialize_project_docs.mjs)。
 - [threejs-game-plugins](../../threejs-game-plugins)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-game-qa-performance](../../threejs-game-qa-performance)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [threejs-game-runtime](../../threejs-game-runtime)：领域资料、模板和工具依赖；不含独立全局流程入口。

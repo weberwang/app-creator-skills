@@ -100,6 +100,31 @@ while index <= #queue do
 		local encoded = #flexItems == 0 and "[]" or HttpService:JSONEncode(flexItems)
 		table.insert(values, HttpService:JSONEncode("FlexItems") .. ":" .. encoded)
 	end
+	-- 文字填色和透明度与背景属性分开回读，数据保持原生 0–1 范围。
+	if instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox") then
+		add(values, "TextColor3", { r = instance.TextColor3.R, g = instance.TextColor3.G, b = instance.TextColor3.B })
+		add(values, "TextTransparency", instance.TextTransparency)
+	end
+	-- 图片切片参数和显示框从同一实际实例回读，祖先 UIScale 也需逐个核对。
+	if instance:IsA("ImageLabel") or instance:IsA("ImageButton") then
+		add(values, "ScaleType", instance.ScaleType.Name)
+		add(values, "SliceScale", instance.SliceScale)
+		add(values, "SliceCenter", { minX = instance.SliceCenter.Min.X, minY = instance.SliceCenter.Min.Y, maxX = instance.SliceCenter.Max.X, maxY = instance.SliceCenter.Max.Y })
+		add(values, "ImageRectOffset", vector2(instance.ImageRectOffset))
+		add(values, "ImageRectSize", vector2(instance.ImageRectSize))
+		local scales = {}
+		local current = instance
+		while current do
+			if current:IsA("GuiBase2d") then
+				for _, child in ipairs(current:GetChildren()) do
+					if child:IsA("UIScale") then table.insert(scales, { scale = child.Scale }) end
+				end
+			end
+			current = current.Parent
+		end
+		local encoded = #scales == 0 and "[]" or HttpService:JSONEncode(scales)
+		table.insert(values, HttpService:JSONEncode("AncestorUIScales") .. ":" .. encoded)
+	end
 	if instance:IsA("UIGridStyleLayout") then
 		for _, property in ipairs({ "FillDirection", "HorizontalAlignment", "VerticalAlignment", "SortOrder" }) do
 			add(values, property, instance[property].Name)

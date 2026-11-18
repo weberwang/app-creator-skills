@@ -55,8 +55,10 @@
       "assetId": "generated-icon",
       "assetType": "image",
       "output": "assets/icons/primary-action.png",
+      "sourceRef": "art/source/primary-action.png",
       "sourceKind": "ai-generated",
       "generationRecord": "docs/artifacts/primary-action-generation.json",
+      "generationRecordSha256": "0000000000000000000000000000000000000000000000000000000000000000",
       "antiAiChecks": [
         {
           "id": "structure-fidelity",

@@ -62,7 +62,7 @@
 <a id="mode-cocos-game-production--领域边界"></a>
 #### 领域边界
 
-- 涉及正式 3D 模型时，按[建模工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)在既有 GDD/场景资源规划中交接模型用途、机位与观看距离、参考尺寸、交互体积、视觉基线、面数/材质/LOD 预算和验收条件；交给建模领域形成可执行规格，不能把灰盒或材质效果当作正式模型完成。贴图、绑定和动画只有明确属于任务范围时才另行安排。
+- 涉及正式 3D 模型时，按[建模工作流接入](./workflow-integration.md)在既有 GDD/场景资源规划中交接模型用途、机位与观看距离、参考尺寸、交互体积、视觉基线、面数/材质/LOD 预算和验收条件；交给建模领域形成可执行规格，不能把灰盒或材质效果当作正式模型完成。贴图、绑定和动画只有明确属于任务范围时才另行安排。
 - [公共策划范围与验收约定](../../app-creator-workflow/references/professional-conventions.md#planning-scope-and-acceptance)
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/game-production.md#完整流程)。
 - 全局静态基线、场景方向和高保真证据由控制面统一校验；本领域只提供体验意图、功能事实和范围，不用文字或根摘要替代机器证据。
@@ -366,7 +366,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 
 [公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
 
-涉及 3D 模型时，按[建模工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)核对 Blender 几何/拓扑/UV 报告、导出回读、Creator 实际模型与子资源、比例/轴向/Pivot、材质槽、LOD/碰撞、资源级 Prefab 和正式场景消费。以当前项目的预算和实际能力为准；通用资源清单 PASS、导出文件存在或 `.meta` 出现不能代替这些技术验证。转台、线框、UV、LOD 切换与碰撞边界截图供用户人工检查，技术结果和显示确认分别记录；不自动启动真机验收。
+涉及 3D 模型时，按[建模工作流接入](./workflow-integration.md)核对 Blender 几何/拓扑/UV 报告、导出回读、Creator 实际模型与子资源、比例/轴向/Pivot、材质槽、LOD/碰撞、资源级 Prefab 和正式场景消费。以当前项目的预算和实际能力为准；通用资源清单 PASS、导出文件存在或 `.meta` 出现不能代替这些技术验证。转台、线框、UV、LOD 切换与碰撞边界截图供用户人工检查，技术结果和显示确认分别记录；不自动启动真机验收。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/quality-verification.md#完整流程)。
 2. [公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
@@ -524,7 +524,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--cocos-游戏-3d-建模"></a>
 ### Cocos 游戏 3D 建模
 
-把已确定的视觉与玩法规格制作成可编辑、可复查并能由目标 Cocos Creator 项目实际导入的 3D 模型。正式模型在 Blender MCP 中生产，Creator 用于资源导入核验和既有 Work Item 要求的场景接入。开始前按需阅读[Blender MCP 建模流程](../../cocos-game-3d-modeling/references/mcp-modeling-workflow.md)、[模型交接](../../cocos-game-3d-modeling/references/model-handoff.md)和[工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)。
+`app_3d_model_creator` 按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 在 Blender MCP 中制作正式模型。Cocos 资产接入负责人使用 Creator 核验资源导入和实际场景消费。按需阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)、[模型交接](./model-handoff.md)和[工作流接入](./workflow-integration.md)。
 
 
 
@@ -534,7 +534,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
 - 缺少关键规格、可用 Blender MCP、明确的 `.blend` 来源/写入范围、唯一 Creator 项目或当前工作项授权时，可提供带假设的只读规格建议；受影响写入保持 `BLOCKED`。没有可用 Blender MCP 时阻断正式建模，不能用体块拼搭或其他工具冒充正式交付。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#完成模型结构)。
-- 本技能拥有几何、拓扑、法线、UV、材质槽结构、LOD、碰撞代理和静态模型导出。它不生产 PBR 贴图，不实现骨架/权重/动作，不代替 Cocos 玩法场景装配或独立 QA；接口约定见[模型交接](../../cocos-game-3d-modeling/references/model-handoff.md)。
+- 本技能拥有几何、拓扑、法线、UV、材质槽结构、LOD、碰撞代理和静态模型导出。它不生产 PBR 贴图，不实现骨架/权重/动作，不代替 Cocos 玩法场景装配或独立 QA；接口约定见[模型交接](./model-handoff.md)。
 - 只按目标项目当前 Creator、Importer 和 MCP 能力选择导入格式。不得假定某种格式、导入器、网格子资源或自动转换能力必然可用。
 
 <a id="mode-cocos-game-3d-modeling--执行底线"></a>
@@ -549,7 +549,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--交付"></a>
 #### 交付
 
-交付版本化 `.blend`、运行时模型文件、拓扑/法线/实际 UV 位置报告、材质槽与 LOD/碰撞指标、导出回读记录、来源与许可、Creator 资源导入及实际加载证据，以及模型交接资料。只有真实模型满足当前工作项验收条件并补齐相应阶段证据，才可报告就绪。
+建模交付版本化 `.blend`、模型导出物、拓扑/法线/实际 UV 位置报告、材质槽、LOD 网格与碰撞指标、导出回读、来源和许可。Creator 资产接入负责人回传真实导入和加载证据。当前工作项满足相应阶段条件后报告就绪。
 <!-- native-source:cocos-game-3d-modeling:end -->
 
 
@@ -632,14 +632,14 @@ pending → generating → generated → validating → packing → packed → r
 
 UI 布局参照按[场景与弹窗尺寸参照](../../cocos-game-ui-layout/references/layout-hierarchy.md#场景与弹窗尺寸参照)统一确定：全屏 UI 的父级是场景，按场景逻辑尺寸相对布局；弹窗有底板时，内容按底板对应功能容器的宽高相对布局；弹窗没有底板时，按宿主场景逻辑尺寸相对布局。弹窗底板容器本身相对场景定位，简单结构中底板 Sprite 节点可直接兼任容器根；全屏装饰背景仍是独立显示层。安全区约束关键内容的可见范围，不替换这三种尺寸参照。
 
-效果图 V3 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。Widget 在已确认的父/祖先参照和单一位置所有权下必须优先使用；兄弟参照与图文整体居中可由共享布局处理，REFLOW/SCROLL 容器自身停靠和子项原生 Layout 排布分别确定控制权；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
+效果图 V3 拆解与布局遵守[功能语义分组约束](../../cocos-game-ui-layout/references/functional-semantic-grouping.md)和[Cocos UI 节点组织](../../cocos-game-ui-layout/references/layout-hierarchy.md)：先在编号拆解图上确认功能归属、实际父级和独立位置参照，再由代理自动整理停靠方案并展示布局图/预览确认；不先发文字方案要求确认。位置依赖不强制直接父子：`parent_element_id`/`parent_layout_node_id` 表示真实功能、状态、交互、生命周期或布局管理归属；可选 `ui_layout.position_reference_id` 表示位置参照，省略时默认真实父级。共同表达同一信息的元素可同属功能组件并保持同级。简单“底板+图标+文本”优先由同一个底板节点兼任 `element_type=container` 和 `render_kind=sprite`，保留组件/placement 与图片资产身份，不拆成空根和底板叶子。只有真实独立职责才新增纯结构容器；它包裹可用底板与内容时须在 `ui_layout.independent_container_reason` 写明具体职责。父容器职责、布局所有者、尺寸、显式溢出、安全区和输入归属仍在技术合同中维护；禁止按类型、显示层序或最小几何包含关系自动归父级或加包装层。固定尺寸直接父子优先保持本地偏移，父级尺寸变化时按需在已确认的父/祖先参照和单一位置所有权下使用 Widget；兄弟参照与图文整体居中可由共享布局处理，REFLOW/SCROLL 容器自身停靠和子项原生 Layout 排布分别确定控制权；按[Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)生成配置与尺寸权限。
 
 <a id="mode-cocos-game-ui-layout--全局控制接入"></a>
 #### 全局控制接入
 
 位置参照根 `viewport`/`safe-area` 使用合成布局几何，不代表同名 Creator Node，也不能作为 Widget target，直接参照时由 `SHARED` 处理。`viewport` 使用当前完整逻辑视口；`safe-area` 使用整批节点统一的实际安全区矩形。已存在的实际 Canvas 等父/祖先节点才可作为 Widget target。位置与尺寸驱动器分开判定，Widget 定位和共享或自身 Layout 尺寸计算可顺序协作，只有同一属性出现多个并行写入者才是冲突；V5 组件快照规则见 [Widget 运行快照](../../cocos-game-ui-layout/references/widget-runtime-evidence.md)，完整策略见 [Widget 定位策略](../../cocos-game-ui-layout/references/widget-layout.md)。
 
-普通 UI 必须相对真实父级或有效参照停靠，原生 Widget 可表达时必须使用 Widget；父 Layout 管理的子项使用 Layout。Widget 其他条件满足但已知路径为非单位变换时，V3 可声明 `SHARED` 与 `widget_fallback: non-unit-transform`，V5 须按实际矩阵证明回退有效，单位路径不能借自填理由绕过原生布局。普通 UI 和浮层本体不得以 `STATIC` 固定冻结坐标；独立定位的浮层必须声明受控位置行为和合法恢复驱动，背景遵循其专用边界。尺寸控制仍按 RAW 原尺寸及九宫格授权分别处理。
+普通 UI 必须相对真实父级或有效参照定位。固定尺寸的直接父子可保持固定本地偏移，父级尺寸变化时按需使用 Widget，父 Layout 管理的子项使用 Layout。Widget 其他条件满足但已知路径为非单位变换时，V3 可声明 `SHARED` 与 `widget_fallback: non-unit-transform`，V5 须按实际矩阵证明回退有效。独立定位的浮层必须声明受控位置行为和合法恢复驱动，背景遵循其专用边界。尺寸控制仍按 RAW 原尺寸及九宫格授权分别处理。
 
 
 
@@ -955,7 +955,7 @@ V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边�
 <a id="mode-cocos-game-asset-integration--条件参考"></a>
 #### 条件参考
 
-- 正式 3D 模型制作或修整：交给 [`cocos-game-3d-modeling`](#mode-cocos-game-3d-modeling) 在 Blender MCP 中生产；本领域按[工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)登记模型来源与输出，通过 Creator MCP 核验真实模型、网格/材质子资源和资源级 Prefab。几何技术报告与实际场景消费证据独立于图片尺寸、Alpha 和 SpriteFrame 检查。
+- 正式 3D 模型制作或修整：交给 [`cocos-game-3d-modeling`](#mode-cocos-game-3d-modeling) 在 Blender MCP 中生产；本领域按[工作流接入](./workflow-integration.md)登记模型来源与输出，通过 Creator MCP 核验真实模型、网格/材质子资源和资源级 Prefab。几何技术报告与实际场景消费证据独立于图片尺寸、Alpha 和 SpriteFrame 检查。
 - 参考截图、录屏、运行项目或源码还原：读取 [视觉还原](../../cocos-game-asset-integration/references/visual-reconstruction.md)。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 - UI：同时读取 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 的布局合同、Cocos 适配器、Widget 定位策略和证据矩阵；资源 origin、布局锚点与动画偏移按合同分离，资产接入不得重新发明布局规则。

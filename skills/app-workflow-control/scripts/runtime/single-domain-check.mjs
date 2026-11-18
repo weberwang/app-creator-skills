@@ -179,7 +179,7 @@ function validateFlutterLayerContext(repo, work, stage, doc) {
 async function run(repo, work, stage) {
   if (!['V2', 'V3', 'V4', 'V5'].includes(stage)) throw new WorkflowError('单目标领域检查只适用于 V2–V5');
   const doc = readEnvelope(repo, work, stage);
-  validateFigmaAppStage(repo, work, stage, doc);
+  const figma = validateFigmaAppStage(repo, work, stage, doc);
   /** 当前阶段的领域引用不可重新使用 RETURN 已撤销的历史证据。 */
   const currentIdentity = (root, ref, label) => {
     if (ref?.path && work.invalidatedRefs?.some((item) => fileIdentityKey(root, item.path) === fileIdentityKey(root, ref.path))) throw new WorkflowError(`${label} 使用 RETURN 已作废证据`);
@@ -189,9 +189,9 @@ async function run(repo, work, stage) {
   if (work.stack === 'unity') return validateUnity(repo, work, stage, doc);
   if (WEB_PREFIX[work.stack]) return validateWeb(repo, work, stage, doc);
   if (work.stack === 'flutter') return validateFlutter(repo, work, stage, doc);
-  if (work.stack === 'expo') return (await import('./expo-domain-check.mjs')).validateExpo(repo, work, stage, doc, currentIdentity);
+  if (work.stack === 'expo') return (await import('./expo-domain-check.mjs')).validateExpo(repo, work, stage, doc, currentIdentity, figma?.nativeTextAppearance);
   // 非视觉技术栈不安装 UI 校验器，只有 ESP32 领域验证才加载其依赖。
-  if (work.stack === 'esp32') return (await import('./esp32-domain-check.mjs')).validateEsp32(repo, work, stage, doc, currentIdentity);
+  if (work.stack === 'esp32') return (await import('./esp32-domain-check.mjs')).validateEsp32(repo, work, stage, doc, currentIdentity, figma?.nativeTextAppearance);
   throw new WorkflowError('单目标领域合同不支持当前技术栈');
 }
 

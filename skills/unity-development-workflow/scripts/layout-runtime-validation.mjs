@@ -1,6 +1,7 @@
 import { validateNineSliceDecision, validateNineSlicePixelMultiplier } from "./nine-slice-contract.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
 import { validateNativePositionSnapshot } from "./layout-native-docking.mjs";
+import { mergeTextStyleEvidence, validateTextStyle } from "./text-style-validation.mjs";
 
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const WRITER_KINDS = new Set(["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"]);
@@ -336,6 +337,11 @@ function validateUiSystemSnapshot(node, snapshot, uiSystem, errors, rectTransfor
   if (uiSystem === "UI_TOOLKIT" && (slicedPlan || actualToolkitSlice)) {
     errors.push(...validateNineSlicePixelMultiplier(style?.sliceScale, `节点 ${node.id} 的 UI Toolkit sliceScale`));
   }
+  // 实际切片必须绑定冻结合同，防止将计划写成普通图片后跳过中心检查。
+  if (!slicedPlan && ((uiSystem === "UGUI" && snapshot.image?.type === "Sliced")
+    || (uiSystem === "UI_TOOLKIT" && actualToolkitSlice))) {
+    errors.push(`节点 ${node.id} 的实际切片必须声明 SLICED imageSizing 和冻结 nineSlice。`);
+  }
 
   if (["STRUCTURE", "TEXT"].includes(node.renderKind) && snapshot.image !== null) {
     errors.push(`${node.renderKind} 节点 ${node.id} 不能伪造 Image 快照。`);
@@ -445,12 +451,23 @@ function validateSlicedSizing(node, snapshot, uiSystem, errors) {
     errors.push(`SLICED 节点 ${node.id} 必须引用 mode=stretch 的冻结 nineSlice。`);
     return;
   }
-  errors.push(...validateNineSliceDecision(decision).map((message) => `节点 ${node.id}：${message}`));
+  const decisionErrors = validateNineSliceDecision(decision);
+  errors.push(...decisionErrors.map((message) => `节点 ${node.id}：${message}`));
+  if (decisionErrors.length > 0) return;
   if (uiSystem === "UGUI") {
     const image = snapshot.image;
     if (!isRecord(image)) return;
     if (image.type !== "Sliced" || image.hasBorder !== true) errors.push(`节点 ${node.id} 的实际 uGUI Image 必须启用 Sliced 与边框。`);
     compareSourceAndBorder(node.id, decision, image.sourceSize, image.border, errors);
+    // Border 是源图像素，本地显示框须按 Image 的真实 PPU 换算后比较。
+    if (snapshot.active === true && Number.isFinite(image.imagePixelsPerUnit) && image.imagePixelsPerUnit > 0) {
+      const local = image.localSize;
+      if (!local || !Number.isFinite(local.width) || !Number.isFinite(local.height)
+        || decision.border[0] / image.imagePixelsPerUnit + decision.border[2] / image.imagePixelsPerUnit >= local.width
+        || decision.border[1] / image.imagePixelsPerUnit + decision.border[3] / image.imagePixelsPerUnit >= local.height) {
+        errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+      }
+    }
     return;
   }
 
@@ -458,6 +475,12 @@ function validateSlicedSizing(node, snapshot, uiSystem, errors) {
   if (!isRecord(style)) return;
   const actualBorder = [style.sliceLeft, style.sliceBottom, style.sliceRight, style.sliceTop];
   compareSourceAndBorder(node.id, decision, null, actualBorder, errors);
+  // 已采集的 resolvedStyle 宽高是布局局部点，避免使用可能受变换影响的屏幕包围盒。
+  if (snapshot.active === true && (!Number.isFinite(style.width) || !Number.isFinite(style.height)
+    || decision.border[0] + decision.border[2] >= style.width
+    || decision.border[1] + decision.border[3] >= style.height)) {
+    errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+  }
 }
 
 /** 比较冻结源像素和边框与 Unity 实际读取值，epsilon 仅用于浮点序列化误差。 */
@@ -745,6 +768,7 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
     if (viewport && safeArea && !isContained(safeArea, viewport)) errors.push("运行报告 safeAreaRect 必须位于 viewportRect 内。");
 
     const measurements = indexMeasurements(plan, report, errors);
+    const textEvidence = mergeTextStyleEvidence(report, options.textStyleEvidence, errors);
     const nodesById = new Map(plan.nodes.map((node) => [node.id, node]));
     const measurementPaths = new Map();
     const seenPaths = new Set();
@@ -771,6 +795,9 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
           ? readSize(snapshotData.snapshot.rectTransform?.localSize, `节点 ${node.id} 的 RectTransform.localSize`, errors, { positive: snapshotData.expectedActive })
           : null;
         validateUiSystemSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, rectSize);
+        if (node.renderKind === "TEXT" && snapshotData.expectedActive && snapshotData.snapshot.active) {
+          errors.push(...validateTextStyle(node, textEvidence.get(node.id) ?? snapshotData.snapshot.textStyle));
+        }
         validateNativePositionSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, measurement);
         if (snapshotData.expectedActive && snapshotData.snapshot.active && measurement.actualRect !== null) {
           actualRects.set(node.id, readRect(measurement.actualRect, `节点 ${node.id} 的 actualRect`, errors));

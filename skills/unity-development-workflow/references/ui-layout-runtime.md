@@ -44,7 +44,11 @@ Toolkit 只读加载场景，从实际 Screen/Canvas/Panel 取得同批 viewport
 
 ## 文本与世界文字的取证边界
 
-UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)验证所有消费者，不能把本页几何报告作为插件安装、配置加载或语言切换证据。当前 uGUI 测量器以 RectTransform 为目标，支持默认显示器的 Screen Space Overlay/Camera Canvas；不要求 TMP，可测 UniText 容器几何，但组件快照只覆盖布局与图片配置，没有文本内容、字体、字形和语言绑定。
+UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)验证所有消费者，不能把本页几何报告作为插件安装、配置加载或语言切换证据。uGUI 测量器支持默认显示器的 Screen Space Overlay/Camera Canvas，也能按实际组件序列化属性回读文字样式；文字内容、字形生成和语言绑定仍须独立验证。
+
+每个活动 `TEXT` 节点在 V3 布局计划的 `textStyle` 记录确认稿来源 `source` 和 `attributes`。每项包含语义名称 `name`、项目实际安装的组件完整类型名 `componentType`、实际属性 `propertyPath` 和已确认目标的 `expectedValue`。必须包含字体（font）、字号（fontSize）和字体颜色（fill，按确认稿记录文字本身的 RGBA 值），并逐项覆盖设计可核实的字重、行高、字距、对齐、换行、渐变和描边阴影等适用效果；设计事实不足时保持待验证。为同节点测量请求的 `textStyle` 填入对应 `name`、`componentType`、`propertyPath`。uGUI 从目标组件的序列化属性读取；UI Toolkit 从实际元素类型和当前 Unity 版本提供的 `resolvedStyle.属性名` 读取解析样式。无法唯一定位组件或属性类型不支持时回报 `UNAVAILABLE`。字符串直接比较，浮点数采用不随地区变化的往返表示，布尔为 `true`/`false`，枚举为序列化整数，颜色为大写 `#RRGGBBAA`，资源引用为项目资源路径。字号和其他属性先明确相同单位与真实组件语义，不能直接比较不同单位。缺少快照、来源、属性或回读不匹配时该文字项保持未验证。
+
+对于目标明确而采集器不支持的属性，使用项目已有 Unity Editor 测量接口实际回读并将补充 JSON 保存在当前 `evidenceRoot`。V5 的 `uiLayoutMeasurementRef.textEvidencePath` 引用该文件，独立运行 `layout-runtime-check` 时可用 `--text-evidence <项目内JSON路径>`。JSON 顶层记录 `measurementSource: UNITY_EDITOR_LOADED_SCENE` 及与布局报告一致的 `runId`、`frameCount`、`scenePath`、`stateId`、`uiSystem`。`measurements` 数组每项绑定同一节点 `id`、实际 `objectPath`（UI Toolkit 还需 `elementName`）和与采集器一致的 `textStyle` 属性数组。仅同批、同对象且与已有实测不冲突的属性参与目标比较。保留实际 Unity 采集调用及原始结果。无法获取时保持未验证并按真实约束调整计划或素材路线。
 
 独立 UniTextWorld 的 MeshRenderer 不属于上述 Canvas 测量范围，World Space Canvas 也不能用该屏幕几何工具证明通过。分别核对真实文字组件、内容、语言、字体及世界布局，沿当前工作项记录实际证据。Game View 最终帧可以拍到世界文字，但 UI 覆盖统计只识别 Canvas/UIDocument，不能证明全部世界文字已覆盖；`NO_RUNTIME_UI_FOUND` 或部分覆盖标记不等于最终帧未拍到文字。目标截图和可读性、遮挡等显示效果仍由用户人工确认。
 

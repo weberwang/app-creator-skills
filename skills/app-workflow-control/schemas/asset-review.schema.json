@@ -179,6 +179,13 @@
         "allOf": [
           {
             "if": {
+              "required": ["sourceKind"],
+              "properties": {"assetType": {"const": "image"}, "sourceKind": {"const": "ai-generated"}}
+            },
+            "then": {"required": ["sourceRef", "designItemIds", "generationRecord", "generationRecordSha256", "antiAiChecks"]}
+          },
+          {
+            "if": {
               "required": [
                 "assetType"
               ],

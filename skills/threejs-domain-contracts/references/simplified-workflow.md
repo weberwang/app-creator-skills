@@ -24,7 +24,7 @@
 六阶段、阶段身份和交付见[公共工作流](../../app-creator-workflow/references/workflow.md)。
 
 
-基础工程阶段必须按[基础显示约束](../../threejs-game-orchestrator/references/game-implementation.md#基础显示约束)完成游戏全屏显示；目标包含 Android 时，启动首帧、启动画面切换及运行全程均不得显示窗口标题栏或 ActionBar，并在后台返回和窗口焦点恢复后保持沉浸式全屏。此项属于基础平台能力，不等待场景视觉生产；无实际运行证据的验收项须明确标记未验证，真机验收仍需用户明确授权。
+基础工程阶段必须按[基础显示约束](../../app-stack-threejs/references/game-implementation.md#基础显示约束)完成游戏全屏显示；目标包含 Android 时，启动首帧、启动画面切换及运行全程均不得显示窗口标题栏或 ActionBar，并在后台返回和窗口焦点恢复后保持沉浸式全屏。此项属于基础平台能力，不等待场景视觉生产；无实际运行证据的验收项须明确标记未验证，真机验收仍需用户明确授权。
 
 音频生命周期也在基础工程阶段完成：按[后台暂停与恢复约束](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-audio--后台暂停与恢复约束)，进入后台暂停播放，返回前台后从原位置继续；手动暂停、停止或销毁的音频不自动恢复，后台新请求不补播。
 

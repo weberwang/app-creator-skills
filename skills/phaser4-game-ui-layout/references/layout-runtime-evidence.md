@@ -10,14 +10,18 @@
 | --- | --- | --- |
 | 位置 | `REFLOW` | 当前项目统一 `reflowUi` 写入基础布局位置 |
 | 位置 | `PARENT_LAYOUT` | 项目父级排版逻辑管理子项位置，非 Phaser 原生 Layout 组件 |
-| 位置 | `STATIC` | 普通游戏 UI 拒绝该声明，固定尺寸仍使用相对停靠或父级排布 |
+| 位置 | `STATIC` | 固定尺寸直接父子沿用本地偏移，V5 核对实际父框与相对位置 |
 | 位置 | `ANIMATION` | 显式声明由动画控制该位置属性，不同时由重排覆盖 |
 | 尺寸 | `FIXED` | 已确认固定布局尺寸 |
 | 尺寸 | `CONTENT` | 当前文字或内容测量结果决定尺寸 |
 | 尺寸 | `REFLOW` | 重排计算 stretch/flex 布局尺寸 |
 | 尺寸 | `NINE_SLICE` | 冻结九宫格合同控制显示尺寸 |
 
-位置默认由 `layout_owner=PARENT` 选择 `PARENT_LAYOUT`，其余选择 `REFLOW`；普通 UI 不允许以 `STATIC` 冻结屏幕位置。`ANIMATION` 必须显式声明，在 `ui_layout.position_behavior` 填写 `kind=drag|pointer-follow|world-follow|transition`、`reason`、`trigger`、非空无重复的本节点位置属性 `properties`（仅 `x/y`）、`restore_driver=REFLOW|PARENT_LAYOUT` 与 `restore_rule`。行为期间只允许一个位置写入者，结束后交回所声明的基础布局；不能将缩放画布或资源 origin 当作停靠。尺寸优先由已冻结 `nine_slice.mode=stretch` 选择 `NINE_SLICE`，其余按 `CONTENT`、`STRETCH/FLEX`、`FIXED` 分别选择 `CONTENT`、`REFLOW`、`FIXED`。显式声明必须与职责和尺寸策略相容。
+正式采集器从实际 Phaser `NineSlice` 读取 `leftWidth`、`rightWidth`、`topHeight`、`bottomHeight`、同帧宽高与对象显示框；对象和中间 `parentContainer` 的 `scaleX/scaleY` 逐级严格等于数字 1。运行校验要求边距及源帧与冻结合同一致，实际宽高分别大于对应边距之和。几何矩阵的 Float32 量化预算只用于坐标复算。
+
+对每个适用状态，分别运行当前工作项确认范围内可能使该皮肤显示框最窄和最矮的条件；两个条件可不同。每次使用当前实际对象重新调用 `collectPhaserLayoutSnapshot`，并将同批结果交给 `validateLayoutRuntimeEvidence`，分别保留 `runtime_context`、条件和结果。响应式视口事件与 `keyUiRects` 不包含完整九宫格对象读数，不能代替这些采集。缺少任一最小条件的真实回读时，九宫格最小显示尺寸保持未验证。
+
+位置由 `layout_owner=PARENT` 选择 `PARENT_LAYOUT`；固定尺寸直接父子以 `STATIC` 保持本地偏移，其他节点选择 `REFLOW`。动态位置、浮层或兄弟参照不能使用固定父子回退。`ANIMATION` 必须显式声明，在 `ui_layout.position_behavior` 填写 `kind=drag|pointer-follow|world-follow|transition`、`reason`、`trigger`、非空无重复的本节点位置属性 `properties`（仅 `x/y`）、`restore_driver=REFLOW|PARENT_LAYOUT` 与 `restore_rule`。行为期间只允许一个位置写入者，结束后交回所声明的基础布局；不能将缩放画布或资源 origin 当作停靠。尺寸优先由已冻结 `nine_slice.mode=stretch` 选择 `NINE_SLICE`，其余按 `CONTENT`、`STRETCH/FLEX`、`FIXED` 分别选择 `CONTENT`、`REFLOW`、`FIXED`。显式声明必须与职责和尺寸策略相容。
 
 Phaser Container 与底板显示对象分别维护。普通图片保持源帧逻辑尺寸，禁止额外内容缩放、`contain`、`cover` 或 `fill`；屏幕装饰背景例外，允许等比 `cover-v1` 缩放，九宫格按冻结切片扩展；源帧尺寸与实际显示几何分开记录，不移植 Cocos 的 RAW、Widget、UITransform 或同 Node Sprite 容器规则。
 

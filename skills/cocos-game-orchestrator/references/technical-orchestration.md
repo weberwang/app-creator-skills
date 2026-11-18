@@ -32,7 +32,7 @@ description: Cocos Creator 3.x 游戏领域编排角色；在全局控制面已�
 
 ## 3D 建模路由
 
-需要制作或修整正式 3D 模型时，调用 [`cocos-game-3d-modeling`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-3d-modeling)，按[工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)把模型规格、Blender 生产、Creator 导入和正式场景消费安排在现有工作项中。制作交接用途、观看距离、视觉基线和预算；建模负责几何、拓扑、法线、UV、LOD 与碰撞代理，资源接入负责 AssetDB、材质绑定与资源级 Prefab，玩法负责实际碰撞和交互语义，QA 分开记录技术证据与用户显示确认。各角色按[模型交接](../../cocos-game-3d-modeling/references/model-handoff.md)串行交接同一源和 Creator 写入权；不把独立纹理、绑定或动画制作隐含并入建模。模型路线不授权替换已冻结的生成式位图，也不跳过适用的 V3/V4/V5 门。
+需要制作或修整正式 3D 模型时，调用 [`cocos-game-3d-modeling`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-3d-modeling)，按[工作流接入](../../app-stack-cocos/references/workflow-integration.md)把模型规格、Blender 生产、Creator 导入和正式场景消费安排在现有工作项中。制作交接用途、观看距离、视觉基线和预算；建模负责几何、拓扑、法线、UV、LOD 与碰撞代理，资源接入负责 AssetDB、材质绑定与资源级 Prefab，玩法负责实际碰撞和交互语义，QA 分开记录技术证据与用户显示确认。各角色按[模型交接](../../app-stack-cocos/references/model-handoff.md)串行交接同一源和 Creator 写入权；不把独立纹理、绑定或动画制作隐含并入建模。模型路线不授权替换已冻结的生成式位图，也不跳过适用的 V3/V4/V5 门。
 
 ## 汁水感与动态反馈路由
 

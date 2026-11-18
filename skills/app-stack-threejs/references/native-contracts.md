@@ -117,7 +117,7 @@
 - 小游戏必须单独验证；可选商业能力须有显式接口和已批准开关。
 - 项目采用的 SDK 按[SDK 分文件独立初始化](../../threejs-game-architecture/references/sdk-initialization.md)由 `src/platform/initialize-sdks.ts` 独立投递，各 SDK 在 `src/platform/sdks/<sdk>-sdk.ts` 分别实现启动、回调、幂等和初始化重试。各 SDK 分别投递，只等待锁定平台、版本及流程的官方真实前置，不建立无关场景或全局就绪屏障；前置不满足仅限制对应 SDK，业务使用仍遵守相应能力门。
 - 基础模块按[音频生命周期约束](#mode-threejs-game-audio--后台暂停与恢复约束)处理浏览器页面可见性和音频上下文受限；只有采用原生宿主时才添加对应平台生命周期适配。
-- 基础模块按[基础显示约束](../../threejs-game-orchestrator/references/game-implementation.md#基础显示约束)让 Canvas 适配实际 CSS 视口并保持 Camera、HUD 和输入坐标一致。原生窗口主题、沉浸式全屏和平台安全区只在对应宿主被选用时实现。
+- 基础模块按[基础显示约束](./game-implementation.md#基础显示约束)让 Canvas 适配实际 CSS 视口并保持 Camera、HUD 和输入坐标一致。原生窗口主题、沉浸式全屏和平台安全区只在对应宿主被选用时实现。
 
 <a id="mode-threejs-game-architecture--原生平台插件选型"></a>
 #### 原生平台插件选型
@@ -521,7 +521,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 <a id="mode-threejs-game-3d-modeling--threejs-游戏-3d-几何建模"></a>
 ### three.js 游戏 3D 几何建模
 
-把已确定的视觉与玩法规格制作成可编辑、可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。开始正式建模前阅读[Blender MCP 建模流程](../../threejs-game-3d-modeling/references/mcp-modeling-workflow.md)；涉及下游使用或修改时阅读[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)。
+把已确定的视觉与玩法规格制作成可编辑、可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。开始正式建模前阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)；涉及下游使用或修改时阅读[模型交接](./model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](./workflow-integration.md)。
 
 范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V0–V5 阶段；V1 验证功能，V2 冻结模型几何规格，V3 制作路线并在有用时做 blockout，V4 按 V0 分类交付正式模型或烘焙源并核验，只有运行模型在 V5 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
 
@@ -529,8 +529,8 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 #### 职责与路由
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
-- 本技能不制作 PBR 贴图，不实现骨架、蒙皮权重或动作，不装配正式场景，也不负责 QA 放行。贴图、骨骼动画、three.js 场景消费和最终运行验收继续由现有模型管线负责。
-- 实际几何建模必须委派 `agent_type=default`、`model=gpt-6.1-sol`、`reasoning_effort=max`、`fork_turns=none` 的建模子代理调用 Blender MCP；主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
+- 几何、拓扑、UV、材质槽结构和适用的 LOD 网格由本技能负责。PBR 贴图由 `app-3d-texturing` 负责，骨架及动作交对应能力，模型管线负责资源导入和运行消费。
+- 正式几何建模按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 委派 `app_3d_model_creator` 使用 Blender MCP；主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
 - 源 `.blend` 保持只读；所有建模修改写入获准路径中的版本化派生文件。同一 `.blend`、MCP 会话和目标导出路径保持单一写者，修改与保存按顺序执行。使用 Blender MCP 前实时发现可用工具和参数，不假定固定命令、API 或导出能力。
 
 目标使用正式模型但不改几何时，走现有模型管线的资源接入或优化流程；本技能只在当前 Work Item 明确包含几何生产或修改时承担建模职责。
@@ -824,12 +824,12 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 
 可提议、审查并在当前 Work Item 内修改资产与接入代码，完成后回到 [app-workflow-control](../../app-workflow-control/SKILL.md) 提交资源身份和验证证据。
 
-<a id="mode-threejs-game-model-pipeline--blender-模型生成"></a>
-#### Blender 模型生成
+<a id="mode-threejs-game-model-pipeline--模型生产交接"></a>
+#### 模型生产交接
 
-用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](../../threejs-game-model-pipeline/references/blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD、碰撞代理和静态导出由 [`threejs-game-3d-modeling`](#mode-threejs-game-3d-modeling) 负责。该建模技能按既有 `gpt-6.1-sol` / `max` 配置委派实际 Blender MCP 制作；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
+用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](./blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD 网格、碰撞代理和静态导出交给 [`app-3d-modeling`](../../app-3d-modeling/SKILL.md) 的 `app_3d_model_creator`，PBR 贴图生产交 `app-3d-texturing`。本管线消费交付物并负责导入和运行；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
 
-贴图、烘焙、绑定/动画或接入任务先读取[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
+贴图、烘焙、绑定/动画或接入任务先读取[模型交接](./model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
 
 图片路线复用 V2 参考、V3 拆解；world-3d 以已确认空间及模型规格交接，在 V4 先制作、导入和试接代表模块，复用既有样本审阅及覆盖范围的真实用户决定，必要判断待定时暂停相关扩展，再分批制作并完成本工作项声明的整批资源验收；V5 替换并复验正式组合。均不创建第二套阶段或逐模型审批。V4 导入及临时试接可提供实际样本供人工审阅；作为已验收资源并进入正式场景前，须复用覆盖本范围的真实用户确认，未确认时等待用户决定。自动静态检查不替代人工审查。截图、渲染及真机验收按用户当前明确授权执行。
 
@@ -841,15 +841,15 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 3. V4 资源清单逐项记录 GLB 路径与可选追踪摘要、来源/许可、triangles、draw calls、material/texture、纹理维度/显存估算、骨骼/clip、LOD、碰撞代理和解码依赖。纹理磁盘体积不能替代 GPU 内存预算，生成图片也不能作为已生成模型的证据。
 4. 使用 GLTFLoader 加载，按实际资产扩展注册 KTX2/meshopt/Draco；部署 decoder/transcoder 并验证 CSP、路径与失败提示。颜色纹理按颜色空间处理，法线/粗糙度等数据纹理不作为 sRGB；不盲目覆盖加载器已设置的材质。
 5. 每实例拥有 AnimationMixer 与角色状态；SkinnedMesh 克隆使用 SkeletonUtils.clone，clip/mixer 时间用于表现，伤害/奖励由玩法状态驱动。切换停止 action 并 uncacheRoot，释放独占 geometry/material/texture；ImageBitmap 和共享纹理由资产所有权管理。
-6. 先测密度，再采用 InstancedMesh、合并静态几何、LOD、视锥裁剪、纹理压缩和阴影限制。实例选取绑定 instanceId；动画 bounds、透明排序和碰撞数据与降级档位一起验证。更换 LOD 不能改变玩法命中语义。
+6. 先测密度，再按需采用 InstancedMesh、既有 LOD 切换、视锥裁剪和阴影限制。需要新增或修改几何、LOD 网格时交建模技能，贴图制作或重制交贴图技能。实例选取绑定 instanceId；动画 bounds、透明排序和碰撞数据与降级档位一起验证。更换 LOD 不能改变玩法命中语义。
 
 V5 为人工视觉验收提供相同相机、光照、时间与游戏状态的检查要点，并检查移动、碰撞、动画、切场景/重进和失败恢复；未实际执行的项目标记未验证。需要截图或检查图时提供给用户人工检查，只有用户明确要求自动视觉验证时才自动分析截图，真机运行验收须另有明确授权。记录实际取得的 renderer.info、加载时间与退出后的资源基线。资产处理工具按项目选择；不得自动上传素材或申请外部付费生成。
 
 参考：[glTF 官方加载器](https://threejs.org/docs/pages/GLTFLoader.html)、[资源释放](https://threejs.org/manual/pages/cleanup.html)、[插件接入](#mode-threejs-game-plugins)。
 
-静态 GLB 资产验收命令见 [`validate-model.mjs`](../../threejs-game-model-pipeline/scripts/validate-model.mjs)，清单范例见 [`model-manifest.example.json`](../../threejs-game-model-pipeline/references/model-manifest.example.json)：`node <模型管线技能目录>/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>`。将实际命令写入实施单元的 `acceptanceCommands`；`asset.sceneId` 是需唯一匹配的 glTF 内部 `scene.name`，游戏场景归属另由资源条目的 `scene_id` 记录。
+静态 GLB 资产验收命令见 [`validate-model.mjs`](../scripts/validate-model.mjs)，清单范例见 [`model-manifest.example.json`](./model-manifest.example.json)：`node .agents/skills/app-stack-threejs/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>`。将实际命令写入实施单元的 `acceptanceCommands`；`asset.sceneId` 是需唯一匹配的 glTF 内部 `scene.name`，游戏场景归属另由资源条目的 `scene_id` 记录。
 
-三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V0–V5 对齐见[建模工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
+三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V0–V5 对齐见[建模工作流接入](./workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
 
 摘要仅作为可选追踪信息，不要求提供或比对，不因缺失、错误或变化阻断验收；仍须检查模型实际内容、路径归属、资源预算和人工审查结果。
 <!-- native-source:threejs-game-model-pipeline:end -->
@@ -910,7 +910,7 @@ three.js 提供渲染与场景图；玩法循环、输入状态、物理世界�
 <a id="mode-threejs-game-asset-integration--threejs-游戏美术生产与接入"></a>
 ### three.js 游戏美术生产与接入
 
-真实三维世界与角色按模型、材质、灯光、Camera、关卡/碰撞数据和运行逻辑生产；骨骼角色使用导入的网格动画 clips 与 `AnimationMixer`。正式几何、拓扑、UV、LOD/碰撞和静态导出交给 [3D 建模](#mode-threejs-game-3d-modeling)，按[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)接收真实文件与专项报告，再由[三维模型与关卡管线](#mode-threejs-game-model-pipeline)组织贴图和运行接入。二维效果图拆解、UI 布局、九宫格和逐帧纹理只约束 HUD、DOM、billboard、平面贴图等适用内容，不能把三维环境或角色替换成整屏/整角色图片。
+真实三维世界与角色按模型、材质、灯光、Camera、关卡/碰撞数据和运行逻辑生产；骨骼角色使用导入的网格动画 clips 与 `AnimationMixer`。正式几何、拓扑、UV、LOD 网格、碰撞与静态导出交给 [3D 建模](#mode-threejs-game-3d-modeling)，按[模型交接](./model-handoff.md)接收真实文件与专项报告。需要新贴图时交 `app-3d-texturing`，[三维模型与关卡管线](#mode-threejs-game-model-pipeline)负责导入和运行接入。二维效果图拆解、UI 布局、九宫格和逐帧纹理只约束 HUD、DOM、billboard、平面贴图等适用内容，不能把三维环境或角色替换成整屏/整角色图片。
 
 <a id="mode-threejs-game-asset-integration--全局控制接入"></a>
 #### 全局控制接入

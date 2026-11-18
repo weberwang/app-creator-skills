@@ -1,6 +1,7 @@
 import { isDeepStrictEqual } from 'node:util';
 import { extractFlutterNodeFacts, figmaNodeBounds } from './figma-design-properties.mjs';
 import { extractFigmaTouchTarget } from './figma-native-facts.mjs';
+import { flutterTextColorIssues } from './text-paint.mjs';
 
 /** 有效源数据不足时保持阻断，不用推测值填满计划。 */
 function insist(ok, message) {
@@ -68,6 +69,8 @@ export function extractFlutterPlan(snapshot, request) {
     const text = mapping.textNodeId ? nodes.get(mapping.textNodeId) : textNodes.length === 1 ? textNodes[0] : null;
     if (mapping.textNodeId) insist(text?.type === 'TEXT', `设计项 ${mapping.designItemId} 的文字节点无效`);
     const facts = extractFlutterNodeFacts(node, text);
+    const colorIssues = flutterTextColorIssues(facts.appearance);
+    insist(colorIssues.length === 0, `设计项 ${mapping.designItemId} ${colorIssues.join('；')}`);
     const touch = extractFigmaTouchTarget(snapshot.nodes, node, mapping, insist);
     // 跳过未映射的组织容器时仍保留最近映射祖先，区域则使用目标根的实际坐标。
     const parentMapping = mappedParent(node);

@@ -48,6 +48,7 @@ export function figmaSnapshotFixture(repo, work, { prefix, previewRef, candidate
       properties: { fill: variant ? '#eeffee' : '#ffffff', spacing: 16, radius: 12 }, bindings: [{ field: 'fill', variableId: 'color' }, { field: 'spacing', variableId: 'spacing' }, { field: 'radius', variableId: 'radius' }] },
     { id: '1:2', type: 'TEXT', name: '主要任务标题', parentId: '1:1', x: 16, y: variant ? 64 : 32, width: 240, height: 48,
       characters: '真实标题样例', designItemId: 'heading', font: { family: 'Noto Sans', platformFamily: 'Noto Sans', available: true, size: variant ? 24 : 18, weight: 500, lineHeight: { unit: 'PERCENT', value: 140 }, letterSpacing: { unit: 'PIXELS', value: 0 } },
+      fills: [{ type: 'SOLID', color: { r: 0.2, g: 0.2, b: 0.2, a: 1 } }], opacity: 1,
       properties: { insets: { top: 8, right: 8, bottom: 8, left: 8 }, colors: { background: '#ffffff', foreground: '#222222' }, border: { width: 0, color: '#00000000' }, shape: { kind: 'rectangle', radius: 0 } } },
   ];
   if (nativePlan) {

@@ -18,6 +18,15 @@ function validStyle(value) {
   return false;
 }
 
+/** 文字填色必须同时含明确颜色和透明度；渐变逐个色标保留同样的信息。 */
+export function validTextFill(value) {
+  if (typeof value === "string") return /^#[0-9a-f]{8}$/i.test(value);
+  if (!object(value)) return false;
+  if (Array.isArray(value.stops)) return value.stops.length >= 2 && value.stops.every(validTextFill);
+  return typeof value.color === "string" && /^#[0-9a-f]{6}$/i.test(value.color)
+    && typeof value.opacity === "number" && Number.isFinite(value.opacity) && value.opacity >= 0 && value.opacity <= 1;
+}
+
 /** 字号和行高无论以标量还是带单位对象记录，都必须是同一空间的有效正数。 */
 function validMeasure(value, unit) {
   if (typeof value === "number") return Number.isFinite(value) && value > 0;
@@ -87,6 +96,13 @@ function compare(target, actual, tolerance, path, differences) {
   if (!equal(target, actual)) differences.push(path);
 }
 
+/** 对不声明容差的文字属性复用相同的目标与实测比较规则。 */
+export function matchesFrozenTextValue(target, actual) {
+  const differences = [];
+  compare(target, actual, 0, 'value', differences);
+  return differences.length === 0;
+}
+
 /** 核对运行报告中的可选镜像，镜像不得更改冻结目标或实际测量。 */
 function validateMirrors(raw, pairs, errors) {
   for (const container of [raw, raw.measurement, raw.runtime_measurement, raw.runtimeMeasurement, raw.comparison, raw.fidelity, raw.fidelity_measurement, raw.fidelityMeasurement].filter(object)) {
@@ -125,7 +141,8 @@ export function validateTextGeometrySpace(node) {
   const unit = typography.geometry_unit;
   const known = { "viewport-logical": "logical-px", "css-px": "css-px", world: "world-unit" };
   const errors = [];
-  if (!text(space) || !["logical-px", "css-px", "world-unit"].includes(unit)) return ["geometry_unit 和 logical_coordinate_space 必须明确声明有效几何坐标单位"];
+  if (!validTextFill(typography.fill)) errors.push("typography_target.fill 必须包含文字颜色及透明度");
+  if (!text(space) || !["logical-px", "css-px", "world-unit"].includes(unit)) return [...errors, "geometry_unit 和 logical_coordinate_space 必须明确声明有效几何坐标单位"];
   if (Object.hasOwn(known, space)) {
     if (unit !== known[space]) errors.push(`${space} 的 geometry_unit 必须为 ${known[space]}`);
   }
@@ -231,6 +248,7 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
       for (const name of fields) {
         const target = name === "line_count" ? typography.expected_line_count : typography[name];
         if (target === undefined || !validStyle(actual[name]) || !sameShape(target, actual[name])
+            || (name === "fill" && (!validTextFill(target) || !validTextFill(actual[name])))
             || (name === "line_count" && (!Number.isInteger(actual[name]) || actual[name] < 1))
             || (name === "font_size_unit" && actual[name] !== target)
             || (["font_size", "line_height"].includes(name) && (!validMeasure(target, typography.font_size_unit) || !validMeasure(actual[name], typography.font_size_unit)))) {
@@ -238,7 +256,12 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
         }
         const unit = name === "font_weight" ? "weight" : name === "line_count" ? "count" : typography.font_size_unit;
         const allowed = limit(rules.typography?.[name], unit, `typography.${name}`, errors);
-        if (allowed !== null) compare(target, actual[name], allowed, name, differences);
+        if (allowed !== null && name === "fill") {
+          // 字体颜色和透明度均为必检事实，其他视觉差异例外不能掩盖本项偏差。
+          const fillDifferences = [];
+          compare(target, actual[name], allowed, name, fillDifferences);
+          if (fillDifferences.length) errors.push(`字体颜色或透明度与目标不一致: ${fillDifferences.join(", ")}`);
+        } else if (allowed !== null) compare(target, actual[name], allowed, name, differences);
       }
     }
     if (route === "hybrid") {

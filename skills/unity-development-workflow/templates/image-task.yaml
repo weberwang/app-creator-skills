@@ -224,6 +224,8 @@ selectedCandidate:
   visualVersion: player-scout-v1
 output:
   candidateCount: 4
+  runtimeWidth: 128
+  runtimeHeight: 128
   aspectRatio: "1:1"
   alphaRequired: true
   targetPath: Assets/Art/Runtime/UI/Portraits

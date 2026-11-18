@@ -2,9 +2,9 @@
 
 ## 普通 UI 的原生停靠
 
-每个普通屏幕 UI 节点在已有 `layoutBinding` 中明确真实父级、水平与垂直停靠意图、`anchor`、`pivot`、尺寸策略，以及 `uiLayout.positionDriver` 和 `sizeDrivers`。uGUI 的普通静态位置优先由 `RECT_TRANSFORM` 或父 `LAYOUT_GROUP` 表达；UI Toolkit 使用 `UITOOLKIT_LAYOUT` 或相对实际父级定位的 `UITOOLKIT_STYLE`。两轴锚点、边距与尺寸各自有明确控制者，`pivot` 本身不能证明相对于父级的停靠。弹窗默认相对宿主布局，父布局管理的子项由该布局定位。
+每个普通屏幕 UI 节点在已有 `layoutBinding` 中明确真实父级、水平与垂直停靠意图、`anchor`、`pivot`、尺寸策略，以及 `uiLayout.positionDriver` 和 `sizeDrivers`。固定结构优先由直接父级的 `RECT_TRANSFORM` 锚点与偏移表达；内容增减、换行、滚动或视口变化确需自动重排时，选用已有父 `LAYOUT_GROUP`。UI Toolkit 根据相同需要选择 `UITOOLKIT_LAYOUT` 或相对实际父级定位的 `UITOOLKIT_STYLE`。两轴锚点、边距与尺寸各自有明确控制者，`pivot` 本身不能证明相对于父级的停靠。弹窗默认相对宿主布局，父布局管理的子项由该布局定位。
 
-`SCRIPT` 只在已有结构客观限制原生停靠时声明 `nativeFallback`：`non-parent-reference` 表示真实定位参照不是直接父级；`partial-composite` 表示虚拟组合只是已有父级内容的一部分；`complex-composite` 表示完整组合的实际几何或引用不能由父原生布局表达。必须填写具体 `reason`；验证器同时检查父级、成员和参照，完整等间距单行或单列组合应由父原生布局管理。不得为了套用原生布局而改变已确认功能树或添加无职责空容器。
+`SCRIPT` 只在已有结构客观限制原生停靠时声明 `nativeFallback`：`non-parent-reference` 表示真实定位参照不是直接父级；`partial-composite` 表示虚拟组合只是已有父级内容的一部分；`complex-composite` 表示完整组合的实际几何或引用不能由父原生布局表达。必须填写具体 `reason`；验证器同时检查父级、成员和参照，完整等间距单行或单列可用父级原生布局表达时不能声明脚本回退。固定等间距节点可用直接父级锚点和偏移，是否启用父布局由内容变化及重排需求决定。不得为了套用原生布局而改变已确认功能树或添加无职责空容器。
 
 拖拽、指针跟随、世界跟随和过渡可以临时由 `SCRIPT`/`ANIMATION` 控制当前节点的位置；必须在 `positionBehavior` 写明有限 `kind`、`property: position`、功能原因、触发条件、当前布局坐标空间、双轴有限 `range.min/max`，以及 `restore.driver/trigger`。恢复驱动须属于本 UI 系统的原生布局，并对同一节点满足正常原生定位的直接父级参照、锚点、父布局表达能力和布局归属；原生驱动名称与文字交接不能取代这些事实。功能活动期间与原生位置驱动互斥，恢复后再次验证停靠；它不能与 `nativeFallback` 同时声明，也不能用功能标签掩盖静态布局。
 

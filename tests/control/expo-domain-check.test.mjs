@@ -62,6 +62,10 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const environment = { android: 'android-emulator', ios: 'ios-simulator', web: 'web-browser' }[platform];
   const build = { schemaVersion: '1.0', sourceRevision: 'fixture-commit', platform, buildKind: 'development', runtimeKind, ...refs, artifactRef: write(repo, 'app.bin', '合成构建产物'), buildLogRef: write(repo, 'build.log', '合成构建输出') };
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, platform, environment, buildKind: 'development', runtimeKind, ...refs, buildIdentityRef: write(repo, 'build.json', build), runEvidenceRef: evidence, interactionEvidenceRef: evidence, ...host };
+  const snapshot = JSON.parse(readFileSync(join(repo, doc.figmaDesignRef.path), 'utf8'));
+  const textReadback = { schemaVersion: '1.0', source: 'expo-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
+    entries: snapshot.nodes.filter((node) => node.type === 'TEXT').map((node) => ({ targetPath: doc.figmaDesignRef.path, nodeId: node.id, runtimeNodeId: node.designItemId, textFill: node.fills, textOpacity: node.opacity })) };
+  runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 更新运行证据及当前确认引用，避免覆盖其他历史阶段材料。 */
   function save() {
@@ -71,7 +75,7 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
     visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   }
   save();
-  return { repo, work, doc, profile, layout, assets, build, runtime, host, referenceTarget, save };
+  return { repo, work, doc, profile, layout, assets, build, runtime, textReadback, host, referenceTarget, save };
 }
 
 test('Expo 页面和显示层分别通过 V2–V5，Web 独立记录其构建和运行', (t) => {
@@ -81,6 +85,67 @@ test('Expo 页面和显示层分别通过 V2–V5，Web 独立记录其构建和
   }
   const web = fixture(t, { platform: 'web' });
   assert.equal(validateSingleDomainTarget(web.repo, web.work, 'V5'), true);
+});
+
+test('Expo V5 对照当前文字填色、Alpha 与透明度的实际读数', (t) => {
+  const f = fixture(t);
+  delete f.runtime.textReadbackRef;
+  f.save();
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /文字颜色实际读数.*缺少/);
+  const observed = f.textReadback.entries[0];
+  observed.textFill = '#333333FF';
+  f.runtime.textReadbackRef = write(f.repo, 'text-readback.json', f.textReadback);
+  f.save();
+  assert.equal(validateSingleDomainTarget(f.repo, f.work, 'V5'), true);
+  for (const [field, value, message] of [
+    ['textFill', '#224467FF', /字体颜色或填色 Alpha.*不一致/],
+    ['textFill', '#22446680', /字体颜色或填色 Alpha.*不一致/],
+    ['textOpacity', undefined, /缺少有效的文字透明度/],
+    ['textOpacity', 0.5, /文字透明度.*不一致/],
+  ]) {
+    const original = observed[field];
+    observed[field] = value;
+    f.runtime.textReadbackRef = write(f.repo, 'text-readback.json', f.textReadback);
+    f.save();
+    assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), message);
+    observed[field] = original;
+  }
+});
+
+test('Expo 运行门验证九宫图真实倍率、中心和最小样本', (t) => {
+  const f = fixture(t);
+  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
+  const slice = { implementation: 'project-native', sourcePath: imageRef.path, sourceSize: { width: 30, height: 24 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
+  f.layout.nodes.find((node) => node.id === 'title').nineSlice = slice;
+  f.doc.layoutSpecRef = write(f.repo, 'layout-slice.json', f.layout);
+  f.assets.layoutSpecRef = f.doc.layoutSpecRef; f.assets.items[0].runtimeRef = imageRef;
+  f.doc.assetManifestRef = write(f.repo, 'assets-slice.json', f.assets);
+  f.work.visual.reviews.V4 = write(f.repo, 'review-v4-slice.json', { ...f.host, assetManifestRef: f.doc.assetManifestRef });
+  Object.assign(f.build, { layoutSpecRef: f.doc.layoutSpecRef, assetManifestRef: f.doc.assetManifestRef });
+  Object.assign(f.runtime, { layoutSpecRef: f.doc.layoutSpecRef, assetManifestRef: f.doc.assetManifestRef, buildIdentityRef: write(f.repo, 'build-slice.json', f.build) });
+  f.textReadback.buildIdentityRef = f.runtime.buildIdentityRef;
+  f.runtime.textReadbackRef = write(f.repo, 'text-slice.json', f.textReadback);
+  const sample = { nodeId: 'title', conditionId: 'minimum', runtimeNodeId: 'Home.panel', sourcePath: imageRef.path, sourceSize: slice.sourceSize, border: slice.border,
+    displaySize: slice.minimumSize, scale: 1, transformScaleX: 1, transformScaleY: 1 };
+  f.runtime.nineSliceMeasurements = [sample];
+  /** 仅测试当前平台合同，Figma 结构与实际节点映射由公共入口另行核对。 */
+  const identity = (_repo, ref) => {
+    const data = readFileSync(join(f.repo, ref.path));
+    assert.equal(createHash('sha256').update(data).digest('hex'), ref.sha256);
+    return ref.path;
+  };
+  const text = f.textReadback.entries.map(({ targetPath, nodeId, textFill, textOpacity }) => ({ targetPath, nodeId, textFill, textOpacity }));
+  function run() {
+    f.doc.runtimeContextRef = write(f.repo, 'runtime-slice.json', f.runtime);
+    f.work.visual.reviews.V5 = write(f.repo, 'review-v5-slice.json', { runtimeContextRef: f.doc.runtimeContextRef });
+    return validateExpo(f.repo, f.work, 'V5', f.doc, identity, text);
+  }
+  assert.doesNotThrow(run);
+  sample.scale = 1.000000001; assert.throws(run, /倍率.*严格/);
+  sample.scale = 1; sample.displaySize = { width: 9, height: 16 }; assert.throws(run, /中心/);
+  sample.displaySize = { width: 21, height: 16 }; assert.throws(run, /最小显示框/);
+  slice.implementation = 'capInsets'; f.doc.layoutSpecRef = write(f.repo, 'layout-slice-ios.json', f.layout);
+  assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /仅在 iOS/);
 });
 
 test('Expo 将 Figma 直线绘制边界交接到原生布局，保留源几何且拒绝伪造样式', (t) => {

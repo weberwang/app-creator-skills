@@ -25,7 +25,7 @@ V3 从 V2 已确认目标出发，关联适用设计项、状态、真实父子�
 
 涉及用户可见文案时，先读取[通用文案原则](../app-domain-toolkit/references/ui-copy-principles.md)，再按当前技术栈完成规格、设计与实现。
 
-首次候选、单素材及后续批次在调用生图工具前都要落实[生成前约束](references/style-and-production.md#生成前约束)。涉及界面的效果图先完成[内容与装饰筛选](references/interface-intent.md#在设计与输出前筛选内容)，并把允许出现的文案和图形写进提示词。
+首次候选、单素材及后续批次在调用生图工具前都要落实[生成前约束](references/style-and-production.md#生成前约束)。确认设计后的部件生产和返修读取[正式生图](references/style-and-production.md#选稿后的正式生图)，用同一条生产记录交付实际附件、提示词及最终尺寸。涉及界面的效果图先完成[内容与装饰筛选](references/interface-intent.md#在设计与输出前筛选内容)，并把允许出现的文案和图形写进提示词。
 
 Unity、Cocos、Roblox 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
 

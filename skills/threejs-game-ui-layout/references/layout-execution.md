@@ -41,6 +41,8 @@ V5 活动 DOM 节点的 `component_snapshot.dom_layout` 保留实际计算样式
 
 `image_mode` 为 `NONE`、`PRESERVE_ASPECT` 或 `NINE_SLICE`。Sprite 普通图片使用 `PRESERVE_ASPECT`；只有已冻结 `nine_slice.mode=stretch` 的合格图片底板使用 `NINE_SLICE`。纯结构容器不能获得九宫格计划，固定皮肤要求九宫格决策时不得省略决定。
 
+九宫格的 `readImage` 实际回读包含纹理像素 `source_size`、`slice_borders`、逻辑显示宽高 `display_size`、实际角边尺寸 `display_borders` 和累计变换量 `effective_scale`。实际切片边须匹配冻结边距，显示角边须与其逐边严格相等，显示框必须留有正宽高的中心。渲染器存在专用倍率时另外回读 `slice_scale`，严格为数字 1；累计矩阵派生值仅按既有浮点量化预算检查单位变换。
+
 图片源像素属于纹理内容，不是 CSS 或 HUD 尺寸。计划不会复制源像素尺寸；普通图片的运行内容必须保留源图宽高比，九宫格源尺寸必须继续等于已冻结的 `nine_slice.source_size`。`layout_execution` 不控制满幅背景的 cover、UV 或裁切，这些继续使用既有满幅背景合同。
 
 合成根只允许 `layout_node_id=viewport/safe-area`、`is_root_container=true` 和 `parent_layout_node_id=null`，根节点不带 `layout_execution`。业务节点即使声明根标记或占用根 ID，也必须失败，不能借此跳过驱动校验。

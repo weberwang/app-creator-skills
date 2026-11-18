@@ -7,7 +7,7 @@ import { createHash } from "node:crypto";
 import test from "node:test";
 import { validateProductionContract } from "../../threejs-domain-contracts/scripts/visual-production-contract.mjs";
 
-const VALIDATOR = resolve("skills/threejs-game-model-pipeline/scripts/validate-model.mjs");
+const VALIDATOR = resolve("skills/app-stack-threejs/scripts/validate-model.mjs");
 const GLB_MAGIC = 0x46546c67;
 const JSON_CHUNK = 0x4e4f534a;
 const BIN_CHUNK = 0x004e4942;

@@ -6,6 +6,9 @@ const { validateGameDomDocking } = domDockingPolicy;
 const { projectActivePositionCentering } = behaviorPolicy;
 import { validateLayoutExecutionNodes } from "./layout-execution.mjs";
 import { normalizeCenterAlignment } from "./center-alignment.mjs";
+import nineSliceRuntime from "../../app-ui-layout/scripts/nine-slice-runtime.cjs";
+
+const { validateNineSliceRuntime } = nineSliceRuntime;
 import { isBackgroundDisplayNode } from "./display-node-role.mjs";
 
 const RUNTIME_SCHEMA = "threejs-layout-runtime/1";
@@ -133,6 +136,13 @@ function validateImageSnapshot(node, snapshot, plan, errors, label) {
     const frozenSource = node.nine_slice?.source_size;
     if (!sameSize(image.source_size, frozenSource)) {
       errors.push(`${label}.image.source_size 必须等于冻结九宫格 source_size`);
+    }
+    const scaleField = Object.hasOwn(image, "slice_scale") ? { scale: image.slice_scale } : {};
+    errors.push(...validateNineSliceRuntime({ ...scaleField, sourceSize: image.source_size, border: image.slice_borders, displaySize: image.display_size }, `${label}.image`));
+    // 源边与显示边都来自实际渲染器，禁止只写一份冻结值冒充角边 1 倍。
+    for (const side of ["left", "right", "top", "bottom"]) {
+      if (image.slice_borders?.[side] !== node.nine_slice?.borders?.[side]) errors.push(`${label}.image.slice_borders.${side} 必须匹配冻结切片`);
+      if (image.display_borders?.[side] !== image.slice_borders?.[side]) errors.push(`${label}.image.display_borders.${side} 必须保持实际源边 1 倍`);
     }
   }
   if (node.image_source_size !== undefined && !sameSize(image.source_size, node.image_source_size)) {

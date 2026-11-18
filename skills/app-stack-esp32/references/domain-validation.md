@@ -36,8 +36,8 @@
   "decompositionRef": "REF",
   "rootId": "screen",
   "nodes": [
-    { "id": "screen", "parentId": null, "x": 0, "y": 0, "width": 320, "height": 240, "positioning": "relative", "references": ["viewport"] },
-    { "id": "title", "parentId": "screen", "x": 8, "y": 8, "width": 304, "height": 24, "positioning": "relative", "references": ["screen"] }
+    { "id": "screen", "parentId": null, "x": 0, "y": 0, "width": 320, "height": 240, "positioning": "relative", "references": ["viewport"], "textAppearance": null },
+    { "id": "title", "parentId": "screen", "x": 8, "y": 8, "width": 304, "height": 24, "positioning": "relative", "references": ["screen"], "textAppearance": { "textFill": "#000000FF", "textOpacity": 0.8 } }
   ]
 }
 ```
@@ -45,6 +45,10 @@
 V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`layoutSourceRef` 指向该源不可变快照，不能越出项目且不得伪造；历史快照无需与后来的可变正式源字节相同。非 Figma 路线的 `decompositionRef` 绑定 `visual.reviews.V3Decomposition`，`visual.reviews.V3Layout` 绑定当前 `layoutSpecRef`；Figma 路线直接引用已选设计及其交接，不要求两份重复人工批准。纯实现改动可保留仍有效设计，另留当前源码快照并记录当前构建；实质改变已选视觉目标或交互方案时重新确认。节点 ID 唯一，宽高为正整数、坐标为整数，父链汇入与真实设备分辨率一致的唯一根节点。
 
 每个节点明确 `positioning` 和 `references`。屏幕根 `parentId` 为 null，引用固定稳定根 `viewport`；不得用真实节点占用该 ID 或声明额外稳定根。普通页面的节点均按相对布局定位，不能声明 `floatingKind`。显示层必须有唯一的浮层本体节点，节点 ID 与工作项 `objectId` 相同、父节点为屏幕根，`floatingKind` 为 `toast`（toast 类型）或 `popup`（其他受支持类型）。仅浮层本体可使用 `absolute`，后代必须使用相对定位且参照留在该本体子树中。布局规格需在项目资料中另行说明关键控件、字体、动态状态、交互范围与坐标语义；控制器的几何检查不证明可读、可点击或画面符合设计。
+
+非 Figma 路线用 `textAppearance` 逐节点冻结文字填色与透明度，无文字的节点写 `null`。Figma 路线直接从冻结文字节点取值。设备色深或样式能力需要调整时，先把适配更新到当前确认目标。
+
+使用九宫格的节点按[App 九宫格来源与运行读数](../../app-workflow-control/references/app-nine-slice.md)冻结源图、四边及最小显示框，V5 核对当前 GUI 实现的实际倍率与显示框。只有内容变化或尺寸确需重排时才增加布局机制；固定父子可直接沿用明确本地偏移与相对停靠。
 
 ## V4：资源及预算
 
@@ -82,6 +86,7 @@ V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`la
   "buildIdentityRef": "REF",
   "environment": "host-simulator",
   "runEvidenceRef": "REF",
+  "textReadbackRef": "REF",
   "interactionEvidenceRef": "REF",
   "performanceEvidenceRef": "REF"
 }
@@ -104,7 +109,7 @@ V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`la
 
 构建身份必须绑定与当前上下文相同的设备、布局、源码快照和资源清单；记录应基于实际编译的源码。`binaryRef` 是实际固件或主机执行产物，`buildLogRef` 是实际构建记录。源码版本非空，所引用文件及摘要必须有效。关联身份仅防止材料错绑，不能证明某个产物确已运行。
 
-三项运行文件分别记录实际运行、关键交互和性能/资源检查的原始结果。`environment` 只能为 `host-simulator` 或 `device`；前者不能作为硬件驱动、显示、触控或峰值资源结果。真实设备情形还须设置 `deviceTarget` 为当前工作项 `action.target`，并设置 `approvalUserMessageRef` 与 `action.approval.userMessageRef` 一致；工作项须包含 `device` 动作及控制器已有精确批准。实际操作之前仍需执行控制器的 `check-action`，满足 F0/F1/F2/F4、动作、阶段及目标要求；事后有日志或在 JSON 中写批准不能代替授权。
+三项运行文件分别记录实际运行、关键交互和性能/资源检查的原始结果。有文字时再按[文字还原规则](../../app-ui-layout/references/relative-layout.md)绑定 `textReadbackRef`，用实际 GUI 框架回读当前文字控件的颜色和透明度。`environment` 只能为 `host-simulator` 或 `device`；前者不能作为硬件驱动、显示、触控或峰值资源结果。真实设备情形还须设置 `deviceTarget` 为当前工作项 `action.target`，并设置 `approvalUserMessageRef` 与 `action.approval.userMessageRef` 一致；工作项须包含 `device` 动作及控制器已有精确批准。实际操作之前仍需执行控制器的 `check-action`，满足 F0/F1/F2/F4、动作、阶段及目标要求；事后有日志或在 JSON 中写批准不能代替授权。
 
 `visual.reviews.V5` 所指真实用户确认中，`runtimeContextRef` 必须绑定同一个上下文及摘要。显示层上下文另需 `hostId`、`layerType` 和 `interactions`：`open`、`close`、`focus-restore` 各出现一次；每项为 `{"action":"open","status":"PASS","evidenceRef":"REF"}` 或 `{"action":"open","status":"NOT_APPLICABLE","reason":"具体原因"}`。显示层 V2、V4 和 V5 的人工确认均绑定相同宿主与类型；非 Figma 路线已有的 V3 拆解及布局确认也绑定宿主，Figma 路线不因此增加重复批准。
 

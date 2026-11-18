@@ -29,6 +29,12 @@ export function readUiHierarchyFiles(plan, readJson, {
   const structure = readJson(structureRef, 'prefabStructureRef');
   const assembly = assemblyRef ? readJson(assemblyRef, 'prefabAssemblyRef') : undefined;
   const errors = validateUiHierarchyChain(plan, { splitPlan, structure, assembly, requireAssembly });
+  // 逐文字样式沿用同一张获批拆解原图，避免旧候选属性在当前布局中通过。
+  for (const node of plan.nodes) {
+    if (node.renderKind === 'TEXT' && node.textStyle?.source !== splitPlan?.sourceImage?.path) {
+      errors.push(`文字节点 ${node.id} 的样式来源未绑定当前确认设计稿。`);
+    }
+  }
   if (projectId && [splitPlan, structure, assembly].filter(Boolean).some((value) => value.projectId !== projectId)) {
     errors.push('布局来源工件的 projectId 与当前工作项不一致');
   }

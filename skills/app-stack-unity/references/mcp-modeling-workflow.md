@@ -26,16 +26,9 @@
 
 ## 生产工序
 
-| 工序 | 必须完成的工作 | 退出条件与证据 |
-| --- | --- | --- |
-| 参考与结构分析 | 拆解主次形体、连接方式、材质分区、可动件与真实厚度；明确硬表面、有机或混合路线 | brief 和结构方案对应目标外观、玩法边界与预算 |
-| 比例与轮廓 | 在 Blender 中建立结构初稿，用固定机位和尺寸参照记录比例与交互体积 | 仅为中间候选；显示证据由用户检查，不能以 blockout 标记正式资源完成 |
-| 正式形体 | 硬表面按需要挤出、放样、切线、布尔后整理、倒角与曲面塑造；有机资产按需要雕刻或多边形建模，落实主次形体与连接 | 轮廓、厚度、转折和关键结构由实际网格表达，关键视角不依赖遮挡掩盖缺陷 |
-| 拓扑与法线 | 按需要高低模重拓扑或直接低模整理，配置硬边、平滑与法线；在导出副本明确三角化策略 | 无意外重叠壳、内部废面、重复点、退化面、反面或非有限坐标；非流形/开放边界按设计逐项说明；变形区域按需求布线 |
-| UV 与烘焙交接 | 规划接缝，展开、统一密度、排布并检查拉伸、越界和 Padding；区分可重叠纹理 UV 与需要唯一性的烘焙/光照 UV | UV 报告记录通道、允许重叠区域与实际位置；需要烘焙时按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交付高低模、Cage/射线方案、匹配命名、法线/切线和三角化策略 |
-| LOD 与碰撞 | 按预算制作并检查各级轮廓、细节与材质槽；碰撞代理按玩法体积和物理要求创建 | 各级面数、顶点数、阈值、Collider 数量/类型有记录；简化不破坏关键孔洞、薄件、交互边界或变形 |
-| 保存与导出 | 保存可编辑 `.blend`，在派生副本处理修改器、变换、法线与三角化；只导出批准对象及其所需依赖，排除参考、灯光、相机、灰模与高模源 | 记录版本、对象列表、导出参数、实际输出位置；以隔离 Collection 或临时文件重新导入检查尺度、朝向、Pivot、网格、UV 和材质槽，无意外依赖 |
-| Unity 技术验证 | 通过 @Unity/AssetDatabase 或已发现 Pipeline 导入，回读 Importer、Mesh、资源级 Prefab、LODGroup、Collider 与引用 | 技术检查和 Editor/PlayMode 结果可追溯；正式场景接入留在 V5，显示效果独立等待用户验收 |
+结构、轮廓、拓扑、UV、LOD、碰撞和导出回读按[公共建模生产](../../app-domain-toolkit/references/modeling-production.md#生产流程)执行。需要烘焙时另按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)提供高低模与 Cage／射线方案。
+
+建模方提交导出回读；Unity 资产接入负责人通过 AssetDatabase 或已发现的 Pipeline 导入，回读 Importer、Mesh、资源级 Prefab、LODGroup、Collider 与引用，并回传 Editor/PlayMode 技术结果。正式场景接入留在 V5，显示效果由用户验收。
 
 高模、重拓扑、额外 UV 集和 LOD 等按资产需求与预算适用；不适用项须说明原因，不能用“低模”跳过结构、拓扑清理、法线、主 UV 和导出验证。贴图角色通过 Blender MCP 执行生产级材质节点、图像绘制、烘焙、通道打包与贴图导出，具体工序遵循[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。贴图使用版本化派生 `.blend`，只读核对模型并向既有槽位赋材质；禁止暗改网格、UV、槽位结构/顺序/面分配，或从派生网格覆盖运行时模型。各 LOD 需明确共用 UV/图集或独立用图策略。输入缺陷退回建模修复，不在纹理阶段补救几何。
 
@@ -51,7 +44,7 @@
 
 ## Unity 验证与人工显示验收
 
-- 项目选择与导入命令按 `unity:unity-cli` 发现；输入必须在批准目录。FBX/OBJ 与 GLB/glTF 使用项目实际支持的导入器，后者先确认 glTFast 等所需能力，不能假定原生 ModelImporter 可处理全部格式。
+- 本节的 Unity 导入、LODGroup 配置与运行回读由资产接入负责人执行。项目选择与导入命令按 `unity:unity-cli` 发现；输入必须在批准目录。FBX/OBJ 与 GLB/glTF 使用项目实际支持的导入器，后者先确认 glTFast 等所需能力，不能假定原生 ModelImporter 可处理全部格式。
 - 回读实际导入器的比例、坐标转换、法线、切线、Read/Write、压缩与网格设置；适用时记录 ModelImporter，其他格式记录实际导入器类型，不伪填证据。
 - Mesh 检查实际三角面/顶点数、Bounds、子网格、UV、法线与材质槽；Prefab 检查 Renderer、LODGroup、Collider、GUID 与引用，无 Missing Script 或 Console 错误。
 - 分别记录各 LOD 的网格、Renderer/材质槽数量、批次影响和内存估算；EditMode/PlayMode 检查引用、LOD/碰撞配置及必要交互，不自动启动 Standalone/Player 或真机。
@@ -62,4 +55,4 @@
 
 Blender MCP 脚本只可在已展示并批准的范围内执行；已有精确授权无需重复请求。允许必要的 Blender API、数学与网格操作，以及批准路径内的源保存、导出、烘焙交接与证据输出；禁止 shell、网络、环境变量、凭据、任意文件读取和动态依赖。保留源检查点、脚本/关键操作、工具版本、调用结果和实际输出位置；原始输入只读，修改写入版本化派生文件。同一源、资源 ID 和输出目标保持单写者；覆盖、删除、重建已交付 UV、改变顶点顺序或蒙皮信息前建立检查点并取得所需确认。
 
-交付可编辑 `.blend`、运行时模型、资源级 Prefab、配方、许可、拓扑/法线/UV 报告、适用的高低模/Cage 烘焙输入、LOD/Collider 指标、导出回读、Unity 技术结果与人工待验收/已确认状态。贴图交付版本化派生 `.blend` 与依赖、通道/打包图、LOD 用图策略及其 Blender/Unity 回读证据，字段详见[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)。模型、UV、烘焙输入或贴图变化后只重验实际受影响部分，无需回改合同或校验 SHA；缺失证据或仍为 blockout 时不得宣称正式模型就绪。
+建模交付可编辑 `.blend`、模型导出物、配方、许可、拓扑/法线/UV 报告、适用的高低模/Cage 烘焙输入、LOD 网格与碰撞代理指标及导出回读。Unity 资产接入负责人提交资源级 Prefab 和导入及运行证据，人工验收记录随当前候选关联。贴图交付版本化派生 `.blend` 与依赖、通道/打包图、LOD 用图策略及其回读证据，字段详见[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)。模型、UV、烘焙输入或贴图变化后只重验实际受影响部分，无需回改合同或校验 SHA；缺失证据或仍为 blockout 时不得宣称正式模型就绪。

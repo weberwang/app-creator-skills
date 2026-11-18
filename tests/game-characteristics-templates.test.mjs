@@ -12,7 +12,7 @@ const STACKS = {
   unity: 'unity-development-workflow',
   cocos: 'cocos-game-orchestrator',
   phaser: 'phaser4-game-orchestrator',
-  threejs: 'threejs-game-orchestrator',
+  threejs: 'app-stack-threejs',
   roblox: 'app-stack-roblox',
 };
 

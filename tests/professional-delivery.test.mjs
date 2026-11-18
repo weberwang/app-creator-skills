@@ -14,7 +14,7 @@ import { initializeWork, transitionWork } from '../skills/app-workflow-control/s
 const INITIALIZERS = Object.freeze({
   cocos: 'cocos-game-orchestrator',
   phaser: 'phaser4-game-orchestrator',
-  threejs: 'threejs-game-orchestrator',
+  threejs: 'app-stack-threejs',
 });
 
 /** 建立独占项目目录，并在测试完成后回收所有安装副作用。 */
@@ -180,7 +180,7 @@ test('安装器分发全部专业目录，并运行 Flutter、帧规划和 Three
   const threeRepo = join(project, 'three-model-fixture');
   mkdirSync(threeRepo, { recursive: true });
   const manifestPath = createModelFixture(threeRepo);
-  const validator = join(installedSkills, 'threejs-game-model-pipeline', 'scripts', 'validate-model.mjs');
+  const validator = join(installedSkills, 'app-stack-threejs', 'scripts', 'validate-model.mjs');
   const threeOutput = runNode(validator, ['--repo', threeRepo, '--manifest', manifestPath]);
   const validation = JSON.parse(threeOutput);
   assert.equal(validation.status, 'passed');

@@ -38,6 +38,7 @@ export function layoutRuntimeFixture(nodes, {
             effective_scale: 1,
             source_logical_size: { ...localSize },
             display_size: { ...localSize },
+            ...(plan.image_mode === "NINE_SLICE" ? { slice_borders: structuredClone(node.nine_slice.borders), display_borders: structuredClone(node.nine_slice.borders) } : {}),
           },
         },
       };

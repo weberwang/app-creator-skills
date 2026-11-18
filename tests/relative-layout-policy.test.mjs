@@ -76,6 +76,13 @@ test('缺失、重复与自引用真实节点不能用虚构父级或空图绕�
   assert.match(validate([node('a', 'viewport', { references: ['missing'] })]).join('\n'), /定位参照不存在/);
 });
 
+test('固定子项只需一个真实父参照，拒绝重复添加同一约束', () => {
+  const nodes = [node('panel', 'viewport'), node('badge', 'panel')];
+  assert.deepEqual(validate(nodes), []);
+  nodes[1].references.push('panel');
+  assert.match(validate(nodes).join('\n'), /同一定位参照只声明一次/);
+});
+
 test('Flutter 固定合成根可由适配器提供，任意无效根配置拒绝', () => {
   assert.deepEqual(validate([node('page', 'safe_area')], { roots: ['viewport', 'safe_area'] }), []);
   assert.match(validate([node('page', 'safe_area')]).join('\n'), /实际父级不存在/);

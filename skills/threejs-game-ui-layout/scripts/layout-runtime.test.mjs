@@ -54,6 +54,10 @@ function geometryFor(sourceNodes, options = {}) {
         ? { width: bounds.width * 1.5, height: bounds.height * 1.25 }
         : { width: 40, height: 20 };
       image = { source_size: structuredClone(source), source_size_kind: "resource-pixels", source_logical_size: { ...display }, effective_scale: 1, display_size: display };
+      if (item.layout_execution.image_mode === "NINE_SLICE") {
+        image.slice_borders = structuredClone(item.nine_slice.borders);
+        image.display_borders = structuredClone(item.nine_slice.borders);
+      }
     }
     return {
       layout_node_id: id,
@@ -354,6 +358,15 @@ test("冻结九宫格可非比例显示，但源像素必须绑定冻结 source_
   snapshotOf(result.geometry, "panel").image.effective_scale = 2;
   assert(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).some((message) => message.includes("九宫格本体及祖先未整体缩放")));
   snapshotOf(result.geometry, "panel").image.effective_scale = 1;
+  snapshotOf(result.geometry, "panel").image.slice_scale = 1.00000001;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /像素倍率必须严格等于数字 1/);
+  snapshotOf(result.geometry, "panel").image.slice_scale = 1;
+  snapshotOf(result.geometry, "panel").image.display_size.width = 24;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /显示框必须为可拉伸中心/);
+  snapshotOf(result.geometry, "panel").image.display_size.width = 130;
+  snapshotOf(result.geometry, "panel").image.display_borders.left = 13;
+  assert.match(validateLayoutRuntimeSnapshots(result.nodes, result.geometry).join("\n"), /display_borders.left/);
+  snapshotOf(result.geometry, "panel").image.display_borders.left = 12;
   snapshotOf(result.geometry, "panel").image.source_size.width = 97;
   const errors = validateLayoutRuntimeSnapshots(result.nodes, result.geometry);
   assert(errors.some((message) => message.includes("必须等于冻结九宫格 source_size")));

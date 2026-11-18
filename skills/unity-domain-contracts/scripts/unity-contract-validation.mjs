@@ -256,8 +256,9 @@ export function validateEvidence(evidence, work, pkg = null, repo = process.cwd(
     canonicalizePosixPath(evidence.resourceHandoffInspectionRef.path, 'Evidence Manifest.resourceHandoffInspectionRef.path');
   }
   if (evidence.uiLayoutMeasurementRef !== undefined) {
-    knownObject(evidence.uiLayoutMeasurementRef, new Set(['path']), 'Evidence Manifest.uiLayoutMeasurementRef');
+    knownObject(evidence.uiLayoutMeasurementRef, new Set(['path', 'textEvidencePath']), 'Evidence Manifest.uiLayoutMeasurementRef');
     canonicalizePosixPath(evidence.uiLayoutMeasurementRef.path, 'Evidence Manifest.uiLayoutMeasurementRef.path');
+    if (evidence.uiLayoutMeasurementRef.textEvidencePath !== undefined) canonicalizePosixPath(evidence.uiLayoutMeasurementRef.textEvidencePath, 'Evidence Manifest.uiLayoutMeasurementRef.textEvidencePath');
     if (!['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType)) fail('非可见工作项不得携带布局运行证据');
   }
   schemaVersion(evidence, 'Evidence Manifest');

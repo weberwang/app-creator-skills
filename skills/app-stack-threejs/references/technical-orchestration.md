@@ -38,9 +38,9 @@ description: three.js 游戏领域编排角色；在全局控制面已建立 Wor
 
 ## 三维运行、模型与插件
 
-三维项目基础采用 [运行基础](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-runtime)；新建、重拓扑或修改正式几何交给 [3D 建模](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-3d-modeling)，参考/贴图编排、已有模型接入、动画与加载优化交给 [模型与关卡管线](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-model-pipeline)，按实际玩法采用 [插件方案](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-plugins)。真实三维世界由模型/网格、材质、灯光、Camera、关卡与碰撞数据交付；角色骨骼动画使用导入的 clips 与 `AnimationMixer`。固定视角效果图、二维拆解与 HUD 布局不能代替世界模型、相机、碰撞或动画数据。
+三维项目基础采用 [运行基础](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-runtime)；新建、重拓扑或修改正式几何及 LOD 网格交给 [3D 建模](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-3d-modeling)，贴图生产交 `app-3d-texturing`，已有模型、贴图及动画的导入、运行接入与加载优化交给 [模型与关卡管线](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-model-pipeline)，按实际玩法采用 [插件方案](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-plugins)。真实三维世界由模型/网格、材质、灯光、Camera、关卡与碰撞数据交付；角色骨骼动画使用导入的 clips 与 `AnimationMixer`。固定视角效果图、二维拆解与 HUD 布局不能代替世界模型、相机、碰撞或动画数据。
 
-新模型生产在当前场景或资源 Work Item 内按[Blender 模型生产合同](../../threejs-game-model-pipeline/references/blender-model-production.md)编排：V2 规格与必要参考，V3 制作路线/多视图及必要隔离 blockout，V4 正式建模、导出回读、按需贴图及人工模型审查，V5 正式场景消费。建模方拥有拓扑、法线、实际 UV、槽位结构、LOD、碰撞代理和静态导出；贴图/绑定/接入按[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)串行接手同一源与导出目录，不擅自改动交付网格。图像生成/编辑委派 `image_generator`；几何建模按合同使用 `gpt-6.1-sol`、`max` 的 Blender MCP 建模代理。实施单元明确模型清单、专项检查、`validate-model.mjs` 验收命令/报告与适用人工结论，通用文件门通过不代表几何质量或实际加载。预算、文件所有权和证据纳入现有实施包，不新增 `MODEL` 执行类型或第二套阶段。
+新模型沿用当前场景或资源 Work Item，按[模型生产与接入合同](./blender-model-production.md)交接建模、贴图和运行接入。模型清单、验收命令、专项检查及人工结论记录在现有实施包中。
 
 ## 本栈配套资料
 

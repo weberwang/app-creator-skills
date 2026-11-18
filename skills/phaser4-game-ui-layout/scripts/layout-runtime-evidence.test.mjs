@@ -31,6 +31,8 @@ function centeredFixture() {
         ? { horizontal: "center", vertical: "center" }
         : { horizontal: "left", vertical: "top" },
     });
+    // 此样例显式测试已有重排驱动，切换对齐策略不能静默更改实际写入者。
+    if (node.layout_node_id === "icon") node.ui_layout.position_driver = "REFLOW";
   }
   return setup;
 }

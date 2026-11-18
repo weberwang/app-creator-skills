@@ -8,6 +8,8 @@ import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from 
 import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs';
 import { isFigmaApp, readFigmaSnapshot } from './figma-app-contract.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
+import { flutterTextColorIssues } from './text-paint.mjs';
+import { validateAppNineSlicePlan, validateAppNineSliceMeasurements, validateAppNineSliceMinimums } from './app-nine-slice.mjs';
 
 let validatePlan;
 const PROPERTIES = ['structure', 'size', 'spacing', 'typography', 'color', 'border', 'shape', 'appearance', 'touchTarget', 'states'];
@@ -210,6 +212,8 @@ function planFor(repo, work, doc) {
   }
   for (const condition of conditions) check(plan.elements.some((item) => item.conditionIds.includes(condition)), `${condition} 没有设计项`);
   for (const implementation of plan.implementations) {
+    const colorIssues = flutterTextColorIssues(implementation.requirements.appearance.value);
+    check(colorIssues.length === 0, `${implementation.id} ${colorIssues.join('；')}`);
     const mapped = plan.elements.filter((item) => item.implementationId === implementation.id).map((item) => item.id);
     sameIds(implementation.designItemIds, mapped, `${implementation.id} 设计项映射`);
     const stateIds = [...new Set(mapped.flatMap((id) => elements.get(id).conditionIds.map((condition) => plan.conditions.find((item) => item.id === condition).stateId)))];
@@ -238,6 +242,13 @@ function planFor(repo, work, doc) {
       }
     }
     if (implementation.production) {
+      const production = implementation.production;
+      check(Boolean(production.slice) === Boolean(production.nineSlice), `${implementation.id} 九宫格必须同时声明切片和最小显示框`);
+      if (production.nineSlice) {
+        check(production.density === 1, `${implementation.id} 九宫格图片密度必须严格为 1`);
+        const slice = { sourcePath: production.outputPath, sourceSize: production.outputSize, border: production.slice, minimumSize: production.nineSlice.minimumSize };
+        validateAppNineSlicePlan(slice, production.outputPath, implementation.id);
+      }
       repoPath(repo, implementation.production.outputPath, '正式资源路径');
       sameIds(implementation.production.consumerIds, implementation.consumers.map((item) => item.id), '图片消费者');
       if (implementation.kind === 'shared-image') check(implementation.consumers.length > 1, '共享素材须有多个实际消费者');
@@ -344,6 +355,12 @@ export function validateFlutterDesign(repo, work, stage, doc) {
   check(sameRef(comparison.designReconstructionRef, doc.designReconstructionRef), '当前组合对照设计错绑');
   sameIds(comparison.implementationEvidenceRefs?.map((ref) => `${ref.path}:${ref.sha256}`), doc.implementationEvidenceRefs.map((ref) => `${ref.path}:${ref.sha256}`), '当前组合实现身份');
   sameIds(comparison.cases?.map((item) => item.conditionId), plan.conditions.map((item) => item.id), 'V5 对照条件');
+  const sliceExpected = plan.implementations.filter((entry) => entry.production?.nineSlice).flatMap((entry) => entry.designItemIds.flatMap((nodeId) => {
+    const production = entry.production;
+    const slice = { sourcePath: production.outputPath, sourceSize: production.outputSize, border: production.slice, minimumSize: production.nineSlice.minimumSize };
+    return plan.elements.find((element) => element.id === nodeId).conditionIds.map((conditionId) => ({ nodeId, conditionId, slice }));
+  }));
+  const sliceActual = [];
   for (const item of comparison.cases) {
     const condition = plan.conditions.find((entry) => entry.id === item.conditionId);
     check(isDeepStrictEqual(item.conditions, condition), 'V5 视口/状态/语言/文字倍率或适配条件错绑');
@@ -360,10 +377,17 @@ export function validateFlutterDesign(repo, work, stage, doc) {
     sameIds(capture.sourceRefs?.map((ref) => `${ref.path}:${ref.sha256}`), [...new Set(sourceRefs.map((ref) => `${ref.path}:${ref.sha256}`))], 'V5 采集源码');
     check(typeof capture.captureMethod === 'string' && capture.captureMethod.trim() && Number.isFinite(capture.pixelRatio) && capture.pixelRatio > 0, 'V5 缺少实际采集方式或像素倍率');
     file(repo, work, capture.captureOutputRef, 'V5 采集原始输出');
+    // 同一视口的采集上下文必须覆盖该条件下的全部九宫格消费者。
+    const expected = sliceExpected.filter((entry) => entry.conditionId === item.conditionId);
+    if (expected.length || capture.nineSliceMeasurements !== undefined) {
+      validateAppNineSliceMeasurements(expected, capture.nineSliceMeasurements, 'Flutter V5');
+      sliceActual.push(...capture.nineSliceMeasurements);
+    }
     const screenshot = imageInfo(repo, work, item.runtimeRef, 'V5 运行截图');
     check(screenshot.width === Math.round(condition.viewport.width * capture.pixelRatio) && screenshot.height === Math.round(condition.viewport.height * capture.pixelRatio), 'V5 截图实际尺寸与采集视口或像素倍率不符');
     sameIds(item.designItemIds, plan.elements.filter((element) => element.conditionIds.includes(item.conditionId)).map((element) => element.id), 'V5 对照设计项');
   }
+  validateAppNineSliceMinimums(sliceExpected, sliceActual, 'Flutter V5');
   // 只核验真实人工确认的范围与材料，不读取截图判断美观，也不写入视觉 PASS。
   reviewFor(repo, work, doc, plan, 'V5', 'runtime-acceptance', 'V5');
 }

@@ -24,7 +24,11 @@ V3 可仅规划 `sourcePath`，已有 `layoutSourceRef` 时核对快照身份；
 
 ## V5 构建、运行与确认
 
-增加 `runtimeContextRef`，指向 [runtime-context.json](../templates/runtime-context.json)，绑定工作项、对象、候选、平台、当前配置/布局/源快照/资源，并引用 [build-identity.json](../templates/build-identity.json) 形状的构建身份。构建身份提供实际 `sourceRevision`、相同资料引用、`artifactRef` 和 `buildLogRef`；运行上下文提供 `runEvidenceRef`、`interactionEvidenceRef`。这些文件均须有真实内容与匹配摘要，不能仅以声明 PASS 或虚构文件代替实际运行。
+增加 `runtimeContextRef`，指向 [runtime-context.json](../templates/runtime-context.json)，绑定工作项、对象、候选、平台、当前配置/布局/源快照/资源，并引用 [build-identity.json](../templates/build-identity.json) 形状的构建身份。构建身份提供实际 `sourceRevision`、相同资料引用、`artifactRef` 和 `buildLogRef`；运行上下文提供 `runEvidenceRef`、`interactionEvidenceRef`。有文字时按[文字还原规则](../../app-ui-layout/references/relative-layout.md)提供 `textReadbackRef`，V3 从冻结 Figma 文字节点保留填色与透明度，V5 对照当前原生 Text 或 Web 对应文字元素的实际解析值。所有证据均须有真实内容与匹配摘要。
+
+### 九宫格运行读数
+
+使用九宫格时按[App 九宫格来源与运行读数](../../app-workflow-control/references/app-nine-slice.md)冻结和核对。固定尺寸内容继续沿用实际父级关系，不为对齐额外添加布局容器或约束。
 
 `buildKind` 为 `development` 或 `release`。Android 对应 `android-emulator` 或 `android-device`，iOS 对应 `ios-simulator` 或 `ios-device`，且 `runtimeKind` 为 `native-build`；Web 对应 `web-browser` 与 `web-export`。构建身份与运行上下文的平台、构建类型及运行类型必须一致。Expo Go 与浏览器预览不能冒充原生构建，development build 不能冒充 release；系统启动屏的 release 观察按独立启动屏合同记录。
 

@@ -197,6 +197,31 @@ test('复用组件须匹配当前尺寸与结构，只有换色不能通过', (t
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /size.*偏离/);
 });
 
+test('文字目标与实际值必须包含字体颜色和透明度', (t) => {
+  const missing = [
+    (appearance) => { appearance.normalized.textFill = null; },
+    (appearance) => { appearance.normalized.textOpacity = null; },
+    (appearance) => { delete appearance.normalized.textFill[0].color.a; },
+  ];
+  for (const mutate of missing) {
+    const f = fixture(t, 'V3');
+    mutate(f.plan.implementations[0].requirements.appearance.value); savePlan(f);
+    assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /Schema|文字颜色|文字透明度/);
+  }
+  for (const mutate of [
+    (appearance) => { appearance.normalized.textFill[0].color.r = 0.8; },
+    (appearance) => { appearance.normalized.textFill[0].color.a = 0.5; },
+    (appearance) => { appearance.normalized.textOpacity.value = 0.5; },
+    (appearance) => { appearance.normalized.textFill = null; },
+  ]) {
+    const f = fixture(t, 'V4');
+    const report = f.reports[0].report;
+    mutate(report.observations.find((item) => item.property === 'appearance').value);
+    f.doc.implementationEvidenceRefs[0] = write(f.repo, 'different-text-color.json', report);
+    assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /appearance.*偏离/);
+  }
+});
+
 test('合法全原生页面与当前组件复用可通过，源码改变使证据失效', (t) => {
   const f = fixture(t, 'V4');
   assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc));
@@ -245,6 +270,46 @@ test('合法共享图片覆盖多个消费者，导入来源、真实尺寸与�
   assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc));
   delete report.imported.provenanceRef; rebind(f);
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /素材实际来源/);
+});
+
+test('Flutter V3 和 V5 按消费者检查九宫格真实倍率和最小显示框', (t) => {
+  const f = fixture(t, 'V5'); const implementation = f.plan.implementations[0];
+  implementation.kind = 'image';
+  implementation.production = { identity: 'independent', consumerIds: implementation.consumers.map((item) => item.id),
+    sourceRegion: f.plan.elements[0].region, outputPath: 'panel.png', outputSize: { width: 30, height: 24 }, displaySize: { width: 20, height: 16 }, density: 1,
+    background: 'transparent', transparentInsets: { top: 0, right: 0, bottom: 0, left: 0 }, edgePolicy: '保留透明边缘',
+    slice: { left: 4, right: 5, top: 3, bottom: 4 }, nineSlice: { minimumSize: { width: 20, height: 16 } } };
+  const bytes = encodePngRgba(30, 24, Buffer.alloc(30 * 24 * 4)); writeFileSync(join(f.repo, 'panel.png'), bytes);
+  const assetRef = { path: 'panel.png', sha256: createHash('sha256').update(bytes).digest('hex') };
+  f.reports[0].report.imported = { assetRef, provenanceRef: write(f.repo, 'provenance.json', { source: 'hand-authored' }),
+    importEvidenceRef: write(f.repo, 'load.txt', '合成资源加载输出'), production: structuredClone(implementation.production), consumerIds: implementation.production.consumerIds };
+  f.asset.assets[0].assetType = 'image'; f.asset.assets[0].output = 'panel.png';
+  rebind(f);
+  const comparison = JSON.parse(readFileSync(join(f.repo, f.doc.comparisonRef.path), 'utf8'));
+  comparison.designReconstructionRef = f.doc.designReconstructionRef;
+  comparison.implementationEvidenceRefs = f.doc.implementationEvidenceRefs;
+  const item = comparison.cases[0]; const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
+  capture.designReconstructionRef = f.doc.designReconstructionRef; capture.implementationEvidenceRefs = f.doc.implementationEvidenceRefs;
+  capture.sourceRefs = f.reports.flatMap(({ report }) => report.sourceRefs);
+  const sample = { nodeId: 'heading', conditionId: item.conditionId, runtimeNodeId: 'Heading', sourcePath: 'panel.png', sourceSize: { width: 30, height: 24 },
+    border: implementation.production.slice, scale: 1, transformScaleX: 1, transformScaleY: 1, displaySize: { width: 20, height: 16 } };
+  /** 每次变异均重新绑定当前采集证据和人工确认引用。 */
+  function bindCapture() {
+    item.captureRef = write(f.repo, 'slice-capture.json', capture);
+    f.doc.comparisonRef = write(f.repo, 'slice-comparison.json', comparison);
+    const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V5.path), 'utf8'));
+    review.comparisonRef = f.doc.comparisonRef; f.work.visual.reviews.V5 = write(f.repo, 'slice-v5.json', review);
+  }
+  capture.nineSliceMeasurements = [sample]; bindCapture();
+  assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc));
+  sample.scale = 1.000000001; bindCapture();
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /倍率.*严格/);
+  sample.scale = 1; sample.displaySize.width = 9; bindCapture();
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /中心/);
+  sample.displaySize.width = 21; bindCapture();
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /最小显示框/);
+  implementation.production.density = 2; rebind(f);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /密度必须严格为 1/);
 });
 
 test('V5 对照必须绑定当前视口、语言、文字倍率和适配条件', (t) => {

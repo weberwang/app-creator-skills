@@ -124,7 +124,6 @@
         "unity-domain-contracts",
         "unity-game-2d-rigging",
         "unity-game-3d-animation",
-        "unity-game-3d-modeling",
         "unity-game-3d-rigging",
         "unity-game-3d-texturing"
       ]
@@ -250,7 +249,6 @@
       "resourceDirectories": [
         "app-domain-toolkit",
         "cocos-domain-contracts",
-        "cocos-game-3d-modeling",
         "cocos-game-ad-integration",
         "cocos-game-architecture",
         "cocos-game-asset-integration",
@@ -519,13 +517,10 @@
       "resourceDirectories": [
         "app-domain-toolkit",
         "threejs-domain-contracts",
-        "threejs-game-3d-modeling",
         "threejs-game-ad-integration",
         "threejs-game-architecture",
         "threejs-game-asset-integration",
         "threejs-game-juice",
-        "threejs-game-model-pipeline",
-        "threejs-game-orchestrator",
         "threejs-game-plugins",
         "threejs-game-qa-performance",
         "threejs-game-runtime",

@@ -1,7 +1,7 @@
 /** Roblox 正式运行、实例绑定和实际输入轨迹的只读验证。 */
 import { WorkflowError } from '../../app-workflow-control/scripts/runtime/io.mjs';
 import { bindSourceBundle, captureRef, instancePath, jsonIdentity, object, observedInCapture, observedNode, samePlace, sameRef, studioIdentity, text, workIdentity } from './common.mjs';
-import { validateScreenReadback } from './screen-layout.mjs';
+import { validateMinimumSliceObservation, validateScreenReadback } from './screen-layout.mjs';
 
 /** 检查 V5 Client 中的真实实例映射及输入反馈，不读取或分析截图。 */
 export function validateRobloxRuntime(repo, work, doc, nodes, assets, sources, layout) {
@@ -50,6 +50,30 @@ export function validateRobloxRuntime(repo, work, doc, nodes, assets, sources, l
   }
   // 同一运行观察必须绑定实际 GUI 属性，布局计划本身不证明客户端实例状态。
   validateScreenReadback(repo, layout, nodes, observation, { runtime: true, runtimePaths: new Map([...byId].map(([id, binding]) => [id, binding.runtimeInstancePath])), sources });
+  const minimums = runtime.minimumSliceObservations ?? [];
+  if (!Array.isArray(minimums)) throw new WorkflowError('V5 最小九宫显示框采样必须是数组');
+  const coveredAxes = new Map();
+  const observationKeys = new Set();
+  for (const minimum of minimums) {
+    const node = nodes.get(minimum?.nodeId);
+    const binding = byId.get(minimum?.nodeId);
+    const key = JSON.stringify([minimum?.nodeId, minimum?.observationRef?.path]);
+    if (!node?.nineSlice || !binding || observationKeys.has(key)) throw new WorkflowError('V5 最小九宫显示框采样须绑定当前切片节点且不能重复引用');
+    observationKeys.add(key);
+    const capture = captureRef(repo, minimum.observationRef, work, runtime.studio, { context: 'Client', tools: ['execute_luau'], targetPath: binding.runtimeInstancePath });
+    bindSourceBundle(repo, capture, sources);
+    if (capture.clientId !== runtime.clientId) throw new WorkflowError('最小九宫显示框采样未绑定当前客户端');
+    const result = validateMinimumSliceObservation(node, observedNode(capture, binding.runtimeInstancePath, 'V5 最小九宫显示框'));
+    const covered = coveredAxes.get(node.id) ?? { width: false, height: false };
+    coveredAxes.set(node.id, { width: covered.width || result.width, height: covered.height || result.height });
+  }
+  for (const node of nodes.values()) {
+    if (!node.nineSlice) continue;
+    // 当前帧和补充采样共同覆盖最窄、最矮条件，允许两者发生在不同视口。
+    const current = validateMinimumSliceObservation(node, observedNode(observation, byId.get(node.id).runtimeInstancePath, 'V5 最小九宫显示框'));
+    const covered = coveredAxes.get(node.id) ?? {};
+    if (!(current.width || covered.width) || !(current.height || covered.height)) throw new WorkflowError(`图片节点 ${node.id} 缺少实际最小宽或最小高的九宫框采样`);
+  }
   if (!Array.isArray(runtime.interactions) || !runtime.interactions.length) throw new WorkflowError('V5 缺少实际输入轨迹');
   for (const interaction of runtime.interactions) {
     object(interaction, 'V5 输入轨迹');

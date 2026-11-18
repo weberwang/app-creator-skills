@@ -183,6 +183,8 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 程序文本、位图字体和混合路线必须提交 `actual_content`、`actual_font_resources` 和 `actual_typography`。后者包括 `font_family`、`font_size`、`font_size_unit`、`font_weight`、`font_style`、`line_height`、`letter_spacing`、`alignment`、`fill`、`stroke`、`shadow`、`wrap`、`line_count`，分别核对冻结事实；字体资源消费路径绑定同一节点的 `required_resources`。原字体未识别时保留观察事实，程序文字的明确替代字体写入 `font_resolution.family`，不能冒充原字体。实际字形框、基线、字体加载状态、渲染器、测试身份与证据仍按对应路线核对；`actual_geometry_unit` 与 `actual_coordinate_space` 必须绑定冻结的几何单位与空间，不能只给出无单位矩形。
 
+每个文字目标的 `fill` 必须同时冻结文字颜色及透明度，使用 `#RRGGBBAA`，或 `{color: "#RRGGBB", opacity: 0..1}`；渐变使用 `stops` 数组逐色标记录颜色和透明度，并保留实际渐变参数。程序文本、位图字体和混合路线的 `actual_typography.fill` 按真实文字组件采集同一形式并逐项比较，缺失、颜色或透明度不同均不能通过。图片字标的颜色与透明度目标仍须记录，实际图内颜色和显示结果通过既有用户人工审阅对照，不虚构字体组件读数。
+
 动态、本地化或只声明来源的文字在节点冻结 `content_source` 和非空 `content_cases`，每项包含唯一 `case_id`、`locale`、`inputs`、同一 `content_source` 及 `expected_content`。运行报告以 `content_case_id`、`actual_locale`、`actual_inputs`、`actual_content_source` 绑定已冻结用例，再比对 `actual_content`；预期内容不能由当前候选自行提供。单个快照只证明所绑定用例已检查，项目所选语言和其他动态状态仍按现有测试范围分别覆盖。
 
 图片字标提交 `actual_image_path` 与 `actual_semantic`，分别绑定冻结图片资源和 `accessible_semantic`，不伪造字体、字号或 baseline 测量；如实际采集了字形可见框，仍须核对目标。混合路线同时验证实际文字及 `actual_image_path` 所绑定的效果资源。图片语义匹配不证明图内像素文案正确，图片实际显示效果仍由用户检查。静态多语言图片另逐语言记录实际显示资源、可访问语义和切换验证证据，现有图片分支的资源及语义检查不能代替语言绑定实测。

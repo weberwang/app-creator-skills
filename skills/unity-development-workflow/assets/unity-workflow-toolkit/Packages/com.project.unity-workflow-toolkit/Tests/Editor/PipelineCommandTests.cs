@@ -251,6 +251,8 @@ namespace Project.UnityWorkflow.Tests
                 {
                     ["aspectRatio"] = "1:1",
                     ["alphaRequired"] = true,
+                    ["runtimeWidth"] = 64,
+                    ["runtimeHeight"] = 64,
                     ["targetPath"] = "Assets/Art/Runtime/UI",
                     ["filename"] = "missing-test.png"
                 },

@@ -1,14 +1,18 @@
 /** Roblox 屏幕 GUI 的原生停靠、布局所有权和结构化回读合同。 */
 import relativeLayoutPolicy from '../../app-ui-layout/scripts/relative-layout-policy.cjs';
+import nineSliceRuntime from '../../app-ui-layout/scripts/nine-slice-runtime.cjs';
 import { WorkflowError } from '../../app-workflow-control/scripts/runtime/io.mjs';
 import { fileIdentity, instancePath, object, observedNode, text } from './common.mjs';
 
 const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
+const { validateNineSliceRuntime } = nineSliceRuntime;
 const CONTROLLERS = new Set(['UIListLayout', 'UIGridLayout']);
 const SCREEN_INSETS = new Set(['None', 'DeviceSafeInsets', 'CoreUISafeInsets', 'TopbarSafeInsets']);
 const SIZE_WRITERS = new Set(['UDIM2', 'LAYOUT', 'AUTOMATIC']);
 const POSITION_WRITERS = new Set(['UDIM2', 'UIListLayout', 'UIGridLayout', 'SHARED']);
 const GUI_OBJECT_CLASSES = new Set(['Frame', 'CanvasGroup', 'ScrollingFrame', 'VideoFrame', 'ViewportFrame', 'ImageButton', 'TextButton', 'ImageLabel', 'TextLabel', 'TextBox', 'InputActionLabel']);
+const TEXT_CLASSES = new Set(['TextLabel', 'TextButton', 'TextBox']);
+const IMAGE_CLASSES = new Set(['ImageLabel', 'ImageButton']);
 const SIZE_CONSTRAINTS = new Set(['RelativeXY', 'RelativeXX', 'RelativeYY']);
 
 /** ScreenGui 的已知原生子类同样使用屏幕容器合同。 */
@@ -32,6 +36,69 @@ function udim2(value, label) { vector(value, ['xScale', 'xOffset', 'yScale', 'yO
 
 /** 校验声明的坐标原点；Roblox 原点可处在自身矩形以外。 */
 function anchor(value, label) { vector(value, ['x', 'y'], label); }
+
+/** 文字颜色使用 Color3 的 0–1 分量，透明度按 Roblox 原生属性另行检查。 */
+function validateTextStyle(style, label) {
+  object(style, label);
+  vector(style.color, ['r', 'g', 'b'], `${label}.color`);
+  if (['r', 'g', 'b'].some((key) => style.color[key] < 0 || style.color[key] > 1)) throw new WorkflowError(`${label}.color 分量必须在 0–1`);
+  if (!Number.isFinite(style.transparency) || style.transparency < 0 || style.transparency > 1) throw new WorkflowError(`${label}.transparency 必须在 0–1`);
+}
+
+/** 冻结九宫源帧、实际图片裁切与最小显示框，坐标使用源纹理像素。 */
+function validateSlicePlan(node) {
+  if (node.nineSlice === undefined) return;
+  if (!IMAGE_CLASSES.has(node.className)) throw new WorkflowError('九宫格只能绑定 ImageLabel 或 ImageButton');
+  const slice = object(node.nineSlice, `图片节点 ${node.id} 的九宫格`);
+  if (!/^[1-9]\d*$/.test(slice.assetId ?? '')) throw new WorkflowError('九宫格必须绑定实际图片资源 ID');
+  vector(slice.sourceSize, ['width', 'height'], '九宫格源帧尺寸');
+  vector(slice.imageRectOffset, ['x', 'y'], '九宫格图片区域偏移');
+  vector(slice.imageRectSize, ['x', 'y'], '九宫格图片区域尺寸');
+  vector(slice.center, ['minX', 'minY', 'maxX', 'maxY'], '九宫格 SliceCenter');
+  if ([...Object.values(slice.sourceSize), ...Object.values(slice.imageRectOffset), ...Object.values(slice.imageRectSize), ...Object.values(slice.center)].some((value) => !Number.isSafeInteger(value) || value < 0)) throw new WorkflowError('九宫格源帧、裁切及 SliceCenter 必须为非负整数像素');
+  const cropped = slice.imageRectSize.x !== 0 && slice.imageRectSize.y !== 0;
+  if (cropped && (slice.sourceSize.width !== slice.imageRectSize.x || slice.sourceSize.height !== slice.imageRectSize.y)) throw new WorkflowError('九宫格源帧与 ImageRectSize 不一致');
+  const origin = cropped ? slice.imageRectOffset : { x: 0, y: 0 };
+  const border = { left: slice.center.minX - origin.x, right: origin.x + slice.sourceSize.width - slice.center.maxX,
+    top: slice.center.minY - origin.y, bottom: origin.y + slice.sourceSize.height - slice.center.maxY };
+  const issues = validateNineSliceRuntime({ scale: slice.sliceScale, sourceSize: slice.sourceSize, border, displaySize: slice.minimumDisplaySize }, `图片节点 ${node.id} 九宫格`);
+  if (issues.length) throw new WorkflowError(issues.join('；'));
+  return { slice, border };
+}
+
+/** 比对真实九宫组件及显示框，额外观察所有祖先 UIScale 以防整体缩放。 */
+function validateObservedSlice(node, actual, runtime) {
+  if (!IMAGE_CLASSES.has(node.className)) return;
+  const planned = validateSlicePlan(node);
+  const properties = actual.properties;
+  if (typeof properties.ScaleType !== 'string') throw new WorkflowError(`图片节点 ${node.id} 缺少实际 ScaleType`);
+  if (!planned) {
+    if (properties.ScaleType === 'Slice') throw new WorkflowError(`图片节点 ${node.id} 实际九宫格未绑定冻结规格`);
+    return;
+  }
+  const { slice, border } = planned;
+  if (properties.ScaleType !== 'Slice' || properties.Image !== `rbxassetid://${slice.assetId}`) throw new WorkflowError(`图片节点 ${node.id} 实际 ScaleType 或 Image 与九宫规格不一致`);
+  for (const [property, expected, keys] of [['SliceCenter', slice.center, ['minX', 'minY', 'maxX', 'maxY']], ['ImageRectOffset', slice.imageRectOffset, ['x', 'y']], ['ImageRectSize', slice.imageRectSize, ['x', 'y']]]) {
+    compareVector(properties[property], expected, keys, `图片节点 ${node.id} 的 ${property}`);
+  }
+  if (!Array.isArray(properties.AncestorUIScales) || properties.AncestorUIScales.some((item) => item?.scale !== 1)) throw new WorkflowError(`图片节点 ${node.id} 缺少祖先 UIScale 回读或存在整体缩放`);
+  if (runtime) {
+    const actualSize = properties.AbsoluteSize;
+    vector(actualSize, ['x', 'y'], `图片节点 ${node.id} 实际显示框`);
+    if (actualSize.x < slice.minimumDisplaySize.width || actualSize.y < slice.minimumDisplaySize.height) throw new WorkflowError(`图片节点 ${node.id} 的实际显示框小于冻结最小尺寸`);
+    const issues = validateNineSliceRuntime({ scale: properties.SliceScale, sourceSize: slice.sourceSize, border, displaySize: { width: actualSize.x, height: actualSize.y } }, `图片节点 ${node.id} 实际九宫格`);
+    if (issues.length) throw new WorkflowError(issues.join('；'));
+  } else if (properties.SliceScale !== 1) throw new WorkflowError(`图片节点 ${node.id} 实际 SliceScale 必须严格为 1`);
+}
+
+/** 返回实际采样覆盖了哪些最小尺寸轴，两个轴可以来自不同状态。 */
+export function validateMinimumSliceObservation(node, actual) {
+  if (actual.className !== node.className) throw new WorkflowError('最小框实际图片类型与冻结节点不一致');
+  validateObservedSlice(node, actual, true);
+  const minimum = node.nineSlice.minimumDisplaySize;
+  const actualSize = actual.properties.AbsoluteSize;
+  return { width: Math.fround(actualSize.x) === Math.fround(minimum.width), height: Math.fround(actualSize.y) === Math.fround(minimum.height) };
+}
 
 /** 判断真实直接父路径，避免将定位参照错当成实例父级。 */
 function directChild(parent, child) {
@@ -140,6 +207,8 @@ export function validateScreenPlan(layout, nodes) {
   }
   const canonical = [];
   for (const node of screen) {
+    if (TEXT_CLASSES.has(node.className)) validateTextStyle(node.textStyle, `文字节点 ${node.id} 确认样式`);
+    validateSlicePlan(node);
     const isRoot = node.parentId === null;
     const parent = isRoot ? external : nodes.get(node.parentId);
     validateSizeModifiers(node.sizeModifiers);
@@ -296,6 +365,13 @@ export function validateScreenReadback(repo, layout, nodes, capture, { runtime =
     const path = instancePath(paths.get(node.id), '屏幕 GUI 实际路径');
     const actual = observedNode(capture, path, '屏幕 GUI 实际回读');
     if (actual.className !== node.className) throw new WorkflowError('屏幕 GUI 实际类型与布局规格不一致');
+    validateObservedSlice(node, actual, runtime);
+    if (TEXT_CLASSES.has(node.className)) {
+      const measured = { color: actual.properties.TextColor3, transparency: actual.properties.TextTransparency };
+      validateTextStyle(measured, `文字节点 ${node.id} 实际样式`);
+      compareVector(measured.color, node.textStyle.color, ['r', 'g', 'b'], `文字节点 ${node.id} 的 TextColor3`);
+      if (Math.fround(measured.transparency) !== Math.fround(node.textStyle.transparency)) throw new WorkflowError(`文字节点 ${node.id} 的 TextTransparency 与当前布局规格不一致`);
+    }
     observations.set(node.id, actual);
     validateObservedController(actual, path, node.layoutController, capture);
     validateObservedSizeModifiers(actual);

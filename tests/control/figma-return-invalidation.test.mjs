@@ -81,14 +81,15 @@ test('V4/V5 RETURN 保留设计交接并按阶段撤销运行、构建与资源�
     const output = write(f.repo, 'runtime/build.log', '合成构建记录');
     const binary = write(f.repo, 'runtime/app.bin', '合成构建结果');
     const buildIdentityRef = write(f.repo, 'runtime/build.json', { artifactRef: binary, buildLogRef: output });
+    const textReadbackRef = write(f.repo, 'runtime/text.json', { buildIdentityRef, runEvidenceRef: run });
     f.doc.layoutSourceRef = source; f.doc.assetManifestRef = assets;
-    f.doc.runtimeContextRef = write(f.repo, 'runtime/context.json', { buildIdentityRef, runEvidenceRef: run });
+    f.doc.runtimeContextRef = write(f.repo, 'runtime/context.json', { buildIdentityRef, runEvidenceRef: run, textReadbackRef });
     f.work.visual.domainEvidenceRef = write(f.repo, 'domain/runtime.json', f.doc);
     const invalidated = [];
     invalidateSingleDomainEvidence(f.repo, f.work, invalidated, stage);
     const paths = new Set(invalidated.map((item) => item.path));
     for (const ref of [f.doc.figmaDesignRef, f.doc.figmaHandoffRef, f.doc.layoutSpecRef, f.referenceTarget]) assert.ok(!paths.has(ref.path));
-    for (const ref of [f.doc.runtimeContextRef, buildIdentityRef, run, output, binary]) {
+    for (const ref of [f.doc.runtimeContextRef, buildIdentityRef, textReadbackRef, run, output, binary]) {
       assert.ok(paths.has(ref.path), `${ref.path} 应被作废`);
       assert.ok(readFileSync(join(f.repo, ref.path)).length > 0);
     }

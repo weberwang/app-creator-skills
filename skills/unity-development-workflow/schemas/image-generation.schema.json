@@ -191,6 +191,67 @@
     "negativePrompt": {
       "type": "string"
     },
+    "assetId": {"$ref": "./common.schema.json#/$defs/taskId"},
+    "candidateId": {"$ref": "./common.schema.json#/$defs/taskId"},
+    "referenceTarget": {"$ref": "./common.schema.json#/$defs/projectRelativePath"},
+    "region": {
+      "type": "object",
+      "required": ["id", "bounds", "requiresDetail"],
+      "properties": {
+        "id": {"$ref": "./common.schema.json#/$defs/taskId"},
+        "bounds": {
+          "type": "object",
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": {"type": "integer", "minimum": 0},
+            "y": {"type": "integer", "minimum": 0},
+            "width": {"type": "integer", "minimum": 1},
+            "height": {"type": "integer", "minimum": 1}
+          }
+        },
+        "requiresDetail": {"type": "boolean"}
+      }
+    },
+    "generationInputs": {
+      "type": "object",
+      "required": ["mode", "references", "preserve"],
+      "properties": {
+        "mode": {"enum": ["edit", "reproduce"]},
+        "preserve": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "references": {
+          "type": "array",
+          "contains": {
+            "type": "object",
+            "required": ["role", "ref"],
+            "properties": {
+              "role": {"const": "source-target"},
+              "ref": {"$ref": "./common.schema.json#/$defs/projectRelativePath"}
+            }
+          },
+          "maxContains": 1
+        }
+      }
+    },
+    "actualReferenceInputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"$ref": "./common.schema.json#/$defs/projectRelativePath"},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "runtimePath": {"$ref": "./common.schema.json#/$defs/projectRelativePath"},
+    "runtimeSize": {
+      "type": "object",
+      "required": ["width", "height"],
+      "properties": {
+        "width": {"type": "integer", "minimum": 1},
+        "height": {"type": "integer", "minimum": 1}
+      }
+    },
     "references": {
       "type": "array",
       "uniqueItems": true,
@@ -391,13 +452,23 @@
       "then": {
         "required": [
           "splitPlanEvidence",
-          "splitPlanApproval"
+          "splitPlanApproval",
+          "assetId", "candidateId", "referenceTarget", "region", "generationInputs", "runtimePath", "runtimeSize"
         ],
         "properties": {
           "visualType": {
             "const": "ASSET_SOURCE"
           }
-        }
+        },
+        "allOf": [
+          {
+            "if": {"properties": {"status": {"const": "GENERATED"}}},
+            "then": {
+              "required": ["actualReferenceInputs"],
+              "properties": {"actualReferenceInputs": {"minItems": 1}}
+            }
+          }
+        ]
       }
     },
     {

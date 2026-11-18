@@ -4,9 +4,13 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { isDirectEntry } from '../../app-skill-runtime/direct-entry.mjs';
 
-/** 两类专属职责共用现有流程，不替换宿主的通用角色。 */
-export const SPECIALIST_AGENTS = Object.freeze(['app_level_scene_designer', 'app_3d_model_creator']);
-const SOURCE = resolve(dirname(fileURLToPath(import.meta.url)), '../agents');
+/** 角色由对应职责技能维护，激活器只负责汇集当前已安装的配置。 */
+const AGENT_SKILLS = Object.freeze({
+  app_level_scene_designer: 'app-gameplay-development',
+  app_3d_model_creator: 'app-3d-modeling',
+});
+export const SPECIALIST_AGENTS = Object.freeze(Object.keys(AGENT_SKILLS));
+const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /** 项目和配置祖先不能经链接重定向到其他位置。 */
 function assertNoLinks(path) {
@@ -61,13 +65,21 @@ export function installSpecialistAgents({ projectRoot }) {
   if (!existsSync(project) || !lstatSync(project).isDirectory()) throw new Error('目标项目必须是已有普通目录');
   const destination = join(project, '.codex', 'agents');
   assertNoLinks(destination);
-  const plan = SPECIALIST_AGENTS.map((name) => {
-    const source = join(SOURCE, `${name}.toml`);
+  const plan = [];
+  for (const name of SPECIALIST_AGENTS) {
+    const skill = join(SKILLS_ROOT, AGENT_SKILLS[name]);
+    assertNoLinks(skill);
+    // 单栈可能没有该职责；已安装职责却缺配置时不能静默忽略。
+    if (!existsSync(skill)) continue;
+    if (!lstatSync(skill).isDirectory()) throw new Error(`代理所属技能必须是目录：${skill}`);
+    const source = join(skill, 'agents', `${name}.toml`);
     assertNoLinks(source);
+    if (!existsSync(source)) throw new Error(`已安装技能缺少代理配置：${source}`);
     const bytes = readFileSync(source);
     const path = join(destination, `${name}.toml`);
-    return { name, path, bytes, exists: inspectTarget(path, bytes) };
-  });
+    plan.push({ name, path, bytes, exists: inspectTarget(path, bytes) });
+  }
+  if (!plan.length) return { installed: [], reused: [] };
   mkdirSync(destination, { recursive: true });
   const lock = join(destination, '.app-creator-specialists.lock');
   let handle;

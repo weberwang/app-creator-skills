@@ -59,7 +59,6 @@
   "resourceDirectories": [
     "app-domain-toolkit",
     "cocos-domain-contracts",
-    "cocos-game-3d-modeling",
     "cocos-game-ad-integration",
     "cocos-game-architecture",
     "cocos-game-asset-integration",

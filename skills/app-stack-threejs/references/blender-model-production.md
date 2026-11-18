@@ -1,6 +1,6 @@
 # Blender 模型生产合同
 
-在当前 Work Item 内编排按需参考、正式几何、PBR/AI 贴图和人工审查，沿用现有 V0–V5 与实施包。独立建模和局部网格修改由 [3D 建模技能](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-3d-modeling) 执行；已有模型的纯加载、压缩和生命周期优化直接走模型管线，不重新制作参考或几何。
+在当前 Work Item 内交接按需参考、正式几何、PBR/AI 贴图和人工审查，沿用现有 V0–V5 与实施包。正式几何、局部网格修改和 LOD 网格由 [3D 建模技能](../../app-3d-modeling/SKILL.md) 的 `app_3d_model_creator` 执行；贴图生产交 `app-3d-texturing`。模型管线负责交付物导入、已有 LOD 切换、加载及生命周期，已有模型的纯接入无需重新制作参考或几何。
 
 ## 需求与分工
 
@@ -13,20 +13,22 @@
 | 工作 | 责任与交付 | 阶段边界 |
 | --- | --- | --- |
 | 参考与多视图 | 确需图片时由 `image_generator` 基于已知对象和基线提供一致尺度的必要视图，保存真实源图、来源、版本和结构说明；未知结构标明推断 | 图片路线沿用 V2 参考及 V3 拆解；world-3d 使用已确认空间与模型规格，已有有效输入直接复用 |
-| 正式几何 | `threejs-game-3d-modeling` 的建模代理通过 Blender MCP 完成结构、拓扑、法线/切线、实际 UV、材质槽及适用的 LOD/碰撞，交付版本化 `.blend`、自包含 GLB 与专项检查报告 | V3 只作必要隔离 blockout；V4 正式制作和导出回读。blockout 不计作成品 |
-| 材质与贴图 | 模型管线依据几何交接安排 PBR、AI 图像、转换/烘焙和材质应用，保持网格/UV/槽位结构只读 | 按资产实际需要在 V4 完成；不得用外观遮掩几何问题 |
+| 正式几何 | `app_3d_model_creator` 按 `app-3d-modeling` 的 Three.js 原生模式通过 Blender MCP 完成结构、拓扑、法线/切线、实际 UV、材质槽及适用的 LOD 网格/碰撞，交付版本化 `.blend`、自包含 GLB 与专项检查报告 | V3 只作必要隔离 blockout；V4 正式制作和导出回读。blockout 不计作成品 |
+| 材质与贴图 | `app-3d-texturing` 依据几何交接制作 PBR、AI 图像、转换/烘焙和材质；模型管线消费素材及材质映射，保持网格/UV/槽位结构只读 | 按资产实际需要在 V4 完成；不得用外观遮掩几何问题 |
 | 绑定与动画 | 需要时由下游绑定/动画任务使用同一静态网格及顶点顺序约定完成骨架、权重和动作，模型管线负责接入 clips 与生命周期 | 不把动画生产交给静态建模技能，不虚构未制作的数据 |
 | 人工审查与运行接入 | 展示当前模型和贴图候选及检查点，记录用户实际反馈；之后由模型管线在正式场景验证加载、材质、动画、碰撞和资源释放 | V4 资源验收与 V5 正式消费分别记录，静态检查不代替人工或运行验收 |
 
 ## 交接与执行
 
-正式几何生产的唯一详细工序见 [Blender MCP 建模流程](../../threejs-game-3d-modeling/references/mcp-modeling-workflow.md)，下游输入见[模型交接](../../threejs-game-3d-modeling/references/model-handoff.md)。几何代理沿用 `agent_type=default`、`model=gpt-6.1-sol`、`reasoning_effort=max`、`fork_turns=none`；模型或强度不可用时如实报告。主代理提供参考与范围、允许修改对象/文件、预算、验收标准、测试等级与命令以及受保护操作的授权状态，负责方案、集成和最终验证。
+正式几何生产的详细工序见 [Blender MCP 建模流程](./mcp-modeling-workflow.md)，下游输入见[模型交接](./model-handoff.md)。统一按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 委派 `app_3d_model_creator`；角色不可用时如实报告。主代理提供参考与范围、允许修改对象/文件、预算、验收标准、测试等级与命令以及受保护操作的授权状态，负责方案、集成和最终验证。
 
 参考、多视图及 AI 纹理素材的生成与编辑仍委派 `image_generator`；任务内有依赖的生产串行交接。同一模型的返修优先复用原建模代理，其他下游不得顺手重拓扑、重展 UV、改变顶点顺序或调整槽位结构。原始源只读，修订使用版本化派生文件，同一个 `.blend` 和导出目录保持单写者。
 
 建模交接不足、工具不能实际保存/导出/回读或仍有几何问题时，阻断受影响制作并报告具体缺口，继续不依赖该结果的工作。只有脚本、参考图或文件路径不能宣称模型完成。操作使用实际可用的 Blender MCP 能力，不虚构命令，不重置用户场景，不因工具可用而扩大外部操作授权。
 
 ## AI 纹理、烘焙与法线
+
+本节作为 `app-3d-texturing` 贴图生产方的 Three.js 交接参考；模型管线消费已交付的贴图和材质映射。
 
 取得当前模型的真实 UV 通道和岛位置、接缝、材质槽到纹理集映射、纹理尺寸及参考后，再制作贴图。不能将整张对象参考图直接贴到任意 UV，也不能为贴图方便擅自改变交付几何。需要高低模/Cage 时使用交接的对应对象、隔离和投射设置；输入不合格交回建模方修复。
 
@@ -40,7 +42,7 @@
 技术验证按当前改动推荐 T0–T3 并自动执行，静态模型检查复用现有脚本：
 
 ```powershell
-node <模型管线技能目录>/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>
+node .agents/skills/app-stack-threejs/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>
 ```
 
 该脚本只接收自包含 GLB，检查容器、glTF 结构/引用、accessor 元数据计数和嵌入纹理头部尺寸等已实现项目；报告中的 `geometryDecoded=false` 和 `texturePixelsDecoded=false` 表明没有解码真实几何或纹理。它不能证明拓扑、法线、UV 拉伸/重叠、Cage、LOD 轮廓、碰撞、骨骼变形、视觉质量或设备性能。这些结论由相应 Blender 专项报告、实际运行事实和用户检查分别提供。
@@ -49,4 +51,4 @@ node <模型管线技能目录>/scripts/validate-model.mjs --repo <项目目录>
 
 人工检查覆盖轮廓/比例、各面结构、拓扑和预算、UV 接缝、材质分区、法线方向及适用的动画/LOD/碰撞。截图或检查图按任务需要提供用户人工检查，未经明确要求不自动分析或判视觉通过，不自动启动真机验收。修改影响当前候选后更新版本和实际文件，旧确认不能用于新候选；不为同一已确认方向增加额外确认阶段。
 
-资源生产继续使用 `production_method=authored-model`、`delivery_kind=gltf-model`，按[建模工作流接入](../../threejs-game-3d-modeling/references/workflow-integration.md)登记。摘要仅供可选追踪，验收依据实际文件、工作项归属、预算、专项报告与适用人工结论。
+资源生产继续使用 `production_method=authored-model`、`delivery_kind=gltf-model`，按[建模工作流接入](./workflow-integration.md)登记。摘要仅供可选追踪，验收依据实际文件、工作项归属、预算、专项报告与适用人工结论。

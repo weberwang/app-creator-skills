@@ -11,6 +11,8 @@
 - 目标显示尺寸范围、目标最小宽高和内容安全内边距；
 - 中心区域允许拉伸的视觉意图，以及文字、图标、装饰相对面板的独立布局节点。
 
+V3 根据已确认设计稿预估四边并记录依据。V4 根据最终解码的小图分别测量四边，从外缘向内找到圆角、端帽、描边转折及需固定阴影结束后首次进入可拉伸区域的位置。各边取完整包住固定细节的最小整数像素，允许不对称；禁止按显示面板的比例或内容内边距套用大切片。用户在已有素材审阅中复核最终小图的逐边最小安全切片；与 V3 冻结值不一致时修正成品，或回原合同更新切片并重新核验受影响范围。图案边界与拉伸接缝须由用户人工确认，数值有效不代表画面已还原。
+
 结构化 `nineSlice` 使用 `mode: stretch`、`reason`、`sourceSize` 和 `border`；不适用时仅记录 `mode: not-applicable` 与理由。明确分类为 `assetType: UI_SKIN` 的拆解项必须记录正反决策。本合同只处理拉伸九宫格，平铺需要独立呈现合同。图片任务的 `nineSlice.sourceSize` 是小图源尺寸，导入时与实际解码纹理核对；`unityImport.border` 非零时必须提供相同的 stretch 声明，不以目标显示框尺寸生产大图。
 
 四边宽度必须落在源图范围内且彼此不发生无效交叉；内容内边距不因切片边界自动推定。文字、图标、计数和可交互区域保留为独立组件，不烘焙进九宫格面板图。
@@ -32,6 +34,6 @@ stretch Sprite 使用 `Single` 与 `Full Rect` 网格，登记前检查实际纹
 
 使用 `workflow-files.mjs nine-slice-check --project-root <项目> --source <项目内 JSON>` 核对传递。JSON 的 `item`、`task`、`registration`、`binding` 分别引用当前 V3 项、图片任务、真实 Unity 登记与正式组合绑定，`placements` 记录消费者实测。每项包含 `nodeId`、`measured: true`、`presentation`（`UGUI_SLICED` 或 `UITOOLKIT_SLICED`）、实际源像素 `border`、显示 `size`、`coordinateSpace`（`SCREEN_PIXELS` 或 `UNITY_LOGICAL_UNITS`）与 `borderPixelsToUnits`。uGUI 还必须提供实际 `pixelsPerUnitMultiplier: 1`，UI Toolkit 必须提供实际 `sliceScale: 1`；不能以单位换算值代替专用倍率。`borderPixelsToUnits` 表示每个源像素对应多少显示单位，按倍率已严格为 `1` 时的实际 Sprite PPU、Canvas／Panel 和屏幕坐标映射推导，不要求此换算值恒为 1。必须完整覆盖 `binding.consumerNodeIds`，不可手填虚假实测或以截图推测参数。
 
-工具检查资源身份、GUID/路径、源尺寸、Border、严格为 `1` 的实测像素倍率和每个显示框的正尺寸中心；运行布局检查也核对真实组件倍率。源图尺寸与显示尺寸分别核对，Importer 缩小源纹理或消费者改为整图拉伸都不能放行。显示效果仍使用既有 V4/V5 人工确认。
+工具检查资源身份、GUID/路径、源尺寸、Border、严格为 `1` 的实测像素倍率和每个显示框的正尺寸中心；运行布局检查使用 uGUI 实际本地尺寸和 Image PPU，或 UI Toolkit 实际计算宽高，核对中心和真实组件倍率。源图尺寸与显示尺寸分别核对，Importer 缩小源纹理或消费者改为整图拉伸都不能放行。显示效果仍使用既有 V4/V5 人工确认。
 
 当前跨合同检查只支持四边使用统一的源像素转换比例；存在非均匀变换、各边不同切片缩放或无法取得实际比例时，不提交虚构的统一值，应先修正呈现方案或补充对应的实际四边测量能力。

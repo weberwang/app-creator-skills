@@ -157,6 +157,24 @@ test("DOM adapter 读取实际 AABB、未变换局部尺寸、图像内容和动
   assert.deepEqual(collectedImage.layout_bounds, snapshot.layout_bounds);
 });
 
+test("DOM 九宫回调保留实际专用倍率与切片边距", () => {
+  const element = { isConnected: true, parentElement: null, offsetWidth: 30, offsetHeight: 24,
+    getBoundingClientRect: () => ({ x: 0, y: 0, width: 30, height: 24 }) };
+  const border = { left: 4, right: 4, top: 4, bottom: 4 };
+  const binding = createDomLayoutBinding(element, {
+    layout_node_id: "skin", cssToLayout: (rect) => rect,
+    readParentLayoutNodeId: () => "viewport", readReferenceId: () => "viewport",
+    readPositionWriters: () => ["DOM_LAYOUT"], readSizeWriters: () => ["FIXED"],
+    getComputedStyle: () => ({ display: "block", visibility: "visible" }),
+    readImage: () => ({ source_size: { width: 16, height: 16 }, source_size_kind: "resource-pixels", display_size: { width: 30, height: 24 },
+      slice_scale: 1.00000001, slice_borders: border, display_borders: border }),
+  });
+  const image = binding.readSnapshot().image;
+  assert.equal(image.slice_scale, 1.00000001);
+  assert.deepEqual(image.slice_borders, border);
+  assert.deepEqual(image.display_borders, border);
+});
+
 test("默认 IMG 适配器拒绝元素或祖先的非等比变换", () => {
   const elementScale = imageDomBinding({ elementTransform: "matrix(2, 0, 0, 1, 0, 0)", width: 100, height: 100, naturalWidth: 100, naturalHeight: 100 });
   assert.throws(() => elementScale.readSnapshot(), /累计 CSS transform 非等比或含剪切.*readImage/);

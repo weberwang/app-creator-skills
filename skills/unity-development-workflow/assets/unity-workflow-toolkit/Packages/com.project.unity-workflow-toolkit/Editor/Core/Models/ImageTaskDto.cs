@@ -99,6 +99,8 @@ namespace Project.UnityWorkflow.Core.Models
     public sealed class ImageOutputDto
     {
         [SerializeField] private int candidateCount;
+        [SerializeField] private int runtimeWidth;
+        [SerializeField] private int runtimeHeight;
         [SerializeField] private string aspectRatio;
         [SerializeField] private bool alphaRequired;
         [SerializeField] private string targetPath;
@@ -106,6 +108,12 @@ namespace Project.UnityWorkflow.Core.Models
 
         /// <summary>获取或设置候选数量。</summary>
         public int CandidateCount { get => candidateCount; set => candidateCount = value; }
+
+        /// <summary>获取或设置由使用规格推导的正式位图宽度。</summary>
+        public int RuntimeWidth { get => runtimeWidth; set => runtimeWidth = value; }
+
+        /// <summary>获取或设置由使用规格推导的正式位图高度。</summary>
+        public int RuntimeHeight { get => runtimeHeight; set => runtimeHeight = value; }
 
         /// <summary>获取或设置宽高比。</summary>
         public string AspectRatio { get => aspectRatio; set => aspectRatio = value; }

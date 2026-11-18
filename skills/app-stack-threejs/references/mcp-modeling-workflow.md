@@ -38,7 +38,7 @@ V4 的技术报告与人工检查分别记录。按需要提供模型文件、�
 仅对 V0 分类为运行模型的交付使用现有模型清单与静态验收器，不创建新的模型 Schema 或第二套机器验收合同：
 
 ```powershell
-node <模型管线技能目录>/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>
+node .agents/skills/app-stack-threejs/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>
 ```
 
 该脚本只报告它实际覆盖的 GLB 容器、glTF 结构、路径和预算元数据问题；它不解码并判断真实网格的形体质量、拓扑、法线或 UV 正确性。脚本通过、文件存在或清单有数值，都不能替代 Blender 检查、GLB 实际回读和人工检查。仅烘焙背景源不使用这套 GLB 验收；其运行输出由现有装饰背景图片路线验收。运行模型的运行时加载及场景消费由现有管线在 V5 提供证据。

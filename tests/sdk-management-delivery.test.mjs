@@ -23,7 +23,7 @@ const NATIVE_REFERENCES = {
 const PROJECT_TEMPLATES = {
   cocos: ['cocos-game-orchestrator', 'assets/scripts/platform/sdks/<sdk>-sdk.ts'],
   phaser: ['phaser4-game-orchestrator', 'src/platform/sdks/<sdk>-sdk.ts'],
-  threejs: ['threejs-game-orchestrator', 'src/platform/sdks/<sdk>-sdk.ts'],
+  threejs: ['app-stack-threejs', 'src/platform/sdks/<sdk>-sdk.ts'],
 };
 
 /** 直接读取所选安装目录中的文件，不借用维护目录中的分发资源。 */

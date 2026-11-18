@@ -485,7 +485,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--unity-游戏-3d-模型制作"></a>
 ### Unity 游戏 3D 模型制作
 
-把已批准的视觉方向转成可编辑、可追溯、可导入 Unity 的生产级 3D 模型。先读 [Blender MCP 生产级建模流程](../../unity-game-3d-modeling/references/mcp-modeling-workflow.md)。模型几何与 PBR 贴图生产均统一通过 Blender MCP；模型和贴图按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。[@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab 和运行验证，不承担模型或纹理创建。
+`app_3d_model_creator` 按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 和 [Blender MCP 建模流程](./mcp-modeling-workflow.md) 交付可编辑、可追溯的正式模型。Unity 模型几何与 PBR 贴图分别通过 Blender MCP 生产，按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。资产接入负责人通过 [@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab、LODGroup 和运行验证。
 
 <a id="mode-unity-game-3d-modeling--输入与边界"></a>
 #### 输入与边界
@@ -503,7 +503,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 2. 所有正式模型均在 Blender MCP 中完成结构、拓扑、法线、UV、LOD、碰撞代理和版本化导出；PBR 贴图也固定由 Blender MCP 按[生产级贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)制作。低模、模块化、风格化资产同样执行生产标准；禁止回退到 ProBuilder、Unity 基础体块拼装或外部生成式供应商创建模型或贴图。
 3. 本地已有模型可作为只读输入，在 Blender MCP 内审计与修整；复用成品必须符合实际轮廓、结构、拓扑与许可要求。无法满足 Blender 所需能力时保持 `BLOCKED`，不得降级交付。
 4. Blender MCP 属于本地 DCC MCP；工具名与参数以当前发现为准。仅暴露脚本执行时，逐项核实所需 Blender API 与实际结果，不能把“能运行 Python”视为全部建模能力就绪。
-5. 按 `unity:unity-cli` 选择唯一 Editor、发现模型和贴图导入命令与参数。通过 AssetDatabase 或项目 Pipeline 导入 Blender 导出的模型及贴图；格式支持先验证，不能把图片导入命令当作模型导入器。
+5. 建模方提交导出回读。资产接入负责人按 `unity:unity-cli` 选择唯一 Editor、核实格式支持，并通过 AssetDatabase 或项目 Pipeline 导入模型及贴图，回传实际结果。
 6. Blender 自检与 Unity 技术验证分别记录；视觉显示由用户人工检查截图并确认，不自动分析截图或据此宣称通过。未经用户明确要求，不启动 Standalone/Player 或真机验收。
 
 <a id="mode-unity-game-3d-modeling--场景小循环"></a>
@@ -513,7 +513,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#完成模型结构)。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#核对表面与性能预算)。
 5. 保存版本化 `.blend` 与可复现模型配方，记录工具版本、关键操作、参数、实际源文件位置及派生关系。在独立导出副本上处理修改器、三角化和轴向，回读导出结果。
-6. 串行接入 Unity，检查实际导入器（适用时为 ModelImporter）、比例、轴向、Pivot、法线、材质槽、LODGroup、Collider、Prefab 引用和 Console；正式场景接入仍在 V5。
+6. Unity 资产接入负责人接收导出物并回读实际导入器（适用时为 ModelImporter）、比例、轴向、Pivot、法线、材质槽、LODGroup、Collider、Prefab 引用和 Console。正式场景接入仍在 V5。
 7. 按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交付 UV、槽位、适用的高低模/Cage、法线/三角化策略和各 LOD 用图信息；贴图返修涉及网格、UV 或槽位时由建模角色修复并按依赖范围复验。输出转台、线框、UV、碰撞、LOD 与目标场景截图及人工检查要点；技术自检后交给纹理角色或独立 QA，不自批。用户确认显示效果前保持视觉待验收。
 
 <a id="mode-unity-game-3d-modeling--生产质量底线"></a>

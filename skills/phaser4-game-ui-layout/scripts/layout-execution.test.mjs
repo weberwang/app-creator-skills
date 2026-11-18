@@ -26,6 +26,14 @@ test("位置驱动默认值按职责派生，行为必须有范围且静态位�
   assert.throws(() => deriveLayoutExecutionPlans([node("animation", "EXTERNAL", "FIXED", { ui_layout: { position_driver: "ANIMATION" } })]), /position_behavior/);
 });
 
+test("固定直接父子默认保存相对偏移，父级动态时使用重排", () => {
+  const parent = node("panel", "SELF", "FIXED", { target_bounds: { x: 0, y: 0, width: 100, height: 80 } });
+  const child = node("icon", "SELF", "FIXED", { parent_layout_node_id: "panel", target_bounds: { x: 10, y: 12, width: 20, height: 20 } });
+  assert.deepEqual(deriveLayoutExecutionPlans([parent, child]).map((item) => item.layout_execution.position_driver), ["REFLOW", "STATIC"]);
+  parent.ui_layout.size_policy = "FLEX";
+  assert.equal(deriveLayoutExecutionPlans([parent, child])[1].layout_execution.position_driver, "REFLOW");
+});
+
 /** 验证 PARENT、SELF 和 EXTERNAL 的所有不相容显式组合都会报错。 */
 test("显式位置驱动器不得与 layout_owner 冲突", () => {
   for (const invalid of [

@@ -74,13 +74,36 @@ test('双边停靠不能借 RectTransform 拉伸普通图片', () => {
   assert.match(validateUiLayoutPlan(plan).join('\n'), /普通图片不能用 horizontal 双边锚点拉伸/);
 });
 
-test('完整图文组合使用父原生布局，不能伪称回退到脚本', () => {
+test('完整图文组合的局部组合回退须与实际兄弟关系一致', () => {
   const plan = JSON.parse(readFileSync(new URL('../templates/ui-layout-plan.json', import.meta.url), 'utf8'));
   assert.deepEqual(validateUiLayoutPlan(plan), []);
   const icon = plan.nodes.find((node) => node.id === 'purchase-icon');
   icon.layoutBinding.uiLayout.positionDriver = 'SCRIPT';
   icon.layoutBinding.uiLayout.nativeFallback = { kind: 'partial-composite', reason: '合成例外' };
-  assert.match(validateUiLayoutPlan(plan).join('\n'), /完整同级组合|不能由父级完整排布/);
+  assert.match(validateUiLayoutPlan(plan).join('\n'), /不能由父级完整排布/);
+});
+
+test('固定等距组合可用直接父级锚点，无需父布局组件', () => {
+  const plan = JSON.parse(readFileSync(new URL('../templates/ui-layout-plan.json', import.meta.url), 'utf8'));
+  const icon = plan.nodes.find((node) => node.id === 'purchase-icon');
+  const label = plan.nodes.find((node) => node.id === 'purchase-label');
+  for (const node of [icon, label]) {
+    node.layoutBinding.uiLayout.positionDriver = 'RECT_TRANSFORM';
+    node.layoutBinding.uiLayout.layoutOwner = 'SELF';
+  }
+  label.layoutBinding.uiLayout.sizePolicy = 'FIXED';
+  label.layoutBinding.uiLayout.sizeDrivers = { width: 'RECT_TRANSFORM', height: 'RECT_TRANSFORM' };
+  delete label.layoutBinding.positionReferenceId;
+  assert.deepEqual(validateUiLayoutPlan(plan), []);
+});
+
+test('完整等距组合不能伪称原生布局不可表达', () => {
+  const plan = JSON.parse(readFileSync(new URL('../templates/ui-layout-plan.json', import.meta.url), 'utf8'));
+  const label = plan.nodes.find((node) => node.id === 'purchase-label');
+  label.layoutBinding.uiLayout.positionDriver = 'SCRIPT';
+  label.layoutBinding.uiLayout.layoutOwner = 'SELF';
+  label.layoutBinding.uiLayout.nativeFallback = { kind: 'non-parent-reference', reason: '文字跟随同组图标' };
+  assert.match(validateUiLayoutPlan(plan).join('\n'), /完整同级组合可由父级原生布局管理/);
 });
 
 test('RectTransform 不能冒充直接追踪兄弟节点的位置', () => {

@@ -193,6 +193,8 @@ namespace Project.UnityWorkflow.VisualQA
         public List<string> heightWriters = new List<string>();
         /// <summary>写入者的观测范围，明确包含引擎组件和显式登记者。</summary>
         public string observationScope = "ENGINE_COMPONENTS_AND_REGISTERED_WRITERS";
+        /// <summary>从目标文字组件读取的属性；未能读取时保留未验证状态。</summary>
+        public List<LayoutTextStyleObservation> textStyle = new List<LayoutTextStyleObservation>();
         /// <summary>uGUI RectTransform 配置；UI Toolkit 时为空。</summary>
         public LayoutRectTransformSnapshot rectTransform;
         /// <summary>目标自身的 LayoutGroup 配置；不适用时为空。</summary>

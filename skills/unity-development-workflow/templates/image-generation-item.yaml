@@ -288,9 +288,31 @@ referencePolicy:
   screenshotStyleTransfer: FORBIDDEN
   screenshotPixelReuse: FORBIDDEN
   independentItemGenerationRequired: true
-prompt: 依据已批准 Visual Bible、效果图中的框选内容和资源规格独立生成完整竞技场背景
-negativePrompt: 不裁切或复用效果图成品像素，不复制截图风格
+assetId: asset.arena-background
+candidateId: game-v1
+referenceTarget: ArtSource/Approved/scene.arena-intro/game-v1.png
+region:
+  id: asset.arena-intro.background
+  bounds: {x: 0, y: 0, width: 1920, height: 1080}
+  requiresDetail: false
+generationInputs:
+  artifact: {kind: 竞技场背景, purpose: 正式场景底图}
+  mode: reproduce
+  sections:
+    - {id: arena, origin: fact, text: 独立重建无前景徽标的竞技场背景}
+  references:
+    - id: v2-arena
+      role: source-target
+      purpose: 当前冻结的竞技场背景还原目标
+      ref: ArtSource/Approved/scene.arena-intro/game-v1.png
+  preserve: [竞技场轮廓与纵深、已选配色和光影层次]
+  avoid: [复用效果图成品像素]
+prompt: 为正式场景底图生成竞技场背景。独立重建无前景徽标的竞技场背景。以当前冻结的竞技场背景还原目标为准，保留竞技场轮廓与纵深、已选配色和光影层次。禁止复用效果图成品像素。
+negativePrompt: 不裁切或复用效果图成品像素
 references: []
+actualReferenceInputs: []
+runtimePath: Assets/Art/Arena/arena-background.png
+runtimeSize: {width: 1920, height: 1080}
 output:
   directory: ArtSource/Generated/asset.arena-background/v1
   format: PNG

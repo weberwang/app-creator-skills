@@ -53,7 +53,7 @@
 <!-- native-source:roblox-game-ui-layout:start -->
 ## mode-roblox-game-ui-layout
 
-按[内容与地形](content.md#gui-与世界)明确 `ScreenGui`、安全区、父子关系、位置参照、层序、真实输入及 Edit 模板与 PlayerGui 运行克隆。世界空间使用 studs 和相机，不混作屏幕布局单位。按[文本布局](text-layout.md)验证实际字体、换行、目标语言与视口；正式显示和可读性由用户人工检查。
+按[内容与地形](content.md#gui-与世界)明确 `ScreenGui`、安全区、父子关系、位置参照、层序、真实输入及 Edit 模板与 PlayerGui 运行克隆。世界空间使用 studs 和相机，不混作屏幕布局单位。按[文本布局](text-layout.md)验证实际字体、换行、目标语言与视口。文字颜色和透明度按[屏幕 GUI 合同](../../roblox-domain-contracts/references/domain-validation.md#屏幕-gui-的相对停靠)分别冻结并回读；正式显示和可读性由用户人工检查。
 
 按[布局与空间](../../app-asset-workflow/references/interface-intent.md#layout-space)核对正式 GuiObject 与运行克隆的父子、容器及输入；在适用客户端运行证据中检查 HUD 与相机画面的遮挡，世界对象按空间和相机关系处理。
 
@@ -69,7 +69,7 @@
 <!-- native-source:roblox-game-3d-modeling:start -->
 ## mode-roblox-game-3d-modeling
 
-按[内容与地形](content.md)判断原生几何、现有资产、程序化模型、AI 网格或外部模型的适用性，记录尺寸、枢轴、形态、碰撞及消费者。Terrain 以[地形](content.md#地形)的目标区域、材料、恢复依据和实际角色通行验证；不为局部任务清空整个 Terrain，不将测试模型或 Play 状态当作正式源。
+按[内容与地形](content.md)判断 Studio 原生 Part/Model、程序化模型、现有资产、AI 网格或外部模型的适用性；正式几何和适用 LOD 网格由 `app-3d-modeling` 的 `app_3d_model_creator` 负责，外部 DCC 仅在选择的路线需要时使用。记录尺寸、枢轴、形态、碰撞及消费者。Terrain 以[地形](content.md#地形)的目标区域、材料、恢复依据和实际角色通行验证；不为局部任务清空整个 Terrain，不将测试模型或 Play 状态当作正式源。
 <!-- native-source:roblox-game-3d-modeling:end -->
 
 <!-- native-source:roblox-game-3d-texturing:start -->
@@ -93,7 +93,7 @@
 <!-- native-source:roblox-game-asset-pipeline:start -->
 ## mode-roblox-game-asset-pipeline
 
-按[内容与地形](content.md)确定已有本地制作源、实际模型格式与导入路线，检查比例、坐标、枢轴、碰撞、材质、骨架、资产所有权和消费者。先明确本地导入与上传的真实副作用；生成/上传/审核/实际访问分别留证。可使用已发现的原生导入工具，不强制某一外部工具或捏造导入成功。
+按[内容与地形](content.md)确定已有制作源、实际模型格式与导入路线，检查比例、坐标、枢轴、碰撞、材质、骨架、资产所有权和消费者；管线负责实际导入、已有 LOD 的运行消费与验证，新增或修改正式几何及 LOD 网格交建模技能。先明确本地导入与上传的真实副作用；生成/上传/审核/实际访问分别留证。可使用已发现的原生导入工具，不强制某一外部工具或捏造导入成功。
 <!-- native-source:roblox-game-asset-pipeline:end -->
 
 <!-- native-source:roblox-game-qa-performance:start -->

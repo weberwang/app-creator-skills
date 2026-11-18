@@ -40,6 +40,23 @@ export function describeWidgetAvailability(node, byId, centerMembers, label, { i
   return { referenceId, parentId, owner, ancestor, group, background, overflow, reason };
 }
 
+/** 固定尺寸的直接父子可保持本地偏移，避免为每个静态子项创建 Widget。 */
+export function canUseFixedParentOffset(node, byId, centerMembers) {
+  const layout = node.ui_layout ?? node.uiLayout ?? {};
+  const parentId = node.parent_layout_node_id ?? node.parentLayoutNodeId;
+  const referenceId = node.reference_id ?? node.referenceId ?? layout.position_reference_id ?? parentId;
+  const nodeId = node.layout_node_id ?? node.layoutNodeId;
+  const parent = byId.get(parentId);
+  const parentLayout = parent?.ui_layout ?? parent?.uiLayout ?? {};
+  return !!parent && !STABLE_ROOTS.has(parentId) && referenceId === parentId
+    && layout.layout_owner === "SELF" && layout.size_policy === "FIXED"
+    && parentLayout.size_policy === "FIXED" && !(parentLayout.widget_stretch_axes?.length > 0)
+    && (parentLayout.size_driver === undefined || ["FIXED", "SPRITE_RAW"].includes(parentLayout.size_driver))
+    && !centerMembers.has(nodeId)
+    && layout.positioning !== "absolute" && !layout.position_behavior
+    && !(layout.widget_stretch_axes?.length > 0);
+}
+
 /** 推导行为结束后可能恢复的布局驱动，组件实际状态仍须在 V5 回读。 */
 export function positionBehaviorBaseDrivers(node, byId, centerMembers, label) {
   const availability = describeWidgetAvailability(node, byId, centerMembers, label, { ignoreOwnership: true });

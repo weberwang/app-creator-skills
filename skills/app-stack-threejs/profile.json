@@ -68,13 +68,10 @@
   "resourceDirectories": [
     "app-domain-toolkit",
     "threejs-domain-contracts",
-    "threejs-game-3d-modeling",
     "threejs-game-ad-integration",
     "threejs-game-architecture",
     "threejs-game-asset-integration",
     "threejs-game-juice",
-    "threejs-game-model-pipeline",
-    "threejs-game-orchestrator",
     "threejs-game-plugins",
     "threejs-game-qa-performance",
     "threejs-game-runtime",

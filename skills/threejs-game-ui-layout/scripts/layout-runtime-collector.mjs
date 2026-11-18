@@ -334,6 +334,9 @@ export function createDomLayoutBinding(element, options = {}) {
           source_size: cloneValue(rawImage.source_size),
           ...(rawImage.source_size_kind === undefined ? {} : { source_size_kind: rawImage.source_size_kind }),
           ...(rawImage.effective_scale === undefined ? {} : { effective_scale: rawImage.effective_scale }),
+          ...(rawImage.slice_scale === undefined ? {} : { slice_scale: rawImage.slice_scale }),
+          ...(rawImage.slice_borders === undefined ? {} : { slice_borders: cloneValue(rawImage.slice_borders) }),
+          ...(rawImage.display_borders === undefined ? {} : { display_borders: cloneValue(rawImage.display_borders) }),
           ...(rawImage.source_logical_size === undefined ? {} : { source_logical_size: cloneValue(rawImage.source_logical_size) }),
           display_size: toLayoutSize(rawImage.display_size, "DOM image.display_size"),
         };

@@ -295,14 +295,17 @@ export function main(argumentsList = process.argv.slice(2)) {
     });
   }
   if (command === "layout-runtime-check") {
-    rejectUnknownOptions(options, ["project-root", "plan", "source"]);
+    rejectUnknownOptions(options, ["project-root", "plan", "source", "text-evidence"]);
     const root = validateProjectRoot(requireOption(options, "project-root"));
     const planPath = ensureInsideProject(resolve(root, requireOption(options, "plan")), root, "布局计划");
     const reportPath = ensureInsideProject(resolve(root, requireOption(options, "source")), root, "布局运行报告");
     const plan = readUiLayoutPlan(planPath);
     const report = readUiLayoutPlan(reportPath);
     if (report.outputPath !== relative(root, reportPath).split(sep).join("/")) throw new Error("布局运行报告 outputPath 与实际输入位置不符。");
-    const errors = validateUiLayoutRuntime(plan, report, { scenePath: plan.scenePath });
+    const textStyleEvidence = options["text-evidence"]
+      ? readUiLayoutPlan(ensureInsideProject(resolve(root, options["text-evidence"]), root, "补充文字实测"))
+      : undefined;
+    const errors = validateUiLayoutRuntime(plan, report, { scenePath: plan.scenePath, textStyleEvidence });
     if (errors.length) throw new Error(errors.join("；"));
     const { assembly } = readLayoutHierarchy(plan, root, { requireAssembly: true, requireVerifiedAssembly: true });
     assertUiAssemblyMeasurement(plan, assembly, report);

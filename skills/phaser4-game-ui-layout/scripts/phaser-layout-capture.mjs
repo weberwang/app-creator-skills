@@ -143,6 +143,19 @@ function captureFrame(object, label) {
   };
 }
 
+/** 回读 NineSlice 原生边框与完整父链缩放，保留真实配置精度。 */
+function captureNineSlice(object) {
+  if (object.type !== "NineSlice") return null;
+  const path = [];
+  const seen = new Set();
+  for (let current = object; current; current = current.parentContainer) {
+    if (seen.has(current)) throw new TypeError("NineSlice 的父对象链不能成环");
+    seen.add(current);
+    path.push({ x: current.scaleX, y: current.scaleY });
+  }
+  return { borders: { left: object.leftWidth, right: object.rightWidth, top: object.topHeight, bottom: object.bottomHeight }, scale_path: path };
+}
+
 /** 读取图形自身尺寸、display 尺寸和 origin；这些字段不覆盖Container逻辑框。 */
 function captureDisplayDimensions(object, label, { allowZero = false } = {}) {
   const values = {
@@ -448,6 +461,7 @@ export function collectPhaserLayoutSnapshot({
       effective_visible: effectiveVisible,
       dimensions,
       frame: captureFrame(object, nodeLabel),
+      nine_slice: captureNineSlice(object),
       is_container: isContainer,
       ...(isContainer ? { container_layout_bounds: { ...registry.layout_bounds }, container_layout_bounds_space: "object-local" } : {}),
       position_writes: positionWrites,

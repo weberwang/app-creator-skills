@@ -1,6 +1,6 @@
 name = "app_level_scene_designer"
-model = "gpt-6.1-sol"
-model_reasoning_effort = "xhigh"
+model = "gpt-6.2-astra"
+model_reasoning_effort = "high"
 description = "关卡／场景设计专属子代理：在产品约束下持续迭代空间结构、尺度、环境与镜头方案；不接管正式资产制作或人工确认。"
 
 developer_instructions = """

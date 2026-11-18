@@ -325,7 +325,7 @@ export function textNode(overrides = {}) {
       letter_spacing: -1,
       alignment: "center",
       baseline: 40,
-      fill: "#ffffff",
+      fill: "#ffffffff",
       stroke: { enabled: true, color: "#15233c", width: 3 },
       shadow: { enabled: false },
       wrap: { mode: "none", width: 390 },
@@ -352,7 +352,7 @@ export function textNode(overrides = {}) {
       actual_font_resources: ["assets/fonts/game-sans.woff2"],
       actual_typography: {
         font_family: "Game Sans", font_size: 32, font_size_unit: "logical-px", font_weight: 600,
-        font_style: "normal", line_height: 38, letter_spacing: -1, alignment: "center", fill: "#ffffff",
+        font_style: "normal", line_height: 38, letter_spacing: -1, alignment: "center", fill: "#ffffffff",
         stroke: { enabled: true, color: "#15233c", width: 3 }, shadow: { enabled: false },
         wrap: { mode: "none", width: 390 }, line_count: 1,
       },

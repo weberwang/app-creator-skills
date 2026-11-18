@@ -207,9 +207,9 @@
                   "value": 0
                 }
               },
-              "fills": null,
+              "fills": [{"type": "SOLID", "color": {"r": 0.13333333333333333, "g": 0.13333333333333333, "b": 0.13333333333333333, "a": 1}}],
               "imageFills": [],
-              "opacity": null,
+              "opacity": 1,
               "strokes": null,
               "strokeWeight": null,
               "cornerRadius": null,
@@ -237,9 +237,9 @@
                     "radius": 0
                   }
                 },
-                "fills": null,
+                "fills": [{"type": "SOLID", "color": {"r": 0.13333333333333333, "g": 0.13333333333333333, "b": 0.13333333333333333, "a": 1}}],
                 "imageFills": [],
-                "opacity": null,
+                "opacity": 1,
                 "strokes": null,
                 "strokeWeight": null,
                 "other": {}
@@ -282,12 +282,12 @@
                   "unit": "logical-px"
                 }
               },
-              "textFill": null,
+              "textFill": [{"type": "SOLID", "color": {"r": 0.13333333333333333, "g": 0.13333333333333333, "b": 0.13333333333333333, "a": 1}}],
               "textOpacity": {
                 "value": 1,
                 "unit": "ratio"
               },
-              "fill": null,
+              "fill": [{"type": "SOLID", "color": {"r": 0.13333333333333333, "g": 0.13333333333333333, "b": 0.13333333333333333, "a": 1}}],
               "opacity": {
                 "value": 1,
                 "unit": "ratio"

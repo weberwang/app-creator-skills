@@ -171,7 +171,7 @@
 
 - [app-domain-toolkit](../../app-domain-toolkit)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [cocos-domain-contracts](../../cocos-domain-contracts)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [cocos-game-3d-modeling](../../cocos-game-3d-modeling)：领域资料、模板和工具依赖；不含独立全局流程入口。
+- Cocos 建模资料见[建模流程](./mcp-modeling-workflow.md)与[导入交接](./workflow-integration.md)。
 - [cocos-game-ad-integration](../../cocos-game-ad-integration)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [cocos-game-architecture](../../cocos-game-architecture)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [cocos-game-asset-integration](../../cocos-game-asset-integration)：领域资料、模板和工具依赖；不含独立全局流程入口。

@@ -14,6 +14,8 @@ function behavior() {
 
 test('普通游戏 UI 拒绝静态坐标和无依据绕过原生方案', () => {
   assert.match(validateDriver({ driver: 'STATIC' }).join(), /必须相对停靠/);
+  assert.deepEqual(validateDriver({ driver: 'STATIC', staticAllowed: true }), []);
+  assert.match(validateDriver({ driver: 'STATIC', staticAllowed: true, independent: true }).join(), /独立定位的游戏浮层/);
   assert.match(validateDriver({ driver: 'SHARED', nativeDriver: 'DOM_LAYOUT' }).join(), /必须使用 DOM_LAYOUT/);
   assert.deepEqual(validateDriver({ driver: 'SHARED', nativeDriver: 'DOM_LAYOUT', sharedAllowed: true }), []);
   assert.deepEqual(validateDriver({ driver: 'DOM_LAYOUT', nativeDriver: 'DOM_LAYOUT' }), []);

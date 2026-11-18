@@ -74,6 +74,41 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     rejects(value, "baseline 必须具有与冻结目标相同的有效类型和结构");
   });
 
+  test(`${stack} 文字颜色及透明度缺失或不一致时拒绝`, () => {
+    const value = scenario();
+    delete value.node.typography_target.fill;
+    rejects(value, "fill");
+    assert.equal(validateSchema(value.node), false);
+    value.node.typography_target.fill = "#ffffff";
+    rejects(value, "颜色及透明度");
+    assert.equal(validateSchema(value.node), false);
+    value.node.typography_target.fill = "#ffffffff";
+    value.runtime.actual_typography.fill = "#ffffff";
+    rejects(value, "actual_typography.fill");
+    assert.equal(validateSchema(value.node), false);
+    value.runtime.actual_typography.fill = "#ffffff80";
+    value.node.approved_exception_ids = ["other-difference"];
+    value.runtime.exception_ids = ["other-difference"];
+    rejects(value, "字体颜色或透明度与目标不一致");
+    value.runtime.actual_typography.fill = "#000000ff";
+    rejects(value, "字体颜色或透明度与目标不一致");
+    value.node.typography_target.fill = { color: "#ffffff", opacity: 0.5 };
+    value.runtime.actual_typography.fill = { color: "#ffffff", opacity: 0.5 };
+    assert.deepEqual(value.validate(), []);
+    assert.ok(validators.every((validate) => validate(value.node)));
+    value.runtime.actual_typography.fill.opacity = 0.8;
+    rejects(value, "字体颜色或透明度与目标不一致");
+    value.runtime.actual_typography.fill.opacity = 2;
+    rejects(value, "actual_typography.fill");
+    assert.ok(validators.every((validate) => !validate(value.node)));
+    value.node.typography_target.fill = { stops: [{ color: "#ffffff", opacity: 0.5 }, { color: "#000000", opacity: 1 }] };
+    value.runtime.actual_typography.fill = structuredClone(value.node.typography_target.fill);
+    assert.deepEqual(value.validate(), []);
+    assert.ok(validators.every((validate) => validate(value.node)));
+    delete value.runtime.actual_typography.fill.stops[1].opacity;
+    rejects(value, "actual_typography.fill");
+  });
+
   test(`${stack} 几何和字重容差不得混用、改单位或替换引用`, () => {
     const value = scenario();
     const rules = value.contract.predeclared_tolerances[0].rules;
@@ -186,6 +221,9 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     value.node.accessible_semantic = { text: "开始游戏", role: "button" };
     value.node.runtime_verification = { renderer: "image-text", actual_bounds: { ...value.node.target_bounds }, actual_geometry_unit: "logical-px", actual_coordinate_space: "viewport-logical", actual_test_id: value.node.planned_test_id, evidence: ["evidence/image.json"], passed: true, asset_consumed: true, actual_image_path: "assets/brand.png", actual_semantic: { role: "button", text: "开始游戏" }, semantic_evidence: ["evidence/semantic.json"] };
     assert.deepEqual(value.validate(), []);
+    value.node.typography_target.fill = "#ffffff";
+    rejects(value, "颜色及透明度");
+    value.node.typography_target.fill = "#ffffffff";
     value.node.runtime_verification.actual_semantic.text = "退出游戏";
     rejects(value, "actual_semantic 必须绑定");
   });

@@ -211,7 +211,9 @@ export function extractFigmaNodeStyle(node, textNode = node.type === 'TEXT' ? no
     shape,
     typography: typography(textNode?.font, textNode?.id ?? node.id),
     textFill: normalizePaint(textNode?.fills ?? textNode?.properties?.fill, textNode?.id ?? node.id),
-    textOpacity: textNode ? { value: textNode.opacity ?? textNode.properties?.opacity ?? 1, unit: 'ratio' } : null,
+    // 文字透明度必须来自已采集的节点事实，缺失时保留未验证。
+    textOpacity: textNode && (textNode.opacity ?? textNode.properties?.opacity) != null
+      ? { value: textNode.opacity ?? textNode.properties.opacity, unit: 'ratio' } : null,
     fill: normalizePaint(node.fills ?? node.properties?.fill, node.id),
     opacity: { value: node.opacity ?? node.properties?.opacity ?? 1, unit: 'ratio' },
     imageFills: normalizePaint(node.imageFills ?? [], node.id),

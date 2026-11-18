@@ -70,7 +70,7 @@
 - [unity-domain-contracts](../../unity-domain-contracts)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-2d-rigging](../../unity-game-2d-rigging)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-animation](../../unity-game-3d-animation)：领域资料、模板和工具依赖；不含独立全局流程入口。
-- [unity-game-3d-modeling](../../unity-game-3d-modeling)：领域资料、模板和工具依赖；不含独立全局流程入口。
+- Unity 建模资料见[建模流程与导入交接](./mcp-modeling-workflow.md)。
 - [unity-game-3d-rigging](../../unity-game-3d-rigging)：领域资料、模板和工具依赖；不含独立全局流程入口。
 - [unity-game-3d-texturing](../../unity-game-3d-texturing)：领域资料、模板和工具依赖；不含独立全局流程入口。
 

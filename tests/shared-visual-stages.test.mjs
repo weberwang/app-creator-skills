@@ -26,8 +26,9 @@ test('视觉错误回退使用统一阶段', () => {
 });
 
 test('三栈项目模板先验证功能并声明完整 V0–V5', async () => {
-  for (const stack of ['cocos', 'phaser4', 'threejs']) {
-    const templates = await import(`../skills/${stack}-game-orchestrator/scripts/project_doc_templates.mjs`);
+  // 模板归属按实际发布目录选择，原生模式名称不决定文件路径。
+  for (const owner of ['cocos-game-orchestrator', 'phaser4-game-orchestrator', 'app-stack-threejs']) {
+    const templates = await import(`../skills/${owner}/scripts/project_doc_templates.mjs`);
     const design = templates.CORE_TEMPLATES['visual-design.md'];
     const tdd = templates.CORE_TEMPLATES['TDD.md'];
     const assets = templates.OPTIONAL_TEMPLATES.assets['asset-license-register.md'];

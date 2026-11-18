@@ -14,6 +14,8 @@
 
 识别颜色贴图的 sRGB 设置；normal、metalness、roughness 与其他数值贴图作为数据处理。明确 alpha blend/cutout/test 与输出方式。不要在不需要时强制覆盖 GLTFLoader 已建立的材质参数和纹理引用。
 
+需要制作或烘焙贴图时，由 `app-3d-texturing` 读取 [Three.js 贴图生产细则](./blender-model-production.md#ai-纹理烘焙与法线)。模型管线消费已交付的贴图并核对运行材质映射。
+
 ## 真实释放
 
 three.js GPU 资源必须由所有者手动 dispose：geometry、材质、texture/render target 和 renderer 分开管理。实现资源跟踪时区分独占实例、跨 Scene 共享 Cache 与 browser ImageBitmap；释放纹理时资源所有者还须按需关闭 ImageBitmap。Scene.exit 时取消 animation/RAF/observer/监听器；Renderer 不自动释放浏览器显存基线和 context。重复 Scene 加载后检查内存、renderer.info、贴图加载与 context 恢复，确保共享材料仍存活且旧场景不泄漏。

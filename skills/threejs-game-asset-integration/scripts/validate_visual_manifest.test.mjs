@@ -17,7 +17,7 @@ import { buildEffectImageAssetPrompt, buildEffectImageFullPrompt, EFFECT_IMAGE_G
 import { configureManifestTransparentFixture, writeManifestTransparentFixtures } from "./visual-manifest-transparent-fixtures.mjs";
 import { IMAGE_PRODUCTION_DPR } from "../../threejs-domain-contracts/scripts/workflow-dpr-contract.mjs";
 import { loadVisualConfirmationAuthority } from "../../threejs-domain-contracts/scripts/visual-confirmation-authority.mjs"; import { computeLayoutAnnotationConfirmationSha256, computeLayoutUserMessageSha256 } from "../../threejs-domain-contracts/scripts/layout_annotation_confirmation.mjs"; import { writeLayoutReviewFixtureArtifacts } from "./layout-review-fixtures.mjs";
-import { CORE_TEMPLATES, OPTIONAL_TEMPLATES } from "../../threejs-game-orchestrator/scripts/project_doc_templates.mjs";
+import { CORE_TEMPLATES, OPTIONAL_TEMPLATES } from "../../app-stack-threejs/scripts/project_doc_templates.mjs";
 import { EMPTY_DOCUMENT_FINGERPRINT, STRUCTURAL_FILE_GATE_OPTIONS, visualComponentContract, addManualConfirmationRecords, nonEmptyString, imageNormalizationRecord, validManifest, attachSceneReconstructionContract, validOrdinaryManifest, validAiManifest, bitmapManifest, multiConfirmationGroupManifest, sha256Bytes, canonicalJson, canonicalSha, prerequisiteListSha, pngCrc32, minimalPng, reuseSnapshot, writeConfirmationFixtureFiles, loadFixtureAuthority, checkManifestFiles, refreshRegionDerivedContracts, createFixtureFiles } from "./visual-manifest-test-fixtures.mjs";
 
 registerVisualManifestUsabilityCases({ validManifest, validateManifest, options: STRUCTURAL_FILE_GATE_OPTIONS, checkManifestFiles, createFixtureFiles, writeConfirmationFixtureFiles });

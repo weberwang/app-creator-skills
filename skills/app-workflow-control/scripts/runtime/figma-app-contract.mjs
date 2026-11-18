@@ -5,6 +5,7 @@ import { readJson, repoPath, requireFile, fileIdentityKey, WorkflowError } from 
 import { readAppVisualSource } from './app-visual-source.mjs';
 import { validateFigmaNodeProperties } from './figma-design-properties.mjs';
 import { validateFigmaNativeFacts } from './figma-native-facts.mjs';
+import { collectFigmaTextAppearance } from './native-text-appearance.mjs';
 export { extractFigmaNodeStyle } from './figma-design-properties.mjs';
 
 /** 非游戏 App 默认采用 Figma；ESP32 显式选择该路线，游戏及无界面服务保持原合同。 */
@@ -326,5 +327,6 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
     const actual = frozen(repo, work.visual.reviews?.[name], `${name} 当前组合确认`, work);
     insist(sameFigmaRef(repo, actual.figmaDesignRef, doc.figmaDesignRef), `${name} 确认未绑定当前 Figma 设计`);
   }
+  if (work.stack === 'expo' || work.stack === 'esp32') return { ...snapshot, nativeTextAppearance: collectFigmaTextAppearance(approved) };
   return snapshot;
 }

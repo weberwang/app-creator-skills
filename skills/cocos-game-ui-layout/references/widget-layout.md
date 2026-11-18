@@ -8,19 +8,19 @@
 
 1. **先定功能父级**：`parent_element_id` 记录真实的功能、状态、交互、生命周期或布局管理归属。简单按钮优先让底板 Sprite 兼任组件根；只有独立裁切、独立动画、稳定交互/布局尺寸或动态子项排布等真实职责需要时才增加纯结构容器。不能为符合 Widget 的 target 限制改变父子树或增加包装层。
 2. **再定位置参照与意图**：`ui_layout.position_reference_id` 省略时等于真实父级；显式值可指向允许的兄弟、祖先或逻辑根，并保持与父级不同的事实。`viewport` 和 `safe-area` 是合成布局根，不是实际 Node，不能作为 Widget target；`viewport` 使用完整逻辑视口，`safe-area` 使用整批节点共享的实际安全区快照。两者作为直接参照时都交给共享布局。记录九点停靠和中心策略；截图位置用于测量 bounds，不能单独证明要吸附哪条边、是否居中或是否跟随。
-3. **选唯一位置驱动器**：位置只能由一种运行时机制写入。实际父/祖先 Node 的边缘、中心及合法伸缩约束可由 Widget 表达时，必须使用 Widget。V3 不读取尚不存在的运行时矩阵，默认计划假设节点与 target 路径 `scale=1`、`rotation=0`、`skew=0`；已知路径为非单位变换且其他条件满足 Widget 时，可显式选择 `SHARED` 并声明 `widget_fallback: non-unit-transform`，V5 必须由实际矩阵证实至少一条路径非单位。若实际逻辑变换与 WIDGET 计划或 SHARED 回退不符，应阻断并回到 V3 调整，不增加容器规避。逻辑 `viewport`/`safe-area`、兄弟参照或整体组合计算可使用共享布局；原生 Layout 可表达的行列与网格由实际父 Layout 控制子项。`REFLOW`/`SCROLL` 是内容排布职责，不能证明容器自身不适用 Widget；`layout_owner: PARENT` 或 `EXTERNAL` 也不能单凭标签豁免原生定位。动画控制位置时显式登记动画驱动及交接。普通 UI 不得以静态冻结坐标代替相对停靠。
+3. **选唯一位置驱动器**：位置只能由一种运行时机制写入。自身和直接父级均为固定尺寸、以父级为参照且不属于整体居中组时，优先保留固定本地偏移；V5 核对实际父框尺寸和相对偏移。需要跟随父级尺寸变化、且实际父/祖先 Node 的边缘、中心及合法伸缩约束可由 Widget 表达时使用 Widget。V3 按单位路径计划；已知非单位变换可显式选择 `SHARED` 与 `widget_fallback: non-unit-transform`，由 V5 核实。逻辑 `viewport`/`safe-area`、兄弟参照或整体组合使用共享布局；动态行列与网格按需由实际父 Layout 控制。动画控制位置时显式登记驱动及交接。
 4. **独立授予尺寸权限**：位置和尺寸分开选择写入者，不能因为选择 Widget 定位就让 Widget 改尺寸。普通 Sprite（包含兼任父容器的底板）由 Sprite 的 `RAW` 模式控制原尺寸；Widget 双边对齐会改变对应轴尺寸，只有明确冻结的 `SLICED + CUSTOM` 九宫格图片或 `size_policy: STRETCH` 的非 Sprite 容器可使用。文本等内容尺寸由 `CONTENT` 管理，或由明确的共享/父级布局约束计算。`size_driver` 的推导、Creator Layout 与 Widget 的顺序协作及 V5 实际组件快照见[运行快照合同](./widget-runtime-evidence.md)。
 
 ## 选择 `position_driver`
 
-`ui_layout.position_driver` 是可选字段，可显式填写 `WIDGET`、`SHARED`、`LAYOUT`、`STATIC` 或 `ANIMATION`。省略时由布局生成器按下列自动规则选择：`layout_owner: SELF`、有效位置参照是已存在的实际父节点或祖先节点、当前九点对齐可由 Widget 表达、默认计划的节点与 target 路径为 `scale=1`、`rotation=0`、`skew=0`，且节点不是背景或图文组合整体居中的成员时选择 `WIDGET`；逻辑根 `viewport`/`safe-area` 和有实际结构限制的情况选 `SHARED`。职责为 `PARENT`/`EXTERNAL` 不改变 Widget 是否可表达：在结构上可用原生停靠时，仅当 `SHARED` 同时声明唯一允许的 `widget_fallback: non-unit-transform` 才能保留该计划；动画结束后恢复 `SHARED` 也适用相同要求。这只是待 V5 证实的计划，不表示已读取运行时矩阵。V5 以实际矩阵核验 Widget 的单位变换和该回退的非单位事实，观测不符即阻断并回到上游调整。父级或外部布局责任本身不会自动推断出 Creator `Layout` 组件或动画控制器。
+`ui_layout.position_driver` 可显式填写 `WIDGET`、`SHARED`、`LAYOUT`、`STATIC` 或 `ANIMATION`。省略时，固定尺寸直接父子且以父级为参照的普通节点选择 `STATIC`，其他可由实际父级或祖先 Widget 表达的节点选择 `WIDGET`，逻辑根及结构限制使用 `SHARED`。组合整体居中、独立浮层、拉伸与行为驱动不套用固定本地偏移。V5 核验实际父框尺寸、偏移、Widget 路径和各轴写入者。父级或外部布局责任本身不会自动推断出 Creator `Layout` 组件或动画控制器。
 
 | 驱动器 | 适用情况 | `layout_owner` 要求 | 运行时唯一位置写入者 |
 | --- | --- | --- | --- |
 | `WIDGET` | 参照是已存在的实际父级/祖先 Node；计划按单位变换路径（`scale=1`、`rotation=0`、`skew=0`）处理，且由 V5 核对实际路径；位置意图可表示为每轴一个边缘、中心或显式拉伸约束；不属于背景或整体居中组 | `SELF` | 当前节点 Widget，由统一布局入口配置并调用 `updateAlignment()` |
 | `SHARED` | 逻辑 `viewport`/`safe-area`、兄弟参照、图文组合按 bounds 联合居中，或已声明且待运行矩阵证实的非单位变换 | 任意 | 项目共享布局入口 |
 | `LAYOUT` | Creator 原生 `Layout` 组件负责节点位置或尺寸 | `PARENT` | 经快照核对的原生 Layout 组件 |
-| `STATIC` | 仅用于背景；普通 UI 和浮层本体不得以静态坐标代替相对停靠 | `SELF` | 冻结节点配置；事件处理器不得另写位置 |
+| `STATIC` | 背景，或固定尺寸子项相对固定尺寸直接父级保持本地偏移 | `SELF` | 冻结节点配置；事件处理器不得另写位置 |
 | `ANIMATION` | 拖拽、指针或世界跟随、过渡动画等行为在活动期间临时拥有节点位置 | `EXTERNAL` | 声明行为和恢复关系的外部驱动 |
 
 若显式选择的驱动器与这些要求冲突，应在布局确认/校验阶段阻断，不能靠添加父容器来规避。`WIDGET` 的有效参照必须解析为该节点已存在的真实父级或祖先 Node；Widget `target` 精确绑定该 `position_reference_id`，不能指向兄弟节点。逻辑 `viewport`/`safe-area` 是合成根，直接参照时使用 `SHARED`，显式声明 `WIDGET` 应被拒绝；合成的 `root_nodes` 也只是合同数据，不证明场景里存在对应 Node。`viewport` 使用完整逻辑视口；`safe-area` 使用本批唯一实际安全区矩形，生成、中心计算和审阅中的所有对应快照须逐字段一致。已有真实 Canvas 等父/祖先节点可直接作为 Widget target。不能为让 Widget 可用而添加 Canvas 包装或空容器。根跳过规则只认保留 ID `viewport`/`safe-area`、`is_root_container: true` 和显式 `parent_layout_node_id: null` 同时成立；业务节点不得标记 `is_root_container: true` 或占用保留 ID，输出快照中的 `false` 不构成根声明。

@@ -15,6 +15,13 @@
     "viewport": { "type": "object", "required": ["width", "height"], "properties": { "width": { "type": "number", "exclusiveMinimum": 0 }, "height": { "type": "number", "exclusiveMinimum": 0 } } },
     "studio": { "type": "object" },
     "editObservationRef": { "type": "object", "required": ["path", "sha256"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+    "minimumSliceObservations": {
+      "type": "array",
+      "items": {"type": "object", "required": ["nodeId", "observationRef"], "properties": {
+        "nodeId": {"type": "string", "minLength": 1},
+        "observationRef": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}
+      }}
+    },
     "nodes": {
       "type": "array",
       "items": {
@@ -22,6 +29,25 @@
         "properties": {
           "space": { "enum": ["world-studs", "screen-scale-offset"] },
           "className": { "type": "string", "minLength": 1 },
+          "nineSlice": {
+            "type": "object", "required": ["assetId", "sliceScale", "sourceSize", "imageRectOffset", "imageRectSize", "center", "minimumDisplaySize"],
+            "properties": {
+              "assetId": {"type": "string", "pattern": "^[1-9][0-9]*$"},
+              "sliceScale": {"const": 1},
+              "sourceSize": {"type": "object", "required": ["width", "height"], "properties": {"width": {"type": "integer", "minimum": 1}, "height": {"type": "integer", "minimum": 1}}},
+              "imageRectOffset": {"type": "object", "required": ["x", "y"], "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}}},
+              "imageRectSize": {"type": "object", "required": ["x", "y"], "properties": {"x": {"type": "integer", "minimum": 0}, "y": {"type": "integer", "minimum": 0}}},
+              "center": {"type": "object", "required": ["minX", "minY", "maxX", "maxY"], "properties": {"minX": {"type": "integer", "minimum": 0}, "minY": {"type": "integer", "minimum": 0}, "maxX": {"type": "integer", "minimum": 0}, "maxY": {"type": "integer", "minimum": 0}}},
+              "minimumDisplaySize": {"type": "object", "required": ["width", "height"], "properties": {"width": {"type": "number", "exclusiveMinimum": 0}, "height": {"type": "number", "exclusiveMinimum": 0}}}
+            }
+          },
+          "textStyle": {
+            "type": "object", "required": ["color", "transparency"],
+            "properties": {
+              "color": { "type": "object", "required": ["r", "g", "b"], "properties": { "r": { "type": "number", "minimum": 0, "maximum": 1 }, "g": { "type": "number", "minimum": 0, "maximum": 1 }, "b": { "type": "number", "minimum": 0, "maximum": 1 } } },
+              "transparency": { "type": "number", "minimum": 0, "maximum": 1 }
+            }
+          },
           "screenInsets": { "enum": ["None", "DeviceSafeInsets", "CoreUISafeInsets", "TopbarSafeInsets"] },
           "clipToDeviceSafeArea": { "type": "boolean" },
           "sizeConstraint": { "enum": ["RelativeXY", "RelativeXX", "RelativeYY"] },
@@ -32,7 +58,8 @@
         },
         "allOf": [
           { "if": { "properties": { "space": { "const": "screen-scale-offset" }, "className": { "enum": ["ScreenGui", "GuiMain"] } }, "required": ["space", "className"] }, "then": { "required": ["screenInsets", "clipToDeviceSafeArea", "sizeModifiers"] } },
-          { "if": { "properties": { "space": { "const": "screen-scale-offset" }, "className": { "not": { "enum": ["ScreenGui", "GuiMain"] } } }, "required": ["space", "className"] }, "then": { "required": ["position", "size", "anchorPoint", "positionWriters", "sizeWriters", "sizeConstraint", "sizeModifiers"] } }
+          { "if": { "properties": { "space": { "const": "screen-scale-offset" }, "className": { "not": { "enum": ["ScreenGui", "GuiMain"] } } }, "required": ["space", "className"] }, "then": { "required": ["position", "size", "anchorPoint", "positionWriters", "sizeWriters", "sizeConstraint", "sizeModifiers"] } },
+          { "if": { "properties": { "className": { "enum": ["TextLabel", "TextButton", "TextBox"] } }, "required": ["className"] }, "then": { "required": ["textStyle"] } }
         ]
       }
     }

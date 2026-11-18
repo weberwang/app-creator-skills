@@ -152,7 +152,7 @@ namespace Project.UnityWorkflow.ImagePipeline
         /// 从已批准图片任务创建导入请求，源路径和视觉版本取自 selectedCandidate。
         /// </summary>
         /// <param name="task">已由 Schema 校验的图片任务。</param>
-        /// <returns>尚可补充尺寸限制和报告路径的导入请求。</returns>
+        /// <returns>绑定正式像素尺寸的导入请求。</returns>
         public static ImageImportRequest FromTask(ImageTaskDto task)
         {
             if (task == null)
@@ -161,7 +161,12 @@ namespace Project.UnityWorkflow.ImagePipeline
             }
 
             var candidate = task.SelectedCandidate;
-            var output = task.Output ?? new ImageOutputDto();
+            var output = task.Output;
+            // 用同一上下限做精确尺寸校验，防止生成画布被直接作为正式纹理导入。
+            if (output == null || output.RuntimeWidth <= 0 || output.RuntimeHeight <= 0)
+            {
+                throw new ArgumentException("图片任务必须声明正整数 output.runtimeWidth 和 output.runtimeHeight。", nameof(task));
+            }
             var settings = task.UnityImport ?? new ImageUnityImportDto();
             return new ImageImportRequest
             {
@@ -181,6 +186,10 @@ namespace Project.UnityWorkflow.ImagePipeline
                 FileName = output.Filename,
                 ExpectedAspectRatio = output.AspectRatio,
                 AlphaRequired = output.AlphaRequired,
+                MinimumWidth = output.RuntimeWidth,
+                MaximumWidth = output.RuntimeWidth,
+                MinimumHeight = output.RuntimeHeight,
+                MaximumHeight = output.RuntimeHeight,
                 TextureType = settings.TextureType,
                 SpriteMode = settings.SpriteMode,
                 Border = settings.Border,

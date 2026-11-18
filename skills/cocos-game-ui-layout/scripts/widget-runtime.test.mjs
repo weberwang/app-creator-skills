@@ -25,6 +25,7 @@ function node(id, {
     parent_layout_node_id: parent,
     target_bounds: { ...bounds },
     ...(geometry ? { sprite_geometry: structuredClone(geometry) } : {}),
+    ...(geometry?.type === "SLICED" ? { nine_slice: { mode: "stretch", reason: "冻结的切片", source_size: { width: 16, height: 16 }, borders: { left: 4, right: 4, top: 4, bottom: 4 } } } : {}),
     layout_execution: { position_driver: position, size_driver: size, widget: widget ? structuredClone(widget) : null },
     ...extra,
   };
@@ -46,6 +47,29 @@ test("接受严格居中 Widget 和保持 RAW 原尺寸的普通图片", () => {
   assert.deepEqual(errors, []);
 });
 
+test("固定父子关系核对运行时父尺寸和本地偏移", () => {
+  const parent = node("panel", {
+    parent: "viewport", position: "SHARED", size: "FIXED", geometry: null, widget: null,
+    bounds: { x: 0, y: 0, width: 100, height: 80 },
+    ui_layout: { layout_owner: "SELF", size_policy: "FIXED" },
+  });
+  const child = node("icon", {
+    parent: "panel", position: "STATIC", size: "FIXED", geometry: null, widget: null,
+    bounds: { x: 40, y: 30, width: 20, height: 20 },
+    ui_layout: { layout_owner: "SELF", size_policy: "FIXED" },
+  });
+  const nodes = [parent, child];
+  const rows = snapshots(nodes);
+  assert.deepEqual(errorsFor(nodes, rows), []);
+  rows[1].component_snapshot.layout_bounds.x += 1;
+  assert.match(errorsFor(nodes, rows).join("\n"), /本地偏移与冻结计划不一致/);
+  rows[1].component_snapshot.layout_bounds.x -= 1;
+  rows[1].component_snapshot.reference_bounds.width += 1;
+  assert.match(errorsFor(nodes, rows).join("\n"), /实际父框尺寸或本地偏移/);
+  parent.ui_layout.size_policy = "STRETCH";
+  assert.match(errorsFor(nodes, rows).join("\n"), /STATIC 要求固定尺寸/);
+});
+
 test("接受父 Layout 只排布位置且 RAW 子图片尺寸不变", () => {
   const parent = node("panel", {
     parent: "viewport", position: "SHARED", size: "FIXED", geometry: null,
@@ -61,6 +85,23 @@ test("接受 Widget 定位与共享尺寸分工", () => {
     geometry: { type: "SLICED", size_mode: "CUSTOM", content_size: { width: 20, height: 20 } },
   });
   assert.deepEqual(errorsFor([item]), []);
+});
+
+test("九宫格实际帧、边距及显示框必须保留正中心", () => {
+  const item = node("slice-check", { position: "SHARED", size: "SHARED", widget: null,
+    geometry: { type: "SLICED", size_mode: "CUSTOM", content_size: { width: 20, height: 20 } } });
+  const row = snapshots([item])[0];
+  assert.deepEqual(errorsFor([item], [row]), []);
+  row.component_snapshot.ui_transform.width = 8;
+  assert.match(errorsFor([item], [row]).join("\n"), /显示框必须为可拉伸中心/);
+  row.component_snapshot.ui_transform.width = 20;
+  row.component_snapshot.sprite.slice_borders.left += 1;
+  assert.match(errorsFor([item], [row]).join("\n"), /slice_borders 与冻结切片不一致/);
+  delete row.component_snapshot.sprite.frame_size;
+  assert.match(errorsFor([item], [row]).join("\n"), /源帧宽高必须为正整数/);
+  row.component_snapshot.sprite.frame_size = { width: 16, height: 16 };
+  row.component_snapshot.sprite.scale_path[0].x = 1.00000001;
+  assert.match(errorsFor([item], [row]).join("\n"), /scale_path.*严格为 1/);
 });
 
 test("接受 Widget 定位与自身 Layout.CONTAINER 尺寸分工", () => {
@@ -234,10 +275,10 @@ test("Widget 停靠在父框变大后仍保持实际右下边距", () => {
 
 test("运行快照拒绝普通 UI 和浮层静态冻结，受控浮层行为和背景按边界处理", () => {
   const ordinary = node("ordinary", { position: "STATIC", size: "FIXED", geometry: null, widget: null });
-  assert.ok(errorsFor([ordinary]).some((message) => message.includes("普通 UI 必须相对停靠")));
+  assert.ok(errorsFor([ordinary]).some((message) => message.includes("STATIC 要求固定尺寸")));
   const floating = node("floating", { position: "STATIC", size: "FIXED", geometry: null, widget: null,
     element_type: "container", ui_layout: { positioning: "absolute", floating_root_kind: "popup" } });
-  assert.ok(errorsFor([floating]).some((message) => message.includes("普通 UI 必须相对停靠")));
+  assert.ok(errorsFor([floating]).some((message) => message.includes("STATIC 要求固定尺寸")));
   floating.layout_execution.position_driver = "ANIMATION";
   floating.ui_layout = { layout_owner: "EXTERNAL", position_driver: "ANIMATION", positioning: "absolute", floating_root_kind: "popup", position_behavior: { kind: "drag", reason: "玩家拖动浮层", trigger: "拖动开始", properties: ["x", "y"], restore_driver: "SHARED", restore_rule: "拖动结束后回到宿主位置" } };
   assert.deepEqual(errorsFor([floating]), []);

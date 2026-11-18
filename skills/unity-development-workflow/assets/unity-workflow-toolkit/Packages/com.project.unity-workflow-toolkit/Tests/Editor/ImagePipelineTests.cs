@@ -93,6 +93,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
                 Id = TaskId,
                 ResourceId = "ui.from-task",
                 SourceVersion = "source-v2",
+                Output = new ImageOutputDto { RuntimeWidth = 64, RuntimeHeight = 64 },
                 Status = "APPROVED",
                 FinalVisualReview = new EvidenceDto
                 {
@@ -111,6 +112,7 @@ namespace Project.UnityWorkflow.ImagePipeline.Tests
             var request = ImageImportRequest.FromTask(task);
 
             Assert.AreEqual(task.SelectedCandidate.Path, request.SourcePath);
+            Assert.That(new[] { request.MinimumWidth, request.MaximumWidth, request.MinimumHeight, request.MaximumHeight }, Is.All.EqualTo(64));
             Assert.AreEqual(task.SelectedCandidate.VisualVersion, request.VisualVersion);
             Assert.AreSame(task.FinalVisualReview, request.FinalVisualReview);
             CollectionAssert.AreEqual(task.UnityImport.Border, request.Border);

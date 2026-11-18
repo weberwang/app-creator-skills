@@ -30,6 +30,8 @@ HUD 由项目侧实现同样形状的 `readSnapshot()`，从实际 `Object3D`、
 
 九宫格运行数据还须提供 `image.effective_scale`，证明本体及祖先未整体缩放；只有切片显示框可变化。默认 IMG 读取器从实际 CSS 变换读取该值，自定义 `readImage` 与 HUD 须从实际运行变换采集，缺失不得视为单位变换。静态字段检查不能证明回调真实采集，正式运行仍须核实数据来源。
 
+对每个适用状态，分别运行当前工作项确认范围内可能使该皮肤显示框最窄和最矮的条件；两个条件可不同。各条件重新调用 `collectLayoutRuntimeSnapshots`，用 `validateLayoutRuntimeSnapshots` 核验完整同批快照并分别保存场景、状态、候选、视口、revision、条件和结果。响应式证据的视口矩形或 `keyUiRects` 不包含完整切片读数，不能代替这些采集。缺少任一最小条件的真实回读时，九宫格最小显示尺寸保持未验证。
+
 静态 JSON fixture、目标图和自动生成的合成节点只能用于单元测试，不能冒充正式运行证据。正式 V5 结果必须来自实际候选场景的同步读取，并绑定本次 scene/state/candidate 与 viewport revision。
 
 已有 `node_measurements.actual_bounds` 和关键对齐 `runtime_measurement` 必须逐字段等于对应活动节点的同批 `component_snapshot.layout_bounds`，不能维护两套互相矛盾的实际读数。该绑定只检查原有测量覆盖范围；`usability` 不因此变成全部节点的精确几何比较。

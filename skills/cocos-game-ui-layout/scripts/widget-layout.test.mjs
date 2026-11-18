@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import { canUseFixedParentOffset } from "./widget-eligibility.mjs";
 import {
   deriveLayoutExecutionPlans,
   validateLayoutDriverDeclaration,
@@ -21,7 +22,7 @@ function panelNode(overrides = {}) {
     parent_layout_node_id: "viewport",
     target_bounds: { x: 0, y: 0, width: 200, height: 100 },
     axis_alignment: { horizontal: "left", vertical: "top" },
-    ui_layout: { layout_owner: "SELF", size_policy: "FIXED" },
+    ui_layout: { layout_owner: "SELF", size_policy: "STRETCH" },
     ...overrides,
   };
 }
@@ -69,7 +70,7 @@ function plans(nodes) {
 }
 
 test("主图标严格居中生成零偏移 Widget，RAW 尺寸仍独立于底板 bounds", () => {
-  const source = [viewportNode(), panelNode({ render_kind: "sprite", element_type: "container", owner_type: "fixed-production-visual", role: "button-skin" }), iconNode()];
+  const source = [viewportNode(), panelNode({ render_kind: "sprite", element_type: "container", owner_type: "fixed-production-visual", role: "button-skin", ui_layout: { layout_owner: "SELF", size_policy: "FIXED" } }), iconNode({ ui_layout: { layout_owner: "SELF", position_driver: "WIDGET", size_policy: "FIXED" } })];
   const result = plans(source);
   const panel = result.find((node) => node.layout_node_id === "panel");
   const icon = result.find((node) => node.layout_node_id === "icon");
@@ -88,6 +89,20 @@ test("主图标严格居中生成零偏移 Widget，RAW 尺寸仍独立于底板
   assert.equal(icon.target_bounds.width, 40);
   assert.equal(icon.target_bounds.height, 20);
   assert.deepEqual(source[2].target_bounds, { x: 80, y: 40, width: 40, height: 20 }, "派生过程不修改源几何");
+});
+
+test("固定尺寸直接父子默认只保存本地偏移，父级尺寸变化时仍选择 Widget", () => {
+  const fixedParent = panelNode({ ui_layout: { layout_owner: "SELF", size_policy: "FIXED" } });
+  const result = plans([viewportNode(), fixedParent, iconNode()]);
+  assert.equal(result[2].layout_execution.position_driver, "STATIC");
+  assert.equal(result[2].layout_execution.widget, null);
+  assert.equal(plans([viewportNode(), panelNode(), iconNode()])[2].layout_execution.position_driver, "WIDGET");
+  const dynamicChild = iconNode({ ui_layout: { layout_owner: "SELF", size_policy: "CONTENT" } });
+  assert.equal(plans([viewportNode(), fixedParent, dynamicChild])[2].layout_execution.position_driver, "WIDGET");
+  const stretchedParent = canvasNode();
+  stretchedParent.ui_layout.widget_stretch_axes = ["horizontal"];
+  const child = iconNode({ parent_layout_node_id: "canvas" });
+  assert.equal(canUseFixedParentOffset(child, new Map([["canvas", stretchedParent]]), new Set()), false);
 });
 
 test("角标可独立贴右上角，且不改变主图标居中策略", () => {
@@ -257,7 +272,7 @@ test("逻辑稳定根映射到共享布局，真实 Canvas 节点可作为 Widge
   const canvasChild = iconNode({
     layout_node_id: "canvas-child",
     parent_layout_node_id: "canvas",
-    ui_layout: { layout_owner: "SELF", size_policy: "FIXED" },
+    ui_layout: { layout_owner: "SELF", position_driver: "WIDGET", size_policy: "FIXED" },
   });
   const result = plans([viewportNode(), canvasNode(), panelNode(), logicalRootChild, canvasChild]);
   const logical = result.find((node) => node.layout_node_id === "viewport-child");

@@ -36,6 +36,8 @@ namespace Project.UnityWorkflow.VisualQA
         public string referenceRoot = string.Empty;
         public LayoutRect targetRect;
         public LayoutTolerance tolerance;
+        /// <summary>文字组件实际属性路径，按已安装的组件版本填写。</summary>
+        public List<LayoutTextStyleProbe> textStyle = new List<LayoutTextStyleProbe>();
     }
 
     /// <summary>记录一个统一采用左上原点的实际矩形。</summary>

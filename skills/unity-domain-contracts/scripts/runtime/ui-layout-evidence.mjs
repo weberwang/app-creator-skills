@@ -69,9 +69,13 @@ export function inspectUiLayoutEvidence({ work, pkg, evidence, repo, forceRuntim
     if (!evidence?.uiLayoutMeasurementRef) throw new Error('V5布局缺少 uiLayoutMeasurementRef，不能用计划或人工确认替代真实采集');
     if (typeof work.evidenceRoot !== 'string' || !work.evidenceRoot.trim()) throw new Error('布局运行证据缺少当前 evidenceRoot');
     if (typeof evidence.candidateId !== 'string' || !evidence.candidateId.trim()) throw new Error('布局运行证据必须绑定当前 candidateId');
-    const { value: report, path } = readProjectJson(repo, evidence.uiLayoutMeasurementRef, 'uiLayoutMeasurementRef', work.evidenceRoot);
+    const { path: measurementPath, textEvidencePath } = evidence.uiLayoutMeasurementRef;
+    const { value: report, path } = readProjectJson(repo, { path: measurementPath }, 'uiLayoutMeasurementRef', work.evidenceRoot);
     if (report.outputPath !== path) throw new Error('布局报告 outputPath 与实际证据引用不符');
-    const errors = validateUiLayoutRuntime(plan, report, { candidateId: evidence.candidateId, scenePath: plan.scenePath });
+    // 补充采集与布局报告使用同一证据边界，再由运行校验核对对象及采集批次。
+    const textStyleEvidence = textEvidencePath === undefined ? undefined
+      : readProjectJson(repo, { path: textEvidencePath }, 'uiLayoutMeasurementRef.textEvidencePath', work.evidenceRoot).value;
+    const errors = validateUiLayoutRuntime(plan, report, { candidateId: evidence.candidateId, scenePath: plan.scenePath, textStyleEvidence });
     if (errors.length) throw new Error(errors.join('；'));
     if (assembly?.status !== 'VERIFIED') throw new Error('V5 运行交付必须使用 VERIFIED 的正式 Prefab 装配');
     assertUiAssemblyMeasurement(plan, assembly, report);

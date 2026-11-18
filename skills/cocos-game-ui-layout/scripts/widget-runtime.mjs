@@ -2,7 +2,10 @@ import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-po
 const { validateRelativeLayoutNodes, validateGameUiPositionDriver } = relativeLayoutPolicy;
 import { validateCenterAlignmentNodes } from "./center-alignment.mjs";
 import { isBackgroundDisplayNode, isLayoutContainer } from "./display-node-role.mjs";
-import { positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
+import { canUseFixedParentOffset, positionBehaviorBaseDrivers } from "./widget-eligibility.mjs";
+import nineSliceRuntime from "../../app-ui-layout/scripts/nine-slice-runtime.cjs";
+
+const { validateNineSliceRuntime } = nineSliceRuntime;
 
 const POSITION_DRIVERS = new Set(["WIDGET", "SHARED", "LAYOUT", "STATIC", "ANIMATION"]);
 const SIZE_DRIVERS = new Set(["SPRITE_RAW", "FIXED", "WIDGET", "LAYOUT", "SHARED", "CONTENT"]);
@@ -156,7 +159,7 @@ function layoutSizeAxes(layout, { parent = false } = {}) {
 }
 
 /** 按计划检查 RAW 尺寸、目标尺寸和普通图片变换路径。 */
-function validateSprite(node, snapshot, label, errors, plan) {
+function validateSprite(node, snapshot, label, errors, plan, nodesById) {
   const geometry = node.sprite_geometry;
   const sprite = snapshot.sprite;
   const target = readField(node, "target_bounds", "targetBounds", node.bounds);
@@ -185,6 +188,30 @@ function validateSprite(node, snapshot, label, errors, plan) {
   }
   // 快照缺失或JSON结构损坏时由外层报告后停止本分支，避免读取 null.width 崩溃。
   if (!isRecord(transform)) return;
+
+  if (geometry.type === "SLICED" && snapshot.active === true) {
+    const contract = node.nine_slice;
+    if (contract?.mode !== "stretch") {
+      errors.push(`${label} 实际 SLICED 必须绑定冻结九宫格合同`);
+    } else {
+      const border = sprite.slice_borders;
+      const source = sprite.frame_size;
+      errors.push(...validateNineSliceRuntime({ sourceSize: source, border, displaySize: transform }, `${label}.sprite`));
+      if (!source || source.width !== contract.source_size?.width || source.height !== contract.source_size?.height) errors.push(`${label}.sprite.frame_size 与冻结源帧不一致`);
+      if (!border || ["left", "right", "top", "bottom"].some((side) => border[side] !== contract.borders?.[side])) errors.push(`${label}.sprite.slice_borders 与冻结切片不一致`);
+      // 回读实际节点与中间父级的 scale，避免浮点矩阵容差放行略大于 1 的配置。
+      const expectedPath = [];
+      let ancestor = node;
+      while (ancestor && !["viewport", "safe-area"].includes(ancestor.layout_node_id) && !expectedPath.includes(ancestor.layout_node_id)) {
+        expectedPath.push(ancestor.layout_node_id);
+        ancestor = nodesById.get(ancestor.parent_layout_node_id);
+      }
+      if (!Array.isArray(sprite.scale_path) || sprite.scale_path.length !== expectedPath.length
+        || sprite.scale_path.some((scale, index) => scale?.node_id !== expectedPath[index] || scale.x !== 1 || scale.y !== 1)) {
+        errors.push(`${label}.sprite.scale_path 必须逐级回读严格为 1 的节点缩放`);
+      }
+    }
+  }
 
   const isRaw = geometry.type === "SIMPLE" && geometry.size_mode === "RAW";
   if (isRaw) {
@@ -398,7 +425,18 @@ function validateSnapshot(node, snapshot, label, parentSnapshot, nodesById, cent
   const floatingBody = uiLayout.positioning === "absolute" && ["popup", "floating", "toast"].includes(uiLayout.floating_root_kind);
   if (floatingBody && isBackgroundDisplayNode(node)) errors.push(`${label} 独立浮层本体不能借背景职责豁免相对停靠`);
   if (active && plan.position_driver === "STATIC" && !isBackgroundDisplayNode(node)) {
-    errors.push(`${label} 普通 UI 必须相对停靠，不能用 STATIC 固定冻结坐标`);
+    const parent = nodesById.get(parentId);
+    const parentTarget = readField(parent, "target_bounds", "targetBounds", parent?.bounds);
+    const nodeTarget = readField(node, "target_bounds", "targetBounds", node.bounds);
+    if (!canUseFixedParentOffset(node, nodesById, centerMembers) || !isBounds(parentTarget) || !isBounds(nodeTarget)) {
+      errors.push(`${label} STATIC 要求固定尺寸的直接父子及有效冻结几何`);
+    } else if (isBounds(snapshot.layout_bounds) && isBounds(snapshot.reference_bounds)) {
+      // 以实际父框核对本地偏移与尺寸，父框缩放或节点漂移均不得冒充固定关系。
+      if (!["width", "height"].every((axis) => sameNumber(snapshot.reference_bounds[axis], parentTarget[axis]))
+        || !["x", "y"].every((axis) => sameNumber(snapshot.layout_bounds[axis] - snapshot.reference_bounds[axis], nodeTarget[axis] - parentTarget[axis]))) {
+        errors.push(`${label} 固定父子关系的实际父框尺寸或本地偏移与冻结计划不一致`);
+      }
+    }
   }
   if (floatingBody && plan.position_driver !== "ANIMATION") errors.push(`${label} 独立定位的游戏浮层必须有受控位置行为，普通弹窗应相对宿主停靠`);
   if (plan.position_driver === "ANIMATION") validateAnimationRestoration(node, snapshot, parentSnapshot, nodesById, centerMembers, label, errors);
@@ -484,7 +522,7 @@ function validateSnapshot(node, snapshot, label, parentSnapshot, nodesById, cent
     }
   }
 
-  validateSprite(node, snapshot, label, errors, plan);
+  validateSprite(node, snapshot, label, errors, plan, nodesById);
   const isRaw = node.sprite_geometry?.type === "SIMPLE" && node.sprite_geometry?.size_mode === "RAW";
   if (isRaw && (parentSizeAxes.size > 0 || selfSizeAxes.size > 0 || widgetSizeAxes.size > 0)) {
     errors.push(`${label} 普通 RAW 图片不得由父 Layout.CHILDREN、自身 Layout.CONTAINER 或 Widget 拉伸改变尺寸`);

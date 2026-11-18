@@ -108,6 +108,10 @@ export function createLayoutRuntimeSnapshot(node, { parentNode, ...overrides } =
       type: geometry.type,
       size_mode: geometry.size_mode,
       original_size: copy(originalSize),
+      ...(geometry.type === "SLICED" && node.nine_slice?.mode === "stretch" ? {
+        frame_size: copy(node.nine_slice.source_size), slice_borders: copy(node.nine_slice.borders),
+        scale_path: [{ node_id: field(node, "layout_node_id", "layoutNodeId"), x: 1, y: 1 }],
+      } : {}),
     },
     node_to_layout: { a: 1, b: 0, c: 0, d: 1 },
     reference_to_layout: { a: 1, b: 0, c: 0, d: 1 },
@@ -179,6 +183,15 @@ export function attachLayoutRuntimeSnapshots(nodes, measurements) {
       parent_layout: parentLayout,
       reference_bounds: referenceBounds,
     });
+    if (snapshot.sprite?.scale_path) {
+      const path = [];
+      let current = node;
+      while (current && !["viewport", "safe-area"].includes(field(current, "layout_node_id", "layoutNodeId")) && !path.some((entry) => entry.node_id === field(current, "layout_node_id", "layoutNodeId"))) {
+        path.push({ node_id: field(current, "layout_node_id", "layoutNodeId"), x: 1, y: 1 });
+        current = nodesById.get(field(current, "parent_layout_node_id", "parentLayoutNodeId", null));
+      }
+      snapshot.sprite.scale_path = path;
+    }
     if (parentLayouts.has(id)) snapshot.layout = copy(parentLayouts.get(id));
     return { ...measurement, component_snapshot: snapshot };
   });

@@ -1,6 +1,8 @@
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { hasPreciseApproval } from './approval.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
+import { collectLayoutTextAppearance, validateNativeTextReadback } from './native-text-appearance.mjs';
+import { collectAppNineSliceNodes, validateAppLayoutNineSlices, validateAppNineSliceAsset } from './app-nine-slice.mjs';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
@@ -98,6 +100,7 @@ function readAssets(repo, work, doc, identity) {
     total += item.flashBytes;
     if (!Number.isSafeInteger(total) || total > assets.budgetFlashBytes) throw new WorkflowError('ESP32 资源超出 Flash 预算');
   }
+  return assets;
 }
 
 /** 显示层每次人工确认必须对应实际宿主，不能从另一页面迁移。 */
@@ -116,7 +119,7 @@ function checkConfirmedRef(repo, work, reviewName, field, expected, identity) {
 }
 
 /** 核对真实运行上下文及审批引用；主机模拟不表示硬件运行通过。 */
-async function checkRuntime(repo, work, doc, identity) {
+async function checkRuntime(repo, work, doc, identity, textAppearance, slices) {
   const runtime = readJson(repo, identity(repo, doc.runtimeContextRef, 'ESP32 运行上下文'), 'ESP32 运行上下文');
   for (const [key, expected] of Object.entries({ schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, candidateId: work.visual.candidateId })) {
     if (runtime[key] !== expected) throw new WorkflowError(`ESP32 运行上下文 ${key} 未绑定当前对象`);
@@ -135,6 +138,8 @@ async function checkRuntime(repo, work, doc, identity) {
   }
   const review = readJson(repo, identity(repo, work.visual.reviews?.V5, 'ESP32 V5 用户确认'), 'ESP32 V5 用户确认');
   sameRef(repo, review.runtimeContextRef, doc.runtimeContextRef, 'V5 用户确认运行上下文', identity);
+  validateNativeTextReadback(repo, runtime, textAppearance, 'esp32', identity);
+  if (slices.length || runtime.nineSliceMeasurements !== undefined) validateAppLayoutNineSlices(slices, runtime.nineSliceMeasurements, 'ESP32 V5');
   if (work.workItemType !== 'DISPLAY_LAYER') return;
   if (runtime.hostId !== work.visual.hostId || runtime.layerType !== work.visual.layerType) throw new WorkflowError('ESP32 运行上下文未绑定显示层宿主或类型');
   for (const action of ['open', 'close', 'focus-restore']) {
@@ -146,16 +151,22 @@ async function checkRuntime(repo, work, doc, identity) {
 }
 
 /** 连接 ESP32 单对象阶段输入；公共门禁继续负责用户确认与阶段迁移。 */
-export async function validateEsp32(repo, work, stage, doc, identity) {
+export async function validateEsp32(repo, work, stage, doc, identity, figmaTextAppearance) {
   if (!['PAGE', 'DISPLAY_LAYER'].includes(work.workItemType)) throw new WorkflowError('ESP32 单目标领域合同仅适用于 PAGE 或 DISPLAY_LAYER');
   const board = readBoard(repo, doc, identity);
   checkConfirmedRef(repo, work, 'V2', 'boardProfileRef', doc.boardProfileRef, identity);
   if (work.workItemType === 'DISPLAY_LAYER') checkLayerReviews(repo, work, stage, identity);
   if (stage === 'V2') return;
-  readLayout(repo, work, stage, doc, board, identity);
+  const layout = readLayout(repo, work, stage, doc, board, identity);
+  const slices = collectAppNineSliceNodes(layout, 'ESP32');
+  const textAppearance = isFigmaApp(work) ? figmaTextAppearance : collectLayoutTextAppearance(layout, doc.layoutSpecRef);
   if (!isFigmaApp(work)) checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
   if (stage === 'V3') return;
-  readAssets(repo, work, doc, identity);
+  const assets = readAssets(repo, work, doc, identity);
+  for (const { slice } of slices) {
+    if (!assets.items.some((item) => item.sourceRef.path === slice.sourcePath)) throw new WorkflowError('ESP32 九宫格未绑定资源清单中的源图片');
+    validateAppNineSliceAsset(repo, slice, 'ESP32');
+  }
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);
-  if (stage === 'V5') await checkRuntime(repo, work, doc, identity);
+  if (stage === 'V5') await checkRuntime(repo, work, doc, identity, textAppearance, slices);
 }

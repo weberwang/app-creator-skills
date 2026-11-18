@@ -32,7 +32,7 @@ function isString(value) {
 }
 
 /** 读取并检查一个业务节点的确定性位置/尺寸驱动计划。 */
-function deriveNodePlan(node, index, errors, label) {
+function deriveNodePlan(node, index, errors, label, byId, centerMembers) {
   const nodeId = node?.layout_node_id;
   const nodeLabel = `${label}[${index}](${isString(nodeId) ? nodeId : `#${index}`})`;
   if (!isObject(node)) {
@@ -51,7 +51,15 @@ function deriveNodePlan(node, index, errors, label) {
   if (!["PARENT", "SELF", "EXTERNAL"].includes(owner)) errors.push(`${nodeLabel}.ui_layout.layout_owner 必须是 PARENT、SELF 或 EXTERNAL`);
   if (!SIZE_POLICIES.has(sizePolicy)) errors.push(`${nodeLabel}.ui_layout.size_policy 必须是 FIXED、STRETCH、CONTENT 或 FLEX`);
 
-  let positionDriver = owner === "PARENT" ? "PARENT_LAYOUT" : "REFLOW";
+  const parent = byId.get(node.parent_layout_node_id);
+  const reference = node.position_reference_id ?? ui.position_reference_id ?? node.parent_layout_node_id;
+  // 仅固定尺寸的直接父子可保存局部偏移，动态参照仍由原有布局器处理。
+  const fixedParent = owner === "SELF" && sizePolicy === "FIXED" && parent?.ui_layout?.size_policy === "FIXED"
+    && reference === node.parent_layout_node_id && isObject(parent.target_bounds) && isObject(node.target_bounds)
+    && !centerMembers.has(nodeId) && node.center_alignment === undefined
+    && node.axis_alignment?.horizontal !== "center" && node.axis_alignment?.vertical !== "center"
+    && ui.positioning !== "absolute" && ui.position_behavior === undefined;
+  let positionDriver = owner === "PARENT" ? "PARENT_LAYOUT" : fixedParent ? "STATIC" : "REFLOW";
   if (ui.position_driver !== undefined) {
     if (!POSITION_DRIVERS.has(ui.position_driver)) errors.push(`${nodeLabel}.ui_layout.position_driver 不属于允许的项目驱动器`);
     else positionDriver = ui.position_driver;
@@ -64,7 +72,7 @@ function deriveNodePlan(node, index, errors, label) {
   if (POSITION_DRIVERS.has(positionDriver) && !ownerCompatible) {
     errors.push(`${nodeLabel}.ui_layout.position_driver=${positionDriver} 与 layout_owner=${owner} 冲突`);
   }
-  errors.push(...validateGameUiPositionDriver({ driver: positionDriver, independent: ui.positioning === "absolute", behavior: ui.position_behavior, baseDrivers: ["REFLOW", "PARENT_LAYOUT"] }, nodeLabel));
+  errors.push(...validateGameUiPositionDriver({ driver: positionDriver, staticAllowed: fixedParent, independent: ui.positioning === "absolute", behavior: ui.position_behavior, baseDrivers: ["REFLOW", "PARENT_LAYOUT"] }, nodeLabel));
 
   let nineSliceStretch = false;
   if (node.nine_slice !== undefined) {
@@ -109,6 +117,8 @@ export function deriveLayoutExecutionPlans(nodes) {
   if (!Array.isArray(nodes)) throw new TypeError("layout_nodes 必须是数组");
   const errors = [];
   const plans = [];
+  const byId = new Map(nodes.map((node) => [node?.layout_node_id, node]));
+  const centerMembers = new Set(nodes.flatMap((node) => node?.center_alignment?.member_ids ?? []));
   const seenIds = new Set();
   for (const [index, node] of nodes.entries()) {
     const nodeId = node?.layout_node_id;
@@ -125,7 +135,7 @@ export function deriveLayoutExecutionPlans(nodes) {
       errors.push(`layout_nodes[${index}] 的合成根必须同时使用保留 ID、is_root_container=true 与 parent_layout_node_id=null`);
       continue;
     }
-    const plan = deriveNodePlan(node, index, errors, "layout_nodes");
+    const plan = deriveNodePlan(node, index, errors, "layout_nodes", byId, centerMembers);
     if (plan) plans.push(plan);
   }
   if (errors.length > 0) throw new TypeError(errors.join("；"));
@@ -140,6 +150,8 @@ export function validateLayoutExecutionNodes(nodes, errors = [], label = "layout
   }
 
   const ids = new Set();
+  const byId = new Map(nodes.map((node) => [node?.layout_node_id, node]));
+  const centerMembers = new Set(nodes.flatMap((node) => node?.center_alignment?.member_ids ?? []));
   const plans = [];
   for (const [index, node] of nodes.entries()) {
     const nodeId = node?.layout_node_id;
@@ -154,7 +166,7 @@ export function validateLayoutExecutionNodes(nodes, errors = [], label = "layout
       continue;
     }
     const nodeErrors = [];
-    const plan = deriveNodePlan(node, index, nodeErrors, label);
+    const plan = deriveNodePlan(node, index, nodeErrors, label, byId, centerMembers);
     errors.push(...nodeErrors);
     if (!plan) continue;
     plans.push(plan);

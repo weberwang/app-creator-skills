@@ -29,7 +29,7 @@
 
 ## 位置与尺寸控制权
 
-`ui_layout.position_driver` 与可选的 `ui_layout.size_driver` 是两项独立决定。V3 自动选型不读取尚未采集的运行时矩阵；默认计划假设节点与 Widget target 路径为 `scale=1`、`rotation=0`、`skew=0`。其他条件允许 Widget 时，普通 UI 必须选择 `WIDGET`；`layout_owner`、`REFLOW` 或 `SCROLL` 不单独构成原生不可用的依据。已知项目路径存在非单位变换时，允许显式选择 `SHARED` 且声明 `widget_fallback: non-unit-transform`；行为结束后恢复 `SHARED` 也须遵循该要求。该计划在 V5 必须以实际 `node_to_layout`、`reference_to_layout` 矩阵证实至少一条路径非单位，不能以自填理由或两个单位矩阵通过。若实际逻辑变换与 WIDGET 计划或 SHARED 回退不符，阻断并回到上游调整位置驱动器，不通过增加容器规避。实际父/祖先 Node 上可表达的停靠必须使用 Widget，逻辑根、兄弟定位和整体组合可用 `SHARED`。Creator 原生父 Layout 若负责排列子节点，子节点必须使用 `position_driver: LAYOUT`，不能另用 Widget 写同一位置；确有结构限制时共享布局可保留 `layout_owner: PARENT`。普通 UI 和浮层本体不使用 `STATIC`；独立定位浮层仅由具体位置行为临时控制，背景按自身边界处理。
+`ui_layout.position_driver` 与可选的 `ui_layout.size_driver` 是两项独立决定。固定尺寸直接父子可使用 `STATIC` 保持固定本地偏移；V5 核对实际父框尺寸及偏移，父 Layout 不能同时排布该子项。父级尺寸变化时使用相应的 `WIDGET` 或共享布局。V3 自动选型假设 Widget target 路径为 `scale=1`、`rotation=0`、`skew=0`。已知路径非单位变换时，显式选择 `SHARED` 且声明 `widget_fallback: non-unit-transform`，V5 以实际矩阵核实。逻辑根、兄弟定位和整体组合可用 `SHARED`。Creator 原生父 Layout 负责排列子节点时，子节点使用 `position_driver: LAYOUT`，不能另用 Widget 写同一位置。独立定位浮层仅由具体位置行为临时控制，背景按自身边界处理。
 
 正式节点的 `axis_alignment` 及当前批次实际 `layout_bounds`、`reference_bounds` 必须与 Widget 已冻结的双轴边距一致；父框或视口变化后重新采集，不能仅凭组件 flag 声称停靠生效。位置行为的 `position_behavior`、可恢复驱动和组件条件遵循[Widget 定位策略](./widget-layout.md)：V5 核查可用组件、目标及矩阵，触发和恢复是否真实发生仍需在现有运行用例中验证。
 
@@ -97,7 +97,9 @@
 - `active` 读取 Creator 的 `Node.activeInHierarchy`，不能用本地 `node.active` 或计划声明值代替；父节点不活动时，后代的层级活动状态也必须为 false。另记录真实 `parent_layout_node_id`；`position_writers`、`size_writers` 分别列出实际写入机制，且各属性只有计划指定的唯一写入者。
 - `widget` 为实际 Widget 快照或 `null`，读取 `enabled`、`target_id`、`align_mode`、六个 `is_align_*` 开关、对应活动对齐值，以及六个 `is_absolute_*` 开关。启用的对齐值必须是有限逻辑像素；活动约束必须使用绝对模式。停用的非 Widget 驱动组件可如实记录 `ONCE`；活动的 `ALWAYS` 不符合本工作流，执行计划为 Widget 时使用 `ON_WINDOW_RESIZE` 并由统一布局入口显式调用 `updateAlignment()`。
 - `layout` 与 `parent_layout` 分别读取节点自身和真实父节点上的 Layout；存在组件时记录 `enabled`、`type`、`resize_mode`、`align_horizontal`、`align_vertical`。`GRID` 必须记录 `start_axis`，可附正数 `cell_size`。无组件时为 `null`。这些 `align_*` 值用于描述实际组件状态，不存在另一个冻结的 Layout 参数合同要求它们逐项等于计划。
-- `ui_transform.width/height`；存在 Sprite 时记录实际 `type`、`size_mode` 与正式帧 `original_size`，无 Sprite 时 `sprite: null`。
+- `ui_transform.width/height`；存在 Sprite 时记录实际 `type`、`size_mode` 与正式帧 `original_size`，无 Sprite 时 `sprite: null`。`SLICED` 还读取同一 SpriteFrame 的 `rect.width/height` 为 `frame_size`，`insetLeft/Right/Top/Bottom` 为 `slice_borders`，从节点到布局树祖先逐级读取实际 `Node.scale.x/y` 并记录 `{node_id,x,y}` 组成的 `scale_path`。每级实际缩放严格为数字 1，四边须绑定冻结值，实际 UITransform 宽高分别大于对应边距之和。矩阵复算仍允许采样量化误差。
+
+对每个适用状态，将当前工作项确认范围内可能使该皮肤显示框最窄和最矮的条件分别运行；最窄和最矮可来自不同视口或内容状态。各条件实际读取当前节点后，分别用现有 `validateLayoutRuntimeSnapshots` 检查对应 `component_snapshots`，保存绑定当前 scene/state、候选、条件和调用结果的独立记录。响应式 `keyUiRects` 或窄屏标签无法证明该皮肤的真实切片及最小显示框。缺少任一最小条件的真实回读时，九宫格最小显示尺寸保持未验证。
 - `layout_bounds` 与 `reference_bounds` 是实际 UITransform 完整矩形经既有坐标合同换算到冻结布局逻辑坐标空间后的几何；它们用于校验严格中心、中心参照和组合 union。业务节点的 `reference_bounds` 必须等于其实际参照节点快照的 `layout_bounds`；引用逻辑根时，使用同一批次唯一的根矩形。
 - `node_to_layout` 与 `reference_to_layout` 是从节点和 Widget 参照路径映射到冻结布局逻辑坐标空间的线性部分；先按现有 `designTransform`、Camera 和逻辑视口合同换算，不得直接把含屏幕适配缩放或 DPR 的 `worldMatrix` 当成逻辑矩阵。`position_driver: WIDGET` 的节点及其 Widget target 参照路径必须为单位变换；`SHARED` 可换算位置。非背景图片节点（包括九宫格）到逻辑空间的线性矩阵必须保持单位轴长与正交，允许旋转但不得缩放或剪切；九宫格仅通过切片改变目标框，独立背景节点允许 cover 等比缩放。不能把全局 bounds 差值直接写入 Widget 局部值。
 

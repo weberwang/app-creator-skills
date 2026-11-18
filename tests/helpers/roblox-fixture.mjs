@@ -108,11 +108,11 @@ export function createRobloxVisualFixture(t, { stage = 'V5', layer = false, publ
   const anchorPoint = { x: 0.5, y: 0.5 };
   const nodes = [
     { id: work.visual.objectId, className, instancePath: objectPath, parentId: null, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: layer ? 'safe-area' : 'world', ...(layer ? { screenInsets: 'CoreUISafeInsets', clipToDeviceSafeArea: true, sizeModifiers: [] } : {}) },
-    { id: 'child-a', className: childClass, instancePath: sourceChild, parentId: work.visual.objectId, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: work.visual.objectId, ...(layer ? { anchorPoint, positionWriters: ['UDIM2'], sizeWriters: { horizontal: 'UDIM2', vertical: 'UDIM2' }, sizeConstraint: 'RelativeXY', sizeModifiers: [] } : {}) },
+    { id: 'child-a', className: childClass, instancePath: sourceChild, parentId: work.visual.objectId, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: work.visual.objectId, ...(layer ? { textStyle: { color: { r: 1, g: 1, b: 1 }, transparency: 0 }, anchorPoint, positionWriters: ['UDIM2'], sizeWriters: { horizontal: 'UDIM2', vertical: 'UDIM2' }, sizeConstraint: 'RelativeXY', sizeModifiers: [] } : {}) },
   ];
   const layout = { schemaVersion: 'roblox-layout/1.0', ...id, studio: structuredClone(studio), rootId: work.visual.objectId, nodes };
   const rootProperties = layer ? { IsGuiBase2d: true, ScreenInsets: 'CoreUISafeInsets', ClipToDeviceSafeArea: true, LayoutControllers: [], SizeModifiers: [] } : {};
-  const childProperties = layer ? { IsGuiObject: true, Position: screen, Size: size, AnchorPoint: anchorPoint, AutomaticSize: 'None', SizeConstraint: 'RelativeXY', LayoutControllers: [], FlexItems: [], SizeModifiers: [] } : {};
+  const childProperties = layer ? { TextColor3: { r: 1, g: 1, b: 1 }, TextTransparency: 0, IsGuiObject: true, Position: screen, Size: size, AnchorPoint: anchorPoint, AutomaticSize: 'None', SizeConstraint: 'RelativeXY', LayoutControllers: [], FlexItems: [], SizeModifiers: [] } : {};
   const editObservation = capture({ context: 'Edit', toolName: 'execute_luau', targetPath: objectPath, actual: JSON.stringify({ nodes: [{ instancePath: objectPath, className, properties: rootProperties }, { instancePath: sourceChild, className: childClass, properties: childProperties }] }) });
   if (layer) layout.editObservationRef = editObservation.ref;
   const rootInspection = capture({ context: 'Edit', toolName: 'execute_luau', targetPath: objectPath, actual: JSON.stringify({ nodes: [{ instancePath: objectPath, className, properties: {} }] }) });

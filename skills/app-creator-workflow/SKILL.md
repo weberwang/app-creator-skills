@@ -5,7 +5,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 # 游戏与应用统一编排
 
-关卡／场景设计与正式三维制作可按需委派给[两个专属子代理](references/specialist-agents.md)，沿用原阶段与人工确认；配置随技能分发，在 Codex 项目中显式激活，不强制普通任务创建代理。
+关卡／场景设计按需使用 `app_level_scene_designer`，正式三维几何制作与修改统一使用 `app_3d_model_creator`。[专属代理配置](references/specialist-agents.md)随各自的专业技能分发，在 Codex 项目中显式激活，沿用原阶段与人工确认。
 
 游戏大场景、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据，先完成可验证路径再按需要推进下一批；小范围修改沿用已有任务。
 

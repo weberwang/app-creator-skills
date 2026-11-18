@@ -16,7 +16,7 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#资产生产路线)。
 
-运行时 3D 模型（包括道具、角色静态网格和模块化环境）使用现有 `gameplay-environment` 路线，由 [`cocos-game-3d-modeling`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-3d-modeling) 通过 Blender MCP 生产，并按[工作流接入](../../cocos-game-3d-modeling/references/workflow-integration.md)登记和导入。`visual-assets.json` 的通用来源、输出、归属和证据校验不验证模型内部几何；拓扑、UV、LOD、导出回读和 Creator 导入报告作为实际技术证据提交，不伪填图片字段。仅将 3D 工程离线渲染成无交互背景时，最终位图仍走 `decorative-full-bleed`；渲染图不能代替运行时网格。已冻结 `image_generation_required=true` 的区域不得用模型、3D 渲染图或原生体块静默替换。
+运行时 3D 模型（包括道具、角色静态网格和模块化环境）使用现有 `gameplay-environment` 路线，由 [`cocos-game-3d-modeling`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-game-3d-modeling) 通过 Blender MCP 生产，并按[工作流接入](../../app-stack-cocos/references/workflow-integration.md)登记和导入。`visual-assets.json` 的通用来源、输出、归属和证据校验不验证模型内部几何；拓扑、UV、LOD、导出回读和 Creator 导入报告作为实际技术证据提交，不伪填图片字段。仅将 3D 工程离线渲染成无交互背景时，最终位图仍走 `decorative-full-bleed`；渲染图不能代替运行时网格。已冻结 `image_generation_required=true` 的区域不得用模型、3D 渲染图或原生体块静默替换。
 
 ## 路线选择规则
 
