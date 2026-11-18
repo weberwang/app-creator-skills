@@ -37,6 +37,8 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 任务按[最小约定](references/output-files.md#每项任务的最小约定)明确目标与结果、涉及写入／输出时的路径、完成条件与验证方式。负责人默认当前代理，委派／并行／交接时才注明；版本、依赖、消费者及保留去向按需补充，已有规则直接引用。正式委派和工具合同必填项保留，机器证据仍使用当前 `evidenceRoot`，不覆盖冻结文件或为小任务额外生成报告。
 
+游戏与非游戏 App 均按[系统与模块覆盖](references/system-module-coverage.md)在需求／全局基线识别必要能力，实施前设计本批规则并关联需求、模块、任务和验证。明确实施、复用、后置、不需要或待决定；本批依赖不能后置或未决。Work Plan 的 `systemCoverage` 是实施必需合同，不能仅列页面／场景任务或依靠视觉设计补业务规则；小任务沿已有依据做局部覆盖。
+
 每轮按[增量影响与复用范围](references/professional-conventions.md#incremental-change-impact)确定真实消费者、需要修改与重验的部分，影响不明时先追踪依赖；小修改在已有计划中简述即可。新项目按[正式功能切片](references/workflow.md#功能切片与跨对象依赖)先贯通最小用户路径，后续沿同一正式工程演进，不另建长期 Demo 或在 V5 重写已验证机制。
 
 按[项目整理与产物清理](../app-artifact-cleanup/references/project-cleanup.md)安排适用的记录与项目内容核对，任务只明确清理结果、允许范围及验证方式；涉及移动／删除时补齐引用与恢复依据，协作时明确写者。已有证据按变化复用，不反复全仓扫描，提交／发布去向到对应环节核对；冻结确认和有效证据链不得为清理改写。

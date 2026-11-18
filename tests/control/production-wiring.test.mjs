@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { completeUnit, initializeWork, inspectProductionDependencyHistory, inspectWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
@@ -64,7 +65,8 @@ async function prepare(repo, id, batchId, dependenciesPath, paths = ['src/flow.t
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   put(repo, workPath, work);
   const planPath = `docs/plan-${id}.json`;
-  put(repo, planPath, { executionUnits: [{ unitId: id, owner: 'fixture', paths, acceptanceCommands: ['node --version'] }] });
+  const executionUnits = [{ unitId: id, owner: 'fixture', paths, acceptanceCommands: ['node --version'] }];
+  put(repo, planPath, { executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) });
   await prepareWorkRecords({ repo, workItem: workPath, planPath });
   await transitionWork({ repo, workItem: workPath, to: 'REVIEW', args: {} });
   return { repo, workPath, work: loadWork(repo, workPath) };
@@ -227,5 +229,5 @@ test('历史交付与控制记录或证据重合时仍要求真实文件存在',
   assert.throws(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }), /交付文件不存在/);
   put(repo, 'evidence/raw.txt', '证据');
   unlinkSync(join(repo, 'docs/plan.json'));
-  assert.throws(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }), /交付文件不存在/);
+  assert.throws(() => validateUnitResult(repo, work, pack, unit, result, { historical: true }), /系统覆盖实施包不存在/);
 });

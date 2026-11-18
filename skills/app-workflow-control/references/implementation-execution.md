@@ -2,6 +2,10 @@
 
 `Implementation Package.executionUnits` 是计划者给定的固定顺序。`sequence` 必须从 1 连续递增；控制器按数组顺序分批，不执行拓扑排序或自动重排。
 
+所有计划及实施包还必须包含[系统与模块覆盖](../../app-creator-workflow/references/system-module-coverage.md)的 `systemCoverage`。需求和设计来源以摘要冻结，每项本批需求落实到活跃模块、实施或复用单元与准确验收命令；模块前置落实为单元 `dependsOn`。执行快照保留完整覆盖内容，记录结果与完成检查沿同一映射复验，不允许启动后删项、改为后置或用新任务悄悄替换。
+
+最终集成还须在范围中声明 `systemCoverageMappings`，把每份真实来源包（含功能基线原包、跨模块及生产前批）的当前需求和完整模块集合关联到最终用例、单元及命令。用例结果必须指向该单元结果中实际登记的同一命令输出，详见[最终系统覆盖闭环](../../app-creator-workflow/references/system-module-coverage.md#最终集成的系统覆盖闭环)。需要显式纳入的独立模块使用范围 `systemSources`，不伪造显示对象。
+
 ## 单元字段
 
 - 未提供 `parallelGroup` 的单元各自构成一个串行批次。

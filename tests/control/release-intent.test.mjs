@@ -7,6 +7,7 @@ import { assertFinalCompletion } from '../../skills/app-workflow-control/scripts
 import { assertReleaseTransition } from '../../skills/app-workflow-control/scripts/runtime/release-policy.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { completeUnit, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 
 /** 为 RELEASE 合同测试建立真实临时项目和必要的工程证据。 */
 async function createReleaseFixture({ id, intent = 'prepare', includePreparation = true, resultOverrides = {}, materialOverrides = {} }) {
@@ -31,6 +32,7 @@ async function createReleaseFixture({ id, intent = 'prepare', includePreparation
       acceptanceCommands: ['node --version'],
     }],
   };
+  packageData.systemCoverage = createSystemCoverage(repo, work, packageData.executionUnits);
   await putJson(repo, packPath, packageData);
   work.implementationPackageRef = { path: packPath };
 

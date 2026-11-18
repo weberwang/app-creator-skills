@@ -22,6 +22,8 @@
 
 `cases` 非空，每项包含唯一的 `caseId` 与非空 `objectIds`，所有 ID 必须指向上述模块，并覆盖全部模块。范围必须在执行前冻结；最终结果不能删除对象、缩小对象集合或更改行为覆盖。范围、来源、实施包、清单及文件变化后须重新核对和执行受影响回归。
 
+范围同时必填公共[系统覆盖最终映射](../../app-creator-workflow/references/system-module-coverage.md#最终集成的系统覆盖闭环)的 `systemCoverageMappings`，逐份来源包将当前需求、完整模块集合及实际消费者关联到 `caseId/unitId/command`。命令必须属于本次实施单元及 `systemCoverage` 的验收声明；启动前严格检查来源的覆盖、计划摘要与执行快照。存在生产总范围时收齐全部批次来源，独立批次用 `productionSources`；其他必要独立模块用 `systemSources`，不依赖视觉对象或 V5。
+
 ## 执行结果
 
 `integrationEvidenceRef` 绑定汇总 JSON：包含同一 `schemaVersion`、`workItemId`、`projectId`、`stack`、`status: "PASS"`，以及与冻结范围逐项一致的 `objects` 和 `cases`。每个汇总 `cases` 项增加独立的 `evidenceRef` 指向实际行为记录：
@@ -35,6 +37,7 @@
   "caseId": "submit-order",
   "objectIds": ["account-module", "order-module"],
   "status": "PASS",
+  "unitId": "integration-unit",
   "command": "实际执行的测试命令",
   "exitCode": 0,
   "outputRef": "REF"
@@ -42,5 +45,7 @@
 ```
 
 汇总文件和各行为记录均须列入当前集成工作项的 Evidence Manifest，状态为 `PASS`。`outputRef` 指向当前工作项 `evidenceRoot` 内独立、非空且摘要正确的实际原始命令输出，不能指向工作项、实施包、范围、清单、汇总、其他行为记录、来源交付、来源证据或控制状态文件，也不能用硬链接别名绕过。执行者记录命令及实际退出码；控制器不执行这些命令，也不能仅凭 `exitCode: 0` 确认命令真实运行。
+
+`unitId/command` 必须与该 case 的冻结映射一致，`outputRef` 还须精确对应本单元 PASS 结果中相同命令的 `commandOutputs.outputFile`。不能在单元执行之外另写一份未关联日志作为通过依据；改变 `final` 用途或删除范围不能绕过已冻结检查。
 
 验收时重新严格检查每个来源工作项，并核对所有交付文件、范围、行为身份和输出。接口、权限、并发、数据库事务、错误路径或服务组合的覆盖依据当前项目需求明确，缺少数据库或外部依赖时记录未运行，不以静态检查代替实际集成结果。

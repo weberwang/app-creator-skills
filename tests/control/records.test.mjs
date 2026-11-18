@@ -13,6 +13,7 @@ import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-
 import { validateEvidence } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -76,9 +77,15 @@ function unit(unitId, overrides = {}) {
 /** 写入计划并调用 records API，返回新冻结的工作项。 */
 async function prepare(fixture, executionUnits, extra = {}) {
   const planPath = 'docs/work-plan.json';
-  await putJson(fixture.repo, planPath, { executionUnits, ...extra });
+  await putPlan(fixture, planPath, executionUnits, extra);
   const result = await prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath });
   return { result, planPath, work: await loadWork(fixture.repo, fixture.workPath) };
+}
+
+/** 显式为测试计划绑定合成需求与设计，以保留各用例原有校验目标。 */
+async function putPlan(fixture, path, executionUnits, extra = {}) {
+  const work = await readJson(fixture.repo, fixture.workPath);
+  await putJson(fixture.repo, path, { executionUnits, systemCoverage: createSystemCoverage(fixture.repo, work, executionUnits), ...extra });
 }
 
 /** 启动已计划工作项并返回当前冻结单元。 */
@@ -176,25 +183,25 @@ test('拒绝身份注入、未知字段、越界路径和覆盖控制记录的�
     workItemId: 'spoofed',
     executionUnits: [unit('one')],
   };
-  await putJson(fixture.repo, 'docs/spoofed-plan.json', maliciousPlan);
+  await putPlan(fixture, 'docs/spoofed-plan.json', maliciousPlan.executionUnits, { workItemId: maliciousPlan.workItemId });
   await assert.rejects(
     prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: 'docs/spoofed-plan.json' }),
     /未知字段/,
   );
 
-  await putJson(fixture.repo, 'docs/unknown-plan.json', { executionUnits: [unit('one', { resultPath: 'arbitrary.json' })] });
+  await putPlan(fixture, 'docs/unknown-plan.json', [unit('one', { resultPath: 'arbitrary.json' })]);
   await assert.rejects(
     prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: 'docs/unknown-plan.json' }),
     /未知字段/,
   );
 
-  await putJson(fixture.repo, 'docs/outside-plan.json', { executionUnits: [unit('one', { paths: ['outside/file.dart'] })] });
+  await putPlan(fixture, 'docs/outside-plan.json', [unit('one', { paths: ['outside/file.dart'] })]);
   await assert.rejects(
     prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: 'docs/outside-plan.json' }),
     /allowedPaths/,
   );
 
-  await putJson(fixture.repo, 'docs/control-plan.json', { executionUnits: [unit('one', { paths: [fixture.workPath] })] });
+  await putPlan(fixture, 'docs/control-plan.json', [unit('one', { paths: [fixture.workPath] })]);
   await assert.rejects(
     prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: 'docs/control-plan.json' }),
     /控制记录/,
@@ -205,7 +212,7 @@ test('拒绝身份注入、未知字段、越界路径和覆盖控制记录的�
 test('锁冲突和已占用目标不覆盖文件；冻结校验失败会回滚本次新建文件', async (t) => {
   const locked = await createFixture({ id: 'locked-records' });
   t.after(() => rm(locked.repo, { recursive: true, force: true }));
-  await putJson(locked.repo, 'docs/work-plan.json', { executionUnits: [unit('one')] });
+  await putPlan(locked, 'docs/work-plan.json', [unit('one')]);
   await put(locked.repo, `${locked.workPath}.lock`, 'another writer\n');
   await assert.rejects(
     prepareWorkRecords({ repo: locked.repo, workItem: locked.workPath, planPath: 'docs/work-plan.json' }),
@@ -217,7 +224,7 @@ test('锁冲突和已占用目标不覆盖文件；冻结校验失败会回滚�
   t.after(() => rm(conflict.repo, { recursive: true, force: true }));
   const occupiedPath = '.workflow-control/implementation-packages/conflict-records-r1.json';
   await put(conflict.repo, occupiedPath, 'leave this file unchanged\n');
-  await putJson(conflict.repo, 'docs/work-plan.json', { executionUnits: [unit('one')] });
+  await putPlan(conflict, 'docs/work-plan.json', [unit('one')]);
   await assert.rejects(
     prepareWorkRecords({ repo: conflict.repo, workItem: conflict.workPath, planPath: 'docs/work-plan.json' }),
     { code: 'ALREADY_EXISTS' },
@@ -226,12 +233,10 @@ test('锁冲突和已占用目标不覆盖文件；冻结校验失败会回滚�
 
   const duplicate = await createFixture({ id: 'duplicate-records' });
   t.after(() => rm(duplicate.repo, { recursive: true, force: true }));
-  await putJson(duplicate.repo, 'docs/work-plan.json', {
-    executionUnits: [unit('same', { paths: ['lib/first.dart'] }), unit('same', { paths: ['lib/second.dart'] })],
-  });
+  await putPlan(duplicate, 'docs/work-plan.json', [unit('same', { paths: ['lib/first.dart'] }), unit('same', { paths: ['lib/second.dart'] })]);
   await assert.rejects(
     prepareWorkRecords({ repo: duplicate.repo, workItem: duplicate.workPath, planPath: 'docs/work-plan.json' }),
-    /unitId 重复/,
+    /unitId (?:不允许)?重复/,
   );
   await assert.rejects(readFile(resolve(duplicate.repo, '.workflow-control/implementation-packages/duplicate-records-r1.json')));
   await assert.rejects(readFile(resolve(duplicate.repo, '.workflow-control/evidence/duplicate-records/manifest.json')));
@@ -242,7 +247,7 @@ test('锁冲突和已占用目标不覆盖文件；冻结校验失败会回滚�
     unit('one', { type: 'PAGE', paths: ['lib/shared.dart'], parallelGroup: 'same-batch' }),
     unit('two', { type: 'PAGE', paths: ['lib/shared.dart'], parallelGroup: 'same-batch' }),
   ];
-  await putJson(rollback.repo, 'docs/work-plan.json', { executionUnits: conflictingUnits });
+  await putPlan(rollback, 'docs/work-plan.json', conflictingUnits);
   await assert.rejects(prepareWorkRecords({ repo: rollback.repo, workItem: rollback.workPath, planPath: 'docs/work-plan.json' }), /冲突/);
   const rollbackWork = await loadWork(rollback.repo, rollback.workPath);
   assert.equal(rollbackWork.implementationPackageRef, null);
@@ -250,7 +255,7 @@ test('锁冲突和已占用目标不覆盖文件；冻结校验失败会回滚�
   await assert.rejects(readFile(resolve(rollback.repo, '.workflow-control/implementation-packages/rollback-records-r1.json')));
   await assert.rejects(readFile(resolve(rollback.repo, '.workflow-control/evidence/rollback-records/manifest.json')));
   await assert.rejects(readdir(resolve(rollback.repo, '.workflow-control/evidence/rollback-records')), { code: 'ENOENT' });
-  await putJson(rollback.repo, 'docs/work-plan.json', { executionUnits: [unit('one')] });
+  await putPlan(rollback, 'docs/work-plan.json', [unit('one')]);
   const retry = await prepareWorkRecords({ repo: rollback.repo, workItem: rollback.workPath, planPath: 'docs/work-plan.json' });
   assert.equal(retry.status, 'PASS');
   assert.equal((await loadWork(rollback.repo, rollback.workPath)).implementationPackageRef.path, '.workflow-control/implementation-packages/rollback-records-r1.json');
@@ -280,7 +285,7 @@ test('RETURN 后使用新计划源和 evidenceRoot 可冻结同一工作项的�
   });
 
   const newPlanPath = 'docs/revised-work-plan.json';
-  await putJson(fixture.repo, newPlanPath, { executionUnits: [unit('one')] });
+  await putPlan(fixture, newPlanPath, [unit('one')]);
   await prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: newPlanPath });
   const replanned = await loadWork(fixture.repo, fixture.workPath);
   assert.equal(replanned.planningRef.path, newPlanPath);
@@ -352,10 +357,11 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
       resultPath: `${work.evidenceRoot}/unit-v3.json`, acceptanceCommands: ['node --version'],
     }],
   };
-  await putJson(fixture.repo, oldPlanPath, { executionUnits: [unit('v3', { type: 'PAGE', paths: ['lib/page.dart'] })] });
+  pack.systemCoverage = createSystemCoverage(fixture.repo, work, pack.executionUnits);
+  await putPlan(fixture, oldPlanPath, [unit('v3', { type: 'PAGE', paths: ['lib/page.dart'] })]);
   await putJson(fixture.repo, oldPackagePath, pack);
   work.implementationPackageRef = { path: oldPackagePath };
-  work.planningRef = { path: oldPlanPath };
+  work.planningRef = { path: oldPlanPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, oldPlanPath))).digest('hex') };
   work.evidenceRef = { path: manifestPath };
   const profile = loadProfile(fixture.repo, work.stack);
   const items = [];
@@ -410,7 +416,7 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
   await putJson(fixture.repo, fixture.workPath, work);
 
   const newPlanPath = 'docs/v4-work-plan.json';
-  await putJson(fixture.repo, newPlanPath, { executionUnits: [unit('v4', { type: 'PAGE', paths: ['lib/page.dart'] })] });
+  await putPlan(fixture, newPlanPath, [unit('v4', { type: 'PAGE', paths: ['lib/page.dart'] })]);
   await prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath: newPlanPath });
   const replanned = await loadWork(fixture.repo, fixture.workPath);
   assert.equal(replanned.planningRef.path, newPlanPath);
@@ -426,7 +432,7 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
     schemaVersion: '1.0', workItemId: 'orphan-replan', stack: 'flutter', workItemType: 'FOUNDATION',
     executionUnits: [{ unitId: 'old', sequence: 1, type: 'MODULE', owner: 'old-owner', paths: ['lib/old.dart'], resultPath: '.workflow-control/evidence/orphan-replan-old/unit-old.json', acceptanceCommands: ['node --version'] }],
   });
-  await putJson(orphan.repo, 'docs/work-plan.json', { executionUnits: [unit('new')] });
+  await putPlan(orphan, 'docs/work-plan.json', [unit('new')]);
   await assert.rejects(
     prepareWorkRecords({ repo: orphan.repo, workItem: orphan.workPath, planPath: 'docs/work-plan.json' }),
     /未登记或未作废/,

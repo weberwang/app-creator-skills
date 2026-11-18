@@ -11,6 +11,8 @@ import { validateProductionBatchEvidence } from '../../skills/app-workflow-contr
 import { bindWorkSource } from '../../skills/app-workflow-control/scripts/runtime/work-source.mjs';
 import { validateFinalIntegration, validateIntegrationScope } from '../../skills/app-workflow-control/scripts/runtime/final-integration.mjs';
 import { initializeWork, inspectProductionDependencySource } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { coverageMappings, putCoverageExecution, putCoveragePackage } from './integration-coverage-fixture.mjs';
+import { collectIntegrationSystemSources } from '../../skills/app-workflow-control/scripts/runtime/integration-system-sources.mjs';
 
 /** 创建独占系统临时项目，只允许清理经过核对的测试目录。 */
 function fixture(t, { app = false } = {}) {
@@ -83,7 +85,11 @@ test('SCENE 与 App 页面可冻结总范围，首批只完成自己的步骤', 
     const inspect = () => ({ status: 'PASS', blocking: [] });
     f.write('first.json', { ...f.work, globalState: 'IMPLEMENTING' });
     assert.throws(() => freezeProductionDependencies(f.repo, second, inspect), /已完成的前置批次/);
-    f.write('first.json', { ...f.work, globalState: 'COMPLETE' });
+    f.write('first.json', { ...f.work, globalState: 'COMPLETE', visual: { ...f.work.visual, stage: 'V2', designIntent: 'proposal' } });
+    delete second.productionDependencies[0].workItemRef.sha256;
+    assert.throws(() => freezeProductionDependencies(f.repo, second, inspect), /不能采用仅设计提案/);
+    // 真正完成的视觉生产前置必须到 V5，V2 设计提案的 COMPLETE 不足以放行。
+    f.write('first.json', { ...f.work, globalState: 'COMPLETE', visual: { ...f.work.visual, stage: 'V5' } });
     delete second.productionDependencies[0].workItemRef.sha256;
     freezeProductionDependencies(f.repo, second, inspect);
     assert.doesNotThrow(() => assertProductionDependencies(f.repo, second, inspect));
@@ -278,15 +284,29 @@ function finalFixture(t, options) {
   }
   const baseline = f.write('final/baseline.json', { objectId: f.objectId });
   const source = { ...f.work, workItemId: 'current-work', globalState: 'COMPLETE', visual: { objectId: f.objectId, stage: 'V5', functionBaselineRef: baseline, ...(options?.app ? {} : { designRoute: 'game-ui', targets: [{ targetId: 'entrance' }, { targetId: 'battle' }] }) } };
+  const sourcePack = 'final/source-pack.json';
+  putCoveragePackage(f.repo, source, { path: sourcePack, resultPath: 'evidence/current-work/unit.json', ownedPath: 'src/source.ts' });
+  source.implementationPackageRef = { path: sourcePack };
+  const sources = [{ objectId: f.objectId, packPath: sourcePack }];
   const sourceRef = f.write('final/source.json', source);
   const entry = { objectId: f.objectId, workItemRef: sourceRef, functionBaselineRef: baseline };
+  // 最新对象只代表首批；第二批由独立已完成模块提供历史系统来源。
+  const previousPack = 'final/previous-pack.json';
+  const previous = { schemaVersion: '1.0', projectId: f.scope.projectId, stack: f.stack, workItemId: 'previous-work', workItemType: 'MODULE', globalState: 'COMPLETE', productionScopeRef: f.ref, productionBatchId: 'second', productionDependencies: [{ batchId: 'first', workItemRef: sourceRef }], implementationPackageRef: { path: previousPack } };
+  putCoveragePackage(f.repo, previous, { path: previousPack, resultPath: 'evidence/previous-work/unit.json', ownedPath: 'src/previous.ts' });
+  const previousRef = f.write('final/previous-source.json', previous);
+  sources.push({ objectId: f.objectId, packPath: previousPack });
   const objects = [entry];
   if (options?.cross) {
     const detailBaseline = f.write('final/detail-baseline.json', { objectId: 'detail' });
     const detailSource = { ...source, workItemId: 'detail-work', visual: { objectId: 'detail', stage: 'V5', functionBaselineRef: detailBaseline } };
+    const detailPack = 'final/detail-pack.json';
+    putCoveragePackage(f.repo, detailSource, { path: detailPack, resultPath: 'evidence/detail-work/unit.json', ownedPath: 'src/detail.ts' });
+    detailSource.implementationPackageRef = { path: detailPack };
+    sources.push({ objectId: 'detail', packPath: detailPack });
     objects.push({ objectId: 'detail', workItemRef: f.write('final/detail-source.json', detailSource), functionBaselineRef: detailBaseline });
   }
-  const work = { schemaVersion: '1.0', workItemId: 'final', projectId: f.scope.projectId, stack: f.stack, workItemType: 'INTEGRATION', integrationPurpose: 'final', productionScopeRef: f.ref, evidenceRoot: 'evidence/final', evidenceRef: { path: 'evidence/final/manifest.json' } };
+  const work = { schemaVersion: '1.0', workItemId: 'final', projectId: f.scope.projectId, stack: f.stack, workItemType: 'INTEGRATION', integrationPurpose: 'final', productionScopeRef: f.ref, evidenceRoot: 'evidence/final', implementationPackageRef: { path: 'final/final-pack.json' }, evidenceRef: { path: 'evidence/final/manifest.json' } };
   const cases = [
     { caseId: 'case-start', objectIds: [f.objectId], stepIds: ['start'], stateIds: ['ready', 'progress'], transitions: [{ transitionId: 'begin', fromStateId: 'ready', toStateId: 'progress' }] },
     { caseId: 'case-fail', objectIds: [f.objectId], stepIds: ['fail'], stateIds: ['progress', 'failed'], transitions: [{ transitionId: 'failure', fromStateId: 'progress', toStateId: 'failed' }] },
@@ -298,13 +318,16 @@ function finalFixture(t, options) {
     cases.push({ caseId: 'case-detail', objectIds: [f.objectId, 'detail'], stepIds: ['open-detail'], stateIds: ['progress', 'detail-ready'], transitions: [] });
     cases.push({ caseId: 'case-cross-page', objectIds: [f.objectId, 'detail'], stepIds: ['start', 'open-detail'], stateIds: ['ready', 'progress', 'detail-ready'], transitions: [], paths: [{ pathId: 'cross-page', stepIds: ['start', 'open-detail'] }] });
   }
-  const integrationScope = { schemaVersion: '1.0', projectId: work.projectId, stack: work.stack, workItemId: work.workItemId, productionScopeRef: f.ref, objects, cases: cases.map(({ caseId, objectIds }) => ({ caseId, objectIds })) };
+  const integrationScope = { schemaVersion: '1.0', projectId: work.projectId, stack: work.stack, workItemId: work.workItemId, productionScopeRef: f.ref, objects, productionSources: [{ workItemRef: previousRef, objectIds: [f.objectId] }], cases: cases.map(({ caseId, objectIds }) => ({ caseId, objectIds })) };
+  const { unit } = putCoveragePackage(f.repo, work, { path: work.implementationPackageRef.path, resultPath: 'evidence/final/unit.json', ownedPath: 'src/integration.ts' });
+  const execution = putCoverageExecution(f.repo, work, unit, { outputPath: 'evidence/final/command.log' });
+  integrationScope.systemCoverageMappings = coverageMappings(f.repo, integrationScope, sources);
   work.integrationScopeRef = f.write('final/scope.json', integrationScope);
   const manifest = { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, items: [{ status: 'PASS', path: 'evidence/final/result.json' }] };
   const evidence = { schemaVersion: '1.0', projectId: work.projectId, stack: work.stack, workItemId: work.workItemId, status: 'PASS', objects, cases: [] };
   for (const item of cases) {
     const log = f.write(`evidence/final/${item.caseId}.log`, '合成运行轨迹');
-    const actual = { schemaVersion: '1.0', projectId: work.projectId, stack: work.stack, workItemId: work.workItemId, status: 'PASS', caseId: item.caseId, objectIds: item.objectIds, production: { stepIds: item.stepIds, stateIds: item.stateIds, transitions: item.transitions, ...(item.paths ? { paths: item.paths } : {}), evidenceRef: log } };
+    const actual = { schemaVersion: '1.0', projectId: work.projectId, stack: work.stack, workItemId: work.workItemId, status: 'PASS', caseId: item.caseId, objectIds: item.objectIds, ...execution, production: { stepIds: item.stepIds, stateIds: item.stateIds, transitions: item.transitions, ...(item.paths ? { paths: item.paths } : {}), evidenceRef: log } };
     const caseRef = f.write(`evidence/final/${item.caseId}.json`, actual);
     evidence.cases.push({ caseId: item.caseId, objectIds: item.objectIds, evidenceRef: caseRef });
     manifest.items.push({ status: 'PASS', path: caseRef.path }, { status: 'PASS', path: log.path });
@@ -317,12 +340,41 @@ function finalFixture(t, options) {
 test('最终游戏场景与 App 页面必须覆盖完整总范围及当前版本用例', (t) => {
   for (const app of [false, true]) {
     const f = finalFixture(t, { app });
-    assert.doesNotThrow(() => validateIntegrationScope(f.repo, f.work));
+    assert.doesNotThrow(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }));
     assert.doesNotThrow(() => validateFinalIntegration(f.repo, f.work, f.inspect));
     const changed = structuredClone(f.integrationScope); changed.cases = changed.cases.filter((item) => item.caseId !== 'case-fail');
     f.work.integrationScopeRef = f.write('final/short-scope.json', changed);
-    assert.throws(() => validateIntegrationScope(f.repo, f.work), /缺少生产行为 case-fail/);
+    assert.throws(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }), /缺少生产行为 case-fail/);
   }
+});
+
+test('完整用例不能掩盖最终集成遗漏独立生产批次的系统来源', (t) => {
+  for (const app of [false, true]) {
+    const f = finalFixture(t, { app });
+    assert.doesNotThrow(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }));
+    const changed = structuredClone(f.integrationScope);
+    const omitted = changed.systemCoverageMappings.find((item) => item.sourcePackageRef.path === 'final/previous-pack.json');
+    changed.productionSources = [];
+    changed.systemCoverageMappings = changed.systemCoverageMappings.filter((item) => item !== omitted);
+    f.work.integrationScopeRef = f.write('final/missing-previous-scope.json', changed);
+    assert.throws(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }), /缺少生产批次系统来源/);
+  }
+});
+
+test('多对象批次不能由单一视觉来源或其下游消费者冒充整批完成', (t) => {
+  const f = finalFixture(t, { app: true, cross: true });
+  const scope = structuredClone(f.integrationScope);
+  const detail = JSON.parse(readFileSync(join(f.repo, 'final/detail-source.json'), 'utf8'));
+  // 详情页依旧是有效消费对象，但不再声明首批完成证据。
+  delete detail.productionScopeRef;
+  delete detail.productionBatchId;
+  detail.visual.functionDependencies = [{ workItemRef: f.sourceRef }];
+  scope.objects.find((entry) => entry.objectId === 'detail').workItemRef = f.write('final/detail-without-batch.json', detail);
+  scope.productionSources.push({ workItemRef: f.sourceRef, objectIds: [f.objectId, 'detail'] });
+  assert.throws(() => collectIntegrationSystemSources(f.repo, f.work, scope, f.inspect), /单个视觉来源不能代表同一批次的其他对象/);
+  // 仅把来源放进详情页依赖，也不能把消费关系当作详情页已完成首批。
+  scope.productionSources.pop();
+  assert.throws(() => collectIntegrationSystemSources(f.repo, f.work, scope, f.inspect), /缺少生产批次系统来源：first \/ detail/);
 });
 
 test('最终场景不能缺少累计目标、篡改状态转移或引用不在清单的输出', (t) => {
@@ -330,7 +382,7 @@ test('最终场景不能缺少累计目标、篡改状态转移或引用不在�
   missingTarget.source.visual.targets.pop();
   missingTarget.integrationScope.objects[0].workItemRef = missingTarget.write('final/short-source.json', missingTarget.source);
   missingTarget.work.integrationScopeRef = missingTarget.write('final/short-scope.json', missingTarget.integrationScope);
-  assert.throws(() => validateIntegrationScope(missingTarget.repo, missingTarget.work), /累计目标未覆盖/);
+  assert.throws(() => validateIntegrationScope(missingTarget.repo, missingTarget.work, { inspectSource: missingTarget.inspect }), /累计目标未覆盖/);
 
   const changed = finalFixture(t, { app: false });
   const actualPath = 'evidence/final/case-fail.json';
@@ -349,10 +401,10 @@ test('最终场景不能缺少累计目标、篡改状态转移或引用不在�
 test('最终集成不能省略其范围或参与对象绑定的生产总范围', (t) => {
   const f = finalFixture(t, { app: true });
   const bypass = { ...f.work }; delete bypass.productionScopeRef;
-  assert.throws(() => validateIntegrationScope(f.repo, bypass), /遗漏了已声明的生产总范围/);
+  assert.throws(() => validateIntegrationScope(f.repo, bypass, { inspectSource: f.inspect }), /遗漏了已声明的生产总范围/);
   delete f.integrationScope.productionScopeRef;
   bypass.integrationScopeRef = f.write('final/unscoped.json', f.integrationScope);
-  assert.throws(() => validateIntegrationScope(f.repo, bypass), /已绑定生产总范围/);
+  assert.throws(() => validateIntegrationScope(f.repo, bypass, { inspectSource: f.inspect }), /已绑定生产总范围/);
 });
 
 test('最终组合不能换绑已冻结的显示层宿主', (t) => {
@@ -370,7 +422,7 @@ test('最终组合不能换绑已冻结的显示层宿主', (t) => {
   f.integrationScope.objects.push({ objectId: 'dialog', workItemRef: f.write('final/dialog-source.json', layer), functionBaselineRef: baseline });
   f.integrationScope.cases.push({ caseId: 'case-dialog', objectIds: ['dialog'] });
   f.work.integrationScopeRef = f.write('final/layer-scope.json', f.integrationScope);
-  assert.throws(() => validateIntegrationScope(f.repo, f.work), /宿主或类型与总范围不一致/);
+  assert.throws(() => validateIntegrationScope(f.repo, f.work, { inspectSource: f.inspect }), /宿主或类型与总范围不一致/);
 });
 
 test('完整路径必须按冻结顺序执行，不能漏步、倒序或改变重试次数', (t) => {

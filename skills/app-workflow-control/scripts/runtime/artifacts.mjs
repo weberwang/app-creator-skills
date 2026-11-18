@@ -29,11 +29,14 @@ import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from '
 import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
 import { validateGeneratedImageReview } from './generated-image-review.mjs';
+import { collectSystemCoverageReferences } from './system-coverage.mjs';
+import { assertSystemCoverageBindings } from './system-coverage-binding.mjs';
+import { collectIntegrationScopeReferences } from './integration-system-sources.mjs';
 
 export { hasPreciseApproval } from './approval.mjs';
 export { bindWorkSource } from './work-source.mjs';
 
-const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits', 'productionScopeRef', 'productionBatchId', 'productionDependencies']);
+const PACKAGE_FIELDS = new Set(['schemaVersion', 'workItemId', 'stack', 'workItemType', 'visualStage', 'executionUnits', 'productionScopeRef', 'productionBatchId', 'productionDependencies', 'systemCoverage']);
 const UNIT_FIELDS = new Set(['unitId', 'sequence', 'type', 'owner', 'paths', 'resultPath', 'acceptanceCommands', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
 
 /** 跨栈美术检查记录的固定维度，便于直接比较候选和实装资源。 */
@@ -82,6 +85,8 @@ export function loadPackage(repo, work) {
   assertUniqueResultPaths(repo, pack.executionUnits);
   assertResultPathsAvoidReservedFiles(repo, work, pack.executionUnits);
   buildExecutionBatches(pack.executionUnits, { repo });
+  // 所有实施入口共用检查，手写实施包也不能跳过系统识别与设计覆盖。
+  assertSystemCoverageBindings(repo, work, pack);
   validateSamplePlan(repo, work, pack, { validateGlobalBaseline });
   assertWorkflowPolicy(work, pack);
   return pack;
@@ -149,6 +154,10 @@ export function collectWorkReferencePaths(work, repo) {
   collect(work.visual?.functionBaselineRef);
   collect(work.visual?.domainEvidenceRef);
   if (repo) paths.push(...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work));
+  if (repo && work.implementationPackageRef?.path) {
+    paths.push(...collectSystemCoverageReferences(readJson(repo, work.implementationPackageRef.path, '系统覆盖实施包')));
+  }
+  if (repo) paths.push(...collectIntegrationScopeReferences(repo, work));
   for (const dependency of work.visual?.functionDependencies ?? []) {
     for (const reference of [dependency.workItemRef, dependency.evidenceRef]) if (reference?.path) paths.push(dependencyPath(repo, reference.path));
   }

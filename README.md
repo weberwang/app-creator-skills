@@ -159,6 +159,8 @@ Unity 运行时文本及国际化默认使用 [UniText](skills/unity-development
 
 [工作流控制器](skills/app-workflow-control/SKILL.md)负责状态、实施单元和证据关系。`plan`、`record` 帮助生成和关联记录；`status`、`check` 用于读取状态和检查材料。控制器不会代替助手执行项目制作、引擎运行或构建，技术检查通过也不代替用户视觉确认。
 
+游戏和非游戏 App 共用[系统与模块防遗漏机制](skills/app-creator-workflow/references/system-module-coverage.md)：需求／全局基线先识别必要能力，实施前通过必填 `systemCoverage` 关联需求、设计、模块、任务与验收命令。共同领域及游戏／App 专项逐项说明适用性，后置或未决前置不能支持本批实施；来源摘要和映射进入执行快照，记录与完成时继续复验。机器检查已声明关系，原始需求完整性与设计质量仍须实际审查。
+
 ## 按任务使用专业能力
 
 通常从 `$app-creator-workflow` 开始，也可直接指定已知能力：

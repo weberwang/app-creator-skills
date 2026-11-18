@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { completeUnit, initializeWork, inspect, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 
 const command = 'node --version';
 
@@ -54,7 +55,7 @@ async function prepareWork(units, { workItemPath, packagePath, evidenceRef, pack
   packagePath ??= '.workflow-control/implementation-packages/batch-work.json';
   const pack = {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    workItemType: work.workItemType, executionUnits: units, ...packageExtras,
+    workItemType: work.workItemType, executionUnits: units, systemCoverage: createSystemCoverage(repo, work, units), ...packageExtras,
   };
   work.implementationPackageRef = { path: packagePath };
   if (evidenceRef) work.evidenceRef = { path: evidenceRef };

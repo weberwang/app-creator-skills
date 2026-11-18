@@ -5,8 +5,9 @@
   "description": "由 Work Item 身份和阶段上下文生成冻结实施包；计划只提供执行单元和可选 F0–F2 自评。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["executionUnits"],
+  "required": ["executionUnits", "systemCoverage"],
   "properties": {
+    "systemCoverage": {"$ref": "https://app-creator-skills.local/app-workflow-control/system-coverage.schema.json"},
     "executionUnits": {
       "type": "array",
       "minItems": 1,

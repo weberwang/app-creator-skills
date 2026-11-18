@@ -5,7 +5,11 @@ import { fileURLToPath } from 'node:url';
 import { repoPath, WorkflowError } from './io.mjs';
 
 const require = createRequire(import.meta.url);
-const { validateNineSliceRuntime } = require('../../../app-ui-layout/scripts/nine-slice-runtime.cjs');
+
+/** 仅在真实界面任务使用九宫格时加载 UI 能力，服务端独立安装不包含该目录。 */
+function validateNineSliceRuntime(...args) {
+  return require('../../../app-ui-layout/scripts/nine-slice-runtime.cjs').validateNineSliceRuntime(...args);
+}
 
 /** 核对确认源帧、边界和要求覆盖的最小显示尺寸。 */
 export function validateAppNineSlicePlan(slice, sourcePath, label) {

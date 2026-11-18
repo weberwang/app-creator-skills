@@ -7,6 +7,8 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { completeUnit, initializeWork, inspectWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
+import { coverageMappings } from './integration-coverage-fixture.mjs';
 
 /** 写入测试独占工程中的实际文件或机器记录。 */
 function put(repo, path, value) {
@@ -38,6 +40,9 @@ async function executeUnit(repo, workPath, sourceFile, scopeRef) {
   const check = `node --check ${sourceFile}`;
   const suite = 'node --test tests/add.test.mjs';
   const pack = { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, executionUnits: [{ unitId: 'run', sequence: 1, type: 'MODULE', owner: 'fixture', paths: [sourceFile], resultPath, acceptanceCommands: [check, suite] }] };
+  pack.systemCoverage = createSystemCoverage(repo, work, pack.executionUnits);
+  // 最终组合用例复用已登记的真实测试命令和原始输出，不另造通过记录。
+  if (work.integrationPurpose === 'final') pack.systemCoverage.modules[0].verifications = [{ unitId: 'run', command: suite }];
   put(repo, packPath, pack);
   work.implementationPackageRef = { path: packPath };
   if (scopeRef) work.integrationScopeRef = scopeRef;
@@ -97,13 +102,13 @@ test('Node.js 无视觉 MODULE 和最终集成通过完整状态闭环', async (
   const object = { objectId: moduleWork.workItemId, workItemRef: identity(repo, modulePath), implementationPackageRef: identity(repo, moduleWork.implementationPackageRef.path), evidenceRef: identity(repo, moduleWork.evidenceRef.path), deliverableRefs: [identity(repo, 'src/add.mjs')] };
   const scopePath = '.workflow-control/input/combined-scope.json';
   const scope = { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objects: [object], cases: [{ caseId: 'sum', objectIds: [object.objectId] }] };
+  scope.systemCoverageMappings = coverageMappings(repo, scope, [{ objectId: object.objectId, packPath: moduleWork.implementationPackageRef.path }], { unitId: 'run', command: 'node --test tests/add.test.mjs' });
   put(repo, scopePath, scope);
   const execution = await executeUnit(repo, workPath, 'tests/add.test.mjs', identity(repo, scopePath));
   work = execution.work;
-  const outputPath = `${work.evidenceRoot}/sum-output.log`;
-  const output = runCommand(repo, ['--test', 'tests/add.test.mjs'], outputPath);
+  const output = execution.outputs[1];
   const casePath = `${work.evidenceRoot}/sum-case.json`;
-  put(repo, casePath, { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, caseId: 'sum', objectIds: [object.objectId], status: 'PASS', command: output.command, exitCode: output.exitCode, outputRef: identity(repo, outputPath) });
+  put(repo, casePath, { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, caseId: 'sum', objectIds: [object.objectId], status: 'PASS', unitId: 'run', command: output.command, exitCode: output.exitCode, outputRef: identity(repo, output.outputFile) });
   const resultPath = `${work.evidenceRoot}/integration-result.json`;
   put(repo, resultPath, { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, status: 'PASS', objects: [object], cases: [{ caseId: 'sum', objectIds: [object.objectId], evidenceRef: identity(repo, casePath) }] });
   work.integrationEvidenceRef = identity(repo, resultPath);

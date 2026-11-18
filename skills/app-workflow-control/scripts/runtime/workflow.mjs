@@ -26,6 +26,7 @@ import { invalidateWorld3DEvidence, invalidateWorld3DVisual, assertFunctionDesig
 import { isWorld2D, validateWorld2DDesign, freezeWorld2DDesign, assertFrozenWorld2DDesign, invalidateSceneDesign } from './scene-design-contract.mjs';
 import { captureWorldHudAssets, isWorldHudReturn } from './world3d-hud.mjs';
 import { freezeSampleResult } from './production-samples.mjs';
+import { functionCoverageOrigins } from './integration-system-sources.mjs';
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -113,6 +114,14 @@ function inspectWorkCore(repo, work, { strict, checkFunctionBaseline, historical
   }
   if (!isDesignProposal(work) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
     next.push('冻结与当前工作项绑定的 Implementation Package');
+  }
+  if (!isDesignProposal(work) && work.globalState === 'REVIEW' && work.implementationPackageRef) {
+    // 实施前的只读诊断也检查覆盖与来源，避免 check 通过而启动才发现设计缺项。
+    try {
+      loadPackage(repo, work);
+      if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') validateIntegrationScope(repo, work, { inspectSource: inspectFunctionSource });
+    }
+    catch (error) { blocking.push(error.message); }
   }
   const executionStates = ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'COMPLETE'];
   const recoveringImplementation = work.globalState === 'BLOCKED' && work.blockedRecord?.returnState === 'IMPLEMENTING';
@@ -315,8 +324,8 @@ async function enterBlocked({ repo, workItem, work, from, args }) {
 async function startImplementation(repo, work) {
   assertGates(work, ['F0', 'F1', 'F2']);
   // 正式跨对象回归先冻结预期范围，结果不能通过遗漏对象缩小验收。
-  if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') validateIntegrationScope(repo, work);
   const pack = loadPackage(repo, work);
+  if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') validateIntegrationScope(repo, work, { inspectSource: inspectFunctionSource });
   const executionPlan = createExecutionPlanSnapshot(pack, { repo });
   const statePath = `${work.evidenceRoot}/execution-state.json`;
   if (existsSync(repoPath(repo, statePath).absolute)) throw new WorkflowError('拒绝复用 evidenceRoot：执行状态已经存在');
@@ -542,7 +551,7 @@ function resolveReturn(work, from, to, args) {
 }
 
 /** 来源必须先符合工作项合同，再执行完整状态及工程证据检查。 */
-function inspectFunctionSource(repo, source, { historical = false } = {}) {
+export function inspectFunctionSource(repo, source, { historical = false } = {}) {
   validateWork(source, { repo });
   return inspectWorkCore(repo, source, { strict: true, checkFunctionBaseline: true, historical });
 }
@@ -575,6 +584,8 @@ async function freezeFunctionBaseline(repo, work, sceneDesignBaseline = null) {
   const dependencies = work.visual.functionDependencies ?? [];
   if (isWorld3D(work) && dependencies.length) throw new WorkflowError('3D 世界须直接验证本场景白模，不能以模块功能依赖替代本次 V1');
   const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId };
+  // 替换共享功能来源时也保留旧系统身份，不能只保留同名 case 就丢掉原需求。
+  if (sceneDesignBaseline) snapshot.systemCoverageOrigins = functionCoverageOrigins(repo, sceneDesignBaseline);
   if (work.visual.designRoute) snapshot.designRoute = work.visual.designRoute;
   if (isWorld3D(work)) {
     snapshot.world3dBlockoutEvidenceRoot = work.evidenceRoot;
@@ -730,7 +741,7 @@ async function refreshLocalFunctionBaseline(repo, work, old, oldRef, spec) {
     if (addedFiles.length) nextScope.push({ files: addedFiles, commands: unit.acceptanceCommands });
     for (const file of addedFiles) deliveryFiles.add(file);
   }
-  const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, mode: 'local-regression', functionScope: nextScope, work: structuredClone(work), files: collectFunctionFiles(repo, work), engineeringEvidence: engineeringEvidence(repo, work) };
+  const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, mode: 'local-regression', functionScope: nextScope, systemCoverageOrigins: functionCoverageOrigins(repo, old), work: structuredClone(work), files: collectFunctionFiles(repo, work), engineeringEvidence: engineeringEvidence(repo, work) };
   if (work.visual.designRoute) snapshot.designRoute = work.visual.designRoute;
   if (isWorld3D(work)) {
     snapshot.world3dBlockoutEvidenceRoot = old.world3dBlockoutEvidenceRoot ?? old.work.evidenceRoot;

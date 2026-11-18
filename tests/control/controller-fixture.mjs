@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import { initializeWork, transitionWork, completeUnit } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -81,6 +82,7 @@ export async function bindImplementation({ repo, work, workPath, stage, commands
   await putJson(repo, packPath, {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
     workItemType: work.workItemType, ...(work.visual ? { visualStage: stage } : {}), executionUnits: units,
+    systemCoverage: createSystemCoverage(repo, work, units),
   });
   work.implementationPackageRef = { path: packPath };
   await putJson(repo, workPath, work);

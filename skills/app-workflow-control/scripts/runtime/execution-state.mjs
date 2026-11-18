@@ -20,7 +20,10 @@ export function validateExecutionState(repo, work, pack, state, { requireComplet
   if (state.schemaVersion !== VERSION || state.workItemId !== work.workItemId || state.stack !== work.stack || state.implementationPackageRef !== work.implementationPackageRef.path) {
     throw new WorkflowError('Execution State 未绑定当前工作项和实施包');
   }
-  if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') {
+  const finalIntegration = work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final';
+  // 冻结范围的存在与 final 身份双向一致，禁止实施后改标 feature 跳过最终检查。
+  if (Boolean(state.integrationScopeRef) !== finalIntegration) throw new WorkflowError('最终集成用途与开始实施时冻结的范围不一致');
+  if (finalIntegration) {
     if (!state.integrationScopeRef || state.integrationScopeRef.path !== work.integrationScopeRef?.path || state.integrationScopeRef.sha256 !== work.integrationScopeRef?.sha256) throw new WorkflowError('最终集成范围与开始实施时冻结的范围不一致');
     validateIntegrationScope(repo, work);
   }

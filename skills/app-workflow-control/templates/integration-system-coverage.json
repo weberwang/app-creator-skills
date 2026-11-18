@@ -1,0 +1,9 @@
+[
+  {
+    "sourcePackageRef": {"path": ".workflow-control/implementation-packages/replace-source.json", "sha256": "replace-with-real-sha256"},
+    "requirementId": "replace-source-current-requirement",
+    "moduleIds": ["replace-source-module"],
+    "objectIds": ["replace-consumer-object"],
+    "verifications": [{"caseId": "replace-final-case", "unitId": "replace-final-unit", "command": "替换为该单元实际验收命令"}]
+  }
+]

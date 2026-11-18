@@ -4,8 +4,9 @@
   "description": "引用栈专用验证标准，不将 Unity 资产规则强制套用于其他栈。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "workItemId", "stack", "workItemType", "executionUnits"],
+  "required": ["schemaVersion", "workItemId", "stack", "workItemType", "executionUnits", "systemCoverage"],
   "properties": {
+    "systemCoverage": {"$ref": "https://app-creator-skills.local/app-workflow-control/system-coverage.schema.json"},
     "schemaVersion": {"const": "1.0"},
     "workItemId": {"type": "string", "minLength": 1},
     "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"]},

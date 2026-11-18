@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile, rm, utimes } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { advanceVisual, assertFunctionBaseline, completeUnit, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
@@ -163,7 +164,7 @@ test('V5 新增交付源码后再次修改须重验完整范围并保留旧日�
   let work = await readWork(fixture.repo, fixture.workPath);
   const packPath = '.workflow-control/implementation-packages/repeated-v5.json';
   const unit = { unitId: 'repeat', sequence: 1, type: 'PAGE', owner: 'test-owner', paths: ['lib/sample.dart', 'lib/visual.dart'], resultPath: `${work.evidenceRoot}/repeat.json`, acceptanceCommands: ['node --version'] };
-  await putJson(fixture.repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: 'V5', executionUnits: [unit] });
+  await putJson(fixture.repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: 'V5', executionUnits: [unit], systemCoverage: createSystemCoverage(fixture.repo, work, [unit]) });
   work.implementationPackageRef = { path: packPath };
   await putJson(fixture.repo, fixture.workPath, work);
   await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'IMPLEMENTING', args: {} });
@@ -209,7 +210,8 @@ test('新增交付源码在回归输出之后变化时不得刷新基线', async
 test('记录器可登记源码变化后的 V5 新回归，刷新后才可推进', async (t) => {
   const fixture = await prepareRegression(t, { deferStart: true });
   const planPath = 'docs/actual-v5-plan.json';
-  await putJson(fixture.repo, planPath, { executionUnits: [{ unitId: 'regression', type: 'PAGE', owner: 'executor', paths: ['lib/sample.dart'], acceptanceCommands: ['node --version'] }] });
+  const executionUnits = [{ unitId: 'regression', type: 'PAGE', owner: 'executor', paths: ['lib/sample.dart'], acceptanceCommands: ['node --version'] }];
+  await putJson(fixture.repo, planPath, { executionUnits, systemCoverage: createSystemCoverage(fixture.repo, await readWork(fixture.repo, fixture.workPath), executionUnits) });
   await prepareWorkRecords({ repo: fixture.repo, workItem: fixture.workPath, planPath });
   await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'IMPLEMENTING', args: {} });
   let work = await readWork(fixture.repo, fixture.workPath);

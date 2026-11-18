@@ -5,6 +5,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { assertVisualReuse, resolveReuseOwner, validateSceneReuseCoverage, validateSceneReuseReview } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse-binding.mjs';
 import { assertVisualReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
@@ -97,7 +98,7 @@ async function prepareFunctionalStage(repo, workPath, { deliveryPath } = {}) {
   const outputFile = `${work.evidenceRoot}/function-command.txt`;
   const unit = { unitId: 'function', sequence: 1, type: work.workItemType, owner: 'test-fixture', paths: [deliveryPath ?? `lib/function-${work.workItemId}.dart`], resultPath: `${work.evidenceRoot}/function-result.json`, acceptanceCommands: ['node --version'] };
   await put(repo, unit.paths[0], `功能夹具 ${work.workItemId}\n`);
-  await putJson(repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: 'V1', executionUnits: [unit] });
+  await putJson(repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: 'V1', executionUnits: [unit], systemCoverage: createSystemCoverage(repo, work, [unit]) });
   const items = [];
   for (const category of profile.evidenceRequirements.engineering) {
     const path = `${work.evidenceRoot}/function-${category}.txt`;
@@ -233,7 +234,7 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
   };
   await putJson(fixture.repo, packPath, {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType,
-    visualStage: 'V5', executionUnits: [unit],
+    visualStage: 'V5', executionUnits: [unit], systemCoverage: createSystemCoverage(fixture.repo, work, [unit]),
   });
   work.implementationPackageRef = { path: packPath };
   const items = [];

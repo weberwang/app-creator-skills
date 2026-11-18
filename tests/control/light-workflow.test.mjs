@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { assertWorkflowPolicy } from '../../skills/app-workflow-control/scripts/runtime/task-policy.mjs';
 
@@ -85,13 +86,14 @@ test('轻量任务通过plan与record生成关联记录，实际命令结果仍�
   const workPath = initialized.metadata.workItemPath;
   const planPath = '.workflow-control/input/local-fix-plan.json';
   const command = 'node --version';
+  const executionUnits = [{ unitId: 'fix', owner: 'test', paths: ['lib/fix.dart'], acceptanceCommands: [command] }];
   put(repo, planPath, {
     gateAssessments: {
       F0: { status: 'PASS', reason: '合成工程中只允许当前测试文件' },
       F1: { status: 'PASS', reason: '验收控制记录引用与真实版本命令输出' },
       F2: { status: 'PASS', reason: '本夹具仅证明控制协议，不证明Flutter功能' },
     },
-    executionUnits: [{ unitId: 'fix', owner: 'test', paths: ['lib/fix.dart'], acceptanceCommands: [command] }],
+    executionUnits, systemCoverage: createSystemCoverage(repo, read(repo, workPath), executionUnits),
   });
   call(repo, 'plan', ['--work-item', workPath, '--spec', planPath]);
   let work = read(repo, workPath);

@@ -9,6 +9,8 @@ import { validateEvidence, validateGlobalBaseline, validateHumanReview, validate
 import { repoPath } from '../skills/app-workflow-control/scripts/runtime/io.mjs';
 import { initializeWork } from '../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { attachFigmaBaselineFixture } from './control/figma-app-fixture.mjs';
+import { createSystemCoverage } from './control/system-coverage-fixture.mjs';
+import { syntheticDesignPng } from './control/visual-image-fixture.mjs';
 
 /** 在独立临时项目中建立有效工作项，并在测试后清理。 */
 async function fixture(t, { id = 'boundary', stack = 'flutter', projectId = 'shared-project', type = 'FOUNDATION' } = {}) {
@@ -37,7 +39,7 @@ function bindPackage(repo, work) {
   };
   put(repo, packPath, JSON.stringify({
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    workItemType: work.workItemType, executionUnits: [unit],
+    workItemType: work.workItemType, executionUnits: [unit], systemCoverage: createSystemCoverage(repo, work, [unit]),
   }));
   work.implementationPackageRef = { path: packPath };
   return { source, packPath, unit };
@@ -104,7 +106,7 @@ test('同项目同技术栈视觉基线可跨工作项复用，错项目或错�
   const dimensions = qualityChecks(first.repo, 'review/selected');
   const candidates = ['direction-a', 'direction-b', 'direction-c'].map((candidateId, index) => ({
     candidateId,
-    path: put(first.repo, `visual/candidates/${candidateId}.png`),
+    path: put(first.repo, `visual/candidates/${candidateId}.png`, syntheticDesignPng(candidateId)),
     qualityChecks: index === 0 ? dimensions : ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension) => ({ dimension, status: 'NOT_RUN' })),
   }));
   const selectionReview = '.workflow-control/reviews/selection.json';

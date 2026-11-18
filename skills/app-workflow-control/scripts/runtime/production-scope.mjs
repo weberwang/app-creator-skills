@@ -231,6 +231,8 @@ export function assertProductionDependencies(repo, work, inspectSource) {
     if (source.visual) {
       // 多对象批次需要整批功能来源，单个页面完成不能证明跨对象链路。
       if (sourceBatch.objectIds.length !== 1 || source.visual.objectId !== sourceBatch.objectIds[0] || source.workItemType !== result.objects.get(source.visual.objectId)?.workItemType) throw new WorkflowError(`生产依赖 ${dependency.batchId} 的单个视觉对象不能代表整个批次`);
+      // 设计提案可在 V2 完成，但没有生产执行与运行证据，不能充当后批的已完成前置。
+      if (source.visual.designIntent === 'proposal' || source.visual.stage !== 'V5') throw new WorkflowError(`生产依赖 ${dependency.batchId} 的视觉来源必须完成实际 V5，不能采用仅设计提案`);
     } else if (source.workItemType !== 'MODULE' && !(source.workItemType === 'INTEGRATION' && source.integrationPurpose === 'feature')) {
       throw new WorkflowError(`生产依赖 ${dependency.batchId} 必须使用模块或功能集成作为批次汇总`);
     }

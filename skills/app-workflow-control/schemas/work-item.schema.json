@@ -366,10 +366,17 @@
       }
     },
     "planningRef": {
-      "$ref": "#/$defs/refOrNull"
+      "$ref": "#/$defs/planningRefOrNull"
     }
   },
   "$defs": {
+    "planningRefOrNull": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+          "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}
+      ]
+    },
     "paths": {
       "type": "array",
       "items": {

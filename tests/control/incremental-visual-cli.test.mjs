@@ -6,6 +6,7 @@ import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { initializeWork, loadWork, advanceVisual, transitionWork, completeUnit, inspectVisualReuseSource } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 
 const controller = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
@@ -120,6 +121,7 @@ async function runStage(repo, path, stage, extraItems = []) {
   const packPath = `.workflow-control/implementation-packages/${work.workItemId}-${stage}.json`;
   const unit = { unitId: `unit-${stage}`, sequence: 1, type: 'SCENE', owner: 'synthetic-test', paths: ['Assets/Main.unity', ...(stage === 'V1' ? [`Assets/Scripts/${work.workItemId}.cs`] : [])], resultPath: `${work.evidenceRoot}/unit-${stage}.json`, acceptanceCommands: ['node --version'] };
   const pack = { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: 'SCENE', visualStage: stage, executionUnits: [unit] };
+  pack.systemCoverage = createSystemCoverage(repo, work, pack.executionUnits);
   put(repo, packPath, pack);
   const manifestPath = `${work.evidenceRoot}/manifest-${stage}.json`;
   const items = ['compile', 'tests'].map((category) => ({ category, status: 'PASS', path: put(repo, `${work.evidenceRoot}/${stage}-${category}.txt`, '合成工程证据').path }));

@@ -5,6 +5,7 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { validateFinalIntegration, validateIntegrationScope } from '../../skills/app-workflow-control/scripts/runtime/final-integration.mjs';
+import { coverageMappings, putCoverageExecution, putCoveragePackage } from './integration-coverage-fixture.mjs';
 
 /** 创建与生产文件身份一致的隔离测试材料。 */
 function fixture(t) {
@@ -13,22 +14,31 @@ function fixture(t) {
   const put = (path, value) => { mkdirSync(dirname(join(repo, path)), { recursive: true }); writeFileSync(join(repo, path), JSON.stringify(value)); };
   const identity = (path) => ({ path, sha256: createHash('sha256').update(readFileSync(join(repo, path))).digest('hex') });
   const project = { projectId: 'project', stack: 'cocos' };
+  const sources = [];
   const objects = ['lobby', 'battle'].map((objectId) => {
     const baselinePath = `${objectId}/baseline.json`;
     put(baselinePath, { schemaVersion: '1.0', objectId });
     const functionBaselineRef = identity(baselinePath);
     const path = `${objectId}/work.json`;
-    put(path, { ...project, workItemId: objectId, workItemType: 'SCENE', globalState: 'COMPLETE', visual: { objectId, designRoute: 'game-ui', stage: 'V5', functionBaselineRef, functionDependencies: [{ caseId: 'start-battle' }] } });
+    const source = { ...project, workItemId: objectId, workItemType: 'SCENE', globalState: 'COMPLETE', visual: { objectId, designRoute: 'game-ui', stage: 'V5', functionBaselineRef } };
+    const packPath = `${objectId}/pack.json`;
+    putCoveragePackage(repo, source, { path: packPath, resultPath: `${objectId}/unit.json`, ownedPath: `assets/${objectId}.ts` });
+    source.implementationPackageRef = { path: packPath };
+    sources.push({ objectId, packPath });
+    put(path, source);
     return { objectId, workItemRef: identity(path), functionBaselineRef };
   });
-  const work = { ...project, workItemId: 'integration', workItemType: 'INTEGRATION', integrationPurpose: 'final', evidenceRef: { path: 'final/manifest.json' } };
+  const work = { ...project, workItemId: 'integration', workItemType: 'INTEGRATION', integrationPurpose: 'final', evidenceRoot: 'final', implementationPackageRef: { path: 'final/pack.json' }, evidenceRef: { path: 'final/manifest.json' } };
   const scope = { schemaVersion: '1.0', ...project, workItemId: work.workItemId, objects: structuredClone(objects), cases: [{ caseId: 'start-battle', objectIds: ['lobby', 'battle'] }] };
+  const { unit } = putCoveragePackage(repo, work, { path: work.implementationPackageRef.path, resultPath: 'final/unit.json', ownedPath: 'assets/integration.ts' });
+  const execution = putCoverageExecution(repo, work, unit);
+  scope.systemCoverageMappings = coverageMappings(repo, scope, sources);
   put('final/scope.json', scope); work.integrationScopeRef = identity('final/scope.json');
   const result = { schemaVersion: '1.0', ...project, workItemId: work.workItemId, status: 'PASS', objects, cases: [{ caseId: 'start-battle', objectIds: ['lobby', 'battle'] }] };
   /** 将实际行为结果与总记录分别写入，并同时登记到当前清单。 */
   const save = () => {
     for (const entry of result.cases) {
-      put(`final/${entry.caseId}.json`, { schemaVersion: '1.0', ...project, workItemId: work.workItemId, caseId: entry.caseId, status: 'PASS', objectIds: entry.objectIds });
+      put(`final/${entry.caseId}.json`, { schemaVersion: '1.0', ...project, workItemId: work.workItemId, caseId: entry.caseId, status: 'PASS', objectIds: entry.objectIds, ...execution });
       entry.evidenceRef = identity(`final/${entry.caseId}.json`);
     }
     put('final/result.json', result); work.integrationEvidenceRef = identity('final/result.json');
@@ -54,11 +64,12 @@ test('结果不能缩小预先冻结的对象和行为范围，范围文件变�
   assert.throws(() => validateFinalIntegration(f.repo, f.work, f.inspect), /结果对象与预先冻结的范围不一致/);
   const f2 = fixture(t);
   f2.scope.cases.push({ caseId: 'return', objectIds: ['battle', 'lobby'] });
+  for (const mapping of f2.scope.systemCoverageMappings) mapping.verifications.push({ ...mapping.verifications[0], caseId: 'return' });
   f2.put('final/scope.json', f2.scope); f2.work.integrationScopeRef = f2.identity('final/scope.json'); f2.save();
   assert.throws(() => validateFinalIntegration(f2.repo, f2.work, f2.inspect), /结果行为与预先冻结的范围不一致/);
   const f3 = fixture(t);
   f3.scope.objects.pop(); f3.put('final/scope.json', f3.scope);
-  assert.throws(() => validateIntegrationScope(f3.repo, f3.work), /最终集成范围内容已变化/);
+  assert.throws(() => validateIntegrationScope(f3.repo, f3.work, { inspectSource: f3.inspect }), /最终集成范围内容已变化/);
   assert.equal(validateIntegrationScope(f3.repo, { workItemType: 'INTEGRATION', integrationPurpose: 'feature' }), null);
 });
 

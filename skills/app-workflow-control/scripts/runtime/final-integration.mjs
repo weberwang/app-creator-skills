@@ -3,6 +3,10 @@ import { readFileSync } from 'node:fs';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { validateNodeScopeObject, assertNodeResultObject, validateNodeCase } from './nodejs-integration.mjs';
 import { validateProductionIntegration, validateProductionIntegrationScope } from './production-coverage.mjs';
+import { collectIntegrationSystemSources } from './integration-system-sources.mjs';
+import { validateIntegrationSystemMappings, validateIntegrationSystemCase } from './integration-system-coverage.mjs';
+import { assertSystemCoverageBindings } from './system-coverage-binding.mjs';
+import { inspectFunctionSource } from './workflow.mjs';
 
 /** 核对项目内文件的冻结内容，避免正式组合或功能基线变化后沿用旧回归。 */
 function verifyIdentity(repo, ref, label, { allowEmpty = false } = {}) {
@@ -25,7 +29,12 @@ function sameIdentity(repo, left, right) {
 }
 
 /** 提前冻结最终集成范围，避免执行后由结果自行缩减对象或行为。 */
-export function validateIntegrationScope(repo, work) {
+export function validateIntegrationScope(repo, work, options = {}) {
+  return inspectIntegrationScope(repo, work, options)?.scope ?? null;
+}
+
+/** 单次检查同时返回范围、包和用例映射，避免最终通过时重复遍历全部来源。 */
+function inspectIntegrationScope(repo, work, { inspectSource = inspectFunctionSource } = {}) {
   if (work?.workItemType !== 'INTEGRATION') return null;
   if (!['feature', 'final'].includes(work.integrationPurpose)) throw new WorkflowError('集成工作项必须明确用途：feature 或 final');
   if (work.integrationPurpose === 'feature') return null;
@@ -61,14 +70,19 @@ export function validateIntegrationScope(repo, work) {
   }
   if (covered.size !== objectIds.size) throw new WorkflowError('最终集成范围必须覆盖全部对象');
   validateProductionIntegrationScope(repo, work, scope);
-  return scope;
+  const sources = collectIntegrationSystemSources(repo, work, scope, inspectSource);
+  const pack = readJson(repo, work.implementationPackageRef?.path, '最终集成实施包');
+  assertSystemCoverageBindings(repo, work, pack);
+  const systemMappings = validateIntegrationSystemMappings(repo, work, scope, { sources, pack });
+  return { scope, pack, systemMappings };
 }
 
 /** 仅在最终正式组合上要求完整覆盖；早期功能集成不能依赖显示对象 V5。 */
 export function validateFinalIntegration(repo, work, inspectSource) {
   if (work?.workItemType !== 'INTEGRATION') return;
-  const scope = validateIntegrationScope(repo, work);
-  if (!scope) return;
+  const checkedScope = inspectIntegrationScope(repo, work, { inspectSource });
+  if (!checkedScope) return;
+  const { scope, pack, systemMappings } = checkedScope;
   if (typeof inspectSource !== 'function') throw new WorkflowError('最终集成必须严格检查参与对象');
   const evidencePath = verifyIdentity(repo, work.integrationEvidenceRef, '最终集成回归证据');
   const evidence = readJson(repo, evidencePath, '最终集成回归证据');
@@ -106,8 +120,7 @@ export function validateFinalIntegration(repo, work, inspectSource) {
       verifyIdentity(repo, entry.functionBaselineRef, `参与对象 ${entry.objectId} 功能基线`);
       if (source.visual.functionBaselineRef?.sha256 !== entry.functionBaselineRef.sha256 || samePath(source.visual.functionBaselineRef?.path) !== samePath(entry.functionBaselineRef.path)) throw new WorkflowError(`参与对象 ${entry.objectId} 功能基线未绑定当前版本`);
     }
-    const checked = inspectSource(repo, source, { strict: true });
-    if (!checked || typeof checked.then === 'function' || checked.status !== 'PASS' || (Array.isArray(checked.blocking) && checked.blocking.length)) throw new WorkflowError(`参与对象 ${entry.objectId} 严格检查未通过`);
+    // 来源已在同次范围检查中严格验证，覆盖其设计、计划和完整执行快照。
     objects.set(entry.objectId, source);
   }
   const seen = new Set();
@@ -119,6 +132,7 @@ export function validateFinalIntegration(repo, work, inspectSource) {
     const actual = readJson(repo, casePath, '最终行为实际验证记录');
     if (actual.schemaVersion !== '1.0' || actual.workItemId !== work.workItemId || actual.projectId !== work.projectId || actual.stack !== work.stack || actual.caseId !== entry.caseId || actual.status !== 'PASS' || !Array.isArray(actual.objectIds) || JSON.stringify([...actual.objectIds].sort()) !== JSON.stringify([...entry.objectIds].sort())) throw new WorkflowError(`最终行为 ${entry.caseId} 的实际验证记录身份、状态或覆盖不匹配`);
     if (work.stack === 'nodejs') validateNodeCase(repo, work, actual, evidence, scope, { verifyIdentity });
+    validateIntegrationSystemCase(repo, work, pack, systemMappings.get(entry.caseId), actual, { verifyIdentity });
     seen.add(entry.caseId);
     for (const id of entry.objectIds) {
       if (!objects.has(id)) throw new WorkflowError(`最终集成行为 ${entry.caseId} 引用了未登记对象`);

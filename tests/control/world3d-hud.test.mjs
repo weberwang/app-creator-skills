@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateGlobalBaseline, assertAssetReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
@@ -199,7 +200,7 @@ async function runUnityEngineering(f, workPath, stage, { hudRuntime = false } = 
   // 返回已有阶段时使用新实施包与证据目录，不能覆盖上一轮归档引用。
   const packPath = `.workflow-control/implementation-packages/${work.workItemId}-${stage}-r${work.revision}.json`;
   const units = [{ unitId: 'unit-1', sequence: 1, type: 'SCENE', owner: 'test-owner', paths: [`Assets/${stage}-hud.cs`], resultPath: `${work.evidenceRoot}/${stage}-unit-1.json`, acceptanceCommands: ['node --version'] }];
-  await putJson(f.repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: stage, executionUnits: units });
+  await putJson(f.repo, packPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType, visualStage: stage, executionUnits: units, systemCoverage: createSystemCoverage(f.repo, work, units) });
   work.implementationPackageRef = { path: packPath };
   await putJson(f.repo, workPath, work);
   await transitionWork({ repo: f.repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });

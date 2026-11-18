@@ -32,6 +32,8 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 ## 最终集成验收
 
+游戏与非游戏 App 的 `final` 均先执行[系统覆盖最终闭环](../../app-creator-workflow/references/system-module-coverage.md#最终集成的系统覆盖闭环)：范围必填 `systemCoverageMappings`，逐份来源包核对本批需求、模块和实际消费者，关联最终用例、单元与冻结验收命令。来源包括当前对象包、V1 原包、功能来源重验保留的旧包及共享／生产前批；独立模块用 `systemSources`，总范围中无依赖链的批次用 `productionSources`，不得遗漏已声明批次。开始实施前就严格重验来源，不能只凭 COMPLETE、V5 或同名 case 推断通过。
+
 Node.js 无界面服务器采用独立的[模块最终集成证据](../../app-stack-nodejs/references/integration-evidence.md)，来源为同项目、同技术栈已完成的 MODULE，冻结实施包、工程清单和交付文件；不要求 `visual`、V5 或 `functionBaselineRef`。以下显示对象与跨场景音乐规则仅适用于实际视觉栈。
 
 `INTEGRATION` 以 `integrationPurpose` 区分用途：`feature` 是早期功能验证，可以作为 V1 共享来源，不等待场景 V5；`final` 是正式组合后的跨对象回归，不能反向作为 V1 来源。初始化最终集成时使用 `--integration-purpose final`，默认用途为 `feature`。
@@ -41,6 +43,8 @@ Node.js 无界面服务器采用独立的[模块最终集成证据](../../app-st
 - **跨场景背景音乐**。项目有跨场景共用的背景音乐时，必须将本项纳入全局集成验收，并在 `integrationScopeRef` 的 `cases` 中登记。在同一正式运行候选中覆盖跨场景切换、返回原场景和重开场景。对每条路径记录前后的曲目、播放进度及播放实例，确认同一首背景音乐从原进度继续，期间始终只有一个背景音乐实例发声。缺少任一路径的运行证据时，本项不得记为通过。
 
 最终集成通过 `integrationEvidenceRef: {path,sha256}` 绑定本工作项 PASS 清单中的回归总记录。总记录包含 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`status: "PASS"`、`objects` 和 `cases`，对象及各行为覆盖必须与预先冻结的范围一致。每个对象记录 `objectId`、已完成 V5 的 `workItemRef: {path,sha256}` 和当前 `functionBaselineRef: {path,sha256}`；每个行为记录 `caseId`、`objectIds`、独立实际验证文件 `evidenceRef: {path,sha256}`。行为文件也必须列入本工作项 PASS 清单，并绑定同一工作项、项目、技术栈、行为及对象范围。完成前严格重验每个参与对象及其已冻结功能范围；对象、功能基线或回归证据改变时重新验证受影响范围。
+
+每份行为实际记录同时保存 `unitId`、准确 `command`、`exitCode:0` 与冻结 `outputRef`，并与该单元结果的真实 `commandOutputs.outputFile` 一致；独立日志或未关联的 PASS 文件不能代替。最终范围的来源与需求／设计文件属于保留输入，不能在本次任务中改写或作为结果覆盖。实施后删除范围或改为 `feature` 也会被冻结执行状态阻断。
 
 当功能代码变化但确认不影响视觉目标和拆解布局时，可在新的非视觉功能工作项完成真实验证后，提交功能重验规格：`{"visualImpact":"none","reason":"实际影响说明","functionDependencies":[{"workItemRef":{"path":"来源工作项.json"},"caseId":"行为范围","evidenceRef":{"path":"真实行为证据.json","sha256":"实际小写摘要"}}]}`。执行 `refresh-function-baseline --repo <项目路径> --work-item <项目内工作项路径> --spec <项目内规格路径>` 会核验新执行来源并保留未受影响的目标与布局确认，但需要重新完成最终运行验收。不得通过重新计算旧摘要冒充新的功能验证。
 

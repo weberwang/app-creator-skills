@@ -174,6 +174,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   }
   if (typeof work.visualBaselineRequired !== 'boolean') throw new WorkflowError('Work Item.visualBaselineRequired 必须显式为布尔值');
   if (work.globalVisualBaselineRef && !/^[a-f0-9]{64}$/.test(work.globalVisualBaselineRef.sha256 ?? '')) throw new WorkflowError('Work Item.globalVisualBaselineRef 必须绑定 SHA-256');
+  if (work.planningRef && !/^[a-f0-9]{64}$/.test(work.planningRef.sha256 ?? '')) throw new WorkflowError('Work Item.planningRef 必须绑定冻结计划的 SHA-256');
   // 可见对象的视觉方向必须经确认，不能通过修改工作项标志跳过阶段门。
   if (work.visual && !work.visualBaselineRequired) throw new WorkflowError('视觉工作项必须启用 visualBaselineRequired');
   if (repo) {

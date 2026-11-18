@@ -1,0 +1,38 @@
+{
+  "requirementsRef": {
+    "path": "docs/requirements.md",
+    "sha256": "replace-with-real-sha256"
+  },
+  "requirements": [
+    {
+      "requirementId": "primary-task",
+      "description": "替换为本批实际用户任务及可观察结果",
+      "scope": "current",
+      "reason": "替换为本批范围依据",
+      "moduleIds": ["primary-module"]
+    }
+  ],
+  "modules": [
+    {
+      "moduleId": "primary-module",
+      "status": "implement",
+      "reason": "替换为实际模块职责及选择理由",
+      "dependsOn": [],
+      "designRefs": [{"path": "docs/technical-design.md", "sha256": "replace-with-real-sha256"}],
+      "implementationUnitIds": ["primary-unit"],
+      "verifications": [{"unitId": "primary-unit", "command": "替换为对应单元真实验收命令"}],
+      "evidenceRefs": []
+    }
+  ],
+  "areas": [
+    {"areaId": "flow", "reason": "替换为实际流程检查依据", "moduleIds": ["primary-module"]},
+    {"areaId": "state-data", "reason": "替换为实际状态与数据检查依据", "moduleIds": ["primary-module"]},
+    {"areaId": "failure-recovery", "reason": "替换为实际异常与恢复检查依据", "moduleIds": []},
+    {"areaId": "persistence", "reason": "替换为实际持久化检查依据", "moduleIds": []},
+    {"areaId": "platform", "reason": "替换为实际平台约束检查依据", "moduleIds": []},
+    {"areaId": "identity-access", "reason": "替换为身份与权限检查依据", "moduleIds": []},
+    {"areaId": "business-rules", "reason": "替换为实际业务规则检查依据", "moduleIds": ["primary-module"]},
+    {"areaId": "content", "reason": "替换为实际内容检查依据", "moduleIds": ["primary-module"]},
+    {"areaId": "integration", "reason": "替换为实际系统集成检查依据", "moduleIds": []}
+  ]
+}

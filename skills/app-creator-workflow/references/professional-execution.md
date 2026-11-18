@@ -6,6 +6,7 @@
 
 ## 当前控制记录
 
+- 游戏与非游戏任务在正式实施前按[系统与模块覆盖](system-module-coverage.md)核对原始需求、本批必要模块、设计及前置，将 `systemCoverage` 写入实际计划；模块实施或复用必须关联本批任务和验证。局部任务复用有效依据，纯查询及仅设计提案沿原边界处理，不以缺省或后置状态跳过本批必要系统。
 - 输出文件按[输出文件与交付规范](output-files.md)分类、命名和保存，先采用当前栈及实际工具的路径约束。执行结果 JSON、命令输出及公共 Manifest 条目受当前 `evidenceRoot` 约束，`Execution Result.files` 则指向单元所有权内的实际交付；不可混用人工审阅目录，也不为采用目录规范迁移冻结记录或新增 Schema 字段。
 - Unity 文本及国际化按 [UniText 安装检查与 JSON 配置](../../unity-development-workflow/references/text-and-localization.md)实施，异常时由用户选择修复或回退 TMP；Cocos、Phaser、Three.js 的静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片。Flutter、Expo 与 ESP32 使用各自本栈原生文本规范。涉及客户端界面时同步本地化资源和可访问语义。
 - 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：保持已确认基准字号与断行，按用途声明单行/换行及固定字号/有界缩小策略、触发条件和具体最小可读字号；正文不持续缩小。更新已有布局规格与正式配置，并在当前验证中分别核对基准还原、内容极值及字体放大。

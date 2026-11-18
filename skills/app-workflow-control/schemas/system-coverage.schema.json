@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/system-coverage.schema.json",
+  "title": "需求与系统模块覆盖",
+  "description": "冻结需求来源，并关联系统设计、本批实施单元及验收命令。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["requirementsRef", "requirements", "modules", "areas"],
+  "properties": {
+    "requirementsRef": {"$ref": "#/$defs/frozenRef"},
+    "requirements": {"type": "array", "minItems": 1, "uniqueItems": true, "contains": {"properties": {"scope": {"const": "current"}}, "required": ["scope"]}, "minContains": 1, "items": {"$ref": "#/$defs/requirement"}},
+    "modules": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/module"}},
+    "areas": {"type": "array", "items": {"$ref": "#/$defs/area"}}
+  },
+  "$defs": {
+    "text": {"type": "string", "pattern": "\\S"},
+    "ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+    "frozenRef": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+    },
+    "requirement": {
+      "type": "object", "additionalProperties": false,
+      "required": ["requirementId", "description", "scope", "reason", "moduleIds"],
+      "properties": {
+        "requirementId": {"$ref": "#/$defs/text"}, "description": {"$ref": "#/$defs/text"},
+        "scope": {"enum": ["current", "later", "excluded"]}, "reason": {"$ref": "#/$defs/text"},
+        "moduleIds": {"$ref": "#/$defs/ids"}
+      },
+      "allOf": [{"if": {"properties": {"scope": {"const": "current"}}}, "then": {"properties": {"moduleIds": {"minItems": 1}}}}]
+    },
+    "verification": {
+      "type": "object", "additionalProperties": false, "required": ["unitId", "command"],
+      "properties": {"unitId": {"$ref": "#/$defs/text"}, "command": {"$ref": "#/$defs/text"}}
+    },
+    "module": {
+      "type": "object", "additionalProperties": false,
+      "required": ["moduleId", "status", "reason", "dependsOn", "designRefs", "implementationUnitIds", "verifications", "evidenceRefs"],
+      "properties": {
+        "moduleId": {"$ref": "#/$defs/text"}, "status": {"enum": ["implement", "reuse", "defer", "exclude", "pending"]},
+        "reason": {"$ref": "#/$defs/text"}, "dependsOn": {"$ref": "#/$defs/ids"},
+        "designRefs": {"type": "array", "items": {"$ref": "#/$defs/frozenRef"}},
+        "implementationUnitIds": {"$ref": "#/$defs/ids"},
+        "verifications": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/verification"}},
+        "evidenceRefs": {"type": "array", "items": {"$ref": "#/$defs/frozenRef"}}
+      },
+      "allOf": [
+        {"if": {"properties": {"status": {"enum": ["implement", "reuse"]}}}, "then": {"properties": {"designRefs": {"minItems": 1}, "verifications": {"minItems": 1}}}},
+        {"if": {"properties": {"status": {"const": "implement"}}}, "then": {"properties": {"implementationUnitIds": {"minItems": 1}}}, "else": {"properties": {"implementationUnitIds": {"maxItems": 0}}}},
+        {"if": {"properties": {"status": {"const": "reuse"}}}, "then": {"properties": {"evidenceRefs": {"minItems": 1}}}},
+        {"if": {"properties": {"status": {"enum": ["defer", "exclude", "pending"]}}}, "then": {"properties": {"verifications": {"maxItems": 0}}}}
+      ]
+    },
+    "area": {
+      "type": "object", "additionalProperties": false, "required": ["areaId", "reason", "moduleIds"],
+      "properties": {"areaId": {"$ref": "#/$defs/text"}, "reason": {"$ref": "#/$defs/text"}, "moduleIds": {"$ref": "#/$defs/ids"}}
+    }
+  }
+}

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, linkSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateGlobalBaseline } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
@@ -170,13 +171,16 @@ test('三维场景的 HUD 样本继续核对独立图片基线和同宿主确认
   assert.throws(() => validateSamplePlan(f.repo, f.work, pack, options), /不允许跨工作项复用/);
 });
 
-test('计划和执行报告 Schema 保留样本声明并拒绝缺失必要字段', () => {
+test('计划和执行报告 Schema 保留样本声明并拒绝缺失必要字段', (t) => {
   const ajv = new Ajv2020({ strict: false });
   const base = 'skills/app-workflow-control/schemas';
   const schema = (name) => JSON.parse(readFileSync(`${base}/${name}.schema.json`, 'utf8'));
+  ajv.addSchema(schema('system-coverage'));
   const plan = ajv.compile(schema('work-plan'));
   const report = ajv.compile(schema('execution-report'));
   const source = { executionUnits: [{ unitId: 'sample', owner: 'test', paths: ['src/a.ts'], acceptanceCommands: ['node --version'], sampleRole: 'sample', sampleScopeIds: ['a'], sampleBasisRef: { path: 'spec/a.json', sha256: 'a'.repeat(64) }, sampleDecisionRequired: true }] };
+  const f = createWorld3DFixture(t);
+  source.systemCoverage = createSystemCoverage(f.repo, { stack: 'unity', workItemId: 'schema' }, source.executionUnits);
   assert.equal(plan(source), true);
   delete source.executionUnits[0].sampleDecisionRequired;
   assert.equal(plan(source), false);
@@ -207,6 +211,7 @@ test('公开计划入口拒绝同路径摘要已更新但确认错宿主的二�
   work.evidenceRoot = '.workflow-control/evidence/sample-preflight';
   await putJson(f.repo, result.metadata.workItemPath, work);
   const plan = { executionUnits: units(target.reviews.V3Layout).map(({ sequence, resultPath, ...entry }) => entry) };
+  plan.systemCoverage = createSystemCoverage(f.repo, work, plan.executionUnits);
   await putJson(f.repo, 'spec/invalid-ui-plan.json', plan);
   await assert.rejects(prepareWorkRecords({ repo: f.repo, workItem: result.metadata.workItemPath, planPath: 'spec/invalid-ui-plan.json' }), /人工确认|状态错绑/);
   work = await readWork(f.repo, result.metadata.workItemPath);
@@ -361,6 +366,7 @@ test('公开计划、记录与单元检查先冻结样本，再开放覆盖相�
   for (const producer of ['current', 'previous-task']) await t.test(producer, async (st) => {
   const { repo, workPath, f } = await preparePublic(st);
   const plan = { executionUnits: units(f.modelSpecRef).map(({ sequence, resultPath, ...entry }) => entry) };
+  plan.systemCoverage = createSystemCoverage(repo, await readWork(repo, workPath), plan.executionUnits);
   await putJson(repo, 'spec/sample-plan.json', plan);
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'spec/sample-plan.json' });
   let work = await readWork(repo, workPath);

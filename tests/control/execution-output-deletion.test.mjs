@@ -4,6 +4,7 @@ import { link, mkdtemp, mkdir, readFile, realpath, rm, unlink, writeFile } from 
 import { tmpdir } from 'node:os';
 import { basename, dirname, resolve } from 'node:path';
 import test from 'node:test';
+import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { completeUnit, initializeWork, inspectWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { freezeDeletionBaseline, validateDeletedFiles } from '../../skills/app-workflow-control/scripts/runtime/deletion-baseline.mjs';
@@ -57,7 +58,8 @@ test('真实静默命令可采集，失败退出码及伪造采集被拒绝', as
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   await put(repo, workPath, JSON.stringify(work));
   const commands = ['node -e "process.exit(0)"', 'node -e "process.exit(3)"'];
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: [{ unitId: 'one', owner: 'agent', paths: ['lib/one.dart'], acceptanceCommands: commands }] }));
+  const executionUnits = [{ unitId: 'one', owner: 'agent', paths: ['lib/one.dart'], acceptanceCommands: commands }];
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   const active = await loadWork(repo, workPath);
@@ -92,7 +94,8 @@ test('真实静默成功采集可登记并通过单元检查', async (t) => {
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   await put(repo, workPath, JSON.stringify(work));
   const command = 'node -e "process.exit(0)"';
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: [{ unitId: 'one', owner: 'agent', paths: ['lib/one.dart'], acceptanceCommands: [command] }] }));
+  const executionUnits = [{ unitId: 'one', owner: 'agent', paths: ['lib/one.dart'], acceptanceCommands: [command] }];
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   const active = await loadWork(repo, workPath);
@@ -114,10 +117,11 @@ test('后续批次在激活时冻结前一批新增的文件', async (t) => {
   work.globalState = 'REVIEW';
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   await put(repo, workPath, JSON.stringify(work));
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: [
+  const executionUnits = [
     { unitId: 'first', owner: 'agent', paths: ['lib'], acceptanceCommands: ['node --version'] },
     { unitId: 'second', owner: 'agent', paths: ['lib/new.dart'], acceptanceCommands: ['node --version'] },
-  ] }));
+  ];
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   const active = await loadWork(repo, workPath);
@@ -147,7 +151,8 @@ async function deletionFixture(t, paths = ['lib']) {
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';
   await put(repo, workPath, JSON.stringify(work));
   await put(repo, 'lib/old.dart', '删除前的真实内容');
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: [{ unitId: 'one', owner: 'agent', paths, acceptanceCommands: ['node --version'] }] }));
+  const executionUnits = [{ unitId: 'one', owner: 'agent', paths, acceptanceCommands: ['node --version'] }];
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   const active = await loadWork(repo, workPath);
@@ -209,7 +214,8 @@ test('并行批次后建的跨单元硬链接不能冒充删除', async (t) => {
   await put(repo, workPath, JSON.stringify(work));
   await put(repo, 'lib/one/old.dart', '旧文件');
   await mkdir(resolve(repo, 'lib/two'), { recursive: true });
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: ['one', 'two'].map((id) => ({ unitId: id, owner: 'agent', type: 'MODULE', paths: [`lib/${id}`], acceptanceCommands: ['node --version'], parallelGroup: 'parallel' })) }));
+  const executionUnits = ['one', 'two'].map((id) => ({ unitId: id, owner: 'agent', type: 'MODULE', paths: [`lib/${id}`], acceptanceCommands: ['node --version'], parallelGroup: 'parallel' }));
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   const active = await loadWork(repo, workPath);

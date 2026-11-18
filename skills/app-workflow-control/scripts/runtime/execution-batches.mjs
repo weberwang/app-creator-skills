@@ -49,6 +49,8 @@ export function buildExecutionBatches(units, { repo } = {}) {
 export function createExecutionPlanSnapshot(pack, { repo } = {}) {
   const batches = buildExecutionBatches(pack.executionUnits, { repo });
   return {
+    // 需求、设计身份和任务／验证映射一起冻结，实施后删项或改为后置会失效。
+    systemCoverage: structuredClone(pack.systemCoverage),
     ...(pack.productionScopeRef ? {
       productionScopeRef: { ...pack.productionScopeRef }, productionBatchId: pack.productionBatchId ?? null,
       // 前置是集合，开发执行顺序仍由单元批次决定；仅重排引用不改变冻结内容。

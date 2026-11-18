@@ -14,6 +14,8 @@ import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scrip
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
 import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
+import { collectIntegrationSystemSources } from '../../skills/app-workflow-control/scripts/runtime/integration-system-sources.mjs';
+import { coverageMappings } from './integration-coverage-fixture.mjs';
 
 import { createFixture, put, readWork, putJson, createQualityChecks, reviewRecord, putVisualReview, frozenReview, bindImplementation, submitPassingUnits, bindEvidence, runEngineeringStage, readyForRelease, approveRelease } from './controller-fixture.mjs';
 
@@ -649,6 +651,9 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
     objects: [{ objectId: source.visual.objectId, workItemRef: await frozenReview(fixture.repo, fixture.workPath), functionBaselineRef: source.visual.functionBaselineRef }],
     cases: [{ caseId: 'home-navigation', objectIds: [source.visual.objectId] }],
   };
+  // 当前页面与 V1 功能基线分别冻结过实施包，最终用例须覆盖两份来源。
+  const sourcePacks = collectIntegrationSystemSources(fixture.repo, integrationWork, scope, () => ({ status: 'PASS' }));
+  scope.systemCoverageMappings = coverageMappings(fixture.repo, scope, sourcePacks.map((entry) => ({ objectId: source.visual.objectId, packPath: entry.packRef.path })), { unitId: 'unit-1', command: 'node --version' });
   await putJson(fixture.repo, scopePath, scope);
   integrationWork.integrationScopeRef = await frozenReview(fixture.repo, scopePath);
   await putJson(fixture.repo, integrationFixture.workPath, integrationWork);
@@ -670,7 +675,10 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V0 到 V5 的控制器闭
     current.integrationScopeRef = originalRef;
     await putJson(fixture.repo, integrationFixture.workPath, current);
     const casePath = `${current.evidenceRoot}/home-navigation.json`;
-    await putJson(fixture.repo, casePath, { schemaVersion: '1.0', workItemId: current.workItemId, projectId: current.projectId, stack: current.stack, caseId: 'home-navigation', status: 'PASS', objectIds: [source.visual.objectId] });
+    const finalPack = JSON.parse(await readFile(resolve(fixture.repo, current.implementationPackageRef.path), 'utf8'));
+    const finalUnit = finalPack.executionUnits[0];
+    const unitResult = JSON.parse(await readFile(resolve(fixture.repo, finalUnit.resultPath), 'utf8'));
+    await putJson(fixture.repo, casePath, { schemaVersion: '1.0', workItemId: current.workItemId, projectId: current.projectId, stack: current.stack, caseId: 'home-navigation', status: 'PASS', objectIds: [source.visual.objectId], unitId: finalUnit.unitId, command: unitResult.commandOutputs[0].command, exitCode: 0, outputRef: await frozenReview(fixture.repo, unitResult.commandOutputs[0].outputFile) });
     const resultPath = `${current.evidenceRoot}/final-integration.json`;
     await putJson(fixture.repo, resultPath, {
       schemaVersion: '1.0', workItemId: current.workItemId, projectId: current.projectId, stack: current.stack, status: 'PASS',

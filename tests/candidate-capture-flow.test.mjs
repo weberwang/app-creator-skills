@@ -7,6 +7,7 @@ import { basename, dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { completeUnit, initializeWork, loadWork, transitionWork } from '../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../skills/app-workflow-control/scripts/runtime/records.mjs';
+import { createSystemCoverage } from './control/system-coverage-fixture.mjs';
 
 /** 将参数按当前采集器使用的 shell 语法引用，支持路径中的空格和单引号。 */
 function quote(value) {
@@ -47,7 +48,8 @@ async function fixture(t, id) {
     `${runner} snapshot --repo . --artifact build --input lib --require index.html`,
     `${runner} check --repo . --snapshot ${quote(snapshotPath)}`,
   ];
-  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits: [{ unitId: 'candidate', owner: 'fixture', paths: ['lib/app.dart'], acceptanceCommands: commands }] }));
+  const executionUnits = [{ unitId: 'candidate', owner: 'fixture', paths: ['lib/app.dart'], acceptanceCommands: commands }];
+  await put(repo, 'docs/plan.json', JSON.stringify({ executionUnits, systemCoverage: createSystemCoverage(repo, work, executionUnits) }));
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'docs/plan.json' });
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   await put(repo, 'lib/app.dart', '// 合成业务交付\n');

@@ -15,8 +15,10 @@ import { freezeProductionDependencies } from './production-scope.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { assertNoSampleControlAliases, collectSampleControlReferences } from './production-samples.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
+import { validateSystemCoverage, collectSystemCoverageReferences } from './system-coverage.mjs';
+import { readCoveragePlan } from './system-coverage-binding.mjs';
 
-const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments']);
+const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments', 'systemCoverage']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
 const REPORT_FIELDS = new Set(['files', 'deletedFiles', 'commandOutputs', 'evidence', 'hostId', 'layerType', 'sampleEvidenceRef']);
 const REPORT_COMMAND_FIELDS = new Set(['command', 'exitCode', 'outputFile']);
@@ -36,8 +38,10 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   const work = loadWorkItem(repo, workItem);
   const workSourcePath = repoPath(repo, workItem, 'Work Item 路径').relative;
   const sourcePath = repoPath(repo, planPath, 'Work Plan 路径').relative;
-  const plan = readJson(repo, sourcePath, 'Work Plan');
+  const { plan, sha256: planSha256 } = readCoveragePlan(repo, sourcePath);
   validatePlanShape(plan);
+  // 先检查需求、设计与任务闭环，缺项时不创建实施包或证据目录。
+  validateSystemCoverage(repo, work, plan);
   assertPlanningState(repo, work);
   freezeProductionDependencies(repo, work, inspectProductionDependencySource);
 
@@ -61,6 +65,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     manifestPath,
     `${evidenceRoot}/execution-state.json`,
     ...collectWorkReferencePaths(work, repo).map((path) => repoPath(repo, path, '工作项保留引用').relative),
+    ...collectSystemCoverageReferences(plan),
     ...plan.executionUnits.map((unit) => unit.sampleBasisRef?.path).filter(Boolean),
     ...plan.executionUnits.map((unit) => `${evidenceRoot}/unit-${unit.unitId}.json`),
   ];
@@ -90,6 +95,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     workItemId: work.workItemId,
     stack: work.stack,
     workItemType: work.workItemType,
+    systemCoverage: structuredClone(plan.systemCoverage),
     ...(work.visual ? { visualStage: work.visual.stage } : {}),
     ...(work.productionScopeRef ? {
       productionScopeRef: { ...work.productionScopeRef },
@@ -111,7 +117,8 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
     allowedPaths: [...new Set(narrowedPaths)],
     implementationPackageRef: { path: packagePath },
     evidenceRef: { path: manifestPath },
-    planningRef: { path: sourcePath },
+    // 在规划提交时就固定来源，不能在 REVIEW 期间同时改计划和包来缩减范围。
+    planningRef: { path: sourcePath, sha256: planSha256 },
     revision: work.revision + 1,
     gateStatus: { ...work.gateStatus },
   };

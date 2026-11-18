@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
+import { createSystemCoverage } from '../control/system-coverage-fixture.mjs';
 
 /** 用真实磁盘字节生成路径和摘要，供负例篡改后核对。 */
 export function writeRobloxFixture(repo, path, value) {
@@ -37,6 +38,7 @@ export function createRobloxFixture(t, { workItemType = 'MODULE', stage, publish
   const luauRef = writeRobloxFixture(repo, 'src/main.server.luau', '-- 合成 Luau 文件，仅供合同测试。\n');
   const pack = { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, workItemType: work.workItemType,
     ...(stage ? { visualStage: stage } : {}), executionUnits: [{ unitId: 'unit-a', sequence: 1, type: ['SCENE', 'DISPLAY_LAYER', 'INTEGRATION', 'RELEASE'].includes(workItemType) ? workItemType : 'MODULE', owner: 'fixture', paths: ['places/**', 'src/**'], resultPath: `${evidenceRoot}/unit-a.json`, acceptanceCommands: ['node --version'] }] };
+  pack.systemCoverage = createSystemCoverage(repo, work, pack.executionUnits);
   const studio = { studioId: 'studio-a', place: { kind: published ? 'published' : 'local', placeKey: 'place-main', snapshotRef, savedAt: '2026-11-09T00:00:00.000Z', ...(published ? { placeId: '123', universeId: '456' } : {}) } };
   let captureNumber = 0;
   /** 构造显式标注为测试使用的规范化采集记录，不调用任何编辑器。 */

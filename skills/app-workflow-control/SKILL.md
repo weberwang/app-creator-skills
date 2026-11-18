@@ -33,7 +33,9 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 按 [schemas/work-item.schema.json](schemas/work-item.schema.json) 定义单个 JSON 工作项。生成新工作项用 CLI `init`，已有工作项引用指向项目里的机器记录：
 
 - `implementationPackageRef` → 固定顺序实施包。单元默认串行；连续且至少两项的 `parallelGroup` 可形成并行批次，组内声明的目录/文件所有权必须互斥。`dependsOn` 只引用更早批次的单元，不会改变 `sequence` 顺序。
-- `planningRef` → 本次实际计划及 F0/F1/F2 显式自评的来源文件。`plan` 生成关联实施包及空 Evidence Manifest，不自动通过任何门。
+- `planningRef` → 用 `{path,sha256}` 固定本次实际计划及 F0/F1/F2 显式自评的来源文件。`plan` 生成关联实施包及空 Evidence Manifest，不自动通过任何门；规划后改写来源须 RETURN 并重新规划。
+- 实施包的 `systemCoverage` → [需求、系统／模块、设计、任务与验证覆盖](../app-creator-workflow/references/system-module-coverage.md)。游戏及非游戏共用；每份计划必填，统一加载器与进入实施的执行快照核对同一内容。缺设计、本批需求关联后置／未决模块、孤立任务或验收命令错绑均阻断，手写包及 light 也不例外；原始需求完整性仍由 F1/F2 实际审查。
+- 最终 `integrationScopeRef` 的 `systemCoverageMappings` → [来源系统到最终用例与命令的闭环](../app-creator-workflow/references/system-module-coverage.md#最终集成的系统覆盖闭环)，覆盖当前包、V1 原包及实际功能／生产前批。独立系统和独立前批分别由范围 `systemSources/productionSources` 纳入，已绑定总范围不得漏批；结果须指向同一单元真实输出，不能实施后改标用途。
 - `evidenceRef` → 当前实施包、工作项、技术栈及视觉阶段相同的 Evidence Manifest。每项必须是 profile 所需类别、真实非空文件，且位于当前 `evidenceRoot`。
 - `visual.functionDependencies` → 按行为范围引用同项目同栈的非视觉功能工作项及其实际通过的证据；详见[功能范围与跨对象依赖](references/function-dependencies.md)。未使用共享功能依赖时由当前工作项完成 V1 工程验证；原型按上述内容分流，不能以模块依赖代替 3D 本场景白模验证。
 - PAGE 和 DISPLAY_LAYER 的 `visual.domainEvidenceRef` → 当前 V2–V5 阶段的实际领域输入；具体合同及技术栈适用性见[单目标领域合同](references/single-target-domain.md)。

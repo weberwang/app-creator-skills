@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/integration-system-coverage.schema.json",
+  "title": "最终集成系统覆盖映射",
+  "description": "将来源实施包中的当前需求和模块关联到最终用例与冻结验收命令。",
+  "type": "array",
+  "minItems": 1,
+  "uniqueItems": true,
+  "items": {
+    "type": "object",
+    "additionalProperties": false,
+    "required": ["sourcePackageRef", "requirementId", "moduleIds", "objectIds", "verifications"],
+    "properties": {
+      "sourcePackageRef": {"$ref": "#/$defs/frozenRef"},
+      "requirementId": {"$ref": "#/$defs/text"},
+      "moduleIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+      "objectIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/text"}},
+      "verifications": {
+        "type": "array", "minItems": 1, "uniqueItems": true,
+        "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["caseId", "unitId", "command"],
+          "properties": {"caseId": {"$ref": "#/$defs/text"}, "unitId": {"$ref": "#/$defs/text"}, "command": {"$ref": "#/$defs/text"}}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "text": {"type": "string", "pattern": "\\S"},
+    "frozenRef": {
+      "type": "object", "additionalProperties": false, "required": ["path", "sha256"],
+      "properties": {"path": {"$ref": "#/$defs/text"}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+    }
+  }
+}
