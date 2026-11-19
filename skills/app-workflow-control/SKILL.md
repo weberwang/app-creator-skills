@@ -14,7 +14,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 - 六个阶段：需求与范围、全局基线、基础工程、场景与页面生产、全局集成验证、发布。全局状态只由控制器校验并按显式命令迁移；`run` 仅推进无需再次执行人工决定的早期安全阶段，停在生产实现或发布边界。
 - `SCENE`、`PAGE`、`DISPLAY_LAYER` 各用独立 Work Item，显示层绑定 `visual.hostId/layerType`。Flutter、Expo 默认按 [Figma App 路线](../app-ui-layout/references/figma-app-design.md)推进 V0 范围与探索边界、V1 功能、V2 分析、生图、用户选图及忠实重建 Figma、V3 必要还原交接、V4 代表组件试接和分批实现、V5 完整运行及人工验收；用户明确要求比较时按指定数量制作实质不同的方向，局部增量复用有效方向。稿中明确的结构不重画或重复批准。ESP32 可显式选择并保留硬件约束；游戏图片路线仍执行原有 V3 拆解/布局确认，3D 世界使用下述显式路线，Node.js 无界面服务不引入 Figma。通用额外白盒按风险选用，world-3d 必须有本场景有效白模运行。
   多个 `PAGE` 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择代表页、复用共享部分并按依赖调度；各对象阶段独立，不默认全页同步。实施包内的批次门禁只约束该包的执行单元，不构成不同页面必须同步推进的要求。
-  采用白盒时遵循[可辨识的功能原型](../app-creator-workflow/references/readable-functional-prototype.md)，将语义、状态和反馈检查并入现有 V1 验证，明确模拟范围，不新增审批或控制器字段。
+  采用白盒时遵循[可辨识的功能原型](../app-creator-workflow/references/readable-functional-prototype.md)，将语义、状态和反馈检查并入现有 V1 验证。采用[两轮流程](../app-creator-workflow/references/readable-functional-prototype.md#core-experience-first)时，执行者在调用 `advance-visual --to V2` 前核对整期白模的既有运行证据和用户确认。尚缺条件的推进可用既有 `BLOCKED` 暂停，补齐后恢复原状态。控制器按当前工作项和登记的阻塞执行状态检查。
 - A0–A6 区分只读调查、规格、原型、生产实现、本地集成、外部状态/设备与发布风险。A4–A6 的外部写入、设备、签名、上传、付费和发布操作必须绑定精确动作、对象与真实用户消息引用。JSON 只追溯决策，不能自行证明身份或授权，也不能让 CLI 执行动作。
 - F0–F4 保存需求范围、规格、领域质量、工程验证和高影响审批事实。PASS 只可在实际调查、证据和人工确认支持时记录；空文件、过期工作项或错栈证据不算通过。
 - 结构完成、工程通过和用户人工确认的视觉通过按[验收结论](../app-creator-workflow/references/verification.md#三类验收结论)分别报告；这是对已有证据的解释，不增加控制器状态或字段。节点、参数、测试和截图采集结果不能代替用户确认，机器检查不证明显示效果通过。

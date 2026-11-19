@@ -18,6 +18,7 @@ const DOCUMENTS = [
   'app-creator-workflow/references/verification.md',
   'app-creator-workflow/references/handoffs.md',
   'app-creator-workflow/references/output-files.md',
+  'app-creator-workflow/references/readable-functional-prototype.md',
   'app-project-foundation/SKILL.md',
   'app-architecture/SKILL.md',
   'app-quality-review/SKILL.md',
@@ -26,7 +27,8 @@ const DOCUMENTS = [
   'app-asset-workflow/references/interface-intent.md',
   'app-asset-workflow/references/multi-image-scene-design.md',
   'app-domain-toolkit/references/incremental-production.md',
-  'app-workflow-control/references/implementation-execution.md',
+  'app-domain-toolkit/references/game-design-exploration.md',
+  'app-ui-layout/references/figma-app-design.md',
 ];
 
 /** 需要通过真实原生读取器验证的执行入口，未声明的模式不凭测试补造。 */
@@ -38,7 +40,7 @@ function read(root, path) {
 }
 
 /** 仅核对本轮公共交付之间的链接，避免把其他栈的条件参考误当成本栈必需资料。 */
-function checkChangedReferences(root, path) {
+function checkChangedReferences(root, path, installedRoots) {
   const source = join(root, path);
   const links = [...markdownProse(read(root, path)).matchAll(/\]\(([^)]+)\)/g)];
   let checked = 0;
@@ -47,7 +49,8 @@ function checkChangedReferences(root, path) {
     const [file, fragment = ''] = href.split('#');
     const target = file ? resolve(dirname(source), decodeURIComponent(file)) : source;
     const local = relative(root, target).split(sep).join('/');
-    if (!DOCUMENTS.includes(local)) continue;
+    // 公共入口含条件路由，例如无界面 Node.js 不交付 Figma 参考。
+    if (!DOCUMENTS.includes(local) || !installedRoots.has(local.split('/')[0])) continue;
     assert.ok(existsSync(target), `${path} 的持续迭代引用未交付：${href}`);
     extractMarkdownSection(readFileSync(target, 'utf8'), decodeURIComponent(fragment));
     checked += 1;
@@ -126,7 +129,7 @@ for (const stack of STACKS) {
         continue;
       }
       assert.equal(read(root, path), read(join(SOURCE_ROOT, 'skills'), path), `${stack}/${path} 安装内容失真`);
-      checkChangedReferences(root, path);
+      checkChangedReferences(root, path, installedRoots);
     }
     checkIterationRules(root);
     const profile = JSON.parse(read(root, `app-stack-${stack}/profile.json`));
@@ -151,7 +154,7 @@ for (const stack of STACKS) {
     if (stack === 'flutter') {
       // 破坏安装副本的真实锚点，确认断链不会被源仓库或相邻章节静默补齐。
       for (const [path, marker, replacement, entry] of [
-        ['app-domain-toolkit/references/incremental-production.md', '<a id="rolling-delivery-plan"></a>', '', 'app-creator-workflow/SKILL.md'],
+        ['app-creator-workflow/references/readable-functional-prototype.md', '<a id="core-experience-first"></a>', '', 'app-ui-layout/references/figma-app-design.md'],
         ['app-creator-workflow/references/professional-conventions.md', '<a id="incremental-change-impact"></a>', '', 'app-creator-workflow/SKILL.md'],
         ['app-asset-workflow/SKILL.md', '## 代表性接入与分批协作', '## 已移除样本章节', 'app-creator-workflow/references/workflow.md'],
       ]) {
@@ -159,7 +162,7 @@ for (const stack of STACKS) {
         assert.ok(original.includes(marker));
         try {
           writeFileSync(join(root, path), original.replace(marker, replacement));
-          assert.throws(() => checkChangedReferences(root, entry), /锚点不存在/);
+          assert.throws(() => checkChangedReferences(root, entry, installedRoots), /锚点不存在/);
         } finally {
           writeFileSync(join(root, path), original);
         }

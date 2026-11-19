@@ -201,15 +201,15 @@ test('字段、来源上下文、结果文件和遗漏的用例都不允许绕�
   assert.throws(() => validateIntegrationSystemCase(i.repo, i.work, i.pack, mappings(i).get('final-case'), i.actual, { verifyIdentity: i.verifyIdentity }), /结果身份或状态/);
 });
 
-/** 构造同一世界两批正式来源，历史 V1 包独立冻结，最终验证仍引用当前命令。 */
-function cumulativeFixture(t) {
-  const f = fixture(t, 'unity');
+/** 构造同一对象的历史及当前来源，历史 V1 包独立冻结。 */
+function cumulativeFixture(t, { stack = 'unity', type = 'SCENE' } = {}) {
+  const f = fixture(t, stack);
   f.work.projectId = 'project-a';
   const unit = [{ unitId: 'scene-unit', acceptanceCommands: ['node --version'] }];
   /** 为每个场景或历史功能来源建立独立实施包，避免按同名需求合并来源。 */
   function makePack(id) {
-    const pack = { schemaVersion: '1.0', workItemId: id, stack: 'unity', workItemType: 'SCENE', executionUnits: unit };
-    pack.systemCoverage = createSystemCoverage(f.repo, { workItemId: id, stack: 'unity' }, unit);
+    const pack = { schemaVersion: '1.0', workItemId: id, stack, workItemType: type, executionUnits: unit };
+    pack.systemCoverage = createSystemCoverage(f.repo, { workItemId: id, stack }, unit);
     return { pack, ref: f.put(`sources/${id}-pack.json`, pack) };
   }
   const oldV1 = makePack('old-v1');
@@ -217,7 +217,7 @@ function cumulativeFixture(t) {
   const currentPack = makePack('current');
   const oldBaseline = f.put('sources/old-baseline.json', { schemaVersion: '1.0', systemCoverageOrigins: [oldV1.ref] });
   const currentBaseline = f.put('sources/current-baseline.json', { schemaVersion: '1.0' });
-  const base = { projectId: 'project-a', stack: 'unity', workItemType: 'SCENE', globalState: 'COMPLETE' };
+  const base = { projectId: 'project-a', stack, workItemType: type, globalState: 'COMPLETE' };
   const old = { ...base, workItemId: 'old', implementationPackageRef: { path: oldPack.ref.path }, visual: { objectId: 'first', stage: 'V5', functionBaselineRef: oldBaseline } };
   const current = { ...base, workItemId: 'current', implementationPackageRef: { path: currentPack.ref.path }, visual: { objectId: 'first', stage: 'V5', functionBaselineRef: currentBaseline } };
   const oldRef = f.put('sources/old-work.json', old);
@@ -233,7 +233,7 @@ function cumulativeFixture(t) {
     inspections.push({ workItemId: source.workItemId, ...options });
     return { status: 'PASS', blocking: [] };
   };
-  return { ...f, old, oldRef, current, currentRef, oldV1, oldPack, currentPack, inspect, inspections };
+  return { ...f, old, oldRef, current, currentRef, oldV1, oldPack, currentPack, inspect, inspections, makePack };
 }
 
 /** 按已收集的真实来源包生成最终映射，验证缺项时由正式覆盖检查器拒绝。 */
@@ -261,8 +261,56 @@ test('未绑定总范围的场景历史来源将旧需求和 V1 原包映射到�
   assert.throws(() => validateIntegrationSystemMappings(f.repo, f.work, f.scope, { sources, pack: f.pack }), /缺少来源需求/);
 });
 
-test('完整 final 入口检查未绑定范围的历史需求与本次真实命令结果', (t) => {
-  const f = cumulativeFixture(t);
+test('未绑定总范围的页面多批历史来源均映射到当前验收，遗漏旧包时拒绝', (t) => {
+  const f = cumulativeFixture(t, { stack: 'flutter', type: 'PAGE' });
+  const secondPack = f.makePack('old-second');
+  const second = { ...f.old, workItemId: 'old-second', implementationPackageRef: { path: secondPack.ref.path } };
+  f.scope.productionSources.push({ workItemRef: f.put('sources/old-second.json', second), objectIds: ['first'] });
+  const sources = collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect);
+  assert.deepEqual(sources.map((item) => item.pack.workItemId).sort(), ['current', 'old', 'old-second', 'old-v1']);
+  assert.deepEqual(f.inspections.map(({ workItemId, historical }) => [workItemId, historical]), [
+    ['current', false], ['old', true], ['old-second', true],
+  ]);
+  mapCumulativeSources(f, sources);
+  const checks = validateIntegrationSystemMappings(f.repo, f.work, f.scope, { sources, pack: f.pack });
+  assert.doesNotThrow(() => validateIntegrationSystemCase(f.repo, f.work, f.pack, checks.get('final-case'), f.actual, { verifyIdentity: f.verifyIdentity }));
+  f.scope.systemCoverageMappings = f.scope.systemCoverageMappings.filter((mapping) => mapping.sourcePackageRef.path !== secondPack.ref.path);
+  assert.throws(() => validateIntegrationSystemMappings(f.repo, f.work, f.scope, { sources, pack: f.pack }), /缺少来源需求/);
+});
+
+test('页面历史批次必须与当前对象同类型、同身份且真实完成', (t) => {
+  for (const [label, mutate] of [
+    ['场景不能冒充页面', (old) => { old.workItemType = 'SCENE'; }],
+    ['显示层不能冒充页面', (old) => { old.workItemType = 'DISPLAY_LAYER'; }],
+    ['项目不匹配', (old) => { old.projectId = 'other'; }],
+    ['技术栈不匹配', (old) => { old.stack = 'expo'; }],
+    ['页面不匹配', (old) => { old.visual.objectId = 'other'; }],
+    ['同一工作项', (old) => { old.workItemId = 'current'; }],
+    ['仅通过未完成', (old) => { old.globalState = 'PASSED'; }],
+    ['阶段未完成', (old) => { old.visual.stage = 'V4'; }],
+    ['设计提案', (old) => { old.visual.designIntent = 'proposal'; }],
+    ['绑定其他范围', (old) => { old.productionScopeRef = { path: 'other.json', sha256: 'a'.repeat(64) }; }],
+  ]) {
+    const f = cumulativeFixture(t, { stack: 'flutter', type: 'PAGE' });
+    mutate(f.old);
+    f.scope.productionSources[0].workItemRef = f.put('sources/old-work.json', f.old);
+    assert.throws(() => collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect), /历史来源必须是同项目/, label);
+  }
+  const duplicate = cumulativeFixture(t, { stack: 'flutter', type: 'PAGE' });
+  duplicate.scope.productionSources.push(structuredClone(duplicate.scope.productionSources[0]));
+  assert.throws(() => collectIntegrationSystemSources(duplicate.repo, duplicate.work, duplicate.scope, duplicate.inspect), /历史对象来源不能重复/);
+  const forged = cumulativeFixture(t, { stack: 'flutter', type: 'PAGE' });
+  forged.put('sources/old-work.json', { ...forged.old, altered: true });
+  assert.throws(() => collectIntegrationSystemSources(forged.repo, forged.work, forged.scope, forged.inspect), /内容已变化/);
+  const strict = cumulativeFixture(t, { stack: 'flutter', type: 'PAGE' });
+  assert.throws(() => collectIntegrationSystemSources(strict.repo, strict.work, strict.scope, (repo, source, options) => {
+    assert.equal(options.historical, source.workItemId === 'old');
+    return source.workItemId === 'old' ? { status: 'FAIL', blocking: ['伪造完成'] } : { status: 'PASS', blocking: [] };
+  }), /严格检查未通过/);
+});
+
+for (const [type, stack] of [['SCENE', 'unity'], ['PAGE', 'flutter']]) test(`${type} 完整 final 入口检查未绑定范围的历史需求与本次真实命令结果`, (t) => {
+  const f = cumulativeFixture(t, { type, stack });
   const sources = collectIntegrationSystemSources(f.repo, f.work, f.scope, f.inspect);
   mapCumulativeSources(f, sources);
   Object.assign(f.scope, { schemaVersion: '1.0', projectId: f.work.projectId, stack: f.work.stack, workItemId: f.work.workItemId });
@@ -312,10 +360,10 @@ test('未绑定总范围的历史来源必须是当前对象的不同已完成�
   assert.throws(() => collectIntegrationSystemSources(missing.repo, missing.work, missing.scope, missing.inspect), /必须冻结工作项/);
   const duplicate = cumulativeFixture(t);
   duplicate.scope.productionSources.push(structuredClone(duplicate.scope.productionSources[0]));
-  assert.throws(() => collectIntegrationSystemSources(duplicate.repo, duplicate.work, duplicate.scope, duplicate.inspect), /历史场景来源不能重复/);
+  assert.throws(() => collectIntegrationSystemSources(duplicate.repo, duplicate.work, duplicate.scope, duplicate.inspect), /历史对象来源不能重复/);
   const alias = cumulativeFixture(t);
   alias.scope.productionSources.push({ workItemRef: alias.put('sources/old-alias.json', alias.old), objectIds: ['first'] });
-  assert.throws(() => collectIntegrationSystemSources(alias.repo, alias.work, alias.scope, alias.inspect), /历史场景来源不能重复/);
+  assert.throws(() => collectIntegrationSystemSources(alias.repo, alias.work, alias.scope, alias.inspect), /历史对象来源不能重复/);
   const current = cumulativeFixture(t);
   current.scope.productionSources[0].workItemRef = current.currentRef;
   assert.throws(() => collectIntegrationSystemSources(current.repo, current.work, current.scope, current.inspect), /历史来源必须是同项目/);

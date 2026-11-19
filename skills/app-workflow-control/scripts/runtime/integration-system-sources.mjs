@@ -147,17 +147,17 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
       if (source.globalState !== 'COMPLETE' || !batch || source.productionScopeRef?.sha256 !== work.productionScopeRef.sha256 || fileIdentityKey(repo, source.productionScopeRef?.path) !== fileIdentityKey(repo, work.productionScopeRef.path) || entry.objectIds.some((id) => !batch.objectIds.includes(id))) throw new WorkflowError('生产批次来源未完成或与当前冻结总范围或批次对象不匹配');
       if (source.visual && entry.objectIds.some((id) => id !== source.visual.objectId)) throw new WorkflowError('单个视觉来源不能代表同一批次的其他对象');
     } else {
-      // 未绑定总范围时只接受显式登记的同场景历史批次，不从目录猜测历史或扩张消费者。
+      // 未绑定总范围时只接受显式登记的同类型、同对象历史批次。
       const sourcePath = fileIdentityKey(repo, loaded.ref.path);
-      if (unscopedSourcePaths.has(sourcePath) || unscopedWorkIds.has(source.workItemId)) throw new WorkflowError('未绑定总范围的历史场景来源不能重复');
+      if (unscopedSourcePaths.has(sourcePath) || unscopedWorkIds.has(source.workItemId)) throw new WorkflowError('未绑定总范围的历史对象来源不能重复');
       const object = scope.objects.find((item) => item.objectId === entry.objectIds[0]);
-      const current = frozenJson(repo, object.workItemRef, '当前场景工作项').value;
-      const sameScene = entry.objectIds.length === 1 && source.workItemType === 'SCENE' && current?.workItemType === 'SCENE' &&
+      const current = frozenJson(repo, object.workItemRef, '当前对象工作项').value;
+      const sameObject = entry.objectIds.length === 1 && ['SCENE', 'PAGE'].includes(source.workItemType) && current?.workItemType === source.workItemType &&
         source.visual?.objectId === entry.objectIds[0] && current.visual?.objectId === entry.objectIds[0];
       const sameProject = source.projectId === work.projectId && current?.projectId === work.projectId && source.stack === work.stack && current?.stack === work.stack;
       const distinctWork = typeof source.workItemId === 'string' && source.workItemId.trim() && typeof current?.workItemId === 'string' && current.workItemId.trim() && source.workItemId !== current.workItemId;
       const validHistory = source.productionScopeRef === undefined && current?.productionScopeRef === undefined && source.globalState === 'COMPLETE' && source.visual?.stage === 'V5' && source.visual?.designIntent !== 'proposal';
-      if (!sameScene || !sameProject || !distinctWork || !validHistory) throw new WorkflowError('未绑定总范围的历史来源必须是同项目、同场景已完成的不同 SCENE 工作项');
+      if (!sameObject || !sameProject || !distinctWork || !validHistory) throw new WorkflowError('未绑定总范围的历史来源必须是同项目、同对象已完成的不同 SCENE 或 PAGE 工作项');
       unscopedSourcePaths.add(sourcePath);
       unscopedWorkIds.add(source.workItemId);
     }

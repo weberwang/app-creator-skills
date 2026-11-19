@@ -3,14 +3,15 @@ import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { mkdtemp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, resolve } from 'node:path';
+import { basename, dirname, resolve } from 'node:path';
 import test from 'node:test';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { assertVisualReuse, resolveReuseOwner, validateSceneReuseCoverage, validateSceneReuseReview } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse-binding.mjs';
 import { assertVisualReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
+import { collectIntegrationSystemSources } from '../../skills/app-workflow-control/scripts/runtime/integration-system-sources.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
-import { advanceVisual, assertFunctionBaseline, completeUnit, initializeWork, inspectWork, loadWork, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { advanceVisual, assertFunctionBaseline, completeUnit, initializeWork, inspectFunctionSource, inspectWork, loadWork, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
 import { attachFigmaBaselineFixture, attachFigmaAppFixture, writeFigmaFixture } from './figma-app-fixture.mjs';
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
@@ -84,7 +85,7 @@ function humanRecord({ objectId, stage, purpose, candidateId, targetRef, userMes
 }
 
 /** 经实际执行与状态迁移建立可复验的 V1 功能基线，不依赖正式视觉或其他场景。 */
-async function prepareFunctionalStage(repo, workPath, { deliveryPath } = {}) {
+async function prepareFunctionalStage(repo, workPath, { deliveryPath, stopAtV1 = false } = {}) {
   let work = loadWork(repo, workPath);
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = 'PASS';
@@ -121,7 +122,7 @@ async function prepareFunctionalStage(repo, workPath, { deliveryPath } = {}) {
   await putJson(repo, workPath, work);
   await transitionWork({ repo, workItem: workPath, to: 'VALIDATING', args: {} });
   await transitionWork({ repo, workItem: workPath, to: 'PASSED', args: {} });
-  await advanceVisual({ repo, workItem: workPath, to: 'V2' });
+  if (!stopAtV1) await advanceVisual({ repo, workItem: workPath, to: 'V2' });
 }
 
 /** 为来源构造完整的合成 V5 材料，覆盖真实校验器读取的绑定字段。 */
@@ -297,6 +298,58 @@ test('V5 功能重验后补充视觉证据并完成正式阶段', async (t) => {
   const work = await completeVisualSource(fixture, { regression: true });
   assert.equal(work.globalState, 'COMPLETE');
   assert.equal(inspectWork(fixture.repo, work, { strict: true }).status, 'PASS');
+});
+
+/** 只在测试结束时清理本用例创建的独占临时目录。 */
+function removeAuditFixtureAfterTest(t, repo) {
+  t.after(async () => {
+    assert.equal(dirname(resolve(repo)), resolve(tmpdir()));
+    assert.ok(basename(repo).startsWith('visual-reuse-'));
+    await rm(repo, { recursive: true, force: true });
+  });
+}
+
+test('整期白模等待期间复用 V1 阻塞与恢复，保留已通过的工程证据', async (t) => {
+  const { repo, workPath } = await createFixture({ id: 'whitebox-awaiting-review' });
+  removeAuditFixtureAfterTest(t, repo);
+  await prepareFunctionalStage(repo, workPath, { stopAtV1: true });
+  const passed = loadWork(repo, workPath);
+  await transitionWork({ repo, workItem: workPath, to: 'BLOCKED', args: { reason: '合成用例：整期跨页用例和确认待齐' } });
+  await assert.rejects(advanceVisual({ repo, workItem: workPath, to: 'V2' }), /BLOCKED\/RETURN 未解决/);
+  await transitionWork({ repo, workItem: workPath, to: 'PASSED', args: { 'return-resolution': '合成用例：恢复已通过的 V1' } });
+  const restored = loadWork(repo, workPath);
+  assert.equal(restored.evidenceRoot, passed.evidenceRoot);
+  assert.deepEqual(restored.evidenceRef, passed.evidenceRef);
+  await advanceVisual({ repo, workItem: workPath, to: 'V2' });
+  assert.equal(loadWork(repo, workPath).visual.stage, 'V2');
+});
+
+test('同页面前批通过真实历史检查进入最终系统来源，旧执行证据仍须完好', async (t) => {
+  const fixture = await createFixture({ id: 'previous-page' });
+  const { repo, workPath } = fixture;
+  removeAuditFixtureAfterTest(t, repo);
+  const earlier = await completeVisualSource(fixture);
+  const earlyRef = await frozenReview(repo, workPath);
+  const current = { ...earlier, workItemId: 'current-page', implementationPackageRef: { path: 'current-pack.json' }, visual: { objectId: earlier.visual.objectId, stage: 'V5' } };
+  await putJson(repo, current.implementationPackageRef.path, { schemaVersion: '1.0', workItemId: current.workItemId, stack: current.stack, workItemType: 'PAGE' });
+  await putJson(repo, 'current-page.json', current);
+  const scope = {
+    objects: [{ objectId: current.visual.objectId, workItemRef: await frozenReview(repo, 'current-page.json') }],
+    productionSources: [{ objectIds: [earlier.visual.objectId], workItemRef: earlyRef }],
+  };
+  const final = { projectId: earlier.projectId, stack: earlier.stack, workItemId: 'final' };
+  /** 当前来源使用替身专注本用例的旧批真实校验，避免重制整套正式视觉夹具。 */
+  function inspect(root, source, options) {
+    return source.workItemId === earlier.workItemId ? inspectFunctionSource(root, source, options) : { status: 'PASS' };
+  }
+  await put(repo, `lib/function-${earlier.workItemId}.dart`, '后批更新已声明的业务交付\n');
+  const sources = collectIntegrationSystemSources(repo, final, scope, inspect);
+  assert.ok(sources.some(({ packRef }) => packRef.path === earlier.implementationPackageRef.path));
+  const original = JSON.parse(await readFile(resolve(repo, earlier.visual.functionBaselineRef.path), 'utf8'));
+  assert.ok(sources.some(({ packRef }) => packRef.path === original.work.implementationPackageRef.path));
+  const v1Root = original.work.evidenceRoot;
+  await put(repo, `${v1Root}/function-command.txt`, '已冻结的原始输出被修改\n');
+  assert.throws(() => collectIntegrationSystemSources(repo, final, scope, inspect), /功能.*证据|严格检查未通过/);
 });
 
 /** 在清理前保存来源记录字节，核验复用命令只建立引用、不改原始记录。 */

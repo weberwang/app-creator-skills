@@ -9,13 +9,13 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 游戏大场景、长游戏流程、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据。游戏先明确区域／机制／解锁的整体骨架，再按连续可玩路径分批，逐批验证邻区与已有内容衔接，按风险补状态复现、持续运行和长期体验检查；不等待全游戏完成才集成。小范围修改沿用已有任务。
 
-多批次开发按[全程粗排、近期细排、逐批更新](../app-domain-toolkit/references/incremental-production.md#rolling-delivery-plan)在已有未被冻结的计划或当前任务沟通中维护完整批次路线、工作量区间、验收里程碑和延期调整；投入或日期依据不足时先给相对计划及假设，不新增排期文档、机器字段或审批。
+核心设计确认后，核心任务可用简化表现验证的 App 和游戏按[白模与正式实现循环](references/readable-functional-prototype.md#core-experience-first)推进。各批按当前需求和实际依赖细化、实现、验证和返修。推进任一对象到 V2 前核对整期白模收口依据，复用已有运行结果和用户确认，再分批接入正式表现。
 
-App 多页面按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择本批路径与代表页：统一视觉方向后，默认优先让代表页完成 V2–V5，再复用共享方案推进其余页面；依赖明确且所有权互斥时可提前并行。各 `PAGE` 独立记录阶段和验收，不默认所有页面同步推进，也不将代表页 V5 设为无关页面的前置门。
+App 正式表现按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)统一视觉方向，优先让代表页完成 V2–V5，再复用方案推进其余页面。各 `PAGE` 独立记录阶段和验收，依赖明确且所有权互斥的制作可并行。
 
 App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-design.md)执行“设计分析 → imagegen 代表页效果图 → 用户确认图 → 忠实重建可编辑 Figma → V3 提取 → V4 实现 → V5 验证”；分析、生图、反馈修订、选稿和重建归入 V2。按项目图片委派规则调用实际可用工具，缺工具或额度如实阻塞；已确认且目标未变的图直接复用。原图确认并授权忠实重建后，结构核对完成即可提取规格，不重复批准同一视觉目标，不把未看重建预览登记为视觉通过；用户指定其他路线时记录真实指令及范围。
 
-从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡／场景职责先形成结构、尺度与镜头依据，仅记录前期内容需求，不逐物件拆图生图。按[3D、2D 与 UI 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式工程白模搭建与 V1 功能验证，2D 使用平面布局和占位资源，UI 保持原流程；概念图可选。本批整体场景单次审查并经人工修改或确认后，再明确正式方向和生产交接、试接代表模块及分批替换。不自动确认或关闭设计任务，不等待全游戏设计完毕；实际机器合同缺口按该规范说明，不伪造阶段通过。
+从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡／场景职责先形成结构、尺度与镜头依据，仅记录前期内容需求，不逐物件拆图生图。按[3D、2D 与 UI 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式工程白模搭建与 V1 功能验证，2D 使用平面布局和占位资源，UI 保持原流程；概念图可选。本批整体场景沿用单次审查和人工空间确认。采用两轮流程时，先完成本期白模收口，再按原阶段明确正式方向、试接和分批替换。实际机器合同缺口按该规范说明，不伪造阶段通过。
 
 可见内容必须先按[通用分析的统一执行要求](references/professional-conventions.md#product-market-research)完成市场、竞品、受众与参考分析，已有有效结论核实后复用，只补查缺失或变化部分；再按共同权威[体验、视觉方向与意图表达](../app-asset-workflow/references/interface-intent.md#design-basis)，从本批真实用户行为、使用压力和适用状态形成有依据的视觉方向，区分硬约束、方向与探索空间，决定文字、美术及制作输入。游戏在原方案确定判断、场景线索、行动、反馈及必要精确信息，区分世界物件、地面区域、角色附属、场景浮层和 HUD，交接真实状态显隐。白模调试标签不直接继承为正式画面。需要多方向比较时，按[候选视觉语言与生成约束](../app-asset-workflow/references/style-and-production.md)分别定义造型、比例、材质、明暗边缘、功能色、UI 图标与制作路线，沿用当前路线的候选数量；实际可读性和风格差异仍由用户判断。
 
@@ -65,7 +65,7 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
 3. 明确目标、非目标、文件/对象所有权与可观察验收；先只读补事实。出现确实需要用户取舍的缺口时进入 [grilling](../grilling/SKILL.md)，继续不依赖该决定的工作，不能把正常实现变成逐步审批。
    包含客户端界面的新项目初始化时询问用户支持的界面语言：默认简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可按需追加；给出默认选项并等待用户选择，已有明确语言决定时不重复询问。将确认的语言清单和默认显示语言写入项目配置并用于各栈实现、字体与验证；默认显示语言必须在清单内。语言选择未答复时继续不依赖该选择的工作，不能把预选项当作确认。既有项目沿用其已确认的语言范围，不因局部修复重问或擅自扩展。
-4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 先验证相关功能，3D 世界按上述分流先搭建或复用有效白模，其他内容按风险选择原型，不等待正式美术。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
+4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 按上述路线验证本批功能并复用有效白模与组件。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
 5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)及本栈规范，从 V0/V1 明确宿主、内容和显示职责，原型方式按上述内容分流。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认使用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)；ESP32 可在设备限制内采用，游戏图片目标及 UI 保留相应三候选和素材规则，不用其替代 3D 白模与模型交接。仅设计提案不强制先建设运行工程，正式实现仍须完成相关 V1 功能验证。Node.js 无界面服务不引入 Figma。已有有效方向和未受影响确认按语义复用，当前功能验证、V4 接入与 V5 实际运行／人工验收仍独立完成。
    制作前按本批深度核对[能力与动作语义](../app-asset-workflow/references/interface-intent.md#capability-semantics)，在原方案记录关键取舍及视觉依据；每次实际生图前将这些结论转成当次提示词，按[生成前约束](../app-asset-workflow/references/style-and-production.md#生成前约束)检查冲突、来源角色及探索边界后调用工具，保存真实发送内容。生图用于适合的路线和产物，不成为所有显示任务的必经步骤。
    代理可按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对真实设计节点与可测事实；未经明确授权不得自动分析设计稿或运行截图，截图交用户检查。非游戏 App 的 V3 从所选稿提取必要还原交接，表达清楚时不重画拆解图、布局图或重复要求人工批准；V4 前段按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)试接实际组件，再分批扩展。共享文件和原生编辑器保持单写者。
