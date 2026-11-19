@@ -165,6 +165,45 @@ test('V4 必须执行工程证据门并核对模型来源、导入、消费者�
   assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /缺少唯一模型验收/);
 });
 
+test('V4 模型专项评审接受无需补稿，拒绝未通过或失去证据的检查', (t) => {
+  const f = createWorld3DFixture(t);
+  attachWorld3DPhase(f, 'V4');
+  const { modelQuality, ...asset } = f.model;
+  assert.doesNotThrow(() => validateWorld3DModel(f.repo, f.work, f.model));
+  assert.doesNotThrow(() => validateWorld3DModel(f.repo, f.work, { ...asset, modelQuality: { ...modelQuality, designViews: 'PASS' } }));
+  assert.throws(() => validateWorld3DModel(f.repo, f.work, asset), /缺少模型质量专项评审/);
+  // 设计稿可以不适用，两项禁令必须明确通过并提供实际检查记录。
+  for (const [change, error] of [
+    [{ designViews: 'NOT_RUN' }, /多角度设计稿/],
+    [{ noProgrammaticCuts: 'FAIL' }, /程序切面/],
+    [{ noProgrammaticColorBlocks: 'NOT_APPLICABLE' }, /程序色块/],
+    [{ evidenceRef: undefined }, /模型质量专项证据/],
+    [{ evidenceRef: f.write('reviews/quality-outside.md', '阶段证据根之外的报告') }, /evidenceRoot/],
+    [{ evidenceRef: asset.importEvidenceRef }, /不能引用/],
+  ]) {
+    assert.throws(() => validateWorld3DModel(f.repo, f.work, { ...asset, modelQuality: { ...modelQuality, ...change } }), error);
+  }
+  f.write(modelQuality.evidenceRef.path, '评审后修改的专项记录');
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /专项证据.*内容已变化/);
+});
+
+test('V4 资源评审 Schema 只对模型要求专项字段', (t) => {
+  const f = createWorld3DFixture(t);
+  attachWorld3DPhase(f, 'V4');
+  const base = new URL('../../skills/app-workflow-control/schemas/', import.meta.url);
+  const ajv = new Ajv2020({ strict: false });
+  for (const name of ['work-item.schema.json', 'human-review.schema.json']) {
+    ajv.addSchema(JSON.parse(readFileSync(new URL(name, base), 'utf8')), name);
+  }
+  const validate = ajv.compile(JSON.parse(readFileSync(new URL('asset-review.schema.json', base), 'utf8')));
+  const review = f.read(f.assetReviewRef);
+  assert.equal(validate(review), true, JSON.stringify(validate.errors));
+  delete review.assets[0].modelQuality;
+  assert.equal(validate(review), false);
+  const imageReview = JSON.parse(readFileSync(new URL('../templates/asset-review.json', base), 'utf8'));
+  assert.equal(validate(imageReview), true, JSON.stringify(validate.errors));
+});
+
 test('V5 必须绑定正式场景、已验收模型、运行记录和人工显示确认', (t) => {
   const f = createWorld3DFixture(t);
   attachWorld3DPhase(f, 'V5');
@@ -280,7 +319,7 @@ test('非 JSON 后缀的控制封套仍保护嵌套文件，超限同样拒绝',
   f.work.assetReviewRef = f.write('reviews/assets.txt', f.read(f.assetReviewRef));
   const paths = collectWorkReferencePaths(f.work, f.repo);
   const sample = f.read(f.sampleRef);
-  for (const path of [f.contract.blockoutRef.path, sample.sceneRef.path, f.model.sourceRef, f.model.output]) {
+  for (const path of [f.contract.blockoutRef.path, sample.sceneRef.path, f.model.sourceRef, f.model.output, f.model.modelQuality.evidenceRef.path]) {
     assert.ok(paths.includes(path), `${path} 未受保护`);
   }
   const tooLarge = 'x'.repeat(5 * 1024 * 1024 + 1);

@@ -251,6 +251,23 @@ export function validateWorld3DModel(repo, work, asset) {
   return withWorld3DModelReuse(() => validateWorld3DModelInContext(repo, work, asset));
 }
 
+/** 核对模型专项评审及冻结记录，实际造型判断由评审负责人提供。 */
+function validateModelQuality(repo, work, asset, root) {
+  const id = asset.assetId;
+  const quality = asset.modelQuality;
+  insist(quality && typeof quality === 'object' && !Array.isArray(quality), `${id} 缺少模型质量专项评审`);
+  insist(['PASS', 'NOT_APPLICABLE'].includes(quality.designViews), `${id} 多角度设计稿适用性检查未通过`);
+  insist(quality.noProgrammaticCuts === 'PASS', `${id} 禁止程序切面的检查未通过`);
+  insist(quality.noProgrammaticColorBlocks === 'PASS', `${id} 禁止程序色块的检查未通过`);
+  const label = `${id} 模型质量专项证据`;
+  // 专项记录和导入记录分别冻结，模型自身及阶段业务快照不能充当检查记录。
+  const path = withLiveWorld3DFiles(() => world3dFile(repo, quality.evidenceRef, label, work));
+  withinEvidenceRoot(repo, path, root, label);
+  const references = [asset.sourceRef, asset.output, asset.importEvidenceRef?.path, asset.consumerEvidenceRef?.path, work.assetReviewRef?.path];
+  const key = fileIdentityKey(repo, path);
+  insist(!references.some((item) => item && fileIdentityKey(repo, item) === key), `${label} 不能引用模型、导入、消费者或评审记录自身`);
+}
+
 /** 模型来源可复用已完成试接，但当前业务文件与资源评审仍须逐项有效。 */
 function validateWorld3DModelInContext(repo, work, asset) {
   assertWorld3DShape(work);
@@ -266,6 +283,7 @@ function validateWorld3DModelInContext(repo, work, asset) {
   });
   const reused = reusedWorld3DAsset(repo, work, asset);
   if (reused) return { source, output, consumer: reused.consumer };
+  validateModelQuality(repo, work, asset, root);
   if (asset.sourceKind === 'ai-generated') {
     world3dFile(repo, { path: asset.generationRecord, sha256: asset.generationRecordSha256 }, `${id} 生成记录`, work);
   }

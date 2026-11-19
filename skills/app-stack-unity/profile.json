@@ -58,6 +58,7 @@
   },
   "resourceDirectories": [
     "app-domain-toolkit",
+    "blender-production-reference",
     "unity-development-workflow",
     "unity-domain-contracts",
     "unity-game-2d-rigging",

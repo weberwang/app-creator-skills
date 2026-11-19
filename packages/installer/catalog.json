@@ -120,6 +120,7 @@
       ],
       "resourceDirectories": [
         "app-domain-toolkit",
+        "blender-production-reference",
         "unity-development-workflow",
         "unity-domain-contracts",
         "unity-game-2d-rigging",
@@ -248,6 +249,7 @@
       ],
       "resourceDirectories": [
         "app-domain-toolkit",
+        "blender-production-reference",
         "cocos-domain-contracts",
         "cocos-game-ad-integration",
         "cocos-game-architecture",
@@ -516,6 +518,7 @@
       ],
       "resourceDirectories": [
         "app-domain-toolkit",
+        "blender-production-reference",
         "threejs-domain-contracts",
         "threejs-game-ad-integration",
         "threejs-game-architecture",
@@ -912,7 +915,7 @@
         {"sourceSkill":"roblox-game-release","capability":"app-release","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-game-release"},
         {"sourceSkill":"roblox-artifact-cleanup","capability":"app-artifact-cleanup","path":"skills/app-stack-roblox/references/native-contracts.md","section":"mode-roblox-artifact-cleanup"}
       ],
-      "resourceDirectories": ["app-domain-toolkit", "roblox-domain-contracts"]
+      "resourceDirectories": ["app-domain-toolkit", "blender-production-reference", "roblox-domain-contracts"]
     }
   }
 }

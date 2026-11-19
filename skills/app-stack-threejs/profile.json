@@ -67,6 +67,7 @@
   },
   "resourceDirectories": [
     "app-domain-toolkit",
+    "blender-production-reference",
     "threejs-domain-contracts",
     "threejs-game-ad-integration",
     "threejs-game-architecture",

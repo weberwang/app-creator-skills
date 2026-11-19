@@ -40,6 +40,12 @@
   },
   "sharedWorkflows": [
     {
+      "id": "blender-scene-production",
+      "path": "../app-domain-toolkit/references/blender-scene-production.md",
+      "stacks": ["cocos", "threejs", "unity", "roblox"],
+      "onDemand": true
+    },
+    {
       "id": "modeling-production",
       "path": "../app-domain-toolkit/references/modeling-production.md",
       "stacks": [

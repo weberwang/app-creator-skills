@@ -14,7 +14,7 @@
 
 1. 先检查可复用的 Blender 进程和 Blender MCP 实例，再核对当前工具能力与参数、活动 `.blend`、对象和 Collection、单位/轴向、源文件及导出路径、未保存状态和文件占用；只有确认没有可复用实例后才按已授权流程启动新进程。写入只触及实施包授权的对象与路径。建模和贴图均固定使用 Blender MCP，不为工具选择重复请求用户确认。
 2. 依据已确认的视觉方向和模型规格分析结构、比例、轮廓、观看距离、交互/变形需求，以及拓扑、材质槽、LOD 和碰撞预算。
-3. 细化形体并建立正式网格。只有目标细节需要时才制作高模并重拓扑；按目标风格、轮廓、变形和性能选择高低模方案，不将高模或写实设为通用门槛。
+3. 细化形体并建立正式网格。需要绑定的角色由建模在交接前完成重拓扑，按动作和 LOD 保留变形边流。静态资产按拓扑与预算决定是否重拓扑，高模按烘焙和细节需求制作。
 4. 整理生产拓扑、边流、面朝向、法线和硬/软边界；制作 UV 并检查接缝、拉伸、重叠规则、Texel Density 交接和材质槽。
 5. 需要烘焙时，模型角色在 Blender MCP 中准备并交接匹配的高低模、UV、Cage/射线方案、法线/切线和三角化策略；贴图角色只读核对后负责 Blender 内的实际烘焙与 PBR 贴图产出。共享项、槽位与 LOD 用图策略按[模型与贴图共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)执行，详细贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。
 6. 在 Blender MCP 内按预算制作 LOD 和碰撞代理；碰撞代理只服务物理，不冒充可见模型。按项目版本策略保存版本化 `.blend`，在获准目录导出目标格式。
@@ -25,9 +25,9 @@
 ## Blender MCP 角色绑定与动画
 
 1. 按[角色共同交接](./3d-character-handoff.md)接收生产网格/UV/法线/槽位、贴图材质、LOD、关节范围和目标动画需求。建模负责几何与静态源导出；绑定角色负责带骨架/蒙皮的正式角色导出，纹理/动画派生文件不得覆盖该模型。
-2. [`$app-character-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-rigging) 在 Blender MCP 中设计骨架、Root/挂点、控制与变形骨、rest/bind、IK/FK 和按需面部/校正驱动，制作并清理各 LOD 权重。自动权重只是起点，须验证归一化、影响数预算与代表性压力姿势；拓扑或形状目标问题退回建模。
+2. [`$app-character-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-rigging) 接收已重拓扑的网格，在 Blender MCP 中设计骨架、Root/挂点、控制与变形骨、rest/bind、IK/FK 和按需的驱动。验证各 LOD 的权重归一化、每顶点最多 4 个骨骼影响及代表性压力姿势。拓扑或形状目标问题退回建模。
 3. [`$app-animation`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-animation) 在动作方案取得既有确认后，按目标玩法、镜头和显示尺度制作关键姿势、节奏、接触、循环、过渡/中断和按需面部动作。每个动作独立定义 FPS/范围/时长、根运动与事件，不能套一个周期摆动批量宣称完成。
-4. 在派生副本将控制 Rig/约束/驱动结果烘焙到明确的运行时骨架/形状曲线，逐 Clip 导出并重新导入回读；保留可编辑源。骨架身份、rest/bind、UV/材质槽、各 LOD 用图与根运动基准保持一致；结构缺陷退原岗位，只重验实际依赖。
+4. 将每个 Clip 的动作分配到 NLA。在版本化导出副本上按[共同角色基准](./3d-character-unity-import.md#导出职责与统一基准)应用变换并烘焙运行时骨骼与适用形态曲线，逐 Clip 导出并回读绑定、姿势、权重和 Root 轨迹。结构缺陷退原岗位，只重验实际依赖。
 5. 按[Unity 角色导入合同](./3d-character-unity-import.md)串行验证 ModelImporter、Humanoid/Generic、Avatar/Root、Clips、事件/根运动、Material、SkinnedMeshRenderer/Bounds、LOD 和资源级 Prefab。V4 做资产导入与临时预览，V5 在正式场景检查动作响应、过渡、打断、暂停恢复、对象池和多实例等适用行为。
 
 生产技术证据、独立动画专业审查和用户显示确认分别记录。不得把 2D 的 `uwt_validate_2d_rigging` 或 `riggingDelivery` 当作 3D 门禁；无实际执行的 Blender/Unity 能力保留 `NOT_RUN`/`BLOCKED`，不伪报通过。

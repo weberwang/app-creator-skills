@@ -48,6 +48,7 @@
   },
   "resourceDirectories": [
     "app-domain-toolkit",
+    "blender-production-reference",
     "roblox-domain-contracts"
   ],
   "sharedCapabilities": [
