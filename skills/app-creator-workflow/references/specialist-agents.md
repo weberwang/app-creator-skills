@@ -3,7 +3,7 @@
 | 角色 | 适用任务与交接 |
 | --- | --- |
 | `app_level_scene_designer` | 合并关卡与场景职责，持续维护同一空间、尺度、环境和镜头方案，按[核心方法](../../app-domain-toolkit/references/game-design-exploration.md)迭代；联合单次审查后交人工修改或确认，不自行批准或关闭设计任务。 |
-| `app_3d_model_creator` | 按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)和[建模技能](../../app-3d-modeling/SKILL.md)制作、修改正式几何及 LOD 网格。场景资源先试接代表模块再分批，工具由本栈原生路线决定。 |
+| `app_3d_model_creator` | 按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)和[建模技能](../../app-3d-modeling/SKILL.md)制作、修改正式几何及 LOD 网格。场景资源按风险安排首件验证与分批生产，工具由本栈原生路线决定。 |
 
 角色配置由所属技能维护和分发。关卡／场景设计的配置在 [`app-gameplay-development`](../../app-gameplay-development/agents/app_level_scene_designer.toml)，正式建模的配置在 [`app-3d-modeling`](../../app-3d-modeling/agents/app_3d_model_creator.toml)。需要使用这些角色的目标项目显式激活后，由 Codex 从该项目的 `.codex/agents/` 加载副本。
 
@@ -27,9 +27,9 @@ node .agents/skills/app-creator-workflow/scripts/install-specialist-agents.mjs -
 
 任务包沿用[协作与交接](handoffs.md)的目标、允许修改、已定依据、禁止事项、验收、测试等级与命令、受保护操作授权及并行修改说明。同一工作项返修复用原代理，新职责或独立审查使用新上下文；主代理负责整合、状态迁移和交接。
 
-建模任务包补齐目标镜头与必需结构、V3 设计稿引用或无需多角度稿的理由、代表样本与目标引擎试接项、依赖批次和放行条件。验收明确正式可见模型禁止程序切面和程序色块，并要求回传 [V4 模型资源评审](../../app-workflow-control/references/world3d-scenes.md#model-asset-review)的实际检查证据。
+建模任务包补齐目标镜头与必需结构、V3 设计稿引用或无需多角度稿的理由、本批风险、适用首件与目标引擎检查项、依赖批次和放行条件。验收明确正式可见模型禁止程序切面和程序色块，并要求回传 [V4 模型资源评审](../../app-workflow-control/references/world3d-scenes.md#model-asset-review)的实际检查证据。
 
-走 Blender 路线时，任务包指明本批区域、同一装配、代表组合、接口和独立导出边界。建模代理按 [Blender 场景生产接入](../../app-domain-toolkit/references/blender-scene-production.md)选择随安装交付的上游技能执行。主代理记录双方实质冲突和影响，交用户决定后继续依赖该取舍的工作。
+走 Blender 路线时，任务包指明本批区域、同一装配、适用首件组合、接口和独立导出边界。建模代理按 [Blender 场景生产接入](../../app-domain-toolkit/references/blender-scene-production.md)选择随安装交付的上游技能执行。主代理记录双方实质冲突和影响，交用户决定后继续依赖该取舍的工作。
 
 调用时将 `agent_type` 设为表中的实际角色名；任务的中文显示说明与工具身份分开，`task_name`／`agent_name` 按工具约束使用小写字母、数字和下划线。新建独立工作项或验证角色加载时使用独立上下文（工具提供 `fork_turns` 时设为 `none`），把必要依据写入任务包，不依赖原会话的隐式记忆。CLI `--ephemeral` 会话在当前宿主继承父上下文时可能报 `no rollout found`，这属于会话上下文加载失败，不能据此认定角色未发现，也不能把失败调用记为完成；可用完整任务包和独立上下文复验，不通过修改角色模型或权限绕过。
 

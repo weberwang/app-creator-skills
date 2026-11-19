@@ -8,9 +8,10 @@ import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { advanceVisual, completeUnit, initializeWork, inspect, loadWork, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { validateWork } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
-import { validateWorld3DStage } from '../../skills/app-workflow-control/scripts/runtime/world3d-contract.mjs';
+import { validateWorld3DProductionBasis, validateWorld3DStage } from '../../skills/app-workflow-control/scripts/runtime/world3d-contract.mjs';
 import { bindEvidence, bindImplementation, frozenReview, put, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
 import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture, syntheticCallbacks } from './world3d-fixture.mjs';
+import { prepareWorld3DStage } from './world3d-completed-fixture.mjs';
 
 /** 通过公共控制器接口执行合成工程证据；不启动引擎或执行用户验收。 */
 async function runWorldEngineering({ repo, workPath }, stage) {
@@ -103,6 +104,7 @@ function switchRoute(f, work, targetWorld) {
   } else {
     work.visual.designRoute = 'game-ui';
     delete work.visual.domainEvidenceRef;
+    delete work.visual.modelProductionBasisRef;
     delete work.visual.candidateId;
     delete work.visual.reviews;
     work.visual.targets = [{ targetId: 'image-target' }];
@@ -256,6 +258,15 @@ for (const returnScope of ['visual:V5', 'implementation']) test(`无图片 3D �
 
   work = await readWork(context.repo, context.workPath);
   attachWorld3DPhase(f, 'V4', work);
+  assert.equal(f.contract.productionRisk, 'low');
+  assert.equal(f.contract.sampleRef, undefined);
+  assert.equal(f.read(work.assetReviewRef).modelSampleRef, undefined);
+  const validReviewRef = work.assetReviewRef;
+  const invalidReview = f.read(validReviewRef);
+  invalidReview.assets[0].consumerEvidenceRef = { path: `${work.evidenceRoot}/missing-consumer.json`, sha256: '0'.repeat(64) };
+  work.assetReviewRef = f.write('reviews/missing-consumer.json', invalidReview);
+  assert.throws(() => validateWorld3DStage(f.repo, work, 'V4', syntheticCallbacks(f)), /不存在/);
+  work.assetReviewRef = validReviewRef;
   await putJson(context.repo, context.workPath, work);
   await runWorldEngineering(context, 'V4');
   await advanceVisual({ ...context, workItem: context.workPath, to: 'V5' });
@@ -280,9 +291,25 @@ for (const returnScope of ['visual:V5', 'implementation']) test(`无图片 3D �
   work = await readWork(context.repo, context.workPath);
   assert.equal(work.visual.stage, 'V5');
   assert.equal(work.globalState, 'COMPLETE');
+  assert.equal(f.read(f.contract.formalRunRef).modelBindings[0].assetId, f.model.assetId);
   assert.equal(work.visual.targets, undefined);
   assert.equal(work.visual.reviews, undefined);
   assert.equal(f.paths.some((path) => /\.(?:png|jpe?g|webp)$/i.test(path)), false);
+});
+
+test('V3 高风险规格推进后不能通过重绑 V4 封套降级风险或更换模型规格', async (t) => {
+  const fixture = createWorld3DFixture(t, { stack: 'unity', productionRisk: 'high' });
+  const { repo, work } = await prepareWorld3DStage(t, 'V4', { fixture });
+  const archive = fixture.read(work.visual.modelProductionBasisRef);
+  assert.equal(archive.visualStage, 'V3');
+  const original = fixture.read(archive.world3dModelProductionBasis.domainEvidenceRef);
+  assert.equal(original.productionRisk, 'high');
+  assert.doesNotThrow(() => validateWorld3DProductionBasis(repo, work));
+  work.visual.domainEvidenceRef = fixture.write('spec/downgraded-world-v4.json', { ...original, stage: 'V4', productionRisk: 'low' });
+  assert.throws(() => validateWorld3DProductionBasis(repo, work), /生产风险.*V3/);
+  const alternative = fixture.write('spec/other-models.json', fixture.read(original.modelSpecRef));
+  work.visual.domainEvidenceRef = fixture.write('spec/changed-models-v4.json', { ...original, stage: 'V4', modelSpecRef: alternative });
+  assert.throws(() => validateWorld3DProductionBasis(repo, work), /模型规格.*V3/);
 });
 
 test('图片路线通过的 V1 不能中途改成三维并继承功能基线', async (t) => {

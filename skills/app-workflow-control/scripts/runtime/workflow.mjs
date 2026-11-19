@@ -913,13 +913,18 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   }
   const previousState = work.globalState;
   const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, planningRef: work.planningRef ?? null, revision: work.revision };
+  if (isWorld3D(work) && work.visual.stage === 'V3' && !(isWorldHudReturn(work) && work.visual.modelProductionBasisRef)) {
+    // 在 V3 推进时固定已确认的制作依据，避免后续改写风险或模型规格绕过首件依赖。
+    archive.world3dModelProductionBasis = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, domainEvidenceRef: work.visual.domainEvidenceRef };
+  }
   if (isWorld3D(work) && work.visual.stage === 'V4') {
     // 复用现有阶段归档冻结试接来源，V5 不能重绑资源评审来绕过 V4 工程验证。
     archive.world3dModelBaseline = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, evidenceRoot: world3dModelArchiveEvidenceRoot(repo, work), assetReviewRef: work.assetReviewRef, domainEvidenceRef: work.visual.domainEvidenceRef, snapshotVersion: '1.0' };
     archive.world3dHudAssets = captureWorldHudAssets(work);
   }
   const archivePath = `${work.evidenceRoot}/archive-${work.visual.stage}-${work.revision + 1}.json`;
-  if (work.implementationPackageRef || work.evidenceRef) await atomicWriteJson(repo, archivePath, archive);
+  if (work.implementationPackageRef || work.evidenceRef || archive.world3dModelProductionBasis) await atomicWriteJson(repo, archivePath, archive);
+  if (archive.world3dModelProductionBasis) work.visual.modelProductionBasisRef = fileDigest(repo, archivePath);
   if (archive.world3dModelBaseline) work.visual.modelBaselineRef = fileDigest(repo, archivePath);
   if (work.implementationPackageRef?.path) (work.invalidatedRefs ??= []).push({ path: work.implementationPackageRef.path, state: work.visual.stage });
   if (work.evidenceRef?.path) (work.invalidatedRefs ??= []).push({ path: work.evidenceRef.path, state: work.visual.stage });

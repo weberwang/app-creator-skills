@@ -38,28 +38,29 @@ function sourceRefs(repo, work, { mutableOnly = false } = {}) {
   const contract = frozenJson(repo, work.visual.domainEvidenceRef, '世界场景合同');
   const protectedPaths = new Set(Object.entries(contract).filter(([name]) => !['blockoutRef', 'formalSceneRef'].includes(name))
     .map(([, ref]) => ref?.path).filter(Boolean));
-  for (const ref of [work.visual.domainEvidenceRef, work.visual.functionBaselineRef, work.visual.modelBaselineRef,
+  for (const ref of [work.visual.domainEvidenceRef, work.visual.functionBaselineRef, work.visual.modelProductionBasisRef, work.visual.modelBaselineRef,
     work.globalVisualBaselineRef, work.assetReviewRef, work.evidenceRef, work.implementationPackageRef, work.planningRef]) {
     if (ref?.path) protectedPaths.add(ref.path);
   }
   const refs = [];
   if (work.visual.stage === 'V1') refs.push(contract.blockoutRef);
   if (work.visual.stage === 'V4') {
-    const sample = frozenJson(repo, contract.sampleRef, '代表模块试接');
+    const sample = contract.sampleRef === undefined ? null : frozenJson(repo, contract.sampleRef, '高风险模型首件');
     const review = frozenJson(repo, work.assetReviewRef, '模型资源评审');
     const spec = frozenJson(repo, contract.modelSpecRef, '模型规格');
     const modelIds = new Set((spec.models ?? []).map((item) => item.assetId));
-    if (!mutableOnly) refs.push(sample.sceneRef, ...(sample.sourceRefs ?? []), ...(sample.outputs ?? []));
-    if (sample.runtimeRef?.path) protectedPaths.add(sample.runtimeRef.path);
-    if (sample.sourceWorkItemRef?.path) protectedPaths.add(sample.sourceWorkItemRef.path);
+    if (sample && !mutableOnly) refs.push(sample.sceneRef, ...(sample.sourceRefs ?? []), ...(sample.outputs ?? []));
+    if (sample?.runtimeRef?.path) protectedPaths.add(sample.runtimeRef.path);
+    const legacyReuse = contract.productionRisk === undefined && sample?.sourceWorkItemRef;
+    if (legacyReuse?.path) protectedPaths.add(legacyReuse.path);
     for (const asset of review.assets ?? []) {
       if (asset.assetType !== 'model' || !modelIds.has(asset.assetId)) continue;
       refs.push({ path: asset.sourceRef, sha256: asset.sourceSha256 }, { path: asset.output, sha256: asset.outputSha256 });
       for (const ref of [asset.importEvidenceRef, asset.consumerEvidenceRef]) if (ref?.path) protectedPaths.add(ref.path);
       if (asset.generationRecord) protectedPaths.add(asset.generationRecord);
       const consumer = frozenJson(repo, asset.consumerEvidenceRef, '模型消费者证据');
-      // 复用试接时旧场景由来源工作项的历史快照核验，当前阶段只冻结实际复用的模型。
-      if (!mutableOnly && !sample.sourceWorkItemRef) refs.push(consumer.sceneRef, consumer.outputRef);
+      // 复用时旧消费者场景由来源快照核验，当前阶段仍冻结每个实际交付的模型版本。
+      if (!mutableOnly && contract.modelReuseRef === undefined && !legacyReuse) refs.push(consumer.sceneRef, consumer.outputRef);
     }
   }
   if (work.visual.stage === 'V5') {
@@ -91,7 +92,7 @@ function blockoutSourceRefs(repo, work, refs) {
   }
   const candidate = refs.blockoutRef;
   const protectedRefs = [refs.spatialSpecRef, refs.blockoutRunRef, work.visual?.domainEvidenceRef,
-    work.visual?.functionBaselineRef, work.visual?.modelBaselineRef, work.globalVisualBaselineRef,
+    work.visual?.functionBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.modelBaselineRef, work.globalVisualBaselineRef,
     work.assetReviewRef, work.evidenceRef, work.implementationPackageRef, work.planningRef];
   const identity = fileIdentityKey(repo, candidate.path);
   // 不能因白模路径与控制记录别名重叠而允许历史快照覆盖审批或运行证据。
@@ -241,6 +242,14 @@ export function withLiveWorld3DFiles(callback) {
   return context.run({ ...active, files: new Map(), merged: new Set() }, callback);
 }
 
+/** 旧版首件只在严格检查已完成来源时被解释，当前制作不能省略风险分流。 */
+export function isArchivedWorld3DSource(repo, work) {
+  const active = context.getStore();
+  const identity = `${resolve(repo)}:${work.projectId}:${work.stack}:${work.workItemId}`;
+  return Boolean(active?.historical && active.identity === identity && work.globalState === 'COMPLETE'
+    && work.visual?.stage === 'V5' && work.visual.modelBaselineRef?.path);
+}
+
 /** 控制记录与原始日志无论是否检查历史都必须读取原文件。 */
 export function withoutWorld3DFileSnapshots(callback) {
   const active = context.getStore();
@@ -304,9 +313,10 @@ export function collectWorld3DMutableSourcePaths(repo, work) {
   if (work.visual?.designRoute !== 'world-3d' || !work.visual.domainEvidenceRef?.path) return [];
   const contract = frozenJson(repo, work.visual.domainEvidenceRef, '世界场景合同');
   const stages = ['V1'];
-  if (['V4', 'V5'].includes(contract.stage)) stages.push('V4');
-  if (contract.stage === 'V5') stages.push('V5');
   const archive = work.visual.modelBaselineRef?.path ? frozenJson(repo, work.visual.modelBaselineRef, '模型阶段归档').world3dModelBaseline : null;
+  // V4 规划可先声明复用来源，资源评审绑定后才有可编辑模型路径可提取。
+  if (['V4', 'V5'].includes(contract.stage) && (work.assetReviewRef || archive?.assetReviewRef)) stages.push('V4');
+  if (contract.stage === 'V5') stages.push('V5');
   const paths = new Map();
   for (const stage of stages) {
     const stageWork = { ...work, evidenceRoot: stage === 'V4' && archive?.evidenceRoot ? archive.evidenceRoot : work.evidenceRoot,

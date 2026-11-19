@@ -41,6 +41,11 @@ export function invalidateWorld3DEvidence(repo, work, invalidatedRefs, earliestS
   // 正式方向返修不重开未受影响的空间审查或确认，真实空间变化仍须回 V1。
   const stages = { blockoutRunRef: 1, reviewRef: 1, spaceApprovalRef: 1, directionApprovalRef: 2, modelSpecRef: 3, sampleRef: 4, formalRunRef: 5, displayApprovalRef: 5 };
   for (const [name, stage] of Object.entries(stages)) if (stage >= cutoff) mark(contract?.[name]);
+  if (cutoff <= 3 && work.visual.modelProductionBasisRef) {
+    // 规格返修必须重新冻结 V3，HUD 局部返修只作废 V5 因而保留该依据。
+    mark(work.visual.modelProductionBasisRef);
+    delete work.visual.modelProductionBasisRef;
+  }
   if (cutoff <= 4 && work.visual.modelBaselineRef) {
     mark(work.visual.modelBaselineRef);
     delete work.visual.modelBaselineRef;

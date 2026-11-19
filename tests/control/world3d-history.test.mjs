@@ -30,8 +30,8 @@ function archivedV4Work(fixture) {
 }
 
 /** 准备 V1、V4 与 V5 的不同阶段快照，阶段记录和人工消息均为合成材料。 */
-async function completedFixture(t) {
-  const fixture = createWorld3DFixture(t, { stack: 'unity' });
+async function completedFixture(t, { productionRisk = 'low' } = {}) {
+  const fixture = createWorld3DFixture(t, { stack: 'unity', productionRisk });
   stateFixture(fixture);
   await captureWorld3DFileSnapshots(fixture.repo, fixture.work);
   attachWorld3DPhase(fixture, 'V5');
@@ -48,6 +48,31 @@ test('同一路径更新白模后，仅历史上下文可以验证真实 V1 版�
   assert.throws(() => validateWorld3DStage(fixture.repo, fixture.work, 'V1'), /内容已变化/);
   assert.doesNotThrow(() => withWorld3DFileSnapshots(fixture.repo, fixture.work, { historical: true, stages: ['V1'] },
     () => validateWorld3DStage(fixture.repo, fixture.work, 'V1')));
+});
+
+test('复用先前生产者的首件时，V5 可使用已验收的本批 V4 场景快照', async (t) => {
+  const fixture = createWorld3DFixture(t, { stack: 'unity', productionRisk: 'high' });
+  stateFixture(fixture);
+  await captureWorld3DFileSnapshots(fixture.repo, fixture.work);
+  attachWorld3DPhase(fixture, 'V4');
+  const sample = fixture.read(fixture.sampleRef);
+  const run = fixture.read(sample.runtimeRef);
+  const producer = 'previous-high-risk-producer';
+  const root = `.workflow-control/evidence/${producer}`;
+  // 保留原始观测字节，以更早生产者的证据根和身份登记同一场景与正式模型。
+  const commandEvidenceRef = fixture.write(`${root}/command.txt`, readFileSync(resolve(fixture.repo, run.commandEvidenceRef.path)));
+  const runtimeRef = fixture.write(`${root}/run.json`, {
+    ...run, workItemId: producer, commandEvidenceRef,
+    checks: run.checks.map((check) => ({ ...check, evidenceRef: commandEvidenceRef })),
+  });
+  fixture.sampleRef = fixture.write(`${root}/sample.json`, { ...sample, workItemId: producer, evidenceRoot: root, runtimeRef });
+  fixture.assetReviewRef = fixture.write('reviews/reused-first-item.json', {
+    ...fixture.read(fixture.assetReviewRef), modelSampleRef: fixture.sampleRef,
+  });
+  attachWorld3DPhase(fixture, 'V5');
+  await captureWorld3DFileSnapshots(fixture.repo, archivedV4Work(fixture));
+  fixture.write(sample.sceneRef.path, 'V4 首件场景路径后续已有新版本');
+  assert.doesNotThrow(() => validateWorld3DStage(fixture.repo, fixture.work, 'V5', syntheticCallbacks(fixture)));
 });
 
 test('正式场景与模型更新后，旧 V5 仍核验当时版本而当前 V5 必须失败', async (t) => {
@@ -139,17 +164,17 @@ test('已绑定的快照文件及其执行状态受到工作项引用保护', as
   for (const entries of Object.values(state.world3dFileSnapshots)) for (const entry of entries) assert.ok(paths.includes(entry.snapshotPath));
 });
 
-test('场景规划只把受控业务源列为可编辑，不放宽审批、试接和快照路径', async (t) => {
+test('场景规划只把受控业务源列为可编辑，不放宽审批、消费证据和快照路径', async (t) => {
   const fixture = await completedFixture(t);
   const mutable = collectWorld3DMutableSourcePaths(fixture.repo, fixture.work);
   for (const path of [fixture.contract.blockoutRef.path, fixture.contract.formalSceneRef.path, fixture.model.sourceRef, fixture.model.output]) assert.ok(mutable.includes(path), path);
-  for (const path of [fixture.contract.spaceApprovalRef.path, fixture.contract.sampleRef.path, fixture.contract.formalRunRef.path]) assert.ok(!mutable.includes(path), path);
+  for (const path of [fixture.contract.spaceApprovalRef.path, fixture.model.consumerEvidenceRef.path, fixture.contract.formalRunRef.path]) assert.ok(!mutable.includes(path), path);
   const state = fixture.read({ path: `${fixture.work.evidenceRoot}/execution-state.json` });
   assert.ok(!mutable.includes(state.world3dFileSnapshots.V5[0].snapshotPath));
 });
 
 test('额外试接材料与正式运行绑定不能自动获得规划写入权限', async (t) => {
-  const fixture = await completedFixture(t);
+  const fixture = await completedFixture(t, { productionRisk: 'high' });
   const sample = fixture.read(fixture.contract.sampleRef);
   sample.sourceRefs = [fixture.write('Assets/extra-source.bin', '额外来源')];
   sample.outputs = [fixture.write('Assets/extra-output.bin', '额外产物')];
@@ -235,9 +260,9 @@ test('实现返修无新三维封套时，局部功能重验继续使用冻结�
   assert.throws(() => assertFunctionBaseline(repo, forged), /快照.*业务来源|快照.*覆盖/);
 });
 
-test('控制器 HUD 返修复用同路径正式装配前的 V4 试接快照', async (t) => {
+test('控制器 HUD 返修复用同路径正式装配前的 V4 消费场景快照', async (t) => {
   const options = {
-    /** 模拟白模、试接和正式装配先后写入同一场景路径。 */
+    /** 模拟白模、消费场景和正式装配先后写入同一场景路径。 */
     beforeEngineering: ({ fixture: f, work, stage }) => {
       if (stage === 'V1') {
         const contract = structuredClone(f.contract);
@@ -251,31 +276,23 @@ test('控制器 HUD 返修复用同路径正式装配前的 V4 试接快照', as
       }
       if (stage === 'V4') {
         const contract = structuredClone(f.contract);
-        const sceneRef = f.write(contract.blockoutRef.path, '同路径的 V4 试接场景');
+        const sceneRef = f.write(contract.blockoutRef.path, '同路径的 V4 消费场景');
         const consumer = f.read(f.model.consumerEvidenceRef);
         consumer.sceneRef = sceneRef;
         f.model.consumerEvidenceRef = f.write(`${work.evidenceRoot}/shared-consumer.json`, consumer);
-        const sample = f.read(contract.sampleRef);
-        const runtime = f.read(sample.runtimeRef);
-        runtime.sceneRef = sceneRef;
-        sample.runtimeRef = f.write(`${work.evidenceRoot}/shared-sample-run.json`, runtime);
-        sample.sceneRef = sceneRef;
-        f.sampleRef = f.write(`${work.evidenceRoot}/shared-sample.json`, sample);
         const review = f.read(work.assetReviewRef);
-        review.modelSampleRef = f.sampleRef;
         review.assets = [f.model];
         f.assetReviewRef = f.write('reviews/shared-models.json', review);
         work.assetReviewRef = f.assetReviewRef;
-        contract.sampleRef = f.sampleRef;
         f.contract = contract;
         work.visual.domainEvidenceRef = f.write('spec/shared-v4.json', contract);
         return;
       }
       if (stage !== 'V5') return;
       const contract = structuredClone(f.contract);
-      const sample = f.read(contract.sampleRef);
+      const consumer = f.read(f.model.consumerEvidenceRef);
       const previousRun = contract.formalRunRef;
-      const formalSceneRef = f.write(sample.sceneRef.path, '同路径的 V5 正式装配');
+      const formalSceneRef = f.write(consumer.sceneRef.path, '同路径的 V5 正式装配');
       const run = f.read(previousRun);
       run.sceneRef = formalSceneRef;
       const formalRunRef = f.write(`${work.evidenceRoot}/same-path-formal-run.json`, run);
@@ -308,7 +325,7 @@ test('控制器 HUD 返修复用同路径正式装配前的 V4 试接快照', as
   assert.doesNotThrow(() => validateWorld3DStage(repo, work, 'V4', syntheticCallbacks(fixture)));
   await captureWorld3DFileSnapshots(repo, work);
   const state = fixture.read({ path: `${archive.evidenceRoot}/execution-state.json` });
-  const oldScene = fixture.read(fixture.read(archive.domainEvidenceRef).sampleRef).sceneRef;
+  const oldScene = fixture.read(fixture.model.consumerEvidenceRef).sceneRef;
   const snapshot = state.world3dFileSnapshots.V4.find((entry) => entry.path === oldScene.path && entry.sha256 === oldScene.sha256);
   assert.ok(snapshot);
   fixture.write(fixture.model.output, '后续模型变化必须重验');
@@ -341,7 +358,7 @@ test('控制器 HUD 返修复用同路径正式装配前的 V4 试接快照', as
   const updated = fixture.read(work.visual.modelBaselineRef).world3dModelBaseline;
   assert.equal(updated.evidenceRoot, archive.evidenceRoot);
   assert.equal(work.visual.stage, 'V5');
-  writeFileSync(resolve(repo, snapshot.snapshotPath), '旧试接快照被篡改');
+  writeFileSync(resolve(repo, snapshot.snapshotPath), '旧消费场景快照被篡改');
   assert.throws(() => withWorld3DFileSnapshots(repo, work, { stages: ['V4'] }, () => {}), /快照.*内容已变化/);
 });
 

@@ -23,10 +23,12 @@ function units(basis, decisionRequired = true) {
 }
 
 /** 在真实项目相对路径中构造当前三维规格及任务包。 */
-function fixture(t) {
-  const f = createWorld3DFixture(t);
+function fixture(t, productionRisk = 'high') {
+  const f = createWorld3DFixture(t, { productionRisk });
   attachWorld3DPhase(f, 'V3');
-  f.work.visual.stage = 'V4';
+  const handoff = f.work.visual.domainEvidenceRef;
+  attachWorld3DPhase(f, 'V4');
+  f.work.visual.domainEvidenceRef = handoff;
   const executionUnits = units(f.modelSpecRef);
   return { ...f, pack: { visualStage: 'V4', executionUnits }, unit: executionUnits[0] };
 }
@@ -67,22 +69,32 @@ function imageBaseline(f, target) {
 }
 
 /** 构造当前或旧工作项留下的真实引用关系；文件内容均为合成测试数据。 */
-function trial(f, { producer = f.work.workItemId, scopeIds = ['building-a'], decision = 'APPROVED', includeDecision = true, writeResult = true } = {}) {
+function trial(f, { producer = f.work.workItemId, scopeIds = ['building-a'], decision = 'APPROVED', includeDecision = true, writeResult = true, structured = true } = {}) {
   const root = producer === f.work.workItemId ? f.work.evidenceRoot : `.workflow-control/evidence/${producer}`;
   const sourceRef = f.write(`public/assets/${producer}-sample.glb`, '仅用于测试的样本来源');
   const runtimeRef = f.write(`${root}/sample-run.log`, '合成试接原始命令输出');
+  const sceneRef = f.write('src/game/trial-scene.ts', '// 合成目标引擎首件场景');
+  const outputRef = f.write(`public/assets/${producer}-output.glb`, '仅用于测试的首件输出');
+  const runRef = structured ? f.write(`${root}/sample-run.json`, {
+    ...f.context, workItemId: producer, phase: 'sample', executionMode: 'engine', engineSessionId: 'synthetic-session',
+    startedAt: '2026-11-15T00:00:00Z', completedAt: '2026-11-15T00:01:00Z',
+    sceneRef, commandEvidenceRef: runtimeRef,
+    checks: ['camera', 'navigation', 'collision', 'interaction'].map((id) => ({ id, status: 'PASS', evidenceRef: runtimeRef })),
+    modelBindings: [{ assetId: 'building-a', nodeId: 'World/FirstItem', outputRef }],
+  }) : runtimeRef;
   const displayRef = f.write(`reviews/${producer}-sample-view.txt`, '合成的用户展示记录');
   const review = {
     schemaVersion: '1.0', workItemId: producer, objectId: f.work.visual.objectId, stage: 'V4',
     purpose: 'representative-sample', decision, userMessageRef: 'test-only://sample-confirmation',
     scope: { kind: 'representative-sample', designItemIds: scopeIds, conditionIds: [] },
-    targetRef: displayRef.path, targetSha256: displayRef.sha256, runtimeContextRef: runtimeRef,
+    targetRef: displayRef.path, targetSha256: displayRef.sha256, runtimeContextRef: runRef,
   };
   const humanDecisionRef = includeDecision ? f.write(`${root}/sample-review.json`, review) : undefined;
   const sample = {
     schemaVersion: '1.0', kind: 'production-sample', workItemId: producer, projectId: f.work.projectId,
-    stack: f.work.stack, objectId: f.work.visual.objectId, scopeIds, basisRef: f.modelSpecRef,
-    evidenceRoot: root, sourceRefs: [sourceRef], runtimeRef, ...(humanDecisionRef ? { humanDecisionRef } : {}),
+    stack: f.work.stack, objectId: f.work.visual.objectId, candidateId: f.context.candidateId, phase: 'sample',
+    assetId: 'building-a', scopeIds, basisRef: f.modelSpecRef, sceneRef, outputs: [outputRef],
+    evidenceRoot: root, sourceRefs: [sourceRef], runtimeRef: runRef, ...(humanDecisionRef ? { humanDecisionRef } : {}),
   };
   const sampleEvidenceRef = f.write(`${root}/sample-contract.json`, sample);
   const result = { sampleEvidenceRef };
@@ -96,10 +108,10 @@ test('仅声明批量时要求更早样本、完整覆盖与相同当前制作�
   const cases = [
     ['缺少依赖', (pack) => { delete pack.executionUnits[1].dependsOn; }, /dependsOn/],
     ['依赖未知样本', (pack) => { pack.executionUnits[1].dependsOn = ['other']; }, /未依赖样本/],
-    ['覆盖不足', (pack) => { pack.executionUnits[1].sampleScopeIds = ['building-a', 'building-b']; }, /未覆盖/],
+    ['范围超出模型规格', (pack) => { pack.executionUnits[1].sampleScopeIds = ['building-a', 'building-b']; }, /当前模型规格/],
     ['样本不早于批量', (pack) => { pack.executionUnits[0].sequence = 3; }, /更早批次/],
     ['同一并行批次', (pack) => { pack.executionUnits.forEach((unit) => { unit.parallelGroup = 'same'; }); }, /更早批次/],
-    ['当前依据已变化', (pack) => { pack.executionUnits[1].sampleBasisRef = f.write('spec/wrong.json', { wrong: true }); }, /当前 V3/],
+    ['当前依据已变化', (pack) => { pack.executionUnits[1].sampleBasisRef = f.write('spec/wrong.json', { wrong: true }); }, /须声明|当前 V3/],
     ['缺少人工判断适用性', (pack) => { delete pack.executionUnits[0].sampleDecisionRequired; }, /人工判断/],
     ['范围重复', (pack) => { pack.executionUnits[0].sampleScopeIds = ['building-a', 'building-a']; }, /不能重复/],
   ];
@@ -110,6 +122,35 @@ test('仅声明批量时要求更早样本、完整覆盖与相同当前制作�
   });
   const ui = { ...f.work, workItemType: 'SCENE', visual: { objectId: f.work.visual.objectId, designRoute: 'game-ui', stage: 'V4', targets: [] } };
   assert.doesNotThrow(() => validateSamplePlan(f.repo, ui, { executionUnits: [{ unitId: 'normal' }] }));
+});
+
+test('低风险模型正常导入，高风险不能把扩批写成无依赖普通场景单元', (t) => {
+  const normal = { visualStage: 'V4', executionUnits: [{ type: 'SCENE', unitId: 'ordinary' }] };
+  const low = fixture(t, 'low');
+  assert.doesNotThrow(() => validateSamplePlan(low.repo, low.work, normal));
+  assert.throws(() => validateSamplePlan(low.repo, low.work, low.pack), /低风险导入/);
+  low.write(low.modelSpecRef.path, '计划前原地替换规格');
+  assert.throws(() => validateSamplePlan(low.repo, low.work, normal), /模型规格.*内容已变化/);
+  const high = fixture(t);
+  assert.throws(() => validateSamplePlan(high.repo, high.work, normal), /高风险模型批次需要一个/);
+  assert.throws(() => validateSamplePlan(high.repo, high.work, { ...high.pack, executionUnits: [high.unit, ...normal.executionUnits] }), /须声明首件或扩批依赖/);
+  const earlyModule = { type: 'MODULE', unitId: 'early-production', sequence: 1 };
+  assert.throws(() => validateSamplePlan(high.repo, high.work, { ...high.pack, executionUnits: [earlyModule, { ...high.unit, sequence: 2 }] }), /须声明首件或扩批依赖/);
+  assert.doesNotThrow(() => validateSamplePlan(high.repo, high.work, { ...high.pack, executionUnits: [high.unit] }));
+  const raw = trial(high, { structured: false });
+  assert.throws(() => validateSampleResult(high.repo, high.work, high.unit, raw.result), /结构化的目标引擎/);
+  const missingBinding = trial(high);
+  const run = high.read(missingBinding.sample.runtimeRef);
+  missingBinding.sample.runtimeRef = high.write(`${missingBinding.root}/unbound-run.json`, { ...run, modelBindings: [] });
+  missingBinding.sample.humanDecisionRef = undefined;
+  high.unit.sampleDecisionRequired = false;
+  missingBinding.result.sampleEvidenceRef = high.write(`${missingBinding.root}/unbound-sample.json`, missingBinding.sample);
+  assert.throws(() => validateSampleResult(high.repo, high.work, high.unit, missingBinding.result), /未绑定代表模型输出和消费节点/);
+  const result = trial(high).result;
+  const contract = high.read(high.work.visual.domainEvidenceRef);
+  const unrelated = trial(high, { producer: 'other-first-item' }).result.sampleEvidenceRef;
+  high.work.visual.domainEvidenceRef = high.write('spec/finalized-v4.json', { ...contract, stage: 'V4', sampleRef: unrelated });
+  assert.throws(() => validateSampleResult(high.repo, high.work, high.unit, result), /封套首件与通过的执行结果不一致/);
 });
 
 test('二维世界使用自己的布局依据，不能借三维规格充当当前方案', (t) => {
@@ -145,7 +186,7 @@ test('二维世界使用自己的布局依据，不能借三维规格充当当�
 });
 
 test('三维场景的 HUD 样本继续核对独立图片基线和同宿主确认', (t) => {
-  const f = fixture(t);
+  const f = fixture(t, 'low');
   const target = imageTarget(f);
   const coverageRef = imageCoverage(f, target);
   const globalVisualBaselineRef = imageBaseline(f, target);
@@ -276,6 +317,7 @@ test('三维已有结构化试接可补充元数据复用，运行观测仍逐�
     startedAt: '2026-11-15T00:00:00Z', completedAt: '2026-11-15T00:01:00Z',
     sceneRef, commandEvidenceRef: data.runtimeRef,
     checks: ['camera', 'navigation', 'collision', 'interaction'].map((id) => ({ id, status: 'PASS', evidenceRef: data.runtimeRef })),
+    modelBindings: [{ assetId: 'building-a', nodeId: 'World/FirstItem', outputRef: data.sourceRef }],
   });
   const review = f.read(data.humanDecisionRef);
   review.runtimeContextRef = runRef;
@@ -325,7 +367,7 @@ test('未声明样本的普通任务不读取执行状态，已声明样本仍�
 
 /** 通过公共 V1 工程入口建立可供本测试复用的真实控制器快照。 */
 async function preparePublic(t) {
-  const f = createWorld3DFixture(t);
+  const f = createWorld3DFixture(t, { productionRisk: 'high' });
   const initialized = await initializeWork({ repo: f.repo, args: { id: f.context.workItemId, stack: f.context.stack, type: 'SCENE', objective: '核对代表样本依赖', 'project-id': f.context.projectId, 'object-id': f.context.objectId, 'design-route': 'world-3d' } });
   const context = { repo: f.repo, workPath: initialized.metadata.workItemPath };
   let work = await readWork(context.repo, context.workPath);
@@ -351,8 +393,14 @@ async function preparePublic(t) {
   await putJson(context.repo, context.workPath, work);
   await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V2' });
   work = await readWork(context.repo, context.workPath);
+  attachWorld3DPhase(f, 'V2', work);
+  await putJson(context.repo, context.workPath, work);
+  await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V3' });
+  work = await readWork(context.repo, context.workPath);
   attachWorld3DPhase(f, 'V3', work);
-  work.visual.stage = 'V4';
+  await putJson(context.repo, context.workPath, work);
+  await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V4' });
+  work = await readWork(context.repo, context.workPath);
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
   work.gateStatus.F3 = 'NOT_RUN';
@@ -367,6 +415,9 @@ test('公开计划、记录与单元检查先冻结样本，再开放覆盖相�
   const { repo, workPath, f } = await preparePublic(st);
   const plan = { executionUnits: units(f.modelSpecRef).map(({ sequence, resultPath, ...entry }) => entry) };
   plan.systemCoverage = createSystemCoverage(repo, await readWork(repo, workPath), plan.executionUnits);
+  const plain = { ...plan, executionUnits: plan.executionUnits.map(({ sampleRole, sampleScopeIds, sampleBasisRef, sampleDecisionRequired, ...unit }) => unit) };
+  await putJson(repo, 'spec/missing-first-item-plan.json', plain);
+  await assert.rejects(prepareWorkRecords({ repo, workItem: workPath, planPath: 'spec/missing-first-item-plan.json' }), /高风险模型批次需要一个/);
   await putJson(repo, 'spec/sample-plan.json', plan);
   await prepareWorkRecords({ repo, workItem: workPath, planPath: 'spec/sample-plan.json' });
   let work = await readWork(repo, workPath);

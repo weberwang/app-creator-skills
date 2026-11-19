@@ -446,6 +446,9 @@
         "modelBaselineRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
+        "modelProductionBasisRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
         "sceneDesignRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
@@ -781,7 +784,7 @@
           }
         }
       },
-      "else": { "properties": { "visual": { "not": { "anyOf": [{ "required": ["modelBaselineRef"] }, { "required": ["hud"] }] } } } }
+      "else": { "properties": { "visual": { "not": { "anyOf": [{ "required": ["modelBaselineRef"] }, { "required": ["modelProductionBasisRef"] }, { "required": ["hud"] }] } } } }
     },
     {
       "if": {

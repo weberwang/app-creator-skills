@@ -1,6 +1,6 @@
 # Unity 视觉工作流
 
-3D／2D 世界与 UI 先按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分：3D 前期记录内容需求，在正式场景白模搭建并验证；整体场景联合单次审查及人工空间／方向确认后，再安排模型规格与代表模块。公共控制器可显式选择[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，无需图片目标或 V3 双图确认。下文相关图片目标、三候选及 V3 双图条款适用于图片／UI 路线；Unity 旧原生图片工具若不支持无图合同，保留其适用限制，不伪造图片或证据。
+3D／2D 世界与 UI 先按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分：3D 前期记录内容需求，在正式场景白模搭建并验证；整体场景联合单次审查及人工空间／方向确认后，再安排模型规格并按风险确定首件验证。公共控制器可显式选择[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，无需图片目标或 V3 双图确认。下文相关图片目标、三候选及 V3 双图条款适用于图片／UI 路线；Unity 旧原生图片工具若不支持无图合同，保留其适用限制，不伪造图片或证据。
 
 视觉生产嵌入场景 V0-V5，不使用独立 A0-A4 流程。A0-A6 只表示动作风险等级，F0-F4 只表示全局质量门。
 

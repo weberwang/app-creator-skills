@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 
 /** 构建隔离项目，文件摘要与用户消息均仅用于测试协议。 */
-export function createWorld3DFixture(t, { stack = 'threejs', repo: sharedRepo, workItemId = 'world-task', controlPrefix = '' } = {}) {
+export function createWorld3DFixture(t, { stack = 'threejs', repo: sharedRepo, workItemId = 'world-task', controlPrefix = '', productionRisk = 'low' } = {}) {
   const repo = sharedRepo ?? mkdtempSync(join(tmpdir(), 'world3d-contract-'));
   if (!sharedRepo) t.after(() => {
     // 只删除本测试创建且确认位于系统临时目录下的独占目录。
@@ -73,7 +73,7 @@ export function createWorld3DFixture(t, { stack = 'threejs', repo: sharedRepo, w
     spatialSpecRef, blockoutRef, blockoutRunRef,
   };
   work.visual.domainEvidenceRef = write('spec/world-V1.json', contract);
-  return { repo, work, paths, context, scopeIds, contract, run, logs, write, read, identity, sequence: 0 };
+  return { repo, work, paths, context, scopeIds, contract, run, logs, write, read, identity, productionRisk, sequence: 0 };
 }
 
 /** 创建指定阶段的合成引擎日志和关联检查，每个阶段独立记录来源。 */
@@ -149,7 +149,7 @@ function attachModelSpec(fixture) {
   });
 }
 
-/** 建立非空模型源、模型输出、导入证据、消费者及代表模块试接。 */
+/** 建立模型导入与消费证据，高风险时另建首件验证记录。 */
 function attachModel(fixture, work) {
   if (fixture.model) return;
   attachModelSpec(fixture);
@@ -175,16 +175,21 @@ function attachModel(fixture, work) {
     const ref = fixture.write(`${work.evidenceRoot}/model-quality-${dimension}.txt`, `合成审阅记录：${dimension}\n`);
     return { dimension, status: 'PASS', evidenceRef: ref.path };
   });
-  const runtimeRef = writeRun(fixture, work, 'sample', sceneRef);
-  fixture.sampleRef = fixture.write(`${work.evidenceRoot}/sample.json`, {
-    ...fixture.context, phase: 'sample', assetId: 'building-a', sceneRef, runtimeRef,
-    sourceRefs: [source], outputs: [output],
-  });
+  if (fixture.productionRisk === 'high') {
+    const runtimeRef = writeRun(fixture, work, 'sample', sceneRef, {
+      modelBindings: [{ assetId: 'building-a', nodeId: 'World/Building', outputRef: output }],
+    });
+    fixture.sampleRef = fixture.write(`${work.evidenceRoot}/sample.json`, {
+      ...fixture.context, kind: 'production-sample', phase: 'sample', assetId: 'building-a',
+      scopeIds: ['building-a'], basisRef: fixture.modelSpecRef, evidenceRoot: work.evidenceRoot,
+      sceneRef, runtimeRef, sourceRefs: [source], outputs: [output],
+    });
+  }
   fixture.assetReviewRef = fixture.write('reviews/assets.json', {
     schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4',
     candidateId: work.visual.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS',
     userMessageRef: 'test-only://model-approval', qualityChecks, assets: [fixture.model],
-    evidenceRoot: work.evidenceRoot, modelSampleRef: fixture.sampleRef,
+    evidenceRoot: work.evidenceRoot, ...(fixture.sampleRef ? { modelSampleRef: fixture.sampleRef } : {}),
   });
 }
 
@@ -226,10 +231,11 @@ export function attachWorld3DPhase(fixture, stage, work = fixture.work) {
   if (index >= 2) {
     attachModelSpec(fixture);
     contract.modelSpecRef = fixture.modelSpecRef;
+    contract.productionRisk = fixture.productionRisk;
   }
   if (index >= 3) {
     attachModel(fixture, work);
-    contract.sampleRef = fixture.sampleRef;
+    if (fixture.sampleRef) contract.sampleRef = fixture.sampleRef;
     work.assetReviewRef = fixture.assetReviewRef;
   }
   if (index >= 4) {
@@ -244,6 +250,19 @@ export function attachWorld3DPhase(fixture, stage, work = fixture.work) {
   fixture.contract = contract;
   fixture.sequence += 1;
   work.visual.domainEvidenceRef = fixture.write(`spec/world-${stage}-${fixture.sequence}.json`, contract);
+  if (index >= 3 && !work.visual.modelProductionBasisRef) {
+    // 直接构造 V4/V5 的合同测试没有经过真实 V3 推进，单独补齐同形状的合成归档。
+    const previous = { ...contract, stage: 'V3' };
+    for (const name of ['sampleRef', 'modelReuseRef', 'formalSceneRef', 'formalRunRef', 'displayApprovalRef']) delete previous[name];
+    const domainEvidenceRef = fixture.write(`spec/synthetic-world-v3-${fixture.sequence}.json`, previous);
+    work.visual.modelProductionBasisRef = fixture.write(`spec/synthetic-production-basis-${fixture.sequence}.json`, {
+      visualStage: 'V3',
+      world3dModelProductionBasis: {
+        workItemId: work.workItemId, projectId: work.projectId, stack: work.stack,
+        objectId: work.visual.objectId, candidateId: work.visual.candidateId, domainEvidenceRef,
+      },
+    });
+  }
   fixture.work = work;
   return contract;
 }

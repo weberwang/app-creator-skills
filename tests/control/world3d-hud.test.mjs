@@ -350,7 +350,7 @@ test('HUD 返修只接受原 V4 模型归档及同一规格、试接', (t) => {
   assert.equal(world3dModelArchiveEvidenceRoot(f.repo, f.work), '.workflow-control/evidence/world-task');
   const contract = { ...f.contract, modelSpecRef: f.write('hud/other-model-spec.json', { different: true }) };
   f.work.visual.domainEvidenceRef = f.write('hud/changed-world-v4.json', contract);
-  assert.throws(() => world3dModelArchiveEvidenceRoot(f.repo, f.work), /规格或试接/);
+  assert.throws(() => world3dModelArchiveEvidenceRoot(f.repo, f.work), /规格|风险|试接/);
 });
 
 test('首个 V4 的 HUD 返工没有旧模型归档时只接受当前证据根', (t) => {
@@ -368,18 +368,25 @@ test('首个 V4 的 HUD 返工没有旧模型归档时只接受当前证据根',
 test('3D 样本准备复用 V3 世界前置，不等待尚未存在的 V4 资源', (t) => {
   const f = createWorld3DFixture(t);
   attachWorld3DPhase(f, 'V3');
+  f.work.visual.modelProductionBasisRef = f.write('hud/production-basis.json', {
+    visualStage: 'V3', world3dModelProductionBasis: {
+      workItemId: f.work.workItemId, projectId: f.work.projectId, stack: f.work.stack,
+      objectId: f.work.visual.objectId, candidateId: f.work.visual.candidateId,
+      domainEvidenceRef: f.work.visual.domainEvidenceRef,
+    },
+  });
   f.work.visual.stage = 'V4';
-  assert.deepEqual(validateWorld3DProductionBasis(f.repo, f.work).modelSpecRef, f.modelSpecRef);
+  assert.deepEqual(validateWorld3DProductionBasis(f.repo, f.work).contract.modelSpecRef, f.modelSpecRef);
   const v4 = { ...f.contract, stage: 'V4' };
   f.work.visual.domainEvidenceRef = f.write('hud/preproduction-v4.json', v4);
-  assert.deepEqual(validateWorld3DProductionBasis(f.repo, f.work).modelSpecRef, f.modelSpecRef);
+  assert.deepEqual(validateWorld3DProductionBasis(f.repo, f.work).contract.modelSpecRef, f.modelSpecRef);
   const noDirection = { ...v4 };
   delete noDirection.directionApprovalRef;
   f.work.visual.domainEvidenceRef = f.write('hud/missing-direction-v4.json', noDirection);
   assert.throws(() => validateWorld3DProductionBasis(f.repo, f.work), /directionApprovalRef|SHA|路径/);
   const wrongSpec = { ...f.read(f.modelSpecRef), objectId: 'other-scene' };
   f.work.visual.domainEvidenceRef = f.write('hud/wrong-model-v4.json', { ...v4, modelSpecRef: f.write('hud/wrong-model-spec.json', wrongSpec) });
-  assert.throws(() => validateWorld3DProductionBasis(f.repo, f.work), /模型规格.*objectId|模型规格.*不一致/);
+  assert.throws(() => validateWorld3DProductionBasis(f.repo, f.work), /模型规格/);
 });
 
 for (const scenario of ['V5', 'V3', 'firstV2', 'firstV4']) test(`公共控制器完成 3D 世界与 HUD，${scenario} 返工后完成 V5`, async (t) => {

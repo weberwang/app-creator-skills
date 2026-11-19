@@ -71,7 +71,7 @@ function reservedEvidencePaths(repo, work) {
   for (const dependency of work.productionDependencies ?? []) add(dependency.workItemRef?.path);
   for (const path of collectSampleControlReferences(repo, work)) add(path);
   const visual = work.visual;
-  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'modelBaselineRef', 'sceneDesignRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
+  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'modelBaselineRef', 'modelProductionBasisRef', 'sceneDesignRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
   for (const ref of Object.values(visual?.reviews ?? {})) add(ref?.path);
   const controlReferences = [...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work)];
   if (isWorld3D(work) || isWorld2D(work)) controlReferences.push(...(isWorld3D(work) ? collectWorld3DReferences(repo, work) : collectSceneDesignReferences(repo, work)));

@@ -131,10 +131,11 @@ export function rawEvidence(repo, ref, label, work, root, forbiddenRefs = []) {
 }
 
 /** 二维布局和三维白模共用运行记录规则，不据文件宣称真实引擎已执行。 */
-export function runRecord(repo, work, ref, phase, sceneRef, root, forbiddenRefs = []) {
+export function runRecord(repo, work, ref, phase, sceneRef, root, forbiddenRefs = [], { producerWorkItemId = work.workItemId } = {}) {
   const record = frozenJson(repo, ref, `${phase} 运行记录`, work);
   withinEvidenceRoot(repo, ref.path, root, `${phase} 运行记录`);
-  identity(record, work, `${phase} 运行记录`);
+  // 复用首件时单独核对原生产者，业务场景仍从当前工作项已验收的快照读取。
+  identity(record, { ...work, workItemId: producerWorkItemId }, `${phase} 运行记录`);
   insist(record.phase === phase && record.executionMode === 'engine', `${phase} 必须绑定引擎运行记录`);
   text(record.engineSessionId, `${phase}.engineSessionId`);
   const start = Date.parse(record.startedAt);

@@ -148,7 +148,7 @@ test('V3 使用真实模型规格，不要求图片目标或两项拆图确认',
   assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V3'), /合同|路径|SHA/);
 });
 
-test('V4 必须执行工程证据门并核对模型来源、导入、消费者及代表模块', (t) => {
+test('低风险 V4 无需首件，仍执行工程证据门和逐模型导入、消费者校验', (t) => {
   const f = createWorld3DFixture(t);
   attachWorld3DPhase(f, 'V4');
   assert.doesNotThrow(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)));
@@ -163,6 +163,22 @@ test('V4 必须执行工程证据门并核对模型来源、导入、消费者�
   review.assets[0].assetType = 'native-component';
   f.work.assetReviewRef = f.write('mutations/pretend-component.json', review);
   assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /缺少唯一模型验收/);
+});
+
+test('高风险 V4 必须绑定同一份首件、当前依据及实际消费者', (t) => {
+  const f = createWorld3DFixture(t, { productionRisk: 'high' });
+  const original = attachWorld3DPhase(f, 'V4');
+  assert.doesNotThrow(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)));
+  const { sampleRef, ...missing } = original;
+  rebind(f, missing);
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /sampleRef/);
+  rebind(f, { ...original, productionRisk: 'low' });
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /高风险/);
+  rebind(f, original);
+  const { modelSampleRef, ...review } = f.read(f.assetReviewRef);
+  assert.deepEqual(modelSampleRef, sampleRef);
+  f.work.assetReviewRef = f.write('mutations/missing-model-sample.json', review);
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V4', syntheticCallbacks(f)), /未绑定当前首件证据/);
 });
 
 test('V4 模型专项评审接受无需补稿，拒绝未通过或失去证据的检查', (t) => {
@@ -197,6 +213,7 @@ test('V4 资源评审 Schema 只对模型要求专项字段', (t) => {
   }
   const validate = ajv.compile(JSON.parse(readFileSync(new URL('asset-review.schema.json', base), 'utf8')));
   const review = f.read(f.assetReviewRef);
+  assert.equal(review.modelSampleRef, undefined);
   assert.equal(validate(review), true, JSON.stringify(validate.errors));
   delete review.assets[0].modelQuality;
   assert.equal(validate(review), false);
@@ -241,9 +258,15 @@ test('合同 Schema 的阶段必需项与实际无图记录一致', (t) => {
     const contract = stage === 'V1' ? f.contract : attachWorld3DPhase(f, stage);
     assert.equal(validate(contract), true, `${stage}: ${JSON.stringify(validate.errors)}`);
     const missing = { ...contract };
-    delete missing[stage === 'V1' ? 'blockoutRunRef' : stage === 'V2' ? 'spaceApprovalRef' : stage === 'V3' ? 'modelSpecRef' : stage === 'V4' ? 'sampleRef' : 'displayApprovalRef'];
+    delete missing[stage === 'V1' ? 'blockoutRunRef' : stage === 'V2' ? 'spaceApprovalRef' : stage === 'V3' ? 'modelSpecRef' : stage === 'V4' ? 'productionRisk' : 'displayApprovalRef'];
     assert.equal(validate(missing), false, `${stage} 不应接受缺失前置`);
   }
+  const high = { ...f.contract, productionRisk: 'high' };
+  assert.equal(validate(high), false);
+  assert.equal(validate({ ...high, sampleRef: high.formalRunRef }), true);
+  assert.equal(validate({ ...high, modelReuseRef: high.formalRunRef }), true);
+  assert.equal(validate({ ...high, sampleRef: high.formalRunRef, modelReuseRef: high.formalRunRef }), false);
+  assert.equal(validate({ ...f.contract, sampleRef: high.formalRunRef }), false);
 });
 
 test('生产范围使用三维空间 scopeIds，不接受未列入范围的场景区域', (t) => {
@@ -295,7 +318,7 @@ test('V5 局部返修作废运行与显示确认，保留空间和模型依据',
   const paths = new Set(invalidated.map((entry) => entry.path));
   assert.ok(paths.has(old.formalRunRef.path));
   assert.ok(paths.has(old.displayApprovalRef.path));
-  for (const ref of [old.spatialSpecRef, old.blockoutRef, old.spaceApprovalRef, old.modelSpecRef, old.sampleRef]) {
+  for (const ref of [old.spatialSpecRef, old.blockoutRef, old.spaceApprovalRef, old.modelSpecRef]) {
     assert.equal(paths.has(ref.path), false, ref.path);
   }
   assert.equal(f.work.assetReviewRef.path, f.assetReviewRef.path);
@@ -313,7 +336,7 @@ test('V4 返修仍须作废当前 V4 封套和模型评审', (t) => {
 });
 
 test('非 JSON 后缀的控制封套仍保护嵌套文件，超限同样拒绝', (t) => {
-  const f = createWorld3DFixture(t);
+  const f = createWorld3DFixture(t, { productionRisk: 'high' });
   attachWorld3DPhase(f, 'V4');
   f.work.visual.domainEvidenceRef = f.write('spec/world.contract', f.contract);
   f.work.assetReviewRef = f.write('reviews/assets.txt', f.read(f.assetReviewRef));
@@ -402,18 +425,21 @@ test('V2 不能在功能基线之后重绑空间、白模或白模运行', (t) =
   }
 });
 
-test('V5 不能重绑 V4 模型评审、证据根或代表模块', (t) => {
-  for (const changed of ['review', 'root', 'sample']) {
-    const f = createWorld3DFixture(t);
+test('V5 不能重绑 V4 模型评审、证据根、风险或高风险首件', (t) => {
+  for (const changed of ['review', 'root', 'sample', 'risk']) {
+    const f = createWorld3DFixture(t, { productionRisk: ['sample', 'risk'].includes(changed) ? 'high' : 'low' });
     attachWorld3DPhase(f, 'V5');
     if (changed === 'sample') {
       const sample = f.write(`${f.work.evidenceRoot}/different-sample.json`, f.read(f.contract.sampleRef));
       rebind(f, { ...f.contract, sampleRef: sample });
+    } else if (changed === 'risk') {
+      const { sampleRef: _sample, ...contract } = f.contract;
+      rebind(f, { ...contract, productionRisk: 'low' });
     } else {
       const review = f.read(f.assetReviewRef);
       if (changed === 'root') review.evidenceRoot = `${review.evidenceRoot}-different`;
       f.work.assetReviewRef = f.write(`reviews/rebound-${changed}.json`, review);
     }
-    assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /模型基线|代表模块/);
+    assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /模型基线|生产风险|已验收的模型风险/);
   }
 });

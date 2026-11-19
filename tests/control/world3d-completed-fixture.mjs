@@ -18,11 +18,27 @@ export async function runWorld3DEngineering(context, stage, unitPaths, beforePas
   }
   const defaultPath = work.stack === 'unity' ? `Assets/Scripts/${work.workItemId}-${stage}.cs` : `src/game/${work.workItemId}-${stage}.ts`;
   const { packPath, units } = await bindImplementation({ repo, work, workPath, stage, unitPaths: unitPaths ?? [defaultPath] });
+  const contract = stage === 'V4' ? await readWork(repo, work.visual.domainEvidenceRef.path) : null;
+  if (contract?.sampleRef) {
+    // 通过公开执行入口登记合成首件，默认唯一单元对应无需扩批的高风险场景。
+    const { scopeIds } = await readWork(repo, contract.sampleRef.path);
+    const sampleUnit = units[0];
+    for (const unit of units) Object.assign(unit, { sampleScopeIds: scopeIds, sampleBasisRef: contract.modelSpecRef });
+    Object.assign(sampleUnit, { sampleRole: 'sample', sampleDecisionRequired: false });
+    for (const unit of units.slice(1)) Object.assign(unit, { sampleRole: 'batch', dependsOn: [sampleUnit.unitId] });
+    const pack = await readWork(repo, packPath);
+    await putJson(repo, packPath, { ...pack, executionUnits: units });
+  }
   await transitionWork({ repo, workItem: workPath, to: 'IMPLEMENTING', args: {} });
   work = await readWork(repo, workPath);
   // 通用结果夹具会创建占位文件；场景作为真实交付时须保留其已绑定的合成版本。
   const existing = new Map(units.flatMap((unit) => unit.paths).filter((path) => existsSync(resolve(repo, path))).map((path) => [path, readFileSync(resolve(repo, path))]));
   await submitPassingUnits({ repo, work, workPath, packPath, units });
+  if (contract?.sampleRef) {
+    const resultPath = units[0].resultPath;
+    const result = await readWork(repo, resultPath);
+    await putJson(repo, resultPath, { ...result, sampleEvidenceRef: contract.sampleRef });
+  }
   for (const [path, bytes] of existing) writeFileSync(resolve(repo, path), bytes);
   for (const unit of units) await completeUnit({ repo, workItem: workPath, resultPath: unit.resultPath });
   work = await readWork(repo, workPath);

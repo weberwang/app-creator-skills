@@ -11,7 +11,7 @@ description: "把三维对象需求转成可控几何、清楚层级、目标面
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
-3D 世界整体白模和方向确认后的正式模型任务，按[生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)选择能暴露本批结构、材质或接入风险的代表模块，先在目标引擎试接并完成现有样本审阅，再启动依赖它的批量制作。独立模型和不改变空间的局部修订沿用自身范围，不重建整场景。
+3D 世界整体白模和方向确认后的正式模型任务，按[生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)评估本批结构、材质和接入风险。低风险批次正常制作并导入，高风险批次先在目标引擎验证首件或复用有效证据，再启动依赖它的批量制作。独立模型和不改变空间的局部修订沿用自身范围，不重建整场景。
 
 按当前栈原生路线确定工具。选择 Blender 时，先按 [Blender 场景生产接入](../app-domain-toolkit/references/blender-scene-production.md)读取 `blender-director` 和本批专项技能，以上游作为 Blender 内的主要实现。围绕可玩区域在同一装配中制作本批场景，整体制作或模块交付按[场景制作单元](../app-domain-toolkit/references/game-design-exploration.md#scene-production-units)选择。Roblox 原生 Part／Model 路线直接在 Studio 制作。
 
@@ -38,7 +38,7 @@ description: "把三维对象需求转成可控几何、清楚层级、目标面
 ## 交付
 
 - 按[三项最小约定](../app-creator-workflow/references/output-files.md#每项任务的最小约定)交付当前范围的结果、实际路径和验证结论。沿用已有简报及记录，保留适用的源／导出身份、单位、层级、面数预算和目标镜头检查。正式导入证据引用接入负责人的回读结果。纯方案或局部调整可在对话或现有工件交付，未运行或待人工检查的结果如实标明。
-- 三维世界模型按 [V4 资源评审](../app-workflow-control/references/world3d-scenes.md#model-asset-review)交付设计依据、代表试接及正式几何和材质的回读证据。实际模型检查图供用户人工核对。
+- 三维世界模型按 [V4 资源评审](../app-workflow-control/references/world3d-scenes.md#model-asset-review)交付设计依据、适用的首件验证及正式几何和材质的回读证据。实际模型检查图供用户人工核对。
 
 ## 当前技术栈的原生流程
 

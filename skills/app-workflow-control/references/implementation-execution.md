@@ -19,11 +19,13 @@
 
 ## 代表样本与生产依赖
 
-本批正式视觉资源需要代表样本试接时，在游戏 `SCENE` 现有 V4 计划的执行单元标明 `sampleRole:sample` 或 `sampleRole:batch`、非空唯一的 `sampleScopeIds` 与 `sampleBasisRef:{path,sha256}`。三维世界使用当前场景合同的模型规格，并重验空间、方向及模型规格的既有 V3 依据；二维世界及游戏 UI 图片目标引用对应已确认的 V3 布局记录，并重验图片基线、目标覆盖、拆解及布局的既有确认链。普通工程任务、非游戏页面与不需该项检查的 UI 保持原计划字段，不为声明创建额外工作项、固定报告或审批。
+本批正式视觉资源需要首件或代表样本验证时，在游戏 `SCENE` 现有 V4 计划的执行单元标明 `sampleRole:sample` 或 `sampleRole:batch`、非空唯一的 `sampleScopeIds` 与 `sampleBasisRef:{path,sha256}`。三维世界在 V3–V5 场景封套声明 `productionRisk:low/high`，控制器在 V3 推进时冻结风险和模型规格。低风险正常制作、导入并核对消费者，高风险安排首件验证。三维高风险以一个首件单元的 `sampleScopeIds` 覆盖冻结模型规格中的全部 `assetId`。高风险批次内除绑定独立 HUD 样本依据的单元外，均声明首件或扩批，扩批单元通过 `dependsOn` 直接依赖首件。首件所需的准备可纳入首件单元。`sampleBasisRef` 绑定当前场景合同的 `modelSpecRef`，并重验空间、方向及模型规格的既有 V3 依据。二维世界及游戏 UI 图片目标引用对应已确认的 V3 布局记录，并重验图片基线、目标覆盖、拆解及布局的既有确认链。普通工程任务、非游戏页面与不需该项检查的 UI 保持原计划字段，无需创建额外工作项、固定报告或审批。
 
 每个 `batch` 必须通过 `dependsOn` 直接引用更早批次的 `sample` 单元；依赖的样本共同覆盖本批 `sampleScopeIds`，且与批量单元绑定相同制作依据版本。同批、未来或未知依赖仍按现有批次规则拒绝。多个独立制作依据可分别安排各自的样本和稳定批次；实际不相关的工作继续按既有依赖推进。若使用仍有效的旧样本，样本单元可核对并引用该来源及既有用户消息，不要求重新制作或重复审批。
 
 样本单元显式填写 `sampleDecisionRequired`，说明现有流程是否确需用户对本样本作判断；为 `true` 时，真实决定尚未明确就不能放行依赖批次。执行报告的 `sampleEvidenceRef:{path,sha256}` 指向已有试接记录；新样本在实际试接完成后记录，不要求规划时预先生成未来结果。记录补齐 `schemaVersion:1.0`、`kind:production-sample`、实际生产者 `workItemId`、当前 `projectId/stack/objectId`、覆盖 `scopeIds`、同版本 `basisRef`、真实 `sourceRefs`、原试接 `evidenceRoot` 和 `runtimeRef`，可沿用已有三维样本的 `sceneRef`、`outputs` 和结构化引擎运行。运行引用也可指向相同证据根下的非空原始试接输出；合同、规格、人工确认和资源本身不能冒充输出。
+
+三维高风险首件须记录结构化目标引擎运行，运行记录的 `modelBindings` 绑定代表模型的 `assetId`、消费者 `nodeId` 和实际 `outputRef:{path,sha256}`。首件执行结果的 `sampleEvidenceRef`、V4/V5 场景封套的 `sampleRef` 和 V4 资源评审的 `modelSampleRef` 指向同一文件路径及摘要。没有首件时省略后两者。已有同范围、同版本且仍有效的首件证据可直接引用，具体来源检查见[三维复用合同](world3d-scenes.md#model-sample-reuse)。
 
 需要人工判断时，`humanDecisionRef` 引用已有 V4 `representative-sample` 或 `imported-assets` 确认，绑定同一对象、实际来源或试接、覆盖范围和真实用户消息；确认展示文件及所有关联事实保留其实际文件与摘要。已有消息明确覆盖本样本时引用同一消息，不自动生成批准。样本单元正常 PASS 时，执行状态冻结当前结果及依据、源、试接、适用人工记录的摘要；后续检查或登记依赖批次时重验，内容或依据变化须返修受影响范围。
 

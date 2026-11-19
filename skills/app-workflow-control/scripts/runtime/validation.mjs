@@ -108,6 +108,7 @@ function validateVisual(work) {
   if (work.visual.functionBaselineRef !== undefined && (!work.visual.functionBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.functionBaselineRef.sha256 ?? ''))) throw new WorkflowError('功能基线引用必须包含路径和 SHA-256');
   if (work.visual.sceneDesignRef !== undefined && (route !== 'world-2d' || !work.visual.sceneDesignRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.sceneDesignRef.sha256 ?? ''))) throw new WorkflowError('场景设计引用仅用于 world-2d，且必须绑定路径和 SHA-256');
   if (work.visual.modelBaselineRef !== undefined && (!world3d || !work.visual.modelBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelBaselineRef.sha256 ?? ''))) throw new WorkflowError('模型基线仅用于 world-3d，且必须绑定路径和 SHA-256');
+  if (work.visual.modelProductionBasisRef !== undefined && (!world3d || !work.visual.modelProductionBasisRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelProductionBasisRef.sha256 ?? ''))) throw new WorkflowError('模型生产基线仅用于 world-3d，且必须绑定路径和 SHA-256');
   if (work.visual.domainEvidenceRef != null && (!work.visual.domainEvidenceRef.path || !/^[a-f0-9]{64}$/.test(work.visual.domainEvidenceRef.sha256 ?? ''))) throw new WorkflowError('单目标领域证据必须包含路径和 SHA-256');
   if (work.workItemType === 'SCENE' && !world3d && work.visual.domainEvidenceRef != null) throw new WorkflowError('SCENE 领域证据必须分别绑定各视觉目标');
   if (work.visual.reuse !== undefined) {
@@ -226,7 +227,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
       if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError(`视觉目标重新绑定已作废引用：${ref.path}`);
     }
   }
-  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modelBaselineRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef]) {
+  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modelBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef]) {
     if (ref && !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('visual 场景证据引用必须绑定 SHA-256');
     if (ref?.path && repo) repoPath(repo, ref.path, 'visual 场景证据引用');
     if (ref?.path && work.invalidatedRefs?.some((item) => repo ? fileIdentityKey(repo, item.path) === fileIdentityKey(repo, ref.path) : item.path === ref.path)) throw new WorkflowError(`视觉清单重新绑定已作废引用：${ref.path}`);

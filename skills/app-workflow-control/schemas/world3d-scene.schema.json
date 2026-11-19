@@ -25,7 +25,9 @@
     "directionApprovalRef": { "$ref": "#/$defs/frozenRef" },
     "functionBaselineRef": { "$ref": "#/$defs/frozenRef" },
     "modelSpecRef": { "$ref": "#/$defs/frozenRef" },
+    "productionRisk": { "enum": ["low", "high"], "description": "本批模型的引擎接入风险" },
     "sampleRef": { "$ref": "#/$defs/frozenRef" },
+    "modelReuseRef": { "$ref": "#/$defs/frozenRef", "description": "已完成并覆盖当前模型和接入风险的来源工作项" },
     "formalSceneRef": { "$ref": "#/$defs/frozenRef" },
     "formalRunRef": { "$ref": "#/$defs/frozenRef" },
     "displayApprovalRef": { "$ref": "#/$defs/frozenRef" }
@@ -40,11 +42,16 @@
     },
     {
       "if": { "properties": { "stage": { "enum": ["V3", "V4", "V5"] } }, "required": ["stage"] },
-      "then": { "properties": { "modelSpecRef": true }, "required": ["modelSpecRef"] }
+      "then": { "required": ["modelSpecRef", "productionRisk"] }
     },
     {
-      "if": { "properties": { "stage": { "enum": ["V4", "V5"] } }, "required": ["stage"] },
-      "then": { "properties": { "sampleRef": true }, "required": ["sampleRef"] }
+      "if": { "properties": { "stage": { "enum": ["V4", "V5"] }, "productionRisk": { "const": "high" } }, "required": ["stage", "productionRisk"] },
+      "then": { "oneOf": [{ "required": ["sampleRef"] }, { "required": ["modelReuseRef"] }] },
+      "else": { "properties": { "sampleRef": false } }
+    },
+    {
+      "if": { "required": ["modelReuseRef"] },
+      "then": { "properties": { "stage": { "enum": ["V4", "V5"] } } }
     },
     {
       "if": { "properties": { "stage": { "const": "V5" } }, "required": ["stage"] },
