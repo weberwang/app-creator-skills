@@ -122,10 +122,11 @@ for (const stack of STACKS) {
     assert.match(routeRows[1][2], /平面布局[\s\S]*不强制制作三维白模/);
     assert.match(routeRows[2][2], /不增加世界场景白模步骤/);
     const handoff = extractMarkdownSection(exploration, 'production-handoff');
-    // 分开核对真实触发、样本与整批验收，避免依赖一整句固定表述。
+    // 分开核对正式方向、首件验证和整批验收，首件只约束高风险批次。
     assert.match(handoff, /整体空间人工确认完成后[\s\S]*等待用户确认正式视觉方向/);
-    const sample = handoff.match(/^\| 代表样本 \|(.+)$/m)?.[1] ?? '';
-    assert.match(sample, /试接[\s\S]*样本合格后再分批/);
+    const firstArticle = handoff.match(/^\| 首件验证 \|(.+)$/m)?.[1] ?? '';
+    assert.match(firstArticle, /高风险批次.*目标镜头.*通过后再补齐依赖批次/);
+    assert.match(handoff, /三维低风险批次正常生产和导入/);
     const batch = handoff.match(/^\| 分批制作与导入 \|(.+)$/m)?.[1] ?? '';
     assert.match(batch, /V4 完成时[\s\S]*本批模型[\s\S]*证据/);
     const tooling = extractMarkdownSection(exploration, 'tooling-boundary');
