@@ -10,4 +10,6 @@ Creator 工程验证取决于所选小版本、插件和当前 MCP 的实际可�
 
 将界面截图交给用户检查显示效果；工程状态证据不能代替美术人工验收。真机、上传、签名和发布需单独获得针对对象的明确授权。
 
+涉及 Label 对齐时，在 V5 正式场景中按 [Label 视觉对齐](ui-and-assets.md#label-视觉对齐)覆盖受影响的内容与代表值，并在本轮实际运行截图中标明对齐参照物，交用户人工确认。
+
 来源：`skills/cocos-game-workflow-control/references/cocos-mcp-protocol.md`、`skills/cocos-game-architecture/references/production-build.md`、`skills/cocos-game-architecture/references/project-structure.md`。
