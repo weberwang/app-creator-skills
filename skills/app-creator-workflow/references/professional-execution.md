@@ -14,6 +14,7 @@
 - 场景、页面和显示层统一执行[节点最小化](../../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)。V3 拆解和布局优先复用已有节点，只保留有实际职责的节点。V5 按确认后的最简层级还原并核对正式源与实际运行结构。
 - 交互组件统一执行[可交互组件结构、命中与输入职责](../../app-domain-toolkit/references/ui-interaction.md)，每个操作绑定唯一语义控件，并按实际平台验证命中、焦点和事件竞争。
 - 各栈项目采用可视化编辑器时统一遵守[编辑器优先](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)。能配置的功能优先在正式场景、Prefab 或原生 UI 源中实现并保存。代码负责业务规则与运行时行为，读取正式配置，启动时不重建已配置节点或覆盖布局。功能性位置调整按[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)限定范围与结束策略。
+- 功能函数实现后，将编辑器支持的事件按[编辑器事件绑定](../../app-domain-toolkit/references/editor-display-authoring.md#editor-event-binding)持久绑定到正式资产，保存回读后由实际事件触发验证。运行时不得用代码为该事件接线或替代触发。
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。
 - 每项任务使用当前项目中的一个 Work Item；机器字段以 [Work Item Schema](../../app-workflow-control/schemas/work-item.schema.json) 和 [模板](../../app-workflow-control/templates/work-item.json) 为准。Work Item 绑定目标、技术栈、工作类型、阶段、允许/禁止路径、工程门状态、证据根和可选视觉/拷问引用。小型事实查询、文案或注释修正不必为了形式创建 Work Item。
 - 实施前以 [Implementation Package Schema](../../app-workflow-control/schemas/implementation-package.schema.json) 冻结实施单元顺序、并行组与依赖、所有者、写入路径、结果文件路径和实际验收命令。并行组与依赖组的激活规则以[控制器实施执行参考](../../app-workflow-control/references/implementation-execution.md)为准。实施单元路径必须在 Work Item 允许范围内，并避开禁止范围；不要从 profile 的建议目录扩大工作项授权。
