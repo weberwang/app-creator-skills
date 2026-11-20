@@ -69,7 +69,7 @@
 <!-- native-source:roblox-game-3d-modeling:start -->
 ## mode-roblox-game-3d-modeling
 
-按[内容与地形](content.md)判断 Studio 原生 Part/Model、程序化模型、现有资产、AI 网格或外部模型的适用性；正式几何和适用 LOD 网格由 `app-3d-modeling` 的 `app_3d_model_creator` 负责，外部 DCC 仅在选择的路线需要时使用。记录尺寸、枢轴、形态、碰撞及消费者。Terrain 以[地形](content.md#地形)的目标区域、材料、恢复依据和实际角色通行验证；不为局部任务清空整个 Terrain，不将测试模型或 Play 状态当作正式源。
+按[内容与地形](content.md)判断 Studio 原生 Part/Model、程序化模型、现有资产、AI 网格或外部模型的适用性；正式几何和适用 LOD 网格按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 制作，外部 DCC 仅在选择的路线需要时使用。记录尺寸、枢轴、形态、碰撞及消费者。Terrain 以[地形](content.md#地形)的目标区域、材料、恢复依据和实际角色通行验证；不为局部任务清空整个 Terrain，不将测试模型或 Play 状态当作正式源。
 <!-- native-source:roblox-game-3d-modeling:end -->
 
 <!-- native-source:roblox-game-3d-texturing:start -->

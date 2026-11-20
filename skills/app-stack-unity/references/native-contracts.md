@@ -485,7 +485,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--unity-游戏-3d-模型制作"></a>
 ### Unity 游戏 3D 模型制作
 
-`app_3d_model_creator` 按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 和 [Blender MCP 建模流程](./mcp-modeling-workflow.md) 交付可编辑、可追溯的正式模型。Unity 模型几何与 PBR 贴图分别通过 Blender MCP 生产，按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。资产接入负责人通过 [@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab、LODGroup 和运行验证。
+按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 和 [Blender MCP 建模流程](./mcp-modeling-workflow.md) 交付可编辑、可追溯的正式模型。Unity 模型几何与 PBR 贴图分别通过 Blender MCP 生产，按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。资产接入负责人通过 [@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab、LODGroup 和运行验证。
 
 <a id="mode-unity-game-3d-modeling--输入与边界"></a>
 #### 输入与边界

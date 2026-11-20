@@ -5,11 +5,11 @@ description: "把三维对象需求转成可控几何、清楚层级、目标面
 
 # 三维几何建模
 
-正式几何制作与修改统一由[专属模型代理 app_3d_model_creator](agents/app_3d_model_creator.toml)执行，按[专属代理说明](../app-creator-workflow/references/specialist-agents.md#委派与生命周期)激活和交接。同一工作项的同一模型批次沿用一个生产负责人，返修交回原代理。主代理负责规格、整合和正式引擎交接。
-
 将模型简报落成在目标视角下可读、结构正确且满足运行预算的几何资产，减少导出后修复和引擎侧猜测。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
+
+同一模型批次由同一负责人完成制作与返修，制作会话、可编辑源、导出路径和正式引擎场景分别明确唯一写者。需要协作时按[协作与交接](../app-creator-workflow/references/handoffs.md)明确规格、允许修改的范围和引擎接入责任。
 
 3D 世界整体白模和方向确认后的正式模型任务，按[生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)评估本批结构、材质和接入风险。低风险批次正常制作并导入，高风险批次先在目标引擎验证首件或复用有效证据，再启动依赖它的批量制作。独立模型和不改变空间的局部修订沿用自身范围，不重建整场景。
 

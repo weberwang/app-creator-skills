@@ -24,6 +24,14 @@ for (const stack of ['cocos', 'unity', 'threejs']) {
       assert.ok(profile.capabilitySkills.includes(capability));
       for (const file of ['SKILL.md', 'native-adapters.json']) assert.ok(existsSync(join(root, capability, file)), `${capability}/${file} 未安装`);
     }
+    // 核对实际安装结果，防止已移除的角色通过技能包或激活脚本重新交付。
+    for (const path of [
+      'app-3d-modeling/agents/app_3d_model_creator.toml',
+      'app-gameplay-development/agents/app_level_scene_designer.toml',
+      'app-creator-workflow/scripts/install-specialist-agents.mjs',
+    ]) {
+      assert.equal(existsSync(join(root, path)), false, `${path} 仍随技能安装`);
+    }
     const adapters = JSON.parse(readFileSync(join(root, 'app-3d-texturing', 'native-adapters.json'), 'utf8'));
     // Cocos 和 Three.js 使用公共贴图流程，Unity 读取自己的原生模式。
     if (stack === 'unity') assert.ok(adapters.adapters.unity?.length);

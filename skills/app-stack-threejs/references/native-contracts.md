@@ -530,7 +530,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
 - 几何、拓扑、UV、材质槽结构和适用的 LOD 网格由本技能负责。PBR 贴图由 `app-3d-texturing` 负责，骨架及动作交对应能力，模型管线负责资源导入和运行消费。
-- 正式几何建模按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 委派 `app_3d_model_creator` 使用 Blender MCP；主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
+- 正式几何建模按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 使用 Blender MCP；主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
 - 源 `.blend` 保持只读；所有建模修改写入获准路径中的版本化派生文件。同一 `.blend`、MCP 会话和目标导出路径保持单一写者，修改与保存按顺序执行。使用 Blender MCP 前实时发现可用工具和参数，不假定固定命令、API 或导出能力。
 
 目标使用正式模型但不改几何时，走现有模型管线的资源接入或优化流程；本技能只在当前 Work Item 明确包含几何生产或修改时承担建模职责。
@@ -827,7 +827,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 <a id="mode-threejs-game-model-pipeline--模型生产交接"></a>
 #### 模型生产交接
 
-用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](./blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD 网格、碰撞代理和静态导出交给 [`app-3d-modeling`](../../app-3d-modeling/SKILL.md) 的 `app_3d_model_creator`，PBR 贴图生产交 `app-3d-texturing`。本管线消费交付物并负责导入和运行；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
+用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](./blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD 网格、碰撞代理和静态导出按 [`app-3d-modeling`](../../app-3d-modeling/SKILL.md) 执行，PBR 贴图生产交 `app-3d-texturing`。本管线消费交付物并负责导入和运行；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
 
 贴图、烘焙、绑定/动画或接入任务先读取[模型交接](./model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
 

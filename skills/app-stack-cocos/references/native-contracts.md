@@ -524,7 +524,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--cocos-游戏-3d-建模"></a>
 ### Cocos 游戏 3D 建模
 
-`app_3d_model_creator` 按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 在 Blender MCP 中制作正式模型。Cocos 资产接入负责人使用 Creator 核验资源导入和实际场景消费。按需阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)、[模型交接](./model-handoff.md)和[工作流接入](./workflow-integration.md)。
+按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 在 Blender MCP 中制作正式模型。Cocos 资产接入负责人使用 Creator 核验资源导入和实际场景消费。按需阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)、[模型交接](./model-handoff.md)和[工作流接入](./workflow-integration.md)。
 
 
 

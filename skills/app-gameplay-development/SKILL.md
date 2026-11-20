@@ -5,8 +5,6 @@ description: "按已确认的玩法规则实现游戏状态、输入响应、实
 
 # 游戏玩法实现
 
-涉及关卡空间、路线或镜头方案的设计时，按需委派[关卡／场景设计代理](agents/app_level_scene_designer.toml)。按[专属代理说明](../app-creator-workflow/references/specialist-agents.md)激活和交接，设计结果交本技能落实玩法与白模验证。
-
 游戏大场景与长流程按[分批生产](../app-domain-toolkit/references/incremental-production.md#game-progression)将区域、玩法状态和连续玩家步骤关联至已有规则和用例；每批验证本批路径、受影响邻区及已有内容衔接，按实际成本复用后期状态复现能力，最终正式组合重验必要完整路径与状态转移。业务状态不等于开发单元或视觉目标状态。
 
 将批准的玩法规则转成权威、可读、可测试的游戏状态与事件行为，保持输入、判定、反馈和存档之间一致。
