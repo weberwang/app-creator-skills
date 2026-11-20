@@ -1,13 +1,13 @@
 # Blender 角色绑定与动画的 Unity 导入合同
 
-角色源绑定、蒙皮与动作由 Blender MCP 生产；[@Unity](plugin://unity@openai-curated-remote) 和 `unity:unity-cli` 只负责导入、Avatar/Clip 设置、角色 Animator、Renderer/Prefab 接入及 Editor 验证。先执行[角色共同交接](./3d-character-handoff.md)，按[上游 Unity 导出技能](../../blender-production-reference/unity-export/UPSTREAM.md)和本合同准备导出，核实项目实际 Blender、导出器、Unity 和包版本。
+角色源绑定、蒙皮与动作由 Blender MCP 生产；[@Unity](plugin://unity@openai-curated-remote) 和 `unity:unity-cli` 只负责导入、Avatar/Clip 设置、角色 Animator、Renderer/Prefab 接入及 Editor 验证。先执行[角色共同交接](./3d-character-handoff.md)，按项目实际 Blender、导出器、Unity 和包版本发现能力；不写死未经实测的命令或 API。
 
 ## 导出职责与统一基准
 
 - 建模交付网格与静态源；绑定角色在派生文件中导出正式带骨架/蒙皮的角色文件；动画角色在动画派生文件中逐 Clip 导出同构运行时骨架的动画文件。角色网格不从纹理或动画工作文件覆盖，动画导出不修改原 Rig 的 rest/bind 或权重。
-- 明确对象/Armature 变换、单位、上轴/前轴、Pivot、Root 路径、rest/bind、骨名/层级、三角化/法线/UV 与槽位。参考角色与动作使用同一导出基准，在版本化导出副本上应用约定的变换。对已绑定数据，记录操作并在共同坐标下对照应用前后 rest/bind、蒙皮姿势、挂点、Root 轨迹和适用形态曲线；若结果超差则退修，原角色模型与控制 Rig 保持只读。
+- 明确文件中对象/Armature 变换、单位、上轴/前轴、Root 路径、静置姿势、骨名/层级、bind 数据、三角化/法线/UV 与槽位；参考角色和所有动作必须遵循同一基准，禁止各阶段各自缩放或旋转抵消错误。绑定后不能为“归零”直接 Apply Transform 或改 rest pose。
 - 保留可编辑控制 Rig，另在版本化导出副本上把约束、IK/FK、空间切换、驱动等结果采样到运行时骨架/实际支持的形状曲线。导出骨集合显式保留必要 Root、变形骨祖先与道具挂点，不盲用 Only Deform Bones 丢掉无权重但必需的节点；不把控制器骨、相机、灯光、参考或未用 Actions 混入产物。
-- 根据实际 FBX 导出器配置采样、曲线简化、骨轴、骨集合、叶骨和对象选择。每个 Clip 将目标 Action 与适用 slot 分配到 NLA，启用该 Clip 所需 strip，静音无关轨道并单独导出。逐 Clip 记录 strip、静音与叠加、范围和采样；独立形态通道按同一 Clip 的实际求值记录验证。
+- 根据实际 FBX 导出器配置采样、曲线简化、骨轴、骨集合、叶骨、对象选择和动作选择；逐 Clip 记录参数。Action/slot/NLA 的选择与静音/叠加状态必须明确，不能用 All Actions/NLA 自动批量导出后猜每个 Take 的身份。
 - 正式模型与动画优先交付显式导出的 FBX，Unity 消费该文件，不依赖直接导入 `.blend` 触发本机转换。使用其他格式时，先证明当前项目导入器具备所需蒙皮、骨架、动画与形状曲线能力，不能因静态模型能显示就推断角色链可用。
 - 单独动画文件与参考模型保留相同层级，按需启用 Preserve Hierarchy 并回读空 Root/中间节点，防止导入器剥离节点改变动画绑定路径。形态动画需另核实当前导出器的目标几何、通道和权重曲线支持；纯骨架文件不能默认承载依赖网格的 BlendShape 动画。需要携带形态网格时明确它是动画传输依赖，保持与基准模型同源，不覆盖正式角色网格。
 - 记录 Armature 修改器与蒙皮算法、校正/驱动对源结果的影响；不能假定 Preserve Volume 等源端选项或任意驱动会由 FBX 和 Unity 原样复现。先通过当前链路的小范围姿势/曲线回读证明必要能力，再扩展全部 LOD/动作；必需通道缺失时阻断相关交付，不以 Unity 勾选 Import BlendShapes 代替导出证据。
@@ -21,7 +21,7 @@
 | Humanoid | 适合可映射人形且需重定向时使用；参考角色创建并验证 Avatar 的必需/可选骨映射、T-pose 配置和有效性 | 不以“导入无报错”推断有效；映射/姿态不满足则退修，不能把非人形强配成人形，也不能为 Avatar 配置暗改源 rest pose |
 | Generic | 非人形或按原骨架播放的角色按需求使用；明确实际 Root 节点和同构层级 | 不假定 Generic 能像 Humanoid 跨不同骨架重定向；骨路径不一致需返修或在 Blender 显式适配 |
 | 动作文件的 Avatar | 骨架、层级和角色基准匹配时明确复用参考 Avatar/来源；否则证明实际适配路线 | 不能仅凭同名骨或相同角色名复用；动画文件与基准不匹配时暂停相关导入 |
-| Skin Weights | Blender 导出和 Unity 导入均按各 LOD 每顶点最多 4 个有效骨骼影响回读。项目可设更低预算；核对导入/运行时设置、实际权重、归一化与裁剪结果 | 超限退回绑定修正源权重；裁剪或权重调整后重验代表姿势、各 LOD 与绑定结果 |
+| Skin Weights | 按目标平台和项目骨数/影响数预算选择导入/运行时设置，回读实际权重、归一化和裁剪后结果 | 不把四影响写成所有项目通用规则；裁剪后重新检查代表姿势、各 LOD 与绑定结果 |
 | Optimize Game Objects | 仅在当前 Rig/Avatar 导入设置支持时按需启用，列出运行时必须可访问的挂点，并通过实际可用的暴露设置保留变换，检查消费方可取到节点 | 不为优化移除装备、事件、IK 或特效需要的 Transform；不要求所有 Rig 类型或动画文件开启，配置改变后复验引用与运行行为 |
 
 角色的骨架/Avatar 参考文件与动画文件导入顺序串行；Import/重导入稳定后回读 AssetDatabase、ModelImporter、Avatar、网格与 GUID，不猜或手造 GUID。`.meta` 和 Unity 管理资源保持同一所有权单元。

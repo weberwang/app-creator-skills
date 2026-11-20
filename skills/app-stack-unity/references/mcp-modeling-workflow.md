@@ -30,7 +30,7 @@
 
 建模方提交导出回读；Unity 资产接入负责人通过 AssetDatabase 或已发现的 Pipeline 导入，回读 Importer、Mesh、资源级 Prefab、LODGroup、Collider 与引用，并回传 Editor/PlayMode 技术结果。正式场景接入留在 V5，显示效果由用户验收。
 
-需绑定的角色按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md#建模与贴图交给绑定)在建模阶段完成重拓扑。静态资产按需求决定是否重拓扑，高模、额外 UV 集和 LOD 按预算决定；低模仍需检查结构、拓扑、法线、主 UV 和导出。贴图角色通过 Blender MCP 执行生产级材质节点、图像绘制、烘焙、通道打包与贴图导出，具体工序遵循[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。贴图使用版本化派生 `.blend`，只读核对模型并向既有槽位赋材质；禁止暗改网格、UV、槽位结构/顺序/面分配，或从派生网格覆盖运行时模型。各 LOD 需明确共用 UV/图集或独立用图策略。输入缺陷退回建模修复，不在纹理阶段补救几何。
+高模、重拓扑、额外 UV 集和 LOD 等按资产需求与预算适用；不适用项须说明原因，不能用“低模”跳过结构、拓扑清理、法线、主 UV 和导出验证。贴图角色通过 Blender MCP 执行生产级材质节点、图像绘制、烘焙、通道打包与贴图导出，具体工序遵循[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。贴图使用版本化派生 `.blend`，只读核对模型并向既有槽位赋材质；禁止暗改网格、UV、槽位结构/顺序/面分配，或从派生网格覆盖运行时模型。各 LOD 需明确共用 UV/图集或独立用图策略。输入缺陷退回建模修复，不在纹理阶段补救几何。
 
 模型交接须覆盖资源 ID 与实际源版本、运行时低模、UV 通道/位置/重叠规则、法线与切线策略、既有材质槽及面分配、Texel Density/Padding、纹理集、LOD 用图策略；按烘焙需要提供匹配高低模、Cage/射线方案、命名、法线/切线和三角化策略。贴图发现几何、UV、法线、烘焙输入或槽位缺陷时，按[共同交接中的返修与局部重验](../../unity-game-3d-texturing/references/model-texture-handoff.md#缺陷退回与局部重验)返回建模；模型修改后只重验其实际影响的烘焙、纹理、材质、导入及 Prefab 依赖。
 

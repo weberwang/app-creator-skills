@@ -9,7 +9,7 @@
 - **启动项目**：梳理目标、平台、核心流程、语言和验收范围，建立工程与任务计划。
 - **探索游戏方案**：复杂游戏先形成[关卡结构草案与空间规则](skills/app-domain-toolkit/references/game-design-exploration.md)，持续推敲路线、空间节奏与玩家视角；概念图按需，本批方案审查后交人工修改或确认。
 - **先验证功能**：按用户行为拆分功能，3D 世界搭建或复用有效白模，2D 世界使用平面布局与占位资源，UI 沿原流程；V1 不等待正式美术。
-- **制作视觉与资源**：空间确认后确定正式方向。走 Blender 路线时按[上游技能接入](skills/app-domain-toolkit/references/blender-scene-production.md)在同一装配中制作本批场景美术。低风险批次正常导入，高风险批次先验证首件或复用有效证据，再扩展依赖批次。2D／UI 保留适用图片和布局流程。
+- **制作视觉与资源**：空间确认后确定正式方向，3D 按[模型与材质交接](skills/app-domain-toolkit/references/game-design-exploration.md#production-handoff)组织制作。低风险批次正常导入，高风险批次先验证首件或复用有效证据，再扩展依赖批次。2D／UI 保留适用图片和布局流程。
 - **按需处理音频**：非游戏客户端按[App 音频工作流](skills/app-domain-toolkit/references/app-audio.md)区分提示、播放、录音／语音和平台通知，无需求则跳过；游戏按[音效生产流程](skills/app-audio/references/sfx-production.md)设计与制作适用素材。分别记录文件技术、实际运行与用户听感，不默认增加声音或后台能力。
 - **组织跨场景功能**：明确导航框架、主页、共享路由和弹窗的职责，复用共享实现并验证实际组合。
 - **持续交付**：支持局部修复、功能增量、质量审核、项目整理和发布准备，保留继续工作所需的有效记录。

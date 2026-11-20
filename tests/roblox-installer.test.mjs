@@ -132,22 +132,13 @@ test('Roblox 独立安装后可读取全部声明的原生模式', async (t) => 
   assert.ok(existsSync(join(skillsRoot, 'roblox-domain-contracts')));
   assert.ok(existsSync(join(skillsRoot, 'app-domain-toolkit/references/game-characteristics.md')));
   assert.ok(existsSync(join(skillsRoot, 'app-domain-toolkit/references/game-content-playtesting.md')));
-  assert.ok(existsSync(join(skillsRoot, 'blender-production-reference/blender-director/UPSTREAM.md')));
-  const blenderUpstream = JSON.parse(readFileSync(join(skillsRoot, 'blender-production-reference/upstream.json'), 'utf8'));
-  assert.equal(blenderUpstream.skills.length, 94);
-  assert.ok(existsSync(join(skillsRoot, 'blender-production-reference/rigging/UPSTREAM.md')));
+  assert.equal(existsSync(join(skillsRoot, 'blender-production-reference')), false);
   for (const route of profile.nativeAdapters) {
     const result = reader.loadNativeMode({ skillsRoot, stack: 'roblox', capability: route.capability, sourceSkill: route.sourceSkill });
     assert.equal(result.documents[0].path, 'app-stack-roblox/references/native-contracts.md');
     assert.equal(result.documents[0].section, route.section);
     assert.ok(result.documents[0].content.trim());
     assert.ok(!result.documents.some((doc) => /^app-stack-(?!roblox\/)/.test(doc.path)));
-    // 只有选用 Blender 的外部网格路线才读取上游资料，Studio 原生模式仍可独立执行。
-    if (['app-3d-modeling', 'app-3d-texturing'].includes(route.capability)) {
-      const blender = 'app-domain-toolkit/references/blender-scene-production.md';
-      assert.ok(result.resources.some((item) => item.path === blender && item.available));
-      assert.ok(!result.documents.some((item) => item.path === blender));
-    }
   }
   assert.equal(existsSync(join(skillsRoot, 'app-stack-unity')), false);
   assert.throws(() => planInstallation({ projectRoot: project, stacks: ['roblox-unknown'] }), /有效技术栈/);

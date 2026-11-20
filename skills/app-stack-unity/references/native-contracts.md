@@ -397,7 +397,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-animation--制作入口"></a>
 #### 制作入口
 
-读取[生产级动画工作流](../../unity-game-3d-animation/references/animation-workflow.md)，沿用既有 Work Item/V0–V5 和 `animation-intent-contract`。为每个动作独立定义 FPS、帧/秒范围、循环接点、步幅/步频、root motion（in-place 或 displacement）、玩法单一权威、中断/对象池/多实例行为和表现事件。每个 Clip 将目标动作分配到 NLA，在版本化副本按角色基准应用变换并单独烘焙导出。交付源、配方、回读和 Unity 导入验证，动作画面由用户人工检查。
+读取[生产级动画工作流](../../unity-game-3d-animation/references/animation-workflow.md)，沿用既有 Work Item/V0–V5 和 `animation-intent-contract`。为每个动作独立定义 FPS、帧/秒范围、循环接点、步幅/步频、root motion（in-place 或 displacement）、玩法单一权威、中断/对象池/多实例行为和表现事件，再按已确认方案制作真实动作。输出要包含源文件与配方、逐 Clip 烘焙/导出、回读证据和 Unity 导入验证；动作画面由用户人工检查。
 <!-- native-source:unity-game-3d-animation:end -->
 
 
@@ -458,7 +458,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 - 建模拥有网格几何、拓扑、法线、UV、材质槽与 BlendShape 目标几何；纹理拥有贴图、材质节点和 Shader 信息。绑定只读接收并保留这些数据，拥有静置姿势、骨架结构、命名/轴向/bone roll、控制器、变形骨、skin weights、驱动校正、道具挂点及各 LOD 绑定。
 - 动画角色只消费已冻结的骨架与绑定，拥有 Actions、曲线、表演、IK/FK 切换、接触、循环、过渡、节奏、根运动轨迹和表现事件。动画发现骨架结构、蒙皮或变形缺陷时退回绑定；绑定发现几何问题退回建模，UV/槽位或材质信息问题退回相应模型/纹理负责人。
 - 绑定不得为了方便改网格、重排顶点、重展 UV、改槽位或重做 BlendShape 目标几何。结构修改需版本化返给建模并重新核对权重、校正形态及导出依赖。
-- Humanoid 或 Generic 按角色形态、用途及重定向需求选择，骨架总骨数按项目预算。角色绑定前完成重拓扑，各 LOD 每顶点最多受 4 根骨骼影响。Unity 负责实际导入、Avatar/Skinned Mesh 设置、Prefab 装配和播放验证。
+- Humanoid 或 Generic 由角色形态、骨架用途和重定向需求决定，不强制人形，也不设统一骨骼数或权重影响数。Unity 负责实际导入、Avatar/Skinned Mesh 设置、Prefab 装配和播放验证，不替代源绑定。
 
 <a id="mode-unity-game-3d-rigging--blender-mcp-与-unity-路由"></a>
 #### Blender MCP 与 Unity 路由
@@ -466,7 +466,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 1. 先检查可复用的 Blender 进程、MCP 连接和当前工具 Schema；核对版本、活动 `.blend`、场景、对象/Collection、未保存状态、外链依赖和写入归属。只有确认没有可复用实例后才考虑启动，禁止重置或覆盖用户场景。
 2. 按当前 Blender/MCP 版本确认 Rig、权重检查/编辑、约束与驱动烘焙、保存、FBX 导出及回读能力；不得假设某个工具名、API 或 UI 操作一定存在。能力不足时将受影响产物标为 `BLOCKED`，不改用 Unity 自动绑定、外部自动 Rig 服务或供应商补位。
 3. 既有合法模型、绑定部件和动作可作为只读输入；所有正式修改写入版本化派生 `.blend`。脚本沿用当前精确授权边界；没有覆盖本次脚本与路径的精确授权时，执行前展示并取得确认。
-4. 通过 Blender MCP 完成源 Rig 和蒙皮。在版本化导出副本上应用约定变换并复验绑定及代表姿势，选定骨架、网格和必需挂点后输出各 LOD 的蒙皮 FBX。按 [Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)串行导入、回读并验证。Blender 源能力不足时保持阻断。
+4. 通过 Blender MCP 完成源 Rig 和蒙皮；派生副本中选择明确的骨架/网格/必需挂点导出集合并输出各 LOD 的 skinned FBX。随后按共享的 [Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)串行导入、回读并验证。Blender 源能力不足时保持阻断，不转到 Unity 或 2D 专用 Rig 路线。
 
 <a id="mode-unity-game-3d-rigging--生产交付"></a>
 #### 生产交付
@@ -494,7 +494,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 - 缺少模型规格、可用 Blender MCP、明确的 `.blend` 源和输出范围、唯一 Unity 项目目标或修改授权时，可先输出带假设标记的只读规格建议，但受影响写入保持 `BLOCKED`。
 - Blender MCP 是模型和贴图的既定生产路线，不再重复选择工具。模型 brief 和需要用户取舍的轮廓/交互边界交给 `$grilling`；已授权范围内的细化与返修继续执行，范围变化和破坏性操作按控制面处理。
 - 本角色拥有几何、拓扑、法线、UV 版本冻结、材质槽结构、LOD、Collider 和静态模型导出；角色的骨架/蒙皮模型由绑定角色导出。`$app-3d-texturing` 在版本化派生 `.blend` 中拥有材质节点、绘制、烘焙、通道打包和贴图导出。Unity 仅负责导入器、Material/Renderer、资源级 Prefab 和运行验证；最终验证交给 `$app-quality-review`。
-- 绑定与动画按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging) 和 [`$app-animation`](#mode-unity-game-3d-animation)。需蒙皮的角色在建模阶段完成重拓扑，交付关节边流、BlendShape 目标几何和静态源。绑定负责骨架、权重和蒙皮模型导出，动画负责动作与逐 Clip 导出；PBR、VFX 与最终 QA 另行分工。
+- 绑定与动画按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging) 和 [`$app-animation`](#mode-unity-game-3d-animation)。本角色准备关节拓扑、BlendShape 目标几何和静态源，绑定负责角色骨架/权重和蒙皮模型导出，动画负责动作与逐 Clip 导出；不负责 PBR 纹理、绑定动画或最终 QA 放行，VFX 另行分工。
 
 <a id="mode-unity-game-3d-modeling--blender-mcp-与-unity-路由"></a>
 #### Blender MCP 与 Unity 路由

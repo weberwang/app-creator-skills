@@ -170,26 +170,6 @@
           "consumerEvidenceRef": {
             "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
           },
-          "modelQuality": {
-            "description": "V4 模型专项评审，记录设计稿适用性、正式几何和材质的实际检查。",
-            "type": "object",
-            "additionalProperties": false,
-            "required": ["designViews", "noProgrammaticCuts", "noProgrammaticColorBlocks", "evidenceRef"],
-            "properties": {
-              "designViews": {
-                "enum": ["PASS", "NOT_APPLICABLE", "FAIL", "NOT_RUN"]
-              },
-              "noProgrammaticCuts": {
-                "enum": ["PASS", "FAIL", "NOT_RUN"]
-              },
-              "noProgrammaticColorBlocks": {
-                "enum": ["PASS", "FAIL", "NOT_RUN"]
-              },
-              "evidenceRef": {
-                "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
-              }
-            }
-          },
           "generationRecordSha256": {
             "type": "string",
             "pattern": "^[a-f0-9]{64}$"
@@ -222,8 +202,7 @@
                 "sourceSha256",
                 "outputSha256",
                 "importEvidenceRef",
-                "consumerEvidenceRef",
-                "modelQuality"
+                "consumerEvidenceRef"
               ],
               "allOf": [
                 {

@@ -11,8 +11,6 @@ description: "规划三维材质分区、UV和贴图通道，控制分辨率、�
 
 3D 世界整体白模和方向按[正式生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)获人工确认、模型材质槽与 UV 已交接后，在当前工作项的 V4 按需安排材质贴图。独立素材或不改变世界空间的局部修改按原范围处理，不要求重建整体白模。
 
-选择 Blender 时，按 [Blender 场景生产接入](../app-domain-toolkit/references/blender-scene-production.md)读取上游 `materials`、`texture-workflow` 和适用的 `lookdev`，作为 Blender 内主要实现。用本批场景装配或其派生源核对相邻模块的材质衔接，按需要在固定机位与光照下提供检查图，由用户人工验收。
-
 ## 输入
 
 - 可追溯的当前模型版本、UV与材质分区；渲染风格和色板；贴图通道、最大尺寸、压缩及纹理内存预算。

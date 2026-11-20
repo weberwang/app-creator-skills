@@ -58,7 +58,6 @@
   },
   "resourceDirectories": [
     "app-domain-toolkit",
-    "blender-production-reference",
     "cocos-domain-contracts",
     "cocos-game-ad-integration",
     "cocos-game-architecture",

@@ -164,12 +164,10 @@ function attachModel(fixture, work) {
   const consumerEvidenceRef = fixture.write(`${work.evidenceRoot}/model-consumer.json`, {
     ...fixture.context, assetId: 'building-a', status: 'PASS', nodeId: 'World/Building', sceneRef, outputRef: output,
   });
-  const modelQualityEvidenceRef = fixture.write(`${work.evidenceRoot}/model-quality.md`, '合成专项评审：固定视角无需多角度稿，正式几何和材质检查通过。\n');
   fixture.model = {
     assetType: 'model', assetId: 'building-a', sourceKind: 'hand-authored', sourceRef: source.path,
     sourceSha256: source.sha256, output: output.path, outputSha256: output.sha256,
     importEvidenceRef, consumerEvidenceRef,
-    modelQuality: { designViews: 'NOT_APPLICABLE', noProgrammaticCuts: 'PASS', noProgrammaticColorBlocks: 'PASS', evidenceRef: modelQualityEvidenceRef },
   };
   const qualityChecks = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'].map((dimension) => {
     const ref = fixture.write(`${work.evidenceRoot}/model-quality-${dimension}.txt`, `合成审阅记录：${dimension}\n`);
