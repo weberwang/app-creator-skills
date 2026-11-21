@@ -10,7 +10,7 @@
 
 > 适用技术栈：cocos、phaser。
 
-帧动画先按“SKILL.md 的分类入口”（见本栈配套资料）选择普通、角色、特效或 UI 帧动画规则。沿[动画拆解清单](frame-animation-execution.md#v3-animation-inventory)在 V3 保存动作设计记录及用户方案确认。V4 按[视频 MCP 生成与抽帧](frame-animation-execution.md#video-mcp-generation)制作并验收实际素材，采样与正式播放不超过 24 FPS。显式指定的独立图片补帧任务逐张确认首尾、必要关键帧和递归父图后推进。帧动画不制作灰盒或可播放占位示意，沿用全局 `visualStage`。
+帧动画先按“SKILL.md 的分类入口”（见本栈配套资料）选择普通、角色、特效或 UI 帧动画规则。沿[动画拆解清单](frame-animation-execution.md#v3-animation-inventory)在 V3 记录方案及每个动作所选的[生图或视频抽帧路线](frame-animation-execution.md#source-route-selection)。V4 制作并验收实际素材。生图按顺序确认首尾、必要关键帧和递归父图，视频验收实际输入后抽帧。采样和正式播放不超过 24 FPS。帧动画不制作灰盒或可播放占位示意，沿用全局 `visualStage`。
 
 > 适用技术栈：cocos、phaser、threejs。
 

@@ -487,7 +487,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 | 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../phaser-domain-contracts/resources/frame-animation/references/image-inbetween.md) |
 | 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../phaser-domain-contracts/resources/frame-animation/references/workflow-integration.md) |
 
-V3 完成[动画清单和方案确认](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，V4 按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)生产并验收序列，采样与播放不超过 24 FPS。V5 依据报告的 preload、anims 和 origin 接入 Phaser 并验证运行态。
+V3 完成[动画清单和方案确认](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，V3 按[来源路线选择](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)为每个动作选择生图补帧或视频抽帧并记录依据，V4 沿选定路线生产并验收序列，采样与播放不超过 24 FPS。V5 依据报告的 preload、anims 和 origin 接入 Phaser 并验证运行态。
 
 <a id="mode-phaser4-frame-animation--本栈配套资料"></a>
 #### 本栈配套资料

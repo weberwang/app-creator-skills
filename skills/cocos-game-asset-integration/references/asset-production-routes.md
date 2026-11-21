@@ -6,7 +6,7 @@
 | --- | --- | --- | --- | --- |
 | UI/图标与字体 `ui-icon-font` | Figma/SVG/矢量源、字体工程、九宫格源图 | SVG 或 PNG/WebP、字体子集、九宫格与布局配置 | 像素密度、透明边缘、图标语法、字体授权、文本安全区、停靠关系 | 纹理尺寸、九宫格数量、Draw Call |
 | 像素美术 `pixel-art` | Aseprite/PSD 分层源、调色板 | PNG/WebP、图集与帧数据 | 整数缩放、最近邻采样、调色板、帧边界、像素抖动 | 图集、帧数、纹理内存、采样模式 |
-| 通用逐帧动画 [`frame-animation`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-frame-animation) | 动画清单、时间轴与尺寸/区域计划，实际 Video MCP 生成或复用来源记录 | 独立 PNG 图集、JSON 报告；需要动画播放时通过 `--output-preview` 生成网页预览，并维护 Cocos 合同 | V3 清点并确认动作方案；V4 复用有效来源或调用 Video MCP 生成源视频，人工验收实际抽帧输入后抽帧，输出及播放不超过 24 FPS；V5 接入 Cocos 并验收 | 区域像素预算、FPS、帧数、生成调用数、图集尺寸、纹理内存 |
+| 通用逐帧动画 [`frame-animation`](../../app-stack-cocos/references/native-contracts.md#mode-cocos-frame-animation) | 动画清单、时间轴与尺寸/区域计划，生图补帧或视频抽帧的来源、选用依据及复用记录 | 独立 PNG 图集、JSON 报告；需要动画播放时通过 `--output-preview` 生成网页预览，并维护 Cocos 合同 | V3 清点并确认动作方案，按[来源路线选择](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)二选一并记录依据；V4 复用有效来源或沿选定路线生成素材，按原流程人工验收视频输入或图片关键帧，输出及播放不超过 24 FPS；V5 接入 Cocos 并验收 | 区域像素预算、FPS、帧数、生成调用数、图集尺寸、纹理内存 |
 | 骨骼动画 `skeletal-animation` | Spine/DragonBones 等工程与依赖贴图 | 骨骼数据、atlas、纹理 | 骨骼层级、蒙皮、混合、事件、运行时版本与许可 | 骨骼/插槽数、贴图、采样、CPU/GPU 成本 |
 | 场景/Tilemap `scene-tilemap` | Tiled/LDtk 工程、tileset 源图 | 地图 JSON、tileset、碰撞/对象层数据 | 接缝、碰撞语义、对象层、坐标系、分块加载 | 图块/图集、地图数据、可见层、Draw Call |
 | VFX/粒子/Shader `vfx-particle-shader` | 粒子配置、shader 源码、噪声/遮罩源图 | 配置、GLSL、纹理 | 动态时序、混合模式、降级、遮挡、色觉差异、设备兼容 | 粒子峰值、过绘、纹理、Draw Call、GPU 时间 |

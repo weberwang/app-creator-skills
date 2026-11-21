@@ -2,7 +2,7 @@
 
 执行者按[执行代理](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--执行代理)中的用途类型与职业映射分配设计师；混合任务按可独立设计的动画或区域明确职业、文件所有权和事件/锚点/依赖交接，同一 Work Item、同一职责范围内的连续制作与修正复用对应代理。主代理交接方案确认、真实素材人工验收、实际来源、生成授权和限定任务包；实际图片生成/编辑另交图片生成代理，动画执行代理负责约束与集成。
 
-帧动画先按 [SKILL.md 的分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择普通、角色、特效或 UI 帧动画规则。V3 按[动画拆解清单](../../../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)确认动作方案，V4 按[视频 MCP 生成与抽帧](../../../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)制作并验收真实素材，采样与正式播放不超过 24 FPS。独立图片补帧任务仅在明确指定时采用，逐张确认首尾、必要关键帧和递归父图。帧动画不制作灰盒或可播放占位示意，沿用全局 `visualStage`。
+帧动画先按 [SKILL.md 的分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择普通、角色、特效或 UI 帧动画规则。V3 按[动画拆解清单](../../../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)确认动作方案，V3 按[来源路线选择](../../../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)为每个动作选择生图补帧或视频抽帧并记录依据，V4 沿选定路线制作并验收真实素材，采样与正式播放不超过 24 FPS。生图补帧逐张确认首尾、必要关键帧和递归父图。帧动画不制作灰盒或可播放占位示意，沿用全局 `visualStage`。
 
 > 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#通用帧动画工作流接入合同)。
 

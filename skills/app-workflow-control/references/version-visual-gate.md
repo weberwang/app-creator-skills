@@ -34,6 +34,6 @@ V2 展示 V1 已确认的当前模块全部适用要素和必要状态，用于�
 
 V3 拆解 V2 确认的稿件，V4 准备资源、接口、共享组件与适用的风险验证。V5 完整实现本轮功能，用 V1 的 `requirementId` 和 `command` 将每项验收关联到当前实施包的需求、验证单元与真实执行输出。通过后固定执行证据摘要，以便第 7 阶段复核来源及正式组合的跨模块状态与端到端路径。
 
-V3 在原拆解记录落实[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，将需要动画的对象与冻结的状态、事件和正式消费者对应。二维需求选用帧动画，V4 按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)处理新增素材，采样和正式播放最高 24 FPS。
+V3 在原拆解记录落实[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，将需要动画的对象与冻结的状态、事件和正式消费者对应。二维采用帧动画，每个动作从[生图和视频抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)中二选一。V4 按确认的来源制作，采样和正式播放最高 24 FPS。
 
 业务规则有实质歧义时做 grilling，更新 V1 后回到 V2。模块稿变更走 `RETURN` 的 `visual:V2` 并重新确认。全局方向变更先更新第 4 阶段，再复核受影响的模块。

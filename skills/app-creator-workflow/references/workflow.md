@@ -176,8 +176,8 @@ SCENE 是真实游戏场景及常驻 HUD；PAGE 是 Flutter、Expo 应用页面�
 | --- | --- | --- |
 | V1 | 确认完整模块方案 | 游戏世界先尝试启动[场景与关卡设计](../../app-domain-toolkit/references/game-design-exploration.md#v1-scene-design-task)，核对当前空间需求与有效方案。按本轮产品规格和实际内容、配置识别机制及变体，确定可达状态与转换、流程及进度、机制组合的触发和结算、异常恢复、依赖接口与验收预期。未决规则先做 grilling 并更新方案，按风险选择原型或运行验证。全部适用规则可执行且无未决问题后进入 V2 |
 | V2 | 生成并确认模块设计稿 | 沿用第 4 阶段全局方向，按 V1 确认的当前模块范围展示全部要素、必要状态、流程与进度，供 V3 拆解。图片目标按实际二维内容决定张数。3D 空间用白模、空间规格与相机路径表达，纯 3D 可用空间、方向和适用状态规格完成设计。用户确认后固定版本。业务歧义回 V1，模块稿缺漏在 V2 补齐，全局方向变化回第 4 阶段 |
-| V3 | 拆解 V2 已确认的设计稿 | 从同一确认稿提取组件、布局、文字样式、资源与时序。逐项梳理[需要动画的对象、状态与事件](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，二维动画选用帧动画并规划不超过 24 FPS 的采样和播放。3D 交接模型／材质／接口及空间替换规格。游戏图片按原合同分别确认拆解和布局，Figma 提取对应的原生结构 |
-| V4 | 准备实现 | 准备、生产和导入资源、共享组件、接口适配及测试数据，按风险验证首件和关键技术点。需新增的二维帧动画视频按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)生产，实际输入确认后抽帧 |
+| V3 | 拆解 V2 已确认的设计稿 | 从同一确认稿提取组件、布局、文字样式、资源与时序。逐项梳理[需要动画的对象、状态与事件](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)。二维采用帧动画，每个动作从生图和视频抽帧中二选一，采样和播放不超过 24 FPS。3D 交接模型／材质／接口及空间替换规格。游戏图片按原合同分别确认拆解和布局，Figma 提取对应的原生结构 |
+| V4 | 准备实现 | 准备、生产和导入资源、共享组件、接口适配及测试数据，按风险验证首件和关键技术点。二维帧动画沿 V3 选定的[来源路线](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)制作并验收实际素材 |
 | V5 | 完整实现与模块验收 | 实现本轮全部约定功能并整合文案、广告与反馈；在正式宿主验证输入、状态转换、进度、异常及恢复，人工确认实际显示 |
 
 ### V1 完整规则与覆盖

@@ -8,7 +8,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-仅在用户明确指定独立图片补帧任务时读取本文件，同时读取当前用途的一份分类参考和“共用时间轴”（见本栈配套资料）。正式工作流中的新二维帧动画按[视频 MCP 生成与抽帧](frame-animation-execution.md#video-mcp-generation)取得素材。分类决定运动与验收依据，来源路线决定怎样取得帧。
+V3 按[帧动画来源二选一](frame-animation-execution.md#source-route-selection)选定生图后，读取本文件及当前用途的一份分类参考和“共用时间轴”（见本栈配套资料）。分类决定运动与验收依据，来源路线决定怎样取得帧。
 
 ## 适用与边界
 
