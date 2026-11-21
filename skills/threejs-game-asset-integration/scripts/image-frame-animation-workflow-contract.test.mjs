@@ -358,6 +358,14 @@ test("图片 accepted schema 按固定接口通过现有静态合同入口", () 
   }), []);
 });
 
+test("图片帧动画合同允许 24 FPS 并拒绝超限", () => {
+  const contract = imageContract();
+  contract.settings.fps = 24;
+  assert.deepEqual(validateImageFrameAnimationWorkflowContract(contract), []);
+  contract.settings.fps = 24.01;
+  assert(validateImageFrameAnimationWorkflowContract(contract).some((item) => item.includes("settings.fps") && item.includes("24")));
+});
+
 test("图片 accepted 合同拒绝错误候选、缺失工件和伪造视频字段", () => {
   const wrongCandidate = imageContract();
   wrongCandidate.candidate_version = "stale-candidate";
@@ -385,6 +393,19 @@ test("图片 accepted 工作流真实通过合同、validateManifest 与 checkMa
     }), []);
     assert.deepEqual(validateManifest(fixture.manifest), []);
     assert.deepEqual(await checkManifestFiles(fixture.manifest, fixture.root), []);
+  });
+});
+
+test("Three.js 图片报告中的示例帧率须与 accepted 合同一致", async () => {
+  await withFixture(async (fixture) => {
+    const factory = fixture.report.threejs.snippets.factory;
+    assert.deepEqual(await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root }), []);
+    fixture.report.threejs.snippets.factory = factory.replace("const frameRate = 2;", "const frameRate = 60;");
+    await rewriteReport(fixture);
+    assert((await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root })).some((item) => item.includes("factory 的 frameRate")));
+    fixture.report.threejs.snippets.factory = factory.replace("elapsed * frameRate", "elapsed * 60");
+    await rewriteReport(fixture);
+    assert((await checkImageFrameAnimationWorkflowFiles(fixture.asset, { projectRoot: fixture.root })).some((item) => item.includes("factory 的 frameRate")));
   });
 });
 

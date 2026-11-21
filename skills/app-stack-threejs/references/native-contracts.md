@@ -497,7 +497,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 | 图片首尾、关键帧、双图参考递归与图片来源合同 | [image-inbetween.md](../../threejs-domain-contracts/resources/frame-animation/references/image-inbetween.md) |
 | 动作设计与素材确认、提示词组合与来源/修图证据 | [workflow-integration.md](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md) |
 
-全局阶段仍由[唯一控制面](../../app-workflow-control/SKILL.md)管理：V3 内部推导并记录动作时间轴、向用户说明设计理念并取得当前方案确认；V4 按已确认方案制作并审阅真实视频或关键帧、验收完整序列；V5 依据报告的 `TextureLoader`、水平 UV、`SpriteMaterial`、`Sprite.center` 与逐帧更新合同接入 three.js 并验证运行态。二维精灵的资源与运行时合同不适用于三维骨骼动画，后者仍走 `AnimationMixer`。
+V3 完成[动画清单和方案确认](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，V4 按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)生产并验收序列，采样与播放不超过 24 FPS。V5 依据报告的 `TextureLoader`、水平 UV、`SpriteMaterial`、`Sprite.center` 与逐帧更新合同接入 three.js 并验证运行态。三维骨骼动画使用 `AnimationMixer`。
 
 <a id="mode-threejs-frame-animation--本栈配套资料"></a>
 #### 本栈配套资料

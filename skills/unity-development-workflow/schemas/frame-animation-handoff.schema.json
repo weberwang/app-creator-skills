@@ -56,7 +56,8 @@
           },
           "frameRate": {
             "type": "number",
-            "exclusiveMinimum": 0
+            "exclusiveMinimum": 0,
+            "maximum": 24
           },
           "duration": {
             "type": "number",

@@ -2,7 +2,7 @@
 
 执行者按[执行代理](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--执行代理)中的用途类型与职业映射分配设计师；混合任务按可独立设计的动画或区域明确职业、文件所有权和事件/锚点/依赖交接，同一 Work Item、同一职责范围内的连续制作与修正复用对应代理。主代理交接方案确认、真实素材人工验收、实际来源、生成授权和限定任务包；实际图片生成/编辑另交图片生成代理，动画执行代理负责约束与集成。
 
-帧动画先按 [SKILL.md 的分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择普通、角色、特效或 UI 帧动画规则，再按[来源路线](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--来源路线)处理素材：未指定时默认视频抽帧，固定画布图片递归补帧须有用户明确选择或切换确认。负责动画或区域的专业设计师先完成内部方案并向用户说明目标感受、动作依据、节奏和资源取舍，等待用户明确确认后才写正式提示词、制作真实素材。视频仍须人工验收当前实际抽帧输入后才能抽帧，图片逐张确认首尾、必要关键帧和递归父图后再推进。方案确认和真实素材验收是两个独立步骤。帧动画不制作灰盒或可播放占位示意。全局视觉阶段为 V1、V2、V3、V4、V5；V3 推导、记录并确认动作方案，V4 按已确认方案制作并验收真实素材，不改写全局 `visualStage`。
+帧动画先按 [SKILL.md 的分类入口](../../../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择普通、角色、特效或 UI 帧动画规则。V3 按[动画拆解清单](../../../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)确认动作方案，V4 按[视频 MCP 生成与抽帧](../../../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)制作并验收真实素材，采样与正式播放不超过 24 FPS。独立图片补帧任务仅在明确指定时采用，逐张确认首尾、必要关键帧和递归父图。帧动画不制作灰盒或可播放占位示意，沿用全局 `visualStage`。
 
 > 通用工作流步骤见[完整规范](../../../../app-domain-toolkit/references/frame-reference-workflow-integration.md#通用帧动画工作流接入合同)。
 

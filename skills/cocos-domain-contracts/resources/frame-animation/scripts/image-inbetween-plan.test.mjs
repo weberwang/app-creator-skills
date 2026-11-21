@@ -6,9 +6,26 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { createImageInbetweenPlan } from "./image-inbetween-plan.mjs";
+import { createImageInbetweenPlan as createPhaserPlan } from "../../../../phaser-domain-contracts/resources/frame-animation/scripts/image-inbetween-plan.mjs";
+import { createImageInbetweenPlan as createThreePlan } from "../../../../threejs-domain-contracts/resources/frame-animation/scripts/image-inbetween-plan.mjs";
 
 /** CLI 子进程始终通过当前测试对应的脚本文件启动。 */
 const scriptPath = fileURLToPath(new URL("./image-inbetween-plan.mjs", import.meta.url));
+
+/** 三栈共享图片规划也必须在写入前校验最终动画帧率。 */
+test("图片补帧规划接受 24 FPS 并拒绝更高帧率", async (t) => {
+  for (const plan of [createImageInbetweenPlan, createPhaserPlan, createThreePlan]) {
+    assert.equal(plan({ durationMs: 1000, fps: 24 }).frame_count, 24);
+    assert.throws(() => plan({ durationMs: 1000, fps: 25 }), /fps.*24/u);
+  }
+  const directory = await mkdtemp(join(tmpdir(), "image-plan-fps-"));
+  t.after(async () => rm(directory, { recursive: true, force: true }));
+  const output = join(directory, "plan.json");
+  const result = spawnSync(process.execPath, [scriptPath, "--duration-ms", "1000", "--fps", "25", "--output-plan", output], { encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fps.*24/u);
+  await assert.rejects(readFile(output), { code: "ENOENT" });
+});
 
 /** 验证六帧时间轴先放端点与关键帧，再按已有父帧递归补齐中点。 */
 test("六帧规划覆盖全部槽位并保留可追溯的中点依赖", () => {

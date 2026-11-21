@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { open, mkdir, rm } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "./frame-rate.mjs";
 
 /** 创建使用指定栈 schema 的共享图片补帧规划 API 与 CLI。 */
 export function createImageInbetweenTools({ planSchema } = {}) {
@@ -37,6 +38,7 @@ export function createImageInbetweenTools({ planSchema } = {}) {
     const { durationMs, fps, loop = false, keyframes = [] } = input;
     positiveFiniteNumber(durationMs, "durationMs");
     positiveFiniteNumber(fps, "fps");
+    if (!isValidFrameAnimationFps(fps)) throw new RangeError(`fps 不得超过 ${MAX_FRAME_ANIMATION_FPS}`);
     if (typeof loop !== "boolean") throw new TypeError("loop 必须是布尔值");
     if (!Array.isArray(keyframes)) throw new TypeError("keyframes 必须是帧索引数组");
   

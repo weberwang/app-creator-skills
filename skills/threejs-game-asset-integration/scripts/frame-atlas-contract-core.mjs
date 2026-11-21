@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "../../app-domain-toolkit/scripts/animation/frame-rate.mjs";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { resolveRuntimeResourceBinding } from "./runtime-resource-binding.mjs";
@@ -98,7 +99,8 @@ export function validateSettings(settings, label, errors) {
     errors.push(label + ".settings 必须包含 fps、width、height 和 remove_background");
     return;
   }
-  if (!finitePositive(settings.fps)) errors.push(label + ".settings.fps 必须是正有限数字");
+  // 限制目标动画的播放帧率，视频母片的来源帧率可以更高。
+  if (!isValidFrameAnimationFps(settings.fps)) errors.push(label + `.settings.fps 必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}`);
   if (!Number.isInteger(settings.width) || settings.width <= 0) errors.push(label + ".settings.width 必须是正整数");
   if (!Number.isInteger(settings.height) || settings.height <= 0) errors.push(label + ".settings.height 必须是正整数");
   if (typeof settings.remove_background !== "boolean") errors.push(label + ".settings.remove_background 必须是布尔值");
@@ -289,7 +291,7 @@ export function validateThreeJSContract(report, asset, sheetBinding, label, erro
   const animation = isObject(report.animation) ? report.animation : {};
   if (!nonEmptyString(animation.key)) errors.push(label + ".animation.key 必须是非空字符串");
   if (!nonEmptyString(animation.texture_key)) errors.push(label + ".animation.texture_key 必须是非空字符串");
-  if (!finitePositive(animation.frame_rate)) errors.push(label + ".animation.frame_rate 必须是正有限数字");
+  if (!isValidFrameAnimationFps(animation.frame_rate)) errors.push(label + `.animation.frame_rate 必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}`);
   else if (finitePositive(report.input?.fps) && animation.frame_rate !== report.input.fps) {
     errors.push(label + ".animation.frame_rate 必须等于 input.fps");
   }
@@ -391,6 +393,14 @@ export function validateThreeJSContract(report, asset, sheetBinding, label, erro
   }
   if (typeof threejs.snippets.factory === "string" && expectedRuntime) {
     const factory = threejs.snippets.factory;
+    // 对标准生成模板做静态绑定，避免报告帧率正确而代码片段另行加速。
+    const rateDeclarations = [...factory.matchAll(/\bconst\s+frameRate\s*=\s*([^;]+);/gu)];
+    const frameDeclarations = [...factory.matchAll(/\bconst\s+frameIndex\s*=/gu)];
+    const expectedFrameIndex = /\bconst\s+frameIndex\s*=\s*Math\.min\(\s*frameCount\s*-\s*1\s*,\s*Math\.floor\(\s*elapsed\s*\*\s*frameRate\s*\)\s*\)\s*;/u;
+    if (rateDeclarations.length !== 1 || rateDeclarations[0][1].trim() !== String(animation.frame_rate)
+      || frameDeclarations.length !== 1 || !expectedFrameIndex.test(factory)) {
+      errors.push(label + ".threejs.snippets.factory 的 frameRate 声明与帧索引必须绑定 animation.frame_rate");
+    }
     const loaderCalls = [...factory.matchAll(/new\s+THREE\.TextureLoader\(\)\.loadAsync\(\s*([^)]*?)\s*\)/gu)];
     const expectedArgument = expectedRuntime.runtime_binding.kind === "module-import"
       ? "atlasUrl" : JSON.stringify(expectedRuntime.runtime_url);

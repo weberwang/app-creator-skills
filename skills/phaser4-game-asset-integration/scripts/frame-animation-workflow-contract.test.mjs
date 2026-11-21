@@ -217,6 +217,28 @@ test("四帧视频抽帧报告通过静态合同和文件门", async () => {
   });
 });
 
+test("帧动画输出允许 24 FPS，独立拒绝超限播放与合同，同时允许高帧率母片", async () => {
+  await withFixture(async (root, fixture) => {
+    fixture.asset.frame_animation.settings.fps = 24;
+    fixture.report.input.fps = 24;
+    fixture.report.animation.frame_rate = 24;
+    fixture.report.phaser.anims.frameRate = 24;
+    fixture.report.frames.forEach((frame) => { frame.source_timestamp = frame.index / 24; });
+    await writeReport(root, fixture);
+    assert.equal(fixture.report.input.source_fps, 30);
+    assert.deepEqual(await runGate(root, fixture.asset), []);
+
+    fixture.report.animation.frame_rate = 25;
+    await writeReport(root, fixture);
+    assert((await runGate(root, fixture.asset)).some((item) => item.includes("animation.frame_rate") && item.includes("24")));
+
+    fixture.asset.frame_animation.settings.fps = 25;
+    const errors = validateFrameAnimationWorkflowContract(fixture.asset.frame_animation);
+    assert(errors.some((item) => item.includes("settings.fps") && item.includes("24")));
+  });
+});
+
+
 test("质量报告必须声明 PASS", async () => {
   await withFixture(async (root, fixture) => {
     fixture.report.status = "FAIL";

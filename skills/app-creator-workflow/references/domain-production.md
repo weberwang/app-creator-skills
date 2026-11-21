@@ -57,6 +57,8 @@ Roblox 同一 Place 内沿用持续背景音乐合同；跨 Place 会进入新�
 
 ## 动画、骨骼与 3D
 
+V3 对照已确认的设计稿、状态和事件完成[动画拆解清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)。二维动画使用帧动画，新增素材在 V4 按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)取得源视频，人工确认实际输入后抽帧。采样与正式播放均不得超过 24 FPS。
+
 制作前明确视角、相机、显示尺度、动作窗口、根位移、朝向、事件和中断需求；先确认设计理念与动作方案，再制作真实动画。资产生产者维护骨架、蒙皮、内部动作控制与源文件，业务/玩法只通过公开接口触发和消费事件，不能私改共享资产或任意变速掩盖动作不匹配。
 
 工程检查与目标角色实际播放分开：骨架/权重/材质/帧序/导入正确只是资产轮，真实场景/页面接入与重复/中断/恢复是运行轮。具体 2D/3D 工具、坐标、根运动、格式和引擎导入规则读对应 `app-stack-*`；不把 2D 专用检查器套到 3D。

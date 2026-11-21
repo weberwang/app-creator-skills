@@ -32,7 +32,7 @@ Unity 原生 2D 骨骼路线在拆件和骨架制作前，由玩法与骨骼角�
 
 动作分析、阶段表、时长、FPS、尺寸、时间映射与提示词由代理内部维护。正式素材生产前，导演或兼任导演的设计师先向用户说明设计理念与动作方案，至少覆盖目标感受、关键表演与姿态变化、空间路径、节奏依据、动画路线间的配合及验收重点；用户明确确认方案后才制作真实视频、关键帧或 Unity 动画。确认沿用当前工作项的用户消息和阶段记录，不增加动画状态机或新的全局阶段。无法推导的玩法事件、时长或行为权限仍只暂停受影响动作并提出具体问题。真实素材完成后仍须交用户人工检查实际表现；文字方案、静态图、专业审查和工具成功都不能替代素材验收。
 
-序列帧路线使用视频时，先准备实际最终抽帧输入并交用户验收，通过后才能抽帧；输入内容或时间映射改变时重验实际输入。图片递归路线在首尾、必要关键帧与实际父图确认后制作依赖帧，最后展示完整真实序列验收。独立静态资源不套用父图依赖规则；Unity 原生 2D 骨骼路线沿用拆件图和真实代表动画的既有确认。所有路线最终在 Unity 按当前 Clip/接口检查实际播放。
+V3 按[动画拆解清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)确认需要动画的对象、状态和事件。新增二维动画使用序列帧，在 V4 按[视频 MCP 生成与抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)取得真实源视频，用户验收实际输入后抽帧，采样和 Clip 播放均不超过 24 FPS。输入内容或时间映射改变时重验。独立明确指定的图片补帧或既有 2D 骨骼资产维护沿用对应确认。所有路线最终在 Unity 按当前 Clip 或播放接口检查实际播放。
 
 合理参数、分辨率与批次在已授权工具和预算内直接确定，未知费用不得虚构；新增费用、超预算或外部上传仍遵循现有授权边界。同目标返修直接修复并展示前后预览，不增加文字返修方案审批，也不因取消文字确认跳过 V1–V5 前序阶段或专项素材确认。
 
@@ -40,7 +40,7 @@ Unity 原生 2D 骨骼路线在拆件和骨架制作前，由玩法与骨骼角�
 
 | 路线 | 制作与交接责任 |
 | --- | --- |
-| 2D 序列帧 | `$app-asset-workflow` 明确逐帧、视频抽帧或其他来源，交付帧序列、帧率/时长、Pivot 与导入信息；玩法消费已验收 Clip 或播放接口。 |
+| 2D 序列帧 | `$app-asset-workflow` 按已确认方案调用视频 MCP，使用 `ffmpeg` 按目标 FPS 抽取有序帧，交付序列、帧率、时长、Pivot 与导入信息。玩法消费已验收 Clip 或播放接口。 |
 | Unity 原生 2D 骨骼 | 由 [`$app-character-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-2d-rigging) 负责骨架、蒙皮、动画 Clip、角色 Controller 内部参数/状态/过渡/中断和角色 Prefab；视觉资产角色负责独立部件，玩法通过接口驱动动作并拥有权威玩法状态与规则。 |
 | Spine | 现有 `$app-spine-reskin` 仅在骨骼、网格、约束、动画固定时负责换皮。需要新动画或修改骨架/Clip 时，必须在 Work Item 明确指定动画生产者、资源版本、运行时导入责任和验收接口；不得把换皮 Skill 当作新动画生产者。 |
 | 3D 绑定与动画 | [`$app-character-rigging`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-rigging) 用 Blender MCP 负责骨架/蒙皮/控制 Rig 和角色模型导出；[`$app-animation`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-animation) 用 Blender MCP 负责动作、运行时骨架曲线烘焙与逐 Clip 导出。按[角色共同交接](./3d-character-handoff.md)绑定模型/UV、贴图、骨架/权重、Root、Clip 和事件，按[导入合同](./3d-character-unity-import.md)接入 Avatar、Animator 和角色 Prefab；Work Item 明确具体生产者与集成单写者，模型/贴图角色不接管绑定或动画。 |

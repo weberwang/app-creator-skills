@@ -110,7 +110,7 @@ function buildFixtureFiles() {
         end_behavior: "wrap-to-first-frame",
       },
       snippets: {
-        factory: "async function createFrameAnimation(THREE, scene) { const texture = await new THREE.TextureLoader().loadAsync(\"/assets/hero/hero.png\"); const material = new THREE.SpriteMaterial({ map: texture, transparent: true }); const sprite = new THREE.Sprite(material); sprite.scale.set(4, 4, 1); sprite.center.set(0.5, 0.25); texture.repeat.set(1 / 4, 1); texture.offset.x = frameIndex / frameCount; return { sprite, update(deltaSeconds) {} }; }",
+        factory: "async function createFrameAnimation(THREE, scene) { const texture = await new THREE.TextureLoader().loadAsync(\"/assets/hero/hero.png\"); const material = new THREE.SpriteMaterial({ map: texture, transparent: true }); const sprite = new THREE.Sprite(material); sprite.scale.set(4, 4, 1); sprite.center.set(0.5, 0.25); const frameCount = 4; const frameRate = 12; let elapsed = 0; texture.repeat.set(1 / 4, 1); return { sprite, update(deltaSeconds) { elapsed += deltaSeconds; const frameIndex = Math.min(frameCount - 1, Math.floor(elapsed * frameRate)); texture.offset.x = frameIndex / frameCount; } }; }",
         usage: "animation.update(deltaSeconds);",
       },
     },
@@ -242,6 +242,44 @@ test("四帧视频抽帧报告通过静态合同和文件门", async () => {
     assert.deepEqual(await runGate(root, fixture.asset), []);
   });
 });
+
+test("帧动画输出允许 24 FPS，独立拒绝超限播放与合同，同时允许高帧率母片", async () => {
+  await withFixture(async (root, fixture) => {
+    fixture.asset.frame_animation.settings.fps = 24;
+    fixture.report.input.fps = 24;
+    fixture.report.animation.frame_rate = 24;
+    fixture.report.threejs.animation.frame_rate = 24;
+    fixture.report.threejs.snippets.factory = fixture.report.threejs.snippets.factory.replace("const frameRate = 12;", "const frameRate = 24;");
+    fixture.report.frames.forEach((frame) => { frame.source_timestamp = frame.index / 24; });
+    await writeReport(root, fixture);
+    assert.equal(fixture.report.input.source_fps, 30);
+    assert.deepEqual(await runGate(root, fixture.asset), []);
+
+    fixture.report.animation.frame_rate = 25;
+    await writeReport(root, fixture);
+    assert((await runGate(root, fixture.asset)).some((item) => item.includes("animation.frame_rate") && item.includes("24")));
+
+    fixture.asset.frame_animation.settings.fps = 25;
+    const errors = validateFrameAnimationWorkflowContract(fixture.asset.frame_animation);
+    assert(errors.some((item) => item.includes("settings.fps") && item.includes("24")));
+  });
+});
+
+test("Three.js 视频报告中的示例帧率及帧索引必须采用已确认的帧率", async () => {
+  await withFixture(async (root, fixture) => {
+    const original = fixture.report.threejs.snippets.factory;
+    for (const factory of [
+      original.replace("const frameRate = 12;", "const frameRate = 60;"),
+      original.replace("elapsed * frameRate", "elapsed * 60"),
+      original.replace("const frameRate = 12;", "const frameRate = 12; const frameRate = 60;"),
+    ]) {
+      fixture.report.threejs.snippets.factory = factory;
+      await writeReport(root, fixture);
+      assert((await runGate(root, fixture.asset)).some((item) => item.includes("factory 的 frameRate")));
+    }
+  });
+});
+
 
 test("质量报告必须声明 PASS", async () => {
   await withFixture(async (root, fixture) => {

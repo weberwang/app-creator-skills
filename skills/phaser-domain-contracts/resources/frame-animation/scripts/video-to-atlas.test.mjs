@@ -5,6 +5,7 @@ import { join } from "node:path";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import sharp from "../../../../app-skill-runtime/sharp.mjs";
+import { renderAtlasPreview } from "./frame-atlas-core.mjs";
 import { checkFrameAnimationWorkflowFiles, FRAME_ANIMATION_WORKFLOW_SCHEMA, sha256Bytes as contractSha256Bytes } from "../../../../phaser4-game-asset-integration/scripts/frame-animation-workflow-contract.mjs";
 import { parseVideoAtlasArgs, videoAtlasHelp, videoToAtlas, VideoAtlasError } from "./video-to-atlas.mjs";
 
@@ -91,6 +92,7 @@ function createPreviewHarness(html) {
   return {
     atlas,
     drawCalls,
+    speed,
     step(time) {
       const callback = rafQueue.shift();
       assert.ok(callback, "预览应继续安排 requestAnimationFrame");
@@ -99,6 +101,37 @@ function createPreviewHarness(html) {
     toggle,
   };
 }
+
+/** 验证速度控件和实际排帧都限制在 24 FPS，脚本赋值也不能绕过。 */
+test("帧动画预览速度和播放调度不超过 24 FPS", () => {
+  const preview = renderAtlasPreview({ sheetUrl: "test.png", sheetSha256: "sha256:test", frameCount: 4,
+    cell: { width: 4, height: 2 }, fps: 6, loop: true });
+  assert.match(preview, /id="speed"[^>]*max="24"/u);
+  const harness = createPreviewHarness(preview);
+  harness.atlas.naturalWidth = 16;
+  harness.atlas.listeners.get("load")();
+  harness.step(1000);
+  harness.speed.value = "120";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "24");
+  harness.step(1020);
+  assert.deepEqual(harness.drawCalls, [0]);
+  harness.step(1042);
+  assert.deepEqual(harness.drawCalls, [0, 4]);
+  // 未触发 input 的程序赋值仍需在播放时限幅。
+  harness.speed.value = "120";
+  harness.step(1052);
+  assert.equal(harness.speed.value, "24");
+  assert.deepEqual(harness.drawCalls, [0, 4]);
+  harness.step(1084);
+  assert.deepEqual(harness.drawCalls, [0, 4, 8]);
+  harness.speed.value = "Infinity";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "6");
+  harness.speed.value = "0.01";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "0.1");
+});
 
 /** 证明 fps 参数传入 ffmpeg，单边尺寸等比缩放且图集像素顺序正确。 */
 test("视频抽帧生成单行 Phaser 图集、尺寸与网页预览", async (t) => {

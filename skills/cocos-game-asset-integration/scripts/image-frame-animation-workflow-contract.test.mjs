@@ -410,6 +410,14 @@ test("图片 accepted schema 按固定接口通过现有静态合同入口", () 
   }), []);
 });
 
+test("图片帧动画合同允许 24 FPS 并拒绝超限", () => {
+  const contract = imageContract();
+  contract.settings.fps = 24;
+  assert.deepEqual(validateImageFrameAnimationWorkflowContract(contract), []);
+  contract.settings.fps = 24.01;
+  assert(validateImageFrameAnimationWorkflowContract(contract).some((item) => item.includes("settings.fps") && item.includes("24")));
+});
+
 test("图片 accepted 合同拒绝错误候选、缺失工件和伪造视频字段", () => {
   const wrongCandidate = imageContract();
   wrongCandidate.candidate_version = "stale-candidate";

@@ -4,6 +4,7 @@ import { createReadStream } from "node:fs";
 import { mkdtemp, readdir, rm, stat } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "./frame-rate.mjs";
 
 /** 将视频提取和写入步骤绑定到技术栈独立的资源合同与图像处理器。 */
 export function createVideoAtlasTools({ core, sharp, schema, contractMethod, contractKey, toolName, temporaryPrefix, includeRuntimeBinding } = {}) {
@@ -49,6 +50,8 @@ export function createVideoAtlasTools({ core, sharp, schema, contractMethod, con
     }
   
     const commonOptions = normalizeCommonAtlasOptions(input, { outputSheet, ...(includeRuntimeBinding ? { projectRoot } : {}), defaultFps: 12, defaultLoop: true });
+    // 抽帧与游戏播放使用同一 FPS；母片自身可高于该帧率。
+    if (!isValidFrameAnimationFps(commonOptions.fps)) throw new VideoAtlasError(`fps 必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}`);
     const commandRunner = input.commandRunner ?? input.runCommand;
     if (commandRunner !== undefined && typeof commandRunner !== "function") throw new VideoAtlasError("commandRunner 必须是函数");
   

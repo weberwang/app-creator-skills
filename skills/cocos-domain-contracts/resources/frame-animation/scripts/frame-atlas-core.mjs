@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { MAX_FRAME_ANIMATION_FPS } from "../../../../app-domain-toolkit/scripts/animation/frame-rate.mjs";
 import { mkdir, open, readFile, realpath, rm, stat, writeFile } from "node:fs/promises";
 import { basename, dirname, extname, join, relative, resolve } from "node:path";
 import sharp from "../../../scripts/runtime/image-runtime.mjs";
@@ -297,7 +298,8 @@ export function renderAtlasPreview({ sheetUrl, sheetSha256, frameCount, cell, fp
     : "";
   const title = source?.kind === "video" ? "视频帧动画预览" : "图片帧动画预览";
   const playerTitle = source?.kind === "video" ? "抽帧动画" : "图片动画";
-  const scriptValues = JSON.stringify({ frameCount, width: cell.width, height: cell.height, fps, loop }).replaceAll("<", "\\u003c");
+  const previewFps = Number.isFinite(fps) && fps > 0 ? Math.min(fps, MAX_FRAME_ANIMATION_FPS) : 12;
+  const scriptValues = JSON.stringify({ frameCount, width: cell.width, height: cell.height, fps: previewFps, maxFps: MAX_FRAME_ANIMATION_FPS, loop }).replaceAll("<", "\\u003c");
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -332,7 +334,7 @@ export function renderAtlasPreview({ sheetUrl, sheetSha256, frameCount, cell, fp
     <section class="panel" aria-label="图集动画预览">
       <h2>${playerTitle}</h2>
       <div class="stage" id="stage" data-background="checker"><canvas id="player" aria-label="精灵图动画"></canvas></div>
-      <div class="controls"><button id="toggle" type="button">暂停</button><label>预览速度 <input id="speed" type="number" min="0.1" max="120" step="0.1" value="${fps}"> FPS</label><span id="position"></span></div>
+      <div class="controls"><button id="toggle" type="button">暂停</button><label>预览速度 <input id="speed" type="number" min="0.1" max="${MAX_FRAME_ANIMATION_FPS}" step="0.1" value="${previewFps}"> FPS</label><span id="position"></span></div>
       ${backgroundControls}
       <div id="thumbnails" aria-label="逐帧缩略图"></div>
     </section>
@@ -393,7 +395,14 @@ export function renderAtlasPreview({ sheetUrl, sheetSha256, frameCount, cell, fp
       playing = !playing;
       toggle.textContent = playing ? "暂停" : "播放";
     });
-    speed.addEventListener("input", () => { if (!(Number(speed.value) > 0)) speed.value = config.fps; });
+    // 输入事件和播放循环共同限幅，避免脚本赋值或非有限值绕过速度边界。
+    function boundedSpeed() {
+      const requested = Number(speed.value);
+      const value = Number.isFinite(requested) && requested > 0 ? Math.max(0.1, Math.min(requested, config.maxFps)) : config.fps;
+      speed.value = String(value);
+      return value;
+    }
+    speed.addEventListener("input", boundedSpeed);
     // 图片来源可切换浅色或深色底，方便人工确认 Alpha 边缘和空帧。
     for (const [id, background] of [["background-checker", "checker"], ["background-light", "light"], ["background-dark", "dark"]]) {
       const button = document.getElementById(id);
@@ -403,7 +412,7 @@ export function renderAtlasPreview({ sheetUrl, sheetSha256, frameCount, cell, fp
     function tick(time) {
       if (playing && thumbnailsReady && previous) {
         carry += time - previous;
-        const interval = 1000 / Math.max(0.1, Number(speed.value) || config.fps);
+        const interval = 1000 / boundedSpeed();
         // 页面恢复或标签页冻结后，直接按帧数取模跳转，避免大 carry 触发长循环。
         if (carry >= interval) {
           const skippedFrames = Math.floor(carry / interval);

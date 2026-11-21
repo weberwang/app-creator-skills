@@ -1,6 +1,7 @@
 import { mkdtemp, rm } from "node:fs/promises";
 import { basename, dirname, extname, join, resolve } from "node:path";
 import { tmpdir } from "node:os";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "./frame-rate.mjs";
 
 /** 将图片图集公共算法绑定到技术栈自己的合同、依赖和报告字段。 */
 export function createImageAtlasTools({ core, readImageFrameSource, schema, contractMethod, contractKey, toolName, temporaryPrefix, includeRuntimeBinding } = {}) {
@@ -48,6 +49,7 @@ export function createImageAtlasTools({ core, readImageFrameSource, schema, cont
     // readImageFrameSource 已复算来源身份；后续仅使用它返回的已校验字节 Map。
     const loaded = await readImageFrameSource(sourceManifest, { projectRoot });
     const source = loaded.source;
+    if (!isValidFrameAnimationFps(source.fps)) throw new VideoAtlasError(`来源帧率必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}`);
     const frameCount = Math.round(source.duration_ms * source.fps / 1000);
     if (!Number.isSafeInteger(frameCount) || frameCount < 2) throw new VideoAtlasError("来源时间轴必须至少包含两个播放帧");
     const sourceFrames = source.frames

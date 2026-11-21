@@ -41,7 +41,7 @@ V5 在正式 Scene 中组合 V3 结构和 V4 资源，按实际运行画面调�
 
 帧动画阶段与统一工作流一致，V3–V5 依次处理拆解、资源与运行验收。
 
-通用帧动画沿用全局状态机，按[分类入口](../../app-stack-phaser/references/native-contracts.md#mode-phaser4-frame-animation--分类入口)选择用途，默认视频抽帧；图片递归补帧仅在用户明确选择或确认切换时启用。V3 内部完成动作分析、时间轴和区域/分辨率方案，阐述设计理念后等待用户明确确认当前动作方案；确认后才写提示词并在已有授权内制作真实候选，只有事件、时长或行为边界有决定性歧义时询问。视频分辨率与条数按[区域规划](../resources/frame-animation/references/region-planning.md)选择并遵守预算；图片默认 768p，确需 2K 时在已有工具与预算授权内直接选择，新增费用或超出授权才询问。V4 人工验收实际最终抽帧视频后才抽帧，图片首尾、必要关键帧和递归帧在真实父图确认后推进；最后验收完整真实序列。仅确认文字参数不能证明表现或衔接通过，内部记录由代理维护。图集、来源、时间映射、声音及 V5 Phaser 接入见[通用帧动画接入合同](../resources/frame-animation/references/workflow-integration.md)。
+通用帧动画沿用全局状态机，按[分类入口](../../app-stack-phaser/references/native-contracts.md#mode-phaser4-frame-animation--分类入口)选择用途。V3 依据 V1 状态、事件和已确认 V2 稿整理本轮[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，本轮二维动画采用帧动画，确定时间轴、区域、分辨率及采样和播放帧率。方案完成后说明目标感受与动作依据，沿原流程确认。V4 复用有效来源，新增源视频通过[视频 MCP 生成](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)，用户验收实际抽帧输入后抽帧并验收完整序列。目标采样和正式播放不超过 24 FPS。生成工具支持设置时源视频选择不超过 24 FPS，固定较高源帧率保留实际记录并按目标帧率抽样。明确提出的独立图片递归补帧任务按原路线执行。视频分辨率、条数和预算见[区域规划](../resources/frame-animation/references/region-planning.md)，图集、来源、时间映射、声音和 V5 Phaser 接入见[通用帧动画接入合同](../resources/frame-animation/references/workflow-integration.md)。
 
 视觉阶段命令和迁移以[当前公共控制协议](../../app-creator-workflow/references/professional-execution.md)为准。
 

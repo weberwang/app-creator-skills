@@ -1,12 +1,36 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import test from "node:test";
 import { runInNewContext } from "node:vm";
 import sharp from "../../../../app-skill-runtime/sharp.mjs";
+import { renderAtlasPreview } from "./frame-atlas-core.mjs";
 import { checkFrameAnimationWorkflowFiles, FRAME_ANIMATION_WORKFLOW_SCHEMA, sha256Bytes as contractSha256Bytes } from "../../../../cocos-game-asset-integration/scripts/frame-animation-workflow-contract.mjs";
 import { normalizeVideoAtlasOptions, parseVideoAtlasArgs, videoAtlasHelp, videoToAtlas, VideoAtlasError } from "./video-to-atlas.mjs";
+import { normalizeVideoAtlasOptions as normalizePhaserVideo } from "../../../../phaser-domain-contracts/resources/frame-animation/scripts/video-to-atlas.mjs";
+import { normalizeVideoAtlasOptions as normalizeThreeVideo } from "../../../../threejs-domain-contracts/resources/frame-animation/scripts/video-to-atlas.mjs";
+
+/** 三栈视频工具共享帧率上限，拒绝发生在打开母片和写入文件之前。 */
+test("三栈视频抽帧接受 24 FPS，拒绝更高输出帧率", async (t) => {
+  const directory = await testDirectory(t);
+  const inputVideo = join(directory, "missing.mp4");
+  const outputSheet = join(directory, "output.png");
+  for (const normalize of [normalizeVideoAtlasOptions, normalizePhaserVideo, normalizeThreeVideo]) {
+    assert.equal(normalize({ inputVideo, outputSheet, fps: 24 }).fps, 24);
+    assert.throws(() => normalize({ inputVideo, outputSheet, fps: 24.01 }), /fps.*24/u);
+  }
+  let invoked = false;
+  await assert.rejects(videoToAtlas({ inputVideo, outputSheet, fps: 25, commandRunner: async () => { invoked = true; } }), /fps.*24/u);
+  assert.equal(invoked, false);
+  const script = fileURLToPath(new URL("./video-to-atlas.mjs", import.meta.url));
+  const result = spawnSync(process.execPath, [script, "--input-video", inputVideo, "--output-sheet", outputSheet, "--fps", "25"], { encoding: "utf8" });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /fps.*24/u);
+  await assert.rejects(readFile(outputSheet), { code: "ENOENT" });
+});
 
 /** 建立指定颜色的 RGBA PNG，测试不依赖系统安装 ffmpeg。 */
 async function solidPng(width, height, color, patches = []) {
@@ -91,6 +115,7 @@ function createPreviewHarness(html) {
   return {
     atlas,
     drawCalls,
+    speed,
     step(time) {
       const callback = rafQueue.shift();
       assert.ok(callback, "预览应继续安排 requestAnimationFrame");
@@ -99,6 +124,37 @@ function createPreviewHarness(html) {
     toggle,
   };
 }
+
+/** 验证速度控件和实际排帧都限制在 24 FPS，脚本赋值也不能绕过。 */
+test("帧动画预览速度和播放调度不超过 24 FPS", () => {
+  const preview = renderAtlasPreview({ sheetUrl: "test.png", sheetSha256: "sha256:test", frameCount: 4,
+    cell: { width: 4, height: 2 }, fps: 6, loop: true });
+  assert.match(preview, /id="speed"[^>]*max="24"/u);
+  const harness = createPreviewHarness(preview);
+  harness.atlas.naturalWidth = 16;
+  harness.atlas.listeners.get("load")();
+  harness.step(1000);
+  harness.speed.value = "120";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "24");
+  harness.step(1020);
+  assert.deepEqual(harness.drawCalls, [0]);
+  harness.step(1042);
+  assert.deepEqual(harness.drawCalls, [0, 4]);
+  // 未触发 input 的程序赋值仍需在播放时限幅。
+  harness.speed.value = "120";
+  harness.step(1052);
+  assert.equal(harness.speed.value, "24");
+  assert.deepEqual(harness.drawCalls, [0, 4]);
+  harness.step(1084);
+  assert.deepEqual(harness.drawCalls, [0, 4, 8]);
+  harness.speed.value = "Infinity";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "6");
+  harness.speed.value = "0.01";
+  harness.speed.listeners.get("input")();
+  assert.equal(harness.speed.value, "0.1");
+});
 
 /** 证明 fps 参数传入 ffmpeg，单边尺寸等比缩放且图集像素顺序正确。 */
 test("视频抽帧生成单行 Cocos 图集、尺寸与网页预览", async (t) => {
@@ -113,7 +169,8 @@ test("视频抽帧生成单行 Cocos 图集、尺寸与网页预览", async (t) 
     solidPng(4, 2, [0, 0, 255]),
     solidPng(4, 2, [255, 255, 0]),
   ]);
-  const observed = {};
+  // 高帧率母片仍可作为输入，最终仅按指定帧率采样并播放。
+  const observed = { probePayload: { streams: [{ codec_type: "video", width: 4, height: 2, avg_frame_rate: "60/1", duration: "1.5" }], format: { duration: "1.5" } } };
   const report = await videoToAtlas({
     inputVideo,
     outputSheet,
@@ -131,6 +188,7 @@ test("视频抽帧生成单行 Cocos 图集、尺寸与网页预览", async (t) 
   assert.equal(report.schema, "cocos-video-atlas/2");
   assert.equal(report.status, "PASS");
   assert.equal(report.input.fps, 6);
+  assert.equal(report.input.source_fps, 60);
   assert.equal(report.input.has_audio, false);
   assert.equal(report.input.remove_background, false);
   assert.equal(report.settings.width, 2);

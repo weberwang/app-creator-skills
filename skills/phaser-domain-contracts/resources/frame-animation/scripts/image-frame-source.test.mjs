@@ -138,6 +138,7 @@ test("静态导入图片来源合同不要求安装 Sharp", async (t) => {
   await mkdir(dirname(isolatedFactory), { recursive: true });
   await copyFile(adapterUrl, isolatedModule);
   await copyFile(new URL(specifier, adapterUrl), isolatedFactory);
+  await copyFile(new URL("../../../../app-domain-toolkit/scripts/animation/frame-rate.mjs", adapterUrl), join(dirname(isolatedFactory), "frame-rate.mjs"));
   const moduleUrl = pathToFileURL(isolatedModule).href;
   const program = `import { IMAGE_FRAME_SOURCE_SCHEMA } from ${JSON.stringify(moduleUrl)}; process.stdout.write(IMAGE_FRAME_SOURCE_SCHEMA);`;
   const result = spawnSync(process.execPath, ["--input-type=module", "--eval", program], { encoding: "utf8", timeout: 10_000 });

@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { readFile, realpath, stat } from "node:fs/promises";
 import { isAbsolute, relative, resolve, sep } from "node:path";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "./frame-rate.mjs";
 
 /** 创建保留技术栈 schema 和延迟图片加载行为的来源校验器。 */
 export function createImageFrameSourceTools({ schema, loadSharpModule } = {}) {
@@ -107,6 +108,8 @@ export function createImageFrameSourceTools({ schema, loadSharpModule } = {}) {
     }
     if (typeof source.fps !== "number" || !Number.isFinite(source.fps) || source.fps <= 0) {
       errors.push("fps 必须是大于 0 的有限数字");
+    } else if (!isValidFrameAnimationFps(source.fps)) {
+      errors.push(`fps 不得超过 ${MAX_FRAME_ANIMATION_FPS}`);
     }
     if (typeof source.loop !== "boolean") errors.push("loop 必须是布尔值");
     if (!Array.isArray(source.frames)) {

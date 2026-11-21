@@ -8,6 +8,7 @@ import {
   nearlyEqual,
   validateInspectionEnvelope,
 } from "./resource-handoff-shape.mjs";
+import { isValidFrameAnimationFps, MAX_FRAME_ANIMATION_FPS } from "../../app-domain-toolkit/scripts/animation/frame-rate.mjs";
 
 const COMPONENT_TYPES = new Set(["SpriteRenderer", "Image"]);
 const CONSUMER_TYPES = new Set(["Animator", "Animation"]);
@@ -50,7 +51,8 @@ function validatePlanAnimationShape(animation, animationId, errors) {
   if (!isStandaloneAnimationClipPath(animation.clipPath)) errors.push(`计划动作 ${animationId} 的 clipPath 必须指向独立 .anim 文件。`);
   if (!isGuid(animation.clipGuid)) errors.push(`计划动作 ${animationId} 的 clipGuid 无效。`);
   if (!isLocalId(animation.clipLocalId)) errors.push(`计划动作 ${animationId} 的 clipLocalId 必须是字符串整数。`);
-  if (!Number.isFinite(animation.frameRate) || animation.frameRate <= 0) errors.push(`计划动作 ${animationId} 的 frameRate 必须为正有限数。`);
+  // 这里仅校验 Sprite 序列帧，不改变三维模型动画及设备刷新率。
+  if (!isValidFrameAnimationFps(animation.frameRate)) errors.push(`计划动作 ${animationId} 的 frameRate 必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}。`);
   if (!Number.isFinite(animation.duration) || animation.duration <= 0) errors.push(`计划动作 ${animationId} 的 duration 必须为正有限数。`);
   if (typeof animation.loop !== "boolean") errors.push(`计划动作 ${animationId} 的 loop 必须是布尔值。`);
   if (typeof animation.bindingPath !== "string" || !isValidBindingPath(animation.bindingPath)) {
@@ -91,6 +93,7 @@ function validateFrameList(frames, frameRate, duration, animationId, label, erro
     return;
   }
   let previousTime = -Infinity;
+  let previousFrameSlot = -1;
   for (const [index, frame] of frames.entries()) {
     if (!isRecord(frame)) {
       errors.push(`${label}动作 ${animationId} 的第 ${index} 帧必须是对象。`);
@@ -104,8 +107,12 @@ function validateFrameList(frames, frameRate, duration, animationId, label, erro
       if (frame.time <= previousTime) errors.push(`${label}动作 ${animationId} 的帧 time 必须严格递增且保持序列顺序。`);
       previousTime = frame.time;
       if (Number.isFinite(frameRate) && frameRate > 0) {
-        const nearestFrameTime = Math.round(frame.time * frameRate) / frameRate;
+        const frameSlot = Math.round(frame.time * frameRate);
+        const nearestFrameTime = frameSlot / frameRate;
         if (Math.abs(frame.time - nearestFrameTime) > EPSILON) errors.push(`${label}动作 ${animationId} 的第 ${index} 帧不在 frameRate 网格上。`);
+        // 时间读回允许浮点误差，但同一采样槽不能容纳多个 Sprite 帧。
+        if (frameSlot <= previousFrameSlot) errors.push(`${label}动作 ${animationId} 的帧不能重复或倒退到同一采样槽。`);
+        previousFrameSlot = frameSlot;
       }
       if (Number.isFinite(duration) && frame.time > duration + EPSILON) {
         errors.push(`${label}动作 ${animationId} 的第 ${index} 帧超出 duration。`);
@@ -137,7 +144,7 @@ function validateObservedAnimationShape(animation, animationId, errors) {
   if (!isStandaloneAnimationClipPath(animation.clipPath)) errors.push(`实测动作 ${animationId} 的 clipPath 必须指向独立 .anim 文件。`);
   if (!isGuid(animation.clipGuid)) errors.push(`实测动作 ${animationId} 的 clipGuid 无效。`);
   if (!isLocalId(animation.clipLocalId)) errors.push(`实测动作 ${animationId} 的 clipLocalId 必须是字符串整数。`);
-  if (!Number.isFinite(animation.frameRate) || animation.frameRate <= 0) errors.push(`实测动作 ${animationId} 的 frameRate 无效。`);
+  if (!isValidFrameAnimationFps(animation.frameRate)) errors.push(`实测动作 ${animationId} 的 frameRate 必须大于 0 且不超过 ${MAX_FRAME_ANIMATION_FPS}。`);
   if (!Number.isFinite(animation.duration) || animation.duration <= 0) errors.push(`实测动作 ${animationId} 的 duration 无效。`);
   if (typeof animation.loop !== "boolean") errors.push(`实测动作 ${animationId} 的 loop 必须是布尔值。`);
   if (typeof animation.bindingPath !== "string" || !isValidBindingPath(animation.bindingPath)) errors.push(`实测动作 ${animationId} 的 bindingPath 无效。`);

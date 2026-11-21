@@ -6,7 +6,7 @@
 | --- | --- | --- | --- | --- |
 | UI/图标与字体 `ui-icon-font` | Figma/SVG/矢量源、字体工程、九宫格源图 | SVG 或 PNG/WebP、字体子集、九宫格与布局配置 | 像素密度、透明边缘、图标语法、字体授权、文本安全区、停靠关系 | 纹理尺寸、九宫格数量、Draw Call |
 | 像素美术 `pixel-art` | Aseprite/PSD 分层源、调色板 | PNG/WebP、图集与帧数据 | 整数缩放、最近邻采样、调色板、帧边界、像素抖动 | 图集、帧数、纹理内存、采样模式 |
-| 通用逐帧动画 [`frame-animation`](../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation) | 内部动作时间轴和尺寸/区域计划；真实视频或固定画布首尾/关键帧、双图补帧来源清单 | 独立 PNG 图集、JSON 报告；需要动画播放时通过 `--output-preview` 生成网页预览，并维护 ThreeJS 合同 | V3 内部设计后直接制作真实候选，不等文字设计确认；V4 实际视频人工验收后抽帧，图片确认真实父图后制作依赖帧，最终序列人工验收；V5 接入 ThreeJS | 区域像素预算、FPS、帧数、生成调用数、图集尺寸、纹理内存 |
+| 通用逐帧动画 [`frame-animation`](../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation) | 动画清单、时间轴与尺寸/区域计划，实际 Video MCP 生成或复用来源记录 | 独立 PNG 图集、JSON 报告；需要动画播放时通过 `--output-preview` 生成网页预览，并维护 ThreeJS 合同 | V3 清点并确认动作方案；V4 复用有效来源或调用 Video MCP 生成源视频，人工验收实际抽帧输入后抽帧，输出及播放不超过 24 FPS；V5 接入 Three.js 并验收 | 区域像素预算、FPS、帧数、生成调用数、图集尺寸、纹理内存 |
 | 3D 骨骼模型动画 `skinned-model-animation` | Blender/FBX/glTF 工程、骨骼和动画源 | GLB/glTF、`SkinnedMesh`、骨骼及动画 clips | 蒙皮权重、骨架映射、clip 切换、根运动、包围盒、`AnimationMixer` 生命周期 | 骨骼/clip 数、纹理、采样、CPU/GPU 成本 |
 | 地图数据与图块环境 `scene-tilemap` | Tiled/LDtk 工程、tileset 源图或项目关卡数据 | 地图/碰撞/对象层数据及项目自建的分块 `Mesh`/对象 | 接缝、碰撞语义、对象层、坐标系、分块加载；three.js 本身不提供 Tilemap 类型 | 图块/图集、地图数据、可见层、Draw Call |
 | VFX/粒子/Shader `vfx-particle-shader` | 粒子配置、shader 源码、噪声/遮罩源图 | 配置、GLSL、纹理 | 动态时序、混合模式、降级、遮挡、色觉差异、设备兼容 | 粒子峰值、过绘、纹理、Draw Call、GPU 时间 |
@@ -14,7 +14,7 @@
 | 世界/玩法环境 `gameplay-environment` | Blender/GLB 场景、模块化模型、关卡与碰撞/导航源数据 | 3D 模型、材质、灯光、Camera/关卡数据及碰撞代理；地图数据按项目实现为网格/对象 | 世界尺度、相机、遮挡、碰撞、导航、交互、动画和动态可读性 | 可见纹理、三角形/对象数、材质、Draw Call、GPU、流式加载 |
 | AI 合成栅格拆分 `ai-composite-raster` | 分层重绘文件，或固定全局提示前缀、资产段、状态段、负向段、实际生成器/版本、参数、种子、参考输入与后处理记录 | 独立透明位图及清单（生成式位图按 `individual` 交付；其他路线图集须另有显式切片合同） | 基线绑定、锚点、框选编号、边缘补绘、透明度、尺度、可复现性、跨资源一致性与授权 | 生成批次、输出数量、纹理内存、图集 |
 
-通用帧动画按[分类入口](../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择用途，默认视频抽帧，图片递归补帧须用户明确选择或确认切换。V3 内部分析行为、阶段、事件、衔接、时长、尺寸与 FPS，直接在已有授权内写提示词并制作真实候选，不等待时间轴文字确认；关键玩法事实有决定性歧义时只询问受影响部分。分辨率、条数与预算选择见[区域规划](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md)，图片默认 768p，确需 2K 时在已有工具与预算授权内直接选择，新增费用或超出授权才询问。V4 人工验收实际最终抽帧视频后才抽帧；图片逐张确认首尾、关键帧及递归父图后继续，最终真实序列人工验收。来源、时间映射、修图成果和 schema 分派见[接入合同](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md)。上游静态图片 individual 禁图集合同不会自动变为帧动画合同，路线切换仍须明确决定；预览确认也不构成付费、外部写入或真机授权。
+通用帧动画按[分类入口](../../app-stack-threejs/references/native-contracts.md#mode-threejs-frame-animation--分类入口)选择用途。V3 依据 V1 状态、事件和已确认 V2 稿整理本轮[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，本轮二维动画采用帧动画，关联行为、时间轴、衔接、尺寸与不超过 24 FPS 的采样和正式播放参数，按原流程确认动作方案。V4 复用有效来源，新增源视频按[视频 MCP 生成](../../app-domain-toolkit/references/frame-animation-execution.md#video-mcp-generation)调用实际支持生成的工具，用户验收实际抽帧输入后制作独立图集并验收完整序列。生成工具支持设置时源视频选择不超过 24 FPS，固定较高源帧率保留实际记录并按目标帧率抽样。单独明确提出的图片递归补帧按原独立路线执行。分辨率、条数及预算见[区域规划](../../threejs-domain-contracts/resources/frame-animation/references/region-planning.md)，来源、时间映射和 schema 分派见[接入合同](../../threejs-domain-contracts/resources/frame-animation/references/workflow-integration.md)。
 
 真实三维世界与角色必须以模型/`SkinnedMesh`、材质、灯光、Camera、关卡/碰撞数据和相应运行逻辑交付；骨骼角色动画由模型管线导入的 clips 与 `AnimationMixer` 驱动。帧动画适用于 HUD、billboard、贴图动画等二维序列表现，不能替代三维骨骼和网格动画。下文 `effect-image` 的图片拆解、UI 九宫格与屏幕空间布局规则仅约束 HUD、DOM、平面贴图等适用的二维表现，不得把真实三维环境或角色拆成图片覆盖场景。
 

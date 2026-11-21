@@ -8,6 +8,8 @@ import { pathToFileURL } from "node:url";
 import sharp from "../../../../app-skill-runtime/sharp.mjs";
 import test from "node:test";
 import { ImageFrameSourceError, imageFrameTimeMatches, readImageFrameSource, validateImageFrameSource } from "./image-frame-source.mjs";
+import { validateImageFrameSource as validatePhaserSource } from "../../../../phaser-domain-contracts/resources/frame-animation/scripts/image-frame-source.mjs";
+import { validateImageFrameSource as validateThreeSource } from "../../../../threejs-domain-contracts/resources/frame-animation/scripts/image-frame-source.mjs";
 
 /** 为来源测试生成不依赖真实素材的透明合成 PNG。 */
 async function createPng(width = 2, height = 2, color = [220, 60, 40, 255]) {
@@ -83,6 +85,23 @@ async function createSourceFixture({ loop = false, middleFrame = false } = {}) {
   return { projectRoot, manifestFile, source };
 }
 
+/** 已有来源清单也须符合上限，不能绕过规划器直接交给图集工具。 */
+test("三栈图片来源均允许 24 FPS 并拒绝更高帧率", async (t) => {
+  const fixture = await createSourceFixture();
+  t.after(async () => rm(fixture.projectRoot, { recursive: true, force: true }));
+  for (const [schema, validate] of [
+    ["cocos-image-frame-source/1", validateImageFrameSource],
+    ["phaser4-image-frame-source/1", validatePhaserSource],
+    ["threejs-image-frame-source/1", validateThreeSource],
+  ]) {
+    const source = { ...structuredClone(fixture.source), schema, duration_ms: 1000 / 12, fps: 24 };
+    source.frames[1].game_time_ms = 1000 / 24;
+    assert.deepEqual(validate(source), []);
+    source.fps = 25;
+    assert.match(validate(source).join("\n"), /fps.*24/u);
+  }
+});
+
 /** 验证乱序清单仍按帧索引完成覆盖检查，并返回可供打包复用的原始字节。 */
 test("接受乱序来源并返回已读取的文件字节", async (t) => {
   const fixture = await createSourceFixture();
@@ -138,6 +157,7 @@ test("静态导入图片来源合同不要求安装 Sharp", async (t) => {
   await mkdir(dirname(isolatedFactory), { recursive: true });
   await copyFile(adapterUrl, isolatedModule);
   await copyFile(new URL(specifier, adapterUrl), isolatedFactory);
+  await copyFile(new URL("../../../../app-domain-toolkit/scripts/animation/frame-rate.mjs", adapterUrl), join(dirname(isolatedFactory), "frame-rate.mjs"));
   const moduleUrl = pathToFileURL(isolatedModule).href;
   const program = `import { IMAGE_FRAME_SOURCE_SCHEMA } from ${JSON.stringify(moduleUrl)}; process.stdout.write(IMAGE_FRAME_SOURCE_SCHEMA);`;
   const result = spawnSync(process.execPath, ["--input-type=module", "--eval", program], { encoding: "utf8", timeout: 10_000 });
