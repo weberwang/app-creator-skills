@@ -4,13 +4,13 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-各技术栈统一使用 V0–V5；V1 验证功能，3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界与 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型；V2–V5 按实际合同完成视觉目标、交接、资源导入和运行验收。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)；其他工具的实际能力及受阻阶段按[工具边界](game-design-exploration.md#tooling-boundary)处理。
+各技术栈统一使用 V1–V5；V1 验证功能，3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界与 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型；V2–V5 按实际合同完成视觉目标、交接、资源导入和运行验收。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)；其他工具的实际能力及受阻阶段按[工具边界](game-design-exploration.md#tooling-boundary)处理。
 
 ## 视觉生产管线
 
 > 适用技术栈：cocos、phaser、threejs。
 
-玩家可见内容沿用“游戏内文案”（见本栈配套资料）：V0/V1/V2 分开内部功能说明与可见表达；实际使用全局候选、场景主图或显示层上下文图时发送明确的可见文字范围与生成约束；V3 对适用图片目标只拆解冻结目标中的文字；V4 不给图标/皮肤附加说明；V5 绑定同一可见表达与真实数值。普通资产、程序界面与 effect-image 均适用；图像显示结论仍由用户人工确认。
+玩家可见内容沿用“游戏内文案”（见本栈配套资料）：V1/V2 分开内部功能说明与可见表达；实际使用全局候选、场景主图或显示层上下文图时发送明确的可见文字范围与生成约束；V3 对适用图片目标只拆解冻结目标中的文字；V4 不给图标/皮肤附加说明；V5 绑定同一可见表达与真实数值。普通资产、程序界面与 effect-image 均适用；图像显示结论仍由用户人工确认。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -20,7 +20,7 @@
 
 effect-image 生成式位图的完整提示词与实际参考输入合同统一见“Effect-image 生成式位图忠实还原提示词合同”（见本栈配套资料）；管线只引用该合同，不重复维护模板正文。透明工具声明与实际输出证据的边界见“生成式透明能力审计”（见本栈配套资料）。
 
-## V0 分流
+## 模块范围与分流
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -28,7 +28,7 @@ effect-image 生成式位图的完整提示词与实际参考输入合同统一�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-效果图/参考图是否适用只看当前场景 Work Item 是否把它指定为正式运行画面的视觉目标，与是否生成、制作或新增资源无关。适用时，参考还原是同一场景实现生命周期内的视觉模式与合同叠加，即使所有覆盖区域均为 `reuse-existing`/`runtime-program`、零新资源且零生成式位图，也必须走 `effect-image` 的 V2→V3→V4→V5 还原合同，并完成布局绑定、coverage、宿主场景同屏组合和 fidelity 验收；不创建第二个场景 Work Item 或第二条阶段链。仅仅生成新资源，或仅把图片作为灵感、说明或临时参考，不足以触发 `effect-image`，仍按普通资产、组件或场景路径分类。`image_generation_required`、`generate-now`、资源数量和 `production_method` 只能在触发后于 V3 决定生产路线，不能参与 V0 applicability 判定。
+效果图/参考图是否适用只看当前场景 Work Item 是否把它指定为正式运行画面的视觉目标，与是否生成、制作或新增资源无关。适用时，参考还原是同一场景实现生命周期内的视觉模式与合同叠加，即使所有覆盖区域均为 `reuse-existing`/`runtime-program`、零新资源且零生成式位图，也必须走 `effect-image` 的 V2→V3→V4→V5 还原合同，并完成布局绑定、coverage、宿主场景同屏组合和 fidelity 验收；不创建第二个场景 Work Item 或第二条阶段链。仅仅生成新资源，或仅把图片作为灵感、说明或临时参考，不足以触发 `effect-image`，仍按普通资产、组件或场景路径分类。`image_generation_required`、`generate-now`、资源数量和 `production_method` 只能在触发后于 V3 决定生产路线，不能参与 模块内容适用性 判定。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -48,7 +48,7 @@ effect-image 生成式位图的完整提示词与实际参考输入合同统一�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-全局基线、foundation-only 边界、场景阶段顺序和集成入口以“控制模型”（见本栈配套资料）与“状态、阶段与停止门”（见本栈配套资料）为准。本管线只补充资源领域的 V0 分流、V3 生产合同、V4 资源验收和 V5 正式场景运行证据；参考还原仍属于当前场景 Work Item。
+全局基线、foundation-only 边界、场景阶段顺序和集成入口以“控制模型”（见本栈配套资料）与“状态、阶段与停止门”（见本栈配套资料）为准。本管线只补充资源领域的 模块范围与分流、V3 生产合同、V4 资源验收和 V5 正式场景运行证据；参考还原仍属于当前场景 Work Item。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -70,7 +70,7 @@ F2 的机器出口必须由确定性验证执行，并绑定当前 baseline/diff
 
 > 适用技术栈：cocos、phaser、threejs。
 
-3. V1 使用实际功能验证本批范围；3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界与 UI 按实际风险选用占位资源或白盒。
+3. V1 确认本批完整模块方案并按风险验证；3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界与 UI 按实际风险选用占位资源或白盒。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -86,7 +86,7 @@ F2 的机器出口必须由确定性验证执行，并绑定当前 baseline/diff
 
 > 适用技术栈：cocos、phaser、threejs。
 
-8. 参考模式在当前场景 Work Item 的 V2 内生成或接收并冻结参考身份、版本、权属、文件指纹、目标视口/状态、对比条件、scene master/reference target 与宿主上下文效果图；V3 前基于 V2 拆解草案建立区域关系和必要状态证据，字段、容差、冲突处理和失败条件以“视觉还原”（见本栈配套资料）为准。默认允许合理几何偏差，只有明确 `exact` 需求时才定义严格像素容差和全覆盖矩阵。
+8. 参考模式在 V2 基于第 4 阶段全局方向生成或接收并确认模块参考身份、版本、权属、文件指纹、目标视口/状态、对比条件、scene master/reference target 与宿主上下文效果图；V3 前基于 V2 拆解草案建立区域关系和必要状态证据，字段、容差、冲突处理和失败条件以“视觉还原”（见本栈配套资料）为准。默认允许合理几何偏差，只有明确 `exact` 需求时才定义严格像素容差和全覆盖矩阵。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -100,7 +100,7 @@ F2 的机器出口必须由确定性验证执行，并绑定当前 baseline/diff
 
 > 适用技术栈：cocos、phaser、threejs。
 
-先在 V1 验证功能，2D、3D 世界按[实现分流](game-design-exploration.md#implementation-routes)分别完成平面／占位或白模验证、单次联合审查及整体空间人工确认，再进入 V2 定义正式视觉契约和目标，完成条件分类和决策记录。自动路径写 `AUTO`、依据与适用范围，且须满足已有人工确认与当前机器合同后进入 V3；实质取舍路径记录一次用户结论。
+V1 确认模块方案并按风险选择 2D、3D 的[实现分流](game-design-exploration.md#implementation-routes)与空间验证，再进入 V2 定义正式视觉契约和目标，完成条件分类和决策记录。自动路径写 `AUTO`、依据与适用范围，且须满足已有人工确认与当前机器合同后进入 V3；实质取舍路径记录一次用户结论。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -302,7 +302,7 @@ V5 直接在正式场景中实现并校准 V3 布局和 V4 正式资源。V5 要
 
 > 适用技术栈：cocos、phaser、threejs。
 
-效果图路线按 `V2 → V3 → V4 → V5` 单向推进：V2 生成或接收并冻结 reference target、scene master、宿主上下文图、`reference_technical_conflicts`、整屏构图、布局/响应式关系、逐区域事实、项目 tolerance 和初步还原草案；V3 绑定拆解图、proposal 技术 JSON、合同回对、coverage、component×state、当前候选版本和拆解方案确认；V3→V4 缺字段直接以 `方案缺失` 回 `V2/PROPOSAL`。V4 绑定资源生产实施包与资源合同，完成资源级验收；V5 绑定正式 Scene 结构、运行时组合与 `scene_asset_usage`，执行真实文件门、F2 两类机器证据、F3 runtime replay 和正式 Scene consumption。
+效果图路线按 `V2 → V3 → V4 → V5` 单向推进：第 4 阶段确认全局视觉方向；V2 生成并确认覆盖模块全部适用状态和进度的 reference target、scene master、宿主上下文图、`reference_technical_conflicts`、整屏构图、布局/响应式关系、逐区域事实、项目 tolerance 和初步还原草案，V3 从该稿提取并绑定拆解图、proposal 技术 JSON、合同回对、coverage、component×state、当前候选版本和拆解方案确认；V3→V4 缺拆解字段时补齐当前交接。模块稿缺要素或需要变更时回 V2 补齐确认，全局视觉方向变化回第 4 阶段。V4 绑定资源生产实施包与资源合同，完成资源级验收；V5 绑定正式 Scene 结构、运行时组合与 `scene_asset_usage`，执行真实文件门、F2 两类机器证据、F3 runtime replay 和正式 Scene consumption。
 
 > 适用技术栈：cocos、phaser、threejs。
 

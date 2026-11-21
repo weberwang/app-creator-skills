@@ -258,7 +258,20 @@ export function validateFigmaBaseline(repo, work, record, visited = new Set()) {
 /** 绑定已确认的源图、忠实还原授权和真实重建方式；预览仍仅是结构采集资料。 */
 function validateReconstruction(repo, work, snapshot, target, sourceRefs) {
   const reconstruction = snapshot.reconstruction;
-  insist(reconstruction && sameFigmaRef(repo, reconstruction.sourceTargetRef, target) && sameFigmaRef(repo, reconstruction.authorizationRef, work.visual.reviews?.V2), '重建未绑定源效果图和忠实还原授权');
+  insist(reconstruction && sameFigmaRef(repo, reconstruction.sourceTargetRef, target), '重建未绑定源效果图和忠实还原授权');
+  // 模块稿在 V2 制作，重建前的授权与最终覆盖确认可分开记录。
+  const authorization = frozen(repo, reconstruction.authorizationRef, '忠实重建授权', work);
+  const authorizationTargets = [authorization.referenceTarget, ...(authorization.approvedTargetRefs ?? [])];
+  const authorizationSources = [authorization.visualSourceRef, ...(authorization.approvedVisualSourceRefs ?? [])];
+  insist(authorization.schemaVersion === '1.0'
+    && ['BASELINE', 'V2'].includes(authorization.stage)
+    && authorization.purpose === 'target' && authorization.decision === 'APPROVED'
+    && authorization.objectId === work.visual.objectId && authorization.candidateId === work.visual.candidateId
+    && (work.workItemType !== 'DISPLAY_LAYER' || (authorization.hostId === work.visual.hostId && authorization.layerType === work.visual.layerType))
+    && authorization.scope?.kind === 'full-object' && authorization.userMessageRef?.trim()
+    && authorization.rebuildAuthorization?.scope === 'faithful' && authorization.rebuildAuthorization.userMessageRef?.trim()
+    && authorizationTargets.some((ref) => sameFigmaRef(repo, ref, target)), '重建未绑定源效果图和忠实还原授权');
+  insist(authorizationSources.some((ref) => sameFigmaRef(repo, ref, reconstruction.visualSourceRef)), '重建来源未获授权');
   insist(fileIdentityKey(repo, snapshot.previewRef.path) !== fileIdentityKey(repo, target.path), '重建预览须保存为独立文件，不能复用源效果图路径');
   insist(['use_figma-plugin', 'figma-agent'].includes(reconstruction.method) && typeof reconstruction.toolName === 'string' && reconstruction.toolName.trim(), '必须区分 Figma Agent 与 Plugin API 的实际重建方式');
   const source = readAppVisualSource(repo, reconstruction.visualSourceRef, work, { file: figmaFile, validateBrief: briefFor });
@@ -277,7 +290,6 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
     insist(sameFigmaRef(repo, snapshot.previewRef, doc.referenceTarget) && sameFigmaRef(repo, review.figmaDesignRef, doc.figmaDesignRef), '直接 Figma 路线须确认实际节点及预览');
   } else {
     insist(sameFigmaRef(repo, review.referenceTarget, doc.referenceTarget) && sameFigmaRef(repo, { path: review.targetRef, sha256: review.targetSha256 }, doc.referenceTarget), 'V2 确认未绑定源效果图');
-    insist(review.rebuildAuthorization?.scope === 'faithful' && review.rebuildAuthorization?.userMessageRef?.trim(), '缺少按已确认效果图忠实重建的明确授权');
     validateReconstruction(repo, work, snapshot, doc.referenceTarget, [review.visualSourceRef]);
   }
   if (work.workItemType === 'DISPLAY_LAYER') insist(review.hostId === work.visual.hostId && review.layerType === work.visual.layerType, '设计确认未绑定显示层宿主');

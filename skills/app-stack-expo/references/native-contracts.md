@@ -19,7 +19,7 @@
 <!-- native-source:expo-workflow:start -->
 ## mode-expo-workflow
 
-以公共控制器为唯一状态机，页面使用 `PAGE`，独立弹窗使用 `DISPLAY_LAYER` 并绑定宿主，业务与平台适配使用 `MODULE`。V0 明确用户、任务、硬约束和探索空间，V1 验证功能、导航与状态；V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成代表页效果图并由用户选稿，再按授权忠实重建可编辑 Figma；V3 从真实重建节点提取必要交接，保留源图确认与转换关系，已表达的布局不重画或重复批准；V4 试接真实组件并导入适用素材；V5 核验正式组合和用户视觉结果。仅设计提案不强制先建运行工程。
+以公共控制器为唯一状态机，页面使用 `PAGE`，独立弹窗使用 `DISPLAY_LAYER` 并绑定宿主，业务与平台适配使用 `MODULE`。在模块任务中明确用户、任务、硬约束和探索空间，V1 确认功能、导航、状态和进度方案；V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成代表页效果图并由用户选稿，再按授权忠实重建可编辑 Figma；V3 从真实重建节点提取必要交接，保留源图确认与转换关系，已表达的布局不重画或重复批准；V4 试接真实组件并导入适用素材；V5 核验正式组合和用户视觉结果。仅设计提案不强制先建运行工程。
 
 按[显示与资源](display-and-assets.md)处理页面及弹窗，并按 [Expo 领域证据](../../expo-domain-contracts/references/domain-validation.md)提交阶段输入；不预造未来阶段文件。Web 仅在实际目标包含时进入其适用测试，不能用 Web 结果证明原生运行。
 <!-- native-source:expo-workflow:end -->

@@ -1,16 +1,16 @@
-# 场景 V0-V5 闭环
+# 场景 V1-V5 闭环
 
-世界内容先按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式 Scene 白模搭建与 V1 验证，2D 平面布局及占位，UI 原流程。前期只记录需求，概念图可选；整体场景单次审查并获人工确认后再安排正式模型／二维资源生产。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)；下文目标图和 V3 双确认属于图片／UI 路线，旧 Unity 图片工具若不支持无图合同须如实报告，不能伪造图片或通过。
+世界内容按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)规划。V1 确认模块方案并按风险选择 3D 白模或 2D 占位验证；V2 基于已确认的全局方向生成并确认模块全部适用状态和进度设计。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)。
 
-图片目标的场景与独立显示层遵守[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)：V0 只作内部识别与分流，V3 拆解图和布局图分别确认。`world-3d` 按公共无图合同绑定单次审查以及实际空间、方向、资源和显示确认，不增加 V3 双图。V5 完成实际运行验证并经用户确认后闭合；技术 PASS 不代替人工确认，确认只绑定当前工作项和实际交付。
+图片目标的场景与独立显示层遵守[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)：模块任务记录范围，V3 拆解图和布局图分别确认。`world-3d` 按公共无图合同绑定单次审查以及实际空间、方向、资源和显示确认，不增加 V3 双图。V5 完成实际运行验证并经用户确认后闭合；技术 PASS 不代替人工确认，确认只绑定当前工作项和实际交付。
 
-## V0 分流
+## 模块范围与分流
 
 内部确定场景 ID、宿主 Scene、模块依赖、常驻 HUD、视觉模式、平台约束和验收轨迹。图片目标的新场景或显示层在 V2 生成真实完整目标图；`world-3d` 使用真实空间与方向依据。纯工程模块不伪装成场景，也不等待视觉基线选择，除非实施包声明 `visualBaselineRequired=true`。跨场景入口归 INTEGRATION。modal、popup、drawer、toast 等瞬态层另建 `DISPLAY_LAYER` Work Item，`hostSceneId` 只作运行上下文。
 
-## V1 功能实现与验证
+## V1 模块方案确认
 
-先验证当前功能切片的玩家行为、状态、输入和跨场景数据；3D 世界先搭建或复用有效白模，2D／UI 的额外原型按风险选择，功能可直接沿正式工程实现。实际验证后，世界场景先完成本批整体空间确认，再确定相关正式视觉目标；纯 UI 沿原流程。
+确认本轮玩家行为、状态、进度、输入、跨场景数据与验收方案；必要时选择白模或功能切片验证空间风险，完整功能在 V5 实现验收。
 
 ## V2 场景定义
 

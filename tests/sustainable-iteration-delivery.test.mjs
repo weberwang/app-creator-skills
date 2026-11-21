@@ -81,7 +81,7 @@ function checkIterationRules(root) {
   assert.match(slice, /正式入口[\s\S]*状态所有者[\s\S]*测试入口/);
   assert.match(slice, /不在 V5 另写一套/);
   const stages = extractMarkdownSection(workflow, '对象闭环');
-  assert.deepEqual([...stages.matchAll(/^\| (V\d) \|/gm)].map((match) => match[1]), ['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
+  assert.deepEqual([...stages.matchAll(/^\| (V\d) \|/gm)].map((match) => match[1]), ['V1', 'V2', 'V3', 'V4', 'V5']);
   const assets = read(root, 'app-asset-workflow/SKILL.md');
   const production = extractMarkdownSection(assets, '生产闭环');
   const assetRoles = production.match(/^\d+\. \*\*明确资产角色\*\*：(.+)$/m)?.[1];
@@ -93,7 +93,7 @@ function checkIterationRules(root) {
   assert.match(assetRoles, /非游戏 App 从 V2 已选 Figma 节点提取/);
   assert.match(assetRoles, /不再机械绘图或重复确认/);
   const gameStages = extractMarkdownSection(read(root, 'app-asset-workflow/references/multi-image-scene-design.md'), '拆解、实现与验收');
-  assert.match(gameStages, /V2 目标、V3 拆解和布局确认、V4 资源验收与 V5 正式场景验证/);
+  assert.match(gameStages, /第 4 阶段确认全局方向[\s\S]*V1 确认模块方案[^。]*V2[^。]*确认模块目标及状态和进度覆盖[^。]*V3 从该确认稿拆解[^。]*V4 准备资源[^。]*V5 完整实现并验证正式场景/);
   // V4 接入验证按风险分流，同时保留图片与界面的既有试接路线。
   const sampleStep = production.match(/^\d+\. \*\*按风险安排接入验证\*\*：(.+)$/m)?.[1];
   assert.ok(sampleStep, '生产闭环缺少 V4 接入验证步骤');
@@ -101,7 +101,7 @@ function checkIterationRules(root) {
   assert.match(sampleStep, /低风险批次正常制作与导入，高风险批次先验证首件或复用有效证据/);
   const sample = extractMarkdownSection(assets, '代表性接入与分批协作');
   assert.match(sample, /真实原生组件、父子关系和代表性数据/);
-  assert.match(sample, /3D 世界在本批整体白模场景与正式视觉方向经人工确认.*V3 模型替换规格交接后/);
+  assert.match(sample, /3D 世界.*V3 模型替换规格交接后/);
   assert.match(sample, /游戏图片路线及 UI 沿用原 V3 拆解与布局确认/);
   assert.match(sample, /非游戏 App 以已选 Figma 稿和必要交接为依据.*不重复画图和批准/);
   // 未决结果只阻断依赖它的扩展；技术检查不能自动形成用户批准或视觉通过。
@@ -149,7 +149,7 @@ for (const stack of STACKS) {
       }
     }
     if (stack === 'nodejs') {
-      assert.match(read(root, 'app-creator-workflow/SKILL.md'), /不要求视觉基线、V0–V5/);
+      assert.match(read(root, 'app-creator-workflow/SKILL.md'), /Node\.js 指实际服务端进程，七阶段使用非视觉/);
       assert.equal(JSON.parse(read(root, 'app-asset-workflow/native-adapters.json')).adapters.nodejs, undefined, '无界面服务不能新增视觉模式');
     }
     if (stack === 'flutter') {

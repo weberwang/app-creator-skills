@@ -4,7 +4,7 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 视觉与功能还原
 
@@ -14,7 +14,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-参考截图、效果图、录屏、运行项目和源码是输入，不是通过结论。参考还原属于 V0 的完整路径并执行 V2、V3、V4、V5；功能契约仍优先定义玩法行为，但当 Work Item 明确以指定效果图或参考截图为还原目标时，必须启用“忠实还原模式”。该模式默认使用 `visual_validation.mode=usability`，不因 effect-image 自动启用 `exact`；只有用户明确要求像素级还原时才选择 `exact`。
+参考截图、效果图、录屏、运行项目和源码是输入，不是通过结论。参考还原属于 实际模块范围并执行 V2、V3、V4、V5；功能契约仍优先定义玩法行为，但当 Work Item 明确以指定效果图或参考截图为还原目标时，必须启用“忠实还原模式”。该模式默认使用 `visual_validation.mode=usability`，不因 effect-image 自动启用 `exact`；只有用户明确要求像素级还原时才选择 `exact`。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -30,7 +30,7 @@ effect-image 生成式位图的 canonical 提示词模板、asset_prompt 事实�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-V2 内生成或接收并冻结参考身份、版本、权属、原始文件指纹、适用状态、scene master/reference target、宿主上下文效果图、布局合同、视觉事实、验证模式和项目容差。需求或基线已明确且不存在产品方向、玩法语义或上游结构取舍时记录 `AUTO`，直接提供场景目标/宿主上下文预览；不先要求确认文字方案。只有会改变产品方向、玩法语义、上游结构或视觉目标的实质歧义才请求一次 `USER_DECISION`，优先用图像示例呈现选项。默认 `usability` 不把细节几何偏差升级为决定门。
+第 4 阶段确认全局视觉方向和代表稿。V2 根据模块方案生成或接收并确认参考身份、版本、权属、原始文件指纹、全部适用状态与进度、scene master/reference target、宿主上下文效果图、布局合同、视觉事实、验证模式和项目容差。需求或基线已明确且不存在产品方向、玩法语义或上游结构取舍时记录 `AUTO`，直接提供场景目标/宿主上下文预览；不先要求确认文字方案。只有会改变产品方向、玩法语义、上游结构或视觉目标的实质歧义才请求一次 `USER_DECISION`，优先用图像示例呈现选项。默认 `usability` 不把细节几何偏差升级为决定门。
 
 ## V3 拆解确认与生产方案
 

@@ -3,6 +3,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { encodePngRgba } from '../../skills/app-asset-workflow/scripts/png-raster.mjs';
 import { extractFlutterNodeFacts } from '../../skills/app-workflow-control/scripts/runtime/figma-design-properties.mjs';
+import { flutterTextStyle } from '../../skills/app-workflow-control/scripts/runtime/native-text-appearance.mjs';
 
 /** 写入明确标记的合成协议材料，绝不代表真实应用或用户视觉验收。 */
 export function writeDesignFixture(repo, path, value) {
@@ -115,10 +116,20 @@ export function attachFlutterDesignFixture(repo, work, doc) {
     const comparison = { ...identity, designReconstructionRef: doc.designReconstructionRef, implementationEvidenceRefs: doc.implementationEvidenceRefs,
       cases: plan.conditions.map((conditions) => {
         const runtimeRef = writeDesignFixture(repo, `${base}/runtime-${conditions.id}.png`, encodePngRgba(conditions.viewport.width, conditions.viewport.height, Buffer.alloc(conditions.viewport.width * conditions.viewport.height * 4)));
+        const entries = plan.elements.filter((element) => element.conditionIds.includes(conditions.id)).flatMap((element) => {
+          const implementation = plan.implementations.find((entry) => entry.id === element.implementationId);
+          const values = flutterTextStyle(implementation.requirements.appearance.value);
+          return values ? [{ designItemId: element.id, runtimeNodeId: `${element.id}.text`, values,
+            propertySources: Object.fromEntries(Object.keys(values).map((name) => [name, { componentType: 'RenderParagraph', propertyPath: name }])) }] : [];
+        });
+        const runId = `synthetic-${conditions.id}`;
+        const captureOutputRef = writeDesignFixture(repo, `${base}/capture-output-${conditions.id}.json`, {
+          format: 'flutter-text-readback-v1', runId, runtimeRef, conditions, designReconstructionRef: doc.designReconstructionRef, entries,
+        });
         const captureRef = writeDesignFixture(repo, `${base}/capture-${conditions.id}.json`, { ...identity,
-          format: 'flutter-runtime-capture-v1', runtimeRef, conditions, pixelRatio: 1, designReconstructionRef: doc.designReconstructionRef,
+          format: 'flutter-runtime-capture-v1', runtimeRef, runId, conditions, pixelRatio: 1, designReconstructionRef: doc.designReconstructionRef,
           implementationEvidenceRefs: doc.implementationEvidenceRefs, sourceRefs: reports.flatMap(({ report }) => report.sourceRefs),
-          captureMethod: 'test-only-synthetic', captureOutputRef: writeDesignFixture(repo, `${base}/capture-output.txt`, '合成采集输出，非真实 Flutter 截图'),
+          captureMethod: 'test-only-synthetic', captureOutputRef,
         });
         return { conditionId: conditions.id, conditions, targetRef: conditions.targetRef ?? plan.referenceTarget, runtimeRef, captureRef,
           designItemIds: plan.elements.filter((item) => item.conditionIds.includes(conditions.id)).map((item) => item.id) };

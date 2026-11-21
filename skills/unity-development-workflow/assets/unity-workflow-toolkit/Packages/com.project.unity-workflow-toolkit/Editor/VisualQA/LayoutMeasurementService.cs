@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using Project.UnityWorkflow.Core;
 using UnityEditor;
 using UnityEngine;
@@ -47,9 +48,24 @@ namespace Project.UnityWorkflow.VisualQA
             }
 
             var report = CreateReport(request);
+            if (!string.IsNullOrWhiteSpace(request.layoutPlanPath))
+            {
+                try
+                {
+                    report.layoutPlanSha256 = ReadLayoutPlanHash(request.layoutPlanPath);
+                }
+                catch (Exception exception) when (exception is ArgumentException || exception is IOException || exception is UnauthorizedAccessException || exception is InvalidOperationException)
+                {
+                    return Failure("FAIL", "LAYOUT_PLAN_UNREADABLE", "无法读取项目内的 V3 布局计划，未采集文字证据。", request);
+                }
+            }
             try
             {
-                if (string.Equals(request.uiSystem, "UGUI", StringComparison.Ordinal))
+                if (request.textOnly)
+                {
+                    MeasureWorldTextStyles(scene, request, report);
+                }
+                else if (string.Equals(request.uiSystem, "UGUI", StringComparison.Ordinal))
                 {
                     MeasureUgui(scene, request, report);
                 }
@@ -87,6 +103,21 @@ namespace Project.UnityWorkflow.VisualQA
             return report;
         }
 
+        /// <summary>在实际采集时从计划文件计算摘要，避免把旧报告绑定到已经改变的设计。</summary>
+        private static string ReadLayoutPlanHash(string relativePath)
+        {
+            string path = WorkflowPaths.ResolveProjectRelative(relativePath);
+            if (!string.Equals(Path.GetExtension(path), ".json", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new ArgumentException("布局计划必须是 JSON 文件。", nameof(relativePath));
+            }
+            using (var stream = File.OpenRead(path))
+            using (var algorithm = SHA256.Create())
+            {
+                return BitConverter.ToString(algorithm.ComputeHash(stream)).Replace("-", string.Empty).ToLowerInvariant();
+            }
+        }
+
         /// <summary>验证请求字段、证据路径、唯一节点 ID 和单一坐标体系。</summary>
         private static LayoutMeasurementReport ValidateRequest(LayoutMeasurementRequest request)
         {
@@ -102,6 +133,10 @@ namespace Project.UnityWorkflow.VisualQA
 
             bool isUgui = string.Equals(request.uiSystem, "UGUI", StringComparison.Ordinal);
             bool isUiToolkit = string.Equals(request.uiSystem, "UI_TOOLKIT", StringComparison.Ordinal);
+            if (request.textOnly && (!isUgui || !request.includeComponentSnapshots || string.IsNullOrWhiteSpace(request.layoutPlanPath)))
+            {
+                return Failure("FAIL", "TEXT_CONTEXT_REQUIRED", "世界空间文字采集需要组件快照及当前 V3 布局计划。", request);
+            }
             string expectedCoordinateSpace = isUgui ? "SCREEN_SPACE_PIXELS" : "UI_TOOLKIT_LOGICAL_POINTS";
             if ((!isUgui && !isUiToolkit) || !string.Equals(request.coordinateSpace, expectedCoordinateSpace, StringComparison.Ordinal))
             {
@@ -159,6 +194,12 @@ namespace Project.UnityWorkflow.VisualQA
                 if (target == null || !IsValidTaskId(target.id) || !ids.Add(target.id))
                 {
                     return Failure("FAIL", "INVALID_OR_DUPLICATE_TARGET_ID", "目标 ID 缺失或重复。", request);
+                }
+                if (request.textOnly)
+                {
+                    if (string.IsNullOrWhiteSpace(target.objectPath) || target.textStyle == null || target.textStyle.Count == 0)
+                        return Failure("FAIL", "TEXT_TARGET_REQUIRED", "世界空间文字必须提供对象路径和实际组件属性。", request);
+                    continue;
                 }
 
                 if (target.tolerance != null &&
@@ -252,6 +293,25 @@ namespace Project.UnityWorkflow.VisualQA
             }
 
             return null;
+        }
+
+        /// <summary>从已加载场景读取世界空间文字组件及材质属性。</summary>
+        private static void MeasureWorldTextStyles(Scene scene, LayoutMeasurementRequest request, LayoutMeasurementReport report)
+        {
+            foreach (LayoutMeasurementTarget probe in request.targets)
+            {
+                GameObject target = ResolveSceneObject(scene, probe.objectPath);
+                report.measurements.Add(new LayoutMeasurementItem
+                {
+                    id = probe.id,
+                    objectPath = NormalizeHierarchyPath(probe.objectPath),
+                    componentSnapshot = new LayoutComponentSnapshot
+                    {
+                        active = target.activeInHierarchy,
+                        textStyle = LayoutTextStyleCollector.Capture(target, probe.textStyle)
+                    }
+                });
+            }
         }
 
         /// <summary>按明确路径解析场景内 uGUI RectTransform，并统一投影为左上原点屏幕像素。</summary>
@@ -736,6 +796,7 @@ namespace Project.UnityWorkflow.VisualQA
                 frameCount = Time.frameCount,
                 stateId = request.stateId ?? string.Empty,
                 includesComponentSnapshots = request.includeComponentSnapshots,
+                textOnly = request.textOnly,
                 gapAxis = request.gapAxis ?? string.Empty
             };
         }

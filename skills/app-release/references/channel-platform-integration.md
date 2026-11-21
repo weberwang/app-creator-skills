@@ -1,6 +1,6 @@
 # 渠道平台接入
 
-用于已选择 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 的游戏／应用。渠道是分发宿主或商店，不等于引擎技术栈、操作系统或广告聚合网络；同一项目可有多个渠道候选，但不默认全部接入。沿用六阶段、现有 MODULE／INTEGRATION／RELEASE 和[任务最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，不增加状态机、审批层或控制器字段。
+用于已选择 CrazyGames、微信小游戏、抖音小游戏、TapTap、Google Play 或 App Store 的游戏／应用。渠道是分发宿主或商店，不等于引擎技术栈、操作系统或广告聚合网络；同一项目可有多个渠道候选，但不默认全部接入。沿用七阶段、现有 MODULE／INTEGRATION／RELEASE 和[任务最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，不增加状态机、审批层或控制器字段。
 
 ## 确认渠道与实现路线
 

@@ -4,9 +4,51 @@ import { readJson, WorkflowError } from './io.mjs';
 import { comparableTextFill, hasCompleteTextFill, isTextChannel } from './text-paint.mjs';
 
 /** 将每个已确认文字条目绑定到自身填色与透明度，容器样式不能作为替代。 */
-function requireAppearance(entry, label) {
-  if (!hasCompleteTextFill(entry?.textFill)) throw new WorkflowError(`${label} 缺少完整的字体颜色和填色 Alpha`);
-  if (!isTextChannel(entry.textOpacity)) throw new WorkflowError(`${label} 缺少有效的文字透明度`);
+function requireAppearance(entry, label, { allowPending = false } = {}) {
+  const pending = entry?.pending ?? {};
+  if (!pending || typeof pending !== 'object' || Array.isArray(pending)) throw new WorkflowError(`${label} 的待确认属性必须逐项记录原因`);
+  for (const [name, reason] of Object.entries(pending)) {
+    if (typeof reason !== 'string' || !reason.trim()) throw new WorkflowError(`${label} 的 ${name} 待人工确认缺少原因`);
+    if (entry[name] !== undefined && entry[name] !== null) throw new WorkflowError(`${label} 的 ${name} 已知值和待确认状态不能并存`);
+    if (!allowPending) throw new WorkflowError(`${label} 的 ${name} 待人工确认：${reason}`);
+  }
+  if (!hasCompleteTextFill(entry?.textFill) && !pending.textFill) throw new WorkflowError(`${label} 缺少完整的字体颜色和填色 Alpha`);
+  if (!isTextChannel(entry?.textOpacity) && !pending.textOpacity) throw new WorkflowError(`${label} 缺少有效的文字透明度`);
+  if ((typeof entry?.fontFamily !== 'string' || !entry.fontFamily.trim()) && !pending.fontFamily) throw new WorkflowError(`${label} 的 fontFamily 目标缺失或待人工确认`);
+  if ((!Number.isFinite(entry?.fontSize) || entry.fontSize <= 0) && !pending.fontSize) throw new WorkflowError(`${label} 的 fontSize 目标缺失或待人工确认`);
+}
+
+/** 从设计源保留可核实的文字属性，缺失字段不能由平台默认值补齐。 */
+export function figmaTextStyle(node) {
+  const font = node.font ?? {};
+  const style = { fontFamily: font.platformFamily, fontSize: font.size };
+  for (const [source, target] of [['weight', 'fontWeight'], ['style', 'fontStyle'], ['letterSpacing', 'letterSpacing'], ['lineHeight', 'lineHeight']]) {
+    if (font[source] !== undefined && font[source] !== null) style[target] = font[source];
+  }
+  for (const name of ['textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'strokes', 'strokeWeight', 'effects']) {
+    const value = node[name] ?? node.properties?.[name];
+    if (value !== undefined && value !== null) style[name] = value;
+  }
+  return style;
+}
+
+/** 从 Flutter 已冻结的外观目标取得需要原生组件实测的文字属性。 */
+export function flutterTextStyle(appearance) {
+  if (!appearance?.raw?.textVisual && appearance?.raw?.nodeType !== 'TEXT' && !appearance?.normalized?.typography) return null;
+  const normalized = appearance.normalized ?? {};
+  const typography = normalized.typography ?? {};
+  const result = { fontFamily: typography.family, fontSize: typography.size, textFill: normalized.textFill, textOpacity: normalized.textOpacity };
+  for (const [source, target] of [['weight', 'fontWeight'], ['lineHeight', 'lineHeight'], ['letterSpacing', 'letterSpacing']]) {
+    if (typography[source] !== undefined && typography[source] !== null) result[target] = typography[source];
+  }
+  const visual = appearance.raw?.textVisual ?? {};
+  if (appearance.raw?.font?.style !== undefined) result.fontStyle = appearance.raw.font.style;
+  for (const name of ['strokes', 'strokeWeight']) if (visual[name] !== undefined && visual[name] !== null) result[name] = visual[name];
+  for (const name of ['textAlignHorizontal', 'textAlignVertical', 'textAutoResize', 'effects']) {
+    const value = visual.other?.[name] ?? visual.properties?.[name];
+    if (value !== undefined && value !== null) result[name] = value;
+  }
+  return result;
 }
 
 /** 对 Figma 路线从实际冻结节点枚举文字，包含同稿附加状态和组件内的标签。 */
@@ -21,7 +63,8 @@ export function collectFigmaTextAppearance(approved) {
       while (layer && layer.visible !== false) layer = byId.get(layer.parentId);
       if (layer) continue;
       const style = extractFigmaNodeStyle(node).designFacts.normalized;
-      const entry = { targetPath: ref.path, nodeId: node.id, textFill: style.textFill, textOpacity: style.textOpacity?.value };
+      const entry = { targetPath: ref.path, targetSha256: ref.sha256, stateId: snapshot.stateId, nodeId: node.id,
+        ...figmaTextStyle(node), textFill: style.textFill, textOpacity: style.textOpacity?.value };
       requireAppearance(entry, `Figma 文字 ${node.id}`);
       result.push(entry);
     }
@@ -30,11 +73,13 @@ export function collectFigmaTextAppearance(approved) {
 }
 
 /** 非 Figma 路线沿用冻结布局节点，空值明确表示当前节点不渲染文字。 */
-export function collectLayoutTextAppearance(layout, layoutRef) {
+export function collectLayoutTextAppearance(layout, layoutRef, designRef, { allowPending = false } = {}) {
   return layout.nodes.flatMap((node) => {
     if (node.textAppearance === null) return [];
-    const entry = { ...node.textAppearance, targetPath: layoutRef.path, nodeId: node.id };
-    requireAppearance(entry, `布局文字 ${node.id}`);
+    const entry = { ...node.textAppearance, targetPath: layoutRef.path, targetSha256: layoutRef.sha256, nodeId: node.id };
+    if (!isDeepStrictEqual(entry.sourceRef, designRef)) throw new WorkflowError(`布局文字 ${node.id} 缺少当前确认稿来源`);
+    if (typeof entry.stateId !== 'string' || !entry.stateId.trim()) throw new WorkflowError(`布局文字 ${node.id} 缺少适用状态`);
+    requireAppearance(entry, `布局文字 ${node.id}`, { allowPending });
     return [entry];
   });
 }
@@ -52,20 +97,29 @@ export function validateNativeTextReadback(repo, runtime, expected, stack, ident
   const nativeNodes = new Set();
   for (const observed of report.entries) {
     if (typeof observed?.runtimeNodeId !== 'string' || !observed.runtimeNodeId.trim()) throw new WorkflowError(`${stack} 文字读数缺少实际文字组件身份`);
-    const key = JSON.stringify([observed?.targetPath, observed?.nodeId]);
+    const key = JSON.stringify([observed?.targetPath, observed?.targetSha256, observed?.stateId, observed?.nodeId]);
     if (observations.has(key)) throw new WorkflowError(`${stack} 文字 ${observed.nodeId} 读数重复`);
-    const nativeKey = JSON.stringify([observed.targetPath, observed.runtimeNodeId]);
+    const nativeKey = JSON.stringify([observed.targetPath, observed.stateId, observed.runtimeNodeId]);
     if (nativeNodes.has(nativeKey)) throw new WorkflowError(`${stack} 同一文字组件不能代替多个文字节点`);
     nativeNodes.add(nativeKey);
     observations.set(key, observed);
   }
   for (const target of expected) {
-    const key = JSON.stringify([target.targetPath, target.nodeId]);
+    const key = JSON.stringify([target.targetPath, target.targetSha256, target.stateId, target.nodeId]);
     const label = `${stack} 文字 ${target.nodeId} 实际读数`;
     const observed = observations.get(key);
     requireAppearance(observed, label);
     if (!isDeepStrictEqual(comparableTextFill(observed.textFill), comparableTextFill(target.textFill))) throw new WorkflowError(`${label} 的字体颜色或填色 Alpha 与确认稿不一致`);
     if (observed.textOpacity !== target.textOpacity) throw new WorkflowError(`${label} 的文字透明度与确认稿不一致`);
+    // 每个可核实样式都要来自具体组件属性，单纯复制设计值无法代替回读。
+    const fields = Object.keys(target).filter((name) => !['targetPath', 'targetSha256', 'stateId', 'nodeId', 'sourceRef', 'pending'].includes(name));
+    for (const name of fields) {
+      const source = observed.propertySources?.[name];
+      if (!source || typeof source.componentType !== 'string' || !source.componentType.trim() || typeof source.propertyPath !== 'string' || !source.propertyPath.trim()) {
+        throw new WorkflowError(`${label} 的 ${name} 缺少实际组件或材质属性回读来源`);
+      }
+      if (name !== 'textFill' && name !== 'textOpacity' && !isDeepStrictEqual(observed[name], target[name])) throw new WorkflowError(`${label} 的 ${name} 与确认稿不一致`);
+    }
     observations.delete(key);
   }
   if (observations.size) throw new WorkflowError(`${stack} 文字读数包含未绑定设计的节点`);

@@ -1,4 +1,4 @@
-/** V0→V5 视觉阶段硬门回归；V3 来源、V4 资源和 V5 运行验收必须绑定。 */
+/** V1→V5 视觉阶段硬门回归；V3 来源、V4 资源和 V5 运行验收必须绑定。 */
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
@@ -753,8 +753,8 @@ test('V1 功能阶段无需视觉基线，正式视觉集成不得借功能阶�
 });
 
 
-test('正式视觉基线不得在 V0 或 V1 冻结', () => {
-  for (const visualStage of ['V0', 'V1']) {
+test('正式视觉基线不得在 V1 冻结', () => {
+  for (const visualStage of ['V1']) {
     const work = { visualStageModel: 'function-first-v1', visualStage, visualStageState: 'in-progress', globalStaticBaselineState: 'global-static-baseline-frozen' };
     assert(validateVisualStageDeclaration(work).some((item) => item.errorCode === 'VISUAL_BASELINE_TOO_EARLY'));
   }

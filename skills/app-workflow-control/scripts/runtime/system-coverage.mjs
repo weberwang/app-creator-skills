@@ -5,7 +5,7 @@ import { repoPath, requireFile, WorkflowError } from './io.mjs';
 /** 游戏和应用都必须从真实使用流程及生命周期反向检查覆盖。 */
 const COMMON_AREAS = Object.freeze(['flow', 'state-data', 'failure-recovery', 'persistence', 'platform']);
 /** 类型只决定应检查的领域，不代表项目必须引入对应系统。 */
-const GAME_AREAS = Object.freeze(['combat', 'economy', 'progression', 'content']);
+const GAME_AREAS = Object.freeze(['combat', 'economy', 'progression', 'content', 'player-feedback', 'advertising']);
 const APP_AREAS = Object.freeze(['identity-access', 'business-rules', 'content', 'integration']);
 const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 const ACTIVE_STATUSES = new Set(['implement', 'reuse']);

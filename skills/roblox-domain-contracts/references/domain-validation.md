@@ -36,7 +36,9 @@ V5 `runtimeContextRef` 包含 Client 身份、运行节点映射、完整源集�
 
 V3 核对上述计划、引用和公共相对关系，不要求 V5 的正式对象提前装配。V4/V5 的 `layout.editObservationRef` 引用同一 Studio、同一已保存 Place 的 Edit `execute_luau` 结构化回读，包含实际节点 `Position`、`Size`、`SizeConstraint`、`AnchorPoint`、`AutomaticSize`、`IsGuiObject`、`LayoutControllers`、`FlexItems` 及 `SizeModifiers`；容器和组件还须包含各自实际属性。V5 再对 PlayerGui 当前客户端实例及其真实父布局执行同样的回读绑定。`inspect-nodes.luau` 自动枚举所选 GUI 的布局、Flex 和尺寸修饰器，目标节点和必要外部父级仍由执行者按实际项目填写。
 
-每个 `TextLabel`、`TextButton`、`TextBox` 在 V3 的布局节点记录确认稿文字填色 `textStyle.color: {r, g, b}` 与 `textStyle.transparency`，取值均为 0–1。分别在 V4 的 Edit 回读及 V5 的 Client 回读同一个实例的 `TextColor3` 和 `TextTransparency`，与对应目标逐项核对。缺少目标、实际值或任一值不一致时保持未通过；其他文字状态分别按适用状态核对。背景颜色和整体透明度不能充当文字属性。`inspect-nodes.luau` 对上述文字类型采集实际值，效果与可读性仍由用户人工确认。
+每个 `TextLabel`、`TextButton`、`TextBox` 在 V3 的布局节点记录 `textStyle.sourceTarget`（确认稿路径与 SHA-256）、`stateId`、`fontFamily`、`fontSize`、填色 `color: {r, g, b}` 和 `transparency`。字重、字形、对齐、换行、自动缩放、行高及描边等设计中可核实的属性也写入 `textStyle`。仅有位图且无法核实的属性在 `unconfirmed` 中逐项记录 `property` 和 `reason`，人工确认后再填写实际目标。分别在 V4 的 Edit 回读及 V5 的 Client 回读同一个实例的字体、字号及全部已声明属性，按节点、状态与确认稿逐项核对。V5 存在待确认属性、目标或回读缺失、属性不一致时保持未通过。`inspect-nodes.luau` 采集原生 FontFace、TextSize、文字颜色、透明度及排版、描边属性，效果与可读性由用户人工确认。
+
+启用 `TextScaled` 时，当前原生回读无法取得引擎最终渲染字号，保持实际字号未验证；缺少 `TextScaled` 回读同样不能通过。关闭自动缩放后按实际 `TextSize` 对照目标。
 
 使用九宫格的 `ImageLabel` 或 `ImageButton` 在 V3 的 `nineSlice` 中冻结 `assetId`、数字 `sliceScale: 1`、源帧 `sourceSize: {width, height}`、`imageRectOffset: {x, y}`、`imageRectSize: {x, y}`、源图片坐标中的 `center: {minX, minY, maxX, maxY}` 及 `minimumDisplaySize: {width, height}`。四边值由源帧和中心矩形计算，源帧及最小显示框的中心均须为正宽高。图集裁切使用原生 `ImageRectOffset` 和 `ImageRectSize`；当实际尺寸任一分量为 0 时 Roblox 读取整图，源帧尺寸按完整上传图核对。V4 资源清单须登记同节点同 `Image` 资源的 `sourceImageRef`，指向实际上传图片及 SHA-256，解码核对源帧是否越界。V4 Edit 和 V5 Client 使用 `inspect-nodes.luau` 同实例读取 `ScaleType`、`SliceScale`、`SliceCenter`、图片区域与祖先 UIScale；V5 另核对实际 `AbsoluteSize` 大于两侧切片合计，并符合冻结最小显示框。当前 V5 采样没有覆盖最窄或最矮值时，在 `runtime.minimumSliceObservations` 中追加 `{nodeId, observationRef}`，引用同客户端、同正式源的 Client 原始回读；最小宽与最小高可以分别由不同实际视口或状态覆盖。未声明九宫合同的实际 Slice、缺回读或倍率不为数字 `1` 均不能通过。上传源文件与资产 ID 的关联须保留真实上传记录，画面中的圆角和切线仍由用户人工核对。
 

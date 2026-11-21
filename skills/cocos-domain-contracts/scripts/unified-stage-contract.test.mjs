@@ -18,13 +18,19 @@ function functionPackage() {
 }
 
 for (const stack of ['cocos', 'phaser', 'threejs']) {
-  test(`${stack} V0–V5 功能前置与视觉门使用同一语义标记`, async (t) => {
+  test(`${stack} V1–V5 功能前置与视觉门使用同一语义标记`, async (t) => {
     const base = new URL(`../../${stack}-domain-contracts/`, import.meta.url);
     const ajv = new Ajv2020({ strict: false, allErrors: true });
     addFormats(ajv);
     const visualSchema = JSON.parse(readFileSync(new URL('references/visual-stage.schema.json', base), 'utf8'));
     const validateVisual = ajv.compile(visualSchema);
-    for (const stage of ['V0', 'V1']) {
+    assert.equal(validateVisual({ visualStageModel: 'function-first-v1', visualStage: 'V0', visualStageState: 'in-progress' }), false);
+    const workSchema = JSON.parse(readFileSync(new URL('references/work-item.schema.json', base), 'utf8'));
+    const validateStageId = ajv.compile(workSchema.properties.stageId);
+    assert.equal(validateStageId('V0'), false);
+    assert.equal(validateStageId('commercial-initiation'), true);
+    assert.equal(validateStageId('cross-module-integration'), true);
+    for (const stage of ['V1']) {
       const work = { visualStageModel: 'function-first-v1', visualStage: stage, visualStageState: 'in-progress' };
       assert.equal(validateVisual(work), true, JSON.stringify(validateVisual.errors));
       assert.equal(validateVisual({ ...work, globalStaticBaselineState: 'global-static-baseline-frozen' }), false);
@@ -59,6 +65,11 @@ for (const stack of ['cocos', 'phaser', 'threejs']) {
     assert.throws(() => gate.assertFormalImplementationAfterV3(integrationWork, { ...integrationPackage, visualManifestFile: 'visual-assets.json' }), /V3|视觉/);
     assert.throws(() => gate.assertFormalImplementationAfterV3(integrationWork, { ...integrationPackage, executionUnits: [...integrationPackage.executionUnits, { unitId: 'scene', unitType: 'SCENE' }] }), /V3|视觉/);
     const stageGate = await import(new URL('scripts/visual-stage-prerequisites.mjs', base));
+    assert(stageGate.validateVisualStageDeclaration({ visualStageModel: 'function-first-v1', visualStage: 'V0', visualStageState: 'in-progress' }).some((item) => item.errorCode === 'VISUAL_STAGE_DECLARATION_INVALID'));
+    const returnGate = await import(new URL('scripts/return-disposition.mjs', base));
+    assert.equal(returnGate.deriveReturnState({ affectedScope: ['stage:V1'] }), 'IMPLEMENTING');
+    assert.equal(returnGate.deriveReturnState({ affectedScope: ['stage:commercial-initiation'] }), 'BASELINE');
+    assert.equal(returnGate.deriveReturnState({ affectedScope: ['stage:cross-module-integration'] }), 'IMPLEMENTING');
     assert(stageGate.validateVisualStageDeclaration({ visualStage: 'V2', visualStageState: 'in-progress' }).some((item) => item.errorCode === 'VISUAL_STAGE_MODEL_INVALID'));
     const scene = await import(new URL('scripts/scene-reconstruction-contract.mjs', base));
     const production = await import(new URL('scripts/visual-production-contract.mjs', base));

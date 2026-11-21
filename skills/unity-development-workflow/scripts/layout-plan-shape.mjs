@@ -1,3 +1,5 @@
+import { validateTextStyleTarget } from './text-style-validation.mjs';
+
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const LAYOUT_COORDINATE_SPACES = new Set(["SCENE_LOCAL", "PREFAB_LOCAL", "CANVAS_LOCAL", "UI_TOOLKIT_PANEL", "SCREEN_SAFE_AREA"]);
 const LAYOUT_DRIVERS = new Set(["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"]);
@@ -233,8 +235,18 @@ function checkLayoutBinding(value, path, errors) {
   }
 }
 
+/** 内联及共享样式采用同一属性形状，实质目标在绑定到节点后检查。 */
+function checkTextAttributes(attributes, path, errors) {
+  if (!Array.isArray(attributes) || attributes.length === 0) addError(errors, path, "必须是非空数组");
+  else attributes.forEach((attribute, index) => {
+    const fields = attribute?.status === "PENDING_HUMAN"
+      ? ["name", "status", "reason"] : ["name", "componentType", "propertyPath", "expectedValue"];
+    checkObject(attribute, `${path}[${index}]`, new Set(fields), fields, errors);
+  });
+}
+
 /** 检查单个计划节点，targetBounds 是可选派生字段。 */
-function checkNode(value, path, errors) {
+function checkNode(value, path, errors, textStyles) {
   const keys = new Set(["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding", "targetBounds", "expectedActive", "nineSlice", "textStyle"]);
   const required = ["id", "decompositionElementId", "parentElementId", "semanticGrouping", "renderKind", "bounds", "layoutBinding"];
   if (!checkObject(value, path, keys, required, errors)) return;
@@ -255,23 +267,14 @@ function checkNode(value, path, errors) {
   if (value.nineSlice !== undefined) checkNineSlice(value.nineSlice, `${path}.nineSlice`, errors);
   if (value.textStyle !== undefined) {
     const style = value.textStyle;
-    if (checkObject(style, `${path}.textStyle`, new Set(["source", "attributes"]), ["source", "attributes"], errors)) {
+    if (checkObject(style, `${path}.textStyle`, new Set(["source", "attributes", "styleId"]), ["source"], errors)) {
       checkString(style.source, `${path}.textStyle.source`, errors);
-      if (!Array.isArray(style.attributes) || style.attributes.length === 0) addError(errors, `${path}.textStyle.attributes`, "必须是非空数组");
-      else style.attributes.forEach((attribute, index) => {
-        const attributePath = `${path}.textStyle.attributes[${index}]`;
-        const fields = ["name", "componentType", "propertyPath", "expectedValue"];
-        if (checkObject(attribute, attributePath, new Set(fields), fields, errors)) {
-          for (const field of fields) checkString(attribute[field], `${attributePath}.${field}`, errors);
-          // 保留字体颜色的 Alpha，避免只核对 RGB 导致半透明文字误过。
-          if (attribute.name === "fill") checkString(attribute.expectedValue, `${attributePath}.expectedValue`, errors, null, /^#[0-9A-F]{8}$/);
-        }
-      });
-      if (Array.isArray(style.attributes) && !style.attributes.some((attribute) => attribute?.name === "fill")) {
-        addError(errors, `${path}.textStyle.attributes`, "缺少字体颜色 fill");
-      }
+      if (style.styleId !== undefined) checkString(style.styleId, `${path}.textStyle.styleId`, errors);
+      if (style.attributes !== undefined) checkTextAttributes(style.attributes, `${path}.textStyle.attributes`, errors);
     }
   }
+  // 未显示的其他状态不需要为本状态虚构样式；已有样式仍按合同检查。
+  if (value.textStyle !== undefined || (value.renderKind === "TEXT" && value.expectedActive !== false)) errors.push(...validateTextStyleTarget(value, textStyles));
 }
 
 /** 检查节点引用的既有九宫格合同，避免运行计划引入另一套字段格式。 */
@@ -310,7 +313,7 @@ function checkNineSlice(value, path, errors) {
 /** 验证 UI 布局计划在本 Skill 中实际使用的 JSON Schema 字段约束子集。 */
 export function validateUiLayoutPlanShape(plan) {
   const errors = [];
-  const keys = new Set(["schemaVersion", "sceneId", "scenePath", "stateId", "displayLayerId", "uiSystem", "coordinateSpace", "splitPlanRef", "prefabStructureRef", "prefabAssemblyRef", "roots", "nodes"]);
+  const keys = new Set(["schemaVersion", "sceneId", "scenePath", "stateId", "displayLayerId", "uiSystem", "coordinateSpace", "splitPlanRef", "splitPlanSha256", "prefabStructureRef", "prefabAssemblyRef", "roots", "nodes", "textStyles"]);
   const required = ["schemaVersion", "sceneId", "stateId", "uiSystem", "coordinateSpace", "roots", "nodes"];
   if (!checkObject(plan, "根对象", keys, required, errors)) return errors;
 
@@ -335,15 +338,23 @@ export function validateUiLayoutPlanShape(plan) {
   for (const key of ["splitPlanRef", "prefabStructureRef", "prefabAssemblyRef"]) {
     if (plan[key] !== undefined) checkProjectArtifactRef(plan[key], key, errors);
   }
+  if (plan.splitPlanSha256 !== undefined) checkString(plan.splitPlanSha256, "splitPlanSha256", errors, null, /^[0-9a-f]{64}$/);
 
   if (checkObject(plan.roots, "roots", ROOT_IDS, ["viewport", "safe-area"], errors)) {
     checkRect(plan.roots.viewport, "roots.viewport", errors);
     checkRect(plan.roots["safe-area"], "roots.safe-area", errors);
   }
+  const textStyles = plan.textStyles === undefined ? {} : plan.textStyles;
+  if (textStyles && typeof textStyles === "object" && !Array.isArray(textStyles)) {
+    for (const [id, attributes] of Object.entries(textStyles)) {
+      checkString(id, "textStyles 样式 ID", errors);
+      checkTextAttributes(attributes, `textStyles.${id}`, errors);
+    }
+  } else addError(errors, "textStyles", "必须是按样式 ID 组织的对象");
   if (!Array.isArray(plan.nodes)) addError(errors, "nodes", "必须是数组");
   else {
     if (plan.nodes.length < 1) addError(errors, "nodes", "至少需要一个 UI 节点");
-    plan.nodes.forEach((node, index) => checkNode(node, `nodes[${index}]`, errors));
+    plan.nodes.forEach((node, index) => checkNode(node, `nodes[${index}]`, errors, textStyles));
   }
   return errors;
 }

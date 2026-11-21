@@ -177,6 +177,14 @@
         "rationale": "价格文字与图标同级，以图标为独立位置参照。"
       },
       "renderKind": "TEXT",
+      "textStyle": {
+        "source": "Artifacts/UI/shop-confirmed.png",
+        "attributes": [
+          { "name": "font", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认实际字体" },
+          { "name": "fontSize", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认实际字号" },
+          { "name": "fill", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认字色及透明度" }
+        ]
+      },
       "bounds": {
         "x": 348,
         "y": 222,

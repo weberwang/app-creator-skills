@@ -68,7 +68,7 @@ async function prepareRouteBaseline(t, world) {
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ ...context, workItem: context.workPath, to: 'V1' });
+
   work = await readWork(context.repo, context.workPath);
   if (world) {
     work.visual.candidateId = f.context.candidateId;
@@ -151,7 +151,7 @@ test('无图 3D 仅由五个游戏栈显式选择且限定为 SCENE', async (t) 
     const repo = fixture(t);
     const work = await initialize(repo, stack, 'SCENE', { 'design-route': 'world-3d' });
     assert.equal(work.visual.designRoute, 'world-3d');
-    assert.equal(work.visual.stage, 'V0');
+    assert.equal(work.visual.stage, 'V1');
     assert.equal(work.workItemType, 'SCENE');
     assert.ok(!work.visual.targets?.length);
     assert.equal(work.visual.reviews, undefined);
@@ -228,7 +228,7 @@ for (const returnScope of ['visual:V5', 'implementation']) test(`无图片 3D �
   work.gateStatus.F0 = 'PASS';
   work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ ...context, workItem: context.workPath, to: 'V1' });
+
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
@@ -323,7 +323,7 @@ test('图片路线通过的 V1 不能中途改成三维并继承功能基线', a
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ ...context, workItem: context.workPath, to: 'V1' });
+
   await runWorldEngineering(context, 'V1');
   await advanceVisual({ ...context, workItem: context.workPath, to: 'V2' });
   work = await readWork(context.repo, context.workPath);
@@ -355,7 +355,7 @@ test('三维 V1 进入 V2 前分别需要一次审查和人工空间确认', asy
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ ...context, workItem: context.workPath, to: 'V1' });
+
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
@@ -434,7 +434,7 @@ for (const destination of ['V2', 'V4']) {
     work.globalState = 'REVIEW';
     work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
     await putJson(context.repo, context.workPath, work);
-    await advanceVisual({ ...context, workItem: context.workPath, to: 'V1' });
+
     work = await readWork(context.repo, context.workPath);
     work.visual.candidateId = f.context.candidateId;
     work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');

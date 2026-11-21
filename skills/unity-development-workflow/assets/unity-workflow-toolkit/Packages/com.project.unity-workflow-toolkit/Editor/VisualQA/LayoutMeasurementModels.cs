@@ -13,8 +13,12 @@ namespace Project.UnityWorkflow.VisualQA
         public string uiSystem = string.Empty;
         public string coordinateSpace = string.Empty;
         public string outputPath = string.Empty;
+        /// <summary>当前 V3 冻结布局计划的项目相对路径，采集时计算内容摘要。</summary>
+        public string layoutPlanPath = string.Empty;
         public string gapAxis = string.Empty;
         public bool includeComponentSnapshots;
+        /// <summary>世界空间文字只采集组件样式，保留原场景和运行身份。</summary>
+        public bool textOnly;
         public string stateId = string.Empty;
         public string evidenceRoot = string.Empty;
         public List<LayoutMeasurementTarget> targets = new List<LayoutMeasurementTarget>();
@@ -105,11 +109,15 @@ namespace Project.UnityWorkflow.VisualQA
         public string origin = "SCREEN_TOP_LEFT";
         public string generatedAtUtc = string.Empty;
         public string outputPath = string.Empty;
+        /// <summary>本批测量对应的布局计划 SHA-256。</summary>
+        public string layoutPlanSha256 = string.Empty;
         public string measurementSource = string.Empty;
         public string runId = string.Empty;
         public int frameCount;
         public string stateId = string.Empty;
         public bool includesComponentSnapshots;
+        /// <summary>表示本批次只读取世界空间组件样式。</summary>
+        public bool textOnly;
         public LayoutRect viewportRect;
         public LayoutRect safeAreaRect;
         public List<LayoutMeasurementItem> measurements = new List<LayoutMeasurementItem>();

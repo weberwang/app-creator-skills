@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 拷问与 F4 集成
 

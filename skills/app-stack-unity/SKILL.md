@@ -22,7 +22,7 @@ Sprite 的 Pixels Per Unit 默认 `100`，uGUI 新建 Canvas 的参考像素单�
 
 插件执行按任务路由给可用的 Unity CLI、Unity MCP 与框架专项能力；先确认目标工程、活动 Editor 和实时可用命令。规范中列出的插件/工具能力不能视为当前已经连接或已经验证。
 
-各技术栈共用 V0–V5：V1 先验证功能，世界场景按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)落实搭建、整体确认和正式交接；UI 保留原图片与布局流程。
+各技术栈共用 V1–V5：V1 先验证功能，世界场景按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)落实搭建、整体确认和正式交接；UI 保留原图片与布局流程。
 
 技术事实以 Profile 和 references 为准。目标内的普通实现修复无需重复确认未受影响的决定；设计目标、布局依据或受影响合同发生变化时更新实际材料。已冻结的目标、人工确认及相关证据引用按公共控制器核对内容身份与摘要，摘要不证明用户身份；工程证据和用户人工视觉确认分别报告。
 

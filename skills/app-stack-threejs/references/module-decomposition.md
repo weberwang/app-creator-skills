@@ -8,7 +8,7 @@
 
 1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-orchestration-module-decomposition.md#划分模块)。
 
-4. 给出 G1 内可独立验证的实施计划。全局基线、foundation-only 边界和场景 V0→V1→V2→V3→V4→V5 顺序以[控制模型](../../threejs-domain-contracts/references/control-model.md)和[状态、阶段与停止门](../../threejs-domain-contracts/references/state-gates.md)为准；本文件只冻结模块/场景/显示层的职责、所有权、依赖和实施单元。基础包只承载场景无关的 `SHARED`/`MODULE` 能力。场景闭环自身规则、画面、常驻 HUD、清理和证据；modal/popup 等弹窗建立独立 DISPLAY_LAYER Work Item，不并入宿主场景完成条件。
+4. 给出 G1 内可独立验证的实施计划。全局基线、foundation-only 边界和场景 V1→V2→V3→V4→V5 顺序以[控制模型](../../threejs-domain-contracts/references/control-model.md)和[状态、阶段与停止门](../../threejs-domain-contracts/references/state-gates.md)为准；本文件只冻结模块/场景/显示层的职责、所有权、依赖和实施单元。基础包只承载场景无关的 `SHARED`/`MODULE` 能力。场景闭环自身规则、画面、常驻 HUD、清理和证据；modal/popup 等弹窗建立独立 DISPLAY_LAYER Work Item，不并入宿主场景完成条件。
 5. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-orchestration-module-decomposition.md#划分模块)。
 
 ## 场景与公共基础边界

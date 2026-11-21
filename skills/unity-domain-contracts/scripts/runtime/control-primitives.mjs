@@ -6,9 +6,9 @@ import { canonicalizePosixPath as canonicalizePosixPathRuntime } from './io.mjs'
 /** 唯一接受的数据合同版本；旧字段不会被迁移或解释。 */
 export const SCHEMA_VERSION = '1.0';
 /** 用户可见的六个项目阶段。 */
-export const STAGES = Object.freeze(['requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'global-integration-validation', 'release']);
+export const STAGES = Object.freeze(['commercial-initiation', 'requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'cross-module-integration', 'global-integration-validation', 'release']);
 /** 单场景证据阶段。 */
-export const SCENE_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
+export const SCENE_STAGES = Object.freeze(['V1', 'V2', 'V3', 'V4', 'V5']);
 /** 工作项全局状态。 */
 export const STATES = Object.freeze(['INTAKE', 'BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING', 'COMPLETE', 'RETURN', 'BLOCKED']);
 /** 控制门集合。 */
@@ -56,12 +56,12 @@ export const ACTION_LEVEL = Object.freeze({
 
 /** 阶段中文标签仅用于稳定展示，不参与门禁判断。 */
 export const STAGE_LABELS = Object.freeze({
-  'requirements-scope': '需求与范围', 'global-baseline': '全局基线', 'foundation-engineering': '基础工程',
-  'scene-production': '场景与弹窗生产', 'global-integration-validation': '全局集成验证',
+  'commercial-initiation': '商业立项', 'requirements-scope': '产品定义与版本规划', 'global-baseline': '全局基线', 'foundation-engineering': '基础工程',
+  'scene-production': '场景与弹窗生产', 'cross-module-integration': '跨模块集成', 'global-integration-validation': '模块集成与整体验收',
   release: '发布',
 });
 /** 场景阶段中文标签仅用于稳定展示。 */
-export const SCENE_LABELS = Object.freeze({ V0: '分流', V1: '功能实现与验证', V2: '场景目标', V3: '拆解与布局确认', V4: '正式资源验收', V5: '正式组合与运行验收' });
+export const SCENE_LABELS = Object.freeze({ V1: '功能实现与验证', V2: '场景目标', V3: '拆解与布局确认', V4: '正式资源验收', V5: '正式组合与运行验收' });
 /** 控制面异常；CLI 入口会把它转换为稳定 JSON 错误。 */
 export class WorkflowControlError extends Error {
   /** 创建带机器可读错误码的控制面异常。 */

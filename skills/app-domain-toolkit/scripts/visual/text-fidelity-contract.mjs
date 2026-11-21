@@ -1,5 +1,8 @@
 /** 三栈共享的文本目标、运行测量和逐属性容差校验，不替代真实运行采集。 */
 import { isDeepStrictEqual } from "node:util";
+import { createHash } from "node:crypto";
+import { readFileSync, realpathSync } from "node:fs";
+import { isAbsolute, relative, resolve, sep } from "node:path";
 
 /** 判断非空字符串。 */
 const text = (value) => typeof value === "string" && value.trim().length > 0;
@@ -7,6 +10,100 @@ const text = (value) => typeof value === "string" && value.trim().length > 0;
 const object = (value) => value !== null && typeof value === "object" && !Array.isArray(value);
 /** 判断两个合同事实是否完全一致。 */
 const equal = (a, b) => isDeepStrictEqual(a, b);
+
+/** 仅使用布局或覆盖范围明确声明的类型识别文字，位图内容由人工拆解登记。 */
+export function isDeclaredTextNode(node) {
+  const values = [node?.element_type, node?.elementType, node?.node_type, node?.nodeType,
+    node?.render_kind, node?.renderKind, node?.visual_route_analysis?.element_type];
+  return values.some((value) => typeof value === 'string' && ['text', 'label', 'bitmap-text', 'image-text', 'dynamic-text'].includes(value.toLowerCase()));
+}
+
+/** 位图不能核实的可选样式逐项交接原因，不把猜测值当作确认目标。 */
+export function pendingTextAttributes(typography) {
+  const names = new Set();
+  const errors = [];
+  if (typography?.pending_attributes === undefined) return { names, errors };
+  if (!Array.isArray(typography.pending_attributes) || !typography.pending_attributes.length) {
+    return { names, errors: ['pending_attributes 必须列出待确认属性及原因'] };
+  }
+  const allowed = new Set(['font_weight', 'font_style', 'line_height', 'letter_spacing', 'alignment', 'stroke', 'shadow', 'wrap']);
+  for (const item of typography.pending_attributes) {
+    if (!allowed.has(item?.property) || !text(item?.reason)) errors.push(`待确认属性 ${item?.property ?? '未知'} 缺少有效名称或原因`);
+    else if (names.has(item.property)) errors.push(`待确认属性 ${item.property} 重复`);
+    else {
+      names.add(item.property);
+      if (typography[item.property] !== undefined) errors.push(`待确认属性 ${item.property} 不能同时填写未经确认的目标值`);
+    }
+  }
+  return { names, errors };
+}
+
+/** 从当前项目的原生运行报告回读相同节点与属性，拒绝旧目标或内联自填读数。 */
+export function validateNativeTextEvidence(node, read, route, options) {
+  const identity = options.textReadbackIdentity;
+  if (!object(identity) || !['stack', 'workItemId', 'sceneId', 'stateId', 'candidateId'].every((key) => text(identity[key]))
+    || !object(identity.referenceTarget) || !text(identity.referenceTarget.path) || !/^[a-f0-9]{64}$/.test(identity.referenceTarget.sha256 ?? '')
+    || !object(identity.runtimeEvidenceRef) || !text(identity.runtimeEvidenceRef.path) || !/^[a-f0-9]{64}$/.test(identity.runtimeEvidenceRef.sha256 ?? '')) {
+    return ['原生文字读数缺少当前工作项、场景、状态、候选、确认稿或运行证据身份'];
+  }
+  const references = read('evidence', 'runtime_evidence', 'runtimeEvidence', 'evidence_paths', 'evidencePaths');
+  const entries = Array.isArray(references) ? references : [references];
+  const reports = entries.filter((item) => object(item) && text(item.path) && /^[a-f0-9]{64}$/.test(item.sha256 ?? ''));
+  if (reports.length !== 1) return ['原生文字读数必须唯一引用含 path 与 sha256 的运行 JSON'];
+  // 文字和公共布局验收消费同一份报告，避免旧批次记录借用当前视觉证据。
+  if (!equal(reports[0], identity.runtimeEvidenceRef)) return ['原生文字运行 JSON 未绑定当前目标的 runtime-layout 证据'];
+  try {
+    const root = realpathSync(options.textReadbackProjectRoot ?? options.projectRoot);
+    const path = reports[0].path.replaceAll('\\', '/');
+    if (isAbsolute(path) || path.split('/').some((part) => part === '..' || part.includes(':'))) throw new Error('运行 JSON 路径越界');
+    const target = realpathSync(resolve(root, path));
+    const suffix = relative(root, target);
+    if (suffix === '..' || suffix.startsWith(`..${sep}`) || isAbsolute(suffix)) throw new Error('运行 JSON 真实路径越界');
+    const bytes = readFileSync(target);
+    if (createHash('sha256').update(bytes).digest('hex') !== reports[0].sha256) throw new Error('运行 JSON 摘要不一致');
+    const report = JSON.parse(bytes.toString('utf8'));
+    if (report.schemaVersion !== 'web-native-text-readback/1.0' || report.measurementSource !== 'runtime-component'
+      || !text(report.runId) || !Array.isArray(report.nodes)) throw new Error('运行 JSON 缺少原生采集来源、runId 或节点');
+    for (const [key, expected] of Object.entries(identity)) {
+      if (key !== 'runtimeEvidenceRef' && !equal(report[key], expected)) throw new Error(`运行 JSON 的 ${key} 未绑定当前目标`);
+    }
+    const componentPaths = report.nodes.map((item) => item?.componentPath);
+    if (componentPaths.some((path) => !text(path)) || new Set(componentPaths).size !== componentPaths.length) throw new Error('运行 JSON 的实际文字组件路径缺失或重复');
+    const textNodeId = node.text_node_id ?? node.textNodeId ?? node.id;
+    const layoutNodeId = node.layout_node_id ?? node.layoutNodeId;
+    const matches = report.nodes.filter((item) => item?.textNodeId === textNodeId && item?.layoutNodeId === layoutNodeId);
+    if (matches.length !== 1 || !text(matches[0].componentPath) || !object(matches[0].measurement)) throw new Error(`文字节点 ${textNodeId} 缺少唯一的实际组件读数`);
+    const measurement = matches[0].measurement;
+    const fields = route === 'image-text'
+      ? ['renderer', 'actual_bounds', 'actual_geometry_unit', 'actual_coordinate_space', 'actual_test_id', 'actual_image_path', 'actual_image_sha256', 'actual_image_tint', 'actual_image_opacity', 'actual_semantic']
+      : ['renderer', 'font_loaded', 'fallback_detected', 'actual_bounds', 'glyph_bounds', 'baseline', 'actual_geometry_unit', 'actual_coordinate_space', 'actual_test_id', 'actual_content', 'actual_font_resources', 'actual_typography'];
+    if (route === 'image-text') {
+      const tint = node.typography_target?.image_tint;
+      const opacity = node.typography_target?.image_opacity;
+      if (!object(tint) || !['r', 'g', 'b'].every((key) => Number.isFinite(tint[key]) && tint[key] >= 0 && tint[key] <= 1)
+        || !Number.isFinite(opacity) || opacity < 0 || opacity > 1) throw new Error(`文字节点 ${textNodeId} 缺少图片组件 tint 或 opacity 目标`);
+      if (!equal(read('actual_image_tint'), tint) || read('actual_image_opacity') !== opacity) throw new Error(`文字节点 ${textNodeId} 的图片 tint 或 opacity 与目标不一致`);
+      const imagePath = read('actual_image_path');
+      const resource = (node.required_resources ?? []).find((item) => item?.path === imagePath && ['image', 'image-text', 'raster-image', 'sprite'].includes(item.kind));
+      const digest = read('actual_image_sha256');
+      if (!resource || !/^[a-f0-9]{64}$/.test(resource.sha256 ?? '') || digest !== resource.sha256) throw new Error(`文字节点 ${textNodeId} 的实际图片资源身份未绑定`);
+      if (typeof imagePath !== 'string' || isAbsolute(imagePath) || imagePath.replaceAll('\\', '/').split('/').some((part) => part === '..' || part.includes(':'))) throw new Error('实际文字图片路径越界');
+      const imageFile = realpathSync(resolve(root, imagePath));
+      const imageRelative = relative(root, imageFile);
+      if (imageRelative === '..' || imageRelative.startsWith(`..${sep}`) || isAbsolute(imageRelative)) throw new Error('实际文字图片真实路径越界');
+      if (createHash('sha256').update(readFileSync(imageFile)).digest('hex') !== digest) throw new Error(`文字节点 ${textNodeId} 的实际图片内容摘要不一致`);
+    }
+    for (const optional of ['content_case_id', 'actual_locale', 'actual_inputs', 'actual_content_source', 'actual_image_path']) {
+      if (read(optional) !== undefined && !fields.includes(optional)) fields.push(optional);
+    }
+    for (const name of fields) {
+      if (measurement[name] === undefined || !equal(measurement[name], read(name))) throw new Error(`文字节点 ${textNodeId} 的 ${name} 与原生运行读数不一致或缺失`);
+    }
+    return [];
+  } catch (error) {
+    return [`原生文字运行证据无效：${error.message}`];
+  }
+}
 
 /** 只接受可真实复核的标量或非空结构，空对象和非有限数不能作为排版证据。 */
 function validStyle(value) {
@@ -174,6 +271,10 @@ function expectedContent(node, read, errors) {
 export function validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline }) {
   const errors = [];
   const typography = node.typography_target ?? {};
+  if (typography.font_identity?.status === "unresolved") errors.push("font_identity 字体目标仍待人工确认");
+  const pending = pendingTextAttributes(typography);
+  errors.push(...pending.errors);
+  for (const item of Array.isArray(typography.pending_attributes) ? typography.pending_attributes : []) if (pending.names.has(item.property)) errors.push(`文字属性 ${item.property} 待人工确认：${item.reason}`);
   const declaredResources = Array.isArray(node.required_resources) ? node.required_resources : [];
   const frozenBounds = node.target_bounds;
   const targetGlyph = typography.target_glyph_bounds;
@@ -208,6 +309,7 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
   ], errors);
 
   const differences = [];
+  const styleDifferences = [];
   if (geometryLimit !== null) compare(frozenBounds, actualBounds, geometryLimit, "bounds", differences);
   if (route !== "image-text" && geometryLimit !== null) {
     compare(targetGlyph, actualGlyphBounds, geometryLimit, "glyph_bounds", differences);
@@ -238,7 +340,7 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
       const identity = typography.font_identity ?? {};
       const family = identity.status === "resolved" ? identity.family : node.font_resolution?.family;
       if (!text(family) || !text(actual.font_family)) errors.push("字体身份或冻结替代方案缺少 family");
-      else if (actual.font_family !== family) differences.push("font_family");
+      else if (actual.font_family !== family) styleDifferences.push("font_family");
       const fields = ["font_size", "font_size_unit", "font_weight", "font_style", "line_height", "letter_spacing", "alignment", "fill", "stroke", "shadow", "wrap", "line_count"];
       const numericFields = new Set(["font_size", "font_weight", "line_height", "letter_spacing", "line_count"]);
       if (rules.typography !== undefined && !object(rules.typography)) errors.push("typography 容差必须为按属性声明的对象");
@@ -259,9 +361,9 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
         if (allowed !== null && name === "fill") {
           // 字体颜色和透明度均为必检事实，其他视觉差异例外不能掩盖本项偏差。
           const fillDifferences = [];
-          compare(target, actual[name], allowed, name, fillDifferences);
+          compare(target, actual[name], 0, name, fillDifferences);
           if (fillDifferences.length) errors.push(`字体颜色或透明度与目标不一致: ${fillDifferences.join(", ")}`);
-        } else if (allowed !== null) compare(target, actual[name], allowed, name, differences);
+        } else if (allowed !== null) compare(target, actual[name], 0, name, styleDifferences);
       }
     }
     if (route === "hybrid") {
@@ -269,6 +371,8 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
       if (!text(read("actual_image_path")) || !images.includes(read("actual_image_path"))) errors.push("hybrid 的 actual_image_path 必须绑定冻结视觉资源");
     }
   }
+  // 其他视觉差异的批准不能豁免冻结文字样式的逐属性比较。
+  if (styleDifferences.length) errors.push(`文字样式差异超出预声明 tolerance: ${styleDifferences.join(", ")}`);
   if (differences.length && !exception) errors.push(`文本 target/candidate 差异超出预声明 tolerance 或存在未批准差异: ${differences.join(", ")}`);
   return errors;
 }

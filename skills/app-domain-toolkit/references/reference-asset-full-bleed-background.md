@@ -4,7 +4,7 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 适用边界
 

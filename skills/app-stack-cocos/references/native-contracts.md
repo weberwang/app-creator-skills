@@ -4,7 +4,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈共用 V0–V5：V0 范围、V1 功能与适用空间验证、V2 正式视觉方向／目标、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈共用 V1–V5：V1 确认完整模块方案并按需验证风险、V2 生成并确认模块全部适用状态和进度稿、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 
@@ -96,7 +96,7 @@
 <a id="mode-cocos-game-architecture--全局控制接入"></a>
 #### 全局控制接入
 
-本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V0-V5、A0-A6、F0-F4 与 Work Item 的当前控制模型。任务内方案和路径变化同步更新计划并重验受影响部分；只有实质架构取舍才停止并进入 grilling。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
+本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V1-V5、A0-A6、F0-F4 与 Work Item 的当前控制模型。任务内方案和路径变化同步更新计划并重验受影响部分；只有实质架构取舍才停止并进入 grilling。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
 
 <a id="mode-cocos-game-architecture--工程边界"></a>
 #### 工程边界
@@ -157,7 +157,7 @@ Creator 编辑器写入、AssetDB、场景、节点、组件、Prefab、构建�
 <a id="mode-cocos-gameplay-development--cocos-creator-3x-玩法开发"></a>
 ### Cocos Creator 3.x 玩法开发
 
-全局阶段、V0–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V0–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
+全局阶段、V1–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V1–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
 
 <a id="mode-cocos-gameplay-development--全局控制接入"></a>
 #### 全局控制接入
@@ -273,7 +273,7 @@ Creator Scene/Node/Component、`AudioSource`、Prefab、AssetDB 和构建操作�
 <a id="mode-cocos-game-juice--cocos-creator-3x-游戏汁水感"></a>
 ### Cocos Creator 3.x 游戏汁水感
 
-先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Creator 原生工具约束和适用阶段确认仍保留。
+先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V1–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Creator 原生工具约束和适用阶段确认仍保留。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/feedback-lifecycle.md#完整流程)。
 
@@ -969,7 +969,7 @@ V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边�
 <a id="mode-cocos-game-asset-integration--视觉确认边界"></a>
 ##### 视觉确认边界
 
-同一场景 Work Item 的 V0→V1→V2→V3→V4→V5 链在 V3 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG（需要交互对照时可使用同批 `review.html`）；技术 JSON、proposal 和 decision 在后台用于机器校验与身份绑定，不构成额外文字确认门。Stage A proposal 是历史确认输入，Stage B decision 是唯一布局生成输入；同批 `layout-nodes.json` 保存唯一分组/父子/参照/布局事实，并由 scene contract 的 `layout_source.nodes_file` 引用。`layout_binding`、annotation 与 confirmation 只存身份/证据，且它们的 `layout_nodes_file` 必须匹配 source 路径。`visual-decomposition-confirmation/1.0` 绑定拆解 PNG、proposal、target、V3 candidate、diff、baseline、全部编号和用户原文；已确认分组或父子变化必须按原规则重生成并重新确认。Stage B 布局修改从 decision 派生更新，不回写 Stage A proposal；PNG、`review.html` 和派生快照是只读投影。V3 拆解图、技术 JSON、布局节点源、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图、decision 和同一 `layout_nodes_file`。V4 资源验收和 V5 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V3 图像确认。
+同一场景 Work Item 的 V1→V2→V3→V4→V5 链在 V3 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG（需要交互对照时可使用同批 `review.html`）；技术 JSON、proposal 和 decision 在后台用于机器校验与身份绑定，不构成额外文字确认门。Stage A proposal 是历史确认输入，Stage B decision 是唯一布局生成输入；同批 `layout-nodes.json` 保存唯一分组/父子/参照/布局事实，并由 scene contract 的 `layout_source.nodes_file` 引用。`layout_binding`、annotation 与 confirmation 只存身份/证据，且它们的 `layout_nodes_file` 必须匹配 source 路径。`visual-decomposition-confirmation/1.0` 绑定拆解 PNG、proposal、target、V3 candidate、diff、baseline、全部编号和用户原文；已确认分组或父子变化必须按原规则重生成并重新确认。Stage B 布局修改从 decision 派生更新，不回写 Stage A proposal；PNG、`review.html` 和派生快照是只读投影。V3 拆解图、技术 JSON、布局节点源、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图、decision 和同一 `layout_nodes_file`。V4 资源验收和 V5 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V3 图像确认。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 

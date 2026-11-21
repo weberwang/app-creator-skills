@@ -261,6 +261,23 @@ test('已确认效果图且授权忠实重建可进入 V3，预览无需第二�
   assert.doesNotThrow(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc));
 });
 
+test('全局代表稿的重建授权可与模块 V2 稿确认分开记录', (t) => {
+  const f = fixture(t);
+  const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V2.path), 'utf8'));
+  const authorization = { ...review, stage: 'BASELINE', userMessageRef: 'test-only://foundation-selected' };
+  const snapshot = structuredClone(f.snapshot);
+  snapshot.reconstruction.authorizationRef = write(f.repo, 'foundation-authorization.json', authorization);
+  delete review.rebuildAuthorization;
+  f.work.visual.reviews.V2 = write(f.repo, 'module-v2-confirmation.json', review);
+  f.doc.figmaDesignRef = snapshotRef(f, snapshot);
+  assert.doesNotThrow(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc));
+
+  // 其他对象的批准不能为当前稿件提供重建授权。
+  snapshot.reconstruction.authorizationRef = write(f.repo, 'other-object-authorization.json', { ...authorization, objectId: 'other-page' });
+  f.doc.figmaDesignRef = snapshotRef(f, snapshot);
+  assert.throws(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc), /未绑定源效果图和忠实还原授权/);
+});
+
 test('有效方向的局部增量直接复用，并防止无来源或循环复用', (t) => {
   const f = fixture(t); const source = baseline(f); const sourceRef = write(f.repo, 'source-baseline.json', source);
   const local = { ...source, baselineId: 'increment', candidates: [source.candidates[0]], exploration: { kind: 'increment', sourceBaselineRef: sourceRef } };
@@ -447,7 +464,7 @@ test('ESP32额外状态同样受实际分辨率、字体与预算约束', (t) =>
   }
 });
 
-test('已有精确批准可在V2检查Figma写入，但设计提案不获得设备或付费权限', async (t) => {
+test('Figma V2 正式模块先核对基础视觉，设计提案按精确批准执行', async (t) => {
   const f = fixture(t);
   const created = await initializeWork({ repo: f.repo, args: { id: 'authorized-design', stack: 'flutter', type: 'PAGE', objective: '合成设计动作', 'design-intent': 'proposal' } });
   const path = created.metadata.workItemPath; const work = loadWork(f.repo, path);
@@ -457,6 +474,11 @@ test('已有精确批准可在V2检查Figma写入，但设计提案不获得设�
     workItemId: work.workItemId, stack: work.stack, stageId: work.stageId, actionId: 'edit-design', effects: ['external-write'], target: 'figma:fixtureFile', userMessageRef: 'test-only://prior-approval',
   } }; write(f.repo, path, work);
   assert.equal(checkProtectedAction({ repo: f.repo, workItem: path, actionId: 'edit-design', effect: 'external-write', target: 'figma:fixtureFile' }).status, 'PASS');
+  work.visual.designIntent = 'implementation';
+  work.visual.candidateId = 'confirmed-candidate';
+  write(f.repo, path, work);
+  assert.throws(() => checkProtectedAction({ repo: f.repo, workItem: path, actionId: 'edit-design', effect: 'external-write', target: 'figma:fixtureFile' }), /基础视觉冻结清单/);
+  work.visual.designIntent = 'proposal';
   for (const effect of ['device', 'payment']) {
     work.action.effects = [effect]; work.action.approval.effects = [effect]; write(f.repo, path, work);
     assert.throws(() => checkProtectedAction({ repo: f.repo, workItem: path, actionId: 'edit-design', effect, target: 'figma:fixtureFile' }), /尚未到达可执行/);
@@ -499,7 +521,7 @@ test('仅设计提案沿现有控制器V2交付，不预建工程且不能进入
   const created = await initializeWork({ repo: f.repo, args: { id: 'proposal', stack: 'flutter', type: 'PAGE', objective: '仅设计提案', 'design-intent': 'proposal', 'object-id': 'page-a', 'project-id': 'project-a' } });
   const path = created.metadata.workItemPath; let work = loadWork(f.repo, path);
   work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS'; work.globalState = 'PROPOSAL'; write(f.repo, path, work);
-  await advanceVisual({ repo: f.repo, workItem: path, to: 'V1' }); await advanceVisual({ repo: f.repo, workItem: path, to: 'V2' });
+await advanceVisual({ repo: f.repo, workItem: path, to: 'V2' });
   work = loadWork(f.repo, path); work.visual.candidateId = 'direction-a';
   const doc = { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: 'flutter', workItemType: 'PAGE', visualStageModel: 'function-first-v1', visualStage: 'V2', objectId: work.visual.objectId, candidateId: 'direction-a', referenceTarget: f.doc.referenceTarget };
   attachFigmaAppFixture(f.repo, work, doc, { designOnly: true });

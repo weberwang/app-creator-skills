@@ -2,7 +2,7 @@
 
 本参考是各技术栈专业技能唯一的公共执行接线。Unity、Cocos Creator、Phaser、Three.js、Flutter、Expo、ESP32 与 Node.js 的专业技能继续定义各自的 API、项目文件、资产身份、工具、构建和技术验收；专业技能不再维护第二套全局 CLI、Work Item 状态机或审批账本。
 
-先按所选栈与真实任务判断条款适用范围。以下文本、布局、可见节点、输入命中、资源和 V0–V5 只用于实际客户端显示；Node.js 无界面服务器使用 MODULE 等非视觉工作项，执行其接口、数据、任务及生命周期规范，不读取未安装的 UI 能力，也不以截图或视觉确认为服务端工程门。
+先按所选栈与真实任务判断条款适用范围。以下文本、布局、可见节点、输入命中、资源和 V1–V5 只用于实际客户端显示；Node.js 无界面服务器使用 MODULE 等非视觉工作项，执行其接口、数据、任务及生命周期规范，不读取未安装的 UI 能力，也不以截图或视觉确认为服务端工程门。
 
 ## 当前控制记录
 
@@ -10,7 +10,7 @@
 - 输出文件按[输出文件与交付规范](output-files.md)分类、命名和保存，先采用当前栈及实际工具的路径约束。执行结果 JSON、命令输出及公共 Manifest 条目受当前 `evidenceRoot` 约束，`Execution Result.files` 则指向单元所有权内的实际交付；不可混用人工审阅目录，也不为采用目录规范迁移冻结记录或新增 Schema 字段。
 - Unity 文本及国际化按 [UniText 安装检查与 JSON 配置](../../unity-development-workflow/references/text-and-localization.md)实施，异常时由用户选择修复或回退 TMP；Cocos、Phaser、Three.js 的静态文本按[静态文本的可见表现](../../app-domain-toolkit/references/ui-copy-principles.md#静态文本的可见表现)使用位图字体或独立文字图片。Flutter、Expo 与 ESP32 使用各自本栈原生文本规范。涉及客户端界面时同步本地化资源和可访问语义。
 - 文本组件按[固定宽度与用途排版](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)实施：保持已确认基准字号与断行，按用途声明单行/换行及固定字号/有界缩小策略、触发条件和具体最小可读字号；正文不持续缩小。更新已有布局规格与正式配置，并在当前验证中分别核对基准还原、内容极值及字体放大。
-- 新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素的设计或可见表现，就统一执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)，从本次增量 V0 开始，再验证 V1 并完成适用 V2–V5；复用素材、组件、动态生成、局部特效参数或时序调整均不豁免 V0。先明确变化范围、所属对象、父级、定位参照和尺寸策略，再在正式源实现并验证，不重做无关宿主。
+- 新增或修改场景、页面、显示层、功能或机制，只要涉及可见表现，就执行[增量显示约束](../../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)。V1 确认范围、状态、依赖与验收，V2–V5 按实际影响设计、准备并完整实现验收。
 - 场景、页面和显示层统一执行[节点最小化](../../app-domain-toolkit/references/reference-domain-display-ownership.md#节点最小化)。V3 拆解和布局优先复用已有节点，只保留有实际职责的节点。V5 按确认后的最简层级还原并核对正式源与实际运行结构。
 - 交互组件统一执行[可交互组件结构、命中与输入职责](../../app-domain-toolkit/references/ui-interaction.md)，每个操作绑定唯一语义控件，并按实际平台验证命中、焦点和事件竞争。
 - 各栈项目采用可视化编辑器时统一遵守[编辑器优先](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)。能配置的功能优先在正式场景、Prefab 或原生 UI 源中实现并保存。代码负责业务规则与运行时行为，读取正式配置，启动时不重建已配置节点或覆盖布局。功能性位置调整按[编辑器位置关系的控制权](../../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)限定范围与结束策略。
@@ -26,15 +26,15 @@
 
 ## 状态、视觉与决定
 
-游戏在需求／基线与对象 V0 按[关卡与场景方案探索](../../app-domain-toolkit/references/game-design-exploration.md#explore)交接结构草案、内容需求和待验证假设，概念图可选，不提前逐物件拆图生图。3D 世界先在正式工程白模搭建与 V1 验证，2D 按平面布局与占位验证，UI 走原流程。本批整体场景联合单次审查并经人工修改或确认后，再安排依赖该空间基线的正式资产生产；不自动写入 V2/V3 通过记录。现有图片或拆解机器门的适用缺口按该规范说明，不能靠文字取消或伪造工件。
+游戏在产品定义、技术方案及模块任务 按[关卡与场景方案探索](../../app-domain-toolkit/references/game-design-exploration.md#explore)交接结构草案、内容需求和待验证假设，概念图可选，不提前逐物件拆图生图。3D 世界先在正式工程白模搭建与 V1 验证，2D 按平面布局与占位验证，UI 走原流程。本批整体场景联合单次审查并经人工修改或确认后，再安排依赖该空间基线的正式资产生产；不自动写入 V2/V3 通过记录。现有图片或拆解机器门的适用缺口按该规范说明，不能靠文字取消或伪造工件。
 
 业务任务范围遵守[本地工具目录隔离](workflow.md#本地工具目录与项目范围)：普通源码/变更扫描、候选基线、工作量与提交判断排除项目根 `.agents/`，不因本地技能安装/更新要求业务返工。规范与工具仍从实际安装位置读取，工具自检不等于业务代码扫描；有效业务记录不得转存到该目录隐藏。
 
 涉及可见内容设计时，先按共同权威[体验与视觉依据](../../app-asset-workflow/references/interface-intent.md#design-basis)复用或补齐本批行为、压力、状态、平台、关键取舍与可执行方向，区分硬约束和探索空间；局部任务不重做全产品分析。在草图、效果图、生图提示词或组件实现之前按[内容与装饰筛选](../../app-asset-workflow/references/interface-intent.md#在设计与输出前筛选内容)明确判断、线索、行动、反馈及精确信息，再决定文字、承载位置和状态显隐。生成图片前同时应用[图片制作约束](../../app-asset-workflow/references/style-and-production.md#生成前约束)，将适用分析转成当次实际发送的独立完整提示词，在原记录保留选择理由及来源；共用任务与视角不等于共用美术造型，不把白模调试说明绘入正式稿。代理检查输入与技术事实，画面可读性、风格差异和视觉质量按既有人工及截图授权规则判断。
 
-公共状态和转移以 [控制面](../../app-workflow-control/SKILL.md) 与 [六阶段及对象流程](workflow.md) 为准。六阶段为需求与范围、全局基线、基础工程、场景/页面/显示层生产、全局集成验证、发布；全局状态只能通过控制器支持的显式迁移。`run` 只自动推进满足门禁的安全早期阶段，在生产实现、发布和人工决定边界停止。
+公共状态和转移以[控制面](../../app-workflow-control/SKILL.md)及[七阶段](workflow.md#七阶段)为准。研发止于模块集成与整体验收，委托的发布另建独立工作项。状态由控制器通过显式迁移校验，`run` 只推进符合条件的安全早期状态。
 
-可见对象各自绑定 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`；V0–V5 是对象进度，不是第二套全局状态。V1 按上述 3D／2D／UI 分流验证功能，游戏图片目标及 UI 沿用适用候选与拆解／布局合同，3D 模型交接不得绕过现有机器门。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)在 V2 内完成分析、生图、用户选图及忠实重建，再提取 V3 规格；原图确认及忠实重建授权有效时不重复选稿；ESP32 可按实际硬件约束采用。设计稿已清楚表达的结构与布局无须重复绘图或审批；V4 在正式工程试接并导入适用素材，V5 验收当前运行组合。仅设计提案不强制建设运行工程；正式实现仍须相关 V1 功能验证。阶段确认记录对象、用途、真实用户消息及适用范围；技术通过不代替人工显示确认。
+可见对象绑定实际 `SCENE`、`PAGE` 或 `DISPLAY_LAYER` Work Item 和 `objectId`。第 4 阶段确认并冻结全局方向和代表稿；V1 确认完整模块方案，V2 生成并人工确认覆盖模块全部适用流程、状态及进度的设计稿，V3 拆解同一版本，V4 准备资源，V5 完整实现及验收。Flutter、Expo 默认按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)，ESP32 和游戏按各自实际路线。阶段确认关联对象、真实用户消息与范围，显示由用户人工核对。
 
 只在需要用户对产品目标、行为、预算、视觉方向或其他实质取舍作决定时使用 [Grilling Record](../../app-workflow-control/schemas/grilling-record.schema.json)，并通过 Work Item 的 `grillingRef` 绑定。OPEN 的问题阻止其影响范围；回答、决定和 `userMessageRef` 必须来自实际用户消息。没有待决取舍时不要制造拷问或审批记录。
 
@@ -60,7 +60,7 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 
 `init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 从真实成功命令、合法输出记录及交付/删除清单生成单元结果并合并真实证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
 
-涉及显示设计或可见表现的新增与修改，先完成当前 V0 范围定义，再完成当前 V1 功能验证，随后在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。复用只覆盖仍有效的事实，变化部分不能冒用旧确认；V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
+涉及显示设计或可见表现的新增与修改，先在模块任务定义范围，再确认当前 V1 模块方案，随后在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。复用只覆盖仍有效的事实，变化部分不能冒用旧确认；V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
 
 全局工程门 F0–F4 分别记录范围、目标与有效决定、领域质量、真实工程结果和受保护动作的精确授权事实。A0–A6 在产品流程中描述动作风险等级，不会因为等级本身产生新的 CLI 命令或审批阶段。普通任务范围内的本地工作依据当前用户请求和 Work Item 执行；`action.approval` 只绑定真实用户明确批准的具体副作用动作及对象。控制器只记录/校验状态，不执行真机、外部写入、签名、上传、付费、破坏性操作或发布。
 

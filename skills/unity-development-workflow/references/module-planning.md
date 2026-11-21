@@ -12,7 +12,7 @@
 
 - `SHARED`：最小共享骨架，强制串行。
 - `MODULE`：场景无关能力；只有状态与路径互斥时可并行。
-- `SCENE`：单场景 V0-V5 聚合，只拥有玩法、画面和常驻 HUD。
+- `SCENE`：单场景 V1-V5 聚合，只拥有玩法、画面和常驻 HUD。
 - `DISPLAY_LAYER`：独立 Work Item，负责 modal、popup、drawer、toast 等瞬态层；`hostSceneId` 只绑定运行上下文，不把实现和验收并入宿主场景。
 - `INTEGRATION`：跨场景入口、Build Settings、Addressables、共享配置与联合验证，强制串行。
 - `RELEASE`：独立 Work Item，处理候选包和获批外部动作。

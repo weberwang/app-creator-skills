@@ -222,6 +222,93 @@ test('文字目标与实际值必须包含字体颜色和透明度', (t) => {
   }
 });
 
+test('Flutter V5 文字必须读取当前运行的组件样式', (t) => {
+  const f = fixture(t);
+  const comparison = JSON.parse(readFileSync(join(f.repo, f.doc.comparisonRef.path), 'utf8'));
+  const item = comparison.cases[0];
+  const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
+  const output = JSON.parse(readFileSync(join(f.repo, capture.captureOutputRef.path), 'utf8'));
+  /** 固定当前采集、组合和既有确认，独立验证每个实际读数。 */
+  function check() {
+    capture.captureOutputRef = write(f.repo, 'text-current.json', output);
+    item.captureRef = write(f.repo, 'capture-current.json', capture);
+    f.doc.comparisonRef = write(f.repo, 'comparison-current.json', comparison);
+    const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V5.path), 'utf8'));
+    review.comparisonRef = f.doc.comparisonRef;
+    f.work.visual.reviews.V5 = write(f.repo, 'v5-current.json', review);
+    return validateFlutterDesign(f.repo, f.work, 'V5', f.doc);
+  }
+  assert.doesNotThrow(check);
+  const entry = output.entries.find((item) => item.designItemId === 'heading');
+  entry.values.fontFamily = 'prototype-font';
+  assert.throws(check, /heading\/default-phone\/fontFamily.*不一致/);
+  entry.values.fontFamily = f.plan.implementations[0].requirements.appearance.value.normalized.typography.family;
+  delete entry.propertySources.fontSize;
+  assert.throws(check, /heading\/default-phone\/fontSize.*回读/);
+  entry.propertySources.fontSize = { componentType: 'RenderParagraph', propertyPath: 'text.style.fontSize' };
+  output.runId = 'old-run';
+  assert.throws(check, /未绑定当前计划、截图及运行条件/);
+  output.runId = capture.runId;
+  output.designReconstructionRef = { path: 'old-plan.json', sha256: '0'.repeat(64) };
+  assert.throws(check, /未绑定当前计划、截图及运行条件/);
+});
+
+test('Flutter 同状态的多个文字设计项不能共用一个组件读数', (t) => {
+  const f = fixture(t);
+  const comparison = JSON.parse(readFileSync(join(f.repo, f.doc.comparisonRef.path), 'utf8'));
+  const item = comparison.cases[0];
+  const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
+  const output = JSON.parse(readFileSync(join(f.repo, capture.captureOutputRef.path), 'utf8'));
+  assert.equal(output.entries.length, 2);
+  assert.deepEqual(output.entries[0].values, output.entries[1].values);
+  output.entries[1].runtimeNodeId = output.entries[0].runtimeNodeId;
+  capture.captureOutputRef = write(f.repo, 'duplicate-component-output.json', output);
+  item.captureRef = write(f.repo, 'duplicate-component-capture.json', capture);
+  f.doc.comparisonRef = write(f.repo, 'duplicate-component-comparison.json', comparison);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /文字组件.*已被其他设计节点使用/);
+});
+
+test('Flutter V3 缺少字体规格或使用估计值时保留未完成', (t) => {
+  const missing = fixture(t, 'V3');
+  missing.plan.implementations[0].requirements.appearance.value.normalized.typography.family = '';
+  savePlan(missing);
+  assert.throws(() => validateFlutterDesign(missing.repo, missing.work, 'V3', missing.doc), /Schema|fontFamily/);
+  const estimated = fixture(t, 'V3');
+  estimated.plan.implementations[0].requirements.typography.basis = 'estimated';
+  savePlan(estimated);
+  assert.throws(() => validateFlutterDesign(estimated.repo, estimated.work, 'V3', estimated.doc), /typography.*估计值/);
+});
+
+test('Flutter V5 确认目标无文字时跳过文字组件回读', (t) => {
+  const f = fixture(t);
+  for (const implementation of f.plan.implementations) {
+    const requirements = implementation.requirements;
+    const appearance = requirements.appearance.value;
+    appearance.raw.nodeType = 'FRAME'; appearance.raw.font = null; appearance.raw.textVisual = null;
+    appearance.normalized.typography = null; appearance.normalized.textFill = null; appearance.normalized.textOpacity = null;
+    requirements.typography.value = { applicable: false, reason: '当前目标没有文字' };
+    const report = f.reports.find((entry) => entry.report.implementationId === implementation.id).report;
+    for (const observation of report.observations) observation.value = requirements[observation.property].value;
+  }
+  rebind(f);
+  const comparison = JSON.parse(readFileSync(join(f.repo, f.doc.comparisonRef.path), 'utf8'));
+  comparison.designReconstructionRef = f.doc.designReconstructionRef;
+  comparison.implementationEvidenceRefs = f.doc.implementationEvidenceRefs;
+  const item = comparison.cases[0];
+  const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
+  capture.designReconstructionRef = f.doc.designReconstructionRef;
+  capture.implementationEvidenceRefs = f.doc.implementationEvidenceRefs;
+  capture.sourceRefs = f.reports.flatMap(({ report }) => report.sourceRefs);
+  capture.captureOutputRef = write(f.repo, 'no-text-capture.log', '无文字的运行采集');
+  delete capture.runId;
+  item.captureRef = write(f.repo, 'no-text-capture.json', capture);
+  f.doc.comparisonRef = write(f.repo, 'no-text-comparison.json', comparison);
+  const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V5.path), 'utf8'));
+  review.comparisonRef = f.doc.comparisonRef;
+  f.work.visual.reviews.V5 = write(f.repo, 'no-text-v5.json', review);
+  assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc));
+});
+
 test('合法全原生页面与当前组件复用可通过，源码改变使证据失效', (t) => {
   const f = fixture(t, 'V4');
   assert.doesNotThrow(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc));
@@ -291,6 +378,9 @@ test('Flutter V3 和 V5 按消费者检查九宫格真实倍率和最小显示�
   const item = comparison.cases[0]; const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
   capture.designReconstructionRef = f.doc.designReconstructionRef; capture.implementationEvidenceRefs = f.doc.implementationEvidenceRefs;
   capture.sourceRefs = f.reports.flatMap(({ report }) => report.sourceRefs);
+  const textOutput = JSON.parse(readFileSync(join(f.repo, capture.captureOutputRef.path), 'utf8'));
+  textOutput.designReconstructionRef = f.doc.designReconstructionRef;
+  capture.captureOutputRef = write(f.repo, 'slice-text-output.json', textOutput);
   const sample = { nodeId: 'heading', conditionId: item.conditionId, runtimeNodeId: 'Heading', sourcePath: 'panel.png', sourceSize: { width: 30, height: 24 },
     border: implementation.production.slice, scale: 1, transformScaleX: 1, transformScaleY: 1, displaySize: { width: 20, height: 16 } };
   /** 每次变异均重新绑定当前采集证据和人工确认引用。 */
@@ -333,6 +423,8 @@ test('V5 拒绝目标冒充运行图及文本伪造截图', (t) => {
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /目标图冒充运行截图/);
   const item = comparison.cases[0]; item.runtimeRef = write(f.repo, 'fake-runtime.txt', 'runtime PASS');
   const capture = JSON.parse(readFileSync(join(f.repo, item.captureRef.path), 'utf8'));
+  const textOutput = JSON.parse(readFileSync(join(f.repo, capture.captureOutputRef.path), 'utf8'));
+  textOutput.runtimeRef = item.runtimeRef; capture.captureOutputRef = write(f.repo, 'fake-text-output.json', textOutput);
   capture.runtimeRef = item.runtimeRef; item.captureRef = write(f.repo, 'fake-capture.json', capture);
   f.doc.comparisonRef = write(f.repo, 'text-as-runtime.json', comparison);
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /运行截图.*解码失败/);

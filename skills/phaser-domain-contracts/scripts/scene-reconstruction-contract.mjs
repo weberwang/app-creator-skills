@@ -514,8 +514,8 @@ export function validateSceneReconstructionContract(contract, manifest = null, o
   }
   const layoutInfo = validateLayoutDecomposition(contract, targetInfo, stage, errors, effectImage, { requireLayout: requireFinalLayout });
   validateLayoutRegionBindings(regions, layoutInfo, contract, stage, errors, effectImage);
-  // effect-image 的文本必须先完成独立拆解；普通合同由模块内部直接跳过，不引入额外硬门。
-  errors.push(...validateSceneTextDecomposition(contract, { stage, manifest, effectImage, regions, layoutInfo, toleranceDefinitions: toleranceBlock }));
+  // 普通路线中明确分类的文字也须交接和验证样式。
+  errors.push(...validateSceneTextDecomposition(contract, { ...options, stage, manifest, effectImage, regions, layoutInfo, toleranceDefinitions: toleranceBlock }));
   // effect-image 的每个视觉区域都必须先完成来源路线分析；普通游戏 UI 不受该忠实还原硬门影响。
   if (effectImage) errors.push(...validateSceneVisualRouteContract(contract, manifest, { ...options, stage, toleranceDefinitions: toleranceBlock }));
   validateCompositionAndResponsive(contract, targetInfo, stage, errors, effectImage, mode);

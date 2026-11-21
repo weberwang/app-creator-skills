@@ -2,7 +2,7 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。
 
-各技术栈统一使用 V0–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)落实 V1、整体确认和生产交接，UI／图片路线保留其目标、拆解布局、资源与运行门。
+各技术栈统一使用 V1–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)落实 V1、整体确认和生产交接，UI／图片路线保留其目标、拆解布局、资源与运行门。
 
 ## 完整流程
 
@@ -24,7 +24,7 @@
 
 ### 实现（cocos、phaser、threejs）
 
-按当前场景 Work Item 的阶段门推进玩法交付：V1 实现并验证功能，3D 世界先搭建或复用有效白模，2D／UI 按风险选择额外原型；整体空间确认后按[生产交接](game-design-exploration.md#production-handoff)安排 V2–V4。V5 消费适用的 V3/V4 产物完成正式组合及功能与视觉验收；现有机器合同限制按[工具边界](game-design-exploration.md#tooling-boundary)如实处理。foundation-only 的基础能力和跨场景 `INTEGRATION` 由控制面计划调度；不另建场景生命周期。
+按当前场景 Work Item 的阶段门推进玩法交付：V1 确认完整模块方案，按风险选择白模或原型；V2 生成并确认模块全部适用状态及进度稿，按[生产交接](game-design-exploration.md#production-handoff)安排 V3–V4。V5 消费适用的 V3/V4 产物完成正式组合及功能与视觉验收；现有机器合同限制按[工具边界](game-design-exploration.md#tooling-boundary)如实处理。foundation-only 的基础能力和跨场景 `INTEGRATION` 由控制面计划调度；不另建场景生命周期。
 
 ### 实现（cocos、phaser、threejs）
 
@@ -32,7 +32,7 @@
 
 ### 实现（cocos、phaser、threejs）
 
-foundation-only 阶段先完成场景无关的 `SHARED`/`MODULE`；V1 按已授权范围实现并验证功能；V3 布局确认与 V4 资源验收通过后，在 V5 完成正式 SCENE 集成。场景实现只闭环玩法、正式资源、场景自有 UI/常驻 HUD、清理和场景证据。modal/popup 等弹窗必须拆为独立 DISPLAY_LAYER Work Item，读取自己的 V3/V4 证据并在自身 V5 验收；弹窗不属于大厅或其他宿主场景实现，也不阻断其验收。`hostSceneId` 仅用于公开接口和运行上下文接线。
+foundation-only 阶段先完成场景无关的 `SHARED`/`MODULE`；V1 按已授权范围确认完整模块方案；V3 布局确认与 V4 资源验收通过后，在 V5 完成正式 SCENE 集成。场景实现只闭环玩法、正式资源、场景自有 UI/常驻 HUD、清理和场景证据。modal/popup 等弹窗必须拆为独立 DISPLAY_LAYER Work Item，读取自己的 V3/V4 证据并在自身 V5 验收；弹窗不属于大厅或其他宿主场景实现，也不阻断其验收。`hostSceneId` 仅用于公开接口和运行上下文接线。
 
 ### 实现（cocos、phaser、threejs）
 

@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const commonAreas = ['flow', 'state-data', 'failure-recovery', 'persistence', 'platform'];
-const gameAreas = ['combat', 'economy', 'progression', 'content'];
+const gameAreas = ['combat', 'economy', 'progression', 'content', 'player-feedback', 'advertising'];
 const appAreas = ['identity-access', 'business-rules', 'content', 'integration'];
 const gameStacks = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 

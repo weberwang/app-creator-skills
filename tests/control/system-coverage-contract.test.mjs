@@ -67,6 +67,30 @@ test('缺少合同或检查领域时阻止实施', (t) => {
   assert.throws(() => validateSystemCoverage(h.repo, h.work, h.pack), /不支持的系统检查领域/);
 });
 
+test('各游戏栈必须检查玩家反馈和广告，并可记录不适用理由', (t) => {
+  for (const stack of ['unity', 'cocos', 'phaser', 'threejs', 'roblox']) {
+    const f = fixture(t, stack);
+    for (const areaId of ['player-feedback', 'advertising']) {
+      const area = f.pack.systemCoverage.areas.find((entry) => entry.areaId === areaId);
+      assert.ok(area, `${stack} 缺少 ${areaId}`);
+      area.reason = '本批没有受影响的相关需求';
+      area.moduleIds = [];
+      assert.doesNotThrow(() => validateSystemCoverage(f.repo, f.work, f.pack));
+      f.pack.systemCoverage.areas = f.pack.systemCoverage.areas.filter((entry) => entry.areaId !== areaId);
+      assert.throws(() => validateSystemCoverage(f.repo, f.work, f.pack), new RegExp(`缺少系统检查领域：${areaId}`));
+      f.pack.systemCoverage.areas.push(area);
+    }
+  }
+});
+
+test('非游戏栈不要求玩家反馈和广告领域', (t) => {
+  for (const stack of ['flutter', 'expo', 'esp32', 'nodejs']) {
+    const f = fixture(t, stack);
+    assert.equal(f.pack.systemCoverage.areas.some((area) => ['player-feedback', 'advertising'].includes(area.areaId)), false);
+    assert.doesNotThrow(() => validateSystemCoverage(f.repo, f.work, f.pack));
+  }
+});
+
 test('当前需求不能指向后置或未决模块，后续需求可保留未实现模块', (t) => {
   const f = fixture(t);
   const module = f.pack.systemCoverage.modules[0];

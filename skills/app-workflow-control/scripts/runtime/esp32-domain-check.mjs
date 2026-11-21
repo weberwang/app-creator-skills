@@ -159,7 +159,7 @@ export async function validateEsp32(repo, work, stage, doc, identity, figmaTextA
   if (stage === 'V2') return;
   const layout = readLayout(repo, work, stage, doc, board, identity);
   const slices = collectAppNineSliceNodes(layout, 'ESP32');
-  const textAppearance = isFigmaApp(work) ? figmaTextAppearance : collectLayoutTextAppearance(layout, doc.layoutSpecRef);
+  const textAppearance = isFigmaApp(work) ? figmaTextAppearance : collectLayoutTextAppearance(layout, doc.layoutSpecRef, doc.referenceTarget, { allowPending: stage !== 'V5' });
   if (!isFigmaApp(work)) checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
   if (stage === 'V3') return;
   const assets = readAssets(repo, work, doc, identity);

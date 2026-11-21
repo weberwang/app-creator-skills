@@ -22,7 +22,7 @@
 
 F0-F4、任务范围、高影响操作批准和失败处置以[控制模型](../../cocos-domain-contracts/references/control-model.md)与[状态、阶段与停止门](../../cocos-domain-contracts/references/state-gates.md)为唯一来源。本领域只提交视觉领域 F2、当前候选的 F3 证据，以及与 V3/V4/V5 产物的绑定关系；机器检查不能替代两次 V3 确认。
 
-冻结前候选图、临时提示和评审草稿保持 transient；冻结后记录原图、候选 ID、时间及 scene/state，SHA 仅可选追踪。V1 验证功能，白盒按风险选择；V2 冻结视觉目标及适用事实，V3 固化拆解与布局，V5 按正式 Cocos Scene 实现并校准；fidelity/parity case 必须关联实际目标/候选文件、适用的复现条件、合同/基线版本、双方证据、容差、例外和结论。默认 `visual_validation.mode=usability` 使用代表性视口/状态并检查关系、可读性、边界和交互；只有 `exact` 或明确需求时才要求完整矩阵和严格差异。上游事实或当前受影响候选身份变化才使对应案例失效。
+冻结前候选图、临时提示和评审草稿保持 transient；冻结后记录原图、候选 ID、时间及 scene/state，SHA 仅可选追踪。V1 确认完整模块方案，白盒按风险选择；V2 生成并确认覆盖状态和进度的模块稿，V3 固化拆解与布局，V5 按正式 Cocos Scene 实现并校准；fidelity/parity case 必须关联实际目标/候选文件、适用的复现条件、合同/基线版本、双方证据、容差、例外和结论。默认 `visual_validation.mode=usability` 使用代表性视口/状态并检查关系、可读性、边界和交互；只有 `exact` 或明确需求时才要求完整矩阵和严格差异。上游事实或当前受影响候选身份变化才使对应案例失效。
 
 ## 失效与返回
 

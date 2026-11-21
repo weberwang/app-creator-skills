@@ -6,6 +6,7 @@ import { isWorld3D, world3dScopeIds, collectWorld3DReferences } from './world3d-
 import { isWorld2D, collectSceneDesignReferences } from './scene-design-contract.mjs';
 import { collectWorldHudReferences } from './world3d-hud.mjs';
 import { collectSampleReferences, collectSampleControlReferences } from './production-samples.mjs';
+import { dependencyPath } from './feature-dependencies.mjs';
 
 /** 规范化项目相对路径，避免 Windows 大小写差异改变证据身份。 */
 function pathKey(repo, path) {
@@ -71,7 +72,11 @@ function reservedEvidencePaths(repo, work) {
   for (const dependency of work.productionDependencies ?? []) add(dependency.workItemRef?.path);
   for (const path of collectSampleControlReferences(repo, work)) add(path);
   const visual = work.visual;
-  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'modelBaselineRef', 'modelProductionBasisRef', 'sceneDesignRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
+  for (const key of ['coverageRef', 'integrationEvidenceRef', 'functionBaselineRef', 'modulePlanRef', 'moduleDesignRef', 'moduleDesignReviewRef', 'moduleRuntimeRef', 'versionDesignSnapshotRef', 'modelBaselineRef', 'modelProductionBasisRef', 'sceneDesignRef', 'domainEvidenceRef']) add(visual?.[key]?.path);
+  const versionVisual = work.productionScopeRef ? validateProductionScope(repo, work)?.scope.versionVisual : null;
+  if (versionVisual) {
+    versionVisual.workItemPaths.forEach(add);
+  }
   for (const ref of Object.values(visual?.reviews ?? {})) add(ref?.path);
   const controlReferences = [...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work)];
   if (isWorld3D(work) || isWorld2D(work)) controlReferences.push(...(isWorld3D(work) ? collectWorld3DReferences(repo, work) : collectSceneDesignReferences(repo, work)));
@@ -168,11 +173,32 @@ function validateCase(repo, work, manifest, actual, expected, excludedPaths, lab
   rawEvidence(repo, work, manifest, actual.evidenceRef, excludedPaths, `${label}原始输出`);
 }
 
+/** 跨模块功能来源必须逐行为证明本批当前对象的步骤、状态、转移与路径。 */
+export function validateVersionFunctionCoverage(repo, work, definition, verified) {
+  const batch = definition.batches.get(work.productionBatchId);
+  if (!batch) throw new WorkflowError('版本功能来源缺少当前生产批次');
+  const expected = expectedCases(definition, { batch, objectId: work.visual.objectId });
+  if (!expected.size) throw new WorkflowError('版本功能来源未声明当前对象的必要行为');
+  for (const [caseId, wanted] of expected) {
+    const result = verified.find((entry) => entry.caseId === caseId);
+    const dependency = work.visual.functionDependencies.find((entry) => entry.caseId === caseId);
+    if (!result || !dependency) throw new WorkflowError(`版本功能依赖缺少必要行为 ${caseId}`);
+    if (!equalIds(result.objectIds, [...wanted.objectIds])) throw new WorkflowError(`版本功能依赖 ${caseId} 的对象覆盖不匹配`);
+    const source = readJson(repo, dependencyPath(repo, dependency.workItemRef.path), '功能来源工作项');
+    if (source.workItemId !== result.workItemId) throw new WorkflowError(`版本功能依赖 ${caseId} 的来源已变化`);
+    const manifest = readJson(repo, source.evidenceRef.path, '功能来源证据清单');
+    const evidence = readJson(repo, dependencyPath(repo, result.evidenceRef.path), '功能行为证据');
+    validateCase(repo, source, manifest, evidence.production, wanted, [result.evidenceRef.path], `版本功能行为 ${caseId}`);
+  }
+}
+
 /** 核对本批当前实施包及 V1/V5 的实际覆盖，V2–V4 不要求未来运行结果。 */
 export function validateProductionBatchEvidence(repo, work, manifest) {
   const result = validateProductionScope(repo, work);
   if (!result || !result.batch) return;
   if (work.visual && !['V1', 'V5'].includes(work.visual.stage)) return;
+  // V1 可验证局部风险，整批实际覆盖在 V5 核对。
+  if (work.visual?.stage === 'V1' && work.visual.modulePlanRef) return;
   if (!work.visual && !['MODULE', 'INTEGRATION'].includes(work.workItemType)) return;
   if (!manifest || !Array.isArray(manifest.items)) throw new WorkflowError('生产批次缺少证据清单');
   const records = manifest.items.filter((item) => item?.category === 'production-coverage' && item.status === 'PASS');

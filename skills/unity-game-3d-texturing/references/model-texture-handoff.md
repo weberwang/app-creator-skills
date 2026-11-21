@@ -1,6 +1,6 @@
 # 建模与贴图交接
 
-建模与贴图均通过 Blender MCP 生产，沿用既有 Work Item、Implementation Package、资源 ID 与 V0-V5/F2/F3，不新增交接状态机或用户确认阶段。此清单是两角色的共同交接依据：建模角色提交真实产物，贴图角色只读核对并记录实际接收的来源。
+建模与贴图均通过 Blender MCP 生产，沿用既有 Work Item、Implementation Package、资源 ID 与 V1-V5/F2/F3，不新增交接状态机或用户确认阶段。此清单是两角色的共同交接依据：建模角色提交真实产物，贴图角色只读核对并记录实际接收的来源。
 
 存在角色绑定或动作时，另读[3D 角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)。建模负责几何/UV/法线/槽位和静态源；绑定负责骨架/权重与角色蒙皮模型导出，动画负责同骨架的动作文件。贴图保持所有这些结构只读，使用共同约定的参考网格/姿态烘焙，不用当前播放帧的变形结果替代烘焙基准；Unity 角色导入按[角色导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)执行。
 

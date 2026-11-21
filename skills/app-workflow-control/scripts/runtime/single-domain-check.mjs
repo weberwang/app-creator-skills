@@ -10,6 +10,8 @@ import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mj
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { validateFlutterDesign } from './flutter-design-contract.mjs';
 import { isFigmaApp, validateFigmaAppStage } from './figma-app-contract.mjs';
+import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
+import { validateWebTextStage } from './web-text-stage.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -50,6 +52,11 @@ async function validateUnity(repo, work, stage, doc) {
     // 原生候选仅服务布局实测；存在时仍必须对应当前显示层候选。
     if (evidence.candidateId !== undefined && evidence.candidateId !== work.visual.candidateId) throw new WorkflowError('Unity 显示层布局候选身份错绑');
     full.validateEvidence(evidence, native, null, repo);
+    const { validateUnityTextStage } = await import('./unity-text-stage.mjs');
+    validateUnityTextStage(repo, work, {
+      targetId: work.visual.objectId, candidateId: work.visual.candidateId, sceneId: work.visual.hostId,
+      stateId: doc.stateId, referenceTarget: doc.referenceTarget, reviews: work.visual.reviews,
+    }, stage, native, evidence);
     if (stage === 'V5') {
       validatePublicArtExperience(repo, work, { targetId: work.visual.objectId, candidateId: work.visual.candidateId, stateId: doc.stateId, viewport: doc.viewport, referenceTarget: doc.referenceTarget });
     }
@@ -74,9 +81,19 @@ async function validateWeb(repo, work, stage, doc) {
   else {
     const validator = await import(pathToFileURL(resolve(SKILLS_ROOT, `${WEB_PREFIX[work.stack]}-game-asset-integration/scripts/validate_visual_manifest.mjs`)).href);
     const authority = await loadDomainConfirmationAuthority(repo, work, manifest, doc);
-    const verifiedOptions = { ...options, authority, workItemId: work.workItemId, candidateVersion: work.visual.candidateId };
+    const verifiedOptions = {
+      ...options, authority, workItemId: work.workItemId, candidateVersion: work.visual.candidateId,
+      // 独立显示层的文字回读绑定实际宿主及本层目标。
+      requireNativeTextReadback: stage === 'V5',
+      textReadbackIdentity: {
+        stack: work.stack, workItemId: work.workItemId, sceneId: work.visual.hostId, stateId: doc.stateId,
+        candidateId: work.visual.candidateId, referenceTarget: doc.referenceTarget,
+        runtimeEvidenceRef: stage === 'V5' ? readTargetRuntimeLayoutRef(repo, work, work.visual.objectId) : null,
+      },
+    };
     errors = validator.validateManifest(manifest, { ...verifiedOptions, checkFiles: true, forceLayoutSourceFiles: true, workItemType: 'DISPLAY_LAYER' });
     errors.push(...await validator.checkManifestFiles(manifest, repo, verifiedOptions));
+    if (!errors.length) validateWebTextStage(repo, manifest, work.visual.reviews?.V3Layout, verifiedOptions.textReadbackIdentity);
   }
   if (errors.length) throw new WorkflowError(`显示层领域合同失败：${[...new Set(errors)].join('；')}`);
 }
@@ -204,9 +221,14 @@ export function validateSingleDomainTarget(repo, work, stage) {
   return true;
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.argv[2] === '--single-domain-worker') {
+/** 领域模块可间接加载控制器，工作进程入口不阻塞模块自身初始化。 */
+async function runWorker() {
   const chunks = [];
   for await (const chunk of process.stdin) chunks.push(chunk);
-  try { const { repo, work, stage } = JSON.parse(Buffer.concat(chunks).toString('utf8')); await run(repo, work, stage); }
-  catch (error) { process.stderr.write(`${error.message}\n`); process.exitCode = 1; }
+  const { repo, work, stage } = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+  await run(repo, work, stage);
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href && process.argv[2] === '--single-domain-worker') {
+  runWorker().catch((error) => { process.stderr.write(`${error.message}\n`); process.exitCode = 1; });
 }

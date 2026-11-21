@@ -40,7 +40,7 @@ function implementationPackage(work, overrides = {}) {
 function evidence(work, overrides = {}) {
   return {
     schemaVersion: '1.0', evidenceId: 'evidence-native-unity', workItemId: work.workItemId,
-    packageId: 'package-native-unity', workItemType: work.workItemType, visualStage: 'V0',
+    packageId: 'package-native-unity', workItemType: work.workItemType, visualStage: 'V1',
     contractVersions: { responsiveContract: 'unity-responsive/1.0' }, baselineHash: work.baselineHash,
     recordedAt: '2026-10-26T00:00:00.000Z', verdict: 'PASS',
     gateResults: Object.fromEntries(['F0', 'F1', 'F2', 'F3', 'F4'].map((gate) => [gate, {

@@ -5,7 +5,7 @@
   "description": "引用同一套空间方案、布局运行及既有人工审查确认；结构合法不代表真实运行或视觉验收通过。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "designRoute", "workItemId", "projectId", "stack", "objectId", "scopeIds", "spatialSpecRef", "layoutRef", "layoutRunRef"],
+  "required": ["schemaVersion", "designRoute", "workItemId", "projectId", "stack", "objectId", "scopeIds", "spatialSpecRef", "layoutRef"],
   "properties": {
     "schemaVersion": { "const": "1.0" },
     "designRoute": { "const": "world-2d" },

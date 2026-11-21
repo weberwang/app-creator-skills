@@ -2,6 +2,8 @@
 
 以项目锁定 Expo SDK 对应的 React Native 版本为准，遵循[公共文本宽度缩放与换行](../../app-ui-layout/references/relative-layout.md#文本宽度缩放与换行)。在正式组件或设计 token、对应布局规格中记录文字语义、基准字号、行高、容器宽高、换行和允许的适配策略；不能只在截图备注里填写。React Native 原生 `Text` / `TextInput` 的 `style` 使用 `fontFamily`、`fontSize`、`fontWeight`、`lineHeight`、`letterSpacing`、`textAlign` 等项目版本支持的属性，尺寸为逻辑单位；系统文字放大与物理像素换算按实际平台处理，不把截图物理像素直接写成字号。
 
+V3 按确认稿的可见文字节点和状态交接字体、字号、文字颜色及透明度，以及可核实的其他样式。V5 在既有 `textReadbackRef` 使用 `source: "expo-native"` 绑定当前 `buildIdentityRef` 和 `runEvidenceRef`，以 `targetPath`、`targetSha256`、`stateId`、`nodeId` 绑定设计节点，并用 `runtimeNodeId` 指向实际控件。逐项回读字体、字号、颜色、透明度及设计中可核实的其他文字样式，每项的 `propertySources` 记录实际 `componentType` 和 `propertyPath`。实际值需要换算单位时保留可复核的换算依据；缺目标、待人工确认、缺回读或不一致均保持未完成。运行截图的显示效果仍由用户人工确认。
+
 ## 策略与平台能力
 
 - `fixed` 保持已确认基准字号，按需允许容器扩展、换行或滚动；标题和正文按确认的断行与层级显示，正文优先换行，长内容由有明确所有者的滚动区域承接。

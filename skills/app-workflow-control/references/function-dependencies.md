@@ -2,7 +2,7 @@
 
 大场景和跨页面流程先按[分批生产](../../app-domain-toolkit/references/incremental-production.md)确定总范围、当前可验证步骤、状态转移和必要路径；本批 `caseId` 对应实际行为而不是视觉状态标签。批次完成仅证明其范围，最终集成须核对总范围和当前正式组合。
 
-SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接实施或复用已有功能，是否制作白盒由实际不确定性决定。一个功能可能覆盖多个对象；不要令功能来源依赖这些对象的 V5，否则会形成循环。
+SCENE、PAGE 或 DISPLAY_LAYER 在 V1 确认当前模块完整方案及其功能依赖，可按风险验证或复用已实现的共享功能。V5 验证依赖的真实结果与当前模块组合。一个共享功能可覆盖多个对象，依赖关系按实际来源规划，避免循环。
 
 对于共享功能，在显示对象的 `visual.functionDependencies` 中按行为范围登记来源工作项及证据。每项填写 `workItemRef.path`、`caseId` 和 `evidenceRef` 的 `{path,sha256}`；一个对象可依赖多个范围，各范围的 `caseId` 必须在该对象内唯一，可使用功能名前缀避免重名。来源必须是同项目、同技术栈、无视觉阶段且已通过的 MODULE 或 INTEGRATION，控制器严格检查它的工程证据和执行状态。
 
@@ -16,7 +16,7 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 各技术栈的 DISPLAY_LAYER 功能证据还须绑定单一实际宿主与层类型：直接实现时每个功能执行结果记录 `hostId`、`layerType`；共享功能来源的行为证据也记录相同字段。宿主或类型变化后须针对新上下文重新验证原功能范围并更新基线，不能复用旧宿主的业务通过记录。不同宿主可以共用实现，但各自的验证证据必须与实际宿主一致。
 
-弹窗与 Toast 按[弹窗公共设计方案](../../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在全局视觉设计稿冻结后，先确定所需弹窗公共方案、再设计 Toast，各自使用可运行的实际宿主实现与验收独立 DISPLAY_LAYER 的 V0–V5，再接入业务。设计方案明确且各自阶段条件满足后可并行实现，Toast 不等待所有业务弹窗 V5；早期业务功能实施及 V1 不等待公共显示层视觉交付，避免阻断全局视觉设计稿冻结所需的功能验证。设计顺序与组件交付引用记入项目实施计划，不作为 `visual.functionDependencies` 的功能来源；该字段继续仅引用满足本节合同的非视觉 MODULE 或 feature INTEGRATION。各显示层保留自己的工作项和视觉证据，后续宿主接入按实际组合验证。
+弹窗与 Toast 按[弹窗公共设计方案](../../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在第 4 阶段确定公共风格，V1 确认模块方案，V2 生成并确认适用模块状态与进度稿。实际宿主提供 V5 正式组合入口；各 DISPLAY_LAYER 保存自己的阶段和证据。设计和资源交付引用写入计划；`visual.functionDependencies` 引用真实非视觉 MODULE 或 feature INTEGRATION 的行为证据。
 
 ## 导航框架与共享路由
 
@@ -40,7 +40,7 @@ SCENE、PAGE 或 DISPLAY_LAYER 在 V1 验证当前批次实际功能。可直接
 
 Node.js 无界面服务器采用独立的[模块最终集成证据](../../app-stack-nodejs/references/integration-evidence.md)，来源为同项目、同技术栈已完成的 MODULE，冻结实施包、工程清单和交付文件；不要求 `visual`、V5 或 `functionBaselineRef`。以下显示对象与跨场景音乐规则仅适用于实际视觉栈。
 
-`INTEGRATION` 以 `integrationPurpose` 区分用途：`feature` 是早期功能验证，可以作为 V1 共享来源，不等待场景 V5；`final` 是正式组合后的跨对象回归，不能反向作为 V1 来源。初始化最终集成时使用 `--integration-purpose final`，默认用途为 `feature`。
+`INTEGRATION` 以 `integrationPurpose` 区分用途：`feature` 可验证早期共享功能，并在 V5 明确复用其真实证据；`final` 是正式组合后的跨对象回归。初始化最终集成时使用 `--integration-purpose final`，默认用途为 `feature`。
 
 最终集成在开始实施前通过 `integrationScopeRef: {path,sha256}` 固定预期范围：范围文件包含 `schemaVersion: "1.0"`、`workItemId`、`projectId`、`stack`、`objects: [{objectId,workItemRef:{path,sha256},functionBaselineRef:{path,sha256}}]` 和 `cases: [{caseId,objectIds}]`，对象与行为覆盖均非空且唯一。每个来源必须是当前项目和技术栈已完成 V5 的实际对象，功能基线引用与来源一致。执行状态冻结范围引用，实施后不能静默缩小范围或换绑其他对象版本。
 
@@ -50,6 +50,6 @@ Node.js 无界面服务器采用独立的[模块最终集成证据](../../app-st
 
 每份行为实际记录同时保存 `unitId`、准确 `command`、`exitCode:0` 与冻结 `outputRef`，并与该单元结果的真实 `commandOutputs.outputFile` 一致；独立日志或未关联的 PASS 文件不能代替。最终范围的来源与需求／设计文件属于保留输入，不能在本次任务中改写或作为结果覆盖。实施后删除范围或改为 `feature` 也会被冻结执行状态阻断。
 
-当功能代码变化但确认不影响视觉目标和拆解布局时，可在新的非视觉功能工作项完成真实验证后，提交功能重验规格：`{"visualImpact":"none","reason":"实际影响说明","functionDependencies":[{"workItemRef":{"path":"来源工作项.json"},"caseId":"行为范围","evidenceRef":{"path":"真实行为证据.json","sha256":"实际小写摘要"}}]}`。执行 `refresh-function-baseline --repo <项目路径> --work-item <项目内工作项路径> --spec <项目内规格路径>` 会核验新执行来源并保留未受影响的目标与布局确认，但需要重新完成最终运行验收。不得通过重新计算旧摘要冒充新的功能验证。
+对于已存在运行功能基线且适用原有功能重验路径的工作项，当功能代码变化但不影响视觉目标和拆解布局时，可在新的非视觉功能工作项完成真实验证后提交重验规格并执行 `refresh-function-baseline`。新 `modulePlanRef` 工作项使用 RETURN 到受影响阶段，再重新实施和验收，不使用历史重刷。不得通过重新计算旧摘要冒充新的功能验证。
 
-V1 由当前工作项直接实现时，V4 或 V5 的 `IMPLEMENTING`、`VALIDATING` 中也可使用 `{"visualImpact":"none","reason":"实际影响说明","localRegression":true}` 提交本地功能重验。先用当前实施包重新执行并完成工程验证，覆盖原 V1 的交付文件和验收命令；控制器检查新执行结果、输出与当前源码并冻结新的内容身份。成功后保持当前阶段和执行状态、保留未受影响的 V2–V4 确认，V5 运行确认须基于新组合重新取得。后续再次修改源码时，通过 implementation 或 engineering 返修建立新的实施及验证记录，再刷新基线；旧记录不可覆盖或作为新回归复用。功能行为或视觉目标、拆解布局实际变化时，应按影响返回相应阶段，不得以 `visualImpact: "none"` 掩盖变化。
+使用 `modulePlanRef` 的工作项在功能或方案变化时按影响范围走 RETURN 并重新实施、验证。历史功能基线的本地重验只适用于相应既有工作项；当前 V5 重新取得真实组合及运行确认。

@@ -45,7 +45,7 @@
 ## 关联候选与完成条件
 
 - 在已有候选材料关联源版本、目标终端／地区、构建参数、真实包体与校验值、所填草稿及其版本、文案依据、素材来源和人工确认、资质 assessment／状态及未完成项。输入或实际游戏内容改变后，只复核受影响的字段、材料与证据。
-- 发布准备交付当期可填写稿、适用的真实素材与资质材料、后台已有值及缺口；必填项、素材或证明尚缺时明确记录，不能凭本地文案完成标为整套资料已就绪。默认沿用 `releaseIntent=prepare` 及[发布准备与实际上线](../../app-creator-workflow/references/workflow.md#发布准备与实际上线)的既有合同。
+- 发布准备交付当期可填写稿、适用的真实素材与资质材料、后台已有值及缺口；必填项、素材或证明尚缺时明确记录，不能凭本地文案完成标为整套资料已就绪。默认沿用 `releaseIntent=prepare` 及[独立的发布任务](../../app-creator-workflow/references/workflow.md#独立的发布任务)的既有合同。
 - 创建、修改后台草稿、上传、绑定、提审、签约和正式发布是不同操作，遵守各自已有明确授权。当前后台所显示的过审后立即发布或定时发布只是已观察到的设置，不代表已获发布授权；实际提交前按[审核与上线](channel-platforms/taptap.md#审核与上线)核对当前快照、预检和实际计划。
 
 页面观察日期：2026-11-18。当前字段、字数和素材规则可能变化；每次执行以目标应用当期后台、当前 CLI schema 和[商店审核要求](https://developer.taptap.cn/docs/store/release/publish/agree/)、[素材要求](https://developer.taptap.cn/docs/store/release/publish/material/)为准。

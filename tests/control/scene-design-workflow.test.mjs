@@ -20,7 +20,7 @@ async function fixture(t) {
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(f.repo, f.workPath, work);
-  await advanceVisual({ repo: f.repo, workItem: f.workPath, to: 'V1' });
+
   work = await readWork(f.repo, f.workPath);
   const context = { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId };
   const json = async (path, value) => { await putJson(f.repo, path, value); return frozenReview(f.repo, path); };
@@ -87,7 +87,7 @@ test('显式游戏 UI 不接受世界空间记录，也不增加空间前置', a
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(f.repo, f.workPath, work);
-  await advanceVisual({ repo: f.repo, workItem: f.workPath, to: 'V1' });
+
   await runEngineeringStage(f, 'V1');
   await advanceVisual({ repo: f.repo, workItem: f.workPath, to: 'V2' });
 });

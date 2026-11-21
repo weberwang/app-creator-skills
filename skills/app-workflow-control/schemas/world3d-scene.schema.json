@@ -5,7 +5,7 @@
   "description": "冻结可追溯的三维空间、运行、人工确认和模型交接；结构合法不证明真实运行或视觉已通过。",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "designRoute", "workItemId", "projectId", "stack", "objectId", "candidateId", "stage", "scopeIds", "spatialSpecRef", "blockoutRef", "blockoutRunRef"],
+  "required": ["schemaVersion", "designRoute", "workItemId", "projectId", "stack", "objectId", "candidateId", "stage", "scopeIds", "spatialSpecRef", "blockoutRef"],
   "properties": {
     "schemaVersion": { "const": "1.0" },
     "designRoute": { "const": "world-3d" },

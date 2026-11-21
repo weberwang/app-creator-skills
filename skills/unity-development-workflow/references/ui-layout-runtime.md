@@ -35,6 +35,7 @@ UI Toolkit 背景图和 VisualElement 的布局尺寸独立，不拥有 uGUI Ima
 从 V3 布局包为当前目标视口与状态准备 `layout-measurement` Job，设置：
 
 - `includeComponentSnapshots: true`、当前 `stateId` 和实际 Work Item 的 `evidenceRoot`；`outputPath` 必须位于该根内，使用新版本文件名。
+- 正式文字回读使用当前工作项 `taskId`、目标 `candidateId` 与 `layoutPlanPath`。Unity 读取冻结计划文件并将其 SHA-256 写入该批报告的 `layoutPlanSha256`。
 - 每个目标记录布局包中的实际节点 `id` 与实际父路径，另写 `referenceId`；实际参照使用 `referenceObjectPath`、`referenceElementName` 或 `referenceRoot` 三者之一。逻辑根使用小写 `viewport`/`safe-area`，对应同批实际 viewport/safe-area 矩形，不假定场景中存在同名 GameObject；普通业务节点的 `parentElementId` 必须对应真实直接父节点。默认实际参照为父节点，但稳定参照 ID 仍须明确。
 - 同批业务节点全部覆盖，包含当前状态下不活动的节点。计划 `expectedActive` 省略时为 true，隐藏节点显式为 false。
 
@@ -50,7 +51,9 @@ UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)�
 
 对于目标明确而采集器不支持的属性，使用项目已有 Unity Editor 测量接口实际回读并将补充 JSON 保存在当前 `evidenceRoot`。V5 的 `uiLayoutMeasurementRef.textEvidencePath` 引用该文件，独立运行 `layout-runtime-check` 时可用 `--text-evidence <项目内JSON路径>`。JSON 顶层记录 `measurementSource: UNITY_EDITOR_LOADED_SCENE` 及与布局报告一致的 `runId`、`frameCount`、`scenePath`、`stateId`、`uiSystem`。`measurements` 数组每项绑定同一节点 `id`、实际 `objectPath`（UI Toolkit 还需 `elementName`）和与采集器一致的 `textStyle` 属性数组。仅同批、同对象且与已有实测不冲突的属性参与目标比较。保留实际 Unity 采集调用及原始结果。无法获取时保持未验证并按真实约束调整计划或素材路线。
 
-独立 UniTextWorld 的 MeshRenderer 不属于上述 Canvas 测量范围，World Space Canvas 也不能用该屏幕几何工具证明通过。分别核对真实文字组件、内容、语言、字体及世界布局，沿当前工作项记录实际证据。Game View 最终帧可以拍到世界文字，但 UI 覆盖统计只识别 Canvas/UIDocument，不能证明全部世界文字已覆盖；`NO_RUNTIME_UI_FOUND` 或部分覆盖标记不等于最终帧未拍到文字。目标截图和可读性、遮挡等显示效果仍由用户人工确认。
+组件渲染材质的适用属性可使用 `material.color.<着色器属性名>` 或 `material.float.<着色器属性名>` 作为原生探针路径。支持的渲染材质来自当前 `Graphic` 或 `Renderer`，存在材质属性块覆盖时由项目原生探针补充实际读数。
+
+World Space Canvas 的视觉目标可用同一采集器的 `textOnly: true`，使用 `uiSystem: UGUI` 并提供每个可见文字节点的 `id`、实际 `objectPath` 和 `textStyle` 探针。世界文字的组件和材质读数随同一运行报告交接，世界框体与投影继续用适用的原生世界证据核对。目标截图、可读性和遮挡由用户人工确认。
 
 ## 外部写入登记的边界
 
@@ -70,7 +73,7 @@ node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layo
 
 显式运行上述文件工具：它读取传入的布局计划和报告，检查同批根、节点覆盖、父/参照绑定、属性控制权、原生尺寸和中心关系，并读取计划引用的拆解、Prefab 结构与 VERIFIED 装配材料进行对账。V5 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。声明 targetRect/tolerance 的节点从报告矩形重新计算 delta 并检查 maxAbsDelta；未声明容差时仍按适用结构、边界、中心与尺寸规则检查，不将默认 usability 升级为整屏 exact。报告或节点为 FAIL 时修复后重验。工具只核对提交的数据，不能证明报告确由 Unity 采集，也不读取运行中的正式对象；采集来源和 scene/state/candidate 等身份须由执行者与当前工作项另行核对。
 
-Unity 原生实施包可用 `uiLayoutPlanRef: {path}` 引用布局计划，计划引用 `splitPlanRef` 与 `prefabStructureRef`；V5 原生测量材料可用 `uiLayoutMeasurementRef: {path}` 引用报告，计划还须引用 `prefabAssemblyRef`。这些是 Unity 原生合同字段，公共 Evidence Manifest 不提供此字段，公共控制器的 `check/status/run` 和状态迁移目前不会自动调用布局引用链校验。执行者须在 V5 显式运行 `layout-runtime-check` 并保存实际命令、结果和当前证据根内报告；另核对候选、对象、scene/state/displayLayer 和宿主身份。已有关联的装配引用须检查；技术修复后 `repair + revalidate`，不改写历史确认。公共控制器对冻结目标和确认引用仍按其合同核对摘要。
+Unity 原生实施包以 `uiLayoutPlanRef: {path}` 引用布局计划，装配交付沿用 `splitPlanRef`、`prefabStructureRef` 和 `prefabAssemblyRef`。公共工作流以既有 V3 布局确认的 `layoutSpecRef: {path,sha256}` 冻结相同计划，逐场景状态核对其拆解来源及文字目标。V5 有保留文字时，原生 Evidence Manifest 用 `uiLayoutMeasurementRef: {path,textEvidencePath?}` 关联实际采集，公共 Evidence Manifest 的当前目标 `runtime-layout` 项引用同一报告路径。正式 V5 门调用 `layout-runtime-check` 使用的原生运行校验，重新核对报告、计划摘要、工作项、候选、实际 Scene 与状态。技术修复后按现有流程复验。装配、交互和截图人工验收分别留在现有证据项中。
 
 V5 先将装配节点 `name` 与 uGUI 实测 `objectPath` 的末段或 UI Toolkit 的 `elementName` 对应，再核对实测父路径和定位参照。本检查验证节点身份、层级与布局事实；当前测量器没有采集 Prefab 实例来源 GUID，资产来源验收仍需相应资源证据。
 

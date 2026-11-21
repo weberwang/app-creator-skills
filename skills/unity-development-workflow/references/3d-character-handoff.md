@@ -1,6 +1,6 @@
 # 3D 角色建模、贴图、绑定与动画交接
 
-建模、贴图、绑定和动画源制作统一使用 Blender MCP。使用现有 Work Item、Implementation Package、V0-V5 和 F2/F3；下列清单是角色交接依据，不新增状态机、Schema 字段或审批阶段。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
+建模、贴图、绑定和动画源制作统一使用 Blender MCP。使用现有 Work Item、Implementation Package、V1-V5 和 F2/F3；下列清单是角色交接依据，不新增状态机、Schema 字段或审批阶段。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
 
 ## 职责与文件所有权
 

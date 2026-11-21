@@ -12,6 +12,8 @@
 
 计划可带 `splitPlanRef`、`prefabStructureRef`、`prefabAssemblyRef`，格式均为 `{ "path": "Artifacts/..." }`，只允许目标 Unity 工程内的项目相对路径。路径引用的是工程中真实保存的工件，不创建虚构的确认记录。纯内存几何 schema 允许不带 refs；`layout-plan`、`layout-check`、`compile-json` 和控制面 V3 要求前两个引用，V5 的 `layout-runtime-check` 与控制面 V5 还要求 `prefabAssemblyRef`。
 
+公共工作流 V3 同时写入 `splitPlanSha256`，冻结 `splitPlanRef` 的实际字节。将确认稿中的可见文字标为拆解项 `visualRouteAnalysis.elementType: text`，在适用 `stateVariants` 内用 `targetPrefabNodeIds` 关联真实文字节点。每个活动 `TEXT` 节点的 `textStyle` 记录确认稿 `source`，并提供 `attributes` 或 `styleId`。`styleId` 引用同一计划 `textStyles` 中的属性数组。字体 `font`、字号 `fontSize`、填色 `fill` 为必检目标，`fill` 使用包含 Alpha 的 RGBA。仅有位图且无法核实的属性写 `name`、`status: PENDING_HUMAN` 和 `reason`。V3 可交接待确认项，V5 必须解决后才可通过。组件和渲染材质属性路径按[原生回读](ui-layout-runtime.md)交接。
+
 ## 输入与派生
 
 每个节点保留原始 `bounds`、稳定的 `decompositionElementId`、实际 `id`、`parentElementId`、`semanticGrouping`、`renderKind` 和完整 `layoutBinding`。`renderKind` 区分 `SPRITE`、`STRUCTURE`、`TEXT`、`BACKGROUND`；底板使用 SPRITE，既保留图片身份也可承担组件根职责。所有几何使用当前包声明的同一种单位，不能把参考图物理像素直接写成 Unity 布局单位。

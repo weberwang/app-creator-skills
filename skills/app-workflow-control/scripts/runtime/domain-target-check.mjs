@@ -6,6 +6,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
+import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
+import { validateWebTextStage } from './web-text-stage.mjs';
 
 const STACKS = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -79,6 +81,8 @@ async function runDomainChecks({ repo, work, target, stage }) {
     const errors = validator.validateVisibleWorkItemContract(native);
     if (evidence) errors.push(...validator.validateVisibleEvidenceContract(evidence, native, repo));
     if (errors.length) throw new WorkflowError(`Unity 领域合同失败：${errors.join('；')}`);
+    const { validateUnityTextStage } = await import('./unity-text-stage.mjs');
+    validateUnityTextStage(repo, work, target, stage, native, evidence);
     return;
   }
   const prefix = STACKS[work.stack];
@@ -95,10 +99,20 @@ async function runDomainChecks({ repo, work, target, stage }) {
   }
   const validator = await import(pathToFileURL(manifestPath).href);
   const authority = await loadDomainConfirmationAuthority(repo, work, document, document);
-  const options = { stage, authority, workItemId: work.workItemId, candidateVersion: target.candidateId };
+  const options = {
+    stage, authority, workItemId: work.workItemId, candidateVersion: target.candidateId,
+    // Web 三栈仍从同一个视觉清单读文字测试，正式 V5 另外核对实际采集原件。
+    requireNativeTextReadback: stage === 'V5',
+    textReadbackIdentity: {
+      stack: work.stack, workItemId: work.workItemId, sceneId: target.sceneId, stateId: target.stateId,
+      candidateId: target.candidateId, referenceTarget: target.referenceTarget,
+      runtimeEvidenceRef: stage === 'V5' ? readTargetRuntimeLayoutRef(repo, work, target.targetId) : null,
+    },
+  };
   const errors = validator.validateManifest(document, { ...options, checkFiles: true, forceLayoutSourceFiles: true, projectRoot: repo, workItemType: 'SCENE' });
   errors.push(...await validator.checkManifestFiles(document, repo, options));
   if (errors.length) throw new WorkflowError(`${stage} 视觉资源清单失败：${[...new Set(errors)].join('；')}`);
+  validateWebTextStage(repo, document, target.reviews?.V3Layout, target);
 }
 
 /** 同步执行目标领域门并返回实际结果；调用方不能跳过或伪造未安装的校验器。 */

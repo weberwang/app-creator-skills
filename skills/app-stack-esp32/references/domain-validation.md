@@ -1,6 +1,6 @@
 # ESP32 页面和显示层领域证据
 
-统一控制器继续负责 V0–V5 的状态、功能证据、视觉目标、用户确认及资源评审；本文只说明 ESP32 的 V2–V5 单目标补充。`PAGE` 表示设备上的一个界面；`DISPLAY_LAYER` 表示挂载在具体页面上的弹层。V2 不要求提前制作布局或素材。所有路径使用项目相对 POSIX 路径，`{ "path": "文件", "sha256": "小写 SHA-256" }` 简记为 **ref**；引用的文件必须是非空真实文件，摘要按其实际字节计算。以下示例中的 `REF` 是说明占位符，必须替换为真实 ref，不能当成通过证据。
+统一控制器继续负责 V1–V5 的状态、功能证据、视觉目标、用户确认及资源评审；本文只说明 ESP32 的 V2–V5 单目标补充。`PAGE` 表示设备上的一个界面；`DISPLAY_LAYER` 表示挂载在具体页面上的弹层。V2 不要求提前制作布局或素材。所有路径使用项目相对 POSIX 路径，`{ "path": "文件", "sha256": "小写 SHA-256" }` 简记为 **ref**；引用的文件必须是非空真实文件，摘要按其实际字节计算。以下示例中的 `REF` 是说明占位符，必须替换为真实 ref，不能当成通过证据。
 
 历史阶段和复用来源引用的设备配置、布局、资源及其产物、源码快照、原始日志均使用版本化不可变工件；后续制作不得覆盖旧版本。实际工程源仍保存在其正式路径，证据快照不取代正式源，也不新建第二套布局真源或状态机。
 
@@ -37,7 +37,7 @@
   "rootId": "screen",
   "nodes": [
     { "id": "screen", "parentId": null, "x": 0, "y": 0, "width": 320, "height": 240, "positioning": "relative", "references": ["viewport"], "textAppearance": null },
-    { "id": "title", "parentId": "screen", "x": 8, "y": 8, "width": 304, "height": 24, "positioning": "relative", "references": ["screen"], "textAppearance": { "textFill": "#000000FF", "textOpacity": 0.8 } }
+    { "id": "title", "parentId": "screen", "x": 8, "y": 8, "width": 304, "height": 24, "positioning": "relative", "references": ["screen"], "textAppearance": { "sourceRef": "REF", "stateId": "default", "fontFamily": "字体资源名称", "fontSize": 18, "textFill": "#000000FF", "textOpacity": 0.8 } }
   ]
 }
 ```
@@ -46,7 +46,7 @@ V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`la
 
 每个节点明确 `positioning` 和 `references`。屏幕根 `parentId` 为 null，引用固定稳定根 `viewport`；不得用真实节点占用该 ID 或声明额外稳定根。普通页面的节点均按相对布局定位，不能声明 `floatingKind`。显示层必须有唯一的浮层本体节点，节点 ID 与工作项 `objectId` 相同、父节点为屏幕根，`floatingKind` 为 `toast`（toast 类型）或 `popup`（其他受支持类型）。仅浮层本体可使用 `absolute`，后代必须使用相对定位且参照留在该本体子树中。布局规格需在项目资料中另行说明关键控件、字体、动态状态、交互范围与坐标语义；控制器的几何检查不证明可读、可点击或画面符合设计。
 
-非 Figma 路线用 `textAppearance` 逐节点冻结文字填色与透明度，无文字的节点写 `null`。Figma 路线直接从冻结文字节点取值。设备色深或样式能力需要调整时，先把适配更新到当前确认目标。
+非 Figma 路线用 `textAppearance` 逐节点冻结文字样式，`sourceRef` 绑定当前已确认视觉目标，`stateId` 记录适用状态，填写 `fontFamily`、`fontSize`、`textFill` 与 `textOpacity`，另记录设计中可核实的字重、字距、行高、对齐、换行、描边与阴影。无文字的节点写 `null`。仅有位图时，不能确定的属性在 `pending` 中按属性记录待人工确认原因，不填写该属性的猜测值。V3 可以交接这些待确认项，V5 须先解决，否则保持未完成。Figma 路线直接从冻结文字节点取值。设备色深或样式能力需要调整时，先把适配更新到当前确认目标。
 
 使用九宫格的节点按[App 九宫格来源与运行读数](../../app-workflow-control/references/app-nine-slice.md)冻结源图、四边及最小显示框，V5 核对当前 GUI 实现的实际倍率与显示框。只有内容变化或尺寸确需重排时才增加布局机制；固定父子可直接沿用明确本地偏移与相对停靠。
 
@@ -109,7 +109,7 @@ V4 起 `sourcePath` 指向真实正式可编辑布局文件或组件代码，`la
 
 构建身份必须绑定与当前上下文相同的设备、布局、源码快照和资源清单；记录应基于实际编译的源码。`binaryRef` 是实际固件或主机执行产物，`buildLogRef` 是实际构建记录。源码版本非空，所引用文件及摘要必须有效。关联身份仅防止材料错绑，不能证明某个产物确已运行。
 
-三项运行文件分别记录实际运行、关键交互和性能/资源检查的原始结果。有文字时再按[文字还原规则](../../app-ui-layout/references/relative-layout.md)绑定 `textReadbackRef`，用实际 GUI 框架回读当前文字控件的颜色和透明度。`environment` 只能为 `host-simulator` 或 `device`；前者不能作为硬件驱动、显示、触控或峰值资源结果。真实设备情形还须设置 `deviceTarget` 为当前工作项 `action.target`，并设置 `approvalUserMessageRef` 与 `action.approval.userMessageRef` 一致；工作项须包含 `device` 动作及控制器已有精确批准。实际操作之前仍需执行控制器的 `check-action`，满足 F0/F1/F2/F4、动作、阶段及目标要求；事后有日志或在 JSON 中写批准不能代替授权。
+三项运行文件分别记录实际运行、关键交互和性能/资源检查的原始结果。有文字时再按[文字还原规则](../../app-ui-layout/references/relative-layout.md)绑定 `textReadbackRef`，用实际 GUI 框架回读当前文字控件及材质属性。记录 `source: "esp32-native"`、当前 `buildIdentityRef`、`runEvidenceRef` 和 `entries`。每条 entry 用 `targetPath`、`targetSha256`、`stateId`、`nodeId` 绑定当前设计节点，`runtimeNodeId` 绑定实际文字控件，逐目标属性记录回读值和 `propertySources` 中的 `componentType`、`propertyPath`。涉及单位换算时根据实际读数换算成目标的单位及结构。缺少目标、回读、来源或属性不符时保持未完成。`environment` 只能为 `host-simulator` 或 `device`；前者不能作为硬件驱动、显示、触控或峰值资源结果。真实设备情形还须设置 `deviceTarget` 为当前工作项 `action.target`，并设置 `approvalUserMessageRef` 与 `action.approval.userMessageRef` 一致；工作项须包含 `device` 动作及控制器已有精确批准。实际操作之前仍需执行控制器的 `check-action`，满足 F0/F1/F2/F4、动作、阶段及目标要求；事后有日志或在 JSON 中写批准不能代替授权。
 
 `visual.reviews.V5` 所指真实用户确认中，`runtimeContextRef` 必须绑定同一个上下文及摘要。显示层上下文另需 `hostId`、`layerType` 和 `interactions`：`open`、`close`、`focus-restore` 各出现一次；每项为 `{"action":"open","status":"PASS","evidenceRef":"REF"}` 或 `{"action":"open","status":"NOT_APPLICABLE","reason":"具体原因"}`。显示层 V2、V4 和 V5 的人工确认均绑定相同宿主与类型；非 Figma 路线已有的 V3 拆解及布局确认也绑定宿主，Figma 路线不因此增加重复批准。
 

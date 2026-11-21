@@ -129,7 +129,7 @@ export function isWorldHudReturn(work) {
 export function invalidateWorldHud(repo, work, invalidatedRefs, stage) {
   const hud = work.visual?.hud;
   if (!hud) throw new WorkflowError('当前 3D 场景没有可返修的 HUD');
-  const index = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5'].indexOf(stage);
+  const index = Number(stage.slice(1));
   if (index < 2) return;
   const order = { V2: 2, V3Decomposition: 3, V3Layout: 3, V4: 4, V5: 5 };
   /** 保留原始源文件，避免未受影响资源因局部返修被重新制作。 */

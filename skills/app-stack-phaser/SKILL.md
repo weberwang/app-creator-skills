@@ -18,6 +18,6 @@ description: 在 Phaser 4 浏览器游戏中设计或实现 TypeScript、Vite、
 
 HTML DOM/UI 与 Phaser Canvas 是不同渲染和输入空间，组合时明确边界与坐标转换。Three.js 的世界坐标和 Cocos Creator 的 Widget/AssetDB 不适用于 Phaser 的视口、资源和输入合同。
 
-各技术栈共用 V0–V5：V1 先验证功能，世界场景按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)落实搭建、整体确认和正式交接；UI 保留原图片与布局流程。
+各技术栈共用 V1–V5：V1 先验证功能，世界场景按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)落实搭建、整体确认和正式交接；UI 保留原图片与布局流程。
 
 来源：`skills/phaser4-game-architecture/references/project-structure.md`、`skills/app-stack-phaser/references/native-contracts.md#mode-phaser4-game-ui-layout`、`skills/app-stack-phaser/references/native-contracts.md#mode-phaser4-game-asset-integration`、`skills/phaser4-game-architecture/references/production-build.md`。

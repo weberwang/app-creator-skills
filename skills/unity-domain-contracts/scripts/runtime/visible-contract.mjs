@@ -12,7 +12,7 @@ export const DISPLAY_LAYER_TYPES = Object.freeze(['modal', 'popup', 'drawer', 't
 export const UNITY_RESPONSIVE_CONTRACT_VERSION = 'unity-responsive/1.0';
 
 /** 可见工作项的运行证据阶段。 */
-export const VISUAL_STAGES = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
+export const VISUAL_STAGES = Object.freeze(['V1', 'V2', 'V3', 'V4', 'V5']);
 
 /** V5 必须由真实 Unity 运行事实覆盖的证据槽位。 */
 export const UNITY_RESPONSIVE_EVIDENCE_FIELDS = Object.freeze([
@@ -238,7 +238,7 @@ export function validateVisibleWorkItemContract(work) {
   if (type === 'SCENE') {
     if (work.stageId !== 'scene-production') errors.push('SCENE Work Item 必须位于 scene-production');
     if (!isObject(scene) || !nonEmptyString(scene.sceneId)) errors.push('SCENE Work Item 必须提供 scene.sceneId');
-    if (isObject(scene) && (!VISUAL_STAGES.includes(scene.stage) || !['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(scene.status))) errors.push('SCENE.scene 必须同时声明 V0-V5 stage 和 status');
+    if (isObject(scene) && (!VISUAL_STAGES.includes(scene.stage) || !['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(scene.status))) errors.push('SCENE.scene 必须同时声明 V1-V5 stage 和 status');
     if (layer !== undefined) errors.push('SCENE Work Item 不得携带 displayLayer 身份');
   } else if (type === 'DISPLAY_LAYER') {
     if (work.stageId !== 'scene-production') errors.push('DISPLAY_LAYER Work Item 必须位于 scene-production');
@@ -247,7 +247,7 @@ export function validateVisibleWorkItemContract(work) {
       knownObject(layer, new Set(['displayLayerId', 'hostSceneId', 'type', 'stage', 'status']), 'Work Item.displayLayer', errors);
       if (!DISPLAY_LAYER_TYPES.includes(layer.type)) errors.push('DISPLAY_LAYER.displayLayer.type 必须是 modal、popup、drawer 或 toast');
     }
-    if (layer?.stage === undefined || !VISUAL_STAGES.includes(layer.stage)) errors.push('DISPLAY_LAYER.displayLayer.stage 必须是 V0-V5');
+    if (layer?.stage === undefined || !VISUAL_STAGES.includes(layer.stage)) errors.push('DISPLAY_LAYER.displayLayer.stage 必须是 V1-V5');
     if (!['NOT_STARTED', 'IN_PROGRESS', 'PASS', 'FAIL', 'NOT_RUN'].includes(layer?.status)) errors.push('DISPLAY_LAYER.displayLayer.status 无效');
     if (scene !== undefined) errors.push('DISPLAY_LAYER Work Item 不得携带 scene 身份；hostSceneId 仅是上下文');
   } else if (scene !== undefined || layer !== undefined) {
@@ -258,7 +258,7 @@ export function validateVisibleWorkItemContract(work) {
   if (['SCENE', 'DISPLAY_LAYER'].includes(type)) {
     const stage = type === 'SCENE' ? scene?.stage : layer?.stage;
     // 功能阶段不强制视觉合同；主动提供时仍按完整合同校验。
-    if (!['V0', 'V1'].includes(stage) || work.responsiveContract !== undefined) {
+    if (stage !== 'V1' || work.responsiveContract !== undefined) {
       const contractErrors = validateUnityResponsiveContract(work.responsiveContract, { scope: work.workItemId });
       errors.push(...contractErrors);
     }
@@ -317,7 +317,7 @@ export function validateVisibleImplementationPackage(pkg, work, repo) {
   }
   if (['SCENE', 'DISPLAY_LAYER'].includes(type)) {
     const stage = type === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
-    if (!pkg.responsiveContractRef && !['V0', 'V1'].includes(stage)) errors.push('V2 起可见 Implementation Package 必须绑定 responsiveContractRef');
+    if (!pkg.responsiveContractRef && stage !== 'V1') errors.push('V2 起可见 Implementation Package 必须绑定 responsiveContractRef');
     else if (pkg.responsiveContractRef) errors.push(...validateResponsiveContractReference(pkg.responsiveContractRef, work, repo));
   } else if (pkg.responsiveContractRef !== undefined) errors.push(`${type} Implementation Package 不得携带 responsiveContractRef`);
   errors.push(...validateUiLayoutPackage(pkg, work, repo));
@@ -396,12 +396,12 @@ export function validateUnityResponsiveEvidence(evidence, work, options = {}) {
 export function validateVisibleEvidenceContract(evidence, work, repo) {
   const errors = [];
   if (evidence.workItemType !== work.workItemType) errors.push('Evidence Manifest.workItemType 必须与 Work Item 一致');
-  if (!VISUAL_STAGES.includes(evidence.visualStage)) errors.push('Evidence Manifest.visualStage 必须是 V0-V5');
+  if (!VISUAL_STAGES.includes(evidence.visualStage)) errors.push('Evidence Manifest.visualStage 必须是 V1-V5');
   const visible = ['SCENE', 'DISPLAY_LAYER'].includes(work.workItemType);
   const stage = work.workItemType === 'SCENE' ? work.scene?.stage : work.displayLayer?.stage;
   // 证据必须独立声明阶段身份，不能只依赖关联工作项。
   if ((visible || evidence.visualStageModel !== undefined) && evidence.visualStageModel !== 'function-first-v1') errors.push('Evidence Manifest.visualStageModel 必须为 function-first-v1');
-  if (visible && !['V0', 'V1'].includes(stage) && (!isObject(evidence.contractVersions) || !nonEmptyString(evidence.contractVersions.responsiveContract))) errors.push('V2 起 Evidence Manifest.contractVersions.responsiveContract 必须记录来源');
+  if (visible && stage !== 'V1' && (!isObject(evidence.contractVersions) || !nonEmptyString(evidence.contractVersions.responsiveContract))) errors.push('V2 起 Evidence Manifest.contractVersions.responsiveContract 必须记录来源');
   if (visible && evidence.visualStage !== stage) errors.push('Evidence Manifest.visualStage 未绑定当前可见 Work Item 阶段');
   if (visible && evidence.visualStage === 'V5' && evidence.verdict === 'PASS') {
     errors.push(...validateUnityResponsiveEvidence(evidence.responsiveEvidence, work, { repo }));

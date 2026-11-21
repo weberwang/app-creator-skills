@@ -4,7 +4,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈共用 V0–V5：V0 范围、V1 功能与适用空间验证、V2 正式视觉方向／目标、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈共用 V1–V5：V1 确认完整模块方案并按需验证风险、V2 生成并确认模块全部适用状态和进度稿、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 
@@ -158,7 +158,7 @@
 <a id="mode-phaser4-gameplay-development--phaser-4-玩法开发"></a>
 ### Phaser 4 玩法开发
 
-全局阶段、V0–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V0–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
+全局阶段、V1–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V1–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
 
 <a id="mode-phaser4-gameplay-development--全局控制接入"></a>
 #### 全局控制接入
@@ -270,7 +270,7 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 <a id="mode-phaser4-game-juice--phaser-4-游戏汁水感"></a>
 ### Phaser 4 游戏汁水感
 
-先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Phaser 原生实现约束和适用阶段确认仍保留。
+先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V1–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Phaser 原生实现约束和适用阶段确认仍保留。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/feedback-lifecycle.md#完整流程)。
 

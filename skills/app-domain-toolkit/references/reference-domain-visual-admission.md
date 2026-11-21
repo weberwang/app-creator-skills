@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+第 4 阶段确认全局视觉方向；V1 确认模块完整方案，V2 生成并确认模块全部适用状态及进度稿，V3 拆解同一版本，V4 准备资源，V5 完整实现与验收。图片／UI 拆解布局要求只适用于相应内容。
 
 ## 任务范围与显式批准
 
@@ -18,7 +18,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-视觉阶段使用机器枚举 `V0`、`V1`、`V2`、`V3`、`V4`、`V5`，且必须同时声明有语义的 `visualStageState`。公共 V2 内、离开公共 V2 前须建立或复用全局基线 brief（不阻断公共 V1 功能验证）、生成恰好三张同条件候选效果图、同屏交给人工并确认其中一张；`globalVisualBaselineSelectionRef` 通过后才可写入 `global-static-baseline-frozen`。该引用通过不可变 `path` 跨 Work Item 复用，根证据顶层 `workItemId` 始终是生产者身份，不是当前消费者；该状态只冻结颜色、字体、栅格等静态规则；它不等于 `v3-production-planning-complete`，三候选人工选择也不能替代逐场景 V3 拆解图确认。V3 方案冻结必须由拆解图、技术 JSON、coverage、生产计划和拆解确认证据派生。
+视觉阶段以当前技术栈领域合同的枚举和有语义的 `visualStageState` 为准。第 4 阶段须建立或复用全局基线 brief、生成恰好三张同条件候选效果图、同屏交给人工并确认其中一张；`globalVisualBaselineSelectionRef` 通过后才可写入 `global-static-baseline-frozen`。V1 确认模块方案，V2 根据全局基线制作并确认模块全部适用流程、状态和进度的设计稿，V3 使用同一确认稿。该引用通过不可变 `path` 跨 Work Item 复用，根证据顶层 `workItemId` 始终是生产者身份，不是当前消费者；该状态只冻结颜色、字体、栅格等静态规则；它不等于 `v3-production-planning-complete`，三候选人工选择也不能替代逐场景 V3 拆解图确认。V3 方案冻结必须由拆解图、技术 JSON、coverage、生产计划和拆解确认证据派生。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -42,9 +42,9 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-效果图还原是当前场景实现 Work Item 内的可选视觉模式；foundation-only 基础实施完成后进入场景 V2，由 V2 生成或接收并冻结 `scene_reconstruction_contract`、scene master/reference target、必需宿主上下文图和初步还原草案，再进入 V3 拆解确认门。工作项按统一阶段和当前全局状态向前推进：缺字段、格式、路径或可补证据问题先在当前阶段原地修复，上游事实未变的机器验证失败只重验当前门。只有上游事实失效、任务范围真实变化，或继续推进会绕过硬门并使下游无效，才使用 `RETURN` 回到最早受影响阶段；普通候选身份变化不触发回退。
+效果图还原是当前场景实现 Work Item 内的可选视觉模式；第 4 阶段确认全局方向，V1 完成模块方案，V2 完成并确认 `scene_reconstruction_contract`、scene master/reference target、必需宿主上下文图和初步还原草案，覆盖模块全部适用状态与进度。V3 从同一确认稿拆解。工作项按统一阶段和当前全局状态向前推进：缺字段、格式、路径或可补证据问题先在当前阶段原地修复，上游事实未变的机器验证失败只重验当前门。只有上游事实失效、任务范围真实变化，或继续推进会绕过硬门并使下游无效，才使用 `RETURN` 回到最早受影响阶段；普通候选身份变化不触发回退。
 
-## V0/V1/V2/V3/V4/V5 机器状态依赖
+## V1–V5 机器状态依赖
 
 > 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
@@ -52,7 +52,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 | 阶段 | 唯一完成状态 | 下游硬依赖 |
 | --- | --- | --- |
-| V0 | `not-started`/`in-progress` 等过程状态 | 分流对象与范围 |
+| V1 | 完整模块方案与验收 | 当前模块的规则、状态、进度与行为，按需验证风险 |
 | V2 | `in-progress`/过程状态 | 视觉契约、冻结图、布局和容差 |
 | V3 | `v3-production-planning-complete` | 拆解图、技术 JSON、coverage、component×state、父子/停靠/对齐/显示层事实、生产方案和拆解确认 |
 | V4 | `v4-formal-acceptance-complete` | 正式资产、组件资源状态、`visualManifestFile`/`visualManifestSha256` 与生产验收 |
@@ -72,7 +72,7 @@ V4 资源验收通过后，V5 直接激活正式实施包并读取当前 V3 拆�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-任务范围和工程基线完成后，纯工程 foundation-only 包可先完成 `SHARED` 最小项目骨架和 `MODULE` 场景无关基础模块；只有具有视觉合同或资产生产依赖的基础包才需先建立全局基线 brief，生成恰好三张同条件候选效果图并同屏交给人工，人工选择确认一张后以 `globalVisualBaselineSelectionRef` 正式冻结 `visual_baseline`。公共 V1 功能验证后各场景进入公共 V2；此视觉阶段生成或接收并冻结当前场景的 scene master/reference target、必需 transient display-layer 宿主上下文图、`scene_reconstruction_contract` 和初步还原草案，集合按 scene/state 分项而非一张合并图；随后该场景才在 V3 完成拆解图确认与生产方案。
+任务范围和工程基线完成后，基础工程先完成 `SHARED` 项目骨架和 `MODULE` 场景无关基础模块，按本轮范围完整实现并验证相关模块 V1 功能。目标版本统一进入 V2，建立或复用全局基线 brief，按当前适用的图片路线生成人工确认的候选并冻结 `visual_baseline`，同时生成全部适用流程、场景和状态的整套视觉目标。图片路线冻结各场景的 scene master/reference target、必需 transient display-layer 宿主上下文图、`scene_reconstruction_contract` 和初步还原草案，集合按 scene/state 分项。全套 V2 覆盖核对完成后各对象进入 V3 拆解确认与生产方案。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -100,7 +100,7 @@ SCENE 与 DISPLAY_LAYER 分别绑定各自 Work Item 的 V3 证据，使用独�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-`visualStage` 只能是 `V0`、`V1`、`V2`、`V3`、`V4` 或 `V5`，`visualStageState` 只能使用带上下文的状态：`global-static-baseline-frozen`、`v3-production-planning-complete`、`v4-formal-acceptance-complete`、`v5-runtime-integration-candidate`（以及明确的过程/失效状态）。裸 `frozen`、未知阶段、缺少阶段语义或冲突声明均失败。
+`visualStage` 使用当前技术栈领域合同定义的阶段枚举，`visualStageState` 使用带上下文的状态：`global-static-baseline-frozen`、`v3-production-planning-complete`、`v4-formal-acceptance-complete`、`v5-runtime-integration-candidate`（以及明确的过程/失效状态）。裸 `frozen`、未知阶段、缺少阶段语义或冲突声明均失败。
 
 > 适用技术栈：cocos、phaser、threejs。
 

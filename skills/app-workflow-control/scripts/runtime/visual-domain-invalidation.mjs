@@ -47,7 +47,8 @@ export function invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earl
       delete work.visual.domainEvidenceRef;
       return;
     }
-    const stageIndex = VISUAL_STAGES.indexOf(earliestStage);
+    // 阶段编号与 V1 起始的数组索引不同，按真实编号失效下游证据。
+    const stageIndex = VISUAL_STAGES.indexOf(earliestStage) + 1;
     if (figma && stageIndex <= 2) {
       // 仅追溯摘要匹配的实际节点导出；历史截图仍保留为上游目标材料。
       const refs = [doc.figmaDesignRef, ...(Array.isArray(doc.additionalTargets) ? doc.additionalTargets.map((item) => item?.figmaDesignRef) : [])];

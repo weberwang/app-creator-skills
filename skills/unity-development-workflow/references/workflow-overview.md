@@ -4,24 +4,25 @@
 
 `app-workflow-control` 保存 Work Item、状态、风险门、实施包和证据索引；本 Skill 负责 Unity 领域编排；[@Unity](plugin://unity@openai-curated-remote)、`com.unity.pipeline` 与 C# Toolkit 负责 Scene、Prefab、Importer、AssetDatabase、Editor、截图、测试与构建事实。三层不得相互伪造结果。
 
-## 六阶段项目视图
+## 七阶段项目视图
 
 | 阶段 | 主要产物 | Unity 完成事实 |
 | --- | --- | --- |
-| 需求与范围 | Work Item、目标、范围、验收、风险和项目语言清单 | 项目路径、支持语言、默认语言和需求边界明确 |
-| 全局基线 | GDD/TDD、技术/视觉基线、平台集合 | 冻结 Unity/包/渲染管线/输入/存档/资源策略，以及 UniText、JSON 正式源、唯一初始化入口、语言策略和绑定接口 |
-| 基础工程 | S00 与 SHARED/MODULE 实施包 | asmdef、Composition Root、测试入口和最小骨架有效；UniText 检查、JSON 加载/校验/索引、启动语言及统一绑定在实际宿主通过基础验收 |
-| 场景与弹窗生产 | SCENE/DISPLAY_LAYER 实施包与 V0-V5 证据 | 所有实际文案消费者复用 S00 能力并验证键、参数和生命周期；场景闭环自身玩法与画面，瞬态显示层独立验收 |
-| 全局集成验证 | INTEGRATION 单元和联合证据 | 导航、存档、音频、平台适配、性能及全部语言/文案消费者回归绑定同一候选 |
-| 发布 | 独立 RELEASE Work Item | 候选包含正式文案与字体资源，收口已验证平台及未覆盖项；合规、回滚和精确外部操作批准完整 |
+| 商业立项 | 玩家、市场、产品目标与投入 | 核心假设及继续条件明确 |
+| 产品定义与版本规划 | GDD、目标版本、验收、风险和语言清单 | 支持语言、默认语言、玩法和范围明确 |
+| 制作技术方案 | TDD、技术选型与平台集合 | 确定 Unity/包/渲染管线/输入/存档/资源策略，以及 UniText、JSON 正式源、初始化入口和绑定接口 |
+| 基础工程与架构实现 | S00 与基础实施包 | asmdef、Composition Root 和测试入口有效；UniText、JSON 加载、启动语言及统一绑定通过基础验收 |
+| 模块实现与体验整合 | SCENE／DISPLAY_LAYER 实施包与 V1–V5 证据 | V1 完整模块方案、V2 全状态和进度模块稿、V3–V5 拆解准备与完整实现验收；实际文案消费者验证键、参数和生命周期 |
+| 跨模块集成 | `feature` 集成单元和联合证据 | 回归场景间导航、数据、存档、音频及界面状态 |
+| 模块集成与整体验收 | `final` 集成和统一验收版本 | 平台适配、性能、实际游玩及全部必要语言与文案消费者在同一版本验收 |
 
-内部 G0-G3 可作为里程碑标签：G0 对应基线，G1 对应基础工程/场景生产，G2 对应全局集成验证，G3 对应发布。它们不是另一套状态机。
+内部 G0–G2 可作为方案、实施和集成里程碑。另行明确委托的发布独立登记 RELEASE，沿用其批准与验证。
 
 国际化按[初始化时机与阶段职责](text-and-localization.md#初始化时机与阶段职责)执行：S00 必须完成可运行基础能力，不等待 HUD、正式视觉稿或 V5；以 [S00 国际化验收条件](foundation-workflow.md#国际化基础能力验收)核对实际安装、配置到文本的运行链路。单场景同样适用，S00 的代表性验证不代替最终全部消费者覆盖。
 
 ## 阶段任务
 
-场景与显示层的 V0–V5 按[阶段规则](../../unity-domain-contracts/references/stage-confirmation.md)推进：V0 内部分流不要求常规确认；V1 实现并验证功能，白盒按需使用；V2 确认真实目标图；V3 先确认拆解图，再独立确认布局图；V4 验收正式资源和导入，可展示临时组合预览；V5 完成正式 Scene/Prefab/UI 实现、布局校准与运行验收，用户确认后闭合。技术验证通过和初始任务授权不能替代人工确认。
+场景与显示层的 V1–V5 按[阶段规则](../../unity-domain-contracts/references/stage-confirmation.md)推进：模块任务范围不要求常规确认；V1 确认完整模块方案，白盒按需使用；V2 生成并确认覆盖全部适用状态和进度的模块设计；V3 先确认拆解图，再独立确认布局图；V4 验收正式资源和导入，可展示临时组合预览；V5 完成正式 Scene/Prefab/UI 实现、布局校准与运行验收，用户确认后闭合。技术验证通过和初始任务授权不能替代人工确认。
 
 普通阶段内任务采用[三项最小约定](../../app-creator-workflow/references/output-files.md#每项任务的最小约定)，只明确结果、相关写入／输出路径及完成验证。使用控制器或领域结构化任务时，`taskId`、所有权、输入／输出、验收命令和状态等字段按实际 Schema 保留；存在依赖时核对其真实证据，不为普通任务自造 ID、状态或空命令。采用 READY 的实际合同仍须满足对应依赖和证据，目录接近、代理空闲或文件存在不能替代。Foundation 的第三方 SDK 按[唯一初始化入口](./sdk-initialization.md)独立启动；产物位置沿用[原生边界](./artifact-storage.md)。
 
@@ -29,7 +30,7 @@
 
 ## 视觉来源与结构装配
 
-场景使用 V0-V5。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系必须有显式节点事实和真实的定位、布局、交互、状态、裁切或复用依赖；没有这些依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。屏幕 UI 的 V3 布局字段按[节点树规则](./ui-layout-and-hierarchy.md)冻结。
+场景使用 V1-V5。每个拆解注释和 item 必须声明 `parentElementId`、`semanticGrouping`、`visualRouteAnalysis`、`assemblyAnalysis` 与 `layoutBinding`。父子关系必须有显式节点事实和真实的定位、布局、交互、状态、裁切或复用依赖；没有这些依赖的共同信息保持同组同级，不能按距离、bounds 或类型猜测。屏幕 UI 的 V3 布局字段按[节点树规则](./ui-layout-and-hierarchy.md)冻结。
 
 视觉来源在 Unity 中只允许 `IMAGE_ASSET`、`UNITY_NATIVE`、`REUSE`、`MODEL_3D`、`MATERIAL`、`VFX`。文字沿用统一 JSON，默认先评估 UniText，并按[完整还原标准](visual-decomposition-routes.md#完整还原的判断标准)确定原生、图片或待验证，非文字的静态特色外观默认独立生产资产；`UNITY_NATIVE` 必须持有文本、动态数据、布局、基础几何、进度、粒子或 Shader 的资格证据。`REUSE` 记录精确 GUID、源路径、实际 Importer 设置和消费节点。单区域禁止使用 `COMPOSITE` 或整屏截图来源；`assemblyAnalysis.fullScreenCapture` 必须为 `false`。
 

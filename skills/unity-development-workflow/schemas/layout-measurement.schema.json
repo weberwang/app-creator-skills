@@ -23,6 +23,10 @@
     "candidateId": {
       "$ref": "./common.schema.json#/$defs/taskId"
     },
+    "layoutPlanPath": {
+      "$ref": "./common.schema.json#/$defs/projectRelativePath"
+    },
+    "textOnly": { "type": "boolean" },
     "scenePath": {
       "allOf": [
         {
@@ -74,13 +78,34 @@
     "targets": {
       "type": "array",
       "minItems": 1,
-      "uniqueItems": true,
-      "items": {
-        "$ref": "#/$defs/target"
-      }
+      "uniqueItems": true
     }
   },
   "$defs": {
+    "textStyleProbes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "componentType", "propertyPath"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "componentType": { "type": "string", "minLength": 1 },
+          "propertyPath": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "worldTextTarget": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "objectPath", "textStyle"],
+      "properties": {
+        "id": { "$ref": "./common.schema.json#/$defs/taskId" },
+        "objectPath": { "type": "string", "minLength": 1 },
+        "textStyle": { "$ref": "#/$defs/textStyleProbes" }
+      }
+    },
     "gapValue": {
       "anyOf": [
         {
@@ -208,6 +233,7 @@
             "safe-area"
           ]
         },
+        "textStyle": { "$ref": "#/$defs/textStyleProbes" },
         "targetRect": {
           "$ref": "#/$defs/rect"
         },
@@ -1095,6 +1121,11 @@
         "measurementSource": {
           "type": "string"
         },
+        "layoutPlanSha256": {
+          "type": "string",
+          "pattern": "^([0-9a-f]{64})?$"
+        },
+        "textOnly": { "type": "boolean" },
         "runId": {
           "type": "string"
         },
@@ -1164,10 +1195,7 @@
           "$ref": "./common.schema.json#/$defs/projectRelativePath"
         },
         "measurements": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/measurement"
-          }
+          "type": "array"
         },
         "gapAxis": {
           "enum": [
@@ -1188,10 +1216,38 @@
       },
       "allOf": [
         {
+          "if": { "properties": { "textOnly": { "const": true } }, "required": ["textOnly"] },
+          "then": {
+            "required": ["layoutPlanSha256", "measurementSource", "runId", "frameCount", "stateId", "includesComponentSnapshots"],
+            "properties": {
+              "layoutPlanSha256": { "pattern": "^[0-9a-f]{64}$" },
+              "measurementSource": { "const": "UNITY_EDITOR_LOADED_SCENE" },
+              "runId": { "minLength": 1 },
+              "stateId": { "minLength": 1 },
+              "includesComponentSnapshots": { "const": true },
+              "measurements": {
+                "items": {
+                  "type": "object",
+                  "required": ["id", "objectPath", "componentSnapshot"],
+                  "properties": {
+                    "id": { "$ref": "./common.schema.json#/$defs/taskId" },
+                    "objectPath": { "type": "string", "minLength": 1 },
+                    "componentSnapshot": { "$ref": "#/$defs/componentSnapshot" }
+                  }
+                }
+              }
+            }
+          },
+          "else": { "properties": { "measurements": { "items": { "$ref": "#/$defs/measurement" } } } }
+        },
+        {
           "if": {
             "properties": {
               "includesComponentSnapshots": {
                 "const": true
+              },
+              "textOnly": {
+                "const": false
               }
             },
             "required": [
@@ -1297,6 +1353,18 @@
   },
   "allOf": [
     {
+      "if": { "properties": { "textOnly": { "const": true } }, "required": ["textOnly"] },
+      "then": {
+        "required": ["layoutPlanPath", "includeComponentSnapshots"],
+        "properties": {
+          "uiSystem": { "const": "UGUI" },
+          "includeComponentSnapshots": { "const": true },
+          "targets": { "items": { "$ref": "#/$defs/worldTextTarget" } }
+        }
+      },
+      "else": { "properties": { "targets": { "items": { "$ref": "#/$defs/target" } } } }
+    },
+    {
       "if": {
         "properties": {
           "includeComponentSnapshots": {
@@ -1312,15 +1380,8 @@
           "stateId",
           "evidenceRoot"
         ],
-        "properties": {
-          "targets": {
-            "items": {
-              "required": [
-                "referenceId"
-              ]
-            }
-          }
-        }
+        "if": { "properties": { "textOnly": { "const": false } } },
+        "then": { "properties": { "targets": { "items": { "required": ["referenceId"] } } } }
       },
       "else": {
         "properties": {
@@ -1349,8 +1410,7 @@
           "targets": {
             "items": {
               "required": [
-                "objectPath",
-                "parentObjectPath"
+                "objectPath"
               ],
               "not": {
                 "anyOf": [

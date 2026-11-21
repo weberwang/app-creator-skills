@@ -4,7 +4,7 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 全局响应式视口合同
 
@@ -182,6 +182,10 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 目标只读取冻结文本节点的 `target_bounds`、`typography_target`、文案/来源和资源；候选只读取 `runtime_verification` 的实际值。可选的 `target_*`/`candidate_*` 副本必须分别与冻结目标/实际测量一致，禁止通过 `target_measurement`、`candidate_measurement` 或空对象替换比较事实。基准条件应与目标一致；适配所需的目标变化先更新受影响规格与证据，不能把运行结果反写为目标。
 
 程序文本、位图字体和混合路线必须提交 `actual_content`、`actual_font_resources` 和 `actual_typography`。后者包括 `font_family`、`font_size`、`font_size_unit`、`font_weight`、`font_style`、`line_height`、`letter_spacing`、`alignment`、`fill`、`stroke`、`shadow`、`wrap`、`line_count`，分别核对冻结事实；字体资源消费路径绑定同一节点的 `required_resources`。原字体未识别时保留观察事实，程序文字的明确替代字体写入 `font_resolution.family`，不能冒充原字体。实际字形框、基线、字体加载状态、渲染器、测试身份与证据仍按对应路线核对；`actual_geometry_unit` 与 `actual_coordinate_space` 必须绑定冻结的几何单位与空间，不能只给出无单位矩形。
+
+Cocos、Phaser、Three.js 的普通视觉路线中，布局或覆盖区域明确分类为文字时，同样按 `text_decomposition` 为对应节点和状态交接样式；确认稿是位图时由人工登记其中的文字，无法核实的字重、字形、行高、字距、对齐、描边、阴影或换行，在 `typography_target.pending_attributes` 中逐项记录 `property` 和 `reason`，无需填写猜测值。V5 在该节点已有的 `runtime_verification.evidence` 中引用唯一原生运行 JSON 的 `{path, sha256}`，并与当前目标的公共 `runtime-layout` 使用同一文件。该文件以 `web-native-text-readback/1.0` 记录 `measurementSource: runtime-component`、实际 `runId`、`workItemId`、`stack`、`sceneId`、`stateId`、`candidateId` 和 `referenceTarget`。其 `nodes` 条目使用 `textNodeId`、`layoutNodeId`、实际 `componentPath` 与 `measurement` 保存本节点运行属性，字段值与 `runtime_verification` 逐项一致并与 V3 目标比较。不同目标、候选、状态或实际属性不能复用旧读数。待确认属性和字体样式差异均保持未通过，其他视觉差异的例外和通用容差不能替代样式匹配。截图继续交用户人工验收。
+
+图片字标的 `typography_target.image_tint` 使用 0–1 的 `{r, g, b}`，`image_opacity` 使用 0–1 的比例。V5 原生测量记录 `actual_image_tint`、`actual_image_opacity`、`actual_image_path` 和 `actual_image_sha256`，与冻结目标及图片资源内容核对。图片字形和烘焙效果仍由用户人工确认。
 
 每个文字目标的 `fill` 必须同时冻结文字颜色及透明度，使用 `#RRGGBBAA`，或 `{color: "#RRGGBB", opacity: 0..1}`；渐变使用 `stops` 数组逐色标记录颜色和透明度，并保留实际渐变参数。程序文本、位图字体和混合路线的 `actual_typography.fill` 按真实文字组件采集同一形式并逐项比较，缺失、颜色或透明度不同均不能通过。图片字标的颜色与透明度目标仍须记录，实际图内颜色和显示结果通过既有用户人工审阅对照，不虚构字体组件读数。
 

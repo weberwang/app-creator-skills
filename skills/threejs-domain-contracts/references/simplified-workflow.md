@@ -1,6 +1,6 @@
 # 简化工作流视图
 
-六阶段和对象视觉闭环见[公共工作流](../../app-creator-workflow/references/workflow.md)，本文件只补充本栈的实施与验收。
+七阶段和对象视觉闭环见[公共工作流](../../app-creator-workflow/references/workflow.md)，本文件只补充本栈的实施与验收。
 
 ## 图片优先的确认方式
 
@@ -19,9 +19,9 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-domain-visual-gates.md#图片优先的确认方式)。
 
-## 六阶段项目视图
+## 七阶段项目视图
 
-六阶段、阶段身份和交付见[公共工作流](../../app-creator-workflow/references/workflow.md)。
+七阶段、阶段身份和交付见[公共工作流](../../app-creator-workflow/references/workflow.md)。
 
 
 基础工程阶段必须按[基础显示约束](../../app-stack-threejs/references/game-implementation.md#基础显示约束)完成游戏全屏显示；目标包含 Android 时，启动首帧、启动画面切换及运行全程均不得显示窗口标题栏或 ActionBar，并在后台返回和窗口焦点恢复后保持沉浸式全屏。此项属于基础平台能力，不等待场景视觉生产；无实际运行证据的验收项须明确标记未验证，真机验收仍需用户明确授权。
@@ -36,7 +36,7 @@ Git 收尾按[最小提交集](../../threejs-game-architecture/references/artifa
 
 ## 四步单场景视图
 
-本栈统一使用 V0–V5；V1 可直接实现和验证功能，白盒可选。
+本栈统一使用 V1–V5；V1 可直接实现和验证功能，白盒可选。
 
 对象视觉阶段及实际产物见[公共工作流](../../app-creator-workflow/references/workflow.md)。
 

@@ -374,7 +374,7 @@ async function preparePublic(t) {
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V1' });
+
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');

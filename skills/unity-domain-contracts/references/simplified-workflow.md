@@ -1,6 +1,6 @@
 # 简化工作流视图
 
-本文件是用户入口，只投影控制面已经记录的事实，不替代状态、门禁、实施包或证据。六阶段顺序固定；阶段内仍以 Work Item 的 `globalState` 为唯一可执行状态。
+本文件是用户入口，只投影控制面已经记录的事实，不替代状态、门禁、实施包或证据。七阶段顺序固定；阶段内仍以 Work Item 的 `globalState` 为唯一可执行状态。
 
 ## 图片优先的确认方式
 
@@ -8,7 +8,7 @@
 
 | 任务 | 用户看到的交付 | 内部处理 |
 | --- | --- | --- |
-| V1 功能验证 | 按需展示可运行功能或必要白盒；白盒可选 | 使用实际行为验证，不依赖视觉目标 |
+| V1 模块方案 | 确认完整模块方案与验收，按风险使用白盒 | 方案可执行后进入模块设计 |
 | V2 场景目标 | 真实完整效果图；纯工程工作项不虚构图片 | 内部维护状态、节点、父子关系、来源和 Unity 原生响应式合同；存在决定性需求歧义才询问 |
 | V3 拆解确认 | 先展示编号框选与中文标注图，确认后再展示独立布局图并确认 | 两项产物分别生成、记录确认；布局图包含参照、约束和关键适配行为 |
 | 静态资源 | 图片画廊或可放大的参考/输出对照 | 独立资产与工程检查保留，文字只列失败、缺失和仍需处理的差异 |
@@ -17,7 +17,7 @@
 | 返修 | 原始目标、修改前与修改后对照 | 已确认目标范围内直接修复与重验，旧生成图只作辅助，不单独确认文字修复方案 |
 | 动画 | 先确认设计理念与动作方案，再展示真实视频、关键帧或 Unity 动画预览 | 取得制作前方案确认后生成；玩法事件、时长或行为边界有决定性歧义时暂停受影响动作 |
 
-V0 是内部识别与分流，不要求常规确认，也不写入 `stageReviews`。V2 的真实目标图确认后才能拆解；V3 先确认拆解图，再单独确认布局图，两项都完成后才能生产正式资源；V4 确认正式资源后进入 V5 正式实现和校准；V5 实际运行交付经用户确认后完成。全局基线首次建立时恰好生成三张同条件候选，每张记录五项美术质量结果；唯一人工选择的候选五项均须 `PASS`。选择证据写入 `Work.globalVisualBaselineSelectionRef.path`，有效证据可由其他 Work 复用，详见 [视觉基线合同](../../unity-development-workflow/references/visual-workflow.md#全局视觉基线)。
+范围记入模块任务。V2 的真实目标图确认后才能拆解；V3 先确认拆解图，再单独确认布局图，两项都完成后才能生产正式资源；V4 确认正式资源后进入 V5 正式实现和校准；V5 实际运行交付经用户确认后完成。全局基线首次建立时恰好生成三张同条件候选，每张记录五项美术质量结果；唯一人工选择的候选五项均须 `PASS`。选择证据写入 `Work.globalVisualBaselineSelectionRef.path`，有效证据可由其他 Work 复用，详见 [视觉基线合同](../../unity-development-workflow/references/visual-workflow.md#全局视觉基线)。
 
 纯工程 `FOUNDATION` 没有视觉依赖时不等待全局选图；实施包声明 `visualBaselineRequired=true` 时才要求有效选择证据。已有骨骼拆件/代表动画等专项确认仍保留；这些确认不新增工作流阶段，也不替代阶段确认。
 
@@ -25,31 +25,34 @@ Unity 运行截图、预览与观看效果由用户人工检查，未经明确�
 
 画面内容按[游戏内文案](../../unity-development-workflow/references/game-copy.md)贯穿策划、效果图和实现：内部规格分开保存，图片、图标、数字、符号和视觉状态优先，文字只补充必要语义。生成前指定实际可见内容，Unity 组合与运行时绑定同一表达，不把策划详细说明复制到画面；拆解标注和编辑器操作说明不属于游戏内文案。
 
-## 六阶段项目视图
+## 七阶段项目视图
 
 | 阶段 ID | 用户阶段 | 聚合产物 | 内部落点 |
 | --- | --- | --- | --- |
-| `requirements-scope` | 需求与范围 | Work Item 摘要、目标、范围、基线和验收边界 | `INTAKE` |
-| `global-baseline` | 全局基线 | 项目事实、GDD/TDD 选择、模块契约和全局质量基线 | `BASELINE`、`PROPOSAL`、`REVIEW` |
-| `foundation-engineering` | 基础工程 | SHARED/MODULE 基础实施包、代码和工程验证证据 | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
-| `scene-production` | 场景与弹窗生产 | 场景或独立显示层契约、V0-V5 证据、Scene/Prefab/UI 正式实现 | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
-| `global-integration-validation` | 全局集成验证 | 跨场景导航、存档、音频、性能和联合回归证据 | `INTEGRATING` |
-| `release` | 发布 | 可复现构建、平台资料、合规与精确发布批准 | `RELEASE_APPROVAL_REQUIRED`、`RELEASING` |
+| `commercial-initiation` | 商业立项 | 玩家需求、成功标准、商业假设 | `INTAKE` |
+| `requirements-scope` | 产品定义与版本规划 | 目标版本、GDD、范围及验收 | `INTAKE`、`BASELINE` |
+| `global-baseline` | 制作技术方案 | TDD、模块契约和质量预算 | `BASELINE`、`PROPOSAL`、`REVIEW` |
+| `foundation-engineering` | 基础工程与架构实现 | 公共工程和验证证据 | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
+| `scene-production` | 模块实现与体验整合 | 完整功能、整版 V2 稿件及正式 Scene/Prefab/UI | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
+| `cross-module-integration` | 跨模块集成 | 本批跨场景和状态回归证据 | `INTEGRATING` |
+| `global-integration-validation` | 模块集成与整体验收 | 同一候选上的目标版本验收 | `INTEGRATING`、`COMPLETE` |
 
-## 单场景 V0-V5
+另行明确委托的发布使用独立 RELEASE 工作项。
 
-V0 仅作内部识别和分流，无常规人工确认。V1 先完成真实功能验证，白盒可选；V2–V5 按[阶段人工确认](./stage-confirmation.md)推进；场景与显示层分别记录 `stageReviews`，技术验证通过不能代替人工确认。V3 必须分别记录拆解图与布局图确认。
+## 单场景 V1-V5
+
+范围记入模块任务。V1 先确认完整模块方案，白盒按风险选择；V2–V5 按[阶段人工确认](./stage-confirmation.md)推进；场景与显示层分别记录 `stageReviews`，技术验证通过不能代替人工确认。V3 必须分别记录拆解图与布局图确认。
 
 | 场景阶段 | 含义 | 最小事实 |
 | --- | --- | --- |
-| `V0` | 内部分流 | 内部确定对象身份、范围、上下文、依赖和验收目标，不提交常规人工确认 |
+| `开工准备` | 内部分流 | 内部确定对象身份、范围、上下文、依赖和验收目标，不提交常规人工确认 |
 | `V1` | 功能实现与验证 | 直接实现或复用功能，白盒按需使用；保留真实验证结果，不要求正式视觉目标 |
 | `V2` | 对象定义 | 视觉工作项的真实完整目标图、功能契约和 Unity 原生响应式合同；目标图经确认后作为持续视觉目标 |
 | `V3` | 拆解与布局确认 | 先确认编号拆解图，再独立确认布局图、参照和适配约束；两项均绑定 V3 |
 | `V4` | 正式资源生产与导入验收 | 正式资源、来源、Importer 和导入验证；可生产资源级 Prefab、做临时组合预览，不实施正式宿主 Scene/场景装配 Prefab/UI |
 | `V5` | 正式实现与运行验收 | 完成 Scene/Prefab/UI 接入、原生布局校准、交互与实际运行证据，用户确认后完成 |
 
-V0-V5 是场景和独立显示层证据的顺序，不是绕过全局状态的另一套控制流。`SCENE` 和 `DISPLAY_LAYER` 都必须在 `scene-production` 内推进自己的阶段与状态；V4 未闭合时不能声称 V5，缺少可见合同或运行证据时只显示当前真实全局阶段。通过 `visual-stage --repo <项目路径> --work-item <file> --to V1|V2|V3|V4|V5` 逐阶段显式推进同一工作项；当前阶段证据与确认闭合后，清除旧阶段消费引用并归档执行状态，再由 `run` 开始下一阶段实施。
+V1-V5 是场景和独立显示层证据的顺序，不是绕过全局状态的另一套控制流。`SCENE` 和 `DISPLAY_LAYER` 都必须在 `scene-production` 内推进自己的阶段与状态；V4 未闭合时不能声称 V5，缺少可见合同或运行证据时只显示当前真实全局阶段。通过 `visual-stage --repo <项目路径> --work-item <file> --to V1|V2|V3|V4|V5` 逐阶段显式推进同一工作项；当前阶段证据与确认闭合后，清除旧阶段消费引用并归档执行状态，再由 `run` 开始下一阶段实施。
 
 ## 场景与显示层
 

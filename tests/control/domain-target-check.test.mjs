@@ -10,6 +10,7 @@ import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import addFormats from '../../skills/app-skill-runtime/ajv-formats.mjs';
 import { validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
 import { validateMultiVisualStage } from '../../skills/app-workflow-control/scripts/runtime/multi-visual-contract.mjs';
+import { unityLayoutFixture } from './unity-text-fixture.mjs';
 import { assertAssetReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { minimalPng, validManifest } from '../../skills/cocos-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
@@ -82,7 +83,7 @@ test('未安装当前栈领域脚本时明确阻断而非跳过', (t) => {
   const { repo, work, target } = webFixture(t);
   const runtime = join(repo, 'isolated', 'skills', 'app-workflow-control', 'scripts', 'runtime');
   mkdirSync(runtime, { recursive: true });
-  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
+  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
   const moduleUrl = pathToFileURL(join(runtime, 'domain-target-check.mjs')).href;
   const script = `import {validateDomainTarget} from ${JSON.stringify(moduleUrl)}; const [repo,work,target]=JSON.parse(process.argv[1]); try {validateDomainTarget(repo,work,target,'V2'); process.exitCode=1;} catch(e) {process.stdout.write(e.message);}`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, JSON.stringify([repo, work, target])], { encoding: 'utf8', windowsHide: true });
@@ -210,6 +211,9 @@ test('Unity V3–V5 经领域门接受完整合同，并拒绝候选、场景和
   const referenceTarget = { path: 'visual/target.png', sha256: createHash('sha256').update(image).digest('hex') };
   const target = { targetId: 'view-1', candidateId: 'c1', sceneId: 'Main', stateId: 'default', viewport: { width: 1920, height: 1080 }, referenceTarget, domainEvidenceRef: { path: 'docs/unity-domain.json' } };
   const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity', evidenceRoot: 'evidence', evidenceRef: { path: 'evidence/manifest.json' } };
+  const save = (path, value) => { put(repo, path, value); return { path, sha256: createHash('sha256').update(readFileSync(join(repo, path))).digest('hex') }; };
+  const layout = unityLayoutFixture(save, target, { prefix: 'docs/single' });
+  target.reviews = { V3Layout: save('docs/single-review.json', { layoutSpecRef: layout.planRef }) };
   const native = { schemaVersion: '1.0', visualStageModel: 'function-first-v1', workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stageId: 'scene-production', globalState: 'REVIEW', scene: { sceneId: 'Main', stage: 'V2', status: 'IN_PROGRESS' }, responsiveContract: unityContract(), baselineHash: 'sha256:abc', revision: 0, objective: '场景验收', moduleIds: ['scene'], allowedPaths: ['Assets/**'], forbiddenPaths: ['Library/**'], allowedActions: ['unity-code-change'], actionLevel: 'A3', actionType: 'unity-code-change', gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' } };
   put(repo, referenceTarget.path, image);
   put(repo, target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
@@ -240,7 +244,7 @@ test('Unity V3–V5 经领域门接受完整合同，并拒绝候选、场景和
   // 包装字段与目标同时变化时，不能冒充已经人工验收过的运行情境。
   for (const changed of [{ ...target, stateId: 'other' }, { ...target, viewport: { width: 37, height: 41 } }]) {
     put(repo, target.domainEvidenceRef.path, { ...changed, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
-    assert.throws(() => validateDomainTarget(repo, work, changed, 'V5'), /状态和视口/);
+    assert.throws(() => validateDomainTarget(repo, work, changed, 'V5'), /状态和视口|stateId/);
   }
   const alternative = Buffer.from('其他目标');
   put(repo, 'visual/other.png', alternative);
@@ -284,7 +288,10 @@ function unityMultiFixture(t, stage) {
     target.assetReviewRef = save(`docs/assets-${id}.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef: message, qualityChecks, assets: [{ assetId: id, assetType: 'image', output: referenceTarget.path, sourceRef: 'synthetic', sourceKind: 'hand-authored' }] });
     for (const [name, reviewStage, purpose] of [['V2', 'V2', 'target'], ['V3Decomposition', 'V3', 'decomposition'], ['V3Layout', 'V3', 'layout'], ['V4', 'V4', 'imported-assets'], ['V5', 'V5', 'runtime-acceptance']]) {
       const review = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: 'Main', targetId: id, candidateId, stage: reviewStage, purpose, decision: 'APPROVED', userMessageRef: message, referenceTarget, targetRef: referenceTarget.path, targetSha256: referenceTarget.sha256, ...(name === 'V2' ? { qualityChecks } : {}) };
-      if (name === 'V3Layout') review.decompositionReviewRef = target.reviews.V3Decomposition;
+      if (name === 'V3Layout') {
+        review.decompositionReviewRef = target.reviews.V3Decomposition;
+        review.layoutSpecRef = unityLayoutFixture(save, target, { prefix: `docs/${id}` }).planRef;
+      }
       target.reviews[name] = save(`docs/review-${id}-${name}.json`, review);
     }
     work.visual.targets.push(target);

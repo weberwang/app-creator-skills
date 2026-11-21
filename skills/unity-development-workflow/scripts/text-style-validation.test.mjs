@@ -69,6 +69,17 @@ test('字体颜色必须有确认稿目标和实际 RGBA 回读', () => {
   assert.match(validateTextStyle(node, observations).join('\n'), /缺少 fill/);
 });
 
+test('共用样式逐节点验证，位图未确认项仍阻止通过', () => {
+  const { node, observations } = fixture();
+  const styles = { primary: node.textStyle.attributes };
+  node.textStyle = { source: node.textStyle.source, styleId: 'primary' };
+  assert.deepEqual(validateTextStyle(node, observations, styles), []);
+  assert.match(validateTextStyle({ ...node, id: 'total' }, [], styles).join('\n'), /total.*fontSize.*未验证/);
+  assert.match(validateTextStyle(node, observations).join('\n'), /有效样式引用/);
+  styles.primary.push({ name: 'shadow', status: 'PENDING_HUMAN', reason: '位图参考无法确认阴影参数' });
+  assert.match(validateTextStyle(node, observations, styles).join('\n'), /shadow.*待人工确认.*位图/);
+});
+
 test('V5 布局入口对活动文字节点校验样式回读', () => {
   const { node: styleNode, observations } = fixture();
   const template = JSON.parse(readFileSync(new URL('../templates/ui-layout-plan.json', import.meta.url), 'utf8'));
@@ -119,4 +130,22 @@ test('V5 布局入口对活动文字节点校验样式回读', () => {
   evidence.measurements[0].objectPath = 'Canvas/SafeArea/Panel';
   snapshot.textStyle = [{ ...observations[0], actualValue: 'another-font' }];
   assert.match(validateUiLayoutRuntime(plan, report, { textStyleEvidence: evidence }).join('\n'), /与已有实测冲突/);
+});
+
+test('世界空间只对照实际组件，屏幕布局不接受纯文字报告', () => {
+  const { node, observations } = fixture();
+  const template = JSON.parse(readFileSync(new URL('../templates/ui-layout-plan.json', import.meta.url), 'utf8'));
+  template.nodes = [{ ...template.nodes[0], renderKind: 'TEXT', textStyle: node.textStyle }];
+  delete template.nodes[0].layoutBinding.uiLayout.imageSizing;
+  const plan = deriveUiLayoutPlan(template);
+  const report = {
+    measurementSource: 'UNITY_EDITOR_LOADED_SCENE', runId: 'world', generatedAtUtc: '2026-11-09T00:00:00Z', frameCount: 1,
+    includesComponentSnapshots: true, uiSystem: plan.uiSystem, coordinateSpace: plan.coordinateSpace, stateId: plan.stateId,
+    scenePath: plan.scenePath, status: 'MEASURED', textOnly: true,
+    measurements: [{ id: plan.nodes[0].id, objectPath: 'World/Price', status: 'MEASURED', componentSnapshot: { active: true, textStyle: observations } }],
+  };
+  assert.deepEqual(validateUiLayoutRuntime(plan, report, { textOnly: true }), []);
+  assert.match(validateUiLayoutRuntime(plan, report).join('\n'), /不能作为屏幕布局报告/);
+  report.measurements[0].componentSnapshot.textStyle = [];
+  assert.match(validateUiLayoutRuntime(plan, report, { textOnly: true }).join('\n'), /fontSize.*未验证/);
 });

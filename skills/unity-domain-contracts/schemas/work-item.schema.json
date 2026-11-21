@@ -55,10 +55,12 @@
     },
     "stageId": {
       "enum": [
+        "commercial-initiation",
         "requirements-scope",
         "global-baseline",
         "foundation-engineering",
         "scene-production",
+        "cross-module-integration",
         "global-integration-validation",
         "release"
       ]
@@ -95,7 +97,6 @@
         },
         "stage": {
           "enum": [
-            "V0",
             "V1",
             "V2",
             "V3",
@@ -1019,7 +1020,6 @@
         },
         "stage": {
           "enum": [
-            "V0",
             "V1",
             "V2",
             "V3",

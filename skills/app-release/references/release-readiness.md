@@ -4,7 +4,7 @@
 
 此规范用于每次构建候选前检查实际生效的服务配置和环境，并在性能检查、优化、图集处理之间作出有依据的选择。内部评审候选可以使用测试服务，但标记必须与实际配置相符；测试环境候选不得标为正式就绪。
 
-仅做检查或候选打包时，使用默认 `RELEASE.releaseIntent=prepare`：完成当前工程验证后，以 `release-preparation` 结果引用真实检查/交付材料即可关闭，结论为“准备完成”。只有实际执行发布才选择 `publish`，并继续核对 F4、精确用户批准和实际 `release-result`。完整收尾规则见[公共流程](../../app-creator-workflow/references/workflow.md#发布准备与实际上线)，准备结果不得描述成已上线。
+仅做检查或候选打包时，使用默认 `RELEASE.releaseIntent=prepare`：完成当前工程验证后，以 `release-preparation` 结果引用真实检查/交付材料即可关闭，结论为“准备完成”。只有实际执行发布才选择 `publish`，并继续核对 F4、精确用户批准和实际 `release-result`。完整收尾规则见[公共流程](../../app-creator-workflow/references/workflow.md#独立的发布任务)，准备结果不得描述成已上线。
 
 发布候选中的所有 SDK 同时遵守[隐私流程与 SDK 解耦](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)：核对用途策略、未授权及撤回路径和最终包自动启动配置，缺少实际行为证据时明确标记未验证。
 

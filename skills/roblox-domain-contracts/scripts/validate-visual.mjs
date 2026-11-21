@@ -79,6 +79,13 @@ export function validateRobloxVisual(repo, work, { stage, target, envelope } = {
   validateIdentity(repo, work, stage, target, envelope, doc);
   if (stage === 'V2') return { status: 'PASS', scope: 'record-consistency' };
   const { layout, nodes } = validateRobloxLayout(repo, work, doc);
+  for (const node of nodes.values()) {
+    if (!['TextLabel', 'TextButton', 'TextBox'].includes(node.className)) continue;
+    // 每个文字节点独立绑定当前目标和适用状态，换稿或换状态不能复用旧样式。
+    sameRef(repo, node.textStyle.sourceTarget, doc.referenceTarget, `文字节点 ${node.id} 的设计来源`);
+    text(node.textStyle.stateId, `文字节点 ${node.id} 的状态`);
+    if (node.textStyle.stateId !== doc.stateId) throw new WorkflowError(`文字节点 ${node.id} 的状态未绑定当前视觉状态`);
+  }
   confirmedRef(repo, work, target, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef);
   if (stage === 'V3') return { status: 'PASS', scope: 'record-consistency' };
   const engineering = bindCurrentEngineering(repo, work, target, doc, stage);

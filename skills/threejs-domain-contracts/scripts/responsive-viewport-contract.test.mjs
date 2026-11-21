@@ -26,7 +26,7 @@ test('响应式工作项范围仅包含 V2-V5', () => {
   for (const visualStage of ['V2', 'V3', 'V4', 'V5', 'v4']) {
     assert.equal(isResponsiveWorkItem({ visualStage, visibleVisualProductionIntegration: true }), true);
   }
-  for (const visualStage of ['V0', 'V6', 'V6']) {
+  for (const visualStage of ['V0', 'V6']) {
     assert.equal(isResponsiveWorkItem({ visualStage, visibleVisualProductionIntegration: true }), false);
   }
 });

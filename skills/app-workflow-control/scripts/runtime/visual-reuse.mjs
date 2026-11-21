@@ -13,7 +13,6 @@ const IMPACT_REVIEWS = Object.freeze({
   layout: ['V2', 'V3Decomposition'],
   target: [],
 });
-const IMPACT_STAGE = Object.freeze({ implementation: 'V3', assets: 'V3', layout: 'V2', target: 'V2' });
 
 /** 在目标工作项锁内，安全复用同项目同视觉对象已完成人工确认的前置阶段。 */
 export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impact, reason, targetIds }) {
@@ -68,9 +67,7 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
       for (const name of inheritedReviews) work.visual.reviews[name] = { path: repoPath(repo, source.visual.reviews[name].path).relative, sha256: source.visual.reviews[name].sha256 };
       if (impact !== 'target') work.visual.candidateId = source.visual.candidateId;
     }
-    // 局部继承时仍有新目标或未选择目标，必须让它们先经过本批 V2 确认。
-    const partialScene = targetIds !== undefined;
-    work.visual.stage = partialScene ? 'V2' : isFigmaApp(work) && impact !== 'target' ? 'V3' : IMPACT_STAGE[impact];
+    // 旧稿可作为 V2 的输入，本批覆盖清单仍需经用户确认后才能进入 V3。
     work.visual.reuse = {
       sourceWorkItemRef: { path: sourcePath }, impact, reason, inheritedReviews,
       ...(targetIds ? { targetIds: [...targetIds] } : {}),
@@ -93,7 +90,7 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
       status: 'PASS', work, changed: true,
       metadata: {
         reusedReviews: inheritedReviews,
-        remainingChecks: partialScene ? ['为本批未继承的场景目标完成 V2/V3 确认', '重新确认当前累计覆盖范围', '当前项目完成 V4 素材导入证据与人工确认', '当前项目完成 V5 运行时人工验收'] : remainingChecks(impact),
+        remainingChecks: ['确认本批 V2 模块稿、状态及进度覆盖', ...remainingChecks(impact)],
         sourceWorkItem: sourcePath,
       },
     });
@@ -133,7 +130,7 @@ function validateSource(target, source, sourcePath, targetPath) {
     throw new WorkflowError('DISPLAY_LAYER 视觉复用来源的宿主或层类型与目标不匹配');
   }
   if (target.globalState !== 'PROPOSAL' || target.visual.stage !== 'V2' || !target.visual.functionBaselineRef?.path) {
-    throw new WorkflowError('目标必须先完成 V1 功能验证，并处于 PROPOSAL/V2');
+    throw new WorkflowError('目标必须先完成 V1 模块方案确认，并处于 PROPOSAL/V2');
   }
   if (target.implementationPackageRef?.path || target.evidenceRef?.path || target.assetReviewRef?.path) {
     throw new WorkflowError('目标已存在实施包、工程证据或素材评审，不能复用');

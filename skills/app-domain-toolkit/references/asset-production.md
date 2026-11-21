@@ -2,7 +2,7 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。
 
-各技术栈统一使用 V0–V5。V1 验证功能；3D 世界场景按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界和 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型，V2–V5 按当前实际合同完成视觉目标、交接、资源导入和运行验收；机器合同适用性与阻断按[工具边界](game-design-exploration.md#tooling-boundary)处理。
+各技术栈统一使用 V1–V5。V1 验证功能；3D 世界场景按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界和 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型，V2–V5 按当前实际合同完成视觉目标、交接、资源导入和运行验收；机器合同适用性与阻断按[工具边界](game-design-exploration.md#tooling-boundary)处理。
 
 ## 完整流程
 
@@ -20,7 +20,7 @@
 
 ### 场景还原合同（effect-image 强制）（cocos、phaser、threejs）
 
-效果图/参考图是否适用只看当前场景 Work Item 是否把它指定为正式运行画面的视觉目标，与是否生成、制作或新增资源无关。适用时，参考还原是同一场景实现生命周期内的视觉模式与合同叠加，必须进入 `effect-image` 的 V2→V3→V4→V5 还原链，包含 `scene_reconstruction_contract`、布局绑定、coverage、宿主场景同屏组合和 fidelity 验收；即使所有区域都用 `reuse-existing`/`runtime-program` 实现、零新资源且零生成式位图也不例外。不创建第二个场景 Work Item 或第二条生命周期。仅仅生成新资源，或仅把图片作为灵感、说明或临时参考，不足以触发 `effect-image`，仍按普通资产、组件或场景路径分类。`image_generation_required`、`generate-now`、资源数量和 `production_method` 只能在已经触发后由 V3 决定生产路线，不能参与 V0 applicability 判定。
+效果图/参考图是否适用只看当前场景 Work Item 是否把它指定为正式运行画面的视觉目标，与是否生成、制作或新增资源无关。适用时，参考还原是同一场景实现生命周期内的视觉模式与合同叠加，必须进入 `effect-image` 的 V2→V3→V4→V5 还原链，包含 `scene_reconstruction_contract`、布局绑定、coverage、宿主场景同屏组合和 fidelity 验收；即使所有区域都用 `reuse-existing`/`runtime-program` 实现、零新资源且零生成式位图也不例外。不创建第二个场景 Work Item 或第二条生命周期。仅仅生成新资源，或仅把图片作为灵感、说明或临时参考，不足以触发 `effect-image`，仍按普通资产、组件或场景路径分类。`image_generation_required`、`generate-now`、资源数量和 `production_method` 只能在已经触发后由 V3 决定生产路线，不能参与 模块内容适用性 判定。
 
 ### 场景还原合同（effect-image 强制）（cocos、phaser、threejs）
 
@@ -40,11 +40,11 @@ V4 先按[代表性接入与分批协作](../../app-asset-workflow/SKILL.md#代�
 
 ### 场景还原合同（effect-image 强制）（cocos、phaser、threejs）
 
-V0 先判断任务属于原子资源、组件/资源集，还是场景/整套 UI/视觉系统/重做；参考还原是否适用只由当前场景 Work Item 的正式运行视觉目标声明决定，不由新资源或图像生成需求决定。原子资源只有在结构、布局、交互和视口行为不变，且已有适用视觉契约、视觉可交付结论与预算基线时才能跳过 V2/V3；任务内小幅适配可更新计划并重验，不必重新授权。
+模块规划时先判断任务属于原子资源、组件/资源集，还是场景/整套 UI/视觉系统/重做；参考还原是否适用只由当前场景 Work Item 的正式运行视觉目标声明决定，不由新资源或图像生成需求决定。原子资源只有在结构、布局、交互和视口行为不变，且已有适用视觉契约、视觉可交付结论与预算基线时才能跳过 V2/V3；任务内小幅适配可更新计划并重验，不必重新授权。
 
 ### 场景还原合同（effect-image 强制）（cocos、phaser、threejs）
 
-当前 effect-image 场景 Work Item 按 V1 功能验证、V2 视觉目标、V3 拆解与布局、V4 正式资源和 V5 运行验收推进；白模适用性按[实现分流](game-design-exploration.md#implementation-routes)确定，3D 世界本批整体场景须经人工确认。V3 依次完成人工确认拆解 PNG 和布局 PNG，V4 进行资源级验收，V5 在正式场景组合、校准并验收运行态画面。正式视觉装配只消费当前场景或合规 `shared` 且 V4 `accepted` 的资源；公共正式资源只允许至少两个场景稳定复用或属于运行必需。场景联合验收前清除不再使用的灰盒、占位和 fallback。
+当前 effect-image 场景 Work Item 按 V1 模块方案、V2 模块视觉目标、V3 拆解与布局、V4 正式资源和 V5 运行验收推进；白模适用性按[实现分流](game-design-exploration.md#implementation-routes)确定，3D 世界本批整体场景须经人工确认。V3 依次完成人工确认拆解 PNG 和布局 PNG，V4 进行资源级验收，V5 在正式场景组合、校准并验收运行态画面。正式视觉装配只消费当前场景或合规 `shared` 且 V4 `accepted` 的资源；公共正式资源只允许至少两个场景稳定复用或属于运行必需。场景联合验收前清除不再使用的灰盒、占位和 fallback。
 
 ### 场景还原合同（effect-image 强制）（cocos、phaser、threejs）
 
@@ -68,7 +68,7 @@ F2 机器证据核对文件、结构、绑定和实际参数，不能单独给�
 
 ### 场景还原合同（effect-image 强制）（phaser、threejs）
 
-foundation-only 基础实施完成后，V1 建立功能规格并实现、验证功能；白模按[实现分流](game-design-exploration.md#implementation-routes)选择，3D 世界本批整体场景须经人工确认。V2 在已验证功能基础上确认玩法视觉契约与预算；Work Item 指定效果图为还原目标时，V2 同时按“视觉还原”（见本栈配套资料）生成或接收并冻结 scene master/reference target、宿主上下文效果图、参考身份、对比条件、可观察视觉事实和初步还原草案。需求或基线已明确时，V2 记录 `AUTO` 并直接提供场景目标/宿主上下文预览；只有产品方向、玩法语义或结构存在实质歧义时才询问额外取舍；目标图仍须在 V2 由用户确认。V3 保持“拆解图确认 → 布局图确认”的串行硬门：阶段 A 在内部完成状态分析、组件/placement、生产路线、技术 JSON 与 `decomposition_elements`，直接展示按确认顺序编号的拆解 PNG，只请用户看图确认；技术记录供代理和机器门使用，不另行要求阅读或确认。阶段 B 在拆解图确认后自动生成逐元素对齐决策、布局 PNG，直接请用户检查并确认；需要交互对照时使用 `--interactive-review` 生成并检查同批 `review.html`；无需先提交文字布局方案。用户发现图中真实歧义时再澄清。布局只在冻结原图上叠加父子框与说明，不重新生成或替换视觉参考图，也不提供多个布局方案。
+foundation-only 基础实施完成后，V1 确认完整模块方案、状态、进度与验收，白模按[实现分流](game-design-exploration.md#implementation-routes)及风险选择。第 4 阶段确认全局方向；V2 基于该方向和模块方案生成或接收 scene master/reference target、宿主上下文效果图、参考身份、对比条件、视觉事实与还原草案，覆盖全部适用状态和进度并取得用户确认。V3 保持“拆解图确认 → 布局图确认”的串行硬门：阶段 A 在内部完成状态分析、组件/placement、生产路线、技术 JSON 与 `decomposition_elements`，直接展示按确认顺序编号的拆解 PNG，只请用户看图确认；技术记录供代理和机器门使用，不另行要求阅读或确认。阶段 B 在拆解图确认后自动生成逐元素对齐决策、布局 PNG，直接请用户检查并确认；需要交互对照时使用 `--interactive-review` 生成并检查同批 `review.html`；无需先提交文字布局方案。用户发现图中真实歧义时再澄清。布局只在冻结原图上叠加父子框与说明，不重新生成或替换视觉参考图，也不提供多个布局方案。
 
 ### 场景还原合同（effect-image 强制）（phaser、threejs）
 
@@ -80,4 +80,4 @@ V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边�
 
 ### 视觉确认边界（phaser、threejs）
 
-实际采用图片还原目标的场景 Work Item 沿 V0→V1→V2→V3→V4→V5，在 V3 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG（需要交互对照时可使用同批 `review.html`）；技术 JSON、提案和决策文件在后台用于机器校验和身份绑定，不构成额外文字确认门。`visual-decomposition-confirmation/1.0` 绑定 annotation/proposal/decision SHA、target、V3 candidate、diff、baseline、全部编号和用户原文；已确认的目标或方案发生实质变化时重新确认受影响部分，普通运行态布局微调不重开 V3。V3 拆解图、技术 JSON、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图与决策文件。V4 资源验收和 V5 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V3 图像确认。`world-3d` 依[无图场景合同](../../app-workflow-control/references/world3d-scenes.md)交接模型规格与运行证据，不以此段生成图片或新增批准。
+实际采用图片还原目标的场景 Work Item 沿 V1→V2→V3→V4→V5，在 V3 依次完成拆解图确认和布局图确认，冻结还原方案。用户面对的是编号拆解 PNG 与布局 PNG（需要交互对照时可使用同批 `review.html`）；技术 JSON、提案和决策文件在后台用于机器校验和身份绑定，不构成额外文字确认门。`visual-decomposition-confirmation/1.0` 绑定 annotation/proposal/decision SHA、target、V3 candidate、diff、baseline、全部编号和用户原文；已确认的目标或方案发生实质变化时重新确认受影响部分，普通运行态布局微调不重开 V3。V3 拆解图、技术 JSON、合同回对、coverage 和结构化机器检查必须齐全，布局确认另行绑定最终布局图与决策文件。V4 资源验收和 V5 正式场景的代表性完整画面及关键可用性证据绑定当前身份；overlay、diff 和完整逐区域精确 fidelity 仅在 exact 模式强制。根节点 PASS、布尔值、AI reviewer 字段或旧 `human_review` 均不能代替两次 V3 图像确认。`world-3d` 依[无图场景合同](../../app-workflow-control/references/world3d-scenes.md)交接模型规格与运行证据，不以此段生成图片或新增批准。

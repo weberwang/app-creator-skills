@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一按 V0–V5 推进；V1 先验证功能，3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界和 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型；V2–V5 依当前合同完成视觉目标、交接、资源导入和运行验收。现有机器字段及图像工件要求按[工具边界](game-design-exploration.md#tooling-boundary)执行，无法满足时保留阻断。
+各技术栈统一按 V1–V5 推进；V1 先验证功能，3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界和 UI 按需选择占位方式。3D 本批整体场景经人工确认后按[生产交接](game-design-exploration.md#production-handoff)处理模型；V2–V5 依当前合同完成视觉目标、交接、资源导入和运行验收。现有机器字段及图像工件要求按[工具边界](game-design-exploration.md#tooling-boundary)执行，无法满足时保留阻断。
 
 ## 结构化 Schema
 
@@ -10,7 +10,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-场景视觉阶段依次使用 V0、V1、V2、V3、V4 和 V5。V4 `v4-formal-acceptance` 证据绑定 `visualManifestFile` 与正式资源验收；V5 Implementation Package 与 runtime candidate 直接绑定当前场景 V3 拆解/布局、V4 资源和实际运行证据。
+场景视觉阶段依次使用 V1、V2、V3、V4 和 V5。V4 `v4-formal-acceptance` 证据绑定 `visualManifestFile` 与正式资源验收；V5 Implementation Package 与 runtime candidate 直接绑定当前场景 V3 拆解/布局、V4 资源和实际运行证据。
 
 > 适用技术栈：cocos、phaser、threejs。
 

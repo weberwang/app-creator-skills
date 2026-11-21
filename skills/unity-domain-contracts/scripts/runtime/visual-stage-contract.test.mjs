@@ -65,14 +65,20 @@ test('阶段确认仅记录 V2–V5，V3 拆解和布局必须分别确认', () 
   assert.deepEqual(stageConfirmationBlockers(work, null, 'COMPLETE'), []);
 });
 
-test('Unity 场景与显示层 schema 均接受 V0–V5，V1 不需要响应式视觉合同', () => {
+test('Unity 场景与显示层 schema 均接受 V1–V5，V1 不需要响应式视觉合同', () => {
   const schema = JSON.parse(readFileSync(new URL('../../schemas/work-item.schema.json', import.meta.url), 'utf8'));
   const ajv = new Ajv2020({ strict: false });
   const scene = ajv.compile(schema.properties.scene);
   const layer = ajv.compile({ $defs: schema.$defs, $ref: '#/$defs/displayLayer' });
-  for (const stage of ['V0', 'V1', 'V2', 'V3', 'V4', 'V5']) {
+  for (const stage of ['V1', 'V2', 'V3', 'V4', 'V5']) {
     assert.equal(scene({ sceneId: 'main', stage, status: 'IN_PROGRESS' }), true, stage);
     assert.equal(layer({ displayLayerId: 'popup', hostSceneId: 'main', type: 'popup', stage, status: 'IN_PROGRESS' }), true, stage);
+  }
+  assert.equal(scene({ sceneId: 'main', stage: 'V0', status: 'IN_PROGRESS' }), false);
+  assert.equal(layer({ displayLayerId: 'popup', hostSceneId: 'main', type: 'popup', stage: 'V0', status: 'IN_PROGRESS' }), false);
+  const projectStage = ajv.compile(schema.properties.stageId);
+  for (const stage of ['commercial-initiation', 'requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'cross-module-integration', 'global-integration-validation']) {
+    assert.equal(projectStage(stage), true, stage);
   }
   const constraints = ajv.compile({ allOf: schema.allOf.filter((rule) => ['SCENE', 'DISPLAY_LAYER'].includes(rule.if?.properties?.workItemType?.const)) });
   assert.equal(constraints(makeWork('V1')), true, JSON.stringify(constraints.errors));
@@ -107,6 +113,9 @@ test('功能变化退回 V1；纯运行修复保留 V4 资源确认', () => {
   const functional = { returnState: deriveReturnState(['stage:V1']), affectedScope: ['stage:V1'] };
   assert.equal(deriveReturnVisualStage(work, functional), 'V1');
   assert.equal(deriveReturnVisualStage(work, { returnState: 'IMPLEMENTING', affectedScope: ['artifact:Assets/test.cs'] }), 'V5');
+  assert.equal(deriveReturnState(['stage:commercial-initiation']), 'BASELINE');
+  assert.equal(deriveReturnState(['stage:cross-module-integration']), 'IMPLEMENTING');
+  assert.throws(() => deriveReturnState(['stage:V0']), /未知阶段/);
 });
 
 

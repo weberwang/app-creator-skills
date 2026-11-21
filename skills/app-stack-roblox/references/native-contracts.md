@@ -5,7 +5,7 @@
 <!-- native-source:roblox-workflow:start -->
 ## mode-roblox-workflow
 
-选择目标 Studio 和 Place 后沿用公共六阶段/V0–V5；真实游戏对象使用 `SCENE`，独立瞬态层使用 `DISPLAY_LAYER`，数据及平台能力使用 `MODULE`。同一 Place 的不同数据关卡或功能可以共享宿主，不按关卡数虚构 Place 或状态机。先按[工程与 Studio](engineering.md)确认正式源和 `studio_id`，有显示时按[内容与地形](content.md)衔接阶段；V1 与非视觉模块也要提交实际工程/运行证据。
+选择目标 Studio 和 Place 后沿用公共七阶段/V1–V5；真实游戏对象使用 `SCENE`，独立瞬态层使用 `DISPLAY_LAYER`，数据及平台能力使用 `MODULE`。同一 Place 的不同数据关卡或功能可以共享宿主，不按关卡数虚构 Place 或状态机。先按[工程与 Studio](engineering.md)确认正式源和 `studio_id`，有显示时按[内容与地形](content.md)衔接阶段；V1 与非视觉模块也要提交实际工程/运行证据。
 <!-- native-source:roblox-workflow:end -->
 
 <!-- native-source:roblox-game-production:start -->

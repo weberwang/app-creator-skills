@@ -15,7 +15,7 @@ description: 在 Roblox Studio 游戏中规划或实现 Luau、Place、客户端
 
 正式工作优先使用 Studio 可编辑源：脚本按项目实际官方 Script Sync 映射，Place 选择一个真实保存并回读的 `.rbxl` 或 `.rbxlx` 作为正式快照。Script Sync 不保存非脚本实例、属性或标签，不能替代 Place；MCP 文档没有确认可自动本地保存的专用工具，自动保存能力须在当前实例实际验证。同一 Place 编辑、同步与保存保持单写者，使用真实项目路径及既有控制器的文件/证据合同。[正式源和环境](references/engineering.md)
 
-游戏世界的实际对象使用 `SCENE`，独立弹窗等使用 `DISPLAY_LAYER` 并绑定宿主；数据规则和平台服务使用 `MODULE`。一份 Place 可包含多个游戏内容对象或关卡，不把每个关卡机械变成 Place。V0–V5 沿用公共阶段，世界搭建、整体确认与模型交接按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)执行；UI 保留原目标、拆解布局与资源验收，V5 在当前正式组合中验证。Roblox `Gui`、系统界面、安全区和实际输入由本栈合同定义，三维世界坐标不能套用屏幕像素；不额外制作自有 Android/iOS 启动屏或执行 Vite/npm 构建。
+游戏世界的实际对象使用 `SCENE`，独立弹窗等使用 `DISPLAY_LAYER` 并绑定宿主；数据规则和平台服务使用 `MODULE`。一份 Place 可包含多个游戏内容对象或关卡，不把每个关卡机械变成 Place。V1–V5 沿用公共阶段，世界搭建、整体确认与模型交接按[3D／2D 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)执行；UI 保留原目标、拆解布局与资源验收，V5 在当前正式组合中验证。Roblox `Gui`、系统界面、安全区和实际输入由本栈合同定义，三维世界坐标不能套用屏幕像素；不额外制作自有 Android/iOS 启动屏或执行 Vite/npm 构建。
 
 客户端输入和 Remote 必须由服务端依实际规则校验；`execute_luau`、导入和启动试玩也可能触发云数据、HTTP、上传或其他副作用，先核对当前 Experience、数据环境和实际动作，默认使用隔离测试数据。云数据写入、上传、付费、发布及真机等仍按现有控制器的具体动作与授权执行。视觉截图和播放效果由用户人工检查，插件试玩子代理不能绕过该规则。
 

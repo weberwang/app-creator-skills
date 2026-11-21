@@ -12,7 +12,7 @@ import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'stage', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],

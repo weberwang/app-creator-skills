@@ -9,7 +9,7 @@ description: 规划、开发或交付采用 Expo 的 React Native 应用时使�
 
 复杂页面和跨页面流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，沿用实际导航、组件、表单与数据状态，验证键盘、返回和适用的中断恢复。
 
-先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用六阶段、工作项、证据和 V0–V5。应用页面使用 `PAGE`，独立瞬态层使用 `DISPLAY_LAYER` 并绑定实际页面宿主；业务能力使用 `MODULE`，不使用游戏 `SCENE`。Android、iOS 只处理实际选定的平台；Web 为按需目标，服务端 API 使用其实际服务端工作项。
+先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用七阶段、工作项、证据和 V1–V5。应用页面使用 `PAGE`，独立瞬态层使用 `DISPLAY_LAYER` 并绑定实际页面宿主；业务能力使用 `MODULE`，不使用游戏 `SCENE`。Android、iOS 只处理实际选定的平台；Web 为按需目标，服务端 API 使用其实际服务端工作项。
 
 页面和显示层默认按 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)制作可编辑方向并由用户选择；从选稿直接提取已表达的布局、组件与状态，缺失才定向补齐。仅设计提案不强制运行工程；正式实现仍验证相关功能、真实组件、平台适配及用户视觉结果。
 

@@ -4,7 +4,7 @@
 
 ## 当前阶段
 
-| Work Item | 六阶段视图 | 内部状态 | 场景 V 阶段 | 权威记录 |
+| Work Item | 七阶段视图 | 内部状态 | 场景 V 阶段 | 权威记录 |
 | --- | --- | --- | --- | --- |
 |  | 需求与范围 | INTAKE |  | .workflow-control/work-items/ |
 

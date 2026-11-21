@@ -17,6 +17,7 @@ import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scrip
 import { loadVisualConfirmationAuthority } from '../../skills/cocos-domain-contracts/scripts/visual-confirmation-authority.mjs';
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
+import { unityLayoutFixture } from './unity-text-fixture.mjs';
 
 const ROOT = fileURLToPath(new URL('../../', import.meta.url));
 const require = createRequire(import.meta.url);
@@ -308,6 +309,9 @@ test('Unity V2 显示层可通过真实原生合同且不能错绑宿主', (t) =
 
 test('Unity V5 显示层绑定真实原生运行与人工验收情境', (t) => {
   const f = fixture(t, { stack: 'unity', type: 'DISPLAY_LAYER', stage: 'V5' });
+  const target = { sceneId: f.work.visual.hostId, stateId: 'default', referenceTarget: f.referenceTarget };
+  const layout = unityLayoutFixture((path, value) => write(f.repo, path, value), target, { prefix: 'unity-layer', displayLayerId: f.work.visual.objectId });
+  f.work.visual.reviews.V3Layout = write(f.repo, 'unity-v3-layout-review.json', { layoutSpecRef: layout.planRef });
   const native = {
     schemaVersion: '1.0', visualStageModel: 'function-first-v1', workItemId: f.work.workItemId, projectId: f.work.projectId,
     workItemType: 'DISPLAY_LAYER', stageId: 'scene-production', globalState: 'REVIEW',
@@ -363,7 +367,7 @@ test('Unity V5 显示层绑定真实原生运行与人工验收情境', (t) => {
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /独立显示层/);
   write(f.repo, 'evidence/acceptance.json', acceptance);
   f.doc.stateId = 'other'; f.save();
-  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /状态和视口/);
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /状态和视口|状态.*错绑/);
   f.doc.stateId = 'default'; f.doc.viewport = { width: 1280, height: 720 }; f.save();
   assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), /状态和视口/);
 });

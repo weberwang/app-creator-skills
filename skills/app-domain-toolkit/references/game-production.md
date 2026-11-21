@@ -2,7 +2,7 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。
 
-各技术栈统一使用 V0–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)落实 V1、整体确认和生产交接，UI／图片路线保留其目标、拆解布局、资源与运行门。通用白盒按需条款不取消 3D 世界白模要求。
+各技术栈统一使用 V1–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)落实 V1、整体确认和生产交接，UI／图片路线保留其目标、拆解布局、资源与运行门。通用白盒按需条款不取消 3D 世界白模要求。
 
 ## 完整流程
 

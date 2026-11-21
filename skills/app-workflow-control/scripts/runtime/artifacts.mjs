@@ -1,6 +1,7 @@
-import { GATES, PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
-import { statSync } from 'node:fs';
+import { GATES, PROTECTED_ACTIONS, WORK_STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
+import { existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { assertModuleRuntimeCoverage, readModulePlan } from './module-plan.mjs';
 import { readFileSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, requireOneOf, requireText } from './validation.mjs';
@@ -18,7 +19,7 @@ import { validateCommandCapture } from './command-capture.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
 import { validateDeletedFiles } from './deletion-baseline.mjs';
 import { validateRobloxEngineeringEvidence } from './roblox-domain-check.mjs';
-import { assertProductionDependencies, validateProductionPackage } from './production-scope.mjs';
+import { assertProductionDependencies, validateProductionPackage, validateProductionScope } from './production-scope.mjs';
 import { validateProductionBatchEvidence } from './production-coverage.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { getWorkSource } from './work-source.mjs';
@@ -88,6 +89,10 @@ export function loadPackage(repo, work) {
   buildExecutionBatches(pack.executionUnits, { repo });
   // 所有实施入口共用检查，手写实施包也不能跳过系统识别与设计覆盖。
   assertSystemCoverageBindings(repo, work, pack);
+  if (work.visual?.stage === 'V5' && work.visual.modulePlanRef) {
+    // 在开始实施前就发现漏项，此后仍验证同一实施包中的真实执行结果。
+    assertModuleRuntimeCoverage(readModulePlan(repo, work), pack);
+  }
   validateSamplePlan(repo, work, pack, { validateGlobalBaseline });
   assertWorkflowPolicy(work, pack);
   return pack;
@@ -145,7 +150,7 @@ export function collectWorkReferencePaths(work, repo) {
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'foundationVisualRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
@@ -153,7 +158,29 @@ export function collectWorkReferencePaths(work, repo) {
   collect(work.visual?.coverageRef);
   collect(work.visual?.integrationEvidenceRef);
   collect(work.visual?.functionBaselineRef);
+  collect(work.visual?.modulePlanRef);
+  collect(work.visual?.moduleDesignRef);
+  collect(work.visual?.moduleDesignReviewRef);
+  collect(work.visual?.moduleRuntimeRef);
+  collect(work.visual?.versionDesignSnapshotRef);
   collect(work.visual?.domainEvidenceRef);
+  if (repo && work.productionScopeRef) {
+    const versionVisual = validateProductionScope(repo, work)?.scope.versionVisual;
+    if (versionVisual) paths.push(...versionVisual.workItemPaths);
+  }
+  // 保护设计输入，实施单元不能将设计和批准材料登记成可写交付。
+  if (repo && work.foundationVisualRef?.path) {
+    const manifest = readJson(repo, work.foundationVisualRef.path, '基础视觉冻结清单');
+    if (manifest.foundationWorkItemPath) paths.push(manifest.foundationWorkItemPath);
+    for (const baseline of manifest.baselines ?? []) collect(baseline?.ref);
+  }
+  if (repo && work.visual?.moduleDesignRef?.path) {
+    const manifest = readJson(repo, work.visual.moduleDesignRef.path, '模块视觉稿清单');
+    for (const entry of manifest.entries ?? []) {
+      collect(entry?.targetRef);
+      collect(entry?.designRef);
+    }
+  }
   if (repo) paths.push(...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work));
   if (repo && work.implementationPackageRef?.path) {
     paths.push(...collectSystemCoverageReferences(readJson(repo, work.implementationPackageRef.path, '系统覆盖实施包')));
@@ -360,8 +387,8 @@ function readApprovedImageSources(repo, work) {
 
 /** 技术成果和人的风格检查各有自己的证据，不能以生成成功推断审美通过。 */
 export function validateGlobalBaseline(repo, work, { required = false } = {}) {
-  // V2 内先生成或复用视觉基线，离开 V2 时必须已确认。
-  if (work.visual && ['V0', 'V1', 'V2'].includes(work.visual.stage) && !required && !work.globalVisualBaselineRef?.path) return;
+  // 对象在 V2 关联第 4 阶段冻结依据，离开 V2 时必须已有有效确认。
+  if (work.visual && ['V1', 'V2'].includes(work.visual.stage) && !required && !work.globalVisualBaselineRef?.path) return;
   if (!work.globalVisualBaselineRef?.path) {
     if (required || work.visualBaselineRequired) throw new WorkflowError('当前工作项要求视觉基线但没有 globalVisualBaselineRef');
     return;
@@ -429,7 +456,7 @@ export function requiresProtectedActionApproval(work, to) {
   return to === 'RELEASING' || to === 'COMPLETE';
 }
 
-/** 校验六阶段、对象类型、拷问、基线及审批的共同迁移边界。 */
+/** 校验工作项阶段、对象类型、拷问、基线及审批的共同迁移边界。 */
 export function assertTransitionInputs(repo, work, to) {
   // 前置批次可先规划；实际进入生产后必须持续绑定已完成的冻结来源。
   if (['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(to)) assertProductionDependencies(repo, work, inspectProductionDependencySource);
@@ -443,7 +470,7 @@ export function assertTransitionInputs(repo, work, to) {
   if (to === 'RELEASE_APPROVAL_REQUIRED' && (!work.action?.effects?.includes('publish') || !work.action?.target)) {
     throw new WorkflowError('发布流程必须先绑定具体发布动作与目标；该状态会等待用户批准', 'APPROVAL_REQUIRED');
   }
-  if (STAGES.indexOf(work.stageId) < 0) throw new WorkflowError('Work Item.stageId 无效');
+  if (!WORK_STAGES.includes(work.stageId)) throw new WorkflowError('Work Item.stageId 无效');
   return to;
 }
 
@@ -563,11 +590,11 @@ export function assertReadyToPass(repo, work) {
     validateProductionBatchEvidence(repo, work, manifest);
     return;
   }
-  if (work.visual && ['V0', 'V2', 'V3'].includes(work.visual.stage)) {
+  if (work.visual && ['V2', 'V3'].includes(work.visual.stage)) {
     assertGates(work, ['F0', 'F1']);
     if (work.visual.stage === 'V2') assertVisualReview(repo, work, 'V2');
     if (work.visual.stage === 'V3') assertVisualReview(repo, work, 'V3');
-    validateGlobalBaseline(repo, work, { required: work.visual.stage !== 'V0' });
+    validateGlobalBaseline(repo, work, { required: true });
     return;
   }
   assertGates(work, ['F0', 'F1', 'F2', 'F3']);

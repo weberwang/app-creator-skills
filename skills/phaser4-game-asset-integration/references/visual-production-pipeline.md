@@ -2,9 +2,9 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-production-pipeline.md#视觉生产管线)。
 
-## V0 分流
+## 模块范围与分流
 
-> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-production-pipeline.md#v0-分流)。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-visual-production-pipeline.md#模块范围与分流)。
 
 ## V1 功能验证与可选白盒
 

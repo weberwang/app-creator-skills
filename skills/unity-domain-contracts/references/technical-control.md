@@ -4,7 +4,7 @@
 
 ---
 name: app-workflow-control
-description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段、A0-A6 风险、F0-F4 门禁、实施包和证据清单控制从需求到发布的可执行状态。
+description: Unity 游戏仓库的唯一全局工作流控制面；以七阶段、A0-A6 风险、F0-F4 门禁、实施包和证据清单控制从商业立项到模块集成与整体验收的可执行状态。
 ---
 
 # Unity 游戏全局工作流控制
@@ -22,7 +22,7 @@ description: Unity 游戏仓库的唯一全局工作流控制面；以六阶段�
 5. 实施后记录实际完成情况和 Evidence Manifest，证据必须属于相同的 Work Item、基线和实施包；V5 PASS 必须有真实 Game View/Screen/backbuffer、CanvasScaler 或 PanelSettings、Camera、Screen.safeArea、InputSystem/EventSystem 命中、同进程连续 resize 和截图。`responsiveEvidence.supportedOrientations` 记录实际支持方向，验收核对其满足用户要求；横屏无需验证竖屏，竖屏无需验证横屏，实际游戏不得声明双方向或自动方向，保留所选方向内连续 resize 轨迹。
 6. 失败只选择 `repair`、`revalidate` 或显式 `RETURN`；控制面不会自动回退、扩大范围或伪造设备/发布证据。
 7. 仅对当前精确对象、影响和范围授予 A4-A6 的明确批准；`run` 不替用户作出决定，也不执行副作用。
-8. `SCENE` 与 `DISPLAY_LAYER` 的 V0 只作内部识别与分流，不要求确认也不写入 `stageReviews`；V2–V5 按[阶段人工确认](./stage-confirmation.md)闭环。V3 先确认拆解图，再单独确认布局图；V2、V4、V5 使用 `confirmation`，V3 分别使用 `decompositionConfirmation` 和 `layoutConfirmation`。
+8. `SCENE` 与 `DISPLAY_LAYER` 的 范围记入模块任务；V2–V5 按[阶段人工确认](./stage-confirmation.md)闭环。V3 先确认拆解图，再单独确认布局图；V2、V4、V5 使用 `confirmation`，V3 分别使用 `decompositionConfirmation` 和 `layoutConfirmation`。
 
 V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unity-evidence.md#可见-v4-美术与动态体验)：公共 Evidence Manifest 的 `art-experience-acceptance` 条目引用公共验收 JSON，其中绑定 `candidateId`、`candidateVersion` 与目标身份，机器只核对材料与文件，不代替用户观看判断。该材料复用现有 V5 阶段确认；纯工程工作项不适用。
 
@@ -32,7 +32,7 @@ V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unit
 
 骨骼资产正式交付按[2D 骨骼交付门禁](./rigging-delivery-gate.md)填写现有 Work Item/Evidence Manifest 的 `riggingDelivery`。`domain: 2d-rigging` 与 `unity-asset-change` 必须声明当前角色；F3 回读工程报告和目标角色的真实播放回归，失败、缺失、未执行或陈旧证据阻断交接。按输出岗位责任修复，由独立 QA 复验，不用公共技术夹具代替正式角色，不自动选择 `RETURN`。
 
-用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V0-V5，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。
+用户阶段依次为 `requirements-scope`、`global-baseline`、`foundation-engineering`、`scene-production`、`global-integration-validation`、`release`；场景证据使用 V1-V5，内部状态使用 INTAKE、BASELINE、PROPOSAL、REVIEW、IMPLEMENTING、VALIDATING、PASSED 及按需接入的集成/发布状态。
 
 ## 视觉任务交付
 
@@ -44,8 +44,8 @@ V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unit
 
 ## 参考资料
 
-- [简化六阶段与场景视图](./simplified-workflow.md)：用户可理解的项目阶段和 V0-V5 场景阶段。
-- [阶段人工确认](./stage-confirmation.md)：V0 内部分流、V2–V5 交付确认、V3 双确认以及阶段失效规则。
+- [简化七阶段与场景视图](./simplified-workflow.md)：用户可理解的项目阶段和 V1-V5 场景阶段。
+- [阶段人工确认](./stage-confirmation.md)：模块任务范围、V2–V5 交付确认、V3 双确认以及阶段失效规则。
 - [控制模型](./control-model.md)：A0-A6、F0-F4、动作和实施包边界。
 - [状态门禁](./state-gates.md)：合法迁移、停止条件和 repair/revalidate/return。
 - [Unity 证据](./unity-evidence.md)：Editor、编译、域重载、Console、测试、资源和构建证据要求。

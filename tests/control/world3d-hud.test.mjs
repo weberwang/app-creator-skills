@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
+import { unityLayoutFixture } from './unity-text-fixture.mjs';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateGlobalBaseline, assertAssetReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
@@ -55,6 +56,11 @@ function attachHud(f, { stateId = 'play', viewport = { width: 1280, height: 720 
   review('V2', 'target');
   review('V3Decomposition', 'decomposition', f.write('hud/decomposition.txt', '合成拆解'));
   review('V3Layout', 'layout', f.write('hud/layout.txt', '合成布局'));
+  if (work.stack === 'unity') {
+    const plan = unityLayoutFixture((path, value) => f.write(path, value), target, { prefix: 'hud/unity' });
+    const record = f.read(target.reviews.V3Layout);
+    target.reviews.V3Layout = f.write('hud/V3Layout.json', { ...record, layoutSpecRef: plan.planRef });
+  }
   const component = f.write('src/hud/component.ts', '// 合成 HUD 原生组件');
   const componentEvidence = f.write('hud/component-check.log', '合成组件检查');
   target.assetReviewRef = f.write('hud/assets.json', {
@@ -402,7 +408,7 @@ for (const scenario of ['V5', 'V3', 'firstV2', 'firstV4']) test(`公共控制器
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   work.visual.hud = { scopeIds: ['persistent-controls'] };
   await putJson(f.repo, workPath, work);
-  await advanceVisual({ repo: f.repo, workItem: workPath, to: 'V1' });
+
   work = await readWork(f.repo, workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');

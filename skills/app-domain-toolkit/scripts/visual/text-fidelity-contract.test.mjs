@@ -1,6 +1,9 @@
 /** 通过三栈真实 V5 场景入口验证文本事实、素材和容差绑定。 */
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
 import Ajv2020 from "ajv/dist/2020.js";
 
@@ -8,6 +11,9 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
   const root = new URL(`../../../${stack}-domain-contracts/`, import.meta.url);
   const { textEffectImageContract, effectImageManifest, textNode } = await import(new URL("scripts/scene-reconstruction-test-fixtures.mjs", root));
   const { validateSceneReconstructionContract } = await import(new URL("scripts/scene-reconstruction-contract.mjs", root));
+  const { validateSceneTextDecomposition } = await import(new URL("scripts/scene-text-decomposition-contract.mjs", root));
+  const prefix = stack === 'phaser' ? 'phaser4' : stack;
+  const { validateManifest } = await import(new URL(`../../../${prefix}-game-asset-integration/scripts/validate_visual_manifest.mjs`, import.meta.url));
   const sourceOptions = stack === "cocos"
     ? (await import(new URL("scripts/v2-layout-source-test-fixtures.mjs", root))).fixtureLayoutSourceOptions
     : (options) => options;
@@ -21,7 +27,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
   function scenario() {
     const contract = textEffectImageContract();
     const node = contract.text_decomposition.text_nodes[0];
-    const validate = () => validateSceneReconstructionContract(contract, { ...effectImageManifest(contract), visualStage: "V5" }, sourceOptions({ stage: "V5" }));
+    const validate = (options = {}) => validateSceneReconstructionContract(contract, { ...effectImageManifest(contract), visualStage: "V5" }, sourceOptions({ stage: "V5", ...options }));
     return { contract, node, runtime: node.runtime_verification, validate };
   }
 
@@ -30,6 +36,112 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     const errors = value.validate();
     assert.ok(errors.some((error) => error.includes(message)), errors.join("\n"));
   }
+
+  test(`${stack} 普通路线对明确分类的文字执行样式门，无文字可跳过`, () => {
+    const source = textEffectImageContract();
+    const node = source.text_decomposition.text_nodes[0];
+    const layoutNode = { layout_node_id: node.layout_node_id, region_id: node.region_id, element_type: 'text', target_bounds: node.target_bounds };
+    const region = { region_id: node.region_id, layout_node_ids: [node.layout_node_id] };
+    const contract = { target_conditions: source.target_conditions, predeclared_tolerances: source.predeclared_tolerances };
+    const options = { stage: 'V3', regions: [region], layoutInfo: { nodes: [layoutNode], nodeById: new Map([[node.layout_node_id, layoutNode]]) } };
+    assert.match(validateSceneTextDecomposition(contract, options).join('\n'), /缺少 text_node/);
+    contract.text_decomposition = { applicability: 'has-text', text_nodes: [node] };
+    assert.deepEqual(validateSceneTextDecomposition(contract, options), []);
+    delete node.typography_target.fill;
+    assert.match(validateSceneTextDecomposition(contract, options).join('\n'), /fill/);
+    node.typography_target.fill = '#ffffffff';
+    options.stage = 'V5';
+    node.runtime_verification.actual_typography.font_size = 12;
+    assert.match(validateSceneTextDecomposition(contract, options).join('\n'), /font_size/);
+    node.runtime_verification.actual_typography.font_size = node.typography_target.font_size;
+    assert.deepEqual(validateSceneTextDecomposition(contract, options), []);
+    assert.deepEqual(validateSceneTextDecomposition({}, { stage: 'V5', layoutInfo: { nodes: [] } }), []);
+  });
+
+  test(`${stack} 正式 V5 从原生运行文件核对当前文字和目标`, (t) => {
+    const value = scenario();
+    const projectRoot = mkdtempSync(join(tmpdir(), 'text-readback-test-'));
+    t.after(() => rmSync(projectRoot, { recursive: true, force: true }));
+    const identity = { stack, workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a', referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
+    const measurement = structuredClone(value.runtime);
+    const report = { schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', runId: 'run-a', ...identity,
+      nodes: [{ textNodeId: value.node.text_node_id, layoutNodeId: value.node.layout_node_id, componentPath: 'Canvas/title', measurement }] };
+    const options = { projectRoot, requireNativeTextReadback: true, textReadbackIdentity: identity };
+    /** 保存合成原生报告并更新本节点已有运行证据引用。 */
+    function saveReport() {
+      const bytes = Buffer.from(JSON.stringify(report));
+      writeFileSync(join(projectRoot, 'readback.json'), bytes);
+      value.runtime.evidence = [{ path: 'readback.json', sha256: createHash('sha256').update(bytes).digest('hex') }];
+      identity.runtimeEvidenceRef = { ...value.runtime.evidence[0] };
+    }
+    saveReport();
+    assert.doesNotMatch(value.validate(options).join('\n'), /原生文字/);
+    // 实际视觉清单入口也必须把原生读数选项传到同一文本校验器。
+    delete value.contract.effect_image_reconstruction;
+    const manifest = { schema_version: '1.5', assets: [], scene_reconstruction_contract: value.contract };
+    const manifestOptions = sourceOptions({ ...options, stage: 'V5' });
+    assert.doesNotMatch(validateManifest(manifest, manifestOptions).join('\n'), /原生文字/);
+    value.runtime.evidence = ['screenshot.png'];
+    assert.match(validateManifest(manifest, manifestOptions).join('\n'), /运行 JSON/);
+    saveReport();
+    value.contract.effect_image_reconstruction = { applicability: 'effect-image' };
+    report.nodes[0].measurement.actual_typography.font_size = 20;
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /actual_typography.*原生运行读数/);
+    report.nodes[0].measurement.actual_typography.font_size = value.runtime.actual_typography.font_size;
+    report.candidateId = 'old-candidate';
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /candidateId/);
+    report.candidateId = identity.candidateId;
+    report.workItemId = 'old-work';
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /workItemId/);
+    report.workItemId = identity.workItemId;
+    saveReport();
+    writeFileSync(join(projectRoot, 'readback.json'), '{}');
+    assert.match(value.validate(options).join('\n'), /摘要不一致/);
+    value.runtime.evidence = ['截图.png'];
+    assert.match(value.validate(options).join('\n'), /运行 JSON/);
+  });
+
+  test(`${stack} 图片文字的实际资源、颜色和透明度必须与运行证据一致`, (t) => {
+    const value = scenario();
+    const projectRoot = mkdtempSync(join(tmpdir(), 'image-text-readback-test-'));
+    t.after(() => rmSync(projectRoot, { recursive: true, force: true }));
+    const imageBytes = Buffer.from('合成图片字标资源');
+    writeFileSync(join(projectRoot, 'title.png'), imageBytes);
+    const imageSha = createHash('sha256').update(imageBytes).digest('hex');
+    const identity = { stack, workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a', referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
+    value.node.implementation_route = 'image-text';
+    value.node.ownership = 'visual';
+    value.node.required_resources = [{ kind: 'image', path: 'title.png', sha256: imageSha }];
+    value.node.accessible_semantic = { text: '开始游戏' };
+    value.node.typography_target.image_tint = { r: 1, g: 1, b: 1 };
+    value.node.typography_target.image_opacity = 1;
+    value.node.runtime_verification = { renderer: 'image-text', actual_bounds: value.node.target_bounds, actual_geometry_unit: 'logical-px', actual_coordinate_space: 'viewport-logical', actual_test_id: value.node.planned_test_id, passed: true, asset_consumed: true, actual_image_path: 'title.png', actual_image_sha256: imageSha, actual_image_tint: { r: 1, g: 1, b: 1 }, actual_image_opacity: 1, actual_semantic: { text: '开始游戏' }, semantic_evidence: ['semantic.json'] };
+    const runtime = value.node.runtime_verification;
+    const report = { schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', runId: 'run-a', ...identity, nodes: [{ textNodeId: value.node.text_node_id, layoutNodeId: value.node.layout_node_id, componentPath: 'Canvas/title', measurement: structuredClone(runtime) }] };
+    const options = { projectRoot, requireNativeTextReadback: true, textReadbackIdentity: identity };
+    /** 更新同批原生回读及公共布局证据引用。 */
+    function saveReport() {
+      const bytes = Buffer.from(JSON.stringify(report));
+      writeFileSync(join(projectRoot, 'readback.json'), bytes);
+      runtime.evidence = [{ path: 'readback.json', sha256: createHash('sha256').update(bytes).digest('hex') }];
+      identity.runtimeEvidenceRef = { ...runtime.evidence[0] };
+    }
+    saveReport();
+    assert.doesNotMatch(value.validate(options).join('\n'), /原生文字/);
+    runtime.actual_image_opacity = 0.5;
+    assert.match(value.validate(options).join('\n'), /opacity 与目标不一致/);
+    runtime.actual_image_opacity = 1;
+    report.nodes[0].measurement.actual_image_tint.r = 0.5;
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /actual_image_tint/);
+    report.nodes[0].measurement.actual_image_tint.r = 1;
+    saveReport();
+    writeFileSync(join(projectRoot, 'title.png'), '已变化的资源');
+    assert.match(value.validate(options).join('\n'), /图片内容摘要不一致/);
+  });
 
   test(`${stack} V5 只比较冻结目标和实际测量，禁止覆盖镜像或注入空比较`, () => {
     const value = scenario();
@@ -72,6 +184,37 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     value.runtime.actual_content = "开始游戏";
     value.runtime.baseline = false;
     rejects(value, "baseline 必须具有与冻结目标相同的有效类型和结构");
+  });
+
+  test(`${stack} 批准其他差异不能代替文字样式一致性及字体确认`, () => {
+    const value = scenario();
+    value.node.approved_exception_ids = ['other'];
+    value.runtime.exception_ids = ['other'];
+    value.runtime.actual_typography.font_size = 11;
+    rejects(value, 'font_size');
+    value.runtime.actual_typography.font_size = value.node.typography_target.font_size;
+    value.node.typography_target.font_identity = { status: 'unresolved', confidence: 'unknown', observable_facts: { shape: '窄体' } };
+    value.node.font_resolution = { strategy: 'replace', family: value.runtime.actual_typography.font_family };
+    rejects(value, '字体目标仍待人工确认');
+  });
+
+  test(`${stack} V3 交接位图中未确认样式，V5 报告属性与原因`, () => {
+    const value = scenario();
+    delete value.node.typography_target.shadow;
+    value.node.typography_target.pending_attributes = [{ property: 'shadow', reason: '位图无法区分阴影与材质' }];
+    const v3 = validateSceneReconstructionContract(value.contract, effectImageManifest(value.contract), sourceOptions({ stage: 'V3' }));
+    assert.doesNotMatch(v3.join('\n'), /typography 缺少或无效 shadow/);
+    assert.ok(validators.every((validate) => validate(value.node)), '待确认样式须通过各类 V3 合同');
+    rejects(value, 'shadow 待人工确认：位图无法区分阴影与材质');
+    value.node.approved_exception_ids = ['other'];
+    value.runtime.exception_ids = ['other'];
+    rejects(value, 'shadow 待人工确认');
+    value.node.typography_target.shadow = { enabled: false };
+    rejects(value, '不能同时填写未经确认的目标值');
+    delete value.node.typography_target.pending_attributes;
+    assert.deepEqual(value.validate(), []);
+    delete value.node.typography_target.shadow;
+    assert.ok(validators.every((validate) => !validate(value.node)), '无目标且无待确认原因不能通过');
   });
 
   test(`${stack} 文字颜色及透明度缺失或不一致时拒绝`, () => {
@@ -124,7 +267,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     rejects(value, "geometry 容差必须包含非负 value 和匹配单位");
     rules.geometry.unit = "logical-px";
     value.runtime.actual_typography.font_weight = 650;
-    assert.deepEqual(value.validate(), []);
+    rejects(value, "font_weight");
     rules.typography.font_weight.unit = "logical-px";
     rejects(value, "typography.font_weight 容差");
   });
@@ -162,12 +305,12 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     rejects(value, "actual_typography.stroke 缺失或无效");
   });
 
-  test(`${stack} 字体身份未知时绑定冻结替代字体`, () => {
+  test(`${stack} 字体身份未知时保留人工确认并绑定替代字体`, () => {
     const value = scenario();
     value.node.typography_target.font_identity = { status: "unresolved", confidence: "low", observable_facts: { silhouette: "bold" } };
     value.node.font_resolution = { strategy: "substitute", family: "Replacement Sans" };
     value.runtime.actual_typography.font_family = "Replacement Sans";
-    assert.deepEqual(value.validate(), []);
+    rejects(value, '字体目标仍待人工确认');
     value.runtime.actual_typography.font_family = "Other Sans";
     rejects(value, "font_family");
     delete value.node.font_resolution.family;

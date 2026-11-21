@@ -14,9 +14,9 @@ Work Item 状态、阶段、用户决定、BLOCKED/RETURN 与恢复规则以[当
 
 ## 统一阶段
 
-G0–G3 是[游戏生产里程碑](../../app-domain-toolkit/references/reference-orchestration-quality-gates.md)；工作项统一使用 V0–V5，其中 V1 实现并验证功能，白盒可选，V2–V5 分别对应视觉目标、拆解布局、资源导入和运行验收。实际阶段、状态和迁移使用[当前公共控制协议](../../app-creator-workflow/references/professional-execution.md)。
+G0–G3 是[游戏生产里程碑](../../app-domain-toolkit/references/reference-orchestration-quality-gates.md)；工作项统一使用 V1–V5，其中 V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V3–V5 分别对应拆解布局、资源准备和完整实现验收。实际阶段、状态和迁移使用[当前公共控制协议](../../app-creator-workflow/references/professional-execution.md)。
 
-## V0/V1/V2/V3/V4/V5 机器状态依赖
+## V1/V2/V3/V4/V5 机器状态依赖
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-domain-visual-admission.md#v0v1v2v3v4v5-机器状态依赖)。
 

@@ -500,8 +500,17 @@ export function validateSceneReconstructionContract(contract, manifest = null, o
   const layoutInfo = validateLayoutDecomposition(contract, targetInfo, stage, errors, effectImage, { ...options, requireLayout: requireFinalLayout });
   if (effectImage && ["V3", "V5"].includes(String(stage).toUpperCase())) validateV3LayoutStage(contract, targetInfo, stage, errors, requireFinalLayout, layoutInfo, options);
   validateLayoutRegionBindings(regions, layoutInfo, contract, stage, errors, effectImage);
-  // effect-image 的文本必须先完成独立拆解；普通合同由模块内部直接跳过，不引入额外硬门。
-  errors.push(...validateSceneTextDecomposition(contract, { stage, manifest, effectImage, regions, layoutInfo, toleranceDefinitions: toleranceBlock }));
+  // 普通路线也读取已有唯一布局源，才能发现明确标记为文字的节点。
+  let textLayoutInfo = layoutInfo;
+  if (!effectImage && ['V3', 'V4', 'V5', 'VALIDATING'].includes(String(stage).toUpperCase()) && contract.layout_decomposition?.layout_source) {
+    try {
+      const source = resolveSceneV2LayoutSource(contract, options, targetInfo);
+      textLayoutInfo = { nodes: source.nodes, nodeById: new Map(source.nodes.map((node) => [node.layout_node_id, node])) };
+    } catch (error) {
+      errors.push(contractError(stage, contract, null, `文字布局源无法解析：${error.message}`));
+    }
+  }
+  errors.push(...validateSceneTextDecomposition(contract, { ...options, stage, manifest, effectImage, regions, layoutInfo: textLayoutInfo, toleranceDefinitions: toleranceBlock }));
   // effect-image 的每个视觉区域都必须先完成来源路线分析；普通游戏 UI 不受该忠实还原硬门影响。
   if (effectImage) errors.push(...validateSceneVisualRouteContract(contract, manifest, { ...options, stage, toleranceDefinitions: toleranceBlock }));
   validateCompositionAndResponsive(contract, targetInfo, stage, errors, effectImage, mode);

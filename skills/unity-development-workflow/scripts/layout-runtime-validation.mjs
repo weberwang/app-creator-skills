@@ -1,7 +1,7 @@
 import { validateNineSliceDecision, validateNineSlicePixelMultiplier } from "./nine-slice-contract.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
 import { validateNativePositionSnapshot } from "./layout-native-docking.mjs";
-import { mergeTextStyleEvidence, validateTextStyle } from "./text-style-validation.mjs";
+import { mergeTextStyleEvidence, validateTextStyle, validateWorldTextReadback } from "./text-style-validation.mjs";
 
 const ROOT_IDS = new Set(["viewport", "safe-area"]);
 const WRITER_KINDS = new Set(["RECT_TRANSFORM", "LAYOUT_GROUP", "CONTENT_SIZE_FITTER", "ASPECT_RATIO_FITTER", "UITOOLKIT_LAYOUT", "UITOOLKIT_STYLE", "SCRIPT", "ANIMATION"]);
@@ -752,6 +752,8 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
       && (typeof report.candidateId !== "string" || report.candidateId !== options.candidateId)) {
       errors.push("运行报告 candidateId 与指定候选不一致。");
     }
+    if (options.taskId !== undefined && report.taskId !== options.taskId) errors.push("运行报告 taskId 未绑定当前工作项。");
+    if (options.layoutPlanSha256 !== undefined && report.layoutPlanSha256 !== options.layoutPlanSha256) errors.push("运行报告 layoutPlanSha256 未绑定当前 V3 冻结布局计划。");
     const scenePath = typeof options.scenePath === "string" && options.scenePath.trim() ? options.scenePath : plan.scenePath;
     if (scenePath && report.scenePath !== scenePath) errors.push("运行报告 scenePath 与计划或指定场景不一致。");
     if (typeof options.scenePath === "string" && options.scenePath.trim() && plan.scenePath && options.scenePath !== plan.scenePath) {
@@ -759,6 +761,11 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
     }
     if (!ACTIVE_REPORT_STATUSES.has(report.status)) errors.push("运行报告 status 必须是可审阅的 MEASURED、PASS 或 FAIL 结果。");
     if (report.status === "FAIL") errors.push("运行报告 status 为 FAIL，不能作为通过证据。");
+    if (options.textOnly === true) {
+      if (report.textOnly !== true) errors.push("世界空间文字必须使用实际文字组件采集报告。");
+      return [...errors, ...validateWorldTextReadback(plan, report, options.textStyleEvidence)];
+    }
+    if (report.textOnly === true) return [...errors, "仅文字采集不能作为屏幕布局报告。"];
 
     const viewport = readRect(report.viewportRect, "运行报告 viewportRect", errors);
     const safeArea = readRect(report.safeAreaRect, "运行报告 safeAreaRect", errors);
@@ -796,7 +803,7 @@ export function validateUiLayoutRuntime(plan, report, options = {}) {
           : null;
         validateUiSystemSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, rectSize);
         if (node.renderKind === "TEXT" && snapshotData.expectedActive && snapshotData.snapshot.active) {
-          errors.push(...validateTextStyle(node, textEvidence.get(node.id) ?? snapshotData.snapshot.textStyle));
+          errors.push(...validateTextStyle(node, textEvidence.get(node.id) ?? snapshotData.snapshot.textStyle, plan.textStyles));
         }
         validateNativePositionSnapshot(node, snapshotData.snapshot, plan.uiSystem, errors, measurement);
         if (snapshotData.expectedActive && snapshotData.snapshot.active && measurement.actualRect !== null) {

@@ -17,6 +17,8 @@ import { auditProductionContractByGroups, confirmationAuthorityBase, validateCon
 import { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateTransparentBackgroundContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV5ProductionGate } from "../../cocos-domain-contracts/scripts/visual-production-contract.mjs";
 import { validateVisualPostApprovalReviewFields } from "../../cocos-domain-contracts/scripts/visual-human-review-contract.mjs";
 import { validateSceneReconstructionGate, validateSceneReconstructionContract, validateStructuredFidelityCases } from "../../cocos-domain-contracts/scripts/scene-reconstruction-contract.mjs";
+import { validateSceneTextDecomposition } from "../../cocos-domain-contracts/scripts/scene-text-decomposition-contract.mjs";
+import { resolveSceneV2LayoutSource } from "../../cocos-domain-contracts/scripts/scene-layout-decomposition-contract.mjs";
 import { resolveVisualValidationMode, validateVisualValidationPolicy, validateVisualManifestFidelityCases } from "../../cocos-domain-contracts/scripts/visual-validation-policy.mjs";
 import { GLOBAL_VISUAL_BASELINE_DOCUMENT, validateGlobalVisualBaseline, validateVisualEffectImageOrigin } from "../../cocos-domain-contracts/scripts/global-visual-consistency-contract.mjs";
 import { checkManifestFileEvidence, collectManifestFileEvidenceEntries } from "./global-visual-file-gate.mjs";
@@ -384,13 +386,25 @@ export function validateManifest(data, options = {}) {
     if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.some((item) => item?.conclusion !== "passed")) errors.push("V5 complete 的 fidelity_cases 必须全部 passed");
   } else if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.length > 0) validateVisualManifestFidelityCases(data.fidelity_cases, target, candidate, baseline, errors, { mode: visualValidationMode });
   const strictProductionContract = reconstruction?.applicability === "effect-image";
+  // 普通路线的文字仍由相同 V3/V5 节点与运行读数合同约束。
+  if (!strictProductionContract && data.scene_reconstruction_contract && ["V3", "V5"].includes(requestedStage)) {
+    const contract = data.scene_reconstruction_contract;
+    let layoutInfo;
+    if (contract.layout_decomposition?.layout_source) {
+      try {
+        const layout = resolveSceneV2LayoutSource(contract, options);
+        layoutInfo = { nodes: layout.nodes, nodeById: new Map(layout.nodes.map((node) => [node.layout_node_id, node])) };
+      } catch (error) { errors.push("文字布局源无法解析：" + error.message); }
+    }
+    errors.push(...validateSceneTextDecomposition(contract, { ...options, stage: requestedStage, manifest: data, regions: contract.coverage_regions, layoutInfo }));
+  }
   if (strictProductionContract) {
     // 清单声明的阶段是实际身份，生命周期不能把 V5 记录降级为 V3。
     const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (reconstruction.lifecycle === "v5-complete" ? "V5" : "V3");
     // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
     // V4 只验收资源生产结果；正式 Scene、同屏组合和运行时消费统一留到 V5。
-    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...layoutSourceOptions, stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
+    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...layoutSourceOptions, ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
     errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage: "V3", requireManualConfirmation: false }));

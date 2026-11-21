@@ -8,7 +8,7 @@
  */
 
 import { isWorkflowDpr } from "./workflow-dpr-contract.mjs";
-import { validateTextContentCases, validateTextFidelity, validateTextGeometrySpace } from "../../app-domain-toolkit/scripts/visual/text-fidelity-contract.mjs";
+import { isDeclaredTextNode, pendingTextAttributes, validateNativeTextEvidence, validateTextContentCases, validateTextFidelity, validateTextGeometrySpace } from "../../app-domain-toolkit/scripts/visual/text-fidelity-contract.mjs";
 
 const TEXT_ROUTES = new Set(["threejs-text", "bitmap-text", "image-text", "hybrid"]);
 const PASS_VALUES = new Set(["passed", "pass", "true"]);
@@ -276,6 +276,8 @@ function validateTypography(node, contract, stage, errors) {
     if (!isObject(observableFacts) || Object.keys(observableFacts).length === 0) pushPlanError(errors, stage, contract, node, "unresolved 字体身份必须保存 observable_facts", { missing: "typography_target.font_identity.observable_facts" });
   }
 
+  const pending = pendingTextAttributes(typography);
+  for (const message of pending.errors) pushPlanError(errors, stage, contract, node, message);
   const required = [
     [["font_size", "fontSize", "font_size_logical", "fontSizeLogical"], "font_size"],
     [["font_weight", "fontWeight", "weight"], "font_weight"],
@@ -296,6 +298,8 @@ function validateTypography(node, contract, stage, errors) {
   ];
   for (const [names, label] of required) {
     const value = textFact(node, typography, names);
+    // 位图无法确认的属性只允许登记待确认，不使用默认值补齐。
+    if (pending.names.has(label) && value === undefined) continue;
     let valid = hasStructuredValue(value);
     if (["font_size", "line_height"].includes(label)) valid = validPositiveMeasure(value);
     if (label === "expected_line_count") valid = Number.isInteger(value) && value > 0;
@@ -366,7 +370,7 @@ function validateImplementationRoute(node, contract, stage, errors, { typography
 }
 
 /** 验证 V4/V5 的实际 renderer、字体加载、bounds、基线、测试 ID 和证据。 */
-function validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceDefinitions, isV4Runtime) {
+function validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceDefinitions, isV4Runtime, options) {
   const raw = field(node, "runtime_verification", "runtimeVerification", "runtime_measurement", "runtimeMeasurement", "measurement");
   if (!isObject(raw)) {
     pushRuntimeError(errors, stage, contract, node, "text_node 缺少 runtime_verification/measurement", { missing: "runtime_verification" });
@@ -400,6 +404,11 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
   }
 
   if (!isV4Runtime) return;
+  if (options.requireNativeTextReadback === true) {
+    for (const message of validateNativeTextEvidence(node, read, route, options)) {
+      pushRuntimeError(errors, stage, contract, node, message);
+    }
+  }
   // 目标与候选只取冻结节点和实际测量；报告不能通过副本或通用容差替换事实。
   for (const message of validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline })) {
     pushRuntimeError(errors, stage, contract, node, message);
@@ -461,7 +470,7 @@ export function validateTextNode(node, context = {}) {
   if (routeRequired) route = validateImplementationRoute(node, contract, stage, errors, typographyResult);
   if (["V5", "VALIDATING"].includes(stageName)) {
     // 显式 V5 也必须执行 target/candidate/tolerance 比较，不能只在 VALIDATING 别名下开启验收分支。
-    validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceMap, isV4Runtime || stageName === "V5" || stageName === "VALIDATING");
+    validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceMap, isV4Runtime || stageName === "V5" || stageName === "VALIDATING", context);
   }
   return errors;
 }
@@ -480,9 +489,33 @@ function effectImageContract(contract, manifest, options) {
 export function validateSceneTextDecomposition(contract, options = {}) {
   const stage = options.stage ?? "V2";
   const manifest = options.manifest ?? null;
-  if (!effectImageContract(contract, manifest, options)) return [];
-  const errors = [];
+  const effectImage = effectImageContract(contract, manifest, options);
+  const layoutNodes = options.layoutInfo?.nodes?.length
+    ? options.layoutInfo.nodes
+    : field(contract?.layout_decomposition, "layout_nodes", "layoutNodes") ?? [];
+  const typedNodes = Array.isArray(layoutNodes) ? layoutNodes.filter(isDeclaredTextNode) : [];
+  const typedRegions = (Array.isArray(options.regions) ? options.regions : []).filter(isDeclaredTextNode);
   const decomposition = field(contract, "text_decomposition", "textDecomposition");
+  if (!effectImage && (!["V3", "V4", "V5", "VALIDATING"].includes(String(stage).toUpperCase())
+    || (!typedNodes.length && !typedRegions.length && decomposition === undefined))) return [];
+  const errors = [];
+  // 普通路线仍使用已冻结布局节点作为文字来源，显式文字不能声明为无文字。
+  if (!effectImage && typedNodes.length && !options.layoutInfo?.nodes?.length) {
+    options = { ...options, layoutInfo: { nodes: layoutNodes, nodeById: new Map(layoutNodes.map((node) => [field(node, "layout_node_id", "layoutNodeId"), node])) } };
+  }
+  const declared = Array.isArray(decomposition?.text_nodes) ? decomposition.text_nodes : [];
+  for (const typed of typedNodes) {
+    const id = field(typed, "layout_node_id", "layoutNodeId");
+    if (!id || !declared.some((node) => field(node, "layout_node_id", "layoutNodeId") === id)) {
+      errors.push(contractError(stage, contract, typed, "文字布局节点 " + (id ?? "未知") + " 缺少 text_node 样式目标", { missing: "text_decomposition.text_nodes", returnStage: "V2/PROPOSAL" }));
+    }
+  }
+  for (const region of typedRegions) {
+    const id = field(region, "region_id", "regionId", "id");
+    if (!declared.some((node) => field(node, "region_id", "regionId") === id)) {
+      errors.push(contractError(stage, contract, region, "文字覆盖区域 " + (id ?? "未知") + " 缺少 text_node 样式目标", { missing: "text_decomposition.text_nodes", returnStage: "V2/PROPOSAL" }));
+    }
+  }
   if (!isObject(decomposition)) {
     errors.push(contractError(stage, contract, null, "effect-image 缺少 text_decomposition", { missing: "text_decomposition", returnStage: "V2/PROPOSAL", rootCause: "方案缺失" }));
     return errors;

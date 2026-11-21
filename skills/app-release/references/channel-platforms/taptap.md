@@ -129,7 +129,7 @@ taptap-cli community-management list-community-moments --dev-id <developerId> --
 
 ## 接入现有发布工作流
 
-继续使用[发布准备与实际上线](../../../app-creator-workflow/references/workflow.md#发布准备与实际上线)的既有合同，不新增 TapTap 专用状态机或控制器字段。CLI 负责实际后台操作，工作流控制器只核对任务、授权及证据，不因选中渠道或进入 RELEASE 自动调用外部写入。
+继续使用[独立的发布任务](../../../app-creator-workflow/references/workflow.md#独立的发布任务)的既有合同，不新增 TapTap 专用状态机或控制器字段。CLI 负责实际后台操作，工作流控制器只核对任务、授权及证据，不因选中渠道或进入 RELEASE 自动调用外部写入。
 
 - 检查与候选准备沿用 `releaseIntent=prepare`。在当前发布材料关联 CLI 版本、真实开发者／应用身份、候选校验值、包体／版本标识、实际命令及脱敏结果；`release-preparation` 引用既有交付材料与检查证据，不用 dry-run、上传成功或预检通过填报已上线。
 - 实际发布沿用 `releaseIntent=publish`、F4 与已授权的准确目标。执行后查询实际发布状态，确认真实版本及可见结果，再按现有 `release-result` 记录真实 `releaseIdentifier` 和证据；审核中、定时待生效或结果未知时不能提前登记发布完成。

@@ -6,6 +6,8 @@ import { dirname, resolve } from 'node:path';
 import { initializeWork, transitionWork, completeUnit } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
+import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
+import { syntheticDesignPng } from './visual-image-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -68,6 +70,63 @@ export async function putVisualReview(repo, path, review, workItemId, targetPath
 /** 对当前确认记录生成工作项中的冻结引用。 */
 export async function frozenReview(repo, path) {
   return { path, sha256: createHash('sha256').update(await readFile(resolve(repo, ...path.split('/')))).digest('hex') };
+}
+
+/** 为隔离项目建立经真实控制器完成的全局视觉来源和本轮模块方案。 */
+export async function prepareFormalVisualFixture({ repo, workPath }) {
+  let target = await readWork(repo, workPath);
+  const prefix = `fixtures/${target.workItemId}`;
+  if (!target.globalVisualBaselineRef) {
+    const checks = await createQualityChecks(repo, `${prefix}/quality`);
+    const candidates = [];
+    for (const candidateId of ['direction-a', 'direction-b', 'direction-c']) {
+      const path = await put(repo, `${prefix}/${candidateId}.png`, syntheticDesignPng(candidateId));
+      candidates.push({ candidateId, path, qualityChecks: candidateId === 'direction-a' ? checks : qualityDimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })) });
+    }
+    const chosen = await frozenReview(repo, candidates[0].path);
+    const reviewPath = `${prefix}/baseline-review.json`;
+    await putJson(repo, reviewPath, { ...reviewRecord({ objectId: `${target.workItemId}-baseline`, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: 'direction-a', userMessageRef: 'test://baseline', targetRef: chosen.path, qualityChecks: checks }), targetSha256: chosen.sha256 });
+    const baselinePath = `${prefix}/baseline.json`;
+    await putJson(repo, baselinePath, { schemaVersion: '1.0', baselineId: `${target.workItemId}-baseline`, projectId: target.projectId, stack: target.stack, candidates, selectedCandidateId: 'direction-a', selectionReviewRef: await frozenReview(repo, reviewPath) });
+    target.globalVisualBaselineRef = await frozenReview(repo, baselinePath);
+    if (['flutter', 'expo'].includes(target.stack) && target.workItemType !== 'SCENE') attachFigmaBaselineFixture(repo, target);
+  }
+  const baselineRef = target.globalVisualBaselineRef;
+  const foundationResult = await initializeWork({ repo, args: { id: `foundation-${target.workItemId}`, stack: target.stack, type: 'FOUNDATION', objective: '建立基础工程及全局视觉', 'project-id': target.projectId } });
+  const foundationPath = foundationResult.metadata.workItemPath;
+  let foundation = await readWork(repo, foundationPath);
+  const foundationRefPath = `${prefix}/foundation-visual.json`;
+  const route = ['flutter', 'expo'].includes(target.stack) && target.workItemType !== 'SCENE' ? 'figma-app' : 'image';
+  await putJson(repo, foundationRefPath, { schemaVersion: '1.0', foundationWorkItemPath: foundationPath, projectId: target.projectId, stack: target.stack, baselines: [{ route, ref: baselineRef }] });
+  foundation.foundationVisualRef = await frozenReview(repo, foundationRefPath);
+  foundation.globalState = 'REVIEW';
+  foundation.gateStatus.F0 = foundation.gateStatus.F1 = foundation.gateStatus.F2 = 'PASS';
+  await putJson(repo, foundationPath, foundation);
+  const unitPath = target.stack === 'cocos' ? 'assets/foundation.ts' : 'lib/foundation.dart';
+  const { packPath, units } = await bindImplementation({ repo, work: foundation, workPath: foundationPath, stage: 'foundation', unitPaths: [unitPath] });
+  const pack = await readWork(repo, packPath);
+  pack.systemCoverage.modules[0].designRefs.push(foundation.foundationVisualRef);
+  await putJson(repo, packPath, pack);
+  await transitionWork({ repo, workItem: foundationPath, to: 'IMPLEMENTING', args: {} });
+  foundation = await readWork(repo, foundationPath);
+  await submitPassingUnits({ repo, work: foundation, workPath: foundationPath, packPath, units });
+  await completeUnit({ repo, workItem: foundationPath, resultPath: units[0].resultPath });
+  foundation = await readWork(repo, foundationPath);
+  await bindEvidence({ repo, work: foundation, workPath: foundationPath, packPath, stage: 'foundation' });
+  for (const to of ['VALIDATING', 'PASSED', 'COMPLETE']) await transitionWork({ repo, workItem: foundationPath, to, args: {} });
+
+  const planPath = `${prefix}/module-plan.json`;
+  const plan = { schemaVersion: '1.0', workItemId: target.workItemId, objectId: target.visual.objectId,
+    ...(target.workItemType === 'DISPLAY_LAYER' ? { hostId: target.visual.hostId } : {}),
+    dependencies: [], entries: [['function', 'open'], ['state', 'ready'], ['step', 'enter']].map(([kind, id]) => ({
+      kind, id, description: `测试 ${kind} ${id}`, acceptance: '满足约定结果', requirementId: 'fixture-requirement-1', command: 'node --version',
+    })) };
+  await putJson(repo, planPath, plan);
+  target.visual.modulePlanRef = await frozenReview(repo, planPath);
+  target.foundationVisualRef = await frozenReview(repo, foundationRefPath);
+  target.gateStatus.F0 = target.gateStatus.F1 = 'PASS';
+  await putJson(repo, workPath, target);
+  return { plan, foundationPath, baselineRef, foundationRefPath, planPath };
 }
 
 /** 建立当前阶段的唯一实施包与执行结果路径。 */

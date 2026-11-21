@@ -37,7 +37,7 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   write(repo, 'ui.c', '合成布局源码');
   doc.layoutSourceRef = write(repo, 'snapshots/ui-before.c', '合成布局源码');
   const registrationRef = write(repo, 'asset-registration.c', '合成资源注册');
-  const textAppearance = { textFill: '#224466FF', textOpacity: 0.8 };
+  const textAppearance = { sourceRef: referenceTarget, stateId: 'default', fontFamily: 'Noto Sans', fontSize: 18, textFill: '#224466FF', textOpacity: 0.8 };
   const nodes = [{ id: 'screen', parentId: null, x: 0, y: 0, width: 320, height: 240, positioning: 'relative', references: ['viewport'], textAppearance: null }];
   if (layer) nodes.push({ id: visual.objectId, parentId: 'screen', x: 8, y: 8, width: 200, height: 120, positioning: 'absolute', references: ['screen'], floatingKind: 'popup', textAppearance: null });
   nodes.push({ id: 'title', parentId: layer ? visual.objectId : 'screen', x: 8, y: 8, width: 100, height: 20, positioning: 'relative', references: [layer ? visual.objectId : 'screen'], textAppearance });
@@ -52,7 +52,8 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   const build = { schemaVersion: '1.0', sourceRevision: 'fixture-commit', boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, binaryRef: write(repo, 'app.bin', '合成构建产物'), buildLogRef: write(repo, 'build.log', '合成构建输出') };
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, buildIdentityRef: write(repo, 'build.json', build), environment: 'host-simulator', runEvidenceRef: evidence, interactionEvidenceRef: evidence, performanceEvidenceRef: evidence, ...host };
   const textReadback = { schemaVersion: '1.0', source: 'esp32-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
-    entries: [{ targetPath: doc.layoutSpecRef.path, nodeId: 'title', runtimeNodeId: 'home.title', ...textAppearance }] };
+    entries: [{ targetPath: doc.layoutSpecRef.path, targetSha256: doc.layoutSpecRef.sha256, nodeId: 'title', runtimeNodeId: 'home.title', ...textAppearance,
+      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'textFill', 'textOpacity'].map((name) => [name, { componentType: 'lv_label', propertyPath: name }])) }] };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 同步上下文、V5 用户确认与外层证据，模拟绑定后的最终输入。 */
@@ -90,6 +91,51 @@ test('ESP32 要求冻结文字目标并核对同次运行的颜色与透明度',
   assert.throws(() => validateSingleDomainTarget(v5.repo, v5.work, 'V5'), /实际读数.*缺少完整的字体颜色/);
 });
 
+test('ESP32 样式绑定当前目标、状态和字体实际读数', (t) => {
+  const v3 = fixture(t, { stage: 'V3' });
+  delete v3.layout.nodes[1].textAppearance.fontSize;
+  v3.doc.layoutSpecRef = write(v3.repo, 'layout-missing-size.json', v3.layout);
+  v3.save();
+  assert.throws(() => validateSingleDomainTarget(v3.repo, v3.work, 'V3'), /title.*fontSize.*缺失/);
+  const f = fixture(t);
+  /** 每次变更后固定当前读数供公共阶段门读取。 */
+  function check() {
+    f.runtime.textReadbackRef = write(f.repo, 'changed-text.json', f.textReadback);
+    f.save();
+    return validateSingleDomainTarget(f.repo, f.work, 'V5');
+  }
+  assert.equal(check(), true);
+  f.textReadback.entries[0].fontSize = 14;
+  assert.throws(check, /title.*fontSize.*不一致/);
+  f.textReadback.entries[0].fontSize = 18;
+  delete f.textReadback.entries[0].propertySources.fontFamily;
+  assert.throws(check, /title.*fontFamily.*回读来源/);
+  f.textReadback.entries[0].propertySources.fontFamily = { componentType: 'lv_label', propertyPath: 'font' };
+  f.textReadback.entries[0].targetSha256 = '0'.repeat(64);
+  assert.throws(check, /title.*实际读数/);
+  f.textReadback.entries[0].targetSha256 = f.doc.layoutSpecRef.sha256;
+  f.textReadback.runEvidenceRef = write(f.repo, 'old-run.log', '历史运行');
+  assert.throws(check, /绑定当前构建和运行/);
+});
+
+test('ESP32 V3 可交接真实待确认项，V5 保持未完成', (t) => {
+  const v3 = fixture(t, { stage: 'V3' });
+  const target = v3.layout.nodes.find((node) => node.id === 'title').textAppearance;
+  delete target.fontFamily;
+  target.pending = { fontFamily: '仅有位图，字形需人工确认', shadow: '位图无法识别阴影参数' };
+  v3.doc.layoutSpecRef = write(v3.repo, 'layout-pending.json', v3.layout);
+  v3.work.visual.reviews.V3Layout = write(v3.repo, 'review-v3-pending.json', { ...v3.host, layoutSpecRef: v3.doc.layoutSpecRef });
+  v3.save();
+  assert.equal(validateSingleDomainTarget(v3.repo, v3.work, 'V3'), true);
+  const v5 = fixture(t);
+  const current = v5.layout.nodes.find((node) => node.id === 'title').textAppearance;
+  delete current.fontFamily;
+  current.pending = { fontFamily: '仅有位图，字形需人工确认' };
+  v5.doc.layoutSpecRef = write(v5.repo, 'layout-pending.json', v5.layout);
+  v5.save();
+  assert.throws(() => validateSingleDomainTarget(v5.repo, v5.work, 'V5'), /title.*fontFamily.*待人工确认.*字形/);
+});
+
 test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) => {
   const f = fixture(t);
   const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
@@ -104,6 +150,7 @@ test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) =
   Object.assign(f.runtime, { layoutSpecRef: f.doc.layoutSpecRef, assetManifestRef: f.doc.assetManifestRef, buildIdentityRef: write(f.repo, 'build-slice.json', f.build) });
   f.textReadback.buildIdentityRef = f.runtime.buildIdentityRef;
   f.textReadback.entries[0].targetPath = f.doc.layoutSpecRef.path;
+  f.textReadback.entries[0].targetSha256 = f.doc.layoutSpecRef.sha256;
   f.runtime.textReadbackRef = write(f.repo, 'text-slice.json', f.textReadback);
   const sample = { nodeId: 'title', conditionId: 'minimum', runtimeNodeId: 'screen.panel', sourcePath: imageRef.path, sourceSize: slice.sourceSize, border: slice.border,
     displaySize: slice.minimumSize, scale: 1, transformScaleX: 1, transformScaleY: 1 };

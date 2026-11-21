@@ -6,10 +6,10 @@ import { resolve } from 'node:path';
 /** 恢复点的先后顺序与影响范围映射。 */
 const ORDER = ['BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING'];
 const STAGE_TARGET = Object.freeze({
-  'requirements-scope': 'BASELINE', 'global-baseline': 'BASELINE',
+  'commercial-initiation': 'BASELINE', 'requirements-scope': 'BASELINE', 'global-baseline': 'BASELINE',
   'foundation-engineering': 'IMPLEMENTING', 'scene-production': 'PROPOSAL',
-  'global-integration-validation': 'IMPLEMENTING', release: 'REVIEW',
-  V0: 'PROPOSAL', V1: 'IMPLEMENTING', V2: 'PROPOSAL', V3: 'REVIEW', V4: 'IMPLEMENTING', V5: 'IMPLEMENTING',
+  'cross-module-integration': 'IMPLEMENTING', 'global-integration-validation': 'IMPLEMENTING', release: 'REVIEW',
+  V1: 'IMPLEMENTING', V2: 'PROPOSAL', V3: 'REVIEW', V4: 'IMPLEMENTING', V5: 'IMPLEMENTING',
 });
 
 /** 严格解析影响范围；未知范围不能被当成可以安全继续的局部修复。 */
@@ -95,7 +95,7 @@ function firstAffectedVisualStage(work, record) {
   if (record.returnState === 'IMPLEMENTING' && current === 'V5' && !record.affectedScope.some((scope) => ['stage:V4', 'stage:foundation-engineering'].includes(scope))) first = 5;
   // 显式影响阶段必须优先于笼统恢复状态，功能变化应回到 V1。
   for (const scope of record.affectedScope) {
-    const match = /^stage:V([0-5])$/.exec(scope);
+    const match = /^stage:V([1-5])$/.exec(scope);
     if (match) first = Math.min(first, Number(match[1]));
   }
   return first;

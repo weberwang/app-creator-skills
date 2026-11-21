@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 
 namespace Project.UnityWorkflow.VisualQA
@@ -53,21 +54,39 @@ namespace Project.UnityWorkflow.VisualQA
                     matched = component;
                     count++;
                 }
-                if (count == 1 && !string.IsNullOrWhiteSpace(probe.propertyPath))
+                if (count == 1 && !string.IsNullOrWhiteSpace(probe.propertyPath)
+                    && TryReadComponent(matched, probe.propertyPath, out string value))
                 {
-                    using (var serialized = new SerializedObject(matched))
-                    {
-                        SerializedProperty property = serialized.FindProperty(probe.propertyPath);
-                        if (TryRead(property, out string value))
-                        {
-                            observation.status = "MEASURED";
-                            observation.actualValue = value;
-                        }
-                    }
+                    observation.status = "MEASURED";
+                    observation.actualValue = value;
                 }
                 result.Add(observation);
             }
             return result;
+        }
+
+        /// <summary>文字效果可从实际参与渲染的材质读取，组件字段仍使用现有序列化路径。</summary>
+        private static bool TryReadComponent(Component component, string path, out string value)
+        {
+            if (!path.StartsWith("material.", StringComparison.Ordinal))
+            {
+                using (var serialized = new SerializedObject(component))
+                {
+                    return TryRead(serialized.FindProperty(path), out value);
+                }
+            }
+
+            value = string.Empty;
+            string[] parts = path.Split('.');
+            if (parts.Length != 3 || string.IsNullOrWhiteSpace(parts[2])) return false;
+            Material material = null;
+            if (component is Graphic graphic) material = graphic.materialForRendering;
+            // 存在 PropertyBlock 时共用材质值可能被覆盖，交给项目原生探针进一步回读。
+            else if (component is Renderer renderer && !renderer.HasPropertyBlock()) material = renderer.sharedMaterial;
+            if (material == null || !material.HasProperty(parts[2])) return false;
+            if (parts[1] == "color") value = "#" + ColorUtility.ToHtmlStringRGBA(material.GetColor(parts[2]));
+            else if (parts[1] == "float") value = material.GetFloat(parts[2]).ToString("R", CultureInfo.InvariantCulture);
+            return !string.IsNullOrEmpty(value);
         }
 
         /// <summary>从当前 Panel 的元素和解析样式读取项目指定的公开属性。</summary>

@@ -1,11 +1,11 @@
 # Unity 3D 资源工作流
 
-3D 模型、UV、PBR、LOD、Collider、Rig、蒙皮、动画制作与 Prefab 均嵌入 V0-V5。
+3D 模型、UV、PBR、LOD、Collider、Rig、蒙皮、动画制作与 Prefab 均嵌入 V1-V5。
 
 模型几何与 PBR 贴图生产统一通过 Blender MCP 完成。生产级模型符合目标风格、轮廓、使用距离、拓扑与性能预算，并不要求所有资产都采用高模或写实风格；贴图按[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)制作，并通过[模型与贴图共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接。建模拥有几何、UV、法线、槽位结构与模型导出；贴图使用版本化派生 `.blend` 完成材质节点、绘制、烘焙、通道打包和贴图导出，不得暗改网格、UV 或槽位。Unity 插件只负责导入器、Material/Renderer、资源级 Prefab 和运行验证，不创建模型几何或纹理。
 
-1. **V0/V1 空间与需求**：3D 世界先按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)在正式 Unity 场景用白模／积木搭建或复用有效空间，接入实际角色、镜头与必要交互，不提前逐物件生图或生产模型。本批整体场景联合单次审查并获人工确认后，再细化模型尺寸、轴向、Pivot、轮廓、连接及生产预算；独立模型的比例实验按需，不能替代整场景白模。
-2. **V2 视觉目标**：基于 V1 已验证的功能确定模型的目标外观及必要参考。
+1. **V1 空间与需求**：规划完整模块空间、规则、状态、进度及验收，按风险选择[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)与白模验证。必要时记录角色尺度、镜头、碰撞及空间确认。
+2. **V2 视觉目标**：基于第 4 阶段确认的全局方向与 V1 方案生成并确认本模块全部适用状态和进度的视觉设计，明确模型目标外观及必要参考。
 3. **V3 生产边界**：冻结几何、贴图、材质、Rig、蒙皮、动画和 VFX 的责任划分、资源 ID、目标节点、许可、源文件和验证矩阵。模型、贴图、绑定和动画工具固定为 Blender MCP，不为工具选择重复请求用户确认；其他工序如 VFX 按自身路线处理，不默认调用外部绑定/动画供应商。外部上传、付费或 DCC 任意代码执行仍按既有规则取得精确批准。
 4. **V4 模型与分批生产**：本批整体空间与正式方向确认、模型规格交接后，低风险批次正常制作与导入，高风险批次先验证首件或复用有效证据，再分批扩展；正式宿主替换在本栈 V5 执行。模型角色通过 Blender MCP 完成生产几何、拓扑、法线、UV、LOD 和碰撞代理，并交付高低模、Cage、法线/三角化等适用的烘焙输入；贴图角色通过 Blender MCP 在版本化派生文件中完成材质节点、绘制、烘焙、PBR 通道打包和贴图导出，按共同交接记录各 LOD 用图策略。Unity 负责纹理/模型导入器、Material/Renderer 绑定和资源级 Prefab。候选分别经 F2 独立领域审查和 F3 Unity 导入验证后组成资源级 Prefab。
 5. **V5 场景接入**：单写者接入 Mesh、材质、LOD、Collider、Rig/Animator、Prefab、Addressables 和 Scene，清理 Blockout/占位与残留引用，并在目标灯光、相机、动画、物理和性能条件下运行 EditMode/PlayMode 验证。

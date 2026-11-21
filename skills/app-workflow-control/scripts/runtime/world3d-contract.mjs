@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
-import { withinEvidenceRoot, rawEvidence, runRecord, validateSceneReview, validateSceneApproval } from './scene-design-contract.mjs';
+import { withinEvidenceRoot, rawEvidence, runRecord, validateSceneReview, validateSceneApproval, moduleSceneEvidenceRoot } from './scene-design-contract.mjs';
 import { assertFrozenWorldHud, isWorldHudReturn } from './world3d-hud.mjs';
 import { reusedWorld3DAsset, withWorld3DModelReuse, world3DModelReuse } from './world3d-model-reuse.mjs';
 import { assertWorld3DModelProductionBasis } from './world3d-production-basis.mjs';
@@ -64,7 +64,7 @@ export function assertWorld3DShape(work) {
   insist(visual.targets === undefined || (Array.isArray(visual.targets) && visual.targets.length === 0), '不能混入图片目标');
   insist(visual.reviews === undefined || (visual.reviews && typeof visual.reviews === 'object' && !Array.isArray(visual.reviews) && Object.keys(visual.reviews).length === 0), '不能混入图片阶段确认');
   for (const name of ['coverageRef', 'integrationEvidenceRef', 'reuse']) insist(visual[name] == null, `不能混入 ${name}`);
-  if (['V2', 'V3', 'V4', 'V5'].includes(visual.stage)) {
+  if (['V3', 'V4', 'V5'].includes(visual.stage) || (visual.stage === 'V2' && !visual.modulePlanRef)) {
     text(visual.candidateId, 'visual.candidateId');
     insist(visual.domainEvidenceRef?.path && /^[a-f0-9]{64}$/.test(visual.domainEvidenceRef.sha256 ?? ''), '缺少冻结的领域合同引用');
   }
@@ -128,7 +128,8 @@ export function readWorld3DContract(repo, work, stage) {
   insist(work.visual.stage === stage, '请求校验的阶段与当前工作项阶段不一致');
   const record = readWorld3DProductionEnvelope(repo, work);
   insist(record.stage === stage, '场景领域合同路线或阶段错绑');
-  const required = ['spatialSpecRef', 'blockoutRef', 'blockoutRunRef'];
+  const required = ['spatialSpecRef', 'blockoutRef'];
+  if (record.blockoutRunRef || !work.visual.modulePlanRef) required.push('blockoutRunRef');
   if (STAGES.indexOf(stage) >= 1) required.push('reviewRef', 'spaceApprovalRef', 'directionRef', 'directionApprovalRef', 'functionBaselineRef');
   if (STAGES.indexOf(stage) >= 2) required.push('modelSpecRef');
   if (STAGES.indexOf(stage) >= 3) {
@@ -233,7 +234,7 @@ export function world3dModelArchiveEvidenceRoot(repo, work) {
 
 /** 三维联合审查沿用世界场景的共同核验规则。 */
 function designReview(repo, work, contract) {
-  validateSceneReview(repo, work, contract.reviewRef, [contract.spatialSpecRef, contract.blockoutRef, contract.blockoutRunRef], 'world-3d-design-review');
+  validateSceneReview(repo, work, contract.reviewRef, [contract.spatialSpecRef, contract.blockoutRef, contract.blockoutRunRef].filter(Boolean), 'world-3d-design-review');
 }
 
 /** 三维人工决定沿用世界场景的共同核验规则。 */
@@ -360,8 +361,17 @@ export function validateWorld3DBaseline(repo, work, record) {
 /** 验证世界设计前置；样本准备与正式阶段共同消费同一套确认和模型规格。 */
 function validateWorld3DUpstream(repo, work, contract, stage) {
   const spatial = spatialSpec(repo, work, contract);
-  const blockoutRoot = blockoutEvidenceRoot(repo, work, contract, stage);
-  runRecord(repo, work, contract.blockoutRunRef, 'blockout', contract.blockoutRef, blockoutRoot, [contract.spatialSpecRef]);
+  if (work.visual.modulePlanRef) {
+    // V2 使用确认的空间和白模文件；可选运行仅用于专项验证。
+    if (contract.blockoutRunRef) {
+      const evidenceRoot = moduleSceneEvidenceRoot(repo, work, contract.blockoutRunRef);
+      runRecord(repo, work, contract.blockoutRunRef, 'blockout', contract.blockoutRef, evidenceRoot, [contract.spatialSpecRef]);
+    }
+    if (stage !== 'V1') insist(sameRef(repo, contract.functionBaselineRef, work.visual.functionBaselineRef), '未绑定当前模块方案');
+  } else {
+    const blockoutRoot = blockoutEvidenceRoot(repo, work, contract, stage);
+    runRecord(repo, work, contract.blockoutRunRef, 'blockout', contract.blockoutRef, blockoutRoot, [contract.spatialSpecRef]);
+  }
   if (STAGES.indexOf(stage) >= 1) {
     // 空间工作项和全局方向须消费同一份冻结依据，防止选定方向被其他文件悄然替换。
     const baseline = frozenJson(repo, work.globalVisualBaselineRef, '全局方向基线', work);
@@ -370,7 +380,7 @@ function validateWorld3DUpstream(repo, work, contract, stage) {
     designReview(repo, work, contract);
     approval(repo, work, contract.spaceApprovalRef, {
       stage: 'V2', purpose: 'space-baseline', subjectRef: contract.spatialSpecRef,
-      basisRefs: [contract.blockoutRef, contract.blockoutRunRef, contract.reviewRef],
+      basisRefs: [contract.blockoutRef, contract.blockoutRunRef, contract.reviewRef].filter(Boolean),
     });
     approval(repo, work, contract.directionApprovalRef, {
       stage: 'V2', purpose: 'visual-direction', subjectRef: contract.directionRef, basisRefs: [contract.spaceApprovalRef],
@@ -393,6 +403,7 @@ function validateWorld3DProductionBasisInContext(repo, work) {
   assertWorld3DModelProductionBasis(repo, work, contract);
   if (contract.modelReuseRef !== undefined) world3dFile(repo, contract.modelReuseRef, '模型复用来源', work);
   for (const field of ['spatialSpecRef', 'blockoutRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionRef', 'directionApprovalRef', 'functionBaselineRef', 'modelSpecRef']) {
+    if (field === 'blockoutRunRef' && work.visual.modulePlanRef && !contract[field]) continue;
     world3dFile(repo, contract[field], `场景领域合同.${field}`, work);
   }
   const { models } = validateWorld3DUpstream(repo, work, contract, 'V3');

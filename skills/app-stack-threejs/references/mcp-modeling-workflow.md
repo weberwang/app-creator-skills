@@ -35,7 +35,7 @@ V4 的技术报告与人工检查分别记录。按需要提供模型文件、�
 
 ## 模型级机器核验的边界
 
-仅对 V0 分类为运行模型的交付使用现有模型清单与静态验收器，不创建新的模型 Schema 或第二套机器验收合同：
+仅对 模块任务的分类为运行模型的交付使用现有模型清单与静态验收器，不创建新的模型 Schema 或第二套机器验收合同：
 
 ```powershell
 node .agents/skills/app-stack-threejs/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>

@@ -61,6 +61,31 @@ export function functionCoverageOrigins(repo, snapshot) {
   return [...result.values()];
 }
 
+/** 版本视觉范围中的每个来源都必须作为实际已完成对象参与最终来源追溯。 */
+export function assertVersionVisualSources(repo, work, production, visited) {
+  if (!production?.scope.versionVisual) return;
+  for (const path of production.scope.versionVisual.workItemPaths) {
+    const ref = visited.get(fileIdentityKey(repo, path));
+    if (!ref) throw new WorkflowError(`最终集成缺少版本视觉来源：${path}`);
+    const source = frozenJson(repo, ref, '最终版本视觉来源').value;
+    if (source.globalState !== 'COMPLETE' || source.visual?.stage !== 'V5' || source.visual.designIntent === 'proposal'
+      || source.projectId !== work.projectId || source.stack !== work.stack
+      || source.productionScopeRef?.sha256 !== work.productionScopeRef?.sha256
+      || fileIdentityKey(repo, source.productionScopeRef?.path) !== fileIdentityKey(repo, work.productionScopeRef.path)) {
+      throw new WorkflowError(`最终版本视觉来源尚未完成 V5 或不属于当前范围：${path}`);
+    }
+  }
+}
+
+/** 最终范围必须与视觉来源绑定同一版本，防止省略或换绑整版约束。 */
+export function assertFinalVisualScope(repo, work, source, production) {
+  if (!source.visual || !production?.scope.versionVisual) return;
+  if (!work.productionScopeRef?.path || work.productionScopeRef.sha256 !== source.productionScopeRef.sha256
+    || fileIdentityKey(repo, work.productionScopeRef.path) !== fileIdentityKey(repo, source.productionScopeRef.path)) {
+    throw new WorkflowError('最终集成必须绑定视觉来源的同一冻结版本范围');
+  }
+}
+
 /** 从最终对象及其真实功能／生产前批追溯系统设计；局部功能旧包保留独立身份。 */
 export function collectIntegrationSystemSources(repo, work, scope, inspectSource) {
   if (typeof inspectSource !== 'function') throw new WorkflowError('最终集成必须严格检查参与对象');
@@ -68,6 +93,7 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
   const completedBatches = new Map();
   const active = new Set();
   const checked = new Set();
+  const visualSources = new Map();
 
   /** 合并同一来源的消费对象，要求每份不同阶段的需求都参与最终映射。 */
   function addPackage(ref, source, objectId, origin = false) {
@@ -97,8 +123,10 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
     try {
       const result = inspectSource(repo, source, { strict: true, historical });
       if (!result || typeof result.then === 'function' || result.status !== 'PASS' || result.blocking?.length) throw new WorkflowError(`参与对象 ${objectId} 严格检查未通过`);
+      if (source.visual) visualSources.set(fileIdentityKey(repo, loaded.ref.path), loaded.ref);
       if (source.productionScopeRef && source.globalState === 'COMPLETE') {
         const production = validateProductionScope(repo, source);
+        assertFinalVisualScope(repo, work, source, production);
         if (production?.batch) {
           const batchKey = `${fileIdentityKey(repo, source.productionScopeRef.path)}:${source.productionScopeRef.sha256}:${source.productionBatchId}`;
           const covered = completedBatches.get(batchKey) ?? new Set();
@@ -164,6 +192,7 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
     for (const objectId of entry.objectIds) visit(entry.workItemRef, objectId, true);
   }
   if (production) {
+    assertVersionVisualSources(repo, work, production, visualSources);
     for (const batch of production.batches.values()) for (const objectId of batch.objectIds) {
       const key = `${fileIdentityKey(repo, work.productionScopeRef.path)}:${work.productionScopeRef.sha256}:${batch.batchId}`;
       if (!completedBatches.get(key)?.has(objectId)) {

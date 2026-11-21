@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://app-creator-skills.local/app-workflow-control/work-item.schema.json",
   "title": "统一应用与游戏工作项",
-  "description": "游戏、应用、设备 GUI 与服务器共用状态合同；V0-V5 视觉字段仅在实际显示工作项中绑定。",
+  "description": "游戏、应用、设备 GUI 与服务器共用状态合同；V1-V5 视觉字段仅在实际显示工作项中绑定。",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -60,10 +60,12 @@
     },
     "stageId": {
       "enum": [
+        "commercial-initiation",
         "requirements-scope",
         "global-baseline",
         "foundation-engineering",
         "scene-production",
+        "cross-module-integration",
         "global-integration-validation",
         "release"
       ]
@@ -142,6 +144,9 @@
     },
     "globalVisualBaselineRef": {
       "$ref": "#/$defs/visualReviewRef"
+    },
+    "foundationVisualRef": {
+      "$ref": "#/$defs/visualFileIdentity"
     },
     "assetReviewRef": {
       "$ref": "#/$defs/visualReviewRef"
@@ -429,7 +434,6 @@
         },
         "stage": {
           "enum": [
-            "V0",
             "V1",
             "V2",
             "V3",
@@ -441,6 +445,21 @@
           "const": "function-first-v1"
         },
         "functionBaselineRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "modulePlanRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "moduleDesignRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "moduleDesignReviewRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "moduleRuntimeRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "versionDesignSnapshotRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
         "modelBaselineRef": {
@@ -736,6 +755,18 @@
     }
   },
   "allOf": [
+    {
+      "if": { "properties": { "workItemType": { "const": "PROJECT" } }, "required": ["workItemType"] },
+      "then": { "properties": { "stageId": { "enum": ["commercial-initiation", "requirements-scope", "global-baseline"] } } }
+    },
+    {
+      "if": { "properties": { "workItemType": { "const": "FOUNDATION" } }, "required": ["workItemType"] },
+      "then": { "properties": { "stageId": { "const": "foundation-engineering" } } }
+    },
+    {
+      "if": { "properties": { "workItemType": { "const": "MODULE" } }, "required": ["workItemType"] },
+      "then": { "properties": { "stageId": { "const": "scene-production" } } }
+    },
     {
       "if": { "required": ["visual"], "properties": { "visual": { "required": ["designRoute"], "properties": { "designRoute": { "const": "world-2d" } } } } },
       "else": { "properties": { "visual": { "not": { "required": ["sceneDesignRef"] } } } }
@@ -1053,7 +1084,7 @@
       "then": {
         "properties": {
           "stageId": {
-            "const": "foundation-engineering"
+            "const": "cross-module-integration"
           }
         },
         "not": {

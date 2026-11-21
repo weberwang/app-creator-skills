@@ -1,6 +1,6 @@
 # Flutter 可编辑设计输入模板
 
-按需在已有需求和任务记录中整理输入，信息足够时直接按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作方向，无需先请用户批准文字方案。仅设计提案不强制先建设运行工程；正式实现仍须有关 V1 功能验证。
+按需在已有需求和任务记录中整理输入，信息足够时直接按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)制作方向，无需先请用户批准文字方案。仅设计提案不强制先建设运行工程；正式实现仍须确认完整 V1 模块方案。
 
 ## 当前页面与约束
 

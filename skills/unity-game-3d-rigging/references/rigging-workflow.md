@@ -1,6 +1,6 @@
 # Blender MCP 生产级角色绑定流程
 
-绑定在既有 V0–V5 和当前 Work Item 内完成，不建立额外的角色资产状态、阶段或审批。模型和贴图事实以[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)为准；Unity 侧的模型导入、Avatar、SkinnedMeshRenderer、Prefab 与播放检查以[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)为准。
+绑定在既有 V1–V5 和当前 Work Item 内完成，不建立额外的角色资产状态、阶段或审批。模型和贴图事实以[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)为准；Unity 侧的模型导入、Avatar、SkinnedMeshRenderer、Prefab 与播放检查以[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)为准。
 
 ## 开始条件与能力发现
 

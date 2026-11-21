@@ -7,13 +7,13 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 游戏大场景、长游戏流程、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据。游戏先明确区域／机制／解锁的整体骨架，再按连续可玩路径分批，逐批验证邻区与已有内容衔接，按风险补状态复现、持续运行和长期体验检查；不等待全游戏完成才集成。小范围修改沿用已有任务。
 
-核心设计确认后，核心任务可用简化表现验证的 App 和游戏按[白模与正式实现循环](references/readable-functional-prototype.md#core-experience-first)推进。各批按当前需求和实际依赖细化、实现、验证和返修。推进任一对象到 V2 前核对整期白模收口依据，复用已有运行结果和用户确认，再分批接入正式表现。
+第 4 阶段按[目标版本统一视觉](references/workflow.md#目标版本统一视觉)确认并冻结全局视觉方向和代表稿。第 5 阶段 V1 确认完整模块方案，V2 生成并确认覆盖全部适用流程、进度与状态的模块稿，V3 拆解该确认稿，V4 准备资源，V5 完整实现与验收。模块稿变更回 V2，全局方向变更回第 4 阶段。
 
-App 正式表现按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)统一视觉方向，优先让代表页完成 V2–V5，再复用方案推进其余页面。各 `PAGE` 独立记录阶段和验收，依赖明确且所有权互斥的制作可并行。
+App 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)在第 4 阶段通过代表页建立并确认全局基线，各 `PAGE` 在 V2 生成并确认覆盖适用状态和进度的模块稿，依赖和所有权明确后推进 V3–V5。
 
-App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-design.md)执行“设计分析 → imagegen 代表页效果图 → 用户确认图 → 忠实重建可编辑 Figma → V3 提取 → V4 实现 → V5 验证”；分析、生图、反馈修订、选稿和重建归入 V2。按项目图片委派规则调用实际可用工具，缺工具或额度如实阻塞；已确认且目标未变的图直接复用。原图确认并授权忠实重建后，结构核对完成即可提取规格，不重复批准同一视觉目标，不把未看重建预览登记为视觉通过；用户指定其他路线时记录真实指令及范围。
+App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-design.md)在第 4 阶段确认代表页及全局方向，V2 完成模块稿生成、用户确认与可编辑设计，V3 从该确认版本提取规格。实际预览的人工结果单独记录。
 
-从零设计复杂游戏，或实质改变关卡空间、路线及镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)由关卡／场景职责先形成结构、尺度与镜头依据，仅记录前期内容需求，不逐物件拆图生图。按[3D、2D 与 UI 分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 在正式工程白模搭建与 V1 功能验证，2D 使用平面布局和占位资源，UI 保持原流程；概念图可选。本批整体场景沿用单次审查和人工空间确认。采用两轮流程时，先完成本期白模收口，再按原阶段明确正式方向、试接和分批替换。实际机器合同缺口按该规范说明，不伪造阶段通过。
+从零设计复杂游戏或实质改变关卡空间、路线与镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)形成空间、尺度和镜头依据。可按[实现分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)及风险用 3D 白模、2D 平面布局或占位资源验证；第 4 阶段冻结全局方向，V1 确认完整模块方案，V2 设计并确认模块画面，V5 实现与验收。
 
 可见内容必须先按[通用分析的统一执行要求](references/professional-conventions.md#product-market-research)完成市场、竞品、受众与参考分析，已有有效结论核实后复用，只补查缺失或变化部分；再按共同权威[体验、视觉方向与意图表达](../app-asset-workflow/references/interface-intent.md#design-basis)，从本批真实用户行为、使用压力和适用状态形成有依据的视觉方向，区分硬约束、方向与探索空间，决定文字、美术及制作输入。游戏在原方案确定判断、场景线索、行动、反馈及必要精确信息，区分世界物件、地面区域、角色附属、场景浮层和 HUD，交接真实状态显隐。白模调试标签不直接继承为正式画面。需要多方向比较时，按[候选视觉语言与生成约束](../app-asset-workflow/references/style-and-production.md)分别定义造型、比例、材质、明暗边缘、功能色、UI 图标与制作路线，沿用当前路线的候选数量；实际可读性和风格差异仍由用户判断。
 
@@ -25,11 +25,11 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 渠道 SDK 先按[分类、多选确认和统一接入](../app-release/references/channel-sdk-selection.md)汇总本批平台必接、产品功能依赖和可选项，集中展示依赖／互斥、材料及已有实现。存在未决可选项时等待用户明确选择或全部不选，再把必须项、已选项及依赖统一交接；已有完整确认直接复用，等待期间继续不依赖该选择的工作。规划阶段等待选择与运行时 SDK 独立启动分别处理，法定限制和平台必需前置仍须落实。
 
-以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。本技能负责编排，不创建第二套状态机。新增或修改场景、页面、显示层、功能或机制，只要涉及显示元素设计或可见表现，就从本次增量的 V0 开始；纯非视觉修改按实际影响处理，不重做无关宿主或全项目阶段。
+以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁、执行结果与证据权威。按[七阶段](references/workflow.md#七阶段)从商业立项推进到模块集成与整体验收，发布任务按明确委托独立处理。可见增量在模块任务记录范围后进入 V1；纯非视觉修改按实际影响验证。
 
 默认不编排隐私弹窗、隐私中心及同意管理等业务，仅在用户明确要求或已确认项目需求包含时实施；不擅自删除已有业务。涉及明确纳入范围的隐私流程或任何 SDK 接入、升级与行为调整时，读取[隐私流程与 SDK 解耦约束](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)，按其中的工作流接入要求更新方案、实现和验证；解耦不允许绕过授权条件。
 
-涉及客户端界面错误反馈时统一遵循[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)：普通业务错误使用 Toast，需要用户确认的使用弹窗，后台加载和重试失败保持静默；功能增量同样适用。全局视觉设计稿冻结后，先确定所需[弹窗公共方案](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)，再设计 Toast；各自满足阶段条件后实现并验收独立 DISPLAY_LAYER，供业务接入。早期业务功能实施及 V1 不等待其视觉交付。Node.js API 的状态码、错误合同与日志按其服务端规范处理。
+客户端错误反馈按[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)分流。第 4 阶段定[弹窗公共方案](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)和 Toast 的全局风格，模块 V2 设计其适用状态。实际 DISPLAY_LAYER 的模块及宿主组合分别验证。
 
 涉及场景／页面切换或弹出层时统一遵循[场景与弹出层统一加载](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：共用唯一加载服务和全局显示层，场景使用不透明全屏过渡、弹窗使用半透明蒙层，并发时场景样式优先；按请求身份与独立令牌管理取消、替代、失败和输入交接。弹窗首次触发才加载，仅缓存模板、图片及依赖资源，关闭销毁实例并停止任务，重开创建新实例读取当前业务数据；场景切换清理旧宿主弹出层、任务与独占资源，后台预取保持静默。
 
@@ -38,6 +38,8 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 任务按[最小约定](references/output-files.md#每项任务的最小约定)明确目标与结果、涉及写入／输出时的路径、完成条件与验证方式。负责人默认当前代理，委派／并行／交接时才注明；版本、依赖、消费者及保留去向按需补充，已有规则直接引用。正式委派和工具合同必填项保留，机器证据仍使用当前 `evidenceRoot`，不覆盖冻结文件或为小任务额外生成报告。
 
 游戏与非游戏 App 均按[系统与模块覆盖](references/system-module-coverage.md)在需求／全局基线识别必要能力，实施前设计本批规则并关联需求、模块、任务和验证。明确实施、复用、后置、不需要或待决定；本批依赖不能后置或未决。Work Plan 的 `systemCoverage` 是实施必需合同，不能仅列页面／场景任务或依靠视觉设计补业务规则；小任务沿已有依据做局部覆盖。
+
+游戏在 GDD 定义核心循环时同步规划[广告体验与动态反馈](references/domain-production.md#游戏策划中的广告与反馈)。逐批从玩家路径和模块交接反查任务，将适用广告位和关键反馈纳入首次可玩切片及正式集成验证。
 
 每轮按[增量影响与复用范围](references/professional-conventions.md#incremental-change-impact)确定真实消费者、需要修改与重验的部分，影响不明时先追踪依赖；小修改在已有计划中简述即可。新项目按[正式功能切片](references/workflow.md#功能切片与跨对象依赖)先贯通最小用户路径，后续沿同一正式工程演进，不另建长期 Demo 或在 V5 重写已验证机制。
 
@@ -57,16 +59,17 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 各栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。功能函数实现后，编辑器支持的事件必须[在正式资产中绑定并由真实事件触发](../app-domain-toolkit/references/editor-display-authoring.md#editor-event-binding)。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。
 
-各技术栈涉及显示元素设计或可见表现的新增与修改，均从 V0 开始，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)确定增量范围，补齐位置、真实父子关系、尺寸、层序及输入等约定，再推进 V1–V5；场景、页面和显示层统一适用，复用组件、素材和程序化显示不以无需生图为由跳过 V0。
+各技术栈新增或修改可见表现时，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)在模块任务确定范围，补齐位置、父子关系、尺寸、层序及输入约定，再推进 V1–V5。按真实范围复用原组件、资源与程序表现。
 
 1. 先读项目约束、已有控制记录、技术版本与已有进程；不得擅自创建分支或 worktree。发现可复用的引擎、浏览器或开发服务后复用，不能为了验证另启实例。若项目还有旧栈总控或编排技能，明确本次只使用公共总控，不运行两套状态机，也不静默把旧批准转换为新记录。
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
 3. 明确目标、非目标、文件/对象所有权与可观察验收；先只读补事实。出现确实需要用户取舍的缺口时进入 [grilling](../grilling/SKILL.md)，继续不依赖该决定的工作，不能把正常实现变成逐步审批。
    包含客户端界面的新项目初始化时询问用户支持的界面语言：默认简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可按需追加；给出默认选项并等待用户选择，已有明确语言决定时不重复询问。将确认的语言清单和默认显示语言写入项目配置并用于各栈实现、字体与验证；默认显示语言必须在清单内。语言选择未答复时继续不依赖该选择的工作，不能把预选项当作确认。既有项目沿用其已确认的语言范围，不因局部修复重问或擅自扩展。
-4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择六阶段和 V0–V5，以可验证的功能切片驱动场景、页面和显示层分批推进；导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分，简单单对象任务不强制额外建项。V1 按上述路线验证本批功能并复用有效白模与组件。单个本地工程修复可用 `init --mode light`，直接进入实施前复核，仍须 F0–F3 和真实单元证据；其他任务使用普通模式，纯文案/查询无需建立完整控制记录。用 `plan --spec` 从实际计划生成实施包及空证据清单，用 `record --report` 从真实执行报告关联结果；二者不执行命令、不自动通过门禁。按独立路径与对象所有权委派，单物理编辑器和共享配置保持单写者。
-5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)及本栈规范，从 V0/V1 明确宿主、内容和显示职责，原型方式按上述内容分流。Flutter、Expo 的 PAGE／DISPLAY_LAYER 默认使用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)；ESP32 可在设备限制内采用，游戏图片目标及 UI 保留相应三候选和素材规则，不用其替代 3D 白模与模型交接。仅设计提案不强制先建设运行工程，正式实现仍须完成相关 V1 功能验证。Node.js 无界面服务不引入 Figma。已有有效方向和未受影响确认按语义复用，当前功能验证、V4 接入与 V5 实际运行／人工验收仍独立完成。
+4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择七阶段及适用的 V1–V5。产品规格决定首批、完整和后续版本，模块计划确认当前状态、范围、依赖及验收。导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分。单个本地工程修复可用 `init --mode light`，仍须 F0–F3 和真实单元证据。用 `plan --spec` 冻结实际计划，用 `record --report` 关联实际执行结果。共享配置和原生编辑器保持单写者。
+5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)明确宿主及职责。第 4 阶段确认全局视觉方向，V1 确认模块方案，V2 生成覆盖本轮全部状态、进度、文案、广告位和反馈的模块稿并取得用户确认，V3 拆解同一确认稿，V5 完整实现与验收。实际显示与手感由用户人工确认。
    制作前按本批深度核对[能力与动作语义](../app-asset-workflow/references/interface-intent.md#capability-semantics)，在布局和生图前按[最少必要文字](../app-domain-toolkit/references/ui-copy-principles.md#最少必要文字)完成文案取舍，并在原方案记录结论及视觉依据。每次实际生图前将这些结论转成当次提示词，按[生成前约束](../app-asset-workflow/references/style-and-production.md#生成前约束)检查冲突、来源角色及探索边界后调用工具，保存真实发送内容。正式场景、页面和显示层的图片目标须使用[实机运行画面约束](../app-asset-workflow/references/style-and-production.md#runtime-view-image)，明确描绘目标设备上可实现的实际视口。生图用于适合的路线和产物，不成为所有显示任务的必经步骤。
    代理可按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对真实设计节点与可测事实，并在同一轮按[最少必要文字](../app-domain-toolkit/references/ui-copy-principles.md#最少必要文字)复核文案。未经明确授权不得自动分析设计稿或运行截图，截图交用户检查。非游戏 App 的 V3 从所选稿提取必要还原交接，表达清楚时不重画拆解图、布局图或重复要求人工批准；V4 前段按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)试接实际组件，再分批扩展。共享文件和原生编辑器保持单写者。
+   保留的可见文字按[文字样式交接与验收](../app-domain-toolkit/references/ui-copy-principles.md#文字样式交接与验收)在 V3 绑定设计来源和样式目标，在 V5 用当前正式运行的原生回读核对。
 6. 交付前将[主要任务与一个适用异常的有界复核](../app-asset-workflow/references/interface-intent.md#bounded-review)合入已有检查，主动修正内容、结构、交互语义与一致性问题，不新增审查轮次或绕过人工看图要求。实施后按[验证与交付](references/verification.md)先推荐 T0–T3 的理由、覆盖与命令，再自动执行；记录真实结果。失败先诊断设计、提示词、生成、还原或适配原因，再 repair/revalidate，仅上游目标或范围真实失效才显式 return。
    按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)沉淀必要回归测试，更新受影响的当前项目说明并处理临时实现；按[精简交付](references/output-files.md#精简交付)简短反馈，不默认生成独立报告，不增加状态或审批。
 
@@ -88,9 +91,9 @@ Roblox 使用 `SCENE`、独立 `DISPLAY_LAYER` 与 `MODULE`，由当前 Studio �
 
 Expo 使用 React Native 的 PAGE 与独立 DISPLAY_LAYER，原生与 Web 按已选平台分别验证；采用项目实际 SDK、导航和原生工程维护方式。Expo Go、开发构建、发布构建的证明范围不同，不能以预览代替原生 SDK 或系统启动屏验收。云服务和插件是可选执行通道，不新增控制器或默认启动付费环境；具体见 [app-stack-expo](../app-stack-expo/SKILL.md)。
 
-ESP32 指设备自带屏幕运行的 GUI，页面使用 PAGE，独立瞬态层使用 DISPLAY_LAYER；驱动、业务和通信按 MODULE 管理。先确认硬件、输入、实际 SDK/GUI 版本和资源预算，再推进 V0–V5。外部手机或电脑控制客户端使用其自身技术栈，按协议与固件衔接。构建、主机模拟、设备运行和用户视觉确认分别记录，不能用主机结果替代硬件验收；具体见 [app-stack-esp32](../app-stack-esp32/SKILL.md)。
+ESP32 指设备自带屏幕运行的 GUI，页面使用 PAGE，独立瞬态层使用 DISPLAY_LAYER；驱动、业务和通信按 MODULE 管理。先确认硬件、输入、实际 SDK/GUI 版本和资源预算，再推进 V1–V5。外部手机或电脑控制客户端使用其自身技术栈，按协议与固件衔接。构建、主机模拟、设备运行和用户视觉确认分别记录；具体见 [app-stack-esp32](../app-stack-esp32/SKILL.md)。
 
-Node.js 指实际服务端进程，使用无视觉的 PROJECT、FOUNDATION、MODULE、INTEGRATION、RELEASE，不使用页面、场景和显示层；不要求视觉基线、V0–V5、图片、屏幕方向或客户端语言确认。前端与后端按模块分别选栈。最终集成冻结完成模块、实施包、证据清单和实际交付文件，按关键行为验证接口、数据、任务与生命周期；详见 [app-stack-nodejs](../app-stack-nodejs/SKILL.md)。
+Node.js 指实际服务端进程，七阶段使用非视觉的 PROJECT、FOUNDATION、MODULE 与 INTEGRATION。前端与后端按模块分别选栈。最终集成冻结完成模块、实施包、证据清单和实际交付文件，按关键行为验证接口、数据、任务与生命周期；详见 [app-stack-nodejs](../app-stack-nodejs/SKILL.md)。
 
 Cocos、Phaser、Three.js 的编排任务按需要读取以下公共资料，同时保留当前技术栈原生补充：
 

@@ -88,6 +88,19 @@ export function withinEvidenceRoot(repo, path, root, label) {
   insist(key.startsWith(`${rootKey}/`), `${label} 必须位于其冻结阶段的 evidenceRoot`);
 }
 
+/** 可选空间运行只可位于 V1 或 V2 的真实阶段目录，不接受运行文件自行指定根。 */
+export function moduleSceneEvidenceRoot(repo, work, runRef) {
+  if (work.visual.stage === 'V1') return work.evidenceRoot;
+  const plan = frozenJson(repo, work.visual.functionBaselineRef, 'V1 模块方案冻结记录', work);
+  const designRoot = work.visual.stage === 'V2' ? work.evidenceRoot :
+    frozenJson(repo, work.visual.versionDesignSnapshotRef, 'V2 模块稿冻结记录', work).versionVisualSnapshot?.evidenceRoot;
+  const key = fileIdentityKey(repo, runRef.path);
+  const roots = [plan.evidenceRoot, designRoot].filter(Boolean);
+  const root = roots.find((value) => key.startsWith(`${fileIdentityKey(repo, value)}/`));
+  if (!root) throw new WorkflowError('空间运行记录必须位于 V1 或 V2 的冻结证据目录');
+  return root;
+}
+
 /** 原始引擎输出不能使用控制、人工决定或空间规格记录自证。 */
 export function rawEvidence(repo, ref, label, work, root, forbiddenRefs = []) {
   const path = withoutWorld3DFileSnapshots(() => sceneFile(repo, ref, label, work));
@@ -192,7 +205,9 @@ function world2dEnvelope(repo, work) {
   insist(contract.designRoute === 'world-2d', '二维场景路线错绑');
   for (const key of Object.keys(contract)) insist(WORLD_2D_FIELDS.has(key), `二维场景设计依据不支持字段 ${key}`);
   identifiers(contract.scopeIds, 'scopeIds');
-  for (const field of ['spatialSpecRef', 'layoutRef', 'layoutRunRef']) sceneFile(repo, contract[field], `二维场景.${field}`, work);
+  // 模块可先用人工确认的平面布局定稿；实际布局运行是可选验证。
+  for (const field of ['spatialSpecRef', 'layoutRef']) sceneFile(repo, contract[field], `二维场景.${field}`, work);
+  if (contract.layoutRunRef || !work.visual.modulePlanRef) sceneFile(repo, contract.layoutRunRef, '二维场景.layoutRunRef', work);
   return contract;
 }
 
@@ -225,8 +240,22 @@ function frozenWorld2DRoot(repo, work, snapshot, contract) {
 function validate2D(repo, work, requireConfirmation, snapshot) {
   const contract = world2dEnvelope(repo, work);
   world2dSpatialSpec(repo, work, contract);
+  if (work.visual.modulePlanRef) {
+    // 空间来源随 V2 稿件冻结。V5 的实际运行仍由完整工程验收记录验证。
+    const basisRefs = [contract.spatialSpecRef, contract.layoutRef];
+    if (contract.layoutRunRef) {
+      const evidenceRoot = moduleSceneEvidenceRoot(repo, work, contract.layoutRunRef);
+      runRecord(repo, work, contract.layoutRunRef, 'layout', contract.layoutRef, evidenceRoot, [contract.spatialSpecRef]);
+      basisRefs.push(contract.layoutRunRef);
+    }
+    if (requireConfirmation) {
+      validateSceneReview(repo, work, contract.reviewRef, basisRefs, 'scene-design-review');
+      validateSceneApproval(repo, work, contract.spaceApprovalRef, { stage: 'V2', purpose: 'space-baseline', subjectRef: contract.spatialSpecRef, basisRefs: [...basisRefs.slice(1), contract.reviewRef] });
+    }
+    return contract;
+  }
   let root = work.evidenceRoot;
-  if (!['V0', 'V1'].includes(work.visual.stage) || snapshot) {
+  if (work.visual.stage !== 'V1' || snapshot) {
     const frozen = snapshot ?? frozenJson(repo, work.visual.functionBaselineRef, '功能基线', work);
     root = frozenWorld2DRoot(repo, work, frozen, contract);
   }
@@ -240,7 +269,6 @@ function validate2D(repo, work, requireConfirmation, snapshot) {
 
 /** 公开阶段检查；布局通过不自动完成审查或人工确认。 */
 export function validateWorld2DDesign(repo, work, { requireConfirmation = false } = {}) {
-  if (isWorld2D(work) && work.visual.stage === 'V0' && !work.visual.sceneDesignRef && !requireConfirmation) return null;
   return validate2D(repo, work, requireConfirmation);
 }
 
@@ -270,7 +298,7 @@ export function invalidateSceneDesign(repo, work, invalidatedRefs, earliestStage
   if (!isWorld2D(work)) return;
   const cutoff = VISUAL_STAGES.indexOf(earliestStage);
   // V2 只重做正式方向；空间依据未变时保留本轮联合审查及已有空间确认。
-  if (cutoff < 0 || cutoff > 1) return;
+  if (cutoff !== VISUAL_STAGES.indexOf('V1')) return;
   const ref = work.visual.sceneDesignRef;
   const contract = historicalJson(repo, ref);
   const seen = new Set();

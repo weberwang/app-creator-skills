@@ -239,8 +239,11 @@ test('合同 Schema 的阶段必需项与实际无图记录一致', (t) => {
     const contract = stage === 'V1' ? f.contract : attachWorld3DPhase(f, stage);
     assert.equal(validate(contract), true, `${stage}: ${JSON.stringify(validate.errors)}`);
     const missing = { ...contract };
-    delete missing[stage === 'V1' ? 'blockoutRunRef' : stage === 'V2' ? 'spaceApprovalRef' : stage === 'V3' ? 'modelSpecRef' : stage === 'V4' ? 'productionRisk' : 'displayApprovalRef'];
+    delete missing[stage === 'V1' ? 'spatialSpecRef' : stage === 'V2' ? 'spaceApprovalRef' : stage === 'V3' ? 'modelSpecRef' : stage === 'V4' ? 'productionRisk' : 'displayApprovalRef'];
     assert.equal(validate(missing), false, `${stage} 不应接受缺失前置`);
+    const withoutOptionalRun = { ...contract };
+    delete withoutOptionalRun.blockoutRunRef;
+    assert.equal(validate(withoutOptionalRun), true, `${stage} 可选白模运行不是方案推进门`);
   }
   const high = { ...f.contract, productionRisk: 'high' };
   assert.equal(validate(high), false);

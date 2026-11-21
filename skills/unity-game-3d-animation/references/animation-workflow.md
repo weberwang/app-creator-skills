@@ -1,6 +1,6 @@
 # Blender MCP 生产级角色动画流程
 
-动画生产沿用既有 V0–V5 与 Work Item，不新增资产状态或用户审批阶段。动画意图、方案确认和动作事件遵循[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)；模型/贴图/Rig 交接遵循[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)，Unity 导入与验证遵循[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)。
+动画生产沿用既有 V1–V5 与 Work Item，不新增资产状态或用户审批阶段。动画意图、方案确认和动作事件遵循[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)；模型/贴图/Rig 交接遵循[3D 角色交接](../../unity-development-workflow/references/3d-character-handoff.md)，Unity 导入与验证遵循[Unity 角色导入流程](../../unity-development-workflow/references/3d-character-unity-import.md)。
 
 ## 输入和制作前确认
 

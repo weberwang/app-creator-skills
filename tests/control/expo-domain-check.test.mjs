@@ -13,6 +13,7 @@ import { validateExpo } from '../../skills/app-workflow-control/scripts/runtime/
 import { attachFigmaAppFixture, attachFigmaLineFixture } from './figma-app-fixture.mjs';
 import { validateFigmaAppStage } from '../../skills/app-workflow-control/scripts/runtime/figma-app-contract.mjs';
 import { extractFlutterPlan } from '../../skills/app-workflow-control/scripts/runtime/flutter-plan-extractor.mjs';
+import { collectFigmaTextAppearance } from '../../skills/app-workflow-control/scripts/runtime/native-text-appearance.mjs';
 
 /** 写入隔离项目的合成文件并返回实际字节摘要。 */
 function write(repo, path, content) {
@@ -64,7 +65,8 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, platform, environment, buildKind: 'development', runtimeKind, ...refs, buildIdentityRef: write(repo, 'build.json', build), runEvidenceRef: evidence, interactionEvidenceRef: evidence, ...host };
   const snapshot = JSON.parse(readFileSync(join(repo, doc.figmaDesignRef.path), 'utf8'));
   const textReadback = { schemaVersion: '1.0', source: 'expo-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
-    entries: snapshot.nodes.filter((node) => node.type === 'TEXT').map((node) => ({ targetPath: doc.figmaDesignRef.path, nodeId: node.id, runtimeNodeId: node.designItemId, textFill: node.fills, textOpacity: node.opacity })) };
+    entries: collectFigmaTextAppearance([{ ref: doc.figmaDesignRef, snapshot }]).map((entry) => ({ ...entry, runtimeNodeId: snapshot.nodes.find((node) => node.id === entry.nodeId).designItemId,
+      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight', 'textFill', 'textOpacity'].map((name) => [name, { componentType: 'Text', propertyPath: `style.${name}` }])) })) };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 更新运行证据及当前确认引用，避免覆盖其他历史阶段材料。 */
@@ -112,6 +114,32 @@ test('Expo V5 对照当前文字填色、Alpha 与透明度的实际读数', (t)
   }
 });
 
+test('Expo 逐状态校验字体和组件样式读数，拒绝旧设计与旧运行', (t) => {
+  const f = fixture(t);
+  /** 每次变更后固定当前读数供公共阶段门读取。 */
+  function check() {
+    f.runtime.textReadbackRef = write(f.repo, 'changed-text.json', f.textReadback);
+    f.save();
+    return validateSingleDomainTarget(f.repo, f.work, 'V5');
+  }
+  assert.equal(check(), true);
+  const item = f.textReadback.entries[0];
+  item.fontFamily = 'prototype-font';
+  assert.throws(check, /fontFamily.*不一致/);
+  item.fontFamily = 'Noto Sans';
+  item.fontSize = 12;
+  assert.throws(check, /fontSize.*不一致/);
+  item.fontSize = 18;
+  item.stateId = 'old-state';
+  assert.throws(check, /实际读数/);
+  item.stateId = 'default';
+  item.targetSha256 = '0'.repeat(64);
+  assert.throws(check, /实际读数/);
+  item.targetSha256 = f.doc.figmaDesignRef.sha256;
+  f.textReadback.runEvidenceRef = write(f.repo, 'old-run.log', '历史运行');
+  assert.throws(check, /绑定当前构建和运行/);
+});
+
 test('Expo 运行门验证九宫图真实倍率、中心和最小样本', (t) => {
   const f = fixture(t);
   const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
@@ -134,7 +162,7 @@ test('Expo 运行门验证九宫图真实倍率、中心和最小样本', (t) =>
     assert.equal(createHash('sha256').update(data).digest('hex'), ref.sha256);
     return ref.path;
   };
-  const text = f.textReadback.entries.map(({ targetPath, nodeId, textFill, textOpacity }) => ({ targetPath, nodeId, textFill, textOpacity }));
+  const text = collectFigmaTextAppearance([{ ref: f.doc.figmaDesignRef, snapshot: JSON.parse(readFileSync(join(f.repo, f.doc.figmaDesignRef.path), 'utf8')) }]);
   function run() {
     f.doc.runtimeContextRef = write(f.repo, 'runtime-slice.json', f.runtime);
     f.work.visual.reviews.V5 = write(f.repo, 'review-v5-slice.json', { runtimeContextRef: f.doc.runtimeContextRef });

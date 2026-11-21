@@ -1,24 +1,30 @@
 ---
 name: app-ad-integration
-description: "规划广告展示位置、频次、同意与失败回退，并在真实受支持平台验证SDK与用户流程。"
+description: "规划游戏与应用广告位，初期通过统一接口模拟成功，按后续版本计划接入目标平台广告 SDK 并验证。"
 ---
 
-# 游戏广告接入
+# 游戏与应用广告接入
 
-将广告位与游戏进度、用户同意、加载失败和生命周期结合，减少误触、阻塞玩法和收益侧不可复现风险。
+将广告位与用户流程、奖励和生命周期结合。初期仅由统一接口返回模拟成功，后续版本明确规划真实广告时才按目标平台接入 SDK。产品规格决定版本范围与适用广告位。
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
 ## 输入
 
-- 已确认广告需求及目标渠道。明确采用对应移动原生聚合路线时，在 AdMob 与 AppLovin MAX 中显式二选一，复用[按引擎的移动 SDK 实现](../app-domain-toolkit/references/mobile-sdk-integration.md)；固定七项网络仅约束 MAX。TapTap 广告统一采用 Dirichlet 聚合，CrazyGames、微信／抖音小游戏按[渠道平台规范](../app-release/references/channel-platform-integration.md#隐私与商业能力)使用对应平台广告，未选能力不接入。[归因与广告直接启动和调用](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#归因与广告直接启动和调用)
-- 目标平台和各渠道适用的广告格式；广告类型/变现目标；隐私同意和地区要求；页面/关卡节奏及测试广告标识。
+- 已确认的版本范围、目标平台、广告格式、点位、触发时机、奖励或权益、不可用时的继续路径及本版模拟／真实接入决定。
+- 真实广告纳入后续版本时，再核实目标渠道、隐私同意、地区要求和测试广告标识。移动原生聚合路线在 AdMob 与 AppLovin MAX 中显式二选一；TapTap、CrazyGames、微信／抖音小游戏按对应平台能力与已确认路线接入。
 
 ## 共用操作步骤
 
 激励广告嵌入 HUD、菜单或结算弹窗时，按[游戏界面设计规则及结算示例](../app-ui-layout/SKILL.md#game-ui-design-rules)设计可选入口、入账反馈与区域收起后的排布。奖励判定和发放沿用当前渠道与业务约定。
 
-广告属于当前[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)的一部分；先将适用广告格式、供应商、依赖和互斥合并进本批多选清单，复用用户已有明确决定。待选项未确认时只准备方案，不安装／复制广告 SDK 或接初始化与业务；确认后与其他已选 SDK 统一安排接入，运行时仍独立初始化。
+1. 在产品规格中记录广告位、玩家／用户流程、成功和适用的后续回退规则，并在技术方案定义统一接口及结果语义。初期各调用均返回确定性的模拟成功，激励广告返回模拟完成；业务通过同一接口消费，按操作身份确保奖励不会重复发放。
+2. V1 规划初期统一广告接口的调用、模拟成功、适用奖励入账及继续操作。V2 将本模块广告入口、文案和结果状态纳入设计稿，V5 在实际宿主实现并验证模拟路径。后续版本明确规划后按目标平台接入 SDK；模拟只证明已执行的业务接线。
+3. 当产品规格明确将真实广告纳入后续版本时，按以下平台接入要求实施并验证。保留统一业务接口，以平台适配器转换真实结果；广告不可用、关闭或失败时遵守规格中的继续路径。
+
+## 真实广告的后续版本
+
+广告属于当前[渠道 SDK 集中选择](../app-release/references/channel-sdk-selection.md)的一部分；将适用广告格式、供应商、依赖和互斥合并进实际版本清单，复用用户已有明确决定。待选项未确认时只准备方案，不安装／复制广告 SDK 或接初始化与业务；确认后与其他已选 SDK 统一安排接入，运行时仍独立初始化。
 
 TapTap 广告统一采用用户已确定的 Dirichlet 聚合，按[引擎与宿主适配路线](../app-release/references/taptap-ad-integration.md)接入真实聚合 SDK 或受支持的 Tap 小游戏媒体接口，材料按[广告开通](../app-release/references/taptap-materials-policy.md)核实；H5／星火／制造的平台接口存在不代表已支持聚合。无需再询问聚合方案，也不为 TapTap 广告改用 AdMob／MAX 或套用 MAX 固定七网络；不把 Tap 小游戏代码当已实现的 APK 聚合桥接。缺少宿主支持、非个性化配置或授权依据时限制受影响请求，继续独立工作。
 
@@ -35,18 +41,18 @@ TapTap 直接复用[已交付的聚合广告代码与安装／下载入口](../a
 
 ## 关键边界
 
-- 所有广告遵守[SDK 不阻塞应用流程](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#sdk-不阻塞应用流程)：后台加载，触发展示即查即返；初始化、授权、加载、无填充与关闭回调都不能卡住启动、关卡、结算或下一局。不可用立即继续正常玩法，激励奖励仅据真实奖励回调发放，不创建广告 Loading 或等待队列。
+- 真实广告遵守[SDK 不阻塞应用流程](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#sdk-不阻塞应用流程)：后台加载，触发展示即查即返；初始化、授权、加载、无填充与关闭回调都不能卡住启动、关卡、结算或下一局。不可用立即继续正常玩法，激励奖励仅据真实奖励回调发放，不创建广告 Loading 或等待队列。初期模拟完成按明确的模拟身份处理，不冒充真实 SDK 回调。
 - 广告 SDK 的实现归属遵循[独立管理与初始化规范](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md)，广告业务状态与 SDK 初始化状态分别管理。
 - 不自行创建/修改广告账户、部署线上ID或执行外部写入；测试配置不得进入正式发行包。
 - 浏览器政策、移动SDK/API与审核条件由当前栈适配和当前平台事实确认。
 
 ## 交付
 
-- 广告位矩阵、授权来源与限制、范围内的隐私/同意流程（如有）、状态与回退规则、测试环境验证和发布配置清单。
+- 交付本版广告位、统一接口、模拟或真实接入范围和实际验证。真实版本补充适用的授权来源、隐私限制、状态回退、目标平台测试与配置；真实设备验证按现有授权执行。
 
 ## 当前技术栈的原生流程
 
-AdMob 使用[移动 SDK 接入入口](../app-domain-toolkit/references/mobile-sdk-integration.md)和[AdMob 聚合约定](../app-domain-toolkit/references/reference-ad-admob-contract.md)。下列原生模式只用于实际采用 MAX 的受支持 Android／iOS 目标。渠道 SDK 广告先读取[对应平台专项](../app-release/references/channel-platform-integration.md)，按平台合同和当前栈实现；不因技术栈相同就加载 MAX 模式。原生阅读器只提供路径和所选模式，不会自动判断渠道。
+仅在本版明确接入真实广告时读取以下原生模式。AdMob 使用[移动 SDK 接入入口](../app-domain-toolkit/references/mobile-sdk-integration.md)和[AdMob 聚合约定](../app-domain-toolkit/references/reference-ad-admob-contract.md)。下列原生模式只用于实际采用 MAX 的受支持 Android／iOS 目标。渠道 SDK 广告先读取[对应平台专项](../app-release/references/channel-platform-integration.md)，按平台合同和当前栈实现；不因技术栈相同就加载 MAX 模式。原生阅读器只提供路径和所选模式，不会自动判断渠道。
 
 先根据仓库实际依赖与项目配置确认当前 `app-stack-*`，再打开同目录的 [native-adapters.json](native-adapters.json)。按 `when` 选择 `mode`，从 `path` 指向的本栈原生手册中定位 `section` 章节，只读取该模式及其明确需要的脚本、模板和校验器；同栈同能力的多个模式在同一本手册内维护。
 使用共用读取工具：`node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> app-ad-integration [sourceSkill]`。单模式可省略来源，多模式必须指定清单中的 `sourceSkill`；输出所选章节、直接公共依赖及按需资源路径，不递归加载其他模式。维护本技能仓库时将 `.agents/skills/` 换为 `skills/`。

@@ -134,7 +134,7 @@ test('从 Work Item 推导包身份、阶段、序号与结果路径，并收窄
   assert.equal(pack.workItemId, 'page-records');
   assert.equal(pack.stack, 'flutter');
   assert.equal(pack.workItemType, 'PAGE');
-  assert.equal(pack.visualStage, 'V0');
+  assert.equal(pack.visualStage, 'V1');
   assert.equal(pack.executionUnits[0].sequence, 1);
   assert.equal(pack.executionUnits[0].type, 'PAGE');
   assert.equal(pack.executionUnits[0].resultPath, `${work.evidenceRoot}/unit-screen.json`);
@@ -301,7 +301,7 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
   let initial = await loadWork(fixture.repo, fixture.workPath);
   initial.globalState = 'REVIEW';
   await putJson(fixture.repo, fixture.workPath, initial);
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+
   const v1 = await start(fixture, [unit('function-v1', { type: 'PAGE' })]);
   const v1Evidence = [];
   for (const category of loadProfile(fixture.repo, 'flutter').evidenceRequirements.engineering) {
@@ -346,7 +346,7 @@ test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', 
     work.visual.reviews[name] = { path: reviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, reviewPath))).digest('hex') };
   }
   for (const gate of ['F0', 'F1', 'F2', 'F3']) work.gateStatus[gate] = 'PASS';
-  const oldPackagePath = '.workflow-control/implementation-packages/visual-replan-r1.json';
+  const oldPackagePath = '.workflow-control/implementation-packages/visual-replan-v4.json';
   const oldPlanPath = 'docs/v3-work-plan.json';
   const manifestPath = `${work.evidenceRoot}/manifest.json`;
   const pack = {

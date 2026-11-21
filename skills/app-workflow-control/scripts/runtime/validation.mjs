@@ -1,4 +1,4 @@
-import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, STAGES, TRANSITIONS, workCategory } from './constants.mjs';
+import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, WORK_STAGES, TRANSITIONS, workCategory } from './constants.mjs';
 import { readFileSync } from 'node:fs';
 import { repoPath, fileIdentityKey, stackProfileLocation, WorkflowError } from './io.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
@@ -10,7 +10,7 @@ import { validateWorldHudShape } from './world3d-hud.mjs';
 const WORK_FIELDS = new Set([
   'schemaVersion', 'workItemId', 'projectId', 'stack', 'workItemType', 'stageId',
   'globalState', 'objective', 'allowedPaths', 'forbiddenPaths', 'gateStatus', 'revision',
-  'implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef',
+  'implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'foundationVisualRef',
   'grillingRef', 'visual', 'visualBaselineRequired', 'evidenceRoot', 'action',
   'returnRecord', 'blockedRecord', 'invalidatedRefs', 'transitionHistory', 'category',
   'workflowMode', 'releaseIntent', 'planningRef', 'integrationPurpose', 'integrationScopeRef', 'integrationEvidenceRef',
@@ -79,7 +79,7 @@ function validateVisual(work) {
     if (!isFigmaApp(work) || !['imagegen', 'figma-direct'].includes(work.visual.designSource?.kind)) throw new WorkflowError('designSource 仅允许 Figma App 的有效设计来源');
     if (work.visual.designSource.kind === 'figma-direct' && (!work.visual.designSource.userMessageRef?.trim() || !work.visual.designSource.scope?.trim())) throw new WorkflowError('其他设计路线必须记录真实用户指令及范围');
   }
-  if (isDesignProposal(work) && (!['V0', 'V1', 'V2'].includes(work.visual.stage) || ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState))) throw new WorkflowError('仅设计提案不得推进正式实现或冒充 V5 工程完成');
+  if (isDesignProposal(work) && (!['V1', 'V2'].includes(work.visual.stage) || ['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState))) throw new WorkflowError('仅设计提案不得推进正式实现或冒充 V5 工程完成');
   if (work.visual.stageModel !== 'function-first-v1') throw new WorkflowError('视觉阶段缺少 function-first-v1 语义标记，旧工作项不能按新阶段解释');
   requireText(work.visual.objectId, 'visual.objectId');
   requireOneOf(work.visual.stage, VISUAL_STAGES, 'visual.stage');
@@ -88,10 +88,10 @@ function validateVisual(work) {
     if (work.visual.targets !== undefined && (!Array.isArray(work.visual.targets) || work.visual.targets.length)) throw new WorkflowError('world-3d 不能绑定图片目标');
     if (work.visual.reviews !== undefined && (!work.visual.reviews || typeof work.visual.reviews !== 'object' || Array.isArray(work.visual.reviews) || Object.keys(work.visual.reviews).length)) throw new WorkflowError('world-3d 不能绑定图片目标确认');
     if (work.visual.coverageRef !== undefined || work.visual.integrationEvidenceRef !== undefined || work.visual.reuse !== undefined) throw new WorkflowError('world-3d 不能绑定图片覆盖、衔接或复用记录');
-    if (!['V0', 'V1'].includes(work.visual.stage)) requireText(work.visual.candidateId, 'visual.candidateId');
+    if (!['V1', 'V2'].includes(work.visual.stage)) requireText(work.visual.candidateId, 'visual.candidateId');
   } else if (work.workItemType === 'SCENE') {
     // 场景统一使用目标数组，避免单图字段形成第二份相互冲突的真源。
-    if (!Array.isArray(work.visual.targets) || (!['V0', 'V1', 'V2'].includes(work.visual.stage) && !work.visual.targets.length)) throw new WorkflowError('SCENE 必须提供目标数组，V3 起至少包含一个视觉目标');
+    if (!Array.isArray(work.visual.targets) || (!['V1', 'V2'].includes(work.visual.stage) && !work.visual.targets.length)) throw new WorkflowError('SCENE 必须提供目标数组，V3 起至少包含一个视觉目标');
     if (work.visual.candidateId !== undefined || work.visual.reviews !== undefined || work.assetReviewRef?.path) throw new WorkflowError('SCENE 禁止使用单目标候选、确认或资源评审字段');
     const identities = new Set();
     for (const target of work.visual.targets) {
@@ -106,6 +106,7 @@ function validateVisual(work) {
   if (work.visual.candidateId !== undefined) requireText(work.visual.candidateId, 'visual.candidateId');
   if (work.visual.functionDependencies !== undefined && !Array.isArray(work.visual.functionDependencies)) throw new WorkflowError('visual.functionDependencies 必须为数组');
   if (work.visual.functionBaselineRef !== undefined && (!work.visual.functionBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.functionBaselineRef.sha256 ?? ''))) throw new WorkflowError('功能基线引用必须包含路径和 SHA-256');
+  for (const name of ['modulePlanRef', 'moduleDesignRef', 'moduleDesignReviewRef', 'moduleRuntimeRef', 'versionDesignSnapshotRef']) if (work.visual[name] !== undefined && (!work.visual[name]?.path || !/^[a-f0-9]{64}$/.test(work.visual[name].sha256 ?? ''))) throw new WorkflowError(`${name} 必须绑定路径和 SHA-256`);
   if (work.visual.sceneDesignRef !== undefined && (route !== 'world-2d' || !work.visual.sceneDesignRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.sceneDesignRef.sha256 ?? ''))) throw new WorkflowError('场景设计引用仅用于 world-2d，且必须绑定路径和 SHA-256');
   if (work.visual.modelBaselineRef !== undefined && (!world3d || !work.visual.modelBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelBaselineRef.sha256 ?? ''))) throw new WorkflowError('模型基线仅用于 world-3d，且必须绑定路径和 SHA-256');
   if (work.visual.modelProductionBasisRef !== undefined && (!world3d || !work.visual.modelProductionBasisRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelProductionBasisRef.sha256 ?? ''))) throw new WorkflowError('模型生产基线仅用于 world-3d，且必须绑定路径和 SHA-256');
@@ -148,11 +149,15 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
     requireOneOf(work.integrationPurpose, ['feature', 'final'], 'Work Item.integrationPurpose');
     if (work.integrationPurpose === 'feature' && (work.integrationScopeRef !== undefined || work.integrationEvidenceRef !== undefined)) throw new WorkflowError('早期功能集成不能声明最终集成范围或证据');
     if (work.integrationPurpose === 'final' && work.stageId !== 'global-integration-validation') throw new WorkflowError('最终集成必须处于 global-integration-validation');
-    if (work.integrationPurpose === 'feature' && work.stageId !== 'foundation-engineering') throw new WorkflowError('早期功能集成必须处于 foundation-engineering');
+    if (work.integrationPurpose === 'feature' && work.stageId !== 'cross-module-integration') throw new WorkflowError('功能集成必须处于 cross-module-integration');
     if (work.integrationEvidenceRef !== undefined && (!work.integrationEvidenceRef?.path || !/^[a-f0-9]{64}$/.test(work.integrationEvidenceRef.sha256 ?? ''))) throw new WorkflowError('最终集成证据必须包含路径和 SHA-256');
     if (work.integrationScopeRef !== undefined && (!work.integrationScopeRef?.path || !/^[a-f0-9]{64}$/.test(work.integrationScopeRef.sha256 ?? ''))) throw new WorkflowError('最终集成范围必须包含路径和 SHA-256');
   } else if (work.integrationPurpose !== undefined || work.integrationScopeRef !== undefined || work.integrationEvidenceRef !== undefined) throw new WorkflowError('只有 INTEGRATION 可以声明集成用途和证据');
-  requireOneOf(work.stageId, STAGES, 'Work Item.stageId');
+  requireOneOf(work.stageId, WORK_STAGES, 'Work Item.stageId');
+  if (work.workItemType === 'PROJECT' && !['commercial-initiation', 'requirements-scope', 'global-baseline'].includes(work.stageId)) throw new WorkflowError('PROJECT 只能处于立项、产品规划或技术方案阶段');
+  if (work.workItemType === 'FOUNDATION' && work.stageId !== 'foundation-engineering') throw new WorkflowError('FOUNDATION 必须处于基础工程阶段');
+  if (work.workItemType === 'MODULE' && work.stageId !== 'scene-production') throw new WorkflowError('MODULE 必须处于模块实现阶段');
+  if (work.workItemType !== 'RELEASE' && work.stageId === 'release') throw new WorkflowError('只有 RELEASE 可以处于 release 阶段');
   requireOneOf(work.globalState, Object.keys(TRANSITIONS), 'Work Item.globalState');
   assertWorkflowPolicy(work);
   if (work.workItemType === 'RELEASE') {
@@ -165,7 +170,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   validatePathList(work.forbiddenPaths, 'Work Item.forbiddenPaths');
   if (!work.gateStatus || typeof work.gateStatus !== 'object') throw new WorkflowError('Work Item.gateStatus 必须记录 F0–F4');
   for (const gate of GATES) requireOneOf(work.gateStatus[gate], ['PASS', 'FAIL', 'NOT_RUN'], `gateStatus.${gate}`);
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'foundationVisualRef']) {
     const ref = work[name];
     if (ref !== undefined && ref !== null) {
       if (typeof ref !== 'object' || Array.isArray(ref)) throw new WorkflowError(`Work Item.${name} 必须为含 path 的对象或 null`);
@@ -175,6 +180,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   }
   if (typeof work.visualBaselineRequired !== 'boolean') throw new WorkflowError('Work Item.visualBaselineRequired 必须显式为布尔值');
   if (work.globalVisualBaselineRef && !/^[a-f0-9]{64}$/.test(work.globalVisualBaselineRef.sha256 ?? '')) throw new WorkflowError('Work Item.globalVisualBaselineRef 必须绑定 SHA-256');
+  if (work.foundationVisualRef && !/^[a-f0-9]{64}$/.test(work.foundationVisualRef.sha256 ?? '')) throw new WorkflowError('Work Item.foundationVisualRef 必须绑定 SHA-256');
   if (work.planningRef && !/^[a-f0-9]{64}$/.test(work.planningRef.sha256 ?? '')) throw new WorkflowError('Work Item.planningRef 必须绑定冻结计划的 SHA-256');
   // 可见对象的视觉方向必须经确认，不能通过修改工作项标志跳过阶段门。
   if (work.visual && !work.visualBaselineRequired) throw new WorkflowError('视觉工作项必须启用 visualBaselineRequired');
@@ -227,9 +233,10 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
       if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError(`视觉目标重新绑定已作废引用：${ref.path}`);
     }
   }
-  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modelBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef]) {
+  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modulePlanRef, work.visual?.moduleDesignRef, work.visual?.moduleDesignReviewRef, work.visual?.moduleRuntimeRef, work.visual?.versionDesignSnapshotRef, work.visual?.modelBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef]) {
     if (ref && !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('visual 场景证据引用必须绑定 SHA-256');
     if (ref?.path && repo) repoPath(repo, ref.path, 'visual 场景证据引用');
+    if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError('visual 重新绑定了 RETURN 已作废引用');
     if (ref?.path && work.invalidatedRefs?.some((item) => repo ? fileIdentityKey(repo, item.path) === fileIdentityKey(repo, ref.path) : item.path === ref.path)) throw new WorkflowError(`视觉清单重新绑定已作废引用：${ref.path}`);
   }
   if (work.assetReviewRef && !/^[a-f0-9]{64}$/.test(work.assetReviewRef.sha256 ?? '')) throw new WorkflowError('assetReviewRef 必须绑定 SHA-256');

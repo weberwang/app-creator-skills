@@ -44,9 +44,18 @@ function index(items, key, label, { empty = false } = {}) {
 /** 严格识别总范围及其业务状态、步骤、转移与开发批次关系。 */
 export function validateProductionDefinition(scope, work) {
   if (!scope || typeof scope !== 'object' || Array.isArray(scope) || scope.schemaVersion !== '1.0') throw new WorkflowError('生产总范围版本无效');
-  fields(scope, ['schemaVersion', 'scopeId', 'projectId', 'stack', 'objects', 'regions', 'states', 'steps', 'transitions', 'paths', 'batches'], '生产总范围');
+  fields(scope, ['schemaVersion', 'scopeId', 'projectId', 'stack', 'objects', 'regions', 'states', 'steps', 'transitions', 'paths', 'batches', 'versionVisual'], '生产总范围');
   for (const key of ['scopeId', 'projectId', 'stack']) text(scope[key], `生产总范围.${key}`);
   if (scope.projectId !== work.projectId || scope.stack !== work.stack) throw new WorkflowError('生产总范围与工作项的项目或技术栈不匹配');
+  if (scope.versionVisual !== undefined) {
+    const visual = scope.versionVisual;
+    if (!visual || typeof visual !== 'object' || Array.isArray(visual)) throw new WorkflowError('版本视觉范围必须是对象');
+    fields(visual, ['workItemPaths'], '版本视觉范围');
+    ids(visual.workItemPaths, '版本视觉范围.workItemPaths');
+    for (const path of visual.workItemPaths) {
+      if (typeof path !== 'string' || !path.trim() || path.includes('\\') || path.includes('\0') || path.startsWith('/') || /^[a-zA-Z]:/.test(path) || path.split('/').some((part) => !part || part === '.' || part === '..')) throw new WorkflowError('版本视觉路径必须是规范的项目相对路径');
+    }
+  }
   const objects = index(scope.objects, 'objectId', '生产对象');
   const regions = index(scope.regions ?? [], 'regionId', '生产区域', { empty: true });
   const states = index(scope.states, 'stateId', '业务状态');
@@ -210,7 +219,11 @@ export function freezeProductionDependencies(repo, work, inspectSource) {
   work.productionDependencies = work.productionDependencies.map((dependency) => {
     const path = requireFile(repo, dependency.workItemRef.path, '生产依赖工作项');
     const sha256 = createHash('sha256').update(readFileSync(repoPath(repo, path).absolute)).digest('hex');
-    if (dependency.workItemRef.sha256 && dependency.workItemRef.sha256 !== sha256) throw new WorkflowError(`生产依赖 ${dependency.batchId} 已变化，须重新确认依赖`);
+    // 整版视觉在前几阶段允许来源继续推进；V4 起重新冻结并严格检查前批完成记录。
+    const source = result.scope.versionVisual ? readJson(repo, path, '生产依赖工作项') : null;
+    const refreshForFormalProduction = result.scope.versionVisual && work.visual && source?.visual
+      && (['V1', 'V2', 'V3'].includes(work.visual.stage) || (work.visual.stage === 'V4' && !work.planningRef));
+    if (!refreshForFormalProduction && dependency.workItemRef.sha256 && dependency.workItemRef.sha256 !== sha256) throw new WorkflowError(`生产依赖 ${dependency.batchId} 已变化，须重新确认依赖`);
     return { batchId: dependency.batchId, workItemRef: { path, sha256 } };
   });
   assertProductionDependencies(repo, work, inspectSource);
@@ -223,8 +236,15 @@ export function assertProductionDependencies(repo, work, inspectSource) {
   if (!result?.batch || !work.productionDependencies?.length) return;
   if (typeof inspectSource !== 'function') throw new WorkflowError('生产依赖必须提供实际完成材料检查器');
   for (const dependency of work.productionDependencies) {
-    const path = productionIdentity(repo, dependency.workItemRef, `生产依赖 ${dependency.batchId}`);
+    const earlyVisual = result.scope.versionVisual && work.visual && ['V1', 'V2', 'V3'].includes(work.visual.stage);
+    const path = earlyVisual ? requireFile(repo, dependency.workItemRef.path, '生产依赖工作项') : productionIdentity(repo, dependency.workItemRef, `生产依赖 ${dependency.batchId}`);
     const source = readJson(repo, path, '生产依赖工作项');
+    // 整版 V1/V2 同步完成前不能等待视觉前批 V5，业务前置依旧严格检查。
+    if (earlyVisual && source.visual) {
+      if (source.projectId !== work.projectId || source.stack !== work.stack || source.productionBatchId !== dependency.batchId || source.productionScopeRef?.sha256 !== work.productionScopeRef.sha256 || repoPath(repo, source.productionScopeRef?.path, '生产依赖总范围').relative !== repoPath(repo, work.productionScopeRef.path).relative) throw new WorkflowError(`生产依赖 ${dependency.batchId} 的视觉来源身份不匹配`);
+      continue;
+    }
+    productionIdentity(repo, dependency.workItemRef, `生产依赖 ${dependency.batchId}`);
     if (source.workItemId === work.workItemId || source.globalState !== 'COMPLETE' || source.projectId !== work.projectId || source.stack !== work.stack || source.productionBatchId !== dependency.batchId) throw new WorkflowError(`生产依赖 ${dependency.batchId} 必须绑定当前项目中已完成的前置批次`);
     if (!source.productionScopeRef || source.productionScopeRef.sha256 !== work.productionScopeRef.sha256 || repoPath(repo, source.productionScopeRef.path).relative !== repoPath(repo, work.productionScopeRef.path).relative) throw new WorkflowError(`生产依赖 ${dependency.batchId} 未绑定同一冻结总范围`);
     const sourceBatch = result.batches.get(dependency.batchId);

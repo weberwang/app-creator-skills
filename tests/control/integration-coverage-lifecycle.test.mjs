@@ -112,7 +112,7 @@ test('REVIEW 来源严格检查失败时不能只凭 COMPLETE 和 V5 开始集�
 test('实施后 final 改标 feature 或移除身份时，冻结执行状态拒绝继续', (t) => {
   const f = fixture(t, 'nodejs');
   const state = { schemaVersion: '1.0', workItemId: f.work.workItemId, stack: f.work.stack, implementationPackageRef: f.work.implementationPackageRef.path, integrationScopeRef: { path: 'scope.json', sha256: 'a'.repeat(64) } };
-  const downgraded = { ...f.work, integrationPurpose: 'feature', stageId: 'foundation-engineering' };
+  const downgraded = { ...f.work, integrationPurpose: 'feature', stageId: 'cross-module-integration' };
   assert.throws(() => validateExecutionState(f.repo, downgraded, f.pack, state), /最终集成用途.*冻结/);
   assert.throws(() => validateExecutionState(f.repo, { ...downgraded, workItemType: 'MODULE' }, f.pack, state), /最终集成用途.*冻结/);
 });

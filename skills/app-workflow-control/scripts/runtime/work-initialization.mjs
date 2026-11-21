@@ -63,6 +63,10 @@ async function initializeWorkLocked({ repo, args }) {
   const integrationPurpose = type === 'INTEGRATION' ? (args['integration-purpose'] ?? 'feature') : undefined;
   if (integrationPurpose !== undefined) requireOneOf(integrationPurpose, ['feature', 'final'], '--integration-purpose');
   if (type !== 'INTEGRATION' && args['integration-purpose'] !== undefined) throw new WorkflowError('只有 INTEGRATION 可以使用 --integration-purpose');
+  if (args.stage !== undefined) {
+    if (type !== 'PROJECT') throw new WorkflowError('只有 PROJECT 可以指定产品规划阶段');
+    requireOneOf(args.stage, ['commercial-initiation', 'requirements-scope', 'global-baseline'], '--stage');
+  }
   if (visualType && type === 'DISPLAY_LAYER') {
     requireText(args['host-id'], '--host-id');
     requireOneOf(args['layer-type'], ['modal', 'popup', 'drawer', 'toast'], '--layer-type');
@@ -73,7 +77,7 @@ async function initializeWorkLocked({ repo, args }) {
     projectId: args['project-id'] ?? 'default-project',
     stack,
     workItemType: type,
-    stageId: type === 'PROJECT' ? 'requirements-scope' : type === 'INTEGRATION' && integrationPurpose === 'final' ? 'global-integration-validation' : type === 'RELEASE' ? 'release' : visualType ? 'scene-production' : 'foundation-engineering',
+    stageId: type === 'PROJECT' ? (args.stage ?? 'commercial-initiation') : type === 'INTEGRATION' ? (integrationPurpose === 'final' ? 'global-integration-validation' : 'cross-module-integration') : type === 'RELEASE' ? 'release' : type === 'FOUNDATION' ? 'foundation-engineering' : 'scene-production',
     globalState: mode === 'light' ? 'REVIEW' : 'INTAKE',
     workflowMode: mode,
     ...(type === 'RELEASE' ? { releaseIntent: args['release-intent'] ?? 'prepare' } : {}),
@@ -94,7 +98,7 @@ async function initializeWorkLocked({ repo, args }) {
     ...(visualType ? { visual: {
       objectId: args['object-id'] ?? id,
       stageModel: 'function-first-v1',
-      stage: 'V0',
+      stage: 'V1',
       // 游戏场景默认按二维世界处理；纯 UI 必须显式分类，避免靠遗漏声明绕过空间前置。
       ...(type === 'SCENE'
         ? { designRoute: args['design-route'] ?? 'world-2d', ...(args['design-intent'] !== undefined ? { designIntent: args['design-intent'] } : {}) }

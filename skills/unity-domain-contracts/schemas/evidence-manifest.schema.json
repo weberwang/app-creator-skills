@@ -12,7 +12,7 @@
     "packageId": {"type": "string", "minLength": 1},
     "workItemType": {"enum": ["PROJECT", "FOUNDATION", "SCENE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
     "visualStageModel": {"const": "function-first-v1"},
-    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4", "V5"]},
+    "visualStage": {"enum": ["V1", "V2", "V3", "V4", "V5"]},
     "contractVersions": {"$ref": "#/$defs/contractVersions"},
     "baselineHash": {"type": "string", "minLength": 1},
     "recordedAt": {"type": "string", "minLength": 1},

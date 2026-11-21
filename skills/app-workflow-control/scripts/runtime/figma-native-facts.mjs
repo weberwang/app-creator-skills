@@ -144,7 +144,8 @@ export function validateFigmaNativeFacts(repo, work, doc, handoff, approved, pla
       if (mapping.nodeId === node.id || mapping.touchNodeId === node.id) return true;
       const owner = target.snapshot.nodes.find((item) => item.id === mapping.nodeId);
       if (!owner || !containsNode(target.snapshot.nodes, owner.id, node.id)) return false;
-      if (['COMPONENT', 'INSTANCE'].includes(owner.type)) return true;
+      // 组件包含多个文字时，必须逐个建立文字交接，容器覆盖不能代替独立样式。
+      if (node.type !== 'TEXT' && ['COMPONENT', 'INSTANCE'].includes(owner.type)) return true;
       const element = plan.elements?.find((item) => item.id === mapping.designItemId);
       const implementation = element && plan.implementations.find((item) => item.id === element.implementationId);
       const texts = target.snapshot.nodes.filter((item) => item.type === 'TEXT' && containsNode(target.snapshot.nodes, owner.id, item.id));

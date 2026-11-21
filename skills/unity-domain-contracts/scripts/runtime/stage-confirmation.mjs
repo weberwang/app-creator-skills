@@ -37,7 +37,7 @@ function validateConfirmation(confirmation, label, expectedStage, errors) {
   return confirmation;
 }
 
-/** 检查阶段确认字段的严格形状；V0 是内部路由，不保存用户阶段确认。 */
+/** 检查阶段确认字段的严格形状。 */
 export function validateStageReviewsShape(work) {
   const errors = [];
   if (work.stageReviews === undefined) return errors;
@@ -65,7 +65,7 @@ export function validateStageReviewsShape(work) {
       if (decomposition && layout && Date.parse(layout.confirmedAt) < Date.parse(decomposition.confirmedAt)) {
         errors.push(`${label}.layoutConfirmation 不能早于 decompositionConfirmation`);
       }
-    } else if (review.stage !== 'V0') {
+    } else {
       if (review.decompositionConfirmation !== undefined || review.layoutConfirmation !== undefined) errors.push(`${label}.${review.stage} 只能使用 confirmation`);
       if (review.confirmation !== undefined) validateConfirmation(review.confirmation, `${label}.confirmation`, review.stage, errors);
     }
@@ -81,7 +81,7 @@ export function stageConfirmationBlockers(work, evidence = null, targetState = w
   if ((work.globalState === 'COMPLETE' || targetState === 'COMPLETE') && currentStage !== 'V5') {
     blockers.push({ code: 'STAGE_COMPLETE_REQUIRES_V5', message: '可见 Work Item 必须到达 V5 并完成全部阶段确认后才能 COMPLETE', next: '推进到 V5 并完成逐阶段人工确认' });
   }
-  // V0 路由和 V1 功能验证均不强制视觉人工确认。
+  // V1 功能验证不强制视觉人工确认。
   if (!REVIEW_STAGES.includes(currentStage)) return blockers;
   const currentStatus = work.workItemType === 'SCENE' ? work.scene?.status : work.displayLayer?.status;
   const currentNeedsConfirmation = currentStatus === 'PASS'

@@ -8,7 +8,7 @@ import { dirname } from 'node:path';
 import { PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
 import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyToPass, assertTransitionInputs, assertVisualReview, bindWorkSource, hasPreciseApproval, loadPackage, requiresProtectedActionApproval, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
 import { validateFinalIntegration, validateIntegrationScope } from './final-integration.mjs';
-import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { captureWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { createExecutionPlanSnapshot, expectedActiveBatch } from './execution-batches.mjs';
@@ -28,6 +28,20 @@ import { isWorld2D, validateWorld2DDesign, freezeWorld2DDesign, assertFrozenWorl
 import { captureWorldHudAssets, isWorldHudReturn } from './world3d-hud.mjs';
 import { freezeSampleResult } from './production-samples.mjs';
 import { functionCoverageOrigins } from './integration-system-sources.mjs';
+import { freezeModulePlan, assertModuleStage, assertFoundationDesignPack, assertFrozenModulePlan, freezeModuleRuntime, assertModuleRuntime } from './module-stages.mjs';
+
+/** 独立的设计提案沿其选稿流程，正式对象统一使用模块阶段门。 */
+function moduleStage(repo, work, options) {
+  if (work.workItemType === 'FOUNDATION' || (work.visual && !isDesignProposal(work))) {
+    assertModuleStage(repo, work, { loadWork, validateGlobalBaseline, assertVisualReview, verifyFoundation }, options);
+  }
+}
+/** 已完成基础工程仍须保有有效的执行记录与通过证据。 */
+function verifyFoundation(repo, work) {
+  const { pack } = inspectExecution(repo, work, { requireComplete: true });
+  assertFoundationDesignPack(repo, work, pack);
+  assertReadyToPass(repo, work);
+}
 
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
@@ -47,7 +61,9 @@ export function checkProtectedAction({ repo, workItem, actionId, effect, target 
     throw new WorkflowError('动作 ID、类型或目标与当前工作项不匹配', 'ACTION_MISMATCH');
   }
   // BLOCKED/RETURN 不能以保留的旧批准绕过工作项恢复要求。
-  const figmaEditing = isFigmaApp(work) && work.visual.stage === 'V2' && ['PROPOSAL', 'REVIEW'].includes(work.globalState) && effect === 'external-write' && /^figma:(?:new:)?[A-Za-z0-9_-]+$/.test(target);
+  const figmaTarget = isFigmaApp(work) && work.visual.stage === 'V2' && effect === 'external-write' && /^figma:(?:new:)?[A-Za-z0-9_-]+$/.test(target);
+  const figmaEditing = figmaTarget && ['PROPOSAL', 'REVIEW'].includes(work.globalState);
+  if (figmaEditing && !isDesignProposal(work)) moduleStage(repo, work);
   // 设计阶段只允许既有精确授权的 Figma 写入；设备、付费和发布仍沿原有执行边界。
   if (!figmaEditing && !['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState)) {
     throw new WorkflowError('当前工作项尚未到达可执行受保护动作的阶段', 'ACTION_NOT_READY');
@@ -109,6 +125,7 @@ function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, h
   try {
     assertTransitionInputs(repo, work, work.globalState);
     if (checkFunctionBaseline) assertFunctionBaseline(repo, work, { historical });
+    if (work.globalState !== 'RETURN' && ((work.visual && work.visual.stage !== 'V1') || work.workItemType === 'FOUNDATION')) moduleStage(repo, work);
   } catch (error) {
     blocking.push(error.message);
   }
@@ -236,6 +253,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   // RETURN/BLOCKED 是恢复控制记录，应允许登记上游失效或未决问题。
   if (to === 'RETURN') return enterReturn({ repo, workItem, work, from, args });
   if (to === 'BLOCKED') return enterBlocked({ repo, workItem, work, from, args });
+  if (to === 'IMPLEMENTING' && ['V2', 'V3'].includes(work.visual?.stage)) throw new WorkflowError('V2/V3 完成设计与拆解，正式实现从 V5 执行');
   if (from === 'RETURN' || from === 'BLOCKED') resolveReturn(work, from, to, args);
   assertTransitionInputs(repo, work, to);
   try {
@@ -249,6 +267,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     if (!recovery) throw error;
     assertRecoverableLocalBaseline(repo, work);
   }
+  if (work.visual && work.visual.stage !== 'V1') moduleStage(repo, work);
   if (to === 'BASELINE') assertGates(work, ['F0']);
   if (to === 'PROPOSAL') assertGates(work, ['F1']);
   if (to === 'REVIEW') assertGates(work, ['F1', 'F2']);
@@ -260,11 +279,14 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   }
   if (to === 'PASSED') {
     // 进入通过态前重验执行快照，不能在 VALIDATING 后替换最终集成范围。
-    inspectExecution(repo, work, { requireComplete: true });
+    const { pack } = inspectExecution(repo, work, { requireComplete: true });
+    if (work.visual?.stage === 'V5') assertFunctionHostResults(repo, work);
+    if (work.workItemType === 'FOUNDATION') { moduleStage(repo, work); assertFoundationDesignPack(repo, work, pack); }
     assertReadyToPass(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
     // 仅在原阶段全部验证通过时保留可变业务源；审批及原始日志仍按原文件核验。
     await captureWorld3DFileSnapshots(repo, work);
+    if (work.visual?.stage === 'V5' && work.visual.modulePlanRef) await freezeModuleRuntime(repo, work, collectFunctionFiles(repo, work), fileDigest);
   }
   // 普通准备不执行受保护动作；发布与关闭前仍须核对精确批准与 F4。
   if (requiresProtectedActionApproval(work, to)) assertGates(work, ['F4']);
@@ -291,7 +313,10 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
   }
   if (to === 'COMPLETE') {
     // 完成前重验当前执行闭环，避免通过后证据丢失仍写入 COMPLETE。
-    if (!proposalCompletion) inspectExecution(repo, work, { requireComplete: true });
+    if (!proposalCompletion) {
+      const { pack } = inspectExecution(repo, work, { requireComplete: true });
+      if (work.workItemType === 'FOUNDATION') { moduleStage(repo, work); assertFoundationDesignPack(repo, work, pack); }
+    }
     assertFinalCompletion(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
     if (isWorld3D(work)) withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V5'] }, () => {});
@@ -381,6 +406,17 @@ async function enterReturn({ repo, workItem, work, from, args }) {
   }
   invalidateReturnGates(work, affected, returnState);
   invalidateReturnVisual(repo, work, affected, invalidatedRefs);
+  if (work.visual?.moduleRuntimeRef?.path) {
+    invalidatedRefs.push({ path: work.visual.moduleRuntimeRef.path, state: 'V5' });
+    delete work.visual.moduleRuntimeRef;
+  }
+  if (work.visual && ['V1', 'V2'].includes(work.visual.stage)) {
+    for (const name of ['moduleDesignRef', 'moduleDesignReviewRef', 'versionDesignSnapshotRef']) {
+      if (work.visual[name]?.path) invalidatedRefs.push({ path: work.visual[name].path, state: work.visual.stage });
+      delete work.visual[name];
+    }
+    if (!work.globalVisualBaselineRef) delete work.foundationVisualRef;
+  }
   const oldEvidenceRoot = work.evidenceRoot;
   const invalidated = [...new Map(invalidatedRefs.map((item) => [item.path, item])).values()];
   work.returnRecord = { reason, affectedScope: affected, returnState, resolvedAt: null, invalidatedRefs: invalidated, evidenceRoot: oldEvidenceRoot };
@@ -413,13 +449,13 @@ function invalidateReturnVisual(repo, work, scope, invalidatedRefs) {
   if (!work.visual) return;
   if (isWorld3D(work)) {
     const earliest = invalidateWorld3DVisual(repo, work, scope, invalidatedRefs);
-    if (earliest && VISUAL_STAGES.indexOf(earliest) <= 1) invalidateFunctionBaseline(work, invalidatedRefs);
+    if (earliest === 'V1') invalidateFunctionBaseline(work, invalidatedRefs);
     return;
   }
   const scopeName = scope.startsWith('stage:') ? scope.slice('stage:'.length) : scope;
   if (work.workItemType === 'SCENE') {
     invalidateSceneVisual(work, scope, scopeName, invalidatedRefs);
-    if (['requirements', 'requirements-scope', 'global-baseline', 'function'].includes(scopeName) || /^visual(?::V[0-5])?$/i.test(scope) || scope.startsWith('scene:')) invalidateSceneDesign(repo, work, invalidatedRefs, work.visual.stage);
+    if (['commercial-initiation', 'requirements', 'requirements-scope', 'global-baseline', 'function'].includes(scopeName) || /^visual(?::V[1-5])?$/i.test(scope) || scope.startsWith('scene:')) invalidateSceneDesign(repo, work, invalidatedRefs, work.visual.stage);
     return;
   }
   if (['implementation', 'engineering'].includes(scopeName)) {
@@ -429,15 +465,15 @@ function invalidateReturnVisual(repo, work, scope, invalidatedRefs) {
     delete work.visual.reviews?.V5;
     return;
   }
-  const baselineAffected = ['requirements', 'requirements-scope', 'global-baseline'].includes(scopeName) || /^visual:V0$/i.test(scope);
-  const stageMatch = scope.match(/^visual(?::(V[0-5]))?$/i);
+  const baselineAffected = ['commercial-initiation', 'requirements', 'requirements-scope', 'global-baseline'].includes(scopeName);
+  const stageMatch = scope.match(/^visual(?::(V[1-5]))?$/i);
   const pageOrSceneAffected = scope.startsWith('page:') || scope.startsWith('scene:');
   if (!baselineAffected && !stageMatch && !pageOrSceneAffected && scopeName !== 'function') return;
-  const requestedStage = baselineAffected ? 'V0' : scopeName === 'function' ? 'V1' : stageMatch?.[1]?.toUpperCase() ?? 'V2';
+  const requestedStage = baselineAffected ? 'V1' : scopeName === 'function' ? 'V1' : stageMatch?.[1]?.toUpperCase() ?? 'V2';
   const stageIndex = Math.min(VISUAL_STAGES.indexOf(work.visual.stage), VISUAL_STAGES.indexOf(requestedStage));
   const earliestStage = VISUAL_STAGES[stageIndex];
   invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earliestStage);
-  const clearFrom = Math.max(2, stageIndex);
+  const clearFrom = Math.max(2, stageIndex + 1);
   const reviewOrder = { V2: 2, V3Decomposition: 3, V3Layout: 3, V4: 4, V5: 5 };
   for (const [name, ref] of Object.entries(work.visual.reviews ?? {})) {
     if (reviewOrder[name] >= clearFrom && ref?.path) {
@@ -445,14 +481,14 @@ function invalidateReturnVisual(repo, work, scope, invalidatedRefs) {
       delete work.visual.reviews[name];
     }
   }
-  if (stageIndex <= 2) delete work.visual.candidateId;
-  if (stageIndex <= 4 && work.assetReviewRef?.path) {
+  if (clearFrom <= 2) delete work.visual.candidateId;
+  if (clearFrom <= 4 && work.assetReviewRef?.path) {
     invalidatedRefs.push({ path: work.assetReviewRef.path, state: 'V4' });
     work.assetReviewRef = null;
   }
-  if (stageIndex <= 1) invalidateFunctionBaseline(work, invalidatedRefs);
+  if (earliestStage === 'V1') invalidateFunctionBaseline(work, invalidatedRefs);
   if (baselineAffected && work.globalVisualBaselineRef?.path) {
-    invalidatedRefs.push({ path: work.globalVisualBaselineRef.path, state: 'V0' });
+    invalidatedRefs.push({ path: work.globalVisualBaselineRef.path, state: 'V1' });
     work.globalVisualBaselineRef = null;
   }
   work.visual.stage = earliestStage;
@@ -480,14 +516,14 @@ function invalidateSceneVisual(work, scope, scopeName, invalidatedRefs) {
     delete work.visual.integrationEvidenceRef;
     return;
   }
-  const baselineAffected = ['requirements', 'requirements-scope', 'global-baseline'].includes(scopeName) || /^visual:V0$/i.test(scope);
-  const match = scope.match(/^visual(?::(V[0-5]))?$/i);
+  const baselineAffected = ['commercial-initiation', 'requirements', 'requirements-scope', 'global-baseline'].includes(scopeName);
+  const match = scope.match(/^visual(?::(V[1-5]))?$/i);
   if (!implementationOnly && !baselineAffected && !match && scopeName !== 'function' && !scope.startsWith('scene:')) return;
-  const requested = baselineAffected ? 'V0' : scopeName === 'function' ? 'V1' : implementationOnly ? 'V5' : match?.[1]?.toUpperCase() ?? 'V2';
+  const requested = baselineAffected ? 'V1' : scopeName === 'function' ? 'V1' : implementationOnly ? 'V5' : match?.[1]?.toUpperCase() ?? 'V2';
   const index = Math.min(VISUAL_STAGES.indexOf(work.visual.stage), VISUAL_STAGES.indexOf(requested));
   const earliest = VISUAL_STAGES[index];
   const order = { V2: 2, V3Decomposition: 3, V3Layout: 3, V4: 4, V5: 5 };
-  const clearFrom = Math.max(2, index);
+  const clearFrom = Math.max(2, index + 1);
   for (const target of work.visual.targets ?? []) {
     for (const [name, ref] of Object.entries(target.reviews ?? {})) {
       if (order[name] >= clearFrom && ref?.path) { invalidatedRefs.push({ path: ref.path, state: name }); delete target.reviews[name]; }
@@ -502,9 +538,9 @@ function invalidateSceneVisual(work, scope, scopeName, invalidatedRefs) {
     invalidatedRefs.push({ path: work.visual.coverageRef.path, state: 'V2' });
     delete work.visual.coverageRef;
   }
-  if (index <= 1) invalidateFunctionBaseline(work, invalidatedRefs);
+  if (earliest === 'V1') invalidateFunctionBaseline(work, invalidatedRefs);
   if (baselineAffected && work.globalVisualBaselineRef?.path) {
-    invalidatedRefs.push({ path: work.globalVisualBaselineRef.path, state: 'V0' });
+    invalidatedRefs.push({ path: work.globalVisualBaselineRef.path, state: 'V1' });
     work.globalVisualBaselineRef = null;
   }
   work.visual.stage = earliest;
@@ -522,12 +558,13 @@ function invalidateSceneVisual(work, scope, scopeName, invalidatedRefs) {
 function invalidateFunctionBaseline(work, invalidatedRefs) {
   if (work.visual.functionBaselineRef?.path) invalidatedRefs.push({ path: work.visual.functionBaselineRef.path, state: 'V1' });
   delete work.visual.functionBaselineRef;
+  if (work.visual.modulePlanRef?.path) invalidatedRefs.push({ path: work.visual.modulePlanRef.path, state: 'V1' });
+  delete work.visual.modulePlanRef;
   delete work.visual.functionDependencies;
 }
 
 /** 仅从实质受影响阶段推导最早恢复入口，不接受用户指定 target state。 */
 export function inferReturnState(scope, stageId) {
-  if (/^visual:V0$/i.test(scope)) return 'BASELINE';
   if (/^visual(?::V[1-5])?$/i.test(scope)) return 'REVIEW';
   if (/^hud:V[2-5]$/i.test(scope)) return 'REVIEW';
   const direct = {
@@ -537,8 +574,8 @@ export function inferReturnState(scope, stageId) {
   };
   const scopeName = scope.startsWith('stage:') ? scope.slice('stage:'.length) : scope;
   if (direct[scopeName]) return direct[scopeName];
-  if (STAGES.includes(scopeName)) {
-    if (scopeName === 'requirements-scope' || scopeName === 'global-baseline') return 'BASELINE';
+  if (STAGES.includes(scopeName) || scopeName === 'release') {
+    if (['commercial-initiation', 'requirements-scope', 'global-baseline'].includes(scopeName)) return 'BASELINE';
     if (scopeName === 'release' || scopeName === 'global-integration-validation') return 'REVIEW';
     return 'PROPOSAL';
   }
@@ -655,13 +692,19 @@ export function assertFunctionBaseline(repo, work, { historical = false } = {}) 
 
 /** 按冻结的 V1 白模版本核验功能证据，其他工作项仍沿用原有文件校验。 */
 function assertFunctionBaselineInContext(repo, work, { historical = false } = {}) {
-  if (!work.visual || isDesignProposal(work) || ['V0', 'V1'].includes(work.visual.stage)) return;
+  if (!work.visual || isDesignProposal(work) || work.visual.stage === 'V1') return;
   const ref = work.visual.functionBaselineRef;
   if (!ref?.path || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '') || fileDigest(repo, ref.path).sha256 !== ref.sha256) throw new WorkflowError('缺少有效功能基线或基线内容已变化');
   const snapshot = readJson(repo, ref.path, '功能基线');
   assertFunctionDesignRoute(work, snapshot);
-  if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, snapshot);
   if (snapshot.schemaVersion !== VERSION || snapshot.workItemId !== work.workItemId || snapshot.projectId !== work.projectId || snapshot.stack !== work.stack || snapshot.objectId !== work.visual.objectId) throw new WorkflowError('功能基线工作项、项目或对象身份错绑');
+  if (snapshot.mode === 'module-plan') {
+    assertFrozenModulePlan(repo, work, snapshot);
+    assertModuleRuntime(repo, work, { historical });
+    if (work.visual.stage === 'V5' && (work.visual.functionDependencies ?? []).length) validateFeatureDependencies(repo, work, historical ? (root, source) => inspectFunctionSource(root, source, { historical: true }) : inspectFunctionSource);
+    return;
+  }
+  if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, snapshot);
   if (work.workItemType === 'DISPLAY_LAYER' && (snapshot.hostId !== work.visual.hostId || snapshot.layerType !== work.visual.layerType)) throw new WorkflowError('显示层宿主或类型已变化，必须重新验证功能');
   if (snapshot.mode === 'dependencies') {
     if (!sameFunctionDependencies(repo, snapshot.dependencies, work.visual.functionDependencies)) throw new WorkflowError('功能依赖已变化，必须重新验证 V1');
@@ -795,10 +838,11 @@ async function refreshLocalFunctionBaseline(repo, work, old, oldRef, spec) {
 export async function refreshFunctionBaseline({ repo, workItem, specPath }) {
   return withWorkLock(repo, workItem, async () => {
     const work = loadWork(repo, workItem);
-    if (!work.visual || ['V0', 'V1'].includes(work.visual.stage) || !['PROPOSAL', 'REVIEW', 'PASSED', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState)) throw new WorkflowError('功能重验仅适用于 V2–V5 的未完成工作项');
+    if (!work.visual || work.visual.stage === 'V1' || !['PROPOSAL', 'REVIEW', 'PASSED', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState)) throw new WorkflowError('功能重验仅适用于 V2–V5 的未完成工作项');
     const oldRef = work.visual.functionBaselineRef;
     if (!oldRef?.path || fileDigest(repo, oldRef.path).sha256 !== oldRef.sha256) throw new WorkflowError('旧功能基线身份无效，不能直接重绑');
     const old = readJson(repo, oldRef.path, '旧功能基线');
+    if (old.mode === 'module-plan') throw new WorkflowError('当前工作项使用 V1 模块方案；行为变化请返回 V1，实现返修请在 V5 重新执行验收');
     assertFunctionDesignRoute(work, old);
     if (isWorld2D(work)) assertFrozenWorld2DDesign(repo, work, old);
     if (old.workItemId !== work.workItemId || old.objectId !== work.visual.objectId || old.projectId !== work.projectId || old.stack !== work.stack) throw new WorkflowError('旧功能基线身份不匹配');
@@ -889,18 +933,12 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   const currentIndex = VISUAL_STAGES.indexOf(work.visual.stage);
   if (currentIndex < 0 || VISUAL_STAGES[currentIndex + 1] !== to) throw new WorkflowError(`视觉阶段必须相邻推进：${work.visual.stage} -> ${to}`);
   assertNoOpenGrilling(repo, work);
-  if (work.visual.stage === 'V0') {
+  const isModule = !isDesignProposal(work);
+  moduleStage(repo, work, { enteringV2: to === 'V2', confirmingV2: to === 'V3' });
+  let functionBaselineRef;
+  if (to === 'V2' && isModule) {
     assertGates(work, ['F0', 'F1']);
-  }
-  if (work.visual.stage !== 'V1') assertFunctionBaseline(repo, work);
-  let functionBaselineRef = null;
-  if (work.visual.stage === 'V1' && !isDesignProposal(work)) {
-    // 功能确认后进入 V2，视觉基线及目标可随后创建或复用。
-    functionBaselineRef = await freezeFunctionBaseline(repo, work);
-  }
-  if (work.visual.stage === 'V2') {
-    validateGlobalBaseline(repo, work, { required: true });
-    assertVisualReview(repo, work, 'V2');
+    functionBaselineRef = await freezeModulePlan(repo, work, fileDigest);
   }
   if (work.visual.stage === 'V3') assertVisualReview(repo, work, 'V3');
   if (work.visual.stage === 'V4') {
@@ -913,6 +951,7 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   }
   const previousState = work.globalState;
   const archive = { visualStage: work.visual.stage, implementationPackageRef: work.implementationPackageRef, evidenceRef: work.evidenceRef, planningRef: work.planningRef ?? null, revision: work.revision };
+  if (to === 'V3') archive.versionVisualSnapshot = structuredClone(work);
   if (isWorld3D(work) && work.visual.stage === 'V3' && !(isWorldHudReturn(work) && work.visual.modelProductionBasisRef)) {
     // 在 V3 推进时固定已确认的制作依据，避免后续改写风险或模型规格绕过首件依赖。
     archive.world3dModelProductionBasis = { workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, domainEvidenceRef: work.visual.domainEvidenceRef };
@@ -923,13 +962,14 @@ async function advanceVisualLocked({ repo, workItem, to }) {
     archive.world3dHudAssets = captureWorldHudAssets(work);
   }
   const archivePath = `${work.evidenceRoot}/archive-${work.visual.stage}-${work.revision + 1}.json`;
-  if (work.implementationPackageRef || work.evidenceRef || archive.world3dModelProductionBasis) await atomicWriteJson(repo, archivePath, archive);
+  if (work.implementationPackageRef || work.evidenceRef || archive.world3dModelProductionBasis || archive.versionVisualSnapshot) await atomicWriteJson(repo, archivePath, archive);
   if (archive.world3dModelProductionBasis) work.visual.modelProductionBasisRef = fileDigest(repo, archivePath);
   if (archive.world3dModelBaseline) work.visual.modelBaselineRef = fileDigest(repo, archivePath);
   if (work.implementationPackageRef?.path) (work.invalidatedRefs ??= []).push({ path: work.implementationPackageRef.path, state: work.visual.stage });
   if (work.evidenceRef?.path) (work.invalidatedRefs ??= []).push({ path: work.evidenceRef.path, state: work.visual.stage });
   if (work.planningRef?.path) (work.invalidatedRefs ??= []).push({ path: work.planningRef.path, state: work.visual.stage });
   work.visual.stage = to;
+  if (to === 'V3') work.visual.versionDesignSnapshotRef = fileDigest(repo, archivePath);
   if (functionBaselineRef) work.visual.functionBaselineRef = functionBaselineRef;
   work.implementationPackageRef = null;
   work.evidenceRef = null;

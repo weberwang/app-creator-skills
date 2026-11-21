@@ -9,6 +9,7 @@ import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs
 import { isFigmaApp, readFigmaSnapshot } from './figma-app-contract.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
 import { flutterTextColorIssues } from './text-paint.mjs';
+import { flutterTextStyle } from './native-text-appearance.mjs';
 import { validateAppNineSlicePlan, validateAppNineSliceMeasurements, validateAppNineSliceMinimums } from './app-nine-slice.mjs';
 
 let validatePlan;
@@ -214,6 +215,15 @@ function planFor(repo, work, doc) {
   for (const implementation of plan.implementations) {
     const colorIssues = flutterTextColorIssues(implementation.requirements.appearance.value);
     check(colorIssues.length === 0, `${implementation.id} ${colorIssues.join('；')}`);
+    const appearance = implementation.requirements.appearance.value;
+    const textStyle = flutterTextStyle(appearance);
+    if (textStyle) {
+      check(typeof textStyle.fontFamily === 'string' && textStyle.fontFamily.trim(), `${implementation.id} 的 fontFamily 目标缺失或待人工确认`);
+      check(Number.isFinite(textStyle.fontSize?.value) && textStyle.fontSize.value > 0, `${implementation.id} 的 fontSize 目标缺失或待人工确认`);
+      for (const property of ['typography', 'appearance']) {
+        check(implementation.requirements[property].basis !== 'estimated', `${implementation.id} 的 ${property} 样式目标为估计值，待人工确认`);
+      }
+    }
     const mapped = plan.elements.filter((item) => item.implementationId === implementation.id).map((item) => item.id);
     sameIds(implementation.designItemIds, mapped, `${implementation.id} 设计项映射`);
     const stateIds = [...new Set(mapped.flatMap((id) => elements.get(id).conditionIds.map((condition) => plan.conditions.find((item) => item.id === condition).stateId)))];
@@ -377,6 +387,33 @@ export function validateFlutterDesign(repo, work, stage, doc) {
     sameIds(capture.sourceRefs?.map((ref) => `${ref.path}:${ref.sha256}`), [...new Set(sourceRefs.map((ref) => `${ref.path}:${ref.sha256}`))], 'V5 采集源码');
     check(typeof capture.captureMethod === 'string' && capture.captureMethod.trim() && Number.isFinite(capture.pixelRatio) && capture.pixelRatio > 0, 'V5 缺少实际采集方式或像素倍率');
     file(repo, work, capture.captureOutputRef, 'V5 采集原始输出');
+    const textTargets = plan.elements.filter((element) => element.conditionIds.includes(item.conditionId)).flatMap((element) => {
+      const implementation = plan.implementations.find((entry) => entry.id === element.implementationId);
+      const style = flutterTextStyle(implementation.requirements.appearance.value);
+      return style ? [{ designItemId: element.id, style }] : [];
+    });
+    if (textTargets.length) {
+      // 文本读数使用当前截图的同一采集输出，不能以 V4 源码观测或旧运行日志代替。
+      check(typeof capture.runId === 'string' && capture.runId.trim(), `V5 ${condition.id} 文字运行缺少 runId`);
+      const output = json(repo, work, capture.captureOutputRef, 'V5 文字组件原始回读');
+      check(output.format === 'flutter-text-readback-v1' && output.runId === capture.runId
+        && sameRef(output.runtimeRef, item.runtimeRef) && sameRef(output.designReconstructionRef, doc.designReconstructionRef)
+        && isDeepStrictEqual(output.conditions, condition), `V5 ${condition.id} 文字回读未绑定当前计划、截图及运行条件`);
+      sameIds(output.entries?.map((entry) => entry.designItemId), textTargets.map((target) => target.designItemId), `V5 ${condition.id} 文字节点`);
+      const runtimeNodes = new Set();
+      for (const target of textTargets) {
+        const actual = output.entries.find((entry) => entry.designItemId === target.designItemId);
+        check(typeof actual.runtimeNodeId === 'string' && actual.runtimeNodeId.trim(), `${target.designItemId} 文字缺少实际组件身份`);
+        // 同一状态的多个文字节点必须各自回读，不能用一个组件的相同样式冒充其他节点。
+        check(!runtimeNodes.has(actual.runtimeNodeId), `${target.designItemId}/${condition.id} 的文字组件 ${actual.runtimeNodeId} 已被其他设计节点使用`);
+        runtimeNodes.add(actual.runtimeNodeId);
+        for (const [name, expected] of Object.entries(target.style)) {
+          const source = actual.propertySources?.[name];
+          check(typeof source?.componentType === 'string' && source.componentType.trim() && typeof source.propertyPath === 'string' && source.propertyPath.trim(), `${target.designItemId}/${condition.id}/${name} 缺少实际组件或材质属性回读`);
+          check(isDeepStrictEqual(actual.values?.[name], expected), `${target.designItemId}/${condition.id}/${name} 运行值与确认目标不一致`);
+        }
+      }
+    }
     // 同一视口的采集上下文必须覆盖该条件下的全部九宫格消费者。
     const expected = sliceExpected.filter((entry) => entry.conditionId === item.conditionId);
     if (expected.length || capture.nineSliceMeasurements !== undefined) {

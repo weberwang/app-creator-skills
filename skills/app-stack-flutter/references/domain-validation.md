@@ -24,6 +24,8 @@ Node 专业工具需要依赖时，按仓库安装说明为 `.agents/skills/app-
 
 Flutter 工程仍按实际 FVM/Flutter 版本执行 `analyze`、定向 widget/unit/integration 测试与必要构建，并按高保真和自适应布局技能提供真实尺寸、SafeArea、文字缩放及交互证据。不能用技能仓库的静态校验替代应用测试。
 
+V3 在现有设计拆解中逐节点及条件冻结可见文字的字体、字号、文字填色和透明度，以及设计中可核实的其他属性。字体或效果仅有位图且尚待确认时记录原因，保持未完成。V5 复用对应条件的 `flutter-runtime-capture-v1`，采集上下文用 `runId` 标识本次运行；`captureOutputRef` 指向 `flutter-text-readback-v1` JSON，绑定相同 `runId`、`runtimeRef`、`conditions` 和 `designReconstructionRef`。`entries` 逐设计项记录 `designItemId`、实际 `runtimeNodeId`、属性 `values`，以及每项实际组件或材质的 `propertySources`（`componentType`、`propertyPath`）。属性名使用 `fontFamily`、`fontSize`、`textFill`、`textOpacity` 和目标中存在的其他属性，实测值按目标单位和结构换算。无可见文字时不要求文字读数。截图由用户人工确认。
+
 把领域工具实际命令、退出码、输入路径和结果保存在当前公共 `evidenceRoot` 的 `flutter-domain-checks.json`；成功后向公共 Evidence Manifest 的 `items` 添加 `category: "flutter-domain-checks"`、`status: "PASS"` 与项目相对 `path`。Manifest 保持当前公共工作项、实施包和视觉阶段绑定，由 Work Item 的 `evidenceRef.path` 引用；profile 要求的 `analyze/tests` 和实际视觉/导入类别仍单独提供。
 
 截图由用户人工检查。未执行的真机、模拟器、发布和外部系统操作保持 `NOT_RUN`，不由此工具接入说明自动授权。

@@ -401,6 +401,35 @@ test('文字样式 schema 要求颜色分量与透明度，非文字节点不受
   assert.equal(validate(fixture.layout), true);
 });
 
+test('文字样式绑定设计和状态并逐属性核对运行回读', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V5', layer: true });
+  const style = fixture.layout.nodes[1].textStyle;
+  assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+  delete style.fontSize;
+  assert.throws(() => verifyVisual(fixture, 'V5'), /fontSize/);
+  style.fontSize = 18;
+  style.sourceTarget = { ...style.sourceTarget, sha256: '0'.repeat(64) };
+  assert.throws(() => verifyVisual(fixture, 'V5'), /设计来源/);
+  style.sourceTarget = fixture.visual.referenceTarget;
+  style.stateId = 'other';
+  assert.throws(() => verifyVisual(fixture, 'V5'), /状态/);
+  style.stateId = 'normal';
+  style.unconfirmed = [{ property: 'shadow', reason: '位图来源无法核实' }];
+  assert.throws(() => verifyVisual(fixture, 'V5'), /shadow.*位图/);
+  delete style.unconfirmed;
+  style.fontWeight = 'Regular';
+  updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.FontFace.weight = 'Regular'; });
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.FontFace.weight = 'Bold'; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /fontWeight/);
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.FontFace.weight = 'Regular'; });
+  updateScreenCapture(fixture, 'runtime', (nodes) => { delete nodes[1].properties.TextSize; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /fontSize/);
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.TextSize = 18; });
+  assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.TextScaled = true; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /实际字号未验证.*TextScaled/);
+});
+
 test('V4 缺少文字颜色或透明度回读均不能通过', (t) => {
   const fixture = createRobloxVisualFixture(t, { stage: 'V4', layer: true });
   assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');

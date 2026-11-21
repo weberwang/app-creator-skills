@@ -106,7 +106,7 @@ for (const [stack, details] of Object.entries(STACKS)) {
     assert.match(nativeGuide, /V3[^\n]*动作[^\n]*V4[^\n]*(?:素材|真实视频)[^\n]*V5[^\n]*(?:接入|消费)/);
     if (stack === 'threejs') {
       assert.match(workflow, /V3[^\n]*动作方案[^\n]*V4[^\n]*素材/);
-      assert.match(workflow, /全局视觉阶段为 V0、V1、V2、V3、V4、V5/);
+      assert.match(workflow, /全局视觉阶段为 V1、V2、V3、V4、V5/);
     } else {
       assert.match(workflow, /V3[^\n]*设计决定[^\n]*V4[^\n]*素材[^\n]*V5[^\n]*触发/);
       assert.match(intent, /V4[^\n]*真实候选[^\n]*V5[^\n]*触发/);

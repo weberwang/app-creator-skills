@@ -5,8 +5,10 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
-import { initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { advanceVisual, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { assertWorkflowPolicy } from '../../skills/app-workflow-control/scripts/runtime/task-policy.mjs';
+import { STAGES } from '../../skills/app-workflow-control/scripts/runtime/constants.mjs';
+import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 
 const CLI = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
 
@@ -37,9 +39,9 @@ function call(repo, command, args = [], expectedExit = 0) {
   return JSON.parse(result.stdout || result.stderr);
 }
 
-test('普通模式保持原入口，PROJECT从需求阶段开始，RELEASE默认只准备', async (t) => {
+test('普通模式按工作项进入研发阶段，RELEASE 默认只准备', async (t) => {
   const repo = temporaryProject(t);
-  for (const [id, type, phase] of [['normal', 'MODULE', 'foundation-engineering'], ['project', 'PROJECT', 'requirements-scope'], ['release', 'RELEASE', 'release']]) {
+  for (const [id, type, phase] of [['normal', 'MODULE', 'scene-production'], ['project', 'PROJECT', 'commercial-initiation'], ['release', 'RELEASE', 'release']]) {
     const result = await initializeWork({ repo, args: { id, type, stack: 'flutter', objective: '验证控制器任务分流' } });
     const work = read(repo, result.metadata.workItemPath);
     assert.equal(work.workflowMode, 'standard');
@@ -47,6 +49,31 @@ test('普通模式保持原入口，PROJECT从需求阶段开始，RELEASE默认
     assert.equal(work.stageId, phase);
     if (type === 'RELEASE') assert.equal(work.releaseIntent, 'prepare');
   }
+});
+
+test('七阶段入口支持明确的产品阶段并保留独立发布工作项', async (t) => {
+  const repo = temporaryProject(t);
+  assert.deepEqual(STAGES, ['commercial-initiation', 'requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'cross-module-integration', 'global-integration-validation']);
+  for (const [index, stage] of ['commercial-initiation', 'requirements-scope', 'global-baseline'].entries()) {
+    const result = call(repo, 'init', ['--id', `project-${index}`, '--type', 'PROJECT', '--stack', 'flutter', '--objective', '阶段入口', '--stage', stage]);
+    assert.equal(read(repo, result.metadata.workItemPath).stageId, stage);
+  }
+  const feature = await initializeWork({ repo, args: { id: 'feature', type: 'INTEGRATION', stack: 'flutter', objective: '跨模块' } });
+  assert.equal(read(repo, feature.metadata.workItemPath).stageId, 'cross-module-integration');
+  await assert.rejects(initializeWork({ repo, args: { id: 'bad-stage', type: 'MODULE', stack: 'flutter', objective: '错误阶段', stage: 'requirements-scope' } }), /只有 PROJECT/);
+  const schema = JSON.parse(readFileSync(resolve('skills/app-workflow-control/schemas/work-item.schema.json'), 'utf8'));
+  const validate = new Ajv2020({ strict: false }).compile(schema);
+  const work = read(repo, feature.metadata.workItemPath);
+  assert.equal(validate(work), true, JSON.stringify(validate.errors));
+  work.stageId = 'foundation-engineering';
+  assert.equal(validate(work), false);
+});
+
+test('视觉工作项从 V1 开始且 V0 不能作为推进目标', async (t) => {
+  const repo = temporaryProject(t);
+  const result = await initializeWork({ repo, args: { id: 'page', type: 'PAGE', stack: 'flutter', objective: '验证视觉入口' } });
+  assert.equal(read(repo, result.metadata.workItemPath).visual.stage, 'V1');
+  await assert.rejects(advanceVisual({ repo, workItem: result.metadata.workItemPath, to: 'V0' }), /--to/);
 });
 
 test('轻量初始化直接进入REVIEW，但没有质量门和实施包不能开始实施', async (t) => {

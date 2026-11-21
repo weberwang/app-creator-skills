@@ -37,12 +37,35 @@ function udim2(value, label) { vector(value, ['xScale', 'xOffset', 'yScale', 'yO
 /** 校验声明的坐标原点；Roblox 原点可处在自身矩形以外。 */
 function anchor(value, label) { vector(value, ['x', 'y'], label); }
 
-/** 文字颜色使用 Color3 的 0–1 分量，透明度按 Roblox 原生属性另行检查。 */
+/** 每个文字节点冻结可核实样式，待人工确认的属性保留明确原因。 */
 function validateTextStyle(style, label) {
   object(style, label);
+  const supported = new Set(['sourceTarget', 'stateId', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'color', 'transparency', 'horizontalAlignment', 'verticalAlignment', 'wrapped', 'scaled', 'lineHeight', 'strokeColor', 'strokeTransparency', 'unconfirmed']);
+  for (const name of Object.keys(style)) if (!supported.has(name)) throw new WorkflowError(`${label}.${name} 没有原生回读合同，须明确记录待确认原因`);
+  text(style.fontFamily, `${label}.fontFamily`);
+  if (!Number.isFinite(style.fontSize) || style.fontSize <= 0) throw new WorkflowError(`${label}.fontSize 必须是正数`);
   vector(style.color, ['r', 'g', 'b'], `${label}.color`);
   if (['r', 'g', 'b'].some((key) => style.color[key] < 0 || style.color[key] > 1)) throw new WorkflowError(`${label}.color 分量必须在 0–1`);
   if (!Number.isFinite(style.transparency) || style.transparency < 0 || style.transparency > 1) throw new WorkflowError(`${label}.transparency 必须在 0–1`);
+  for (const key of ['fontWeight', 'fontStyle', 'horizontalAlignment', 'verticalAlignment']) {
+    if (style[key] !== undefined) text(style[key], `${label}.${key}`);
+  }
+  for (const key of ['wrapped', 'scaled']) {
+    if (style[key] !== undefined && typeof style[key] !== 'boolean') throw new WorkflowError(`${label}.${key} 必须是布尔值`);
+  }
+  if (style.lineHeight !== undefined && (!Number.isFinite(style.lineHeight) || style.lineHeight <= 0)) throw new WorkflowError(`${label}.lineHeight 必须是正数`);
+  if (style.strokeColor !== undefined) {
+    vector(style.strokeColor, ['r', 'g', 'b'], `${label}.strokeColor`);
+    if (['r', 'g', 'b'].some((key) => style.strokeColor[key] < 0 || style.strokeColor[key] > 1)) throw new WorkflowError(`${label}.strokeColor 分量必须在 0–1`);
+  }
+  if (style.strokeTransparency !== undefined && (!Number.isFinite(style.strokeTransparency) || style.strokeTransparency < 0 || style.strokeTransparency > 1)) throw new WorkflowError(`${label}.strokeTransparency 必须在 0–1`);
+  if (style.unconfirmed !== undefined) {
+    if (!Array.isArray(style.unconfirmed) || !style.unconfirmed.length) throw new WorkflowError(`${label}.unconfirmed 必须列出待确认属性和原因`);
+    for (const item of style.unconfirmed) {
+      text(item?.property, `${label}.unconfirmed.property`);
+      text(item?.reason, `${label}.unconfirmed.reason`);
+    }
+  }
 }
 
 /** 冻结九宫源帧、实际图片裁切与最小显示框，坐标使用源纹理像素。 */
@@ -367,10 +390,26 @@ export function validateScreenReadback(repo, layout, nodes, capture, { runtime =
     if (actual.className !== node.className) throw new WorkflowError('屏幕 GUI 实际类型与布局规格不一致');
     validateObservedSlice(node, actual, runtime);
     if (TEXT_CLASSES.has(node.className)) {
-      const measured = { color: actual.properties.TextColor3, transparency: actual.properties.TextTransparency };
+      const face = actual.properties.FontFace;
+      // TextScaled 由引擎动态求字号，配置 TextSize 不能冒充实际渲染字号。
+      if (actual.properties.TextScaled !== false) throw new WorkflowError(`文字节点 ${node.id} 的实际字号未验证：TextScaled 已启用或缺少回读`);
+      const measured = { fontFamily: face?.family, fontSize: actual.properties.TextSize, color: actual.properties.TextColor3, transparency: actual.properties.TextTransparency };
       validateTextStyle(measured, `文字节点 ${node.id} 实际样式`);
+      if (runtime && node.textStyle.unconfirmed?.length) throw new WorkflowError(`文字节点 ${node.id} 待人工确认：${node.textStyle.unconfirmed.map((item) => `${item.property}（${item.reason}）`).join('、')}`);
+      const attributes = {
+        fontFamily: face?.family, fontSize: actual.properties.TextSize, fontWeight: face?.weight, fontStyle: face?.style,
+        horizontalAlignment: actual.properties.TextXAlignment, verticalAlignment: actual.properties.TextYAlignment,
+        wrapped: actual.properties.TextWrapped, scaled: actual.properties.TextScaled, lineHeight: actual.properties.LineHeight,
+        strokeTransparency: actual.properties.TextStrokeTransparency,
+      };
+      for (const [name, value] of Object.entries(attributes)) {
+        if (node.textStyle[name] === undefined) continue;
+        const expected = node.textStyle[name];
+        if (typeof value !== typeof expected || (typeof value === 'number' ? Math.fround(value) !== Math.fround(expected) : value !== expected)) throw new WorkflowError(`文字节点 ${node.id} 的 ${name} 缺少实际回读或与目标不一致`);
+      }
       compareVector(measured.color, node.textStyle.color, ['r', 'g', 'b'], `文字节点 ${node.id} 的 TextColor3`);
       if (Math.fround(measured.transparency) !== Math.fround(node.textStyle.transparency)) throw new WorkflowError(`文字节点 ${node.id} 的 TextTransparency 与当前布局规格不一致`);
+      if (node.textStyle.strokeColor !== undefined) compareVector(actual.properties.TextStrokeColor3, node.textStyle.strokeColor, ['r', 'g', 'b'], `文字节点 ${node.id} 的 TextStrokeColor3`);
     }
     observations.set(node.id, actual);
     validateObservedController(actual, path, node.layoutController, capture);

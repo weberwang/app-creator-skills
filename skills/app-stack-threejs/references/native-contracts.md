@@ -4,7 +4,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈共用 V0–V5：V0 范围、V1 功能与适用空间验证、V2 正式视觉方向／目标、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈共用 V1–V5：V1 确认完整模块方案并按需验证风险、V2 生成并确认模块全部适用状态和进度稿、V3 按制作介质交接、V4 样本后分批制作与导入、V5 正式组合和人工运行显示验收。世界场景的前置审查、空间确认及二维／三维验证方式按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)，UI 保留原流程。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 
@@ -163,7 +163,7 @@
 <a id="mode-threejs-gameplay-development--threejs-玩法开发"></a>
 ### three.js 玩法开发
 
-全局阶段、V0–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V0–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
+全局阶段、V1–V5、状态、执行结果与证据门统一按[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)执行。本领域只负责玩法规则、状态、交互和动态验收；场景按 V1–V5 推进；V1 验证功能，V3 的拆解和布局分别确认。
 
 <a id="mode-threejs-gameplay-development--全局控制接入"></a>
 #### 全局控制接入
@@ -275,7 +275,7 @@ Work Item 范围、实施结果、证据门、验证与用户确认统一按[当
 <a id="mode-threejs-game-juice--threejs-游戏汁水感"></a>
 ### three.js 游戏汁水感
 
-先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Three.js 二维/三维资产路线和适用阶段确认仍保留。
+先按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择特效，分别判断新设计稿、新图片和 V1–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走全链或重新生图。Three.js 二维/三维资产路线和适用阶段确认仍保留。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/feedback-lifecycle.md#完整流程)。
 
@@ -523,7 +523,7 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 
 把已确定的视觉与玩法规格制作成可编辑、可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。开始正式建模前阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)；涉及下游使用或修改时阅读[模型交接](./model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](./workflow-integration.md)。
 
-范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V0–V5 阶段；V1 验证功能，V2 冻结模型几何规格，V3 制作路线并在有用时做 blockout，V4 按 V0 分类交付正式模型或烘焙源并核验，只有运行模型在 V5 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
+范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V1–V5 阶段；V1 确认模块方案，V2 随模块稿确定模型几何规格，V3 制作路线并在有用时做 blockout，V4 按 模块任务的分类交付正式模型或烘焙源并核验，只有运行模型在 V5 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
 
 <a id="mode-threejs-game-3d-modeling--职责与路由"></a>
 #### 职责与路由
@@ -849,7 +849,7 @@ V5 为人工视觉验收提供相同相机、光照、时间与游戏状态的�
 
 静态 GLB 资产验收命令见 [`validate-model.mjs`](../scripts/validate-model.mjs)，清单范例见 [`model-manifest.example.json`](./model-manifest.example.json)：`node .agents/skills/app-stack-threejs/scripts/validate-model.mjs --repo <项目目录> --manifest <模型清单.json>`。将实际命令写入实施单元的 `acceptanceCommands`；`asset.sceneId` 是需唯一匹配的 glTF 内部 `scene.name`，游戏场景归属另由资源条目的 `scene_id` 记录。
 
-三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V0–V5 对齐见[建模工作流接入](./workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
+三维资源的生产单元使用 `production_method=authored-model`、`delivery_kind=gltf-model`，绑定模型清单与验收报告路径并提交控制面的通用文件证据；登记和 V1–V5 对齐见[建模工作流接入](./workflow-integration.md)。`sceneVisualRouteAnalysis` 只服务二维 effect-image coverage；GLB 不进入它的 image-asset/threejs-native 分支。固定视角截图用于人工检查视觉结果，模型清单提供空间资产的静态事实，两者分别记录。
 
 摘要仅作为可选追踪信息，不要求提供或比对，不因缺失、错误或变化阻断验收；仍须检查模型实际内容、路径归属、资源预算和人工审查结果。
 <!-- native-source:threejs-game-model-pipeline:end -->

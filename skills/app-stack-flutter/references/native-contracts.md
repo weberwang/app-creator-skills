@@ -2,7 +2,7 @@
 
 本手册按公共能力组织技术栈专属规则；每个模式保留来源边界，脚本、模板和校验器继续由对应技术栈目录提供。
 
-各技术栈统一使用 V0–V5：V0 范围、V1 功能验证、V2 视觉目标、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
+各技术栈统一使用 V1–V5：V1 确认完整模块方案、V2 生成并确认模块全部适用状态和进度稿、V3 拆解布局、V4 资源导入、V5 正式运行验收；白盒按需使用。包含视觉阶段的领域记录必须声明 `visualStageModel: function-first-v1`，无阶段的纯资源协议不需要该字段。
 
 ## 能力索引
 
@@ -58,7 +58,7 @@
 2. 新产品按实际需求明确目标用户、主要任务、价值与可观察验收；既有增量只补受影响行为、状态、依赖与回归条件，直接复用有效依据。仅用户明确采用 MVP 范围时区分 MVP 与后续项。
 3. 付款、账户、隐私、支持、留存与其他商业条件仅在真实任务涉及或已有项目要求时核对，不为非商业增量创造商业能力或假设。市场验证仅在实际范围内设计。
 4. 适用可见内容时在已有记录中交接品牌、交互语义、视觉方向、使用状态和平台约束；[视觉表达预设](../../flutter-ux-ui-quality/references/visual-expression-presets.md)仅供按需参考，不选择预设或不填预设字段均不是缺陷。
-5. 只有存在实质未决取舍时讨论；需求足够明确时按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认先生成代表页效果图、用户选图后忠实重建可编辑稿。正式实现仍需 V1 功能验证，设计提案不强制先建工程；文字方向不单独冻结或要求预先批准。
+5. 只有存在实质未决取舍时讨论；需求足够明确时按 [Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)默认先生成代表页效果图、用户选图后忠实重建可编辑稿。正式实现仍需 V1 模块方案确认，设计提案不强制先建工程；文字方向不单独冻结或要求预先批准。
 6. 新产品需要产品简报时可按需使用[产品简报模板](../../flutter-product-spec/references/product-brief-template.md)；既有增量直接更新现有规格的受影响部分。已有事实直接引用，不为格式另建完整简报、矩阵或讨论记录。
 
 <a id="mode-flutter-product-spec--output-files"></a>
@@ -141,7 +141,7 @@ Explicitly address applicable account lifecycle, privacy-sensitive data, payment
 
 先遵守[公共执行协议](../../app-creator-workflow/references/professional-execution.md)，再将[游戏与应用共用的交互反馈规范](../../app-feedback/references/interaction-feedback.md)应用到 Flutter 项目。本文件只规定 Flutter 的实现映射；产品语义、事件矩阵、通道预算与异步真实性原则以共用规范为准。
 
-按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择控件、状态过渡等适用特效，分别判断新设计稿、新图片和 V0–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走页面生产全链或重新生图。常规 Widget 动画不强制升级为图片生产；适用阶段确认与人工体验验收仍保留。
+按[资源与视觉流程分流](../../app-feedback/references/interaction-feedback.md#资源与视觉流程分流)自主选择控件、状态过渡等适用特效，分别判断新设计稿、新图片和 V1–V5 范围；复用有效目标、布局与资源，只更新受影响阶段，不默认重走页面生产全链或重新生图。常规 Widget 动画不强制升级为图片生产；适用阶段确认与人工体验验收仍保留。
 
 <a id="mode-flutter-feedback--flutter-中的实现边界"></a>
 #### Flutter 中的实现边界
@@ -327,7 +327,7 @@ UX/UI Lead 负责页面语义与视觉输入，不写页面代码。
 3. 按风险决定是否使用 Code Sketch；可直接实现并验证已明确的页面功能。选择草图路线时依据 `flutter-code-sketch/references/code-sketch-level-standard.md` 决定 Full、Lightweight 或 Reuse 并记录理由。
 4. 需要布局合同或选择草图路线时，调用 `adaptive-layout-implementation` 创建 `phase: sketch` 的页面 `layout-spec.yaml`；此阶段不含未来视觉 parity 字段。
 5. 选择 Code Sketch 时，由 Flutter Engineer 在生产骨架实现中性草图并执行关系测试；需要截图时由用户人工检查。直接实现路线保留相应真实功能和结构验证。
-6. 正式实现的 V1 功能经实际验证后，按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再按授权忠实重建可编辑方向；仅设计提案不以建设运行工程为前置。独立素材按需制作，不能用整页生图替代可编辑稿。
+6. 正式实现的 V1 完整模块方案确认后，按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再按授权忠实重建可编辑方向；仅设计提案不以建设运行工程为前置。独立素材按需制作，不能用整页生图替代可编辑稿。
 7. 对选定目标与语义合同及适用布局规则做回对，范围、状态、导航、滚动、断点、无障碍或 ownership 变化时定向更新并重验受影响事实；只有实质改变已选视觉目标或交互方案才要求重新确认。
 8. 根据 V2 目标按[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项拆解、规划素材及原生实现，再在同一骨架完成正式组合；仅明确要求 exact 时将 layout-spec 升级为 `phase: fidelity`。截图由用户检查。
 
@@ -500,7 +500,7 @@ Do not finish initialization until FVM commands work, selected dependencies matc
 <a id="mode-flutter-code-sketch--高保真交接"></a>
 #### 高保真交接
 
-1. 选择草图路线时，完成 Code Sketch Review 后再交接；其他路线直接以 V1 实际功能验证和页面语义进入 V2，由用户确认视觉目标。
+1. 选择草图路线时，完成 Code Sketch Review 后再交接；其他路线直接以 V1 完整模块方案和页面语义进入 V2，由用户确认视觉目标。
 2. 将冻结目标与已审语义合同及 sketch layout-spec 回对。若范围、状态、导航语义、滚动 owner、断点、无障碍或 data/UI/asset ownership 改变，回到语义/草图阶段更新并重审，不得静默继续。
 3. 从已确认原图对应的真实 Figma 重建节点完成必要资产和布局交接后，在同一 Flutter 骨架上实现；已表达内容不重画或重复批准。仅明确要求 exact 时将同一 `layout-spec.yaml` 升级为 `phase: fidelity`，禁止用 `Stack/Positioned` 覆盖旧草图凑像素。
 4. 最终通过实际 Widget 关系和功能验证，由用户检查截图；仅明确要求 exact 时执行 fidelity validator 和完整同视口 parity。validator 只证明规格结构与元数据，不证明实际视觉一致。
@@ -555,7 +555,7 @@ UI 布局与位置统一遵循[公共相对布局规范](../../app-ui-layout/ref
 <a id="mode-flutter-hifi-mockup--flutter-high-fidelity-mockup"></a>
 ### Flutter High-Fidelity Mockup
 
-正式实现的 V1 实际验证功能和页面语义；白盒或 Code Sketch 按风险选择。仅设计提案不先建设运行工程。V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再忠实重建可编辑设计，保留业务事实、必要功能、无障碍、平台能力及用户明确锁定的品牌约束；未锁定的布局、层级、字体、配色和组件形态可自主探索。既有代码用于理解功能与实现条件，只有用户明确要求忠实还原时才以现有页面作为主要视觉依据。
+正式实现的 V1 确认功能、状态、进度和页面语义方案；白盒或 Code Sketch 按风险选择。仅设计提案不先建设运行工程。V2 按[Figma App 设计流程](../../app-ui-layout/references/figma-app-design.md)先生成效果图并由用户选择，再忠实重建可编辑设计，保留业务事实、必要功能、无障碍、平台能力及用户明确锁定的品牌约束；未锁定的布局、层级、字体、配色和组件形态可自主探索。既有代码用于理解功能与实现条件，只有用户明确要求忠实还原时才以现有页面作为主要视觉依据。
 
 <a id="mode-flutter-hifi-mockup--输入"></a>
 #### 输入

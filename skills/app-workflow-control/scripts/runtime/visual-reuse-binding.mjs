@@ -19,7 +19,7 @@ export function assertVisualReuse(repo, work, visited = new Set()) {
   visited.add(work?.workItemId);
   if (reuse === undefined) return;
   // 复用不能代替当前空间确认；普通 V1 搭建入口仍允许尚未产生布局运行记录。
-  if (isWorld2D(work)) validateWorld2DDesign(repo, work, { requireConfirmation: !['V0', 'V1'].includes(work.visual.stage) });
+  if (isWorld2D(work)) validateWorld2DDesign(repo, work, { requireConfirmation: work.visual.stage !== 'V1' });
   if (isWorld3D(work)) throw new WorkflowError('world-3d 不允许手写旧视觉复用批准链');
 
   // 目标由调用方先行校验；RETURN 恢复中的内存过渡态会先解析记录、后写入新状态。

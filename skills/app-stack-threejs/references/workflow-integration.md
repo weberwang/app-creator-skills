@@ -1,12 +1,12 @@
 # 建模工作流与 three.js 接入
 
-3D 几何建模沿用现有 Work Item、Implementation Package、资源清单、控制面和 V0–V5 阶段。本技能不新增 Work Item、状态、Schema 或确认流程；结论、文件变化和证据写回当前工作项。
+3D 几何建模沿用现有 Work Item、Implementation Package、资源清单、控制面和 V1–V5 阶段。本技能不新增 Work Item、状态、Schema 或确认流程；结论、文件变化和证据写回当前工作项。
 
-## V0–V5 范围
+## V1–V5 范围
 
 | 阶段 | 静态几何工作的范围 |
 | --- | --- |
-| V0 | 分类当前 3D 输入是运行时模型，还是仅用于烘焙装饰背景的可编辑源。运行时模型沿用 `authored-model` / `gltf-model` 与 `gameplay-environment`；只有当前 Work Item 明确要求烘焙装饰背景时，运行输出才沿用 `decorative-full-bleed`，`.blend` 只作为可编辑源，不冒充运行 GLB。已冻结 `image_generation_required=true` 的区域不得由 3D 替代。 |
+| 开工准备 | 分类当前 3D 输入是运行时模型，还是仅用于烘焙装饰背景的可编辑源。运行时模型沿用 `authored-model` / `gltf-model` 与 `gameplay-environment`；只有当前 Work Item 明确要求烘焙装饰背景时，运行输出才沿用 `decorative-full-bleed`，`.blend` 只作为可编辑源，不冒充运行 GLB。已冻结 `image_generation_required=true` 的区域不得由 3D 替代。 |
 | V2 | 绑定资源身份、视觉/玩法用途、结构与观看要求、米制/Y-up 与前向轴、Pivot、预算、槽位、按需的 LOD/碰撞、来源/许可和正式输出位置。 |
 | V3 | 确定建模路线；单个模型的隔离 blockout 按比例／轮廓验证需要选择，不计正式模型。3D 世界整体先在 V1 按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)搭建或复用白模，整体人工确认后再交接本行模型规格；不能以单模型实验代替整场景验证。 |
 | V4 | world-3d 整体白模、正式方向人工确认且 V3 模型规格交接后，按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 使用 Blender MCP 制作代表模块并完成几何和导出回读，贴图按需交贴图负责人，模型管线负责资源导入和临时试接。复用已有样本审阅及覆盖当前范围的真实用户决定，必要判断待定时暂停依赖该判断的扩展，再分批制作。当前工作项须完成其声明的整批模型及证据，涵盖拓扑/法线/实际 UV/槽位及适用的 LOD 网格/碰撞。运行模型交付经回读的自包含 GLB，更新模型清单并运行 `validate-model.mjs`。仅烘焙背景源沿 `decorative-full-bleed` 路线产出和回读最终图片。两种路线均提交适用的几何技术报告和用户人工检查。静态脚本仅检查容器、结构和预算元数据。 |

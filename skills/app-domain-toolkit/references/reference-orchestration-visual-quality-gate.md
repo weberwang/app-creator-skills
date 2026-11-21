@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 视觉质量门
 
@@ -14,11 +14,11 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-视觉领域规则只能收紧 “app-workflow-control”（见本栈配套资料）。公共对象阶段为 V0–V5，Work Item 使用 `visual.stage` 记录，不能将其作为工作项的 `stageId`；各技术栈均使用一致的 V0–V5 阶段；全局状态、审批与 F0-F4 语义不得改写。
+视觉领域规则只能收紧 “app-workflow-control”（见本栈配套资料）。公共对象阶段为 V1–V5，Work Item 使用 `visual.stage` 记录，不能将其作为工作项的 `stageId`；各技术栈均使用一致的 V1–V5 阶段；全局状态、审批与 F0-F4 语义不得改写。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-场景视觉与功能生命周期沿用当前场景 Work Item 的 V0→V1→V2→V3→V4→V5 阶段；本领域只补充视觉质量事实。V3 依次完成拆解确认和布局确认，V4 完成正式资源验收，V5 直接消费 V3 布局与 V4 正式资源，完成运行态视觉接入和功能/视觉联合复验。全局基线、基础工程和集成入口以控制面文档为准。
+场景视觉与功能生命周期沿用当前场景 Work Item 的 V1→V2→V3→V4→V5 阶段；本领域只补充视觉质量事实。V3 依次完成拆解确认和布局确认，V4 完成正式资源验收，V5 直接消费 V3 布局与 V4 正式资源，完成运行态视觉接入和功能/视觉联合复验。全局基线、基础工程和集成入口以控制面文档为准。
 
 ## 路径
 
@@ -26,11 +26,11 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-- V0 分流原子资源、组件/资源集、场景/整套 UI/视觉系统/重做；参考还原只作为场景实现的可选视觉模式。
+- 模块范围与分流原子资源、组件/资源集、场景/整套 UI/视觉系统/重做；参考还原只作为场景实现的可选视觉模式。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-- V1 实现并验证功能，低保真或白盒按需使用。V2 基于已验证功能确认玩法视觉契约、布局合同和早期预算；参考模式在 V2 内冻结 scene master/reference target、宿主上下文图、参考身份、目标视口/状态、对比条件、整屏构图和初步还原草案。
+- V1 确认完整模块方案，低保真或白盒按需使用。V2 基于模块方案生成并确认覆盖状态与进度的玩法视觉契约、布局合同和早期预算；参考模式在 V2 内冻结 scene master/reference target、宿主上下文图、参考身份、目标视口/状态、对比条件、整屏构图和初步还原草案。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -54,7 +54,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-场景内显示层沿用同一条 V0→V1→V2→V3→V4→V5 链。主效果图只冻结基础场景与 persistent/HUD，transient 层按必需状态分别提供绑定宿主场景、遮罩/层级和当前状态的 contextual effect image。V3 确认显示层拆解方案，V5 在正式场景组合并提交打开→交互→关闭/恢复轨迹。
+场景内显示层沿用同一条 V1→V2→V3→V4→V5 链。主效果图只冻结基础场景与 persistent/HUD，transient 层按必需状态分别提供绑定宿主场景、遮罩/层级和当前状态的 contextual effect image。V3 确认显示层拆解方案，V5 在正式场景组合并提交打开→交互→关闭/恢复轨迹。
 
 > 适用技术栈：cocos、phaser、threejs。
 

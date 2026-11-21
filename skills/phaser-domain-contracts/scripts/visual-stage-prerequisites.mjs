@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 视觉 V0→V5 跨阶段硬门。
+ * 视觉 V1→V5 跨阶段硬门。
  *
  * 该模块只读取 Work Item 及其显式绑定的视觉证据，不接受根节点布尔值、
  * Approval Ledger 文本或 stageId 猜测。所有控制入口都应调用同一个函数，
@@ -15,7 +15,7 @@ import { V2_PLAN_FIELDS } from './v2-reconstruction-plan-contract.mjs';
 import { canonicalJson, deriveVisualDisposition, earliestVisualReturnStage as earliestReturnStage, isPlainObject as isObject, nonEmptyString as nonEmpty, VISUAL_REMEDIATION, VISUAL_REMEDIATION_LABEL, VISUAL_REMEDIATION_NEXT_ACTION } from './visual-contract-core.mjs';
 export { VISUAL_REMEDIATION } from './visual-contract-core.mjs';
 
-export const VISUAL_STAGE_IDS = Object.freeze(['V0', 'V1', 'V2', 'V3', 'V4', 'V5']);
+export const VISUAL_STAGE_IDS = Object.freeze(['V1', 'V2', 'V3', 'V4', 'V5']);
 export const VISUAL_STAGE_STATES = Object.freeze([
   'not-started',
   'in-progress',
@@ -30,7 +30,6 @@ export const VISUAL_STAGE_STATES = Object.freeze([
 ]);
 
 export const VISUAL_STAGE_STATE_FOR = Object.freeze({
-  V0: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid']),
   // V1 只验证功能，不预设视觉基线或正式视觉工件。
   V1: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid']),
   V2: new Set(['not-started', 'in-progress', 'pending', 'failed', 'stale', 'invalid', 'global-static-baseline-frozen']),
@@ -90,7 +89,7 @@ function valuesOnly(value, depth = 0) {
   return [];
 }
 
-/** 只接受显式 V0-V5；stageId、文本和用户回复不能替代阶段声明。 */
+/** 只接受显式 V1-V5；stageId、文本和用户回复不能替代阶段声明。 */
 export function normalizeVisualStage(value) {
   const stage = typeof value === 'string' ? value.trim().toUpperCase() : '';
   return VISUAL_STAGE_IDS.includes(stage) ? stage : null;
@@ -115,22 +114,22 @@ export function validateVisualStageDeclaration(subject = {}) {
   // 阶段语义变化后必须拒绝未标识或标识错误的旧工作记录。
   if (stage && subject.visualStageModel !== 'function-first-v1') errors.push(error('VISUAL_STAGE_MODEL_INVALID', '阶段记录必须声明 visualStageModel=function-first-v1', { missingEvidence: ['visualStageModel'] }));
   if (conflicts.length) errors.push(error('VISUAL_STAGE_DECLARATION_INVALID', 'visualStage 字段未知或互相矛盾，不允许猜测', { missingEvidence: ['visualStage'] }));
-  if (/^V/i.test(rawStageId) && !/^V[0-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_UNKNOWN', `未知视觉阶段：${rawStageId}`, { missingEvidence: ['visualStage'] }));
+  if (/^V/i.test(rawStageId) && !/^V[1-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_UNKNOWN', `未知视觉阶段：${rawStageId}`, { missingEvidence: ['visualStage'] }));
   if ((subject.visualStageState ?? subject.visual_stage_state ?? subject.visualState ?? subject.visual_state) === 'frozen') errors.push(error('VISUAL_BARE_FROZEN', '裸 frozen 没有视觉阶段语义；请使用 global-static-baseline-frozen 或 v3-production-planning-complete', { missingEvidence: ['visualStageState'] }));
   if (baselineState && baselineState !== 'global-static-baseline-frozen') errors.push(error(baselineState === 'frozen' ? 'VISUAL_BARE_FROZEN' : 'VISUAL_STAGE_STATE_INVALID', '全局静态基线状态必须为 global-static-baseline-frozen，且不能代替 V3', { missingEvidence: ['globalStaticBaselineState'] }));
   const state = firstValue(subject.visualStageState, subject.visual_stage_state, subject.visualState, subject.visual_state);
   if (stage && state !== null && !VISUAL_STAGE_STATE_FOR[stage]?.has(String(state))) errors.push(error('VISUAL_STAGE_STATE_INVALID', `阶段 ${stage} 与状态 ${String(state)} 不匹配`, { missingEvidence: ['visualStageState'] }));
   // 功能尚未确认前不能把正式视觉基线冻结为当前阶段证据。
-  if (['V0', 'V1'].includes(stage) && (baselineState === 'global-static-baseline-frozen' || state === 'global-static-baseline-frozen')) errors.push(error('VISUAL_BASELINE_TOO_EARLY', '正式视觉基线须在 V2 才能冻结，V0/V1 不接受冻结声明', { missingEvidence: ['visualStage'] }));
+  if (stage === 'V1' && (baselineState === 'global-static-baseline-frozen' || state === 'global-static-baseline-frozen')) errors.push(error('VISUAL_BASELINE_TOO_EARLY', '正式视觉基线须在 V2 才能冻结，V1 不接受冻结声明', { missingEvidence: ['visualStage'] }));
   // 全局冻结状态必须绑定三候选人工选择证据；只写状态字段不能绕过冻结前置。
   // 这里仅校验消费者引用的 path+sha 形状；根证据的生产者链由 loader 完整复核。
   if (baselineState === 'global-static-baseline-frozen' || (stage === 'V2' && state === 'global-static-baseline-frozen')) {
     const selectionErrors = validateGlobalVisualBaselineSelectionReferenceShape(subject.globalVisualBaselineSelectionRef);
     for (const message of selectionErrors) errors.push(error('GLOBAL_VISUAL_BASELINE_SELECTION_MISSING', message, { missingEvidence: ['globalVisualBaselineSelectionRef'] }));
   }
-  if (/^V[0-5]$/i.test(rawStageId) && stage && rawStageId.toUpperCase() !== stage) errors.push(error('VISUAL_STAGE_DECLARATION_CONFLICT', 'stageId 仅作范围标签，必须与显式 visualStage 一致且不能替代它', { missingEvidence: ['visualStage'] }));
+  if (/^V[1-5]$/i.test(rawStageId) && stage && rawStageId.toUpperCase() !== stage) errors.push(error('VISUAL_STAGE_DECLARATION_CONFLICT', 'stageId 仅作范围标签，必须与显式 visualStage 一致且不能替代它', { missingEvidence: ['visualStage'] }));
   if (stage && !state) errors.push(error('VISUAL_STAGE_STATE_MISSING', `阶段 ${stage} 缺少有语义状态`, { missingEvidence: ['visualStageState'] }));
-  if (!stage && /^V[0-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_MISSING', 'V0-V5 工作必须显式声明 visualStage，不能从 stageId 推断', { missingEvidence: ['visualStage'] }));
+  if (!stage && /^V[1-5]$/i.test(rawStageId)) errors.push(error('VISUAL_STAGE_MISSING', 'V1-V5 工作必须显式声明 visualStage，不能从 stageId 推断', { missingEvidence: ['visualStage'] }));
   return errors;
 }
 
@@ -355,7 +354,7 @@ function finalizeRemediation(result, context = {}) {
   if (finalDisposition === VISUAL_REMEDIATION.RETURN) {
     const stage = context.returnStage && identityChanges.length === 0
       ? context.returnStage
-      : earliestReturnStage(identityChanges, context.returnStage ?? (result.stage && /^V[0-5]$/.test(result.stage) ? result.stage : 'V3'));
+      : earliestReturnStage(identityChanges, context.returnStage ?? (result.stage && /^V[1-5]$/.test(result.stage) ? result.stage : 'V3'));
     result.returnStage = stage;
     const startIndex = VISUAL_STAGE_IDS.indexOf(stage);
     result.invalidatedStages = startIndex >= 0 ? VISUAL_STAGE_IDS.slice(startIndex) : [];

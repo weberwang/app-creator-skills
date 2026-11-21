@@ -5,7 +5,7 @@ description: 开发 ESP32 自带屏幕的嵌入式 GUI 固件时使用，覆盖�
 
 # ESP32 设备 GUI 技术栈
 
-先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用其工作项、证据和 V0–V5，不另建固件状态机。设备完整页面使用 `PAGE`，弹窗等独立瞬态层使用 `DISPLAY_LAYER`；硬件驱动、业务和通信使用 `MODULE`，不使用游戏 `SCENE`。
+先读公共 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，共用其工作项、证据和 V1–V5，不另建固件状态机。设备完整页面使用 `PAGE`，弹窗等独立瞬态层使用 `DISPLAY_LAYER`；硬件驱动、业务和通信使用 `MODULE`，不使用游戏 `SCENE`。
 
 默认方案是 ESP-IDF 与 LVGL，先核实具体芯片、板卡、显示与输入，以及 SDK、GUI 和移植组件的实际版本。已有 Arduino、PlatformIO 或其他 GUI 工程沿用明确选择，记录实际构建入口与能力缺口；不把 ESP-IDF 命令直接套到其他工程，也不擅自迁移技术栈。
 

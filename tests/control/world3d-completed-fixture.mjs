@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 import { advanceVisual, completeUnit, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { bindEvidence, bindImplementation, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
 import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture } from './world3d-fixture.mjs';
+import { finishWorldFoundation } from './module-world-fixture.mjs';
 
 /** 使用现有工程夹具执行本阶段命令与结果登记，保留真实的控制器校验链。 */
 export async function runWorld3DEngineering(context, stage, unitPaths, beforePassed) {
@@ -49,7 +50,7 @@ export async function runWorld3DEngineering(context, stage, unitPaths, beforePas
   return readWork(repo, workPath);
 }
 
-/** 从 V0 推进到真实 COMPLETE/V5，阶段钩子只构造合成的待验证条件。 */
+/** 从 V1 推进到真实 COMPLETE/V5，阶段钩子只构造合成的待验证条件。 */
 export async function createCompletedWorld3D(t, options = {}) {
   return buildWorld3D(t, options);
 }
@@ -72,11 +73,25 @@ async function buildWorld3D(t, { stack = 'unity', fixture: existingFixture, befo
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V1' });
+
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = fixture.context.candidateId;
   work.visual.domainEvidenceRef = fixture.identity('spec/world-V1.json');
   await beforeEngineering?.({ fixture, context, work, stage: 'V1' });
+  // 可选白模运行需要记录其原始证据根，供后续阶段按实际路径重新核验。
+  const blockoutRun = fixture.read(fixture.contract.blockoutRunRef);
+  fixture.contract.blockoutRunRef = fixture.write(fixture.contract.blockoutRunRef.path, { ...blockoutRun, evidenceRoot: work.evidenceRoot });
+  work.visual.domainEvidenceRef = fixture.write('spec/world-v1-plan.json', { ...fixture.contract, stage: 'V1' });
+  // 全局方向先由基础工程确认，模块方案在 V1 冻结为后续覆盖依据。
+  const baselineWork = structuredClone(work);
+  attachWorld3DPhase(fixture, 'V2', baselineWork);
+  work.foundationVisualRef = await finishWorldFoundation(fixture, fixture.baselineRef);
+  work.globalVisualBaselineRef = fixture.baselineRef;
+  const entries = ['function', 'state', 'step'].map((kind) => ({ kind, id: `${kind}-one`, description: `测试 ${kind}`,
+    acceptance: '满足方案', requirementId: 'fixture-requirement-1', command: 'node --version' }));
+  const planRef = fixture.write('spec/module-plan.json', { schemaVersion: '1.0', workItemId: work.workItemId,
+    objectId: work.visual.objectId, dependencies: [], entries });
+  work.visual.modulePlanRef = planRef;
   await putJson(context.repo, context.workPath, work);
   await runWorld3DEngineering(context, 'V1', typeof v1UnitPaths === 'function' ? v1UnitPaths({ fixture, context, work }) : v1UnitPaths);
   work = await readWork(context.repo, context.workPath);
@@ -87,6 +102,18 @@ async function buildWorld3D(t, { stack = 'unity', fixture: existingFixture, befo
     work = await readWork(context.repo, context.workPath);
     if (stage === stopBeforeStage) return { ...context, fixture, work, ref: fixture.identity(context.workPath) };
     attachWorld3DPhase(fixture, stage, work);
+    if (stage === 'V2') {
+      const stateDesign = fixture.write('spec/module-state.md', '合成状态设计\n');
+      const stepDesign = fixture.write('spec/module-step.md', '合成步骤设计\n');
+      work.visual.moduleDesignRef = fixture.write('spec/module-design.json', { schemaVersion: '1.0', workItemId: work.workItemId,
+        modulePlanRef: planRef, baselineRef: work.globalVisualBaselineRef, entries: [
+          { kind: 'state', id: 'state-one', targetRef: fixture.directionRef, designRef: stateDesign },
+          { kind: 'step', id: 'step-one', targetRef: fixture.contract.spatialSpecRef, designRef: stepDesign },
+        ] });
+      work.visual.moduleDesignReviewRef = fixture.write('reviews/module-design.json', { schemaVersion: '1.0',
+        workItemId: work.workItemId, stage: 'V2', decision: 'approved', userMessageRef: 'test-only://module-design',
+        subjectRef: work.visual.moduleDesignRef });
+    }
     await beforeEngineering?.({ fixture, context, work, stage });
     await putJson(context.repo, context.workPath, work);
     if (['V4', 'V5'].includes(stage)) await runWorld3DEngineering(context, stage, undefined, (current) => beforePassed?.({ fixture, context, work: current, stage }));

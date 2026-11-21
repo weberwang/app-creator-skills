@@ -1,6 +1,6 @@
 # Blender MCP 生产级建模流程
 
-模型几何与 PBR 贴图生产统一由 Blender MCP 执行；Unity 插件只负责导入器、Material/Renderer、资源级 Prefab 装配和运行验证。模型与贴图按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图生产步骤见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。流程嵌入既有 V0-V5，不新增状态机或额外用户审批阶段。
+模型几何与 PBR 贴图生产统一由 Blender MCP 执行；Unity 插件只负责导入器、Material/Renderer、资源级 Prefab 装配和运行验证。模型与贴图按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图生产步骤见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。流程嵌入既有 V1-V5，不新增状态机或额外用户审批阶段。
 
 角色资产还须按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)提供关节拓扑、形状目标几何和明确的 UV/法线/槽位/LOD 基准，交由 Blender MCP 绑定和动画技能制作。建模导出静态网格源；绑定导出带骨架/蒙皮的正式角色，动画只导出匹配骨架的 Clips，不由建模技能包办动作。绑定/动画提出几何缺陷时，建模修复后按实际依赖复验蒙皮、烘焙和受影响动作。
 

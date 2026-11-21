@@ -110,11 +110,11 @@ export function createRobloxVisualFixture(t, { stage = 'V5', layer = false, publ
   const anchorPoint = { x: 0.5, y: 0.5 };
   const nodes = [
     { id: work.visual.objectId, className, instancePath: objectPath, parentId: null, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: layer ? 'safe-area' : 'world', ...(layer ? { screenInsets: 'CoreUISafeInsets', clipToDeviceSafeArea: true, sizeModifiers: [] } : {}) },
-    { id: 'child-a', className: childClass, instancePath: sourceChild, parentId: work.visual.objectId, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: work.visual.objectId, ...(layer ? { textStyle: { color: { r: 1, g: 1, b: 1 }, transparency: 0 }, anchorPoint, positionWriters: ['UDIM2'], sizeWriters: { horizontal: 'UDIM2', vertical: 'UDIM2' }, sizeConstraint: 'RelativeXY', sizeModifiers: [] } : {}) },
+    { id: 'child-a', className: childClass, instancePath: sourceChild, parentId: work.visual.objectId, space: layer ? 'screen-scale-offset' : 'world-studs', position: screen, size, positionReferenceId: work.visual.objectId, ...(layer ? { textStyle: { sourceTarget: targetRef, stateId: 'normal', fontFamily: 'rbxasset://fonts/families/Arial.json', fontSize: 18, color: { r: 1, g: 1, b: 1 }, transparency: 0 }, anchorPoint, positionWriters: ['UDIM2'], sizeWriters: { horizontal: 'UDIM2', vertical: 'UDIM2' }, sizeConstraint: 'RelativeXY', sizeModifiers: [] } : {}) },
   ];
   const layout = { schemaVersion: 'roblox-layout/1.0', ...id, studio: structuredClone(studio), rootId: work.visual.objectId, nodes };
   const rootProperties = layer ? { IsGuiBase2d: true, ScreenInsets: 'CoreUISafeInsets', ClipToDeviceSafeArea: true, LayoutControllers: [], SizeModifiers: [] } : {};
-  const childProperties = layer ? { TextColor3: { r: 1, g: 1, b: 1 }, TextTransparency: 0, IsGuiObject: true, Position: screen, Size: size, AnchorPoint: anchorPoint, AutomaticSize: 'None', SizeConstraint: 'RelativeXY', LayoutControllers: [], FlexItems: [], SizeModifiers: [] } : {};
+  const childProperties = layer ? { FontFace: { family: 'rbxasset://fonts/families/Arial.json', weight: 'Regular', style: 'Normal' }, TextSize: 18, TextScaled: false, TextColor3: { r: 1, g: 1, b: 1 }, TextTransparency: 0, IsGuiObject: true, Position: screen, Size: size, AnchorPoint: anchorPoint, AutomaticSize: 'None', SizeConstraint: 'RelativeXY', LayoutControllers: [], FlexItems: [], SizeModifiers: [] } : {};
   const editObservation = capture({ context: 'Edit', toolName: 'execute_luau', targetPath: objectPath, actual: JSON.stringify({ nodes: [{ instancePath: objectPath, className, properties: rootProperties }, { instancePath: sourceChild, className: childClass, properties: childProperties }] }) });
   if (layer) layout.editObservationRef = editObservation.ref;
   const rootInspection = capture({ context: 'Edit', toolName: 'execute_luau', targetPath: objectPath, actual: JSON.stringify({ nodes: [{ instancePath: objectPath, className, properties: {} }] }) });
@@ -125,7 +125,7 @@ export function createRobloxVisualFixture(t, { stage = 'V5', layer = false, publ
   const runtime = { schemaVersion: 'roblox-runtime/1.0', visualStage: 'V5', ...id, studio: structuredClone(studio), clientId: 'player-a', rootInstancePath: runtimePath, observationRef: observation.ref,
     bindings: [{ nodeId: work.visual.objectId, sourceInstancePath: objectPath, runtimeInstancePath: runtimePath, className }, { nodeId: 'child-a', sourceInstancePath: sourceChild, runtimeInstancePath: runtimeChild, className: childClass }],
     interactions: [{ nodeId: 'child-a', expected: 'activated', actual: 'activated', status: 'PASS', inputRef: input.ref, resultRef: result.ref }] };
-  const state = target ? { sceneId: target.sceneId, stateId: target.stateId, viewport: target.viewport } : stage === 'V5' ? { stateId: 'normal', viewport: { width: 1280, height: 720 } } : {};
+  const state = target ? { sceneId: target.sceneId, stateId: target.stateId, viewport: target.viewport } : { stateId: 'normal', viewport: { width: 1280, height: 720 } };
   const visual = { schemaVersion: 'roblox-visual/1.0', ...id, visualStage: stage, ...host, ...state, referenceTarget: targetRef, studio: structuredClone(studio), object: { id: work.visual.objectId, className, instancePath: objectPath }, editReadbackRef: edit.ref };
   const envelope = { schemaVersion: '1.0', ...id, visualStageModel: 'function-first-v1', visualStage: stage, ...host, ...state, referenceTarget: targetRef };
 

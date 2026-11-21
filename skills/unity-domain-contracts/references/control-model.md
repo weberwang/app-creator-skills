@@ -1,6 +1,6 @@
 # 控制模型
 
-领域工作项及含视觉阶段的证据记录须声明 `visualStageModel: function-first-v1`，V1 完成功能验证，视觉确认从 V2 开始，白盒可选。
+领域工作项及含视觉阶段的证据记录须声明 `visualStageModel: function-first-v1`，V1 确认完整模块方案，V2 生成并确认模块全部适用状态和进度的设计，白盒可选。
 
 ## A0-A6 动作等级
 
@@ -18,7 +18,7 @@ A0-A3 的风险等级不等于自动执行许可；路径、范围和 F0-F3 仍�
 
 ## Work Item 类型与显示层边界
 
-`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V0-V5）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
+`workItemType` 是 Work Item 的强制机器枚举：`PROJECT`、`FOUNDATION`、`SCENE`、`DISPLAY_LAYER`、`INTEGRATION`、`RELEASE`。`SCENE` 必须处于 `scene-production`，并提供独立的 `scene.sceneId`、`scene.stage`（V1-V5）和 `scene.status`。`DISPLAY_LAYER` 同样必须处于 `scene-production`，并提供独立 `displayLayer.displayLayerId`、`displayLayer.hostSceneId`、`displayLayer.type`（`modal`/`popup`/`drawer`/`toast`）、`displayLayer.stage` 和 `displayLayer.status`。
 
 `hostSceneId` 只表示显示层打开时的宿主上下文和公开接线目标，不是场景身份，也不把宿主场景完成状态并入显示层。场景与显示层必须各自规划、各自实施、各自验收；同一 Implementation Package 不得同时出现 `SCENE` 和 `DISPLAY_LAYER` 单元。
 

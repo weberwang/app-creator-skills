@@ -22,7 +22,7 @@ const OPTIONAL_SNAPSHOT_FIELDS = new Set([
   'diffFingerprint', 'diff_fingerprint', 'evidenceSha256', 'evidence_sha256',
   'baselineId', 'baseline_id',
 ]);
-const VISUAL_STAGES = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5'];
+const VISUAL_STAGES = ['V1', 'V2', 'V3', 'V4', 'V5'];
 const PACKAGE_VISUAL_FIELDS = Object.freeze([
   'visualContractVersion', 'candidateVersion', 'visualManifestFile', 'visualManifestSha256',
   'visualDecompositionConfirmations', 'current_stage',

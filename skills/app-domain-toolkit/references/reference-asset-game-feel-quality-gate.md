@@ -4,7 +4,7 @@
 
 示例中的相对脚本和文件路径按当前技术栈的原生资料与项目约定解析；运行前核对已安装的专业资源位置。
 
-V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 先验证功能，图片／UI 的拆解布局要求只适用于相应内容。
+V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-routes)执行；V1 确认完整模块方案并按需验证风险，V2 生成并确认模块全部适用状态和进度稿，V5 完整实现与验收；图片／UI 拆解布局要求只适用于相应内容。
 
 ## 游戏感质量硬门
 
@@ -46,7 +46,7 @@ V0–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-V1 实现并验证功能、状态与交互，白盒按需使用。V2 基于已验证功能确认视觉目标和页面几何；明确需求/参考路径写 `AUTO` 决策，真实目标图经用户确认后进入 V3；仅实质结构取舍请求确认。
+V1 确认功能、状态、进度与交互方案，白盒按需使用。V2 基于该方案生成覆盖适用状态及进度的视觉目标和页面几何；明确需求/参考路径写 `AUTO` 决策，真实目标图经用户确认后进入 V3；仅实质结构取舍请求确认。
 
 > 适用技术栈：cocos、phaser、threejs。
 

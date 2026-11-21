@@ -124,6 +124,15 @@ test('有渐变和描边的容器仅映射其文字时不能通过还原检查',
   assert.throws(() => validate(f), /可见容器 1:3 缺少自身样式映射/);
 });
 
+test('组件中的多段文字必须分别绑定设计节点和样式', () => {
+  const f = fixture();
+  f.snapshot.nodes[2].type = 'COMPONENT';
+  f.snapshot.nodes.push({ ...structuredClone(f.snapshot.nodes[3]), id: '1:5', name: '第二段文字', y: 20, characters: '其他文字' });
+  const { plan, mappings } = extractFlutterPlan(f.snapshot, f.request);
+  f.plan = plan; f.mappings = mappings;
+  assert.throws(() => validate(f), /Figma 可见元素 1:5 缺少原生设计项覆盖/);
+});
+
 test('AUTO 与百分比行高保留源单位，不把数值误当 Flutter 倍率', () => {
   const f = fixture(); const text = f.snapshot.nodes[3];
   text.font.lineHeight = { unit: 'AUTO' };

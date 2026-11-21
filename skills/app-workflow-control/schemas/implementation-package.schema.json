@@ -11,7 +11,7 @@
     "workItemId": {"type": "string", "minLength": 1},
     "stack": {"enum": ["unity", "cocos", "phaser", "threejs", "flutter", "expo", "esp32", "nodejs", "roblox"]},
     "workItemType": {"enum": ["PROJECT", "FOUNDATION", "MODULE", "SCENE", "PAGE", "DISPLAY_LAYER", "INTEGRATION", "RELEASE"]},
-    "visualStage": {"enum": ["V0", "V1", "V2", "V3", "V4", "V5"]},
+    "visualStage": {"enum": ["V1", "V2", "V3", "V4", "V5"]},
     "productionScopeRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}},
     "productionBatchId": {"type": "string", "minLength": 1},
     "productionDependencies": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["batchId", "workItemRef"], "properties": {"batchId": {"type": "string", "minLength": 1}, "workItemRef": {"type": "object", "additionalProperties": false, "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}}}}},

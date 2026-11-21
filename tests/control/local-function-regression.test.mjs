@@ -18,11 +18,11 @@ async function prepareRegression(t, { commands = ['node --version'], files = ['l
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
   await putJson(fixture.repo, fixture.workPath, work);
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V1' });
+
   await runEngineeringStage(fixture, 'V1');
   await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
   work = await readWork(fixture.repo, fixture.workPath);
-  // 此夹具聚焦回归绑定；视觉确认链由其他完整 V0–V5 测试覆盖。
+  // 此夹具聚焦回归绑定；视觉确认链由其他完整 V1–V5 测试覆盖。
   work.visual.stage = 'V5';
   work.globalState = 'REVIEW';
   work.gateStatus.F2 = 'PASS';

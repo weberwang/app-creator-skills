@@ -213,7 +213,7 @@ export function withWorld3DFileSnapshots(repo, work, { historical = false, stage
     const completedStage = history && work.visual.stage === stage && ['PASSED', 'COMPLETE'].includes(work.globalState);
     const required = stage === 'V1' ? v1?.world3dSnapshotVersion === '1.0' || completedStage
       : stage === 'V4' ? v4?.snapshotVersion === '1.0' || completedStage : completedStage;
-    const expectedRefs = stage === 'V1' && v1 ? blockoutSourceRefs(repo, stageWork, v1.world3dBlockoutRefs) : undefined;
+    const expectedRefs = stage === 'V1' && v1?.world3dBlockoutRefs ? blockoutSourceRefs(repo, stageWork, v1.world3dBlockoutRefs) : undefined;
     const cacheKey = JSON.stringify([stage, root, required, stageWork, expectedRefs]);
     let entries = verified.get(cacheKey);
     if (!entries) {

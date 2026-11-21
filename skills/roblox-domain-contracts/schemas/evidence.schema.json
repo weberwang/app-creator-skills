@@ -42,8 +42,22 @@
             }
           },
           "textStyle": {
-            "type": "object", "required": ["color", "transparency"],
+            "type": "object", "required": ["sourceTarget", "stateId", "fontFamily", "fontSize", "color", "transparency"],
             "properties": {
+              "sourceTarget": { "type": "object", "required": ["path", "sha256"], "properties": { "path": { "type": "string", "minLength": 1 }, "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } },
+              "stateId": { "type": "string", "minLength": 1 },
+              "fontFamily": { "type": "string", "minLength": 1 },
+              "fontSize": { "type": "number", "exclusiveMinimum": 0 },
+              "fontWeight": { "type": "string", "minLength": 1 },
+              "fontStyle": { "type": "string", "minLength": 1 },
+              "horizontalAlignment": { "type": "string", "minLength": 1 },
+              "verticalAlignment": { "type": "string", "minLength": 1 },
+              "wrapped": { "type": "boolean" },
+              "scaled": { "type": "boolean" },
+              "lineHeight": { "type": "number", "exclusiveMinimum": 0 },
+              "strokeColor": { "type": "object", "required": ["r", "g", "b"], "properties": { "r": { "type": "number", "minimum": 0, "maximum": 1 }, "g": { "type": "number", "minimum": 0, "maximum": 1 }, "b": { "type": "number", "minimum": 0, "maximum": 1 } } },
+              "strokeTransparency": { "type": "number", "minimum": 0, "maximum": 1 },
+              "unconfirmed": { "type": "array", "minItems": 1, "items": { "type": "object", "required": ["property", "reason"], "properties": { "property": { "type": "string", "minLength": 1 }, "reason": { "type": "string", "minLength": 1 } } } },
               "color": { "type": "object", "required": ["r", "g", "b"], "properties": { "r": { "type": "number", "minimum": 0, "maximum": 1 }, "g": { "type": "number", "minimum": 0, "maximum": 1 }, "b": { "type": "number", "minimum": 0, "maximum": 1 } } },
               "transparency": { "type": "number", "minimum": 0, "maximum": 1 }
             }

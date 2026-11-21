@@ -7,7 +7,7 @@ description: 规划、开发或维护 Node.js 服务器项目时使用，覆盖 
 
 先读 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，复用公共工作项、F0–F4、执行与证据记录。本栈处理实际运行在 Node.js 上的 HTTP/API 服务、后台任务和消息消费者。`package.json` 本身不能证明是服务器；检查实际入口、服务端依赖、脚本及部署方式。
 
-服务功能使用 `MODULE`，工程基础使用 `FOUNDATION`，跨模块验证使用 `INTEGRATION`，交付使用 `RELEASE`。本栈不使用 `SCENE`、`PAGE`、`DISPLAY_LAYER`，不建立 `visual`，不强制视觉基线、V0–V5、截图、生图或素材验收。带管理界面的产品按前后端模块分别选择技术栈，通过接口合同衔接。
+服务功能使用 `MODULE`，工程基础使用 `FOUNDATION`，跨模块和整体分别使用 `INTEGRATION` 的 feature 和 final 用途。独立委托的发布使用 `RELEASE`。带管理界面的产品按前后端分别选栈，通过接口合同衔接；本栈的服务端范围使用非视觉合同。
 
 按任务读取：
 

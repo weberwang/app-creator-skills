@@ -118,12 +118,12 @@ for (const stack of STACKS) {
     const routeRows = [...routes.matchAll(/^\| (3D 世界场景|2D 世界场景|UI[^|]*) \|(.+)$/gm)];
     assert.equal(routeRows.length, 3, '3D、2D 与 UI 均须有独立的可安装分流');
     // 只检查各路线的关键区别，其他工作流约束继续由原有章节和合同承载。
-    assert.match(routeRows[0][2], /白模[\s\S]*人工确认后/);
+    assert.match(routeRows[0][2], /V1[\s\S]*风险[\s\S]*白模[\s\S]*V2[\s\S]*确认/);
     assert.match(routeRows[1][2], /平面布局[\s\S]*不强制制作三维白模/);
     assert.match(routeRows[2][2], /不增加世界场景白模步骤/);
     const handoff = extractMarkdownSection(exploration, 'production-handoff');
     // 分开核对正式方向、首件验证和整批验收，首件只约束高风险批次。
-    assert.match(handoff, /整体空间人工确认完成后[\s\S]*等待用户确认正式视觉方向/);
+    assert.match(handoff, /V1 确认模块方案[\s\S]*V2 基于全局方向生成并等待用户确认模块设计稿/);
     const firstArticle = handoff.match(/^\| 首件验证 \|(.+)$/m)?.[1] ?? '';
     assert.match(firstArticle, /高风险批次.*目标镜头.*通过后再补齐依赖批次/);
     assert.match(handoff, /三维低风险批次正常生产和导入/);

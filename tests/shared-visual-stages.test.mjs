@@ -25,7 +25,7 @@ test('视觉错误回退使用统一阶段', () => {
   assert.equal(earliestVisualReturnStage('V4'), 'V3/V4');
 });
 
-test('三栈项目模板先验证功能并声明完整 V0–V5', async () => {
+test('三栈项目模板先验证功能并声明完整 V1–V5', async () => {
   // 模板归属按实际发布目录选择，原生模式名称不决定文件路径。
   for (const owner of ['cocos-game-orchestrator', 'phaser4-game-orchestrator', 'app-stack-threejs']) {
     const templates = await import(`../skills/${owner}/scripts/project_doc_templates.mjs`);
@@ -37,7 +37,7 @@ test('三栈项目模板先验证功能并声明完整 V0–V5', async () => {
     assert.match(tdd, /世界场景在整体空间人工确认后进入正式生产，纯 UI 沿原流程/);
     assert.doesNotMatch(design, /UI 原型按需）→ 本批整体空间人工确认/);
     assert.doesNotMatch(tdd, /不得注册正式入口或实现正式场景功能/);
-    assert.match(assets, /V0→V1→V2→V3→V4→V5/);
+    assert.match(assets, /V1→V2→V3→V4→V5/);
     const manifest = JSON.parse(templates.OPTIONAL_TEMPLATES.assets['visual-assets.json']);
     assert.deepEqual(Object.keys(manifest.visualStageEvidenceRefs).sort(), ['V3', 'V4', 'V5']);
   }

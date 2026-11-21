@@ -7,6 +7,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
+import { unityLayoutFixture, unityLayoutMeasurement } from './unity-text-fixture.mjs';
 import { initializeWork, loadWork, advanceVisual, transitionWork, completeUnit, inspectVisualReuseSource } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 
 const controller = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
@@ -71,6 +72,15 @@ function nativeDomain(repo, work, target, stage) {
     const artifact = (source) => ({ source, measured: true, path: 'proof/synthetic.bin' });
     evidence.responsiveEvidence = { gameView: artifact('GameView'), screen: artifact('Screen'), backbuffer: artifact('backbuffer'), canvasScaler: artifact('CanvasScaler'), camera: artifact('Camera'), screenshot: artifact('Screenshot'), safeArea: { source: 'Screen.safeArea', measured: true, rect: { x: 0, y: 0, width: 1920, height: 1080 } }, inputHit: { system: 'InputSystem', eventSystem: 'EventSystem', hit: true, coordinates: { x: 1, y: 1 } }, resizeOrientationTrajectory: { sameProcess: true, events: [{ type: 'resize' }, { type: 'resize' }] }, supportedOrientations: ['landscape'] };
     evidence.productionContractAudit = { status: 'PASS', contractVersion: '1', staticDeclarationOnly: false, buildOnly: false, singleScreenshotOnly: false };
+    const layoutReview = JSON.parse(readFileSync(join(repo, target.reviews.V3Layout.path), 'utf8'));
+    const planRef = layoutReview.layoutSpecRef;
+    const plan = JSON.parse(readFileSync(join(repo, planRef.path), 'utf8'));
+    if (plan.nodes.some((node) => node.renderKind === 'TEXT' && node.expectedActive !== false)) {
+      const outputPath = `${work.evidenceRoot}/V5-${target.targetId}-runtime-layout.json`;
+      const report = unityLayoutMeasurement(plan, planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath });
+      put(repo, outputPath, report);
+      evidence.uiLayoutMeasurementRef = { path: outputPath };
+    }
   }
   const evidenceRef = put(repo, `${prefix}-evidence.json`, evidence);
   const envelope = { workItemId: work.workItemId, targetId: target.targetId, candidateId: target.candidateId, sceneId: target.sceneId, stateId: target.stateId, viewport: target.viewport, referenceTarget: target.referenceTarget, nativeWorkItemRef: { path: nativeRef.path }, nativeEvidenceRef: { path: evidenceRef.path } };
@@ -81,13 +91,25 @@ function nativeDomain(repo, work, target, stage) {
 function addReview(repo, work, target, name) {
   const [stage, purpose] = { V2: ['V2', 'target'], V3Decomposition: ['V3', 'decomposition'], V3Layout: ['V3', 'layout'], V4: ['V4', 'imported-assets'], V5: ['V5', 'runtime-acceptance'] }[name];
   const record = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: 'Main', targetId: target.targetId, candidateId: target.candidateId, stage, purpose, decision: 'APPROVED', userMessageRef: `synthetic-${work.workItemId}-${target.targetId}`, referenceTarget: target.referenceTarget, targetRef: target.referenceTarget.path, targetSha256: target.referenceTarget.sha256, ...(name === 'V2' ? { qualityChecks: quality(repo) } : {}), ...(name === 'V3Layout' ? { decompositionReviewRef: target.reviews.V3Decomposition } : {}) };
+  if (name === 'V3Layout') {
+    const fixture = unityLayoutFixture((path, data) => put(repo, path, data), target, {
+      prefix: `proof/${work.workItemId}-${target.targetId}`, withText: target.targetId === 'old',
+    });
+    record.layoutSpecRef = fixture.planRef;
+  }
   target.reviews[name] = put(repo, `proof/${work.workItemId}-${target.targetId}-${name}.json`, record);
 }
 
 /** 构造正式候选绑定所需的模拟美术记录和目标素材评审。 */
 function addAssetsAndArt(repo, work, target) {
   const userMessageRef = `synthetic-${work.workItemId}-${target.targetId}`;
-  target.assetReviewRef = put(repo, `proof/${work.workItemId}-${target.targetId}-assets.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId: target.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef, qualityChecks: quality(repo), assets: [{ assetId: target.targetId, assetType: 'image', output: target.referenceTarget.path, sourceRef: 'synthetic', sourceKind: 'hand-authored' }] });
+  // 背景与图标已经替换成当前素材，文字仍必须独立读取并和设计目标比较。
+  const assets = ['background', 'icon'].map((kind) => ({
+    assetId: `${target.targetId}-${kind}`, assetType: 'image',
+    output: put(repo, `proof/${work.workItemId}-${target.targetId}-${kind}.png`, `当前 ${kind} 素材`).path,
+    sourceRef: 'synthetic', sourceKind: 'hand-authored',
+  }));
+  target.assetReviewRef = put(repo, `proof/${work.workItemId}-${target.targetId}-assets.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId: target.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef, qualityChecks: quality(repo), assets });
   const budget = { brightnessContrast: 'test', screenCoverage: 'test', duration: 'test', triggerFrequency: 'test', maxConcurrent: 1, recovery: 'test', blendPolicy: 'test' };
   const brief = put(repo, `proof/${work.workItemId}-brief.json`, { schemaVersion: '1.0', projectId: work.projectId, theme: 'test', audience: { facts: ['test'], assumptions: [] }, coreLoop: 'test', experienceGoals: ['test'], viewingContext: 'test', visualHierarchy: ['test'], intensityBudget: { normal: budget, operation: budget, peak: budget, measurementMethod: 'test' } });
   put(repo, 'proof/synthetic.bin', '合成运行文件');
@@ -114,7 +136,7 @@ function baseline(repo, work) {
 }
 
 /** 构造工作项的有序实施和输出，使用真实 Node 版本命令作为测试命令。 */
-async function runStage(repo, path, stage, extraItems = []) {
+async function runStage(repo, path, stage, extraItems = [], beforePass) {
   let work = loadWork(repo, path);
   work.globalState = 'REVIEW';
   work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS'; work.gateStatus.F2 = 'PASS';
@@ -126,7 +148,14 @@ async function runStage(repo, path, stage, extraItems = []) {
   const manifestPath = `${work.evidenceRoot}/manifest-${stage}.json`;
   const items = ['compile', 'tests'].map((category) => ({ category, status: 'PASS', path: put(repo, `${work.evidenceRoot}/${stage}-${category}.txt`, '合成工程证据').path }));
   if (stage === 'V4') items.push({ category: 'asset-import', status: 'PASS', path: put(repo, `${work.evidenceRoot}/${stage}-asset.txt`, '合成资源导入证据').path });
-  if (stage === 'V5') for (const target of work.visual.targets) for (const category of ['runtime-layout', 'runtime-interaction', 'asset-import']) items.push({ category, status: 'PASS', targetId: target.targetId, path: put(repo, `${work.evidenceRoot}/${stage}-${target.targetId}-${category}.txt`, '合成运行证据').path });
+  if (stage === 'V5') for (const target of work.visual.targets) for (const category of ['runtime-layout', 'runtime-interaction', 'asset-import']) {
+    const domain = JSON.parse(readFileSync(join(repo, target.domainEvidenceRef.path), 'utf8'));
+    const nativeEvidence = JSON.parse(readFileSync(join(repo, domain.nativeEvidenceRef.path), 'utf8'));
+    const path = category === 'runtime-layout' && nativeEvidence.uiLayoutMeasurementRef
+      ? nativeEvidence.uiLayoutMeasurementRef.path
+      : put(repo, `${work.evidenceRoot}/${stage}-${target.targetId}-${category}.txt`, '合成运行证据').path;
+    items.push({ category, status: 'PASS', targetId: target.targetId, path });
+  }
   put(repo, manifestPath, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, implementationPackageRef: packPath, visualStage: stage, items: [...items, ...extraItems] });
   work.implementationPackageRef = { path: packPath };
   work.evidenceRef = { path: manifestPath };
@@ -139,6 +168,7 @@ async function runStage(repo, path, stage, extraItems = []) {
   await completeUnit({ repo, workItem: path, resultPath: unit.resultPath });
   work = loadWork(repo, path); work.gateStatus.F3 = 'PASS'; put(repo, path, work);
   await transitionWork({ repo, workItem: path, to: 'VALIDATING', args: {} });
+  if (beforePass) await beforePass();
   await transitionWork({ repo, workItem: path, to: 'PASSED', args: {} });
 }
 
@@ -147,7 +177,7 @@ async function runV1(repo, path, content) {
   let work = loadWork(repo, path);
   work.globalState = 'REVIEW'; work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS';
   put(repo, path, work);
-  await advanceVisual({ repo, workItem: path, to: 'V1' });
+
   put(repo, 'Assets/Main.unity', content);
   put(repo, `Assets/Scripts/${work.workItemId}.cs`, '// 合成测试功能源码');
   await runStage(repo, path, 'V1');
@@ -189,12 +219,61 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   stageTargets(repo, source, 'V2'); put(repo, sourcePath, source);
   await advanceVisual({ repo, workItem: sourcePath, to: 'V3' });
   source = loadWork(repo, sourcePath); stageTargets(repo, source, 'V3'); put(repo, sourcePath, source);
+  const v3ReviewRef = source.visual.targets[0].reviews.V3Layout;
+  const v3Review = JSON.parse(readFileSync(join(repo, v3ReviewRef.path), 'utf8'));
+  const v3PlanPath = v3Review.layoutSpecRef.path;
+  const originalPlan = JSON.parse(readFileSync(join(repo, v3PlanPath), 'utf8'));
+  const invalidPlan = structuredClone(originalPlan);
+  delete invalidPlan.nodes[0].textStyle;
+  v3Review.layoutSpecRef = put(repo, v3PlanPath, invalidPlan);
+  source.visual.targets[0].reviews.V3Layout = put(repo, v3ReviewRef.path, v3Review);
+  put(repo, sourcePath, source);
+  await assert.rejects(advanceVisual({ repo, workItem: sourcePath, to: 'V4' }), /文字|textStyle/);
+  // 即使把漏交的文字重标为结构，当前状态的冻结拆解仍能发现缺项。
+  invalidPlan.nodes[0].renderKind = 'STRUCTURE';
+  v3Review.layoutSpecRef = put(repo, v3PlanPath, invalidPlan);
+  source.visual.targets[0].reviews.V3Layout = put(repo, v3ReviewRef.path, v3Review);
+  put(repo, sourcePath, source);
+  await assert.rejects(advanceVisual({ repo, workItem: sourcePath, to: 'V4' }), /文字拆解项.*缺少文字节点/);
+  v3Review.layoutSpecRef = put(repo, v3PlanPath, originalPlan);
+  source.visual.targets[0].reviews.V3Layout = put(repo, v3ReviewRef.path, v3Review);
+  put(repo, sourcePath, source);
   await advanceVisual({ repo, workItem: sourcePath, to: 'V4' });
   source = loadWork(repo, sourcePath); stageTargets(repo, source, 'V4'); put(repo, sourcePath, source);
   await runStage(repo, sourcePath, 'V4');
   await advanceVisual({ repo, workItem: sourcePath, to: 'V5' });
   source = loadWork(repo, sourcePath); const sourceExtras = stageTargets(repo, source, 'V5'); put(repo, sourcePath, source);
-  await runStage(repo, sourcePath, 'V5', sourceExtras);
+  await runStage(repo, sourcePath, 'V5', sourceExtras, async () => {
+    const target = loadWork(repo, sourcePath).visual.targets[0];
+    const domain = JSON.parse(readFileSync(join(repo, target.domainEvidenceRef.path), 'utf8'));
+    const evidence = JSON.parse(readFileSync(join(repo, domain.nativeEvidenceRef.path), 'utf8'));
+    const reportPath = evidence.uiLayoutMeasurementRef.path;
+    const report = JSON.parse(readFileSync(join(repo, reportPath), 'utf8'));
+    const rejected = async (expected) => {
+      await assert.rejects(transitionWork({ repo, workItem: sourcePath, to: 'PASSED', args: {} }), expected);
+      assert.equal(loadWork(repo, sourcePath).globalState, 'VALIDATING');
+    };
+    const missing = structuredClone(evidence);
+    delete missing.uiLayoutMeasurementRef;
+    put(repo, domain.nativeEvidenceRef.path, missing);
+    await rejected(/文字|测量|uiLayoutMeasurementRef/);
+    put(repo, domain.nativeEvidenceRef.path, evidence);
+    for (const [name, value] of [['font', 'Assets/Fonts/Prototype.asset'], ['fontSize', '14']]) {
+      const wrong = structuredClone(report);
+      wrong.measurements[0].componentSnapshot.textStyle.find((entry) => entry.name === name).actualValue = value;
+      put(repo, reportPath, wrong);
+      await rejected(new RegExp(`${name}.*不一致`));
+    }
+    const stale = structuredClone(report);
+    stale.layoutPlanSha256 = '0'.repeat(64);
+    put(repo, reportPath, stale);
+    await rejected(/计划|布局|layoutPlanSha256/);
+    stale.layoutPlanSha256 = report.layoutPlanSha256;
+    stale.taskId = 'previous-work-item';
+    put(repo, reportPath, stale);
+    await rejected(/taskId|工作项/);
+    put(repo, reportPath, report);
+  });
   await transitionWork({ repo, workItem: sourcePath, to: 'COMPLETE', args: {} });
   source = loadWork(repo, sourcePath);
 
