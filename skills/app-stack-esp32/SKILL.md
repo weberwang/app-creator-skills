@@ -17,6 +17,6 @@ description: 开发 ESP32 自带屏幕的嵌入式 GUI 固件时使用，覆盖�
 - 控制器 V2–V5 输入：读[领域证据合同](references/domain-validation.md)。
 - 从公共能力进入专业任务：使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs esp32 <公共能力>`，只读[原生手册](references/native-contracts.md)中选中的模式。维护本仓库时将 `.agents/skills/` 换为 `skills/`。
 
-V1 验证功能、导航与状态，白盒按需；V2 可采用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)，但目标始终受实际分辨率、输入方式、字体、色深及 Flash／RAM／PSRAM 预算约束。V3 保存必要布局与输入交接，Figma 已表达清楚的内容无需重画或重复确认；V4 转换并注册实际资源，V5 分别记录结构、工程、主机模拟、硬件运行和人工视觉结果。仅设计提案不强制建设运行工程；没有硬件授权时硬件结果保留未执行。
+V1 明确功能、导航与状态，并使用正式工程、直接功能用例及必要的静态布局线框验证；V2 可采用 [Figma App 设计流程](../app-ui-layout/references/figma-app-design.md)，目标受实际分辨率、输入方式、字体、色深及 Flash／RAM／PSRAM 预算约束。V3 保存必要布局与输入交接，Figma 已表达清楚的内容无需重画或重复确认；V4 转换并注册实际资源，V5 分别记录结构、工程、主机模拟、硬件运行和人工视觉结果。仅设计提案不强制建设运行工程；没有硬件授权时硬件结果保留未执行。
 
 不自动连接或操作真机、烧录、擦除、读写设备配置、OTA、启用安全熔丝或执行实际发布。真机动作须有对应明确授权；只读文档、生成代码或测试等级不构成该授权。截图可提供检查点，默认由用户人工检查。

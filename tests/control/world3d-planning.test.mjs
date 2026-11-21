@@ -7,6 +7,7 @@ import { completeUnit, loadWork, transitionWork } from '../../skills/app-workflo
 import { put, putJson } from './controller-fixture.mjs';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { prepareWorld3DStage } from './world3d-completed-fixture.mjs';
+import { attachWorld3DPhase } from './world3d-fixture.mjs';
 
 /** 以正式 Unity 场景路径承载白模，V5 规划沿用同一场景而非复制运行世界。 */
 async function planningFixture(t) {
@@ -74,4 +75,11 @@ test('可变世界源的规划例外不允许覆盖冻结控制记录或快照�
     archive.world3dModelBaseline.assetReviewRef.path, snapshot]) {
     await assert.rejects(plan(context, [path]), /不能覆盖工作流控制记录/);
   }
+  const design = context.fixture.read(context.work.visual.moduleDesignRef);
+  // 合成待接入场景的材料放在计划证据目录之外，避免提前占用新执行目录。
+  const future = { ...structuredClone(context.work), evidenceRoot: 'spec/future-world-evidence' };
+  const contract = attachWorld3DPhase(context.fixture, 'V5', future);
+  const formalSceneRef = design.worldViews[0].designRef;
+  context.work.visual.domainEvidenceRef = context.fixture.write('spec/formal-aliases-camera-design.json', { ...contract, formalSceneRef });
+  await assert.rejects(plan(context, [formalSceneRef.path]), /不能覆盖工作流控制记录/);
 });

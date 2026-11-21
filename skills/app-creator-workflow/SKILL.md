@@ -7,13 +7,17 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 游戏大场景、长游戏流程、复杂页面或跨页面流程按[多状态与多步骤的分批生产](../app-domain-toolkit/references/incremental-production.md)关联总范围、本批范围、行为步骤及实际证据。游戏先明确区域／机制／解锁的整体骨架，再按连续可玩路径分批，逐批验证邻区与已有内容衔接，按风险补状态复现、持续运行和长期体验检查；不等待全游戏完成才集成。小范围修改沿用已有任务。
 
+3D 世界按[可玩路径推进](../app-domain-toolkit/references/incremental-production.md#world-3d-playable-path)选择首批或受影响的代表路径。所有 3D 世界场景在 V1 搭建或复用有效白模，按空间、镜头、碰撞和交互风险选择运行验证，再沿路径交接约束、验证适用首件并回归正式场景与邻区。
+
+V2 以 V1 确认的当前模块为出稿范围，展示其全部适用要素与必要状态，供 V3 拆解交接。图片目标覆盖该模块的 UI、精灵、地块、二维背景与反馈及适用的 3D 场景二维内容。一张能清楚容纳时使用一张，不够时拆分多张并沿用同一场景和共享设计来源。宿主场景和其他模块仅引用说明当前交互所需的上下文。3D 空间通过白模、空间规格及相机路径表达，机位预览按需提供。V3 按已确认空间拆分模型，V4 按需选择本地模型、生成 API 或 Blender，并在目标引擎核对接入。沿用[3D 设计与模型交接](../app-workflow-control/references/world3d-scenes.md#world-camera-designs)。
+
 第 4 阶段按[目标版本统一视觉](references/workflow.md#目标版本统一视觉)确认并冻结全局视觉方向和代表稿。第 5 阶段 V1 确认完整模块方案，V2 生成并确认覆盖全部适用流程、进度与状态的模块稿，V3 拆解该确认稿，V4 准备资源，V5 完整实现与验收。模块稿变更回 V2，全局方向变更回第 4 阶段。
 
 App 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)在第 4 阶段通过代表页建立并确认全局基线，各 `PAGE` 在 V2 生成并确认覆盖适用状态和进度的模块稿，依赖和所有权明确后推进 V3–V5。
 
 App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-design.md)在第 4 阶段确认代表页及全局方向，V2 完成模块稿生成、用户确认与可编辑设计，V3 从该确认版本提取规格。实际预览的人工结果单独记录。
 
-从零设计复杂游戏或实质改变关卡空间、路线与镜头关系时，按[关卡与场景方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)形成空间、尺度和镜头依据。可按[实现分流](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)及风险用 3D 白模、2D 平面布局或占位资源验证；第 4 阶段冻结全局方向，V1 确认完整模块方案，V2 设计并确认模块画面，V5 实现与验收。
+游戏世界 `SCENE` 在 V1 开始按[场景与关卡设计任务](../app-domain-toolkit/references/game-design-exploration.md#v1-scene-design-task)尝试执行设计，先核对本批范围与已有方案。新场景或空间、路线、镜头及关键玩法实质变化时形成或修订空间、尺度和镜头依据。3D 世界在 V1 搭建或复用白模。2D 使用平面布局和正式工程，禁止白模。HUD、菜单和非游戏 App 按原界面流程推进。第 4 阶段冻结全局方向，V1 确认完整模块方案，V2 设计并确认模块画面，V5 实现与验收。
 
 可见内容必须先按[通用分析的统一执行要求](references/professional-conventions.md#product-market-research)完成市场、竞品、受众与参考分析，已有有效结论核实后复用，只补查缺失或变化部分；再按共同权威[体验、视觉方向与意图表达](../app-asset-workflow/references/interface-intent.md#design-basis)，从本批真实用户行为、使用压力和适用状态形成有依据的视觉方向，区分硬约束、方向与探索空间，决定文字、美术及制作输入。游戏在原方案确定判断、场景线索、行动、反馈及必要精确信息，区分世界物件、地面区域、角色附属、场景浮层和 HUD，交接真实状态显隐。白模调试标签不直接继承为正式画面。需要多方向比较时，按[候选视觉语言与生成约束](../app-asset-workflow/references/style-and-production.md)分别定义造型、比例、材质、明暗边缘、功能色、UI 图标与制作路线，沿用当前路线的候选数量；实际可读性和风格差异仍由用户判断。
 
@@ -65,7 +69,7 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。
 3. 明确目标、非目标、文件/对象所有权与可观察验收；先只读补事实。出现确实需要用户取舍的缺口时进入 [grilling](../grilling/SKILL.md)，继续不依赖该决定的工作，不能把正常实现变成逐步审批。
    包含客户端界面的新项目初始化时询问用户支持的界面语言：默认简体中文 `zh-CN`，英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es` 可按需追加；给出默认选项并等待用户选择，已有明确语言决定时不重复询问。将确认的语言清单和默认显示语言写入项目配置并用于各栈实现、字体与验证；默认显示语言必须在清单内。语言选择未答复时继续不依赖该选择的工作，不能把预选项当作确认。既有项目沿用其已确认的语言范围，不因局部修复重问或擅自扩展。
-4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择七阶段及适用的 V1–V5。产品规格决定首批、完整和后续版本，模块计划确认当前状态、范围、依赖及验收。导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分。单个本地工程修复可用 `init --mode light`，仍须 F0–F3 和真实单元证据。用 `plan --spec` 冻结实际计划，用 `record --report` 关联实际执行结果。共享配置和原生编辑器保持单写者。
+4. 创建或读取 Work Item，按[统一流程](references/workflow.md)选择七阶段及适用的 V1–V5。产品规格决定首批、完整和后续版本，V1 对照本轮玩法、内容、配置与规则完整确定机制、可达状态、流程、进度及组合结果，记录依赖和验收；规则不清时做 grilling 并更新方案后进入 V2。导航、主页及共享路由按[功能范围与跨对象依赖](../app-workflow-control/references/function-dependencies.md#导航框架与共享路由)划分。单个本地工程修复可用 `init --mode light`，仍须 F0–F3 和真实单元证据。用 `plan --spec` 冻结实际计划，用 `record --report` 关联实际执行结果。共享配置和原生编辑器保持单写者。
 5. 涉及可见内容时，按[显示结构约定](../app-domain-toolkit/references/reference-domain-display-ownership.md#公共显示结构约定)明确宿主及职责。第 4 阶段确认全局视觉方向，V1 确认模块方案，V2 生成覆盖本轮全部状态、进度、文案、广告位和反馈的模块稿并取得用户确认，V3 拆解同一确认稿，V5 完整实现与验收。实际显示与手感由用户人工确认。
    制作前按本批深度核对[能力与动作语义](../app-asset-workflow/references/interface-intent.md#capability-semantics)，在布局和生图前按[最少必要文字](../app-domain-toolkit/references/ui-copy-principles.md#最少必要文字)完成文案取舍，并在原方案记录结论及视觉依据。每次实际生图前将这些结论转成当次提示词，按[生成前约束](../app-asset-workflow/references/style-and-production.md#生成前约束)检查冲突、来源角色及探索边界后调用工具，保存真实发送内容。正式场景、页面和显示层的图片目标须使用[实机运行画面约束](../app-asset-workflow/references/style-and-production.md#runtime-view-image)，明确描绘目标设备上可实现的实际视口。生图用于适合的路线和产物，不成为所有显示任务的必经步骤。
    代理可按[单次用户视角审查](../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对真实设计节点与可测事实，并在同一轮按[最少必要文字](../app-domain-toolkit/references/ui-copy-principles.md#最少必要文字)复核文案。未经明确授权不得自动分析设计稿或运行截图，截图交用户检查。非游戏 App 的 V3 从所选稿提取必要还原交接，表达清楚时不重画拆解图、布局图或重复要求人工批准；V4 前段按[代表性接入与分批协作](../app-asset-workflow/SKILL.md#代表性接入与分批协作)试接实际组件，再分批扩展。共享文件和原生编辑器保持单写者。
@@ -106,7 +110,7 @@ Cocos、Phaser、Three.js 的编排任务按需要读取以下公共资料，同
 
 ## 交接与状态
 
-V1 采用白盒、临时资源或白模时，读取[可辨识的功能原型](references/readable-functional-prototype.md)，让对象、任务、可操作状态和反馈可理解；3D 世界先搭建或复用有效白模，2D／UI 按风险选择。复用实际机制和已有功能验证记录，不提前进行正式美术验收。
+3D 世界在 V1 搭建或复用白模时，读取[可辨识的功能原型](references/readable-functional-prototype.md)，让对象、任务、可操作状态和反馈可理解。2D、HUD、菜单及 App 使用正式工程和直接功能用例，按需保留静态布局线框、空间规格和数据验证，不使用白模。复用仍有效的机制和验证记录。
 
 实施包、单元结果和证据格式以控制器的 schemas/templates 为准，不手写另一套近似字段。角色职责与交接见[协作边界](references/handoffs.md)；涉及策划、业务/玩法、动态反馈、音频、数值或动画时读取[领域生产交接](references/domain-production.md)。公共流程只规定“必须证明什么”；如何读取引擎对象、布局、输入、资源、构建及性能由各技术技能规定。
 

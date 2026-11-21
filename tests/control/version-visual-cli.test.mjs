@@ -10,6 +10,7 @@ import { createFixture, put, readWork, putJson, createQualityChecks, reviewRecor
 import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
+import { moduleDesignItems, withModuleRules } from './module-rules-fixture.mjs';
 
 const cliPath = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
 const dimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
@@ -89,15 +90,15 @@ async function makeBaseline(repo, work) {
 async function bindPlan(repo, workPath, names = {}) {
   const work = await readWork(repo, workPath);
   const definitions = [
-    ['function', 'submit'], ['state', names.state ?? 'ready'], ['state', 'working'],
+    ['element', 'submit-button'], ['function', 'submit'], ['state', names.state ?? 'ready'], ['state', 'working'],
     ['step', names.step ?? 'enter'], ['step', 'submit'], ['transition', names.transition ?? 'start'],
     ['progress', 'halfway'],
   ];
-  const plan = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId,
+  const plan = withModuleRules({ schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId,
     dependencies: [], entries: definitions.map(([kind, id]) => ({
       kind, id, description: `测试 ${kind} ${id}`, acceptance: '满足已约定结果',
       requirementId: 'fixture-requirement-1', command: 'node --test lib/module.spec.mjs',
-    })) };
+    })) });
   await putJson(repo, 'spec/module-plan.json', plan);
   work.visual.modulePlanRef = await frozenReview(repo, 'spec/module-plan.json');
   work.gateStatus.F0 = 'PASS';
@@ -127,7 +128,7 @@ async function makeV2(repo, workPath, plan) {
   const targetRef = await frozenReview(repo, targetPath);
   const design = { schemaVersion: '1.0', workItemId: work.workItemId,
     modulePlanRef: work.visual.modulePlanRef, baselineRef: work.globalVisualBaselineRef,
-    entries: plan.entries.filter((entry) => entry.kind !== 'function').map((entry) => ({
+    entries: moduleDesignItems(plan).map((entry) => ({
       kind: entry.kind, id: entry.id, targetRef, designRef: domain.figmaDesignRef,
     })) };
   /** 用新摘要重写清单和用户确认，模拟确认当前设计版本。 */
@@ -170,12 +171,48 @@ test('控制器以已确认的基线和模块稿贯通 V1 至 V5 并完成验收
   await putJson(repo, 'spec/scope.json', scope);
   work.productionScopeRef = await frozenReview(repo, 'spec/scope.json');
   work.productionBatchId = 'batch';
-  await putJson(repo, 'spec/module-plan.json', { ...plan, entries: plan.entries.filter((entry) => entry.id !== 'working') });
+  const incompletePlan = structuredClone(plan);
+  incompletePlan.entries.find((entry) => entry.kind === 'state' && entry.id === 'working').id = 'other';
+  await putJson(repo, 'spec/module-plan.json', withModuleRules(incompletePlan));
   work.visual.modulePlanRef = await frozenReview(repo, 'spec/module-plan.json');
   await putJson(repo, workPath, work);
   attempt = visualStage(repo, workPath, 'V2');
   assert.notEqual(attempt.status, 0, 'V1 必须覆盖本批已登记的全部状态');
   assert.match(attempt.output, /遗漏生产范围中的 state/);
+  const missingCombination = structuredClone(plan);
+  missingCombination.entries.push({
+    ...plan.entries.find((entry) => entry.kind === 'function'),
+    id: 'retry', trigger: '收到重试请求', resolution: '恢复为可操作状态',
+  });
+  missingCombination.rules.flows[0].functionIds.push('retry');
+  await putJson(repo, 'spec/module-plan.json', missingCombination);
+  work.visual.modulePlanRef = await frozenReview(repo, 'spec/module-plan.json');
+  await putJson(repo, workPath, work);
+  attempt = visualStage(repo, workPath, 'V2');
+  assert.notEqual(attempt.status, 0, '同流程机制缺少组合裁决必须阻断 V2');
+  assert.match(attempt.output, /缺少机制 .* 的组合规则/);
+
+  const question = '处理中是否允许重复提交？';
+  await putJson(repo, 'spec/module-plan.json', { ...plan, rules: { ...plan.rules, openQuestions: [question] } });
+  work.visual.modulePlanRef = await frozenReview(repo, 'spec/module-plan.json');
+  const grillingPath = 'spec/pending-grilling.json';
+  await putJson(repo, grillingPath, {
+    schemaVersion: '1.0', workItemId: work.workItemId, status: 'OPEN',
+    decisions: [{ question, impact: '影响状态转换', options: ['允许', '禁止'], recommendation: '禁止' }],
+  });
+  work.grillingRef = { path: grillingPath };
+  await putJson(repo, workPath, work);
+  attempt = visualStage(repo, workPath, 'V2');
+  assert.notEqual(attempt.status, 0, '未决业务拷问必须阻断 V2');
+  assert.match(attempt.output, /未决拷问/);
+  const answer = { question, answer: '处理中忽略重复提交', userMessageRef: 'test://submit-decision' };
+  await putJson(repo, grillingPath, {
+    schemaVersion: '1.0', workItemId: work.workItemId, status: 'CLOSED', userMessageRef: answer.userMessageRef, decisions: [answer],
+  });
+  attempt = visualStage(repo, workPath, 'V2');
+  assert.notEqual(attempt.status, 0, '关闭 grilling 后仍须回填方案');
+  assert.match(attempt.output, /V1 存在未决规则/);
+  plan.entries.find((entry) => entry.kind === 'function').resolution = answer.answer;
   await putJson(repo, 'spec/module-plan.json', plan);
   work.visual.modulePlanRef = await frozenReview(repo, 'spec/module-plan.json');
   await putJson(repo, workPath, work);
@@ -187,13 +224,21 @@ test('控制器以已确认的基线和模块稿贯通 V1 至 V5 并完成验收
   assert.equal(work.implementationPackageRef, null);
 
   const { design, saveDesign, decompositionRef } = await makeV2(repo, workPath, plan);
-  const progress = design.entries.findIndex((entry) => entry.kind === 'progress');
-  const removed = design.entries.splice(progress, 1)[0];
-  await saveDesign();
-  attempt = visualStage(repo, workPath, 'V3');
-  assert.notEqual(attempt.status, 0, '缺进度稿不得通过 V2');
-  assert.match(attempt.output, /未覆盖全部状态、步骤、转换及进度/);
-  design.entries.push(removed);
+  // 每类条目分别缺失时即使用户确认了当前清单，也不得创建 V3 归档或修改阶段。
+  const fullEntries = design.entries;
+  for (const kind of ['element', 'function', 'state', 'step', 'transition', 'progress', 'flow']) {
+    const missing = fullEntries.find((entry) => entry.kind === kind);
+    design.entries = fullEntries.filter((entry) => entry !== missing);
+    await saveDesign();
+    attempt = visualStage(repo, workPath, 'V3');
+    assert.notEqual(attempt.status, 0, `缺少 ${kind} 必须阻断 V3`);
+    assert.ok(attempt.output.includes(`遗漏 V1 条目：${kind}:${missing.id}`), attempt.output);
+    const unchanged = await readWork(repo, workPath);
+    assert.equal(unchanged.visual.stage, 'V2');
+    assert.equal(unchanged.revision, work.revision);
+    assert.equal(unchanged.visual.versionDesignSnapshotRef, undefined);
+  }
+  design.entries = fullEntries;
   await saveDesign();
   attempt = visualStage(repo, workPath, 'V3');
   assert.equal(attempt.status, 0, attempt.output);

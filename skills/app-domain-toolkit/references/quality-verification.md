@@ -2,7 +2,7 @@
 
 本规范是列入迁移清单的技术栈共用的完整规则。每段标明适用栈；执行时同时读取本栈技能的原生约束与“本栈配套资料”，资料路径和具体工具由栈入口维护。公共状态与授权仍由 app-workflow-control 管理。
 
-各技术栈统一使用 V1–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)验证白模或占位、整体人工确认及正式替换，UI／图片路线保留原阶段门。空间确认、机器检查和人工显示验收分别记录。
+各技术栈统一使用 V1–V5；世界场景按[3D、2D 与 UI 分流](game-design-exploration.md#implementation-routes)核对适用空间验证、整体人工确认及正式接入，UI／图片路线保留原阶段门。空间确认、机器检查和人工显示验收分别记录。
 
 ## 完整流程
 

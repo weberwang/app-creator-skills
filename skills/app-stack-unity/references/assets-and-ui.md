@@ -12,7 +12,7 @@ uGUI 新建 Canvas 的参考像素单位默认采用 `CanvasScaler.referencePixe
 
 涉及场景切换或弹出层加载时读取[统一加载与过渡显示](../../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)，将应用级加载服务与视图、场景激活／卸载、Prefab 实例和共享资源引用分别落实到项目已有 Unity 生命周期；加载入口不得随内容 Scene 卸载。
 
-V1 按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：3D 世界先在实际 Scene 中搭建或复用有效白模，2D 使用平面布局与占位，UI 原型按风险选择。按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)复用 Scene/Prefab、功能接口与项目已选 UI 路线，用简单几何、文本和可操作组件区分对象、状态及反馈；体验画面保持可理解，调试信息按需显示。整体场景人工确认后再进入模型生产；白模不替代 V4 资源或最终显示验收。
+V1 按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)：每个 3D 世界场景搭建或复用有效白模，按风险选择运行验证；2D 使用平面布局、正式工程与功能用例，不制作白模。HUD、菜单及 App 沿用界面流程。3D 白模按[可辨识的功能原型](../../app-creator-workflow/references/readable-functional-prototype.md)复用 Scene/Prefab 和功能接口。整体空间人工确认后进入模型生产，正式资源与最终显示按阶段验收。
 
 遵循[场景与显示层职责](../../app-domain-toolkit/references/reference-domain-display-ownership.md)：代码目录、功能切片和运行时显示树分别描述归属、行为和装配。功能可跨多个显示分支，每个实际显示实例仍须明确挂载、卸载和状态清理的唯一所有者；共享代码或 Prefab 不代表共享同一个运行时实例。
 
@@ -32,7 +32,7 @@ uGUI 使用 Scene/GameObject、Canvas 和 Prefab 表达实际树；UI Toolkit �
 
 屏幕内默认从后到前为游戏层/内容层、HUD、弹窗层、浮窗层；非模态面板及模态遮罩与弹窗归弹窗层，Toast 等全局短时提示归最上方浮窗层。非模态面板不穿越模态遮罩；附属 tooltip、下拉菜单跟随所属组件，不进入全局浮窗层。层职责不与 `layerType` 一一对应，Toast 沿用 `toast` 类型；遮罩、模态堆叠与浮窗的输入和焦点边界遵循[公共显示结构](../../app-domain-toolkit/references/reference-domain-display-ownership.md)。在 uGUI 中结合 Canvas、同级节点和实际 Raycast 配置，在 UI Toolkit 中结合 Panel、元素顺序和命中配置，核验跨渲染域的覆盖和输入；浮窗默认不交互、不抢焦点、不阻断下层或遮挡关键操作；需要用户确认的提示使用模态弹窗；可交互的全局提示须明确命中与焦点策略，并遵守模态隔离。模态存在时，仅最顶模态及其附属浮层接收交互。World Space HUD 留在世界深度和对应相机的合成域，不能默认等同于屏幕 HUD。
 
-在模块任务中识别显示范围、宿主和职责；V1 验证路由、交互及关闭恢复，白盒按风险可选；V2 确定实际视觉分层；V3 在既有拆解与布局材料中说明实际结构，并分别确认拆解与布局；V4 导入正式资源，V5 检查正式组合及运行，并由用户人工验收显示效果。领域证据沿用[单目标领域合同](../../app-workflow-control/references/single-target-domain.md)及现有场景合同，不额外建立一套显示树证据。
+在模块任务中识别显示范围、宿主和职责；V1 用正式工程和功能用例验证路由、交互及关闭恢复，按需保留静态布局线框；V2 确定实际视觉分层；V3 在既有拆解与布局材料中说明实际结构，并分别确认拆解与布局；V4 导入正式资源，V5 检查正式组合及运行，并由用户人工验收显示效果。领域证据沿用[单目标领域合同](../../app-workflow-control/references/single-target-domain.md)及现有场景合同，不额外建立一套显示树证据。
 
 ## UI 与布局
 

@@ -48,11 +48,15 @@ function staysWithin(base, target) {
 /** 检查已存在路径的所有父级，避免通过符号链接越过项目边界。 */
 function ensureNoSymlinkEscape(repo, target, label) {
   const base = resolve(repo);
+  // Windows 原生解析避免每次核对祖先时再次逐级展开同一路径；每次调用仍重新检查边界。
+  const resolveRealPath = process.platform === 'win32' ? realpathSync.native : realpathSync;
+  let realBase;
   let cursor = target;
   while (staysWithin(base, cursor)) {
     if (existsSync(cursor)) {
-      const real = realpathSync(cursor);
-      const rel = relative(realpathSync(base), real);
+      realBase ??= resolveRealPath(base);
+      const real = cursor === base ? realBase : resolveRealPath(cursor);
+      const rel = relative(realBase, real);
       if (rel === '..' || rel.startsWith('..\\') || rel.startsWith('../') || isAbsolute(rel)) {
         throw new WorkflowError(`${label}经符号链接越出项目：${cursor}`);
       }

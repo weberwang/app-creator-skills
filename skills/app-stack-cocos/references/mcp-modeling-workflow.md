@@ -1,6 +1,6 @@
 # Blender MCP 生产级建模流程
 
-模型几何由 Blender MCP 制作；Cocos Creator 负责真实资源导入核验和工作项要求的运行接入。二者按同一个 Work Item、资源 ID、Implementation Package 和 V1-V5 阶段协作，不增加单独状态机或额外确认阶段。角色边界和交接字段见[模型交接](./model-handoff.md)，阶段与登记规则见[工作流接入](./workflow-integration.md)。
+选择 Blender 制作模型时，按本流程使用 Blender MCP；本地模型复用和项目授权且可用的生成 API 沿[公共模型来源与交接](../../app-3d-modeling/SKILL.md#模型来源与交接)执行。Cocos Creator 负责真实资源导入核验和工作项要求的运行接入。沿用同一个 Work Item、资源 ID、Implementation Package 和 V1-V5 阶段。角色边界和交接字段见[模型交接](./model-handoff.md)，阶段与登记规则见[工作流接入](./workflow-integration.md)。
 
 ## 执行前发现
 

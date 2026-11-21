@@ -6,6 +6,7 @@ import test from 'node:test';
 import { captureWorld3DFileSnapshots, collectWorld3DMutableSourcePaths, withWorld3DFileSnapshots } from '../../skills/app-workflow-control/scripts/runtime/world3d-file-snapshots.mjs';
 import { collectWorld3DReferences, validateWorld3DStage, world3dFile } from '../../skills/app-workflow-control/scripts/runtime/world3d-contract.mjs';
 import { inspectProductionDependencySource } from '../../skills/app-workflow-control/scripts/runtime/production-dependency-inspector.mjs';
+import { assertModuleRuntime } from '../../skills/app-workflow-control/scripts/runtime/module-stages.mjs';
 import { advanceVisual, assertFunctionBaseline, completeUnit, refreshFunctionBaseline, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
 import { bindEvidence, bindImplementation, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
@@ -222,7 +223,7 @@ test('发布冲突失败后只清理本次临时文件，修复冲突可重试',
   await captureWorld3DFileSnapshots(fixture.repo, fixture.work);
 });
 
-test('实现返修无新三维封套时，局部功能重验继续使用冻结白模身份', async (t) => {
+test('V1 模块方案的实现返修保留白模身份并拒绝旧功能基线刷新', async (t) => {
   const { repo, workPath, fixture } = await prepareWorld3DStage(t, 'V5');
   let work = await readWork(repo, workPath);
   const original = fixture.read(work.visual.functionBaselineRef);
@@ -248,16 +249,12 @@ test('实现返修无新三维封套时，局部功能重验继续使用冻结�
   delete work.visual.domainEvidenceRef;
   await putJson(repo, workPath, work);
   const spec = fixture.write('spec/local-function-regression.json', { localRegression: true, visualImpact: 'none', reason: '功能返修不影响视觉' });
-  await refreshFunctionBaseline({ repo, workItem: workPath, specPath: spec.path });
+  await assert.rejects(refreshFunctionBaseline({ repo, workItem: workPath, specPath: spec.path }), /V1 模块方案/);
   work = await readWork(repo, workPath);
   const baseline = fixture.read(work.visual.functionBaselineRef);
-  assert.equal(baseline.mode, 'local-regression');
-  assert.ok(!baseline.work.visual.domainEvidenceRef);
+  assert.equal(baseline.mode, 'module-plan');
+  assert.deepEqual(baseline.world3dBlockoutRefs, original.world3dBlockoutRefs);
   assert.doesNotThrow(() => assertFunctionBaseline(repo, work));
-  baseline.world3dBlockoutRefs.blockoutRef.sha256 = '0'.repeat(64);
-  const forged = structuredClone(work);
-  forged.visual.functionBaselineRef = fixture.write('spec/forged-local-baseline.json', baseline);
-  assert.throws(() => assertFunctionBaseline(repo, forged), /快照.*业务来源|快照.*覆盖/);
 });
 
 test('控制器 HUD 返修复用同路径正式装配前的 V4 消费场景快照', async (t) => {
@@ -396,10 +393,11 @@ test('控制器实际阶段流保留同路径白模与正式场景，并允许�
   });
   const { fixture, repo, work, workPath } = completed;
   assert.equal(inspectProductionDependencySource(repo, work, workPath).status, 'PASS');
-  const logicPath = 'Assets/Scripts/v1-logic.cs';
+  const logicPath = `Assets/Scripts/${work.workItemId}-V5.cs`;
   const originalLogic = readFileSync(resolve(repo, logicPath));
   fixture.write(logicPath, '功能代码改动必须重验');
-  assert.throws(() => assertFunctionBaseline(repo, work), /功能证据已变化/);
+  assert.throws(() => assertModuleRuntime(repo, work), /验收证据已变化/);
+  assert.doesNotThrow(() => assertModuleRuntime(repo, work, { historical: true }));
   fixture.write(logicPath, originalLogic);
   fixture.write(fixture.contract.formalSceneRef.path, '后批在同一场景增加湿地');
   fixture.write(fixture.model.output, '后批更新模型');

@@ -1,6 +1,6 @@
 # 场景 V1-V5 闭环
 
-世界内容按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)规划。V1 确认模块方案并按风险选择 3D 白模或 2D 占位验证；V2 基于已确认的全局方向生成并确认模块全部适用状态和进度设计。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)。
+世界内容按[3D、2D 与 UI 分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)规划。V1 确认模块方案并所有 3D 世界场景须建立或复用有效白模，2D 使用平面布局与正式工程；V2 基于已确认的全局方向生成并确认模块全部适用状态和进度设计。公共控制器可显式使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)。
 
 图片目标的场景与独立显示层遵守[阶段人工确认](../../unity-domain-contracts/references/stage-confirmation.md)：模块任务记录范围，V3 拆解图和布局图分别确认。`world-3d` 按公共无图合同绑定单次审查以及实际空间、方向、资源和显示确认，不增加 V3 双图。V5 完成实际运行验证并经用户确认后闭合；技术 PASS 不代替人工确认，确认只绑定当前工作项和实际交付。
 
@@ -14,7 +14,7 @@
 
 ## V2 场景定义
 
-冻结玩家行为、状态、失败/恢复、输入、相机、UI、数据所有权与 Scene/Prefab/UXML 结构，并生成适用响应式合同。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。图片／UI 目标按[持续目标规则](./visual-workflow.md#v2-场景定义)确认真实完整目标图，草图和白盒不能代替图片目标；`world-3d` 按公共合同确认白模对应空间和方向，不要求目标图。功能可直接在正式代码实现并验证。
+冻结玩家行为、状态、失败/恢复、输入、相机、UI、数据所有权与 Scene/Prefab/UXML 结构，并生成适用响应式合同。按[布局参照规则](./ui-layout-and-hierarchy.md#布局参照选择)确定场景 UI 相对场景大小停靠，弹窗内部有底板时相对底板布局、无底板时相对屏幕布局。图片／UI 目标按[持续目标规则](./visual-workflow.md#v2-场景定义)确认真实完整目标图，草图和白盒不能代替图片目标；`world-3d` 按公共合同确认空间和方向，不要求目标图。功能可直接在正式代码实现并验证。
 
 视觉任务同时明确主题、受众、核心循环、体验目标与主要观看情境，并由玩法和 [`unity-game-juice`](../../app-stack-unity/references/native-contracts.md#mode-unity-game-juice) 确认关键事件的反馈意图，按[美术质量合同](./art-quality-contract.md)记录目标。
 

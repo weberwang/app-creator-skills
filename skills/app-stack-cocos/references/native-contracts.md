@@ -366,7 +366,7 @@ Creator 项目配置、资源、Scene/Node/Component、Prefab、AssetDB 与编�
 
 [公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
 
-涉及 3D 模型时，按[建模工作流接入](./workflow-integration.md)核对 Blender 几何/拓扑/UV 报告、导出回读、Creator 实际模型与子资源、比例/轴向/Pivot、材质槽、LOD/碰撞、资源级 Prefab 和正式场景消费。以当前项目的预算和实际能力为准；通用资源清单 PASS、导出文件存在或 `.meta` 出现不能代替这些技术验证。转台、线框、UV、LOD 切换与碰撞边界截图供用户人工检查，技术结果和显示确认分别记录；不自动启动真机验收。
+涉及 3D 模型时，按[建模工作流接入](./workflow-integration.md)核对实际来源的几何/拓扑/UV 报告、导出回读、Creator 实际模型与子资源、比例/轴向/Pivot、材质槽、LOD/碰撞、资源级 Prefab 和正式场景消费。以当前项目的预算和实际能力为准；通用资源清单 PASS、导出文件存在或 `.meta` 出现不能代替这些技术验证。转台、线框、UV、LOD 切换与碰撞边界截图供用户人工检查，技术结果和显示确认分别记录；不自动启动真机验收。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/quality-verification.md#完整流程)。
 2. [公共质量证据与返修复验约定](../../app-creator-workflow/references/professional-conventions.md#quality-evidence-and-retests)
@@ -524,7 +524,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--cocos-游戏-3d-建模"></a>
 ### Cocos 游戏 3D 建模
 
-按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 在 Blender MCP 中制作正式模型。Cocos 资产接入负责人使用 Creator 核验资源导入和实际场景消费。按需阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)、[模型交接](./model-handoff.md)和[工作流接入](./workflow-integration.md)。
+按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 选择本地模型复用、项目授权且可用的生成 API 或 Blender 制作。Cocos 资产接入负责人使用 Creator 核验资源导入和实际场景消费。选择 Blender 时阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)，并按需阅读[模型交接](./model-handoff.md)和[工作流接入](./workflow-integration.md)。
 
 
 
@@ -532,7 +532,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 #### 输入与边界
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
-- 缺少关键规格、可用 Blender MCP、明确的 `.blend` 来源/写入范围、唯一 Creator 项目或当前工作项授权时，可提供带假设的只读规格建议；受影响写入保持 `BLOCKED`。没有可用 Blender MCP 时阻断正式建模，不能用体块拼搭或其他工具冒充正式交付。
+- 缺少关键规格、所选来源所需能力、明确来源/写入范围、唯一 Creator 项目或当前工作项授权时，可提供带假设的只读规格建议；受影响写入保持 `BLOCKED`。选择 Blender 时须核查可用 MCP 和 `.blend` 来源，其他来源须核查实际许可、输出和目标导入能力。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#完成模型结构)。
 - 本技能拥有几何、拓扑、法线、UV、材质槽结构、LOD、碰撞代理和静态模型导出。它不生产 PBR 贴图，不实现骨架/权重/动作，不代替 Cocos 玩法场景装配或独立 QA；接口约定见[模型交接](./model-handoff.md)。
 - 只按目标项目当前 Creator、Importer 和 MCP 能力选择导入格式。不得假定某种格式、导入器、网格子资源或自动转换能力必然可用。
@@ -540,7 +540,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--执行底线"></a>
 #### 执行底线
 
-1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#检查-blender-工作区)。
+1. 选择 Blender 时按[完整规范](../../app-domain-toolkit/references/modeling-production.md#检查-blender-工作区)检查工作区；其他来源核对其实际能力及交接记录。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#核对表面与性能预算)。
 3. 源资产只读；在授权路径内创建版本化派生文件。按实际授权处理覆盖、删除、重建 UV、改变顶点顺序或绑定数据等破坏性修改。Blender 脚本遵循当前工作项授权和 DCC 脚本限制；已授权的精确脚本范围可复用，不为每个本地脚本重复增加确认。
 4. Creator 的 AssetDB、资源 UUID、子资源、Scene、Node、Component、Prefab 和构建操作严格遵循[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)，每次读取实时 `tools/list` Schema。禁止手写 `.scene`、`.prefab`、`.meta` 或伪造 UUID/子资源绑定；同一项目编辑器状态保持单写者，保存后读回。
@@ -549,7 +549,7 @@ Creator 资产、Scene/Node/Component、Prefab、AssetDB 和构建操作遵循[C
 <a id="mode-cocos-game-3d-modeling--交付"></a>
 #### 交付
 
-建模交付版本化 `.blend`、模型导出物、拓扑/法线/实际 UV 位置报告、材质槽、LOD 网格与碰撞指标、导出回读、来源和许可。Creator 资产接入负责人回传真实导入和加载证据。当前工作项满足相应阶段条件后报告就绪。
+建模交付实际可用的版本化源、模型导出物、拓扑/法线/实际 UV 位置报告、材质槽、LOD 网格与碰撞指标、导出回读、来源和许可；选择 Blender 时交付 `.blend` 源。Creator 资产接入负责人回传真实导入和加载证据。当前工作项满足相应阶段条件后报告就绪。
 <!-- native-source:cocos-game-3d-modeling:end -->
 
 
@@ -955,7 +955,7 @@ V3 拆解 UI 底板、按钮皮肤和框体时，必须按可观察固定角边�
 <a id="mode-cocos-game-asset-integration--条件参考"></a>
 #### 条件参考
 
-- 正式 3D 模型制作或修整：交给 [`cocos-game-3d-modeling`](#mode-cocos-game-3d-modeling) 在 Blender MCP 中生产；本领域按[工作流接入](./workflow-integration.md)登记模型来源与输出，通过 Creator MCP 核验真实模型、网格/材质子资源和资源级 Prefab。几何技术报告与实际场景消费证据独立于图片尺寸、Alpha 和 SpriteFrame 检查。
+- 正式 3D 模型制作或修整：交给 [`cocos-game-3d-modeling`](#mode-cocos-game-3d-modeling) 按实际来源执行；本领域按[工作流接入](./workflow-integration.md)登记模型来源与输出，通过 Creator MCP 核验真实模型、网格/材质子资源和资源级 Prefab。几何技术报告与实际场景消费证据独立于图片尺寸、Alpha 和 SpriteFrame 检查。
 - 参考截图、录屏、运行项目或源码还原：读取 [视觉还原](../../cocos-game-asset-integration/references/visual-reconstruction.md)。
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/asset-production.md#完整流程)。
 - UI：同时读取 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 的布局合同、Cocos 适配器、Widget 定位策略和证据矩阵；资源 origin、布局锚点与动画偏移按合同分离，资产接入不得重新发明布局规则。

@@ -25,7 +25,7 @@ style recipe 至少约定：
 
 ## 三候选选择
 
-本节固定三候选用于适用的游戏图片视觉基线路线；3D 世界按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)完成本批整体白模和人工确认，再按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)确定方向与模型依据。游戏 UI 保持原路线。Flutter、Expo 默认按 [Figma App 流程](../../app-ui-layout/references/figma-app-design.md)先生成一张代表页效果图、人工选稿后忠实重建 Figma；只有用户要求比较时才按指定数量制作多方向，已有有效确认图可复用。ESP32 按硬件约束可采用同路。效果图不是正式整屏背景，重建预览未人工检查时不得登记视觉通过。
+本节固定三候选用于适用的游戏图片视觉基线路线；3D 世界按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)完成本批白模和空间依据的人工确认，再按[生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)确定方向与模型依据。游戏 UI 保持原路线。Flutter、Expo 默认按 [Figma App 流程](../../app-ui-layout/references/figma-app-design.md)先生成一张代表页效果图、人工选稿后忠实重建 Figma；只有用户要求比较时才按指定数量制作多方向，已有有效确认图可复用。ESP32 按硬件约束可采用同路。效果图不是正式整屏背景，重建预览未人工检查时不得登记视觉通过。
 
 生成前按上述统一要求核对四项分析及其与当前视觉 brief 的对应关系；三张候选共用同一产品定位与已完成或有效复用的分析结论。
 

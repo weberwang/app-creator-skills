@@ -284,6 +284,8 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
   const snapshot = readFigmaSnapshot(repo, doc.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, work });
   const review = frozen(repo, work.visual.reviews?.V2, 'V2 Figma 目标确认', work);
   insist(review.stage === 'V2' && review.purpose === 'target' && review.decision === 'APPROVED' && review.userMessageRef?.trim() && review.scope?.kind === 'full-object', 'V2 缺少当前完整目标的人工选择');
+  // 显示层先校验确认所依赖的宿主，避免重建授权错误掩盖具体的宿主或层类型不匹配。
+  if (work.workItemType === 'DISPLAY_LAYER') insist(review.hostId === work.visual.hostId && review.layerType === work.visual.layerType, '设计确认未绑定显示层宿主');
   const direct = work.visual?.designSource?.kind === 'figma-direct';
   if (direct) {
     insist(work.visual.designSource.userMessageRef?.trim() && work.visual.designSource.scope?.trim(), '其他路线须记录真实用户指令及范围');
@@ -292,7 +294,6 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
     insist(sameFigmaRef(repo, review.referenceTarget, doc.referenceTarget) && sameFigmaRef(repo, { path: review.targetRef, sha256: review.targetSha256 }, doc.referenceTarget), 'V2 确认未绑定源效果图');
     validateReconstruction(repo, work, snapshot, doc.referenceTarget, [review.visualSourceRef]);
   }
-  if (work.workItemType === 'DISPLAY_LAYER') insist(review.hostId === work.visual.hostId && review.layerType === work.visual.layerType, '设计确认未绑定显示层宿主');
   const approved = [{ ref: doc.figmaDesignRef, snapshot }];
   for (const extra of doc.additionalTargets ?? []) {
     const target = readFigmaSnapshot(repo, extra.figmaDesignRef, { projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId, candidateId: work.visual.candidateId, work });

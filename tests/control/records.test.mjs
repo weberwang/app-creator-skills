@@ -1,21 +1,16 @@
 import assert from 'node:assert/strict';
-import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import { mkdtemp, mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { syncBuiltinESMExports } from 'node:module';
 import { tmpdir } from 'node:os';
 import { dirname, resolve } from 'node:path';
 import test from 'node:test';
-import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/validation.mjs';
-import { advanceVisual, completeUnit, initializeWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
+import { completeUnit, initializeWork, loadWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
 import { validateEvidence } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
-import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/scripts/runtime/execution-batches.mjs';
-import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
+import { prepareFlutterModuleV5 } from './module-design-fixture.mjs';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
-
-const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
 /** 创建独立临时项目并准备可冻结的工作项。 */
 async function createFixture({ id = 'records-sample', type = 'FOUNDATION', state = 'REVIEW', stack = 'flutter' } = {}) {
@@ -50,17 +45,6 @@ async function put(repo, path, content = '用于测试的非空文件\n') {
 /** 将 JSON 记录写入临时项目并保留固定缩进。 */
 async function putJson(repo, path, value) {
   return put(repo, path, `${JSON.stringify(value, null, 2)}\n`);
-}
-
-/** 为视觉资源人工验收建立五项带文件依据的质量检查。 */
-async function createQualityChecks(repo, prefix) {
-  const checks = [];
-  for (const dimension of qualityDimensions) {
-    const evidenceRef = `${prefix}/${dimension}.txt`;
-    await put(repo, evidenceRef, `${dimension} 已检查。\n`);
-    checks.push({ dimension, status: 'PASS', evidenceRef });
-  }
-  return checks;
 }
 
 /** 生成最小计划单元，调用者可覆盖路径和批次字段。 */
@@ -297,120 +281,21 @@ test('RETURN 后使用新计划源和 evidenceRoot 可冻结同一工作项的�
 test('V4→V5 阶段归档能授权重计划，未作废历史包仍会阻断', async (t) => {
   const fixture = await createFixture({ id: 'visual-replan', type: 'PAGE', state: 'PROPOSAL' });
   t.after(() => rm(fixture.repo, { recursive: true, force: true }));
-  // 视觉阶段的历史包测试先实际完成 V1 工程证据，避免凭空构造功能基线。
-  let initial = await loadWork(fixture.repo, fixture.workPath);
-  initial.globalState = 'REVIEW';
-  await putJson(fixture.repo, fixture.workPath, initial);
-
-  const v1 = await start(fixture, [unit('function-v1', { type: 'PAGE' })]);
-  const v1Evidence = [];
-  for (const category of loadProfile(fixture.repo, 'flutter').evidenceRequirements.engineering) {
-    const path = `${v1.work.evidenceRoot}/function-${category}.txt`;
-    await put(fixture.repo, path, '合成 V1 工程证据');
-    v1Evidence.push({ category, path });
-  }
-  const v1Report = await writeReport(fixture, v1.work, 'function-v1', { evidence: v1Evidence });
-  await recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'function-v1', reportPath: v1Report.reportPath });
-  await completeUnit({ repo: fixture.repo, workItem: fixture.workPath, resultPath: v1.pack.executionUnits[0].resultPath });
-  initial = await loadWork(fixture.repo, fixture.workPath);
-  initial.gateStatus.F3 = 'PASS';
-  await putJson(fixture.repo, fixture.workPath, initial);
-  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'VALIDATING', args: {} });
-  await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'PASSED', args: {} });
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
-  let work = await loadWork(fixture.repo, fixture.workPath);
-  work.allowedPaths = ['lib'];
-  work.globalState = 'PASSED';
-  work.visual.stage = 'V4';
-  work.visual.candidateId = 'candidate-v3';
-  // 阶段归档测试仍须提供可追溯的 V2/V3 确认，不能绕过上游图像绑定。
-  const targetBytes = syntheticDesignPng('records-target');
-  const targetPath = await put(fixture.repo, 'reviews/target.png', targetBytes);
-  const targetSha = createHash('sha256').update(targetBytes).digest('hex');
-  const referenceTarget = { path: targetPath, sha256: targetSha };
-  for (const [name, stage, purpose] of [['V2', 'V2', 'target'], ['V3Decomposition', 'V3', 'decomposition'], ['V3Layout', 'V3', 'layout']]) {
-    const picturePath = name === 'V2' ? targetPath : await put(fixture.repo, `reviews/${name}.png`, name);
-    const pictureSha = name === 'V2' ? targetSha : createHash('sha256').update(name).digest('hex');
-    const reviewPath = `reviews/${name}.json`;
-    const review = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId, candidateId: work.visual.candidateId, stage, purpose, decision: 'APPROVED', userMessageRef: `chat://${name}`, targetRef: picturePath, targetSha256: pictureSha, referenceTarget };
-    if (name === 'V2') {
-      review.qualityChecks = await createQualityChecks(fixture.repo, 'reviews/v1-quality');
-      review.scope = { kind: 'full-object', designItemIds: [], conditionIds: [] };
-    }
-    if (name === 'V3Layout') {
-      const decompositionPath = work.visual.reviews.V3Decomposition.path;
-      const bytes = await readFile(resolve(fixture.repo, decompositionPath));
-      review.decompositionReviewRef = { path: decompositionPath, sha256: createHash('sha256').update(bytes).digest('hex') };
-    }
-    await putJson(fixture.repo, reviewPath, review);
-    work.visual.reviews[name] = { path: reviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, reviewPath))).digest('hex') };
-  }
-  for (const gate of ['F0', 'F1', 'F2', 'F3']) work.gateStatus[gate] = 'PASS';
-  const oldPackagePath = '.workflow-control/implementation-packages/visual-replan-v4.json';
-  const oldPlanPath = 'docs/v3-work-plan.json';
-  const manifestPath = `${work.evidenceRoot}/manifest.json`;
-  const pack = {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    workItemType: work.workItemType, visualStage: 'V4',
-    executionUnits: [{
-      unitId: 'v3', sequence: 1, type: 'PAGE', owner: 'visual-agent', paths: ['lib/page.dart'],
-      resultPath: `${work.evidenceRoot}/unit-v3.json`, acceptanceCommands: ['node --version'],
-    }],
-  };
-  pack.systemCoverage = createSystemCoverage(fixture.repo, work, pack.executionUnits);
-  await putPlan(fixture, oldPlanPath, [unit('v3', { type: 'PAGE', paths: ['lib/page.dart'] })]);
-  await putJson(fixture.repo, oldPackagePath, pack);
-  work.implementationPackageRef = { path: oldPackagePath };
-  work.planningRef = { path: oldPlanPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, oldPlanPath))).digest('hex') };
-  work.evidenceRef = { path: manifestPath };
-  const profile = loadProfile(fixture.repo, work.stack);
-  const items = [];
-  for (const category of [...profile.evidenceRequirements.engineering, ...(profile.evidenceRequirements.assetImport ?? [])]) {
-    const path = `${work.evidenceRoot}/engineering-${category}.txt`;
-    await put(fixture.repo, path, `${category} 已通过。\n`);
-    items.push({ category, status: 'PASS', path });
-  }
-  const componentPath = 'lib/page.dart';
-  const componentEvidencePath = `${work.evidenceRoot}/component-check.txt`;
-  await put(fixture.repo, componentPath, 'class Page {}\n');
-  await put(fixture.repo, componentEvidencePath, '原生组件已检查。\n');
-  const userMessageRef = 'chat://v3-assets-reviewed';
-  const assetReviewPath = 'reviews/v3-assets.json';
-  await putJson(fixture.repo, assetReviewPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4',
-    candidateId: work.visual.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef,
-    qualityChecks: await createQualityChecks(fixture.repo, 'reviews/v3-quality'),
-    assets: [{ assetId: 'native-page', assetType: 'native-component', output: componentPath, componentEvidenceRef: componentEvidencePath }],
-  });
-  work.assetReviewRef = { path: assetReviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, assetReviewPath))).digest('hex') };
-  const v3ReviewPath = 'reviews/v3-human-review.json';
-  await putJson(fixture.repo, v3ReviewPath, {
-    schemaVersion: '1.0', objectId: work.visual.objectId, candidateId: work.visual.candidateId,
-    stage: 'V4', purpose: 'imported-assets', decision: 'APPROVED', userMessageRef,
-  });
-  work.visual.reviews.V4 = { path: v3ReviewPath, sha256: createHash('sha256').update(await readFile(resolve(fixture.repo, v3ReviewPath))).digest('hex') };
-  await putJson(fixture.repo, manifestPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    implementationPackageRef: oldPackagePath, visualStage: 'V4', items,
-  });
-  // 阶段推进需要真实形状的完整执行状态及匹配的单元结果。
-  const commandOutput = await put(fixture.repo, `${work.evidenceRoot}/v4-command.log`, 'node --version\nv22\n');
-  await putJson(fixture.repo, pack.executionUnits[0].resultPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, implementationPackageRef: oldPackagePath,
-    unitId: 'v3', sequence: 1, status: 'PASS', exitCode: 0, files: [componentPath],
-    commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: commandOutput }],
-  });
-  await putJson(fixture.repo, `${work.evidenceRoot}/execution-state.json`, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, implementationPackageRef: oldPackagePath,
-    executionPlan: createExecutionPlanSnapshot(pack, { repo: fixture.repo }), units: [{ unitId: 'v3', sequence: 1, status: 'PASS' }], activeBatch: [],
-  });
-  await writeSingleDomainFixture(fixture.repo, work, 'V4');
-  await putJson(fixture.repo, fixture.workPath, work);
-
-  await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V5' });
-  work = await loadWork(fixture.repo, fixture.workPath);
+  // 在真实 V4 执行完成后进入 V5，验证阶段归档记录的包可以安全替换。
+  let oldPackagePath;
+  let v4EvidenceRoot;
+  const work = await prepareFlutterModuleV5(fixture, { beforeAdvance: async (passed) => {
+    oldPackagePath = passed.implementationPackageRef.path;
+    v4EvidenceRoot = passed.evidenceRoot;
+    assert.equal(passed.globalState, 'PASSED');
+    assert.equal((await readJson(fixture.repo, oldPackagePath)).visualStage, 'V4');
+  } });
   assert.equal(work.visual.stage, 'V5');
   assert.ok(work.invalidatedRefs.some((reference) => reference.path === oldPackagePath));
+  const archives = (await readdir(resolve(fixture.repo, v4EvidenceRoot))).filter((name) => /^archive-V4-.*\.json$/.test(name));
+  assert.equal(archives.length, 1);
+  const archive = await readJson(fixture.repo, `${v4EvidenceRoot}/${archives[0]}`);
+  assert.equal(archive.implementationPackageRef.path, oldPackagePath);
   // 移除直接失效索引，确认阶段归档本身也能证明该包已过期。
   work.invalidatedRefs = [];
   await putJson(fixture.repo, fixture.workPath, work);

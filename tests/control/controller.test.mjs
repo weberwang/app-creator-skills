@@ -17,6 +17,7 @@ import { writeSingleDomainFixture } from './single-domain-fixture.mjs';
 import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 import { collectIntegrationSystemSources } from '../../skills/app-workflow-control/scripts/runtime/integration-system-sources.mjs';
 import { coverageMappings } from './integration-coverage-fixture.mjs';
+import { moduleDesignItems } from './module-rules-fixture.mjs';
 
 import { createFixture, put, readWork, putJson, createQualityChecks, reviewRecord, putVisualReview, frozenReview, bindImplementation, submitPassingUnits, bindEvidence, runEngineeringStage, readyForRelease, approveRelease, prepareFormalVisualFixture } from './controller-fixture.mjs';
 
@@ -463,7 +464,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V1 到 V5 的控制器闭
   const moduleDesignPath = 'visual/home-module-design.json';
   await putJson(fixture.repo, moduleDesignPath, { schemaVersion: '1.0', workItemId: work.workItemId,
     modulePlanRef: work.visual.modulePlanRef, baselineRef: work.globalVisualBaselineRef,
-    entries: plan.entries.filter((entry) => entry.kind !== 'function').map((entry) => ({ kind: entry.kind, id: entry.id, targetRef, designRef: domain.figmaDesignRef })) });
+    entries: moduleDesignItems(plan).map((entry) => ({ ...entry, targetRef, designRef: domain.figmaDesignRef })) });
   work.visual.moduleDesignRef = await frozenReview(fixture.repo, moduleDesignPath);
   const moduleReviewPath = 'visual/home-module-review.json';
   await putJson(fixture.repo, moduleReviewPath, { schemaVersion: '1.0', workItemId: work.workItemId, stage: 'V2', decision: 'approved', userMessageRef: 'chat://module-design', subjectRef: work.visual.moduleDesignRef });
@@ -545,7 +546,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V1 到 V5 的控制器闭
   const v5State = resolve(fixture.repo, work.evidenceRoot, 'execution-state.json');
   const v5Bytes = await readFile(v5State);
   await rm(v5State);
-  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} }), /Execution State/);
+  await assert.rejects(transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} }), /Execution State|V5 模块验收证据文件不存在：.*execution-state\.json/);
   await writeFile(v5State, v5Bytes);
   const complete = await transitionWork({ repo: fixture.repo, workItem: fixture.workPath, to: 'COMPLETE', args: {} });
   assert.ok(complete.stage.endsWith('/COMPLETE'));
@@ -668,7 +669,7 @@ test('SCENE V2 推进必须逐目标验证真实领域合同及各自确认', as
   const moduleDesignPath = 'docs/scene-module-design.json';
   await putJson(fixture.repo, moduleDesignPath, { schemaVersion: '1.0', workItemId: missing.workItemId,
     modulePlanRef: missing.visual.modulePlanRef, baselineRef: missing.globalVisualBaselineRef,
-    entries: plan.entries.filter((entry) => entry.kind !== 'function').map((entry) => ({ kind: entry.kind, id: entry.id, targetRef: referenceTarget })) });
+    entries: moduleDesignItems(plan).map((entry) => ({ ...entry, targetRef: referenceTarget })) });
   missing.visual.moduleDesignRef = await frozenReview(fixture.repo, moduleDesignPath);
   const moduleReviewPath = 'docs/scene-module-review.json';
   await putJson(fixture.repo, moduleReviewPath, { schemaVersion: '1.0', workItemId: missing.workItemId, stage: 'V2', decision: 'approved', userMessageRef: 'user://scene-design', subjectRef: missing.visual.moduleDesignRef });

@@ -10,8 +10,9 @@ import { createExecutionPlanSnapshot } from '../../skills/app-workflow-control/s
 import { validateSamplePlan, validateSampleResult, freezeSampleResult, assertSampleResult, collectSampleReferences, collectSampleControlReferences } from '../../skills/app-workflow-control/scripts/runtime/production-samples.mjs';
 import { advanceVisual, completeUnit, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from '../../skills/app-workflow-control/scripts/runtime/records.mjs';
-import { bindEvidence, bindImplementation, frozenReview, put, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
-import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture } from './world3d-fixture.mjs';
+import { put, putJson, readWork } from './controller-fixture.mjs';
+import { attachWorld3DPhase, createWorld3DFixture } from './world3d-fixture.mjs';
+import { attachWorldModuleDesign, prepareWorldModule } from './world3d-completed-fixture.mjs';
 
 /** 构造覆盖一组模型或图片的样本、稳定批量执行单元。 */
 function units(basis, decisionRequired = true) {
@@ -365,35 +366,20 @@ test('未声明样本的普通任务不读取执行状态，已声明样本仍�
   assert.throws(() => collectSampleReferences(f.repo, f.work), /不是有效 JSON/);
 });
 
-/** 通过公共 V1 工程入口建立可供本测试复用的真实控制器快照。 */
+/** 用真实控制器完成基础视觉、V1 方案和 V2 场景设计，准备样本生产阶段。 */
 async function preparePublic(t) {
   const f = createWorld3DFixture(t, { productionRisk: 'high' });
   const initialized = await initializeWork({ repo: f.repo, args: { id: f.context.workItemId, stack: f.context.stack, type: 'SCENE', objective: '核对代表样本依赖', 'project-id': f.context.projectId, 'object-id': f.context.objectId, 'design-route': 'world-3d' } });
   const context = { repo: f.repo, workPath: initialized.metadata.workItemPath };
   let work = await readWork(context.repo, context.workPath);
-  work.globalState = 'REVIEW';
-  work.gateStatus.F0 = work.gateStatus.F1 = work.gateStatus.F2 = 'PASS';
-  await putJson(context.repo, context.workPath, work);
-
-  work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
-  work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
-  await putJson(context.repo, context.workPath, work);
-  const { packPath, units: initialUnits } = await bindImplementation({ ...context, work, stage: 'V1', unitPaths: ['src/game/function.ts'] });
-  await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'IMPLEMENTING', args: {} });
-  work = await readWork(context.repo, context.workPath);
-  await submitPassingUnits({ ...context, work, packPath, units: initialUnits });
-  await completeUnit({ repo: context.repo, workItem: context.workPath, resultPath: initialUnits[0].resultPath });
-  work = await readWork(context.repo, context.workPath);
-  await bindEvidence({ ...context, work, packPath, stage: 'V1' });
-  await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'VALIDATING', args: {} });
-  await transitionWork({ repo: context.repo, workItem: context.workPath, to: 'PASSED', args: {} });
-  work = await readWork(context.repo, context.workPath);
-  attachWorld3DPreflight(f, work);
+  work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
+  await prepareWorldModule(f, work);
   await putJson(context.repo, context.workPath, work);
   await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V2' });
   work = await readWork(context.repo, context.workPath);
   attachWorld3DPhase(f, 'V2', work);
+  attachWorldModuleDesign(f, work);
   await putJson(context.repo, context.workPath, work);
   await advanceVisual({ repo: context.repo, workItem: context.workPath, to: 'V3' });
   work = await readWork(context.repo, context.workPath);

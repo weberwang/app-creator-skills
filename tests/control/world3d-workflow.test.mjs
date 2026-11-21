@@ -11,7 +11,22 @@ import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/ru
 import { validateWorld3DProductionBasis, validateWorld3DStage } from '../../skills/app-workflow-control/scripts/runtime/world3d-contract.mjs';
 import { bindEvidence, bindImplementation, frozenReview, put, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
 import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture, syntheticCallbacks } from './world3d-fixture.mjs';
-import { prepareWorld3DStage } from './world3d-completed-fixture.mjs';
+import { attachWorldModuleDesign, prepareWorld3DStage, prepareWorldModule } from './world3d-completed-fixture.mjs';
+import { finishWorldFoundation } from './module-world-fixture.mjs';
+import { withModuleRules } from './module-rules-fixture.mjs';
+
+/** 为图片路线建立真实基础工程与模块方案，供跨路线防护测试使用。 */
+async function prepareImageModule(fixture, work) {
+  const candidate = structuredClone(work);
+  switchRoute(fixture, candidate, false);
+  work.globalVisualBaselineRef = candidate.globalVisualBaselineRef;
+  work.foundationVisualRef = await finishWorldFoundation(fixture, work.globalVisualBaselineRef, [], 'image');
+  work.visual.modulePlanRef = fixture.write('spec/image-module-plan.json', withModuleRules({
+    schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, dependencies: [],
+    entries: ['function', 'state', 'step'].map((kind) => ({ kind, id: `${kind}-one`, description: `测试 ${kind}`,
+      acceptance: '满足方案', requirementId: 'fixture-requirement-1', command: 'node --version' })),
+  }));
+}
 
 /** 通过公共控制器接口执行合成工程证据；不启动引擎或执行用户验收。 */
 async function runWorldEngineering({ repo, workPath }, stage) {
@@ -73,6 +88,10 @@ async function prepareRouteBaseline(t, world) {
   if (world) {
     work.visual.candidateId = f.context.candidateId;
     work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
+    await prepareWorldModule(f, work);
+    await putJson(context.repo, context.workPath, work);
+  } else {
+    await prepareImageModule(f, work);
     await putJson(context.repo, context.workPath, work);
   }
   await runWorldEngineering(context, 'V1');
@@ -89,7 +108,6 @@ async function prepareRouteBaseline(t, world) {
     work.visual.targets = [{ targetId: 'image-target' }];
   }
   work.globalState = 'REVIEW';
-  work.globalVisualBaselineRef = null;
   await putJson(context.repo, context.workPath, work);
   return { f, context };
 }
@@ -232,23 +250,17 @@ for (const returnScope of ['visual:V5', 'implementation']) test(`无图片 3D �
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
+  await prepareWorldModule(f, work);
   await putJson(context.repo, context.workPath, work);
   await runWorldEngineering(context, 'V1');
   work = await readWork(context.repo, context.workPath);
-  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /review|审查|确认/i);
   attachWorld3DPreflight(f, work);
-  const approvedRef = work.visual.domainEvidenceRef;
-  const noApproval = f.read(approvedRef);
-  delete noApproval.spaceApprovalRef;
-  work.visual.domainEvidenceRef = f.write('spec/world-preflight-no-approval.json', noApproval);
-  await putJson(context.repo, context.workPath, work);
-  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /approval|确认/i);
-  work.visual.domainEvidenceRef = approvedRef;
   await putJson(context.repo, context.workPath, work);
   await advanceVisual({ ...context, workItem: context.workPath, to: 'V2' });
 
   work = await readWork(context.repo, context.workPath);
   attachWorld3DPhase(f, 'V2', work);
+  attachWorldModuleDesign(f, work);
   await putJson(context.repo, context.workPath, work);
   await advanceVisual({ ...context, workItem: context.workPath, to: 'V3' });
   work = await readWork(context.repo, context.workPath);
@@ -324,6 +336,8 @@ test('图片路线通过的 V1 不能中途改成三维并继承功能基线', a
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
   await putJson(context.repo, context.workPath, work);
 
+  await prepareImageModule(f, work);
+  await putJson(context.repo, context.workPath, work);
   await runWorldEngineering(context, 'V1');
   await advanceVisual({ ...context, workItem: context.workPath, to: 'V2' });
   work = await readWork(context.repo, context.workPath);
@@ -347,7 +361,7 @@ test('三维场景不得经旧图片复用入口继承确认', async (t) => {
   }
 });
 
-test('三维 V1 进入 V2 前分别需要一次审查和人工空间确认', async (t) => {
+test('三维 V2 进入 V3 前分别需要一次审查和人工空间确认', async (t) => {
   const f = createWorld3DFixture(t);
   const initialized = await initializeWork({ repo: f.repo, args: { id: f.context.workItemId, stack: 'threejs', type: 'SCENE', objective: '验证三维前置', 'project-id': f.context.projectId, 'object-id': f.context.objectId, 'design-route': 'world-3d' } });
   const context = { repo: f.repo, workPath: initialized.metadata.workItemPath };
@@ -359,21 +373,43 @@ test('三维 V1 进入 V2 前分别需要一次审查和人工空间确认', asy
   work = await readWork(context.repo, context.workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
+  await prepareWorldModule(f, work);
   await putJson(context.repo, context.workPath, work);
   await runWorldEngineering(context, 'V1');
-  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /review|审查|确认/i);
   work = await readWork(context.repo, context.workPath);
-  attachWorld3DPreflight(f, work);
+  const v1Ref = work.visual.domainEvidenceRef;
+  const v1 = f.read(v1Ref);
+  const wrongSpace = { ...f.read(v1.spatialSpecRef), objectId: 'other-world' };
+  work.visual.domainEvidenceRef = f.write('spec/v1-wrong-space.json', { ...v1, spatialSpecRef: f.write('spec/wrong-space.json', wrongSpace) });
+  await putJson(context.repo, context.workPath, work);
+  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /空间规格\.objectId.*不一致/);
+  const run = f.read(v1.blockoutRunRef);
+  run.sceneRef = f.write('src/game/wrong-blockout.ts', '// 测试错误的白模绑定\n');
+  work.visual.domainEvidenceRef = f.write('spec/v1-wrong-run.json', { ...v1,
+    blockoutRunRef: f.write(`${work.evidenceRoot}/wrong-run.json`, run) });
+  await putJson(context.repo, context.workPath, work);
+  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /错绑|不匹配/);
+  work.visual.domainEvidenceRef = v1Ref;
+  await putJson(context.repo, context.workPath, work);
+  await advanceVisual({ ...context, workItem: context.workPath, to: 'V2' });
+  work = await readWork(context.repo, context.workPath);
+  attachWorld3DPhase(f, 'V2', work);
+  attachWorldModuleDesign(f, work);
   const approvedRef = work.visual.domainEvidenceRef;
+  const noReview = f.read(approvedRef);
+  delete noReview.reviewRef;
+  work.visual.domainEvidenceRef = f.write('spec/no-review.json', noReview);
+  await putJson(context.repo, context.workPath, work);
+  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V3' }), /review|审查|确认/i);
   const unapproved = f.read(approvedRef);
   delete unapproved.spaceApprovalRef;
   work.visual.domainEvidenceRef = f.write('spec/unapproved.json', unapproved);
   await putJson(context.repo, context.workPath, work);
-  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V2' }), /approval|确认/i);
+  await assert.rejects(advanceVisual({ ...context, workItem: context.workPath, to: 'V3' }), /approval|确认/i);
   work.visual.domainEvidenceRef = approvedRef;
   await putJson(context.repo, context.workPath, work);
-  await advanceVisual({ ...context, workItem: context.workPath, to: 'V2' });
-  assert.equal((await readWork(context.repo, context.workPath)).visual.stage, 'V2');
+  await advanceVisual({ ...context, workItem: context.workPath, to: 'V3' });
+  assert.equal((await readWork(context.repo, context.workPath)).visual.stage, 'V3');
 });
 
 test('三维方向 RETURN 保留空间审查和确认，但旧方向批准不能重新绑定', async (t) => {
@@ -407,7 +443,7 @@ for (const oldWorld of [false, true]) {
     work.globalState = 'IMPLEMENTING';
     await putJson(context.repo, context.workPath, work);
     await putJson(context.repo, 'spec/regression.json', { localRegression: true, visualImpact: 'none', reason: '合成重验' });
-    await assert.rejects(refreshFunctionBaseline({ repo: context.repo, workItem: context.workPath, specPath: 'spec/regression.json' }), /设计路线已变化/);
+    await assert.rejects(refreshFunctionBaseline({ repo: context.repo, workItem: context.workPath, specPath: 'spec/regression.json' }), /V1 模块方案/);
   });
 
   test(`${route} 不能经 RETURN 恢复沿用旧功能基线`, async (t) => {
@@ -438,6 +474,7 @@ for (const destination of ['V2', 'V4']) {
     work = await readWork(context.repo, context.workPath);
     work.visual.candidateId = f.context.candidateId;
     work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
+    await prepareWorldModule(f, work);
     await putJson(context.repo, context.workPath, work);
     const scope = {
       schemaVersion: '1.0', scopeId: 'production', projectId: work.projectId, stack: work.stack,
@@ -449,6 +486,10 @@ for (const destination of ['V2', 'V4']) {
     };
     work.productionScopeRef = f.write('spec/production.json', scope);
     work.productionBatchId = 'first';
+    const plan = f.read(work.visual.modulePlanRef);
+    plan.entries.find((entry) => entry.kind === 'state').id = 'ready';
+    plan.entries.find((entry) => entry.kind === 'step').id = 'walk';
+    work.visual.modulePlanRef = f.write('spec/production-module-plan.json', withModuleRules(plan));
     await putJson(context.repo, context.workPath, work);
     await runWorldEngineering(context, 'V1');
     work = await readWork(context.repo, context.workPath);
@@ -458,6 +499,7 @@ for (const destination of ['V2', 'V4']) {
     if (destination === 'V4') {
       work = await readWork(context.repo, context.workPath);
       attachWorld3DPhase(f, 'V2', work);
+      attachWorldModuleDesign(f, work);
       await putJson(context.repo, context.workPath, work);
       await advanceVisual({ ...context, workItem: context.workPath, to: 'V3' });
       work = await readWork(context.repo, context.workPath);

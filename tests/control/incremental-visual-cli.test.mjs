@@ -8,6 +8,8 @@ import { basename, dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { unityLayoutFixture, unityLayoutMeasurement } from './unity-text-fixture.mjs';
+import { prepareFormalVisualFixture } from './controller-fixture.mjs';
+import { confirmModuleDesignFixture } from './module-design-fixture.mjs';
 import { initializeWork, loadWork, advanceVisual, transitionWork, completeUnit, inspectVisualReuseSource } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 
 const controller = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
@@ -173,10 +175,12 @@ async function runStage(repo, path, stage, extraItems = [], beforePass) {
 }
 
 /** 以真实状态迁移完成当前场景的 V1，并冻结功能基线。 */
-async function runV1(repo, path, content) {
+async function runV1(repo, path, content, baselineRef) {
   let work = loadWork(repo, path);
   work.globalState = 'REVIEW'; work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS';
+  work.globalVisualBaselineRef = baselineRef;
   put(repo, path, work);
+  await prepareFormalVisualFixture({ repo, workPath: path });
 
   put(repo, 'Assets/Main.unity', content);
   put(repo, `Assets/Scripts/${work.workItemId}.cs`, '// 合成测试功能源码');
@@ -212,11 +216,13 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   const repo = temporaryProject(t);
   const init = async (id) => (await initializeWork({ repo, args: { id, stack: 'unity', type: 'SCENE', 'design-route': 'game-ui', objective: '合成场景测试', 'project-id': 'p1', 'object-id': 'Main' } })).metadata.workItemPath;
   const sourcePath = await init('first');
-  await runV1(repo, sourcePath, '首批场景源码');
+  const baselineRef = baseline(repo, loadWork(repo, sourcePath));
+  await runV1(repo, sourcePath, '首批场景源码', baselineRef);
   let source = loadWork(repo, sourcePath);
-  source.globalVisualBaselineRef = baseline(repo, source);
   source.visual.targets = [makeTarget(repo, 'old')];
   stageTargets(repo, source, 'V2'); put(repo, sourcePath, source);
+  await confirmModuleDesignFixture(repo, source, source.visual.targets.map((target) => ({ targetRef: target.referenceTarget })));
+  put(repo, sourcePath, source);
   await advanceVisual({ repo, workItem: sourcePath, to: 'V3' });
   source = loadWork(repo, sourcePath); stageTargets(repo, source, 'V3'); put(repo, sourcePath, source);
   const v3ReviewRef = source.visual.targets[0].reviews.V3Layout;
@@ -278,7 +284,7 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   source = loadWork(repo, sourcePath);
 
   const targetPath = await init('second');
-  await runV1(repo, targetPath, '第二批修改同一正式场景');
+  await runV1(repo, targetPath, '第二批修改同一正式场景', baselineRef);
   assert.equal(inspectVisualReuseSource(repo, source).status, 'PASS');
   let current = loadWork(repo, targetPath);
   const old = structuredClone(source.visual.targets[0]); old.reviews = {}; delete old.assetReviewRef;
@@ -289,13 +295,12 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
 
   const args = [controller, 'reuse-visual', '--repo', repo, '--work-item', targetPath, '--source-work-item', sourcePath, '--impact', 'implementation', '--reason', '合成未变化目标', '--target-ids', 'old'];
   const baselinePath = source.visual.functionBaselineRef.path;
-  const snapshot = JSON.parse(readFileSync(join(repo, baselinePath), 'utf8'));
-  const planPath = snapshot.work.implementationPackageRef.path;
+  const planPath = source.implementationPackageRef.path;
   const plan = JSON.parse(readFileSync(join(repo, planPath), 'utf8'));
   const result = JSON.parse(readFileSync(join(repo, plan.executionUnits[0].resultPath), 'utf8'));
   const logPath = result.commandOutputs[0].outputFile;
   const originalTarget = readFileSync(join(repo, targetPath));
-  // 共享业务场景可增量修改，但历史基线、V1 计划及真实命令输出必须保持原始身份。
+  // 共享业务场景可增量修改，但历史方案、V5 实施包及命令输出必须保持原始身份。
   for (const [path, action] of [[baselinePath, 'delete'], [baselinePath, 'alter'], [planPath, 'alter'], [logPath, 'alter']]) {
     const full = join(repo, path);
     const original = readFileSync(full);
@@ -322,6 +327,8 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   assert.equal(current.visual.coverageRef, undefined);
   await assert.rejects(advanceVisual({ repo, workItem: targetPath, to: 'V3' }), /缺少 V2 确认/);
   addReview(repo, current, current.visual.targets[1], 'V2'); saveCoverage(repo, current); put(repo, targetPath, current);
+  await confirmModuleDesignFixture(repo, current, current.visual.targets.map((target) => ({ targetRef: target.referenceTarget })));
+  put(repo, targetPath, current);
   await advanceVisual({ repo, workItem: targetPath, to: 'V3' });
   current = loadWork(repo, targetPath); stageTargets(repo, current, 'V3', { inherited: ['old'] }); put(repo, targetPath, current);
   await advanceVisual({ repo, workItem: targetPath, to: 'V4' });

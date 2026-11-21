@@ -1,6 +1,6 @@
 # Blender MCP 正式几何建模流程
 
-本流程只覆盖正式静态几何及其模型级技术证据。阶段安排沿用[现有工作流接入约定](./workflow-integration.md)，下游边界见[模型交接](./model-handoff.md)。实际 Blender MCP 工具名称、参数和能力以当前会话发现结果为准。
+选择 Blender 制作时使用本流程，覆盖正式静态几何及其模型级技术证据；本地模型复用和项目授权且可用的生成 API 按[公共模型来源与交接](../../app-3d-modeling/SKILL.md#模型来源与交接)处理。阶段安排沿用[现有工作流接入约定](./workflow-integration.md)，下游边界见[模型交接](./model-handoff.md)。实际 Blender MCP 工具名称、参数和能力以当前会话发现结果为准。
 
 ## 开始前
 

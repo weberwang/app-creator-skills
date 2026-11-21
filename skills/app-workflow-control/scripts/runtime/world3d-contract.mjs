@@ -4,7 +4,7 @@ import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from 
 import { withinEvidenceRoot, rawEvidence, runRecord, validateSceneReview, validateSceneApproval, moduleSceneEvidenceRoot } from './scene-design-contract.mjs';
 import { assertFrozenWorldHud, isWorldHudReturn } from './world3d-hud.mjs';
 import { reusedWorld3DAsset, withWorld3DModelReuse, world3DModelReuse } from './world3d-model-reuse.mjs';
-import { assertWorld3DModelProductionBasis } from './world3d-production-basis.mjs';
+import { assertWorld3DModelProductionBasis, assertWorld3DSpaceForHudReturn } from './world3d-production-basis.mjs';
 import { collectWorld3DFileSnapshotPaths, hasWorld3DFileSnapshot, isArchivedWorld3DSource, withLiveWorld3DFiles, withoutWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
 
 // 路线仅服务真实游戏世界；声明本身不证明场景已搭建或运行。
@@ -112,6 +112,7 @@ export function readWorld3DProductionEnvelope(repo, work) {
   insist(record.designRoute === 'world-3d' && STAGES.includes(record.stage), '场景领域合同路线或阶段错绑');
   for (const key of Object.keys(record)) insist(CONTRACT_FIELDS.has(key), `场景领域合同不支持字段 ${key}`);
   identifiers(record.scopeIds, 'scopeIds');
+  insist(record.blockoutRef !== undefined, '3D 场景必须绑定白模 blockoutRef');
   // 已完成来源中的旧式封套仍以当时强制验证的真实样本为准。
   const legacy = record.stage === 'V5' && record.productionRisk === undefined && record.modelReuseRef === undefined
     && record.sampleRef !== undefined && isArchivedWorld3DSource(repo, work);
@@ -129,7 +130,7 @@ export function readWorld3DContract(repo, work, stage) {
   const record = readWorld3DProductionEnvelope(repo, work);
   insist(record.stage === stage, '场景领域合同路线或阶段错绑');
   const required = ['spatialSpecRef', 'blockoutRef'];
-  if (record.blockoutRunRef || !work.visual.modulePlanRef) required.push('blockoutRunRef');
+  if (record.blockoutRunRef !== undefined || !work.visual.modulePlanRef) required.push('blockoutRunRef');
   if (STAGES.indexOf(stage) >= 1) required.push('reviewRef', 'spaceApprovalRef', 'directionRef', 'directionApprovalRef', 'functionBaselineRef');
   if (STAGES.indexOf(stage) >= 2) required.push('modelSpecRef');
   if (STAGES.indexOf(stage) >= 3) {
@@ -361,8 +362,9 @@ export function validateWorld3DBaseline(repo, work, record) {
 /** 验证世界设计前置；样本准备与正式阶段共同消费同一套确认和模型规格。 */
 function validateWorld3DUpstream(repo, work, contract, stage) {
   const spatial = spatialSpec(repo, work, contract);
+  if (stage === 'V2' && isWorldHudReturn(work) && work.visual.modelProductionBasisRef) assertWorld3DSpaceForHudReturn(repo, work, contract);
   if (work.visual.modulePlanRef) {
-    // V2 使用确认的空间和白模文件；可选运行仅用于专项验证。
+    // 3D 模块方案必须附白模，专项运行按实际风险安排。
     if (contract.blockoutRunRef) {
       const evidenceRoot = moduleSceneEvidenceRoot(repo, work, contract.blockoutRunRef);
       runRecord(repo, work, contract.blockoutRunRef, 'blockout', contract.blockoutRef, evidenceRoot, [contract.spatialSpecRef]);
@@ -403,7 +405,7 @@ function validateWorld3DProductionBasisInContext(repo, work) {
   assertWorld3DModelProductionBasis(repo, work, contract);
   if (contract.modelReuseRef !== undefined) world3dFile(repo, contract.modelReuseRef, '模型复用来源', work);
   for (const field of ['spatialSpecRef', 'blockoutRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionRef', 'directionApprovalRef', 'functionBaselineRef', 'modelSpecRef']) {
-    if (field === 'blockoutRunRef' && work.visual.modulePlanRef && !contract[field]) continue;
+    if (field === 'blockoutRunRef' && work.visual.modulePlanRef && contract[field] === undefined) continue;
     world3dFile(repo, contract[field], `场景领域合同.${field}`, work);
   }
   const { models } = validateWorld3DUpstream(repo, work, contract, 'V3');
@@ -474,9 +476,25 @@ export function validateWorld3DDesignPreflight(repo, work) {
   designReview(repo, work, contract);
   approval(repo, work, contract.spaceApprovalRef, {
     stage: 'V2', purpose: 'space-baseline', subjectRef: contract.spatialSpecRef,
-    basisRefs: [contract.blockoutRef, contract.blockoutRunRef, contract.reviewRef],
+    basisRefs: [contract.blockoutRef, contract.blockoutRunRef, contract.reviewRef].filter(Boolean),
   });
   return contract;
+}
+
+/** 进入 V2 前核对白模；已有 V1 执行通过时，绑定原证据根中的白模快照。 */
+export function freezeWorld3DModuleBlockout(repo, work) {
+  if (work.globalState !== 'PASSED') {
+    validateWorld3DStage(repo, work, 'V1');
+    return {};
+  }
+  return withWorld3DFileSnapshots(repo, work, { historical: true }, () => {
+    const { spatialSpecRef, blockoutRef, blockoutRunRef } = validateWorld3DStage(repo, work, 'V1');
+    return {
+      world3dBlockoutEvidenceRoot: work.evidenceRoot,
+      world3dBlockoutRefs: { spatialSpecRef, blockoutRef, ...(blockoutRunRef && { blockoutRunRef }) },
+      world3dSnapshotVersion: '1.0',
+    };
+  });
 }
 
 /** 返回冻结的空间覆盖身份；调用方仍须先校验该阶段的完整人工与工程证据。 */
@@ -518,12 +536,12 @@ export function collectWorld3DReferences(repo, work) {
     const { ref, control } = queued.shift();
     if (!ref?.path) continue;
     try {
-      const normalized = repoPath(repo, ref.path).relative;
-      const key = fileIdentityKey(repo, normalized);
+      const { relative: normalized, absolute } = repoPath(repo, ref.path);
+      // 路径已通过项目边界核对，可直接按同一规则折叠 Windows 大小写。
+      const key = process.platform === 'win32' ? normalized.toLowerCase() : normalized;
       found.set(key, normalized);
       if (!control || scanned.has(key)) continue;
       scanned.add(key);
-      const absolute = repoPath(repo, normalized).absolute;
       // 控制记录按内容解析，不能让任意扩展名绕过嵌套引用保护。
       if (!existsSync(absolute)) continue;
       const stat = lstatSync(absolute);

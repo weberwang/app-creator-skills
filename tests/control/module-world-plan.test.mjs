@@ -7,6 +7,7 @@ import test from 'node:test';
 import { advanceVisual, completeUnit, initializeWork, transitionWork } from '../../skills/app-workflow-control/scripts/runtime/workflow.mjs';
 import { bindEvidence, bindImplementation, put, putJson, readWork } from './controller-fixture.mjs';
 import { createWorld3DFixture } from './world3d-fixture.mjs';
+import { moduleDesignItems, withModuleRules } from './module-rules-fixture.mjs';
 
 /** 真实执行一个基础工程单元，证据中固定全局视觉清单。 */
 async function finishFoundation(f, baselineRef) {
@@ -44,7 +45,7 @@ async function finishFoundation(f, baselineRef) {
   return manifest;
 }
 
-test('三维模块按 V1 方案进入 V2，空间设计可无白模运行记录', async (t) => {
+test('三维模块须在 V1 提交白模，白模运行可按风险省略', async (t) => {
   const f = createWorld3DFixture(t);
   const { repo, context } = f;
   const direction = f.write('spec/global-direction.md', '仅供测试的全局方向\n');
@@ -58,14 +59,21 @@ test('三维模块按 V1 方案进入 V2，空间设计可无白模运行记录'
     objective: '验证三维模块设计阶段', 'project-id': context.projectId, 'object-id': context.objectId, 'design-route': 'world-3d' } });
   const workPath = initialized.metadata.workItemPath;
   let work = await readWork(repo, workPath);
-  const plan = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, dependencies: [],
+  const plan = withModuleRules({ schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, dependencies: [],
     entries: ['function', 'state', 'step'].map((kind) => ({ kind, id: `${kind}-one`, description: `测试 ${kind}`,
-      acceptance: '满足方案', requirementId: 'world-requirement', command: 'node --version' })) };
+      acceptance: '满足方案', requirementId: 'world-requirement', command: 'node --version' })) });
   const planRef = f.write('spec/module-plan.json', plan);
   work.foundationVisualRef = foundation;
   work.globalVisualBaselineRef = baseline;
   work.visual.modulePlanRef = planRef;
   work.gateStatus.F0 = work.gateStatus.F1 = 'PASS';
+  const { spatialSpecRef, blockoutRef } = f.contract;
+  const spatialBasis = { ...context, designRoute: 'world-3d', stage: 'V1', scopeIds: f.scopeIds, spatialSpecRef };
+  work.visual.candidateId = context.candidateId;
+  work.visual.domainEvidenceRef = f.write('spec/module-world-v1-without-blockout.json', spatialBasis);
+  await putJson(repo, workPath, work);
+  await assert.rejects(advanceVisual({ repo, workItem: workPath, to: 'V2' }), /blockoutRef/);
+  work.visual.domainEvidenceRef = f.write('spec/module-world-v1.json', { ...spatialBasis, blockoutRef });
   await putJson(repo, workPath, work);
   await advanceVisual({ repo, workItem: workPath, to: 'V2' });
   work = await readWork(repo, workPath);
@@ -73,7 +81,6 @@ test('三维模块按 V1 方案进入 V2，空间设计可无白模运行记录'
   assert.equal(work.evidenceRef, null);
   assert.equal(work.implementationPackageRef, null);
 
-  const { spatialSpecRef, blockoutRef } = f.contract;
   const review = f.write('reviews/module-space-review.json', { ...context, kind: 'world-3d-design-review',
     rounds: 1, status: 'COMPLETE', basisRefs: [spatialSpecRef, blockoutRef], issues: [] });
   const spaceApproval = f.write('reviews/module-space-approval.json', { ...context, stage: 'V2', purpose: 'space-baseline',
@@ -87,14 +94,18 @@ test('三维模块按 V1 方案进入 V2，空间设计可无白模运行记录'
   const stateDesign = f.write('spec/state-design.md', '合成状态的构图与反馈描述\n');
   const stepDesign = f.write('spec/step-design.md', '合成步骤的空间与时序描述\n');
   const design = f.write('spec/module-design.json', { schemaVersion: '1.0', workItemId: work.workItemId,
-    modulePlanRef: planRef, baselineRef: baseline, entries: [
-      { kind: 'state', id: 'state-one', targetRef: direction, designRef: stateDesign },
-      { kind: 'step', id: 'step-one', targetRef: spatialSpecRef, designRef: stepDesign },
-    ] });
+    modulePlanRef: planRef, baselineRef: baseline, entries: moduleDesignItems(plan).map((entry) => ({
+      ...entry, targetRef: entry.kind === 'step' ? spatialSpecRef : direction,
+      designRef: entry.kind === 'step' ? stepDesign : stateDesign,
+    })) });
   work.visual.moduleDesignRef = design;
   work.visual.moduleDesignReviewRef = f.write('reviews/module-design-confirm.json', { schemaVersion: '1.0',
     workItemId: work.workItemId, stage: 'V2', decision: 'approved', userMessageRef: 'test-only://design', subjectRef: design });
   assert.equal(f.read(work.visual.domainEvidenceRef).blockoutRunRef, undefined);
+  work.visual.hud = { scopeIds: ['late-hud'] };
+  await putJson(repo, workPath, work);
+  await assert.rejects(advanceVisual({ repo, workItem: workPath, to: 'V3' }), /HUD.*存在.*V1/);
+  delete work.visual.hud;
   const contract = f.read(work.visual.domainEvidenceRef);
   const unapproved = f.write('reviews/unapproved-direction.json', { ...context, stage: 'V2', purpose: 'visual-direction',
     decision: 'REJECTED', userMessageRef: 'test-only://rejected', subjectRef: direction, basisRefs: [spaceApproval] });

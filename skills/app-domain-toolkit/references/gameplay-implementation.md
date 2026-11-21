@@ -24,11 +24,11 @@
 
 ### 实现（cocos、phaser、threejs）
 
-按当前场景 Work Item 的阶段门推进玩法交付：V1 确认完整模块方案，按风险选择白模或原型；V2 生成并确认模块全部适用状态及进度稿，按[生产交接](game-design-exploration.md#production-handoff)安排 V3–V4。V5 消费适用的 V3/V4 产物完成正式组合及功能与视觉验收；现有机器合同限制按[工具边界](game-design-exploration.md#tooling-boundary)如实处理。foundation-only 的基础能力和跨场景 `INTEGRATION` 由控制面计划调度；不另建场景生命周期。
+按当前场景 Work Item 的阶段门推进玩法交付：V1 确认完整模块方案，3D 世界须建立或复用白模，2D 使用平面布局与正式工程；V2 生成并确认模块全部适用状态及进度稿，按[生产交接](game-design-exploration.md#production-handoff)安排 V3–V4。V5 消费适用的 V3/V4 产物完成正式组合及功能与视觉验收；现有机器合同限制按[工具边界](game-design-exploration.md#tooling-boundary)如实处理。foundation-only 的基础能力和跨场景 `INTEGRATION` 由控制面计划调度；不另建场景生命周期。
 
 ### 实现（cocos、phaser、threejs）
 
-3D 世界的 V1 白模在同一正式工程组织稳定 ID、层级、交互区和资源依赖，2D／UI 原型按实际风险选择；隔离实验说明迁入条件，不维护平行游戏。有效已有空间不为形式重搭；白模和功能验证不能单独作为正式场景完成证据。
+3D 世界的 V1 白模在同一正式工程组织稳定 ID、层级、交互区和资源依赖；隔离实验说明迁入条件，不维护平行游戏。有效已有空间不为形式重搭；白模和功能验证不能单独作为正式场景完成证据。
 
 ### 实现（cocos、phaser、threejs）
 

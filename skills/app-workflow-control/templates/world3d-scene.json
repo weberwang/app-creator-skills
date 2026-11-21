@@ -9,6 +9,5 @@
   "stage": "V1",
   "scopeIds": ["replace-with-scope-id"],
   "spatialSpecRef": { "path": "docs/replace-spatial-spec.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
-  "blockoutRef": { "path": "docs/replace-blockout-source.unity", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
-  "blockoutRunRef": { "path": ".workflow-control/evidence/replace-with-work-id/replace-blockout-run.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }
+  "blockoutRef": { "path": "docs/replace-blockout-source.unity", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" }
 }

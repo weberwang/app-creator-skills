@@ -1,6 +1,6 @@
 # 3D 角色建模、贴图、绑定与动画交接
 
-建模、贴图、绑定和动画源制作统一使用 Blender MCP。使用现有 Work Item、Implementation Package、V1-V5 和 F2/F3；下列清单是角色交接依据，不新增状态机、Schema 字段或审批阶段。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
+模型几何可来自本地复用、项目授权且可用的生成 API 或 Blender 制作；贴图、绑定和动画仍按各自 Blender MCP 流程制作。使用现有 Work Item、Implementation Package、V1-V5 和 F2/F3；下列清单是角色交接依据。模型与贴图继续执行[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)，角色在此基础上增加骨架、蒙皮和动作依赖。
 
 ## 职责与文件所有权
 
@@ -12,11 +12,11 @@
 | [动画](../../app-stack-unity/references/native-contracts.md#mode-unity-game-3d-animation) | 动作方案、Actions/曲线、NLA 使用范围、表演/节奏、根运动轨迹、事件标记、导出骨架动画烘焙和逐 Clip 动画导出 | 绑定输入只读，不改 rest pose、bind matrices、骨架名/层级、权重或控制 Rig；驱动已有 BlendShape 通道，不创建目标几何。结构缺陷退回绑定 |
 | Unity 集成单写者 | ModelImporter/TextureImporter、Avatar、AnimationClip 设置、Material/Renderer、角色内部 Animator 与资源级 Prefab | 由实施包明确到绑定/动画/集成负责人，执行[导入合同](./3d-character-unity-import.md)；玩法拥有触发、权威状态、命中/伤害和位移裁定，正式场景接入属于 V5 |
 
-各角色保存版本化派生 `.blend` 和可编辑依赖，原始输入只读。同一源、导出目标和 Unity 对象同时只允许一个写者；不能通过复制派生文件绕过网格/骨架所有权，也不能从纹理或动画派生文件覆盖正式蒙皮角色。项目内部可引用同一资产，但接收记录必须绑定实际文件和候选，不凭“最新版”猜测。
+进入 Blender 贴图或绑定工序时，先将本地或 API 的可回读模型按实际格式导入 Blender，建立版本化派生 `.blend`，回读网格、UV、法线和材质槽并记录来源及派生关系。各角色保存版本化派生 `.blend` 和可编辑依赖，原始输入只读。同一源、导出目标和 Unity 对象同时只允许一个写者；不能通过复制派生文件绕过网格/骨架所有权，也不能从纹理或动画派生文件覆盖正式蒙皮角色。项目内部可引用同一资产，但接收记录必须绑定实际文件和候选，不凭“最新版”猜测。
 
 ## 建模与贴图交给绑定
 
-- 角色/资源 ID、候选与实际 `.blend`、对象/Collection、运行时网格及当前导出、源路径与许可。
+- 角色/资源 ID、候选、实际来源、运行时网格、当前导出、源路径与许可；本地复用记录本地源，生成 API 记录实际输入、服务版本、可获取参数与原始输出，Blender 制作记录 `.blend` 源。进入绑定时提供经回读的版本化派生 `.blend` 和对象/Collection。
 - 单位、上轴/前轴、Pivot、变换、对称/拆件、三角化与法线/切线策略；明确关节、极限姿势、装备/附件、面部与变形需求。
 - 网格/顶点顺序、UV 通道、槽位/面分配、各 LOD 几何与用图、目标平台的骨数/权重/蒙皮预算，以及已有骨架/BlendShape 的来源和归属。
 - 按[模型与贴图共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)提供已有贴图、通道语义、Material/Shader 映射、颜色空间和烘焙基准；尚未制作的贴图明确标为待交及其责任人，不用占位图冒充正式贴图。网格/UV/槽位与变形范围已确定即可开展骨架/蒙皮，不以正式贴图完成作为绑定启动前置。材质连续性与最终角色外观验收须等待实际贴图后进行，绑定只读使用，不重新制作贴图。

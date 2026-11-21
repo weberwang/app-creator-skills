@@ -17,7 +17,7 @@
     "stage": { "enum": ["V1", "V2", "V3", "V4", "V5"] },
     "scopeIds": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
     "spatialSpecRef": { "$ref": "#/$defs/frozenRef" },
-    "blockoutRef": { "$ref": "#/$defs/frozenRef" },
+    "blockoutRef": { "$ref": "#/$defs/frozenRef", "description": "所有 3D 世界场景必须提交的白模来源" },
     "blockoutRunRef": { "$ref": "#/$defs/frozenRef" },
     "reviewRef": { "$ref": "#/$defs/frozenRef" },
     "spaceApprovalRef": { "$ref": "#/$defs/frozenRef" },

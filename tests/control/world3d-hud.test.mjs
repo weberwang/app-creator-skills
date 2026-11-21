@@ -15,6 +15,7 @@ import { validateWorld3DProductionBasis, world3dModelArchiveEvidenceRoot } from 
 import { assertFrozenWorldHud, captureWorldHudAssets, collectWorldHudReferences, validateWorldHud, validateWorldHudShape } from '../../skills/app-workflow-control/scripts/runtime/world3d-hud.mjs';
 import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture } from './world3d-fixture.mjs';
 import { putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
+import { attachWorldModuleDesign, prepareWorldModule } from './world3d-completed-fixture.mjs';
 import { validManifest } from '../../skills/threejs-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 
 /** 构造同一真实工作项下的合成 HUD 图片链，阶段确认都引用测试消息。 */
@@ -412,6 +413,11 @@ for (const scenario of ['V5', 'V3', 'firstV2', 'firstV4']) test(`公共控制器
   work = await readWork(f.repo, workPath);
   work.visual.candidateId = f.context.candidateId;
   work.visual.domainEvidenceRef = f.identity('spec/world-V1.json');
+  f.work = work;
+  attachHud(f, { stateId: 'default', viewport: { width: 1920, height: 1080 } });
+  const hudBaseline = work.visual.hud.globalVisualBaselineRef;
+  work.visual.hud = { scopeIds: ['persistent-controls'] };
+  await prepareWorldModule(f, work, [{ route: 'image', ref: hudBaseline }]);
   await putJson(f.repo, workPath, work);
   await runUnityEngineering(f, workPath, 'V1');
   work = await readWork(f.repo, workPath);
@@ -423,6 +429,7 @@ for (const scenario of ['V5', 'V3', 'firstV2', 'firstV4']) test(`公共控制器
   attachWorld3DPhase(f, 'V2', work);
   attachHud(f, { stateId: 'default', viewport: { width: 1920, height: 1080 } });
   attachUnityHudDomain(f, work, 'V2');
+  attachWorldModuleDesign(f, work);
   await putJson(f.repo, workPath, work);
   if (scenario === 'firstV2') {
     const previous = structuredClone(work.visual.hud);
@@ -432,6 +439,8 @@ for (const scenario of ['V5', 'V3', 'firstV2', 'firstV4']) test(`公共控制器
     reissueHudConfirmations(f, work, previous, 'V2');
     attachWorld3DPhase(f, 'V2', work);
     attachUnityHudDomain(f, work, 'V2');
+    // V2 返工使模块稿与用户确认失效，新稿绑定本次重新确认的 HUD 目标。
+    attachWorldModuleDesign(f, work, { suffix: '-first-v2-return' });
     work.gateStatus.F2 = 'PASS';
     await putJson(f.repo, workPath, work);
     await transitionWork({ repo: f.repo, workItem: workPath, to: 'REVIEW', args: { 'return-resolution': '重新确认 HUD 目标' } });

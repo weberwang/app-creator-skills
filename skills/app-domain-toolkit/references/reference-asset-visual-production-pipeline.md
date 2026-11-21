@@ -70,7 +70,7 @@ F2 的机器出口必须由确定性验证执行，并绑定当前 baseline/diff
 
 > 适用技术栈：cocos、phaser、threejs。
 
-3. V1 确认本批完整模块方案并按风险验证；3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模，2D 世界与 UI 按实际风险选用占位资源或白盒。
+3. V1 确认本批完整模块方案并按风险验证；3D 世界按[实现分流](game-design-exploration.md#implementation-routes)搭建或复用有效白模；2D 世界与 UI 使用平面布局和正式实现验证。
 
 > 适用技术栈：cocos、phaser、threejs。
 

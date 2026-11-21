@@ -17,6 +17,7 @@ import { attachFigmaAppFixture, writeFigmaFixture } from './figma-app-fixture.mj
 import { attachFlutterDesignFixture } from './flutter-design-fixture.mjs';
 import { reuseVisualReviews } from '../../skills/app-workflow-control/scripts/runtime/visual-reuse.mjs';
 import { prepareFormalVisualFixture } from './controller-fixture.mjs';
+import { confirmModuleDesignFixture } from './module-design-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 const expectedReviews = {
@@ -156,22 +157,7 @@ async function completeVisualSource(fixture, { regression = false } = {}) {
   const v2DomainPath = `.workflow-control/domain/${work.workItemId}-V2.json`;
   await putJson(fixture.repo, v2DomainPath, { ...domain, visualStage: 'V2' });
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, v2DomainPath);
-  const plan = JSON.parse(await readFile(resolve(fixture.repo, work.visual.modulePlanRef.path), 'utf8'));
-  const moduleDesignPath = `fixtures/${work.workItemId}/module-design.json`;
-  await putJson(fixture.repo, moduleDesignPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, modulePlanRef: work.visual.modulePlanRef,
-    baselineRef: work.globalVisualBaselineRef,
-    entries: plan.entries.filter((entry) => entry.kind !== 'function').map((entry) => ({
-      kind: entry.kind, id: entry.id, targetRef: domain.referenceTarget, designRef: domain.figmaDesignRef,
-    })),
-  });
-  work.visual.moduleDesignRef = await frozenReview(fixture.repo, moduleDesignPath);
-  const moduleReviewPath = `fixtures/${work.workItemId}/module-review.json`;
-  await putJson(fixture.repo, moduleReviewPath, {
-    schemaVersion: '1.0', workItemId: work.workItemId, stage: 'V2', decision: 'approved',
-    userMessageRef: 'test-message://module-design', subjectRef: work.visual.moduleDesignRef,
-  });
-  work.visual.moduleDesignReviewRef = await frozenReview(fixture.repo, moduleReviewPath);
+  await confirmModuleDesignFixture(fixture.repo, work, [{ targetRef: domain.referenceTarget, designRef: domain.figmaDesignRef }]);
   await putJson(fixture.repo, fixture.workPath, work);
   await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' });
   work = loadWork(fixture.repo, fixture.workPath);
@@ -461,9 +447,13 @@ test('Flutter 显示层更换宿主必须重新绑定实际运行证据和阶段
   attachFigmaAppFixture(fixture.repo, work, domain);
   await putJson(fixture.repo, domainPath, domain);
   work.visual.domainEvidenceRef = await frozenReview(fixture.repo, domainPath);
-  assert.doesNotThrow(() => assertVisualReview(fixture.repo, work, 'V5'));
   // 视觉证据更新不能替代新宿主的 V1 功能回归。
   assert.throws(() => assertFunctionBaseline(fixture.repo, work), /宿主|hostId/);
+  // 运行合同按新宿主登记方案，同时保留原功能冻结记录以单独检验回归要求。
+  const currentPlan = JSON.parse(await readFile(resolve(fixture.repo, work.visual.modulePlanRef.path), 'utf8'));
+  currentPlan.hostId = 'host-b';
+  work.visual.modulePlanRef = writeFigmaFixture(fixture.repo, 'proof/new-host-module-plan.json', currentPlan);
+  assert.doesNotThrow(() => assertVisualReview(fixture.repo, work, 'V5'));
   context.interactions[0].evidenceRef = { path: newEvidence.path, sha256: '0'.repeat(64) };
   await putJson(fixture.repo, runtimePath, context);
   domain.runtimeContextRef = await frozenReview(fixture.repo, runtimePath);
@@ -822,11 +812,26 @@ test('RETURN visual:V2/V3 清理失效继承后，恢复 REVIEW 仍可验证来�
       });
       assert.doesNotThrow(() => assertVisualReuse(fixture.repo, loadWork(fixture.repo, fixture.targetPath)));
 
+      let v2DomainRef;
+      if (scenario.stage === 'V3') {
+        // 继承只提供目标批准，当前模块须补齐 V2 清单并通过正式门禁才能测试 V3 返修。
+        const draft = loadWork(fixture.repo, fixture.targetPath);
+        v2DomainRef = await writeSingleDomainFixture(fixture.repo, draft, 'V2');
+        const domain = JSON.parse(await readFile(resolve(fixture.repo, v2DomainRef.path), 'utf8'));
+        await confirmModuleDesignFixture(fixture.repo, draft, [{ targetRef: domain.referenceTarget, designRef: domain.figmaDesignRef }]);
+        await putJson(fixture.repo, fixture.targetPath, draft);
+        await advanceVisual({ repo: fixture.repo, workItem: fixture.targetPath, to: 'V3' });
+        const enteredV3 = loadWork(fixture.repo, fixture.targetPath);
+        enteredV3.visual.domainEvidenceRef = writeFigmaFixture(fixture.repo, 'proof/return-v3-domain.json', { ...domain, visualStage: 'V3' });
+        await putJson(fixture.repo, fixture.targetPath, enteredV3);
+      }
+
       await transitionWork({
         repo: fixture.repo, workItem: fixture.targetPath, to: 'RETURN',
         args: { reason: '视觉阶段发生变化', 'affected-scope': `visual:${scenario.stage}` },
       });
       let returned = loadWork(fixture.repo, fixture.targetPath);
+      assert.equal(returned.visual.stage, scenario.stage);
       assert.equal(returned.visual.reuse.impact, scenario.impact);
       assert.deepEqual(returned.visual.reuse.inheritedReviews, scenario.inherited);
       assert.deepEqual(Object.keys(returned.visual.reviews).sort(), [...scenario.retained].sort());
@@ -837,6 +842,7 @@ test('RETURN visual:V2/V3 清理失效继承后，恢复 REVIEW 仍可验证来�
         assert.throws(() => assertVisualReuse(fixture.repo, returned), scenario.stage === 'V2' ? /RETURN 已作废引用/ : /未声明为可继承确认/);
         delete returned.visual.reviews[scenario.invalidatedReview];
       }
+      if (v2DomainRef) returned.visual.domainEvidenceRef = v2DomainRef;
       returned.gateStatus.F2 = 'PASS';
       await putJson(fixture.repo, fixture.targetPath, returned);
 

@@ -2,6 +2,7 @@ import { GATES, PROTECTED_ACTIONS, WORK_STAGES, TRANSITIONS, VERSION, VISUAL_STA
 import { existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { assertModuleRuntimeCoverage, readModulePlan } from './module-plan.mjs';
+import { moduleDesignInputRefs } from './module-design-targets.mjs';
 import { readFileSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, requireOneOf, requireText } from './validation.mjs';
@@ -26,7 +27,8 @@ import { getWorkSource } from './work-source.mjs';
 import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
 import { isFigmaApp, isDesignProposal, validateFigmaBaseline, selectedFigmaCandidate } from './figma-app-contract.mjs';
 import { isWorld3D, assertWorld3DShape, validateWorld3DStage, validateWorld3DBaseline, validateWorld3DModel, collectWorld3DReferences } from './world3d-contract.mjs';
-import { hasWorld3DFileSnapshotPath } from './world3d-file-snapshots.mjs';
+import { hasWorld3DFileSnapshotPath, world3DDesignInputRefs } from './world3d-file-snapshots.mjs';
+import { withWorld3DModelReuse } from './world3d-model-reuse.mjs';
 import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from './scene-design-contract.mjs';
 import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
@@ -176,10 +178,8 @@ export function collectWorkReferencePaths(work, repo) {
   }
   if (repo && work.visual?.moduleDesignRef?.path) {
     const manifest = readJson(repo, work.visual.moduleDesignRef.path, '模块视觉稿清单');
-    for (const entry of manifest.entries ?? []) {
-      collect(entry?.targetRef);
-      collect(entry?.designRef);
-    }
+    const designInputs = isWorld3D(work) ? world3DDesignInputRefs(manifest) : moduleDesignInputRefs(manifest);
+    designInputs.forEach(collect);
   }
   if (repo) paths.push(...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work));
   if (repo && work.implementationPackageRef?.path) {
@@ -488,7 +488,7 @@ export function assertVisualReview(repo, work, stage) {
     assertWorld3DShape(work);
     const contract = validateWorld3DStage(repo, work, stage, { validateEvidence, validateAssetReview: assertAssetReview });
     // UI 目标沿原合同验收，工程包与原生回调始终绑定真实世界宿主。
-    validateWorldHud(repo, work, stage, {
+    if (work.visual.hud !== undefined) validateWorldHud(repo, work, stage, {
       validateGlobalBaseline,
       validateDomainTarget: (root, _hud, target, phase) => validateDomainTarget(root, work, target, phase),
       validateAssetReview: (root, _hud, target) => assertAssetReview(root, work, target),
@@ -581,6 +581,11 @@ function verifySingleVisualFile(repo, identity, label) {
 
 /** 根据当前门禁判定产品质量和证据是否允许完成。 */
 export function assertReadyToPass(repo, work) {
+  return withWorld3DModelReuse(() => assertReadyToPassInContext(repo, work));
+}
+
+/** 同一次只读门禁共享模型来源核验；后续迁移仍重新读取来源及证据。 */
+function assertReadyToPassInContext(repo, work) {
   assertVisualReuse(repo, work);
   if (work.visual?.stage === 'V1') {
     assertGates(work, ['F0', 'F1', 'F2', 'F3']);

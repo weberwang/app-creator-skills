@@ -5,6 +5,73 @@ import { advanceVisual, completeUnit, initializeWork, transitionWork } from '../
 import { bindEvidence, bindImplementation, putJson, readWork, submitPassingUnits } from './controller-fixture.mjs';
 import { attachWorld3DPhase, attachWorld3DPreflight, createWorld3DFixture } from './world3d-fixture.mjs';
 import { finishWorldFoundation } from './module-world-fixture.mjs';
+import { moduleDesignItems, withModuleRules } from './module-rules-fixture.mjs';
+
+/** 用两个不同玩家机位和独立文件构造合成设计稿，HUD 沿用同一状态与视口目标。 */
+export function worldViewFixture(fixture, scopeIds, hud, suffix = '') {
+  const target = hud?.targets?.[0];
+  const stateId = target?.stateId ?? 'state-one';
+  const viewport = target?.viewport ?? { width: 1280, height: 720 };
+  const worldViews = [0, 1].map((index) => ({
+    viewId: `view-${index + 1}`,
+    scopeIds,
+    camera: { position: [index * 4, 2, 6], target: [0, 1, 0] },
+    stateId,
+    viewport,
+    designRef: fixture.write(`spec/world-view-${index + 1}${suffix}.txt`, `合成场景机位 ${index + 1} 的设计稿`),
+    ...(target && { hudTargetId: target.targetId }),
+  }));
+  return { worldViews, ...(target && { hudSourceRef: target.referenceTarget }) };
+}
+
+/** 按正式入口建立全局方向和 V1 模块方案，供三维生命周期用例复用。 */
+export async function prepareWorldModule(fixture, work, additionalBaselines = []) {
+  const blockoutRun = fixture.read(fixture.contract.blockoutRunRef);
+  fixture.contract.blockoutRunRef = fixture.write(fixture.contract.blockoutRunRef.path, { ...blockoutRun, evidenceRoot: work.evidenceRoot });
+  work.visual.domainEvidenceRef = fixture.write('spec/world-v1-plan.json', { ...fixture.contract, stage: 'V1' });
+  const originalContract = fixture.contract;
+  const originalWork = fixture.work;
+  attachWorld3DPhase(fixture, 'V2', structuredClone(work));
+  fixture.contract = originalContract;
+  fixture.work = originalWork;
+  work.foundationVisualRef = await finishWorldFoundation(fixture, fixture.baselineRef, additionalBaselines);
+  work.globalVisualBaselineRef = fixture.baselineRef;
+  const kinds = ['function', 'state', 'step', ...(additionalBaselines.length ? ['transition'] : [])];
+  work.visual.modulePlanRef = fixture.write('spec/module-plan.json', withModuleRules({
+    schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, dependencies: [],
+    entries: kinds.map((kind) => ({ kind, id: `${kind}-one`, description: `测试 ${kind}`,
+      acceptance: '满足方案', requirementId: 'fixture-requirement-1', command: 'node --version' })),
+  }));
+}
+
+/** 让 V2 的状态与步骤覆盖每个实际确认的世界或 HUD 稿件。 */
+export function attachWorldModuleDesign(fixture, work, { suffix = '' } = {}) {
+  const contract = fixture.read(work.visual.domainEvidenceRef);
+  const targets = [contract.directionRef, contract.spatialSpecRef];
+  if (work.visual.hud?.targets?.length) targets.push(work.visual.hud.targets[0].referenceTarget);
+  const plan = fixture.read(work.visual.modulePlanRef);
+  const designEntries = plan.entries.filter((entry) => ['state', 'step', 'transition', 'progress'].includes(entry.kind));
+  const entries = targets.map((targetRef, index) => ({
+    kind: designEntries[index].kind, id: designEntries[index].id, targetRef,
+    ...(index < 2 ? { designRef: fixture.write(`spec/module-${designEntries[index].kind}${suffix}.md`, `合成 ${designEntries[index].kind} 设计\n`) } : {}),
+  }));
+  // 沿用状态、步骤和 HUD 的既有目标，为其余机制及流程补齐同一场景设计依据。
+  const represented = new Set(entries.map(({ kind, id }) => JSON.stringify([kind, id])));
+  for (const item of moduleDesignItems(plan)) {
+    if (!represented.has(JSON.stringify([item.kind, item.id]))) {
+      entries.push({ ...item, targetRef: entries[0].targetRef, designRef: entries[0].designRef });
+    }
+  }
+  work.visual.moduleDesignRef = fixture.write(`spec/module-design${suffix}.json`, {
+    schemaVersion: '1.0', workItemId: work.workItemId, modulePlanRef: work.visual.modulePlanRef,
+    baselineRef: work.globalVisualBaselineRef, entries,
+    ...worldViewFixture(fixture, contract.scopeIds, work.visual.hud, suffix),
+  });
+  work.visual.moduleDesignReviewRef = fixture.write(`reviews/module-design${suffix}.json`, {
+    schemaVersion: '1.0', workItemId: work.workItemId, stage: 'V2', decision: 'approved',
+    userMessageRef: 'test-only://module-design', subjectRef: work.visual.moduleDesignRef,
+  });
+}
 
 /** 使用现有工程夹具执行本阶段命令与结果登记，保留真实的控制器校验链。 */
 export async function runWorld3DEngineering(context, stage, unitPaths, beforePassed) {
@@ -89,8 +156,8 @@ async function buildWorld3D(t, { stack = 'unity', fixture: existingFixture, befo
   work.globalVisualBaselineRef = fixture.baselineRef;
   const entries = ['function', 'state', 'step'].map((kind) => ({ kind, id: `${kind}-one`, description: `测试 ${kind}`,
     acceptance: '满足方案', requirementId: 'fixture-requirement-1', command: 'node --version' }));
-  const planRef = fixture.write('spec/module-plan.json', { schemaVersion: '1.0', workItemId: work.workItemId,
-    objectId: work.visual.objectId, dependencies: [], entries });
+  const planRef = fixture.write('spec/module-plan.json', withModuleRules({ schemaVersion: '1.0', workItemId: work.workItemId,
+    objectId: work.visual.objectId, dependencies: [], entries }));
   work.visual.modulePlanRef = planRef;
   await putJson(context.repo, context.workPath, work);
   await runWorld3DEngineering(context, 'V1', typeof v1UnitPaths === 'function' ? v1UnitPaths({ fixture, context, work }) : v1UnitPaths);
@@ -103,16 +170,7 @@ async function buildWorld3D(t, { stack = 'unity', fixture: existingFixture, befo
     if (stage === stopBeforeStage) return { ...context, fixture, work, ref: fixture.identity(context.workPath) };
     attachWorld3DPhase(fixture, stage, work);
     if (stage === 'V2') {
-      const stateDesign = fixture.write('spec/module-state.md', '合成状态设计\n');
-      const stepDesign = fixture.write('spec/module-step.md', '合成步骤设计\n');
-      work.visual.moduleDesignRef = fixture.write('spec/module-design.json', { schemaVersion: '1.0', workItemId: work.workItemId,
-        modulePlanRef: planRef, baselineRef: work.globalVisualBaselineRef, entries: [
-          { kind: 'state', id: 'state-one', targetRef: fixture.directionRef, designRef: stateDesign },
-          { kind: 'step', id: 'step-one', targetRef: fixture.contract.spatialSpecRef, designRef: stepDesign },
-        ] });
-      work.visual.moduleDesignReviewRef = fixture.write('reviews/module-design.json', { schemaVersion: '1.0',
-        workItemId: work.workItemId, stage: 'V2', decision: 'approved', userMessageRef: 'test-only://module-design',
-        subjectRef: work.visual.moduleDesignRef });
+      attachWorldModuleDesign(fixture, work);
     }
     await beforeEngineering?.({ fixture, context, work, stage });
     await putJson(context.repo, context.workPath, work);

@@ -521,16 +521,16 @@ node <skill-dir>/scripts/images-to-atlas.mjs --help
 <a id="mode-threejs-game-3d-modeling--threejs-游戏-3d-几何建模"></a>
 ### three.js 游戏 3D 几何建模
 
-把已确定的视觉与玩法规格制作成可编辑、可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。开始正式建模前阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)；涉及下游使用或修改时阅读[模型交接](./model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](./workflow-integration.md)。
+把已确定的视觉与玩法规格交接为可复查的正式静态几何；按当前 Work Item 将其交付为 three.js 运行模型，或仅作为明确要求烘焙装饰背景的源文件。选择 Blender 时阅读[Blender MCP 建模流程](./mcp-modeling-workflow.md)；本地模型复用或项目授权且可用的生成 API 按[公共模型来源与交接](../../app-3d-modeling/SKILL.md#模型来源与交接)执行。涉及下游使用或修改时阅读[模型交接](./model-handoff.md)；登记资源、安排阶段证据或进入运行接入时阅读[工作流接入](./workflow-integration.md)。
 
-范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V1–V5 阶段；V1 确认模块方案，V2 随模块稿确定模型几何规格，V3 制作路线并在有用时做 blockout，V4 按 模块任务的分类交付正式模型或烘焙源并核验，只有运行模型在 V5 验证 GLB 的真实消费；不另建 Work Item、状态机或确认阶段。
+范围、资源路径、执行权限、状态和风险门由唯一控制面 [app-workflow-control](../../app-workflow-control/SKILL.md) 约束。本技能可提议、审查，并在当前 WorkItem（工作项）范围内修改；完成后回到控制面提交实际文件与证据，不另建或复制控制状态。本技能与[三维模型与关卡管线](#mode-threejs-game-model-pipeline)共用当前 Work Item、资源清单和 V1–V5 阶段；V1 确认模块方案，V2 确认空间方案、适用状态及本轮二维元素设计，V3 按三维空间确定模型单元、来源及规格，V4 按模块任务分类交付正式模型或烘焙源并核验，运行模型在 V5 验证 GLB 的真实消费。
 
 <a id="mode-threejs-game-3d-modeling--职责与路由"></a>
 #### 职责与路由
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
 - 几何、拓扑、UV、材质槽结构和适用的 LOD 网格由本技能负责。PBR 贴图由 `app-3d-texturing` 负责，骨架及动作交对应能力，模型管线负责资源导入和运行消费。
-- 正式几何建模按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 使用 Blender MCP；主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
+- 正式模型按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 选择本地复用、授权且可用的生成 API 或 Blender；选用 Blender 时按其实时 MCP 能力制作。主代理负责规格、任务包、集成和最终验证。只有明确需要生成或编辑图片时才调用 `image_generator`。
 - 源 `.blend` 保持只读；所有建模修改写入获准路径中的版本化派生文件。同一 `.blend`、MCP 会话和目标导出路径保持单一写者，修改与保存按顺序执行。使用 Blender MCP 前实时发现可用工具和参数，不假定固定命令、API 或导出能力。
 
 目标使用正式模型但不改几何时，走现有模型管线的资源接入或优化流程；本技能只在当前 Work Item 明确包含几何生产或修改时承担建模职责。
@@ -827,7 +827,7 @@ setBannerVisibility(slotId, visible): Promise<BannerVisibilityResult> // 展示�
 <a id="mode-threejs-game-model-pipeline--模型生产交接"></a>
 #### 模型生产交接
 
-用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用经 V1 验证及人工确认的整体白模、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。读取 [Blender 模型生产合同](./blender-model-production.md)，将题材、风格、面数和贴图预算写入当前实施包；实际几何、拓扑、法线、UV、槽位、LOD 网格、碰撞代理和静态导出按 [`app-3d-modeling`](../../app-3d-modeling/SKILL.md) 执行，PBR 贴图生产交 `app-3d-texturing`。本管线消费交付物并负责导入和运行；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
+用户要求生成新模型时，在当前资源或场景 Work Item 内按 **按需参考 → 正式几何交接 → 按需制作 PBR/AI 贴图 → 人工模型审查** 编排。world-3d 使用 V1 白模、已确认的空间方案、V2 正式方向和 V3 模型规格；参考图按需，图片路线及已冻结的图片要求保持原合同。选择 Blender 时读取 [Blender 模型生产合同](./blender-model-production.md)；将题材、风格、面数和贴图预算写入当前实施包，模型来源、实际几何、拓扑、法线、UV、槽位、LOD 网格、碰撞代理和静态导出按 [`app-3d-modeling`](../../app-3d-modeling/SKILL.md) 执行，PBR 贴图生产交 `app-3d-texturing`。本管线消费交付物并负责导入和运行；图像生成与编辑交给 `image_generator`。已提供有效参考或多视图时复用，不重复生成；不需要新几何的已有模型接入直接执行下述接入流程。
 
 贴图、烘焙、绑定/动画或接入任务先读取[模型交接](./model-handoff.md)。沿用交付网格、实际 UV 位置、槽位与 LOD 用图策略；下游不擅自重展 UV、改顶点顺序、重排槽位或覆盖建模源。几何缺陷交回建模责任人，在同一工作项内局部修复和复验。
 

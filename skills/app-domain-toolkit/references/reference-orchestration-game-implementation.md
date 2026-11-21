@@ -2,7 +2,7 @@
 
 执行公共规则时，同时读取当前技术栈参考中的原生补充和“本栈配套资料”。各段仅适用于标注的技术栈；结构化证据不代替用户对显示效果的人工验收。
 
-各技术栈统一使用 V1–V5；V1 按[内容分流](game-design-exploration.md#implementation-routes)验证功能，3D 世界先白模，2D／UI 的额外原型按需；整体人工确认后正式生产。下文图片／拆解机器要求仍按[工具边界](game-design-exploration.md#tooling-boundary)如实执行，不把新说明视为机器已支持。
+各技术栈统一使用 V1–V5；V1 按[内容分流](game-design-exploration.md#implementation-routes)验证功能，3D 世界先建立或复用白模，2D 按平面布局和正式工程验证，禁止白模；整体人工确认后正式生产。下文图片／拆解机器要求仍按[工具边界](game-design-exploration.md#tooling-boundary)如实执行，不把新说明视为机器已支持。
 
 ## 游戏实现规则
 
@@ -92,7 +92,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-2. 公共 V1 定义完整模块方案、状态、进度、输入、规则和反馈，按需验证风险；可以直接实现正式功能，也可按需使用低保真草图或白盒，2D／UI 不强制三维白模。指定效果图还原时，第 4 阶段确认全局方向，模块 V2 生成并确认覆盖适用状态和进度的 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认仅接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
+2. 公共 V1 定义完整模块方案、状态、进度、输入、规则和反馈，按需验证风险；3D 世界须提交白模并按风险运行；2D 与纯界面任务直接验证正式功能，按需使用静态草图。指定效果图还原时，第 4 阶段确认全局方向，模块 V2 生成并确认覆盖适用状态和进度的 scene master/reference target、宿主上下文、参考身份、视口、状态、对比条件和还原草案，并声明 `visual_validation.mode=usability|exact`（默认 `usability`）。默认仅接受已声明适配或已确认目标容差内的位置、尺寸、边距和换行变化；改变产品方向、玩法语义或上游结构，或明确要求 `exact` 时处理相应用户决定。
 
 > 适用技术栈：cocos、phaser、threejs。
 

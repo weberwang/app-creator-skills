@@ -96,6 +96,6 @@ export function invalidateWorld3DVisual(repo, work, scope, invalidatedRefs) {
 export function assertFunctionDesignRoute(work, snapshot) {
   const source = snapshot.designRoute ?? snapshot.work?.visual?.designRoute;
   if ((source ?? null) !== (work.visual?.designRoute ?? null)) throw new WorkflowError('功能基线设计路线已变化，必须重新验证 V1');
-  if (isWorld3D(work) && snapshot.mode === 'dependencies') throw new WorkflowError('3D 世界必须有本场景白模运行，不能仅用非视觉模块依赖替代');
+  if (isWorld3D(work) && snapshot.mode === 'dependencies') throw new WorkflowError('3D 世界须核对本场景空间依据，不能仅用非视觉模块依赖替代');
   if (isWorld3D(work) && snapshot.mode !== 'module-plan') assertFrozenWorldHud(work, snapshot);
 }

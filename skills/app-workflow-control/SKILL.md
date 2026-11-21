@@ -14,7 +14,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 - [通用七阶段](../app-creator-workflow/references/workflow.md#七阶段)从商业立项到模块集成与整体验收。阶段 ID、类型和状态由控制器检查。PROJECT 可按 `init --stage commercial-initiation|requirements-scope|global-baseline` 建立对应策划工作项；MODULE 属于模块实现；`INTEGRATION` 的 `feature` 属于跨模块集成，`final` 属于整体验收。发布是独立明确委托的工作项。
 - `SCENE`、`PAGE`、`DISPLAY_LAYER` 各有独立 Work Item。第 4 阶段确认并冻结全局视觉方向。第 5 阶段 V1 确认完整模块方案，V2 生成并确认全状态和进度稿，V3 拆解同一确认稿，V4 准备资源和接口，V5 完整实现与模块验收。Flutter、Expo 默认使用 [Figma App 路线](../app-ui-layout/references/figma-app-design.md)，ESP32 按硬件约束选用；游戏图片与无图 3D 沿用各自证据合同。
   多个 `PAGE` 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选择代表页、复用共享部分并按依赖调度；各对象阶段独立，不默认全页同步。实施包内的批次门禁只约束该包的执行单元，不构成不同页面必须同步推进的要求。
-  按需采用[轻量原型](../app-creator-workflow/references/readable-functional-prototype.md)验证风险。所有正式视觉对象按[模块阶段门禁](references/version-visual-gate.md)绑定第 4 阶段确认来源与 V1 方案。V2 核对全部状态与进度后进 V3。改模块稿回 V2，改共享视觉方向回第 4 阶段。
+  按需采用[轻量原型](../app-creator-workflow/references/readable-functional-prototype.md)验证风险。所有正式视觉对象按[模块阶段门禁](references/version-visual-gate.md)绑定第 4 阶段确认来源与 V1 方案；进入 V2 前确定机制、状态、流程和适用组合规则，未决实质规则做 grilling。V2 核对全部状态与进度后进 V3。改模块稿回 V2，改共享视觉方向回第 4 阶段。
 - A0–A6 区分只读调查、规格、原型、生产实现、本地集成、外部状态/设备与发布风险。A4–A6 的外部写入、设备、签名、上传、付费和发布操作必须绑定精确动作、对象与真实用户消息引用。JSON 只追溯决策，不能自行证明身份或授权，也不能让 CLI 执行动作。
 - F0–F4 保存需求范围、规格、领域质量、工程验证和高影响审批事实。PASS 只可在实际调查、证据和人工确认支持时记录；空文件、过期工作项或错栈证据不算通过。
 - 结构完成、工程通过和用户人工确认的视觉通过按[验收结论](../app-creator-workflow/references/verification.md#三类验收结论)分别报告；这是对已有证据的解释，不增加控制器状态或字段。节点、参数、测试和截图采集结果不能代替用户确认，机器检查不证明显示效果通过。
@@ -22,7 +22,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 
 ## 工作项和文件
 
-游戏 3D 世界可显式选择[无图场景路线](references/world3d-scenes.md)：`init --design-route world-3d`，仅用于五游戏栈 SCENE。它以真实白模、单次审查、人工空间／方向确认、模型规格、导入与运行记录替代图片目标和 V3 两图硬门；不改变 2D、UI 或 Figma 默认流程。以下游戏三候选及多图条款针对原图片路线，不强加到 world-3d；原工程门和用户最终显示确认保持。世界模型不伪装成原生 UI。
+游戏 3D 世界可显式选择[无图场景路线](references/world3d-scenes.md)：`init --design-route world-3d`，仅用于五游戏栈 SCENE。它以 V1 必需的白模、空间规格、单次审查、人工空间／方向确认、模型规格、导入与运行记录替代图片目标和 V3 两图硬门；不改变 2D、UI 或 Figma 默认流程。以下游戏三候选及多图条款针对原图片路线，不强加到 world-3d；原工程门和用户最终显示确认保持。世界模型不伪装成原生 UI。
 
 游戏 `SCENE` 默认使用 `world-2d`，纯界面场景使用 `init --design-route game-ui`。二维世界可用 `visual.sceneDesignRef:{path,sha256}` 引用[二维空间合同](schemas/world2d-scene.schema.json)，三维世界沿用其场景合同。V1 确认模块空间、状态、进度与验收方案，按风险选择原型、运行验证及必要的空间确认；V2 制作并确认模块稿，V5 验证实际运行。
 

@@ -1,7 +1,10 @@
 import { statSync } from 'node:fs';
 import { fileIdentityKey, readJson, repoPath, WorkflowError } from './io.mjs';
 import { productionIdentity } from './production-scope.mjs';
+import { moduleDesignTargets } from './module-design-targets.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
+import { world3dFile } from './world3d-contract.mjs';
+import { withWorld3DFileSnapshots, world3DFileIdentity } from './world3d-file-snapshots.mjs';
 
 /** 比较冻结文件的路径和摘要，路径的大小写规则与项目控制面一致。 */
 function sameRef(repo, left, right) {
@@ -21,14 +24,17 @@ function frozenJson(repo, ref, label) {
 }
 
 /** 将当前对象已经经过原生阶段门确认的目标整理为实际设计对。 */
-function approvedDesigns(repo, work) {
+function approvedDesigns(repo, work, worldContract, manifest) {
   const visual = work.visual;
-  if (visual.designRoute === 'world-3d') {
-    const contract = frozenJson(repo, visual.domainEvidenceRef, '三维场景合同');
-    const world = [contract.directionRef, contract.spatialSpecRef].filter(Boolean)
+  if (worldContract) {
+    const world = [worldContract.directionRef, worldContract.spatialSpecRef].filter(Boolean)
       .map((targetRef) => ({ targetRef, world: true }));
     const hud = (visual.hud?.targets ?? []).map((target) => ({ targetRef: target.referenceTarget }));
-    return [...world, ...hud];
+    // 整组 V2 用户确认已绑定清单摘要，同一文件兼作 HUD 与场景二维稿时登记一个目标即可。
+    const scene2d = (manifest.scene2dDesignRefs ?? [])
+      .filter((ref) => !hud.some(({ targetRef }) => sameRef(repo, ref, targetRef)))
+      .map((targetRef) => ({ targetRef }));
+    return [...world, ...hud, ...scene2d];
   }
   if (work.workItemType === 'SCENE') {
     return (visual.targets ?? []).map((target) => ({ targetRef: target.referenceTarget }));
@@ -56,16 +62,20 @@ function matchesDesign(repo, entry, design) {
     && (!entry.designRef || sameRef(repo, entry.designRef, design.designRef)));
 }
 
-/** 三维状态规格必须是独立设计工件，控制记录不能冒充画面或时序。 */
-function assertWorldStateArtifact(repo, work, entry) {
-  const path = productionIdentity(repo, entry.designRef, '三维状态设计');
-  const actual = statSync(repoPath(repo, path).absolute, { bigint: true });
-  const contract = frozenJson(repo, work.visual.domainEvidenceRef, '三维场景合同');
-  const reserved = [entry.targetRef, work.visual.modulePlanRef, work.globalVisualBaselineRef, work.foundationVisualRef,
+/** 空间、方向及审批是设计依据，不能登记为独立视角稿。 */
+function worldControlRefs(work, contract) {
+  return [work.visual.modulePlanRef, work.globalVisualBaselineRef, work.foundationVisualRef,
     work.visual.functionBaselineRef, contract.blockoutRunRef,
     work.visual.moduleDesignRef, work.visual.moduleDesignReviewRef, work.visual.domainEvidenceRef,
     contract.directionRef, contract.spatialSpecRef, contract.reviewRef,
     contract.spaceApprovalRef, contract.directionApprovalRef].filter(Boolean);
+}
+
+/** 三维状态规格必须是独立设计工件，控制记录不能冒充画面或时序。 */
+function assertWorldStateArtifact(repo, work, contract, entry) {
+  const path = productionIdentity(repo, entry.designRef, '三维状态设计');
+  const actual = statSync(repoPath(repo, path).absolute, { bigint: true });
+  const reserved = [entry.targetRef, ...worldControlRefs(work, contract)];
   for (const ref of reserved) {
     productionIdentity(repo, ref, '三维状态设计来源');
     const source = statSync(repoPath(repo, ref.path).absolute, { bigint: true });
@@ -80,7 +90,71 @@ function assertWorldStateArtifact(repo, work, entry) {
   }
 }
 
-/** V2 的模块稿按 V1 全部状态和流程项目逐项核对并绑定用户确认。 */
+/** 相机采用可对照场景的三维坐标，拒绝非数值或指向自身的机位。 */
+function cameraPoint(value) {
+  return Array.isArray(value) && value.length === 3 && value.every(Number.isFinite);
+}
+
+/** 核对设计文件并保留其物理身份，以便识别重复使用和控制记录别名。 */
+function assertIndependentWorldDesign(repo, ref, label, reservedFiles) {
+  const path = productionIdentity(repo, ref, label);
+  const file = world3DFileIdentity(repo, path);
+  if (reservedFiles.has(file)) throw new WorkflowError(`${label}须绑定独立设计稿`);
+  reservedFiles.add(file);
+}
+
+/** 二维内容可独立出稿；世界上下文预览按需登记并核对适用的共享 HUD。 */
+function assertWorldSupplementalDesigns(repo, work, contract, design) {
+  const { worldViews = [], scene2dDesignRefs = [], hudSourceRef } = design;
+  if (!Array.isArray(worldViews)) throw new WorkflowError('三维 V2 上下文预览 worldViews 必须为数组');
+  if (!Array.isArray(scene2dDesignRefs)) throw new WorkflowError('三维场景二维内容设计稿 scene2dDesignRefs 必须为数组');
+  if (!worldViews.length && !scene2dDesignRefs.length && hudSourceRef === undefined) return;
+  const hud = work.visual.hud;
+  const hudTargets = hud?.targets ?? [];
+  const controlRefs = [...worldControlRefs(work, contract), contract.blockoutRef, hud?.globalVisualBaselineRef, hud?.coverageRef,
+    ...hudTargets.flatMap((target) => [target.domainEvidenceRef, ...Object.values(target.reviews ?? {})])];
+  const reservedFiles = new Set(controlRefs.filter(Boolean).map((ref) => world3DFileIdentity(repo, ref.path)).filter(Boolean));
+  const needsHudSource = hud && (worldViews.length > 0 || hudSourceRef !== undefined);
+  const hudSource = needsHudSource ? world3DFileIdentity(repo, productionIdentity(repo, hudSourceRef, '三维共用 HUD 源')) : undefined;
+  if (hudSource && reservedFiles.has(hudSource)) throw new WorkflowError('三维共用 HUD 必须引用独立界面源');
+  if (!hud && hudSourceRef !== undefined) throw new WorkflowError('没有常驻 HUD 的三维场景不能登记 HUD 源');
+  // 同一张二维设计可以覆盖 HUD 与游戏元素；机位预览仍须引用自己的世界层文件。
+  for (const ref of scene2dDesignRefs) assertIndependentWorldDesign(repo, ref, '三维场景二维内容设计稿', reservedFiles);
+  if (hudSource) reservedFiles.add(hudSource);
+  const viewIds = new Set();
+  for (const target of hudTargets) reservedFiles.add(world3DFileIdentity(repo, target.referenceTarget.path));
+  const hudByState = new Map();
+  for (const view of worldViews) {
+    const { viewId, camera, scopeIds, stateId, viewport, designRef, hudTargetId } = view ?? {};
+    if (typeof viewId !== 'string' || !viewId.trim() || viewIds.has(viewId)) throw new WorkflowError('三维机位 viewId 必须非空且唯一');
+    viewIds.add(viewId);
+    if (!cameraPoint(camera?.position) || !cameraPoint(camera?.target) || camera.position.every((coordinate, index) => coordinate === camera.target[index])) {
+      throw new WorkflowError(`三维机位 ${viewId} 需要有效的相机位置和目标`);
+    }
+    if (!Array.isArray(scopeIds) || !scopeIds.length || new Set(scopeIds).size !== scopeIds.length || scopeIds.some((id) => !contract.scopeIds?.includes(id))) {
+      throw new WorkflowError(`三维机位 ${viewId} 必须绑定当前场景范围`);
+    }
+    const { width, height } = viewport ?? {};
+    if (typeof stateId !== 'string' || !stateId.trim() || ![width, height].every((value) => Number.isInteger(value) && value > 0)) {
+      throw new WorkflowError(`三维机位 ${viewId} 缺少实际状态或视口`);
+    }
+    assertIndependentWorldDesign(repo, designRef, `三维机位 ${viewId} 设计稿`, reservedFiles);
+    if (!hud) {
+      if (hudTargetId !== undefined) throw new WorkflowError('没有常驻 HUD 的三维机位不能登记 HUD 目标');
+      continue;
+    }
+    const target = hudTargets.find((item) => item.targetId === hudTargetId);
+    if (!target || target.stateId !== stateId || target.viewport?.width !== width || target.viewport?.height !== height) {
+      throw new WorkflowError(`三维机位 ${viewId} 的 HUD 目标必须匹配当前状态与视口`);
+    }
+    // 同一状态和视口下，机位变化只改变世界取景，界面须复用同一目标。
+    const state = JSON.stringify([stateId, width, height]);
+    if (hudByState.has(state) && hudByState.get(state) !== hudTargetId) throw new WorkflowError('同状态同视口的三维机位必须共用同一 HUD 目标');
+    hudByState.set(state, hudTargetId);
+  }
+}
+
+/** V2 的模块稿按冻结的 V1 要素、机制、状态和流程逐项核对并绑定用户确认。 */
 export function assertModuleVisualDesign(repo, work, plan) {
   const visual = work.visual;
   const design = frozenJson(repo, visual?.moduleDesignRef, '模块设计稿清单');
@@ -95,28 +169,46 @@ export function assertModuleVisualDesign(repo, work, plan) {
     || review.stage !== 'V2' || review.decision !== 'approved'
     || typeof review.userMessageRef !== 'string' || !review.userMessageRef.trim()
     || !sameRef(repo, review.subjectRef, visual.moduleDesignRef)) throw new WorkflowError('模块设计稿缺少绑定当前清单的 V2 用户确认');
-  if (!Array.isArray(plan?.entries)) throw new WorkflowError('模块方案缺少条目');
-  const kinds = new Set(['state', 'step', 'transition', 'progress']);
-  const expected = new Set(plan.entries.filter((entry) => kinds.has(entry.kind))
-    .map((entry) => JSON.stringify([entry.kind, entry.id])));
-  const seen = new Set();
-  const designs = approvedDesigns(repo, work);
+  if (!Array.isArray(plan?.entries) || !Array.isArray(plan.rules?.flows) || !plan.rules.flows.length) {
+    throw new WorkflowError('V1 模块方案缺少条目或流程');
+  }
+  // 流程作为整体交接，逐步覆盖之外还要有对应流程稿，流程顺序以冻结方案为准。
+  const plannedItems = [...plan.entries, ...plan.rules.flows.map(({ id }) => ({ kind: 'flow', id }))];
+  const pending = new Map(plannedItems.map(({ kind, id }) => [JSON.stringify([kind, id]), `${kind}:${id}`]));
+  const worldContract = visual.designRoute === 'world-3d' ? frozenJson(repo, visual.domainEvidenceRef, '三维场景合同') : null;
+  if (worldContract) assertWorldSupplementalDesigns(repo, work, worldContract, design);
+  const designs = approvedDesigns(repo, work, worldContract, design);
   if (!designs.length) throw new WorkflowError('V2 尚无已确认的设计目标');
+  const usedDesigns = new Set();
   for (const item of design.entries) {
     const key = JSON.stringify([item?.kind, item?.id]);
-    if (!expected.has(key) || seen.has(key)) throw new WorkflowError('模块设计稿条目重复或超出模块方案');
-    productionIdentity(repo, item.targetRef, '模块设计目标');
-    if (item.designRef) productionIdentity(repo, item.designRef, '模块状态设计');
-    const matching = designs.find((candidate) => matchesDesign(repo, item, candidate));
-    if (!matching) throw new WorkflowError('模块设计目标未绑定 V2 已确认的实际稿件');
-    if (matching.world) assertWorldStateArtifact(repo, work, item);
-    seen.add(key);
+    if (!pending.delete(key)) throw new WorkflowError(`模块设计稿条目重复或超出 V1 模块方案：${key}`);
+    const label = `${item.kind}:${item.id}`;
+    if (item.additionalTargets !== undefined && !Array.isArray(item.additionalTargets)) {
+      throw new WorkflowError(`V2 条目 ${label} 的附加目标 additionalTargets 必须为数组`);
+    }
+    // 同一条目可以跨多张确认稿表达，仍只占据 V1 清单中的一个位置。
+    const usedByItem = new Set();
+    for (const target of moduleDesignTargets(item)) {
+      productionIdentity(repo, target?.targetRef, '模块设计目标');
+      if (target.designRef !== undefined) productionIdentity(repo, target.designRef, '模块状态设计');
+      const matches = designs.filter((candidate) => matchesDesign(repo, target, candidate));
+      if (!matches.length) throw new WorkflowError(`模块设计目标未绑定 V2 已确认的实际稿件：${label}`);
+      if (matches.every((candidate) => usedByItem.has(candidate))) throw new WorkflowError(`V2 条目 ${label} 重复引用同一设计稿`);
+      if (matches.some((candidate) => candidate.world)) {
+        if (item.kind === 'element') throw new WorkflowError(`V2 二维要素 ${item.id} 须绑定已确认的 HUD 或场景二维稿`);
+        assertWorldStateArtifact(repo, work, worldContract, target);
+      }
+      for (const candidate of matches) {
+        usedByItem.add(candidate);
+        usedDesigns.add(candidate);
+      }
+    }
   }
-  if (seen.size !== expected.size) throw new WorkflowError('模块设计稿未覆盖全部状态、步骤、转换及进度');
+  if (pending.size) throw new WorkflowError(`V2 模块设计稿遗漏 V1 条目：${[...pending.values()].join('、')}`);
   // 逐目标反查清单，避免确认了额外状态稿却没有交接任何适用项目。
-  if (designs.some((candidate) => !design.entries.some((entry) => matchesDesign(repo, entry, candidate)))) {
-    throw new WorkflowError('V2 已确认的设计稿未登记模块方案用途');
-  }
+  const unused = designs.filter((candidate) => !usedDesigns.has(candidate));
+  if (unused.length) throw new WorkflowError(`V2 已确认的设计稿未登记模块方案用途：${unused.map(({ targetRef }) => targetRef.path).join('、')}`);
   return design;
 }
 
@@ -149,12 +241,16 @@ function assertFigmaUnchanged(repo, before, after) {
 }
 
 /** 原生场景封套可随阶段更新，但空间设计及人工确认的文件身份不能变化。 */
-function assertSceneBasisUnchanged(repo, beforeRef, afterRef, fields, label) {
+function assertSceneBasisUnchanged(repo, beforeRef, afterRef, fields, label, world) {
   const before = frozenJson(repo, beforeRef, `V2 ${label}合同`);
   const after = frozenJson(repo, afterRef, `当前${label}合同`);
   for (const field of fields) {
     if (!sameOptionalRef(repo, before[field], after[field])) throw new WorkflowError(`${label}依据 ${field} 已变化`);
-    if (before[field]) productionIdentity(repo, before[field], `${label}依据 ${field}`);
+    if (!before[field]) continue;
+    if (world && field === 'blockoutRef') {
+      // 仅白模可按冻结字节交接；空间规格、审批和运行记录继续核验原文件。
+      withWorld3DFileSnapshots(repo, world, {}, () => world3dFile(repo, before[field], `${label}依据 ${field}`, world));
+    } else productionIdentity(repo, before[field], `${label}依据 ${field}`);
   }
   const beforeScope = before.scopeIds ?? [];
   const afterScope = after.scopeIds ?? [];
@@ -187,6 +283,6 @@ export function assertModuleDraftUnchanged(repo, frozenWork, work) {
   }
   if (work.visual.designRoute === 'world-3d') {
     assertSceneBasisUnchanged(repo, frozenWork.visual.domainEvidenceRef, work.visual.domainEvidenceRef,
-      ['directionRef', 'spatialSpecRef', 'blockoutRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionApprovalRef'], '三维空间');
+      ['directionRef', 'spatialSpecRef', 'blockoutRef', 'blockoutRunRef', 'reviewRef', 'spaceApprovalRef', 'directionApprovalRef'], '三维空间', work);
   }
 }

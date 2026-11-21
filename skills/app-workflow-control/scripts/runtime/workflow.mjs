@@ -10,6 +10,7 @@ import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyTo
 import { validateFinalIntegration, validateIntegrationScope } from './final-integration.mjs';
 import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { captureWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
+import { withWorld3DModelReuse } from './world3d-model-reuse.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { createExecutionPlanSnapshot, expectedActiveBatch } from './execution-batches.mjs';
 import { withWorkLock } from './work-lock.mjs';
@@ -96,11 +97,10 @@ export function inspectPendingRegressionExecution(repo, work) {
   return inspectWorkCore(repo, work, { strict: false, checkFunctionBaseline: false });
 }
 
-/** 视觉复用仅复验已完成来源的视觉与执行记录；当前工作项仍须通过功能基线。 */
+/** 将已完成来源的功能基线、视觉和执行问题统一纳入复用诊断。 */
 export function inspectVisualReuseSource(repo, work) {
   if (work?.globalState !== 'COMPLETE' || work.visual?.stage !== 'V5') throw new WorkflowError('视觉复用来源必须为已完成的 V5 工作项');
-  assertFunctionBaseline(repo, work, { historical: true });
-  return inspectWorkCore(repo, work, { strict: true, checkFunctionBaseline: false, historical: true });
+  return inspectWorkCore(repo, work, { strict: true, checkFunctionBaseline: true, historical: true });
 }
 
 /** 前置批次证明历史完成，当前源码仍由本批和最终集成重新验证。 */
@@ -113,8 +113,10 @@ export function inspectProductionDependencyHistory(repo, source, sourcePath) {
 
 /** 按用途收集诊断，常规检查始终包含当前功能基线。 */
 function inspectWorkCore(repo, work, options) {
-  if (options.historical && isWorld3D(work)) return withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V1', 'V4', 'V5'] }, () => inspectWorkCoreInContext(repo, work, options));
-  return inspectWorkCoreInContext(repo, work, options);
+  return withWorld3DModelReuse(() => {
+    if (options.historical && isWorld3D(work)) return withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V1', 'V4', 'V5'] }, () => inspectWorkCoreInContext(repo, work, options));
+    return inspectWorkCoreInContext(repo, work, options);
+  });
 }
 
 /** 在适用的来源版本中运行原有只读诊断，不更改最终工作项。 */
@@ -177,14 +179,11 @@ function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, h
     const requiredByState = { INTAKE: ['F0'], BASELINE: ['F1'], PROPOSAL: ['F2'], REVIEW: ['F0', 'F1', 'F2'] };
     for (const gate of requiredByState[work.globalState] ?? []) if (work.gateStatus[gate] !== 'PASS') blocking.push(`${gate} 尚未 PASS`);
     if (!isDesignProposal(work) && work.globalState === 'REVIEW' && !work.implementationPackageRef) blocking.push('尚未冻结 Implementation Package');
-    if (work.globalState === 'PASSED') {
-      try { assertReadyToPass(repo, work); } catch (error) { blocking.push(error.message); }
-    }
     if (work.globalState === 'RELEASE_APPROVAL_REQUIRED') {
       if (!hasPreciseApproval(work)) blocking.push('当前发布动作尚未获得精确用户批准');
       else if (work.gateStatus.F4 !== 'PASS') blocking.push('F4 尚未 PASS，不能进入 RELEASING');
     }
-    if (work.globalState === 'COMPLETE' || work.globalState === 'RELEASING') {
+    if (work.globalState === 'RELEASING') {
       // check 在发布边界要求真实完成记录，但不会执行发布动作。
       try { assertFinalCompletion(repo, work); } catch (error) { blocking.push(error.message); }
     }
@@ -629,7 +628,7 @@ function collectFunctionFiles(repo, work) {
 async function freezeFunctionBaseline(repo, work, sceneDesignBaseline = null) {
   assertGates(work, ['F0', 'F1']);
   const dependencies = work.visual.functionDependencies ?? [];
-  if (isWorld3D(work) && dependencies.length) throw new WorkflowError('3D 世界须直接验证本场景白模，不能以模块功能依赖替代本次 V1');
+  if (isWorld3D(work) && dependencies.length) throw new WorkflowError('3D 世界须直接核对本场景空间依据，不能以模块功能依赖替代本次 V1');
   const snapshot = { schemaVersion: VERSION, workItemId: work.workItemId, projectId: work.projectId, stack: work.stack, objectId: work.visual.objectId };
   // 替换共享功能来源时也保留旧系统身份，不能只保留同名 case 就丢掉原需求。
   if (sceneDesignBaseline) snapshot.systemCoverageOrigins = functionCoverageOrigins(repo, sceneDesignBaseline);

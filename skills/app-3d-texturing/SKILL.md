@@ -9,7 +9,7 @@ description: "规划三维材质分区、UV和贴图通道，控制分辨率、�
 
 执行前阅读[公共执行协议](../app-creator-workflow/references/professional-execution.md)。以下共用步骤不能跳过所选原生适配规定的操作顺序、资源格式与平台边界；必要的用户确认按协议执行。
 
-3D 世界整体白模和方向按[正式生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)获人工确认、模型材质槽与 UV 已交接后，在当前工作项的 V4 按需安排材质贴图。独立素材或不改变世界空间的局部修改按原范围处理，不要求重建整体白模。
+3D 世界白模、空间方案和方向按[正式生产交接](../app-domain-toolkit/references/game-design-exploration.md#production-handoff)获人工确认、模型材质槽与 UV 已交接后，在当前工作项的 V4 按需安排材质贴图。独立素材或不改变世界空间的局部修改按原范围处理，不要求重建整体白模。
 
 ## 输入
 

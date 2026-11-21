@@ -7,14 +7,14 @@ import { completeUnit, initializeWork, transitionWork } from '../../skills/app-w
 import { bindEvidence, bindImplementation, put, putJson, readWork } from './controller-fixture.mjs';
 
 /** 真实执行一个基础工程单元，并在活动模块中冻结阶段四视觉清单。 */
-export async function finishWorldFoundation(fixture, baselineRef) {
+export async function finishWorldFoundation(fixture, baselineRef, additionalBaselines = [], route = 'world-3d') {
   const { repo, context } = fixture;
   const initialized = await initializeWork({ repo, args: { id: `foundation-${context.workItemId}`, stack: context.stack, type: 'FOUNDATION',
     objective: '建立基础工程与全局方向', 'project-id': context.projectId } });
   const workPath = initialized.metadata.workItemPath;
   let work = await readWork(repo, workPath);
   const manifest = fixture.write('spec/foundation-manifest.json', { schemaVersion: '1.0', foundationWorkItemPath: workPath,
-    projectId: work.projectId, stack: work.stack, baselines: [{ route: 'world-3d', ref: baselineRef }] });
+    projectId: work.projectId, stack: work.stack, baselines: [{ route, ref: baselineRef }, ...additionalBaselines] });
   work.foundationVisualRef = manifest;
   work.globalState = 'REVIEW';
   for (const gate of ['F0', 'F1', 'F2']) work.gateStatus[gate] = 'PASS';

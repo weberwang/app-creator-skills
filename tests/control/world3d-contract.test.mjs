@@ -1,11 +1,11 @@
 /** 这些测试验证无图三维合同及冻结身份；合成记录不声称真实运行或人工确认。 */
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { linkSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import {
-  collectWorld3DReferences, readWorld3DContract, validateWorld3DBaseline,
+  collectWorld3DReferences, readWorld3DContract, validateWorld3DBaseline, validateWorld3DProductionBasis,
   validateWorld3DModel, validateWorld3DStage, world3dScopeIds,
 } from '../../skills/app-workflow-control/scripts/runtime/world3d-contract.mjs';
 import { createWorld3DFixture, attachWorld3DPhase, syntheticCallbacks } from './world3d-fixture.mjs';
@@ -13,6 +13,7 @@ import { validateProductionScope } from '../../skills/app-workflow-control/scrip
 import { validateProductionIntegrationScope } from '../../skills/app-workflow-control/scripts/runtime/production-coverage.mjs';
 import { invalidateWorld3DVisual } from '../../skills/app-workflow-control/scripts/runtime/world3d-lifecycle.mjs';
 import { collectWorkReferencePaths } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
+import { collectWorld3DMutableSourcePaths } from '../../skills/app-workflow-control/scripts/runtime/world3d-file-snapshots.mjs';
 
 /** 以新文件重新冻结修改后的封套，避免仅测出封套本身的摘要变化。 */
 function rebind(fixture, contract) {
@@ -38,19 +39,45 @@ test('V1 三维白模和真实文件引用可独立通过合同检查，无需�
   assert.equal(f.work.visual.reviews, undefined);
 });
 
-test('V1 不能以空间声明、模块功能或自填状态代替白模与实际运行材料', (t) => {
+test('V1 必须有空间规格与白模，实际引擎运行不能用模拟声明替代', (t) => {
   for (const field of ['spatialSpecRef', 'blockoutRef', 'blockoutRunRef']) {
     const f = createWorld3DFixture(t);
     const contract = structuredClone(f.contract);
     delete contract[field];
     rebind(f, contract);
-    assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V1'), /路径|SHA|合同/, field);
+    assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V1'), /路径|SHA|合同|blockoutRef/, field);
   }
   const f = createWorld3DFixture(t);
   const run = { ...f.run, executionMode: 'simulation' };
   const contract = { ...f.contract, blockoutRunRef: f.write(`${f.work.evidenceRoot}/simulated-run.json`, run) };
   rebind(f, contract);
   assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V1'), /引擎运行记录/);
+});
+
+test('仅 HUD 返修核对已冻结的真实空间依据', (t) => {
+  const f = createWorld3DFixture(t);
+  attachWorld3DPhase(f, 'V4');
+  attachWorld3DPhase(f, 'V2');
+  f.work.returnRecord = { affectedScope: 'hud:V2' };
+  assert.doesNotThrow(() => validateWorld3DStage(f.repo, f.work, 'V2'));
+  const space = f.read(f.contract.spatialSpecRef);
+  space.camera.position[1] += 1;
+  const spatialSpecRef = f.write('spec/changed-space-for-hud.json', space);
+  rebind(f, { ...f.contract, spatialSpecRef });
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V2'), /仅 HUD 返修须保留三维空间依据 spatialSpecRef/);
+});
+
+test('三维模型样本规划和正式运行验收均要求白模依据', (t) => {
+  const f = createWorld3DFixture(t, { productionRisk: 'high' });
+  attachWorld3DPhase(f, 'V4');
+  const { blockoutRef, ...productionWithoutBlockout } = f.contract;
+  rebind(f, productionWithoutBlockout);
+  assert.throws(() => validateWorld3DProductionBasis(f.repo, f.work), /blockoutRef/);
+  rebind(f, { ...productionWithoutBlockout, blockoutRef });
+  attachWorld3DPhase(f, 'V5');
+  const { blockoutRef: _blockoutRef, ...formalWithoutBlockout } = f.contract;
+  rebind(f, formalWithoutBlockout);
+  assert.throws(() => validateWorld3DStage(f.repo, f.work, 'V5', syntheticCallbacks(f)), /blockoutRef/);
 });
 
 test('白模源、实际运行场景和命令证据必须绑定当前内容', (t) => {
@@ -235,15 +262,18 @@ test('合同 Schema 的阶段必需项与实际无图记录一致', (t) => {
   const f = createWorld3DFixture(t);
   const schema = JSON.parse(readFileSync(resolve('skills/app-workflow-control/schemas/world3d-scene.schema.json'), 'utf8'));
   const validate = new Ajv2020({ strict: false }).compile(schema);
+  const template = JSON.parse(readFileSync(resolve('skills/app-workflow-control/templates/world3d-scene.json'), 'utf8'));
+  assert.equal(validate(template), true);
   for (const stage of ['V1', 'V2', 'V3', 'V4', 'V5']) {
     const contract = stage === 'V1' ? f.contract : attachWorld3DPhase(f, stage);
     assert.equal(validate(contract), true, `${stage}: ${JSON.stringify(validate.errors)}`);
     const missing = { ...contract };
     delete missing[stage === 'V1' ? 'spatialSpecRef' : stage === 'V2' ? 'spaceApprovalRef' : stage === 'V3' ? 'modelSpecRef' : stage === 'V4' ? 'productionRisk' : 'displayApprovalRef'];
     assert.equal(validate(missing), false, `${stage} 不应接受缺失前置`);
-    const withoutOptionalRun = { ...contract };
-    delete withoutOptionalRun.blockoutRunRef;
-    assert.equal(validate(withoutOptionalRun), true, `${stage} 可选白模运行不是方案推进门`);
+    const { blockoutRunRef, ...withoutRun } = contract;
+    assert.equal(validate(withoutRun), true, `${stage} 白模运行按风险安排`);
+    const { blockoutRef, ...withoutBlockout } = withoutRun;
+    assert.equal(validate(withoutBlockout), false, `${stage} 必须绑定白模来源`);
   }
   const high = { ...f.contract, productionRisk: 'high' };
   assert.equal(validate(high), false);
@@ -317,6 +347,18 @@ test('V4 返修仍须作废当前 V4 封套和模型评审', (t) => {
   const paths = new Set(invalidated.map((item) => item.path));
   assert.ok(paths.has(contractRef.path));
   assert.ok(paths.has(f.assetReviewRef.path));
+});
+
+test('作为 V2 条目设计引用的白模成为只读输入，附加稿硬链接也受保护', (t) => {
+  const f = createWorld3DFixture(t);
+  const blockout = f.contract.blockoutRef;
+  assert.ok(collectWorld3DMutableSourcePaths(f.repo, f.work).includes(blockout.path));
+  const aliasPath = 'blockout-design-alias.txt';
+  linkSync(resolve(f.repo, blockout.path), resolve(f.repo, aliasPath));
+  for (const entry of [{ designRef: blockout }, { additionalTargets: [{ designRef: { ...blockout, path: aliasPath } }] }]) {
+    f.work.visual.moduleDesignRef = f.write('spec/module-inputs.json', { entries: [entry] });
+    assert.ok(!collectWorld3DMutableSourcePaths(f.repo, f.work).includes(blockout.path));
+  }
 });
 
 test('非 JSON 后缀的控制封套仍保护嵌套文件，超限同样拒绝', (t) => {

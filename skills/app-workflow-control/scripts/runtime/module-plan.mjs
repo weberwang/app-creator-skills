@@ -2,8 +2,10 @@ import { fileIdentityKey, readJson, WorkflowError } from './io.mjs';
 import { productionIdentity, validateProductionScope } from './production-scope.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
 import { getWorkSource } from './work-source.mjs';
+import { assertResolvedModuleRules } from './module-plan-rules.mjs';
 
-const kinds = ['function', 'state', 'step', 'transition', 'progress'];
+// 二维要素独立登记并沿用现有验收字段，避免只靠流程或状态名称推断画面内容。
+const kinds = ['element', 'function', 'state', 'step', 'transition', 'progress'];
 
 /** 比较已冻结引用，防止用内容相同的另一份计划改绑阶段来源。 */
 export function samePlanRef(repo, left, right) {
@@ -39,12 +41,15 @@ export function readModulePlan(repo, work) {
   for (const kind of ['function', 'state', 'step']) {
     if (!plan.entries.some((entry) => entry.kind === kind)) throw new WorkflowError(`V1 模块方案必须登记 ${kind}`);
   }
-  const multipleStates = plan.entries.filter((entry) => entry.kind === 'state').length > 1;
-  const multipleSteps = plan.entries.filter((entry) => entry.kind === 'step').length > 1;
-  if (multipleStates && !plan.entries.some((entry) => entry.kind === 'transition')) throw new WorkflowError('V1 多状态模块缺少状态转换规划');
-  if (multipleSteps && !plan.entries.some((entry) => entry.kind === 'progress')) throw new WorkflowError('V1 多步骤模块缺少进度规划');
   const production = validateProductionScope(repo, work);
   if (production) assertProductionPlanCoverage(repo, work, entries, production);
+  // 规则在 V1 冻结时核对，后续阶段按已冻结的方案身份验收。
+  if (work.visual.stage === 'V1') {
+    const boundaryStates = new Set([...(production?.states.values() ?? [])]
+      .filter((state) => state.objectId !== work.visual.objectId).map((state) => state.stateId));
+    assertResolvedModuleRules(plan.rules, entries, boundaryStates);
+    if (production) assertProductionFlowScope(work, plan.rules.flows, production);
+  }
   return plan;
 }
 
@@ -61,18 +66,57 @@ function assertProductionPlanCoverage(repo, work, entries, production) {
     if (objectIds.includes(objectId) && !entries.has(`${kind}:${id}`)) throw new WorkflowError(`V1 模块方案遗漏生产范围中的 ${kind}：${id}`);
   };
   const stateIds = new Set();
+  const scopedTransitions = [];
   for (const id of batch?.stepIds ?? production.steps.keys()) {
     const step = production.steps.get(id);
     forObject('step', id, step.objectIds);
     step.stateIds.forEach((stateId) => stateIds.add(stateId));
   }
   for (const id of batch?.transitionIds ?? production.transitions.keys()) {
-    const { fromStateId, toStateId } = production.transitions.get(id);
+    const transition = production.transitions.get(id);
+    const { fromStateId, toStateId } = transition;
     stateIds.add(fromStateId);
     stateIds.add(toStateId);
-    forObject('transition', id, [production.states.get(fromStateId).objectId, production.states.get(toStateId).objectId]);
+    const objectIds = [production.states.get(fromStateId).objectId, production.states.get(toStateId).objectId];
+    forObject('transition', id, objectIds);
+    if (work.visual.stage === 'V1' && objectIds.includes(objectId)) scopedTransitions.push(transition);
   }
   for (const id of stateIds) forObject('state', id, [production.states.get(id).objectId]);
+  // 只有同名标识仍可能把进度写到错误对象，明确核对生产范围的源状态和目标状态。
+  for (const { transitionId, fromStateId, toStateId } of scopedTransitions) {
+    const entry = entries.get(`transition:${transitionId}`);
+    if (entry.fromStateId !== fromStateId || entry.toStateId !== toStateId) {
+      throw new WorkflowError(`V1 状态转换 ${transitionId} 的起止状态与生产范围不一致`);
+    }
+  }
+}
+
+/** 核对步骤的适用状态及生产路径，保留步骤顺序和回环。 */
+function assertProductionFlowScope(work, flows, production) {
+  const scopedSteps = new Set(production.batch?.stepIds ?? []);
+  for (const flow of flows) {
+    const states = new Set(flow.stateIds);
+    for (const id of new Set(flow.stepIds)) {
+      if (!scopedSteps.has(id)) continue;
+      const step = production.steps.get(id);
+      if (step.stateIds.some((stateId) => !states.has(stateId))) {
+        throw new WorkflowError(`V1 流程 ${flow.id} 未覆盖生产步骤 ${id} 的适用状态`);
+      }
+    }
+  }
+  for (const id of production.batch?.pathIds ?? []) {
+    const path = production.paths.get(id);
+    const localSteps = path.stepIds.filter((stepId) => production.steps.get(stepId).objectIds.includes(work.visual.objectId));
+    if (!localSteps.length) continue;
+    const covered = flows.some((flow) => {
+      let position = 0;
+      for (const stepId of flow.stepIds) {
+        if (stepId === localSteps[position]) position += 1;
+      }
+      return position === localSteps.length;
+    });
+    if (!covered) throw new WorkflowError(`V1 流程遗漏生产路径 ${id} 或未保留步骤顺序`);
+  }
 }
 
 /** 正式验收使用当前包已完成的执行单元，准备阶段的同名命令不能代替 V5。 */

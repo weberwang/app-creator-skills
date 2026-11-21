@@ -4,6 +4,8 @@ import { readModulePlan, samePlanRef } from './module-plan.mjs';
 import { assertFoundationVisual } from './foundation-visual.mjs';
 import { assertModuleDraftUnchanged, assertModuleVisualDesign } from './module-visual-design.mjs';
 import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
+import { freezeWorld3DModuleBlockout } from './world3d-contract.mjs';
+import { assertFrozenWorldHud } from './world3d-hud.mjs';
 
 /** 冻结 V1 方案而非运行结果，后续仍可沿既有功能基线字段引用工作范围。 */
 export async function freezeModulePlan(repo, work, fileDigest) {
@@ -24,6 +26,10 @@ export async function freezeModulePlan(repo, work, fileDigest) {
     productionBatchId: work.productionBatchId ?? null,
     evidenceRoot: work.evidenceRoot,
     modulePlanRef: work.visual.modulePlanRef,
+    ...(work.visual.designRoute === 'world-3d' && {
+      world3dHudScopeIds: work.visual.hud?.scopeIds ?? null,
+      ...freezeWorld3DModuleBlockout(repo, work),
+    }),
   });
   return fileDigest(repo, path);
 }
@@ -86,6 +92,7 @@ export function assertFrozenModulePlan(repo, work, snapshot) {
     || !samePlanRef(repo, frozenPlan.modulePlanRef, work.visual.modulePlanRef)) {
     throw new WorkflowError('模块方案已变化或冻结记录错绑，须返回 V1');
   }
+  assertFrozenWorldHud(work, frozenPlan);
   return plan;
 }
 

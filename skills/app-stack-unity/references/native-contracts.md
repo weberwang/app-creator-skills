@@ -72,7 +72,7 @@
 
 正式 2D 骨骼资产交付按[控制面门禁](../../unity-domain-contracts/references/rigging-delivery-gate.md)冻结当前角色身份、候选修订、实际必需回归和五岗位负责人。工程与角色回归双证据不齐或失败时阻断交玩法；总控将 `repairs` 分配给原实施单元所有者，独立 QA 复验后再放行。普通返修不自动 RETURN、不扩大范围；跨界或上游事实失效再按原机制裁决。
 
-3D 资源按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)分配 Blender MCP 建模、贴图、绑定和动画生产者；角色按[共同交接](../../unity-development-workflow/references/3d-character-handoff.md)与 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)规划模型/骨架/动作来源、材质/LOD、Avatar、根运动和事件接口。V4 可交付资源级角色 Prefab 与资产验证，V5 验收实际场景和玩法轨迹；不用 2D 专用 `riggingDelivery` 或检查器代替 3D 证据，普通本地制作不追加工具选择审批。
+3D 资源按[3D 生产流程](../../unity-development-workflow/references/3d-asset-workflow.md)确定模型来源并分配贴图、绑定和动画生产者；模型可按实际能力选择本地复用、授权且可用的生成 API 或 Blender，贴图、绑定和动画按各自原生合同执行。角色按[共同交接](../../unity-development-workflow/references/3d-character-handoff.md)与 [Unity 导入合同](../../unity-development-workflow/references/3d-character-unity-import.md)规划模型/骨架/动作来源、材质/LOD、Avatar、根运动和事件接口。V4 可交付资源级角色 Prefab 与资产验证，V5 验收实际场景和玩法轨迹；不用 2D 专用 `riggingDelivery` 或检查器代替 3D 证据，普通本地制作不追加工具选择审批。
 <!-- native-source:unity-game-production:end -->
 
 
@@ -485,14 +485,14 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--unity-游戏-3d-模型制作"></a>
 ### Unity 游戏 3D 模型制作
 
-按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 和 [Blender MCP 建模流程](./mcp-modeling-workflow.md) 交付可编辑、可追溯的正式模型。Unity 模型几何与 PBR 贴图分别通过 Blender MCP 生产，按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)衔接，贴图工序见[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)。资产接入负责人通过 [@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab、LODGroup 和运行验证。
+按 [app-3d-modeling](../../app-3d-modeling/SKILL.md) 选择本地模型复用、项目授权且可用的生成 API 或 Blender 制作，并交付可追溯的正式模型。选择 Blender 时按 [Blender MCP 建模流程](./mcp-modeling-workflow.md) 执行。PBR 贴图仍按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)和[生产级 PBR 贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)制作。资产接入负责人通过 [@Unity](plugin://unity@openai-curated-remote) 负责导入器、Material/Renderer、资源级 Prefab、LODGroup 和运行验证。
 
 <a id="mode-unity-game-3d-modeling--输入与边界"></a>
 #### 输入与边界
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
-- 缺少模型规格、可用 Blender MCP、明确的 `.blend` 源和输出范围、唯一 Unity 项目目标或修改授权时，可先输出带假设标记的只读规格建议，但受影响写入保持 `BLOCKED`。
-- Blender MCP 是模型和贴图的既定生产路线，不再重复选择工具。模型 brief 和需要用户取舍的轮廓/交互边界交给 `$grilling`；已授权范围内的细化与返修继续执行，范围变化和破坏性操作按控制面处理。
+- 缺少模型规格、所选来源所需能力、明确的源和输出范围、唯一 Unity 项目目标或修改授权时，可先输出带假设标记的只读规格建议，但受影响写入保持 `BLOCKED`。选择 Blender 时核查可用 MCP 与 `.blend` 源。
+- 模型来源按当前项目实际能力及授权选择；贴图仍按其 Blender MCP 原生流程执行。模型 brief 和需要用户取舍的轮廓/交互边界交给 `$grilling`；已授权范围内的细化与返修继续执行，范围变化和破坏性操作按控制面处理。
 - 本角色拥有几何、拓扑、法线、UV 版本冻结、材质槽结构、LOD、Collider 和静态模型导出；角色的骨架/蒙皮模型由绑定角色导出。`$app-3d-texturing` 在版本化派生 `.blend` 中拥有材质节点、绘制、烘焙、通道打包和贴图导出。Unity 仅负责导入器、Material/Renderer、资源级 Prefab 和运行验证；最终验证交给 `$app-quality-review`。
 - 绑定与动画按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging) 和 [`$app-animation`](#mode-unity-game-3d-animation)。本角色准备关节拓扑、BlendShape 目标几何和静态源，绑定负责角色骨架/权重和蒙皮模型导出，动画负责动作与逐 Clip 导出；不负责 PBR 纹理、绑定动画或最终 QA 放行，VFX 另行分工。
 
@@ -500,8 +500,8 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 #### Blender MCP 与 Unity 路由
 
 1. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#检查-blender-工作区)。
-2. 所有正式模型均在 Blender MCP 中完成结构、拓扑、法线、UV、LOD、碰撞代理和版本化导出；PBR 贴图也固定由 Blender MCP 按[生产级贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)制作。低模、模块化、风格化资产同样执行生产标准；禁止回退到 ProBuilder、Unity 基础体块拼装或外部生成式供应商创建模型或贴图。
-3. 本地已有模型可作为只读输入，在 Blender MCP 内审计与修整；复用成品必须符合实际轮廓、结构、拓扑与许可要求。无法满足 Blender 所需能力时保持 `BLOCKED`，不得降级交付。
+2. 选择 Blender 制作模型时，在 Blender MCP 中完成结构、拓扑、法线、UV、LOD、碰撞代理和版本化导出；PBR 贴图固定由 Blender MCP 按[生产级贴图流程](../../unity-game-3d-texturing/references/pbr-texture-workflow.md)制作。低模、模块化、风格化资产同样执行生产标准。
+3. 本地模型或项目授权且可用的生成 API 模型可按实际许可及规格交接；核对轮廓、结构、拓扑、源与输出版本，并按目标格式回读。选择 Blender 的任务缺少所需能力时保持 `BLOCKED`；其他来源分别核对其实际能力，不能以来源名称替代质量和 Unity 导入验证。
 4. Blender MCP 属于本地 DCC MCP；工具名与参数以当前发现为准。仅暴露脚本执行时，逐项核实所需 Blender API 与实际结果，不能把“能运行 Python”视为全部建模能力就绪。
 5. 建模方提交导出回读。资产接入负责人按 `unity:unity-cli` 选择唯一 Editor、核实格式支持，并通过 AssetDatabase 或项目 Pipeline 导入模型及贴图，回传实际结果。
 6. Blender 自检与 Unity 技术验证分别记录；视觉显示由用户人工检查截图并确认，不自动分析截图或据此宣称通过。未经用户明确要求，不启动 Standalone/Player 或真机验收。
@@ -512,7 +512,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 1. 冻结模型 brief、Visual Bible 版本、资源 ID、主次形体、结构特征、观看距离与验收矩阵。
 2. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#完成模型结构)。
 4. 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#核对表面与性能预算)。
-5. 保存版本化 `.blend` 与可复现模型配方，记录工具版本、关键操作、参数、实际源文件位置及派生关系。在独立导出副本上处理修改器、三角化和轴向，回读导出结果。
+5. 记录实际来源、版本、授权、参数、源文件及派生关系并回读导出结果。选择 Blender 时保存版本化 `.blend` 与可复现模型配方，在独立导出副本上处理修改器、三角化和轴向。
 6. Unity 资产接入负责人接收导出物并回读实际导入器（适用时为 ModelImporter）、比例、轴向、Pivot、法线、材质槽、LODGroup、Collider、Prefab 引用和 Console。正式场景接入仍在 V5。
 7. 按[共同交接](../../unity-game-3d-texturing/references/model-texture-handoff.md)交付 UV、槽位、适用的高低模/Cage、法线/三角化策略和各 LOD 用图信息；贴图返修涉及网格、UV 或槽位时由建模角色修复并按依赖范围复验。输出转台、线框、UV、碰撞、LOD 与目标场景截图及人工检查要点；技术自检后交给纹理角色或独立 QA，不自批。用户确认显示效果前保持视觉待验收。
 
@@ -526,7 +526,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--安全与写入规则"></a>
 #### 安全与写入规则
 
-- 本流程不调用外部生成式模型供应商、不上传项目文件或付费生成；需要改变路线时先由用户明确变更范围。
+- 模型生成 API 仅在项目实际具备能力和相应授权时选择；上传、付费等外部操作按现有授权边界处理，真实输入、版本、输出和许可须可追溯。
 - Blender MCP 若支持任意代码执行，沿用 DCC 脚本边界：执行前展示并取得用户确认，已有精确脚本授权可复用。脚本只允许 Blender API、数学与网格操作，以及批准路径内的 `.blend` 保存、模型导出和证据输出；禁止操作系统命令、网络、环境变量、凭据、任意文件读取和动态导入。
 - 原始来源只读，修改写入版本化派生文件；同一 DCC 源、模型资源 ID、Unity 项目和导出目标同时只允许一个写代理。
 - 覆盖、删除、重建 UV、改变顶点顺序或蒙皮信息前建立检查点并取得确认。
@@ -534,7 +534,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-3d-modeling--交付"></a>
 #### 交付
 
-交付版本化 `.blend` 源文件、运行时模型、资源级 Prefab、模型配方、许可、拓扑与法线报告、实际 UV 位置与报告、按需的高低模/烘焙交接、导入设置、LOD/Collider 指标、Unity 技术证据和用户显示确认状态。以实际模型满足用户要求为验收依据；目标内普通实现修复不重复确认未受影响决定，目标或布局依据变化时更新受影响合同。中间模型不因此一律要求计算 SHA，公共冻结目标与确认引用仍按控制器合同核对内容摘要。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。
+交付实际可用的版本化源、运行时模型、资源级 Prefab、来源记录、许可、拓扑与法线报告、实际 UV 位置与报告、按需的高低模/烘焙交接、导入设置、LOD/Collider 指标、Unity 技术证据和用户显示确认状态。选择 Blender 时交付版本化 `.blend` 与模型配方；生成 API 记录实际提供的输入、版本、参数和输出。以实际模型满足用户要求为验收依据；目标内普通实现修复不重复确认未受影响决定，目标或布局依据变化时更新受影响合同。中间模型不因此一律要求计算 SHA，公共冻结目标与确认引用仍按控制器合同核对内容摘要。模型必须使用与资产类型匹配的登记分支，禁止为通过契约伪填 TextureImporter/Sprite 等图片字段。
 <!-- native-source:unity-game-3d-modeling:end -->
 
 
@@ -788,7 +788,7 @@ Unity 原生 2D 骨骼角色交给 [`$app-character-rigging`](#mode-unity-game-2
 #### V1-V5
 
 1. **模块范围与分流**：识别全局基线、场景、显示层、参考图使用边界和实际交付类型。场景只包含自身画面与常驻 HUD；modal、popup、drawer、toast 建立独立 `DISPLAY_LAYER` Work Item。首次建立视觉对象或改变其有效目标时安排效果图；既有对象的新增量工作项满足公共 `reuse-visual` 条件时引用有效记录，不因任务编号变化重复生产。建立或替换全局基线恰好三张同条件候选，已有基线下的对象目标按实际需要制作。
-1. **V1 模块方案**：明确玩法、交互、进度和跨场景状态及验收；3D 世界可按风险搭建或复用有效白模，2D／UI 的额外原型按需，不要求先冻结正式视觉目标；完整方法从公共清单按需读取，不在本模式自动展开。
+1. **V1 模块方案**：明确玩法、交互、进度和跨场景状态及验收；3D 世界搭建或复用有效白模并按风险运行，2D 与纯界面模块直接在正式工程验证，不要求先冻结正式视觉目标；完整方法从公共清单按需读取，不在本模式自动展开。
 
 2. **V2 对象定义**：为首次建立或目标已变化的可见 `SCENE`/`DISPLAY_LAYER` 提交至少一张可查看的完整效果图，覆盖目标状态与主要视觉元素，确认后作为 V3–V5 持续目标；符合 `reuse-visual` 的增量复用既有记录。独立生产不等于重新设计，后续生成图不得静默替代 V2，具体见[持续目标规则](../../unity-development-workflow/references/visual-workflow.md#v2-场景定义)。同时冻结主题、受众、核心循环、体验目标和观看情境，并与 `$app-feedback` 定义关键反馈意图。按需提交草图或灰盒，并记录 Scene/Prefab/UXML 结构，覆盖稳定节点 ID、位置依赖、语义分组、父子层级、渲染顺序、状态、Anchor、Pivot、安全区、遮罩、资源槽和 Unity 原生响应式合同。效果图不注册为正式资源。
 3. **V3 拆解确认**：先按[文本与色彩拆分路线](../../unity-development-workflow/references/visual-decomposition-routes.md)覆盖 V2 的实际可见特征及空间结构，逐项绑定稳定编号、生产归属、消费节点和组件×状态，不能仅列功能名称；系统文本、原生绘制及原子资源内含特征同样登记。按位置依赖确定父子关系；共同表达同一信息但无位置依赖的元素归入同一语义组并保持同级，禁止按距离、最小包含矩形或元素类型猜父级。再分别记录 `visualRouteAnalysis` 与 `assemblyAnalysis`：前者决定独立图片、复用、Unity 原生绘制、模型、材质或 VFX 来源，后者决定 Scene/Prefab/UXML/UIDocument/Canvas/Transform 装配。适用的九宫格资源冻结源图尺寸、Unity border 与内容内边距；动作资产冻结独立时间轴、关键事件、资源生产者与消费接口。单一区域不得用 `COMPOSITE` 混合外观和行为，也不得用整屏图冒充结构化装配。需要用户取舍时绑定精确版本确认；确认前不生产或导入正式资源。

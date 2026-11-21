@@ -4,6 +4,7 @@ import { closeSync, copyFileSync, existsSync, linkSync, lstatSync, mkdirSync, op
 import { dirname, resolve } from 'node:path';
 import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { isWorldHudReturn } from './world3d-hud.mjs';
+import { moduleDesignInputRefs } from './module-design-targets.mjs';
 
 // 异步调用上下文按工作项隔离；历史来源嵌套检查不能把其他项目的旧文件带入当前候选。
 const context = new AsyncLocalStorage();
@@ -85,7 +86,9 @@ function sourceRefs(repo, work, { mutableOnly = false } = {}) {
 /** V1 白模身份由功能基线直接冻结，后续局部重验的 work 不一定仍有场景封套。 */
 function blockoutSourceRefs(repo, work, refs) {
   if (!refs || typeof refs !== 'object') throw new WorkflowError('功能基线缺少冻结的 V1 白模依据');
-  for (const name of ['spatialSpecRef', 'blockoutRef', 'blockoutRunRef']) {
+  const names = ['spatialSpecRef', 'blockoutRef'];
+  if (!work.visual.modulePlanRef || refs.blockoutRunRef !== undefined) names.push('blockoutRunRef');
+  for (const name of names) {
     const ref = refs[name];
     if (!ref || typeof ref.path !== 'string' || !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError(`功能基线白模依据 ${name} 无效`);
     if (repoPath(repo, ref.path, `功能基线白模依据 ${name}`).relative !== ref.path) throw new WorkflowError(`功能基线白模依据 ${name} 路径不规范`);
@@ -308,6 +311,20 @@ export function collectWorld3DFileSnapshotPaths(repo, work) {
   return [...found];
 }
 
+/** V2 设计条目、二维内容稿、上下文预览与 HUD 源都是后续实施的只读输入。 */
+export function world3DDesignInputRefs(manifest) {
+  const views = Array.isArray(manifest.worldViews) ? manifest.worldViews : [];
+  const scene2d = Array.isArray(manifest.scene2dDesignRefs) ? manifest.scene2dDesignRefs : [];
+  return [...moduleDesignInputRefs(manifest), manifest.hudSourceRef, ...scene2d, ...views.map((view) => view?.designRef)]
+    .filter((ref) => typeof ref?.path === 'string' && ref.path.trim());
+}
+
+/** 用磁盘文件身份识别设计文件的硬链接别名，历史源缺失时继续按冻结引用处理。 */
+export function world3DFileIdentity(repo, path) {
+  const stat = lstatSync(repoPath(repo, path).absolute, { bigint: true, throwIfNoEntry: false });
+  return stat ? `${stat.dev}:${stat.ino}` : null;
+}
+
 /** 显式区分可继续编辑的正式场景/模型与必须保护的控制、审批及日志记录。 */
 export function collectWorld3DMutableSourcePaths(repo, work) {
   if (work.visual?.designRoute !== 'world-3d' || !work.visual.domainEvidenceRef?.path) return [];
@@ -323,6 +340,19 @@ export function collectWorld3DMutableSourcePaths(repo, work) {
       assetReviewRef: stage === 'V4' && archive?.assetReviewRef ? archive.assetReviewRef : work.assetReviewRef,
       visual: { ...work.visual, stage, ...(stage === 'V4' && archive?.domainEvidenceRef ? { domainEvidenceRef: archive.domainEvidenceRef } : {}) } };
     for (const ref of sourceRefs(repo, stageWork, { mutableOnly: true })) paths.set(fileIdentityKey(repo, ref.path), ref.path);
+  }
+  if (work.visual.moduleDesignRef) {
+    const design = frozenJson(repo, work.visual.moduleDesignRef, '模块视觉稿清单');
+    const readOnlyFiles = new Set();
+    for (const ref of world3DDesignInputRefs(design)) {
+      // 设计稿重复登记为正式场景或模型产物时，仍以 V2 只读设计输入为准。
+      paths.delete(fileIdentityKey(repo, ref.path));
+      const identity = world3DFileIdentity(repo, ref.path);
+      if (identity) readOnlyFiles.add(identity);
+    }
+    if (readOnlyFiles.size) for (const [key, path] of paths) {
+      if (readOnlyFiles.has(world3DFileIdentity(repo, path))) paths.delete(key);
+    }
   }
   return [...paths.values()];
 }

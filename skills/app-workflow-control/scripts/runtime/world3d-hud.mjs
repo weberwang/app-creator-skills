@@ -58,12 +58,11 @@ export function validateWorldHudShape(work, { repo } = {}) {
 /** V1 功能基线冻结是否有 HUD 及本批范围，后续改动不能改标为无界面。 */
 export function assertFrozenWorldHud(work, snapshot) {
   if (work?.visual?.designRoute !== 'world-3d') return;
-  const before = snapshot?.work?.visual?.hud;
+  const previous = snapshot?.mode === 'module-plan' ? snapshot.world3dHudScopeIds : snapshot?.work?.visual?.hud?.scopeIds;
   const current = work.visual.hud;
-  insist(Boolean(before) === Boolean(current), 'HUD 是否存在已变化，必须返回 V1');
+  insist(Boolean(previous) === Boolean(current), 'HUD 是否存在已变化，必须返回 V1');
   if (!current) return;
   validateWorldHudShape(work);
-  const previous = before.scopeIds;
   insist(Array.isArray(previous) && new Set(previous).size === previous.length && JSON.stringify([...previous].sort()) === JSON.stringify([...current.scopeIds].sort()), 'HUD 范围已变化，必须返回 V1');
 }
 

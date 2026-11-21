@@ -8,6 +8,7 @@ import { loadProfile } from '../../skills/app-workflow-control/scripts/runtime/v
 import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
+import { withModuleRules } from './module-rules-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -102,7 +103,8 @@ export async function prepareFormalVisualFixture({ repo, workPath }) {
   foundation.globalState = 'REVIEW';
   foundation.gateStatus.F0 = foundation.gateStatus.F1 = foundation.gateStatus.F2 = 'PASS';
   await putJson(repo, foundationPath, foundation);
-  const unitPath = target.stack === 'cocos' ? 'assets/foundation.ts' : 'lib/foundation.dart';
+  const unitPath = target.stack === 'unity' ? `Assets/Scripts/${foundation.workItemId}.cs`
+    : target.stack === 'cocos' ? 'assets/foundation.ts' : 'lib/foundation.dart';
   const { packPath, units } = await bindImplementation({ repo, work: foundation, workPath: foundationPath, stage: 'foundation', unitPaths: [unitPath] });
   const pack = await readWork(repo, packPath);
   pack.systemCoverage.modules[0].designRefs.push(foundation.foundationVisualRef);
@@ -116,11 +118,11 @@ export async function prepareFormalVisualFixture({ repo, workPath }) {
   for (const to of ['VALIDATING', 'PASSED', 'COMPLETE']) await transitionWork({ repo, workItem: foundationPath, to, args: {} });
 
   const planPath = `${prefix}/module-plan.json`;
-  const plan = { schemaVersion: '1.0', workItemId: target.workItemId, objectId: target.visual.objectId,
+  const plan = withModuleRules({ schemaVersion: '1.0', workItemId: target.workItemId, objectId: target.visual.objectId,
     ...(target.workItemType === 'DISPLAY_LAYER' ? { hostId: target.visual.hostId } : {}),
     dependencies: [], entries: [['function', 'open'], ['state', 'ready'], ['step', 'enter']].map(([kind, id]) => ({
       kind, id, description: `测试 ${kind} ${id}`, acceptance: '满足约定结果', requirementId: 'fixture-requirement-1', command: 'node --version',
-    })) };
+    })) });
   await putJson(repo, planPath, plan);
   target.visual.modulePlanRef = await frozenReview(repo, planPath);
   target.foundationVisualRef = await frozenReview(repo, foundationRefPath);
