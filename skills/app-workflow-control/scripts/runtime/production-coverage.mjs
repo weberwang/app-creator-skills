@@ -8,6 +8,8 @@ import { collectWorldHudReferences } from './world3d-hud.mjs';
 import { collectSampleReferences, collectSampleControlReferences } from './production-samples.mjs';
 import { dependencyPath } from './feature-dependencies.mjs';
 import { supplementalDecompositionReferencePaths } from './module-design-targets.mjs';
+import { collectVisualResearchPaths } from './visual-research.mjs';
+import { moduleDesignDecisionPaths } from './grilling-design.mjs';
 
 /** 规范化项目相对路径，避免 Windows 大小写差异改变证据身份。 */
 function pathKey(repo, path) {
@@ -80,6 +82,11 @@ function reservedEvidencePaths(repo, work) {
   }
   for (const ref of Object.values(visual?.reviews ?? {})) add(ref?.path);
   for (const path of supplementalDecompositionReferencePaths(work, repo)) add(path);
+  for (const path of [
+    ...collectVisualResearchPaths(repo, work.globalVisualBaselineRef),
+    ...collectVisualResearchPaths(repo, visual?.hud?.globalVisualBaselineRef),
+    ...moduleDesignDecisionPaths(repo, work),
+  ]) add(path);
   const controlReferences = [...collectWorldHudReferences(repo, work), ...collectSampleReferences(repo, work)];
   if (isWorld3D(work) || isWorld2D(work)) controlReferences.push(...(isWorld3D(work) ? collectWorld3DReferences(repo, work) : collectSceneDesignReferences(repo, work)));
   if (controlReferences.length) {

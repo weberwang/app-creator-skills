@@ -9,6 +9,7 @@
     "baselineId",
     "projectId",
     "stack",
+    "visualResearchRef",
     "selectionReviewRef"
   ],
   "properties": {
@@ -71,6 +72,9 @@
       }
     },
     "selectionReviewRef": {
+      "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+    },
+    "visualResearchRef": {
       "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
     },
     "designRoute": {

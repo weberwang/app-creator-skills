@@ -1,5 +1,6 @@
 /** 真实控制器生命周期使用合成空间和人工记录，不执行引擎或声称人工验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -53,7 +54,7 @@ test('三维模块须在 V1 提交白模，白模运行可按风险省略', asyn
     stack: context.stack, objectId: 'baseline', stage: 'BASELINE', purpose: 'visual-baseline', decision: 'APPROVED',
     userMessageRef: 'test-only://global', subjectRef: direction });
   const baseline = f.write('spec/global-baseline.json', { schemaVersion: '1.0', designRoute: 'world-3d',
-    baselineId: 'baseline', projectId: context.projectId, stack: context.stack, directionRef: direction, selectionReviewRef: selection });
+    baselineId: 'baseline', projectId: context.projectId, stack: context.stack, visualResearchRef: visualResearchFixture(repo, context.projectId, context.stack), directionRef: direction, selectionReviewRef: selection });
   const foundation = await finishFoundation(f, baseline);
   const initialized = await initializeWork({ repo, args: { id: context.workItemId, stack: context.stack, type: 'SCENE',
     objective: '验证三维模块设计阶段', 'project-id': context.projectId, 'object-id': context.objectId, 'design-route': 'world-3d' } });

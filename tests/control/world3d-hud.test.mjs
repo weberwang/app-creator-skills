@@ -1,5 +1,6 @@
 /** 合成文件只验证 HUD 控制合同，不生成场景图或代表真实人工验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import test from 'node:test';
@@ -33,7 +34,7 @@ function attachHud(f, { stateId = 'play', viewport = { width: 1280, height: 720 
   });
   const globalVisualBaselineRef = f.write('hud/baseline.json', {
     schemaVersion: '1.0', baselineId: 'hud-baseline', projectId: work.projectId, stack: work.stack,
-    candidates, selectedCandidateId: 'a', selectionReviewRef: baselineReview,
+    candidates, selectedCandidateId: 'a', selectionReviewRef: baselineReview, visualResearchRef: visualResearchFixture(f.repo, work.projectId, work.stack),
   });
   const referenceTarget = f.write('hud/target.txt', '仅供协议验证的界面目标');
   const target = {

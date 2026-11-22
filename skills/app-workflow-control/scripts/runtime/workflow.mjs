@@ -33,9 +33,8 @@ import { freezeModulePlan, assertModuleStage, assertFoundationDesignPack, assert
 
 /** 独立的设计提案沿其选稿流程，正式对象统一使用模块阶段门。 */
 function moduleStage(repo, work, options) {
-  if (work.workItemType === 'FOUNDATION' || (work.visual && !isDesignProposal(work))) {
-    assertModuleStage(repo, work, { loadWork, validateGlobalBaseline, assertVisualReview, verifyFoundation }, options);
-  }
+  if (work.workItemType !== 'FOUNDATION' && !work.visual) return;
+  assertModuleStage(repo, work, { loadWork, validateGlobalBaseline, assertVisualReview, verifyFoundation }, options);
 }
 /** 已完成基础工程仍须保有有效的执行记录与通过证据。 */
 function verifyFoundation(repo, work) {
@@ -64,7 +63,7 @@ export function checkProtectedAction({ repo, workItem, actionId, effect, target 
   // BLOCKED/RETURN 不能以保留的旧批准绕过工作项恢复要求。
   const figmaTarget = isFigmaApp(work) && work.visual.stage === 'V2' && effect === 'external-write' && /^figma:(?:new:)?[A-Za-z0-9_-]+$/.test(target);
   const figmaEditing = figmaTarget && ['PROPOSAL', 'REVIEW'].includes(work.globalState);
-  if (figmaEditing && !isDesignProposal(work)) moduleStage(repo, work);
+  if (figmaEditing) moduleStage(repo, work);
   // 设计阶段只允许既有精确授权的 Figma 写入；设备、付费和发布仍沿原有执行边界。
   if (!figmaEditing && !['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASING'].includes(work.globalState)) {
     throw new WorkflowError('当前工作项尚未到达可执行受保护动作的阶段', 'ACTION_NOT_READY');
@@ -200,6 +199,9 @@ export async function completeUnit(args) {
 async function completeUnitLocked({ repo, workItem, resultPath }) {
   const work = loadWork(repo, workItem);
   if (work.globalState !== 'IMPLEMENTING') throw new WorkflowError('unit-check 只允许用于 IMPLEMENTING 状态');
+  assertNoOpenGrilling(repo, work);
+  validateGlobalBaseline(repo, work);
+  if (work.workItemType === 'FOUNDATION') moduleStage(repo, work);
   const pack = loadPackage(repo, work);
   const statePath = `${work.evidenceRoot}/execution-state.json`;
   const state = readJson(repo, statePath, 'Execution State');
@@ -266,7 +268,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     if (!recovery) throw error;
     assertRecoverableLocalBaseline(repo, work);
   }
-  if (work.visual && work.visual.stage !== 'V1') moduleStage(repo, work);
+  if (work.workItemType === 'FOUNDATION' || (work.visual && work.visual.stage !== 'V1')) moduleStage(repo, work);
   if (to === 'BASELINE') assertGates(work, ['F0']);
   if (to === 'PROPOSAL') assertGates(work, ['F1']);
   if (to === 'REVIEW') assertGates(work, ['F1', 'F2']);
@@ -280,7 +282,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     // 进入通过态前重验执行快照，不能在 VALIDATING 后替换最终集成范围。
     const { pack } = inspectExecution(repo, work, { requireComplete: true });
     if (work.visual?.stage === 'V5') assertFunctionHostResults(repo, work);
-    if (work.workItemType === 'FOUNDATION') { moduleStage(repo, work); assertFoundationDesignPack(repo, work, pack); }
+    if (work.workItemType === 'FOUNDATION') assertFoundationDesignPack(repo, work, pack);
     assertReadyToPass(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);
     // 仅在原阶段全部验证通过时保留可变业务源；审批及原始日志仍按原文件核验。
@@ -314,7 +316,7 @@ async function transitionWorkLocked({ repo, workItem, to, args }) {
     // 完成前重验当前执行闭环，避免通过后证据丢失仍写入 COMPLETE。
     if (!proposalCompletion) {
       const { pack } = inspectExecution(repo, work, { requireComplete: true });
-      if (work.workItemType === 'FOUNDATION') { moduleStage(repo, work); assertFoundationDesignPack(repo, work, pack); }
+      if (work.workItemType === 'FOUNDATION') assertFoundationDesignPack(repo, work, pack);
     }
     assertFinalCompletion(repo, work);
     validateFinalIntegration(repo, work, inspectFunctionSource);

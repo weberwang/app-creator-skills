@@ -6,7 +6,8 @@ import {
 import { dirname, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { VERSION, VISUAL_STAGES } from './constants.mjs';
-import { bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateUnitResult } from './artifacts.mjs';
+import { assertNoOpenGrilling, bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
+import { assertFoundationVisual } from './foundation-visual.mjs';
 import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, validateWork } from './validation.mjs';
 import { inspectPendingRegressionExecution, inspectWork, loadWork, response } from './workflow.mjs';
@@ -37,6 +38,9 @@ export async function prepareWorkRecords({ repo, workItem, planPath }) {
 /** 在 Work Item 锁内校验计划、暂存新记录并最后提交 Work Item 引用。 */
 async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   const work = loadWorkItem(repo, workItem);
+  assertNoOpenGrilling(repo, work);
+  validateGlobalBaseline(repo, work);
+  if (work.workItemType === 'FOUNDATION') assertFoundationVisual(repo, work, { loadWork, validateGlobalBaseline });
   const workSourcePath = repoPath(repo, workItem, 'Work Item 路径').relative;
   const sourcePath = repoPath(repo, planPath, 'Work Plan 路径').relative;
   const { plan, sha256: planSha256 } = readCoveragePlan(repo, sourcePath);

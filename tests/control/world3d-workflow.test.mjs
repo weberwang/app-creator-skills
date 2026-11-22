@@ -1,5 +1,6 @@
 /** 无图 3D 路线使用合成文件验证控制协议，不运行游戏或代替人工验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join, resolve } from 'node:path';
@@ -140,7 +141,7 @@ function switchRoute(f, work, targetWorld) {
     });
     work.globalVisualBaselineRef = f.write('image-baseline/baseline.json', {
       schemaVersion: '1.0', baselineId: 'base', projectId: work.projectId, stack: work.stack,
-      candidates, selectedCandidateId: 'a', selectionReviewRef,
+      candidates, selectedCandidateId: 'a', selectionReviewRef, visualResearchRef: visualResearchFixture(f.repo, work.projectId, work.stack),
     });
     work.assetReviewRef = null;
   }

@@ -9,6 +9,7 @@ import { createSystemCoverage } from './system-coverage-fixture.mjs';
 import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { withModuleRules } from './module-rules-fixture.mjs';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -88,7 +89,11 @@ export async function prepareFormalVisualFixture({ repo, workPath }) {
     const reviewPath = `${prefix}/baseline-review.json`;
     await putJson(repo, reviewPath, { ...reviewRecord({ objectId: `${target.workItemId}-baseline`, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: 'direction-a', userMessageRef: 'test://baseline', targetRef: chosen.path, qualityChecks: checks }), targetSha256: chosen.sha256 });
     const baselinePath = `${prefix}/baseline.json`;
-    await putJson(repo, baselinePath, { schemaVersion: '1.0', baselineId: `${target.workItemId}-baseline`, projectId: target.projectId, stack: target.stack, candidates, selectedCandidateId: 'direction-a', selectionReviewRef: await frozenReview(repo, reviewPath) });
+    await putJson(repo, baselinePath, {
+      schemaVersion: '1.0', baselineId: `${target.workItemId}-baseline`, projectId: target.projectId, stack: target.stack,
+      visualResearchRef: visualResearchFixture(repo, target.projectId, target.stack),
+      candidates, selectedCandidateId: 'direction-a', selectionReviewRef: await frozenReview(repo, reviewPath),
+    });
     target.globalVisualBaselineRef = await frozenReview(repo, baselinePath);
     if (['flutter', 'expo'].includes(target.stack) && target.workItemType !== 'SCENE') attachFigmaBaselineFixture(repo, target);
   }

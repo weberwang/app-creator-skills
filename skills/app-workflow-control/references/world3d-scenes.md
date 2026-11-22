@@ -33,6 +33,8 @@ HUD 沿用已有界面目标。非 HUD 的二维内容可在同一 V2 清单用 
 
 需要世界上下文预览时，可在 `visual.moduleDesignRef` 对应的清单登记 `worldViews`；各项声明唯一 `viewId`、当前场景内的 `scopeIds`、三维 `camera.position` 与 `camera.target`、`stateId`、实际 `viewport:{width,height}` 和世界层设计稿 `designRef:{path,sha256}`。不需要预览时可省略 `worldViews`。已登记的视图沿用当前 `SCENE`、白模与全局方向，用户对整份 `moduleDesignRef` 的 V2 确认可覆盖这些视图及原有状态、步骤、转换与进度。
 
+白模向 V2 交接已确认的尺度、路线、碰撞、镜头等空间与功能约束。世界预览和二维稿按全局视觉方向独立设计，V1 白模截图及临时外观禁止作为出稿参考。[正式出稿输入](../../app-creator-workflow/references/workflow.md#v2-design-inputs)
+
 提供世界预览且有常驻 HUD 时，同一清单用 `hudSourceRef:{path,sha256}` 固定共用的可编辑界面源或独立设计图层，每项 `hudTargetId` 引用当前 `visual.hud.targets` 中与状态、视口对应的目标。同状态同视口的不同机位复用同一个 HUD 目标；适配和显隐沿用已确认的规则。无世界预览时可省略预览绑定；无常驻 HUD 时省略 HUD 来源及目标。预览由用户核对实际层序、锚点、样式和界面内容；控制器核对身份、坐标与文件摘要。
 
 V3 从确认的同一空间依据及已有视图按对象和组团拆分模型。V4 可复用符合规格的本地资产、使用项目授权且可用的模型生成 API，或通过 Blender 创建。各来源统一执行模型规格核对、目标引擎导入与消费验证。详见[模型生产交接](../../app-domain-toolkit/references/game-design-exploration.md#production-handoff)。

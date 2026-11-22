@@ -106,7 +106,7 @@ function validateVisual(work) {
   if (work.visual.candidateId !== undefined) requireText(work.visual.candidateId, 'visual.candidateId');
   if (work.visual.functionDependencies !== undefined && !Array.isArray(work.visual.functionDependencies)) throw new WorkflowError('visual.functionDependencies 必须为数组');
   if (work.visual.functionBaselineRef !== undefined && (!work.visual.functionBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.functionBaselineRef.sha256 ?? ''))) throw new WorkflowError('功能基线引用必须包含路径和 SHA-256');
-  for (const name of ['modulePlanRef', 'moduleDesignRef', 'moduleDesignReviewRef', 'moduleRuntimeRef', 'versionDesignSnapshotRef']) if (work.visual[name] !== undefined && (!work.visual[name]?.path || !/^[a-f0-9]{64}$/.test(work.visual[name].sha256 ?? ''))) throw new WorkflowError(`${name} 必须绑定路径和 SHA-256`);
+  for (const name of ['modulePlanRef', 'moduleDesignRef', 'moduleDesignReviewRef', 'moduleRuntimeRef', 'versionDesignSnapshotRef', 'visualResearchRef']) if (work.visual[name] !== undefined && (!work.visual[name]?.path || !/^[a-f0-9]{64}$/.test(work.visual[name].sha256 ?? ''))) throw new WorkflowError(`${name} 必须绑定路径和 SHA-256`);
   if (work.visual.supplementalDecompositionReviews !== undefined && !Array.isArray(work.visual.supplementalDecompositionReviews)) throw new WorkflowError('visual.supplementalDecompositionReviews 必须为数组');
   if (work.visual.sceneDesignRef !== undefined && (route !== 'world-2d' || !work.visual.sceneDesignRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.sceneDesignRef.sha256 ?? ''))) throw new WorkflowError('场景设计引用仅用于 world-2d，且必须绑定路径和 SHA-256');
   if (work.visual.modelBaselineRef !== undefined && (!world3d || !work.visual.modelBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelBaselineRef.sha256 ?? ''))) throw new WorkflowError('模型基线仅用于 world-3d，且必须绑定路径和 SHA-256');
@@ -234,7 +234,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
       if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError(`视觉目标重新绑定已作废引用：${ref.path}`);
     }
   }
-  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modulePlanRef, work.visual?.moduleDesignRef, work.visual?.moduleDesignReviewRef, work.visual?.moduleRuntimeRef, work.visual?.versionDesignSnapshotRef, work.visual?.modelBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef]) {
+  for (const ref of [work.visual?.coverageRef, work.visual?.integrationEvidenceRef, work.visual?.functionBaselineRef, work.visual?.modulePlanRef, work.visual?.moduleDesignRef, work.visual?.moduleDesignReviewRef, work.visual?.moduleRuntimeRef, work.visual?.versionDesignSnapshotRef, work.visual?.modelBaselineRef, work.visual?.modelProductionBasisRef, work.visual?.sceneDesignRef, work.visual?.domainEvidenceRef, work.visual?.visualResearchRef]) {
     if (ref && !/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('visual 场景证据引用必须绑定 SHA-256');
     if (ref?.path && repo) repoPath(repo, ref.path, 'visual 场景证据引用');
     if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError('visual 重新绑定了 RETURN 已作废引用');

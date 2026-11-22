@@ -1,5 +1,6 @@
 /** 本文件只构造控制器合同测试替身，不运行引擎，也不代表真实人工验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -110,7 +111,7 @@ function attachBaseline(fixture, work) {
   });
   fixture.baselineRef = fixture.write('spec/world-baseline.json', {
     schemaVersion: '1.0', designRoute: 'world-3d', baselineId: 'world-baseline',
-    projectId: work.projectId, stack: work.stack, directionRef: fixture.directionRef, selectionReviewRef,
+    projectId: work.projectId, stack: work.stack, directionRef: fixture.directionRef, selectionReviewRef, visualResearchRef: visualResearchFixture(fixture.repo, work.projectId, work.stack),
   });
 }
 

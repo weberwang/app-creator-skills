@@ -1,5 +1,6 @@
 /** 用真实 CLI 与隔离夹具验证阶段四来源、模块方案和模块稿的交接。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { spawnSync } from 'node:child_process';
 import { readFile, rm } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -80,7 +81,7 @@ async function makeBaseline(repo, work) {
   const reviewPath = 'visual/baseline-review.json';
   await putJson(repo, reviewPath, { ...reviewRecord({ objectId: 'baseline', candidateId: 'direction-a', stage: 'BASELINE', purpose: 'visual-baseline', userMessageRef: 'test://baseline', targetRef: target.path, qualityChecks: checks }), targetSha256: target.sha256 });
   const baselinePath = 'visual/baseline.json';
-  await putJson(repo, baselinePath, { schemaVersion: '1.0', baselineId: 'baseline', projectId: work.projectId, stack: work.stack, candidates, selectedCandidateId: 'direction-a', selectionReviewRef: await frozenReview(repo, reviewPath) });
+  await putJson(repo, baselinePath, { schemaVersion: '1.0', baselineId: 'baseline', projectId: work.projectId, stack: work.stack, visualResearchRef: visualResearchFixture(repo, work.projectId, work.stack), candidates, selectedCandidateId: 'direction-a', selectionReviewRef: await frozenReview(repo, reviewPath) });
   work.globalVisualBaselineRef = await frozenReview(repo, baselinePath);
   attachFigmaBaselineFixture(repo, work);
   return work.globalVisualBaselineRef;

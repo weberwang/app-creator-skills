@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -39,7 +40,7 @@ function baseline(f, count = 1) {
   const selectionReviewRef = write(f.repo, 'baseline-review.json', { schemaVersion: '1.0', objectId: 'baseline-a', stage: 'BASELINE', purpose: 'visual-baseline',
     decision: 'APPROVED', userMessageRef: 'test-only://selected', candidateId: 'direction-a', targetRef: f.doc.referenceTarget.path, targetSha256: f.doc.referenceTarget.sha256,
     visualSourceRef: candidates[0].visualSourceRef, qualityChecks: checks(f) });
-  return { schemaVersion: '1.0', baselineId: 'baseline-a', projectId: f.work.projectId, stack: f.work.stack, designRoute: 'figma-app', exploration: { kind: 'initial' }, candidates, selectedCandidateId: 'direction-a', selectionReviewRef };
+  return { schemaVersion: '1.0', baselineId: 'baseline-a', projectId: f.work.projectId, stack: f.work.stack, visualResearchRef: visualResearchFixture(f.repo, f.work.projectId, f.work.stack), designRoute: 'figma-app', exploration: { kind: 'initial' }, candidates, selectedCandidateId: 'direction-a', selectionReviewRef };
 }
 
 /** 变异节点后同时更新原始采集，区分格式一致性和语义门禁。 */
@@ -484,6 +485,9 @@ test('Figma V2 正式模块先核对基础视觉，设计提案按精确批准�
   work.action = { actionId: 'edit-design', effects: ['external-write'], target: 'figma:fixtureFile', approval: {
     workItemId: work.workItemId, stack: work.stack, stageId: work.stageId, actionId: 'edit-design', effects: ['external-write'], target: 'figma:fixtureFile', userMessageRef: 'test-only://prior-approval',
   } }; write(f.repo, path, work);
+  assert.throws(() => checkProtectedAction({ repo: f.repo, workItem: path, actionId: 'edit-design', effect: 'external-write', target: 'figma:fixtureFile' }), /全局视觉产品调研与美术参考/);
+  work.visual.visualResearchRef = visualResearchFixture(f.repo, work.projectId, work.stack);
+  write(f.repo, path, work);
   assert.equal(checkProtectedAction({ repo: f.repo, workItem: path, actionId: 'edit-design', effect: 'external-write', target: 'figma:fixtureFile' }).status, 'PASS');
   work.visual.designIntent = 'implementation';
   work.visual.candidateId = 'confirmed-candidate';
@@ -498,6 +502,7 @@ test('Figma V2 正式模块先核对基础视觉，设计提案按精确批准�
 
 test('游戏基线仍须三候选，Node服务不被要求Figma', (t) => {
   const f = fixture(t); const record = baseline(f); record.stack = 'cocos'; delete record.designRoute;
+  record.visualResearchRef = visualResearchFixture(f.repo, f.work.projectId, 'cocos');
   f.work.stack = 'cocos'; f.work.workItemType = 'DISPLAY_LAYER'; f.work.globalVisualBaselineRef = write(f.repo, 'game-baseline.json', record);
   assert.throws(() => validateGlobalBaseline(f.repo, f.work, { required: true }), /三张/);
   assert.equal(validateFigmaAppStage(f.repo, { stack: 'nodejs', workItemType: 'MODULE' }, 'V2', {}), null);
@@ -532,7 +537,10 @@ test('仅设计提案沿现有控制器V2交付，不预建工程且不能进入
   const created = await initializeWork({ repo: f.repo, args: { id: 'proposal', stack: 'flutter', type: 'PAGE', objective: '仅设计提案', 'design-intent': 'proposal', 'object-id': 'page-a', 'project-id': 'project-a' } });
   const path = created.metadata.workItemPath; let work = loadWork(f.repo, path);
   work.gateStatus.F0 = 'PASS'; work.gateStatus.F1 = 'PASS'; work.globalState = 'PROPOSAL'; write(f.repo, path, work);
-await advanceVisual({ repo: f.repo, workItem: path, to: 'V2' });
+  await assert.rejects(advanceVisual({ repo: f.repo, workItem: path, to: 'V2' }), /全局视觉产品调研与美术参考/);
+  work.visual.visualResearchRef = visualResearchFixture(f.repo, work.projectId, work.stack);
+  write(f.repo, path, work);
+  await advanceVisual({ repo: f.repo, workItem: path, to: 'V2' });
   work = loadWork(f.repo, path); work.visual.candidateId = 'direction-a';
   const doc = { schemaVersion: '1.0', workItemId: work.workItemId, projectId: work.projectId, stack: 'flutter', workItemType: 'PAGE', visualStageModel: 'function-first-v1', visualStage: 'V2', objectId: work.visual.objectId, candidateId: 'direction-a', referenceTarget: f.doc.referenceTarget };
   attachFigmaAppFixture(f.repo, work, doc, { designOnly: true });

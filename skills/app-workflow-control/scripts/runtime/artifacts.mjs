@@ -3,6 +3,7 @@ import { existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { assertModuleRuntimeCoverage, readModulePlan } from './module-plan.mjs';
 import { moduleDesignInputRefs, supplementalDecompositionReferencePaths } from './module-design-targets.mjs';
+import { assertModuleDesignDecisions, moduleDesignDecisionPaths } from './grilling-design.mjs';
 import { assertSupplementalDecompositionReviews } from './module-visual-design.mjs';
 import { readFileSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
@@ -13,6 +14,7 @@ import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs
 import { validateMultiVisualStage } from './multi-visual-contract.mjs';
 import { validateDomainTarget } from './domain-target-check.mjs';
 import { readFrozenVisualBaseline } from './visual-baseline-identity.mjs';
+import { collectVisualResearchInputPaths, collectVisualResearchPaths, validateVisualResearch } from './visual-research.mjs';
 import { validateSingleDomainTarget } from './single-domain-check.mjs';
 import { validateSceneReuseReview, validateSceneReuseCoverage } from './visual-reuse-binding.mjs';
 import { dependencyPath } from './feature-dependencies.mjs';
@@ -157,6 +159,12 @@ export function collectWorkReferencePaths(work, repo) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
+  if (repo) paths.push(
+    ...collectVisualResearchPaths(repo, work.globalVisualBaselineRef),
+    ...collectVisualResearchPaths(repo, work.visual?.hud?.globalVisualBaselineRef),
+    ...collectVisualResearchInputPaths(repo, work.visual?.visualResearchRef),
+    ...moduleDesignDecisionPaths(repo, work),
+  );
   paths.push(...supplementalDecompositionReferencePaths(work, repo));
   for (const dependency of work.productionDependencies ?? []) collect(dependency.workItemRef);
   collect(work.visual?.coverageRef);
@@ -176,7 +184,10 @@ export function collectWorkReferencePaths(work, repo) {
   if (repo && work.foundationVisualRef?.path) {
     const manifest = readJson(repo, work.foundationVisualRef.path, '基础视觉冻结清单');
     if (manifest.foundationWorkItemPath) paths.push(manifest.foundationWorkItemPath);
-    for (const baseline of manifest.baselines ?? []) collect(baseline?.ref);
+    for (const baseline of manifest.baselines ?? []) {
+      collect(baseline?.ref);
+      paths.push(...collectVisualResearchPaths(repo, baseline?.ref));
+    }
   }
   if (repo && work.visual?.moduleDesignRef?.path) {
     const manifest = readJson(repo, work.visual.moduleDesignRef.path, '模块视觉稿清单');
@@ -315,10 +326,12 @@ export function validateHumanReview(repo, ref, { objectId, stage, purpose, candi
 /** 确保未决 grilling 对象不会经状态或证据门绕过。 */
 export function assertNoOpenGrilling(repo, work) {
   if (!work.grillingRef?.path) return;
+  if (work.grillingRef.sha256 !== undefined) verifySingleVisualFile(repo, work.grillingRef, '已冻结的模块设计决策');
   const record = readJson(repo, work.grillingRef.path, 'Grilling Record');
-  if (record.schemaVersion !== VERSION || record.workItemId !== work.workItemId) throw new WorkflowError('Grilling Record 版本或工作项错绑');
+  if (record?.schemaVersion !== VERSION || record.workItemId !== work.workItemId) throw new WorkflowError('Grilling Record 版本或工作项错绑');
   if (record.status === 'OPEN') throw new WorkflowError('存在未决拷问，受影响工作停止');
   if (!['CLOSED', 'NOT_REQUIRED'].includes(record.status)) throw new WorkflowError('Grilling Record.status 必须为 OPEN/CLOSED/NOT_REQUIRED');
+  assertModuleDesignDecisions(repo, work, record);
   if (record.status === 'CLOSED') {
     requireText(record.userMessageRef, 'Grilling Record.userMessageRef');
     if (!Array.isArray(record.decisions) || !record.decisions.length) throw new WorkflowError('Grilling Record.CLOSED 必须记录用户已经回答的实质决策');
@@ -397,6 +410,7 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
   }
   const record = readFrozenVisualBaseline(repo, work.globalVisualBaselineRef);
   if (record.schemaVersion !== VERSION || record.baselineId === undefined || record.projectId !== work.projectId || record.stack !== work.stack) throw new WorkflowError('视觉基线版本、项目或技术栈错绑');
+  validateVisualResearch(repo, record);
   if (isWorld3D(work)) return validateWorld3DBaseline(repo, work, record);
   if (record.designRoute === 'world-3d') throw new WorkflowError('2D／UI 不得引用无图 3D 方向基线绕过图片候选');
   if (isFigmaApp(work)) {

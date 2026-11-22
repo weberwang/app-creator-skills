@@ -6,6 +6,8 @@ import { assertModuleDraftUnchanged, assertModuleVisualDesign } from './module-v
 import { assertFunctionSnapshotFiles } from './function-baseline-files.mjs';
 import { freezeWorld3DModuleBlockout } from './world3d-contract.mjs';
 import { assertFrozenWorldHud } from './world3d-hud.mjs';
+import { isDesignProposal } from './figma-app-contract.mjs';
+import { validateVisualResearch } from './visual-research.mjs';
 
 /** 冻结 V1 方案而非运行结果，后续仍可沿既有功能基线字段引用工作范围。 */
 export async function freezeModulePlan(repo, work, fileDigest) {
@@ -98,6 +100,12 @@ export function assertFrozenModulePlan(repo, work, snapshot) {
 
 /** 校验 V1 冻结、当前全局方向和当前验收阶段的正式模块稿。 */
 export function assertModuleStage(repo, work, { loadWork, validateGlobalBaseline, assertVisualReview, verifyFoundation }, { enteringV2 = false, confirmingV2 = false } = {}) {
+  if (isDesignProposal(work)) {
+    if (!enteringV2 && work.visual.stage !== 'V2') return;
+    // 候选尚未生成时可直接冻结调研，不提前要求已经选定的全局基线。
+    if (work.globalVisualBaselineRef?.path && !work.visual.visualResearchRef) return validateGlobalBaseline(repo, work, { required: true });
+    return validateVisualResearch(repo, { projectId: work.projectId, stack: work.stack, visualResearchRef: work.visual.visualResearchRef });
+  }
   const source = assertFoundationVisual(repo, work, { loadWork, validateGlobalBaseline });
   if (source && work.workItemType !== 'FOUNDATION') verifyFoundation(repo, source.foundation);
   if (enteringV2 || work.workItemType === 'FOUNDATION') return;

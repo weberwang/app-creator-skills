@@ -152,7 +152,10 @@
       "$ref": "#/$defs/visualReviewRef"
     },
     "grillingRef": {
-      "$ref": "#/$defs/refOrNull"
+      "anyOf": [
+        { "$ref": "#/$defs/refOrNull" },
+        { "$ref": "#/$defs/visualFileIdentity" }
+      ]
     },
     "visual": {
       "$ref": "#/$defs/visual"
@@ -454,6 +457,9 @@
           "$ref": "#/$defs/visualFileIdentity"
         },
         "moduleDesignReviewRef": {
+          "$ref": "#/$defs/visualFileIdentity"
+        },
+        "visualResearchRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
         "supplementalDecompositionReviews": {

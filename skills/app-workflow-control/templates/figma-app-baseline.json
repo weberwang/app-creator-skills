@@ -3,6 +3,7 @@
   "baselineId": "replace-direction-baseline",
   "projectId": "replace-project",
   "stack": "flutter",
+  "visualResearchRef": { "path": "docs/visual-research.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
   "designRoute": "figma-app",
   "exploration": {
     "kind": "initial"

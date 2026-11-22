@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { readFile, rm, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -433,7 +434,7 @@ test('模拟阶段材料与人工记录驱动 PAGE 从 V1 到 V5 的控制器闭
   }), targetSha256: baselineTarget.sha256 });
   await putJson(fixture.repo, work.globalVisualBaselineRef.path, {
     schemaVersion: '1.0', baselineId: 'project-baseline-1', projectId: work.projectId,
-    stack: work.stack, candidates: baselineCandidates, selectedCandidateId: 'direction-a',
+    stack: work.stack, visualResearchRef: visualResearchFixture(fixture.repo, work.projectId, work.stack), candidates: baselineCandidates, selectedCandidateId: 'direction-a',
     selectionReviewRef: await frozenReview(fixture.repo, baselinePath),
   }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
   attachFigmaBaselineFixture(fixture.repo, work);
@@ -633,7 +634,7 @@ test('SCENE V2 推进必须逐目标验证真实领域合同及各自确认', as
   const baselineTarget = await frozenReview(fixture.repo, candidates[0].path);
   await putJson(fixture.repo, baselineReview, { ...reviewRecord({ objectId: 'base', candidateId: 'a', stage: 'BASELINE', purpose: 'visual-baseline', userMessageRef: 'user://base', qualityChecks: baselineChecks, targetRef: baselineTarget.path }), targetSha256: baselineTarget.sha256 });
   work.globalVisualBaselineRef = { path: 'baseline/selection.json' };
-  await putJson(fixture.repo, work.globalVisualBaselineRef.path, { schemaVersion: '1.0', baselineId: 'base', projectId: work.projectId, stack: work.stack, candidates, selectedCandidateId: 'a', selectionReviewRef: await frozenReview(fixture.repo, baselineReview) }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
+  await putJson(fixture.repo, work.globalVisualBaselineRef.path, { schemaVersion: '1.0', baselineId: 'base', projectId: work.projectId, stack: work.stack, visualResearchRef: visualResearchFixture(fixture.repo, work.projectId, work.stack), candidates, selectedCandidateId: 'a', selectionReviewRef: await frozenReview(fixture.repo, baselineReview) }); work.globalVisualBaselineRef = await frozenReview(fixture.repo, work.globalVisualBaselineRef.path);
   const imagePath = 'evidence/visual/mockup.png';
   const image = minimalPng(390, 844);
   await put(fixture.repo, imagePath, image);

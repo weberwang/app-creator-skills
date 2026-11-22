@@ -8,11 +8,51 @@
   "properties": {
     "schemaVersion": {"const": "1.0"}, "workItemId": {"type": "string"}, "status": {"enum": ["OPEN", "CLOSED", "NOT_REQUIRED"]},
     "userMessageRef": {"type": "string"},
-    "decisions": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["question", "impact", "options", "recommendation", "answer", "userMessageRef"], "properties": {"question": {"type": "string", "minLength": 1}, "impact": {"type": "string", "minLength": 1}, "options": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}}, "recommendation": {"type": "string", "minLength": 1}, "answer": {"type": "string", "minLength": 1}, "userMessageRef": {"type": "string", "minLength": 1}}}}
+    "decisions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "dependentRequired": { "resolution": ["kind"] },
+        "required": ["question", "impact", "options", "recommendation"],
+        "properties": {
+          "kind": {"const": "module-design"},
+          "question": {"type": "string", "minLength": 1},
+          "impact": {"type": "string", "minLength": 1},
+          "options": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+          "recommendation": {"type": "string", "minLength": 1},
+          "answer": {"type": "string", "minLength": 1},
+          "userMessageRef": {"type": "string", "minLength": 1},
+          "resolution": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["approach", "choiceUserMessageRef", "proposalRef", "confirmationUserMessageRef"],
+            "properties": {
+              "approach": {"enum": ["research", "manual"]},
+              "choiceUserMessageRef": {"type": "string", "minLength": 1},
+              "proposalRef": {"$ref": "#/$defs/fileRef"},
+              "confirmationUserMessageRef": {"type": "string", "minLength": 1},
+              "referenceRefs": {"type": "array", "items": {"$ref": "#/$defs/fileRef"}}
+            },
+            "allOf": [
+              {"if": {"properties": {"approach": {"const": "research"}}}, "then": {"required": ["referenceRefs"], "properties": {"referenceRefs": {"type": "array", "minItems": 1}}}}
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}
+    }
   },
   "allOf": [
-    {"if": {"properties": {"status": {"const": "OPEN"}}}, "then": {"required": ["decisions"], "properties": {"decisions": {"minItems": 1}}}},
-    {"if": {"properties": {"status": {"const": "CLOSED"}}}, "then": {"required": ["userMessageRef", "decisions"], "properties": {"decisions": {"minItems": 1}}}},
-    {"if": {"properties": {"status": {"const": "NOT_REQUIRED"}}}, "then": {"properties": {"decisions": {"maxItems": 0}}}}
+    {"if": {"properties": {"status": {"const": "OPEN"}}}, "then": {"required": ["decisions"], "properties": {"decisions": {"type": "array", "minItems": 1}}}},
+    {"if": {"properties": {"status": {"const": "CLOSED"}}}, "then": {"required": ["userMessageRef", "decisions"], "properties": {"decisions": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["answer", "userMessageRef"], "allOf": [{"if": {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "module-design"}}}, "then": {"type": "object", "required": ["resolution"], "properties": {"answer": {"enum": ["research", "manual"]}}}}]}}}}},
+    {"if": {"properties": {"status": {"const": "NOT_REQUIRED"}}}, "then": {"properties": {"decisions": {"type": "array", "maxItems": 0}}}}
   ]
 }

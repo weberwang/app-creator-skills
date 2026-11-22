@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -41,7 +42,7 @@ function fixture() {
     });
     const baseline = put('visual/baseline.json', {
       schemaVersion: '1.0', baselineId: 'baseline-a', projectId: 'project-a', stack: 'unity',
-      designRoute: 'world-3d', directionRef, selectionReviewRef,
+      designRoute: 'world-3d', directionRef, selectionReviewRef, visualResearchRef: visualResearchFixture(repo, 'project-a', 'unity'),
     });
     manifest.baselines = [{ route: 'world-3d', ref: baseline }];
     work.globalVisualBaselineRef = baseline;

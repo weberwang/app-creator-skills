@@ -8,7 +8,7 @@
 
 正式实现先按[系统与模块覆盖](../../app-creator-workflow/references/system-module-coverage.md)识别必要模块、规则、状态和进度并关联验收。第 4 阶段确认全局视觉方向与代表稿，V1 确认完整模块方案，V2 生成并确认模块设计稿，V5 实现与验收。
 
-第 4 阶段基于产品规格制作并确认全局基线及代表稿。V1 确认本轮模块方案及验收，按风险使用[功能原型](../../app-creator-workflow/references/readable-functional-prototype.md#core-experience-first)验证；V2 基于基线生成全部适用流程、状态和进度的模块可编辑稿，用户确认后固定版本；V3 从该确认稿提取规格。已有有效设计可按范围复用。
+第 4 阶段基于产品规格制作并确认全局基线及代表稿。V1 确认本轮模块方案及验收，按风险使用[功能原型](../../app-creator-workflow/references/readable-functional-prototype.md#core-experience-first)验证。V2 按[正式出稿输入](../../app-creator-workflow/references/workflow.md#v2-design-inputs)从 V1 接收功能要求，基于全局基线独立制作覆盖适用流程、状态和进度的可编辑稿。已有正式确认的设计可按适用范围复用。V2 用户确认后固定版本，V3 从该确认稿提取规格。
 
 按本次范围应用[设计依据](../../app-asset-workflow/references/interface-intent.md#design-basis)和[能力与动作语义](../../app-asset-workflow/references/interface-intent.md#capability-semantics)：从真实使用顺序与压力确定层级和关键取舍，核实现有、拟新增及待验证能力，把结论转为实际生图输入；不把未经验证的估计写成硬约束。
 

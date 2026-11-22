@@ -1,5 +1,6 @@
 /** 使用 Unity 合成协议材料验证两批增量复用；不会启动编辑器或代表真实人工验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { mkdirSync, mkdtempSync, readFileSync, realpathSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
@@ -134,7 +135,7 @@ function baseline(repo, work) {
   const candidates = ['a', 'b', 'c'].map((id) => ({ candidateId: id, path: put(repo, `baseline/${id}.txt`, `合成候选 ${id}`).path, qualityChecks: id === 'a' ? checks : dimensions.map((dimension) => ({ dimension, status: 'NOT_RUN' })) }));
   const selected = put(repo, candidates[0].path, '合成候选 a');
   const review = put(repo, 'baseline/review.json', { schemaVersion: '1.0', objectId: 'baseline-a', candidateId: 'a', stage: 'BASELINE', purpose: 'visual-baseline', decision: 'APPROVED', userMessageRef: 'synthetic', targetRef: selected.path, targetSha256: selected.sha256, qualityChecks: checks });
-  return put(repo, 'baseline/global.json', { schemaVersion: '1.0', baselineId: 'baseline-a', projectId: work.projectId, stack: work.stack, candidates, selectedCandidateId: 'a', selectionReviewRef: review });
+  return put(repo, 'baseline/global.json', { schemaVersion: '1.0', baselineId: 'baseline-a', projectId: work.projectId, stack: work.stack, visualResearchRef: visualResearchFixture(repo, work.projectId, work.stack), candidates, selectedCandidateId: 'a', selectionReviewRef: review });
 }
 
 /** 构造工作项的有序实施和输出，使用真实 Node 版本命令作为测试命令。 */

@@ -6,6 +6,10 @@
 
 定义方向和制作代表稿前，执行[产品调研与美术设定参考](../../app-creator-workflow/references/professional-conventions.md#product-market-research)，将查证或有效复用的产品参考转成当前视觉 brief 的设计依据。
 
+图片、Figma 和三维世界基线都须用 `visualResearchRef: {path,sha256}` 绑定[调研清单](../templates/visual-research.json)。`projectId` 和 `stack` 与当前基线相同，`productResearch` 提供 `market`、`competitor`、`audience` 的来源和结论，`artReferences` 逐项记录来源、设计观察及当前适用依据。每项来源提供公开 `url` 或冻结的 `fileRef: {path,sha256}`。控制器在绑定基线的阶段迁移和基础视觉冻结清单校验时核对这些材料。当前项目和技术栈下仍适用的冻结清单可以直接复用。仅部分来源适用时，将这些来源纳入本次清单并说明适用依据。执行者负责核对公开链接内容和实际适用性。
+
+仅设计的 Figma 提案在选稿前用 `visual.visualResearchRef` 绑定同样的调研清单，也可以沿用已绑定的有效全局基线。进入 V2 及执行受保护的 Figma 写入前都要核对调研。
+
 基础工程 Work Item 完成原有工程验收。其 `foundationVisualRef: {path,sha256}` 指向 JSON，字段为 `schemaVersion: "1.0"`、`projectId`、`stack`、`foundationWorkItemPath` 及 `baselines`。各基线记录 `{route,ref:{path,sha256}}`。路线取 `image`、`figma-app` 或 `world-3d`，直接 Figma 条目保留已获授权的 `designSource`。各路线使用既有基线合同，记录用户对代表稿及全局方向的确认，并将清单的准确路径与摘要纳入基础工程的 `systemCoverage.modules[].designRefs`。正式模块绑定同一个 `foundationVisualRef` 和当前路线对应的 `globalVisualBaselineRef`。
 
 ## V1 确认方案
@@ -28,7 +32,11 @@
 
 V2 展示 V1 已确认的当前模块全部适用要素和必要状态，用于用户确认及 V3 拆解交接。全局视觉方向沿用第 4 阶段的冻结基线。跨模块内容只引用当前交互、状态或布局所需的宿主上下文；同一场景含多个模块时，按当前模块的范围确认稿件。
 
+`modulePlanRef` 提供 V1 的功能和覆盖依据。出稿按[正式出稿输入](../../app-creator-workflow/references/workflow.md#v2-design-inputs)独立设计，V1 草稿、线框、原型截图和临时视觉规则不得用作 V2 参考或底稿。3D 白模按场景合同提供已确认的空间与功能约束。
+
 出稿或实施前发现方案无法从已确认依据中明确时，执行[模块设计方案决策](../../app-creator-workflow/references/workflow.md#module-design-decision)，待用户选择调研或人工调整并明确方案后再推进受影响的设计。变更沿用 V1、V2 和现有用户确认记录。
+
+在当前工作项的 `grillingRef` 登记该问题，并将该条 `decisions[].kind` 设为 `module-design`。待定时记录为 `OPEN`。用户选择后，将 `answer` 和 `resolution.approach` 一致填写为 `research` 或 `manual`，并在 `resolution.choiceUserMessageRef` 引用该决定的用户答复。用户确认具体方案后，用 `proposalRef: {path,sha256}` 冻结该方案，另以 `confirmationUserMessageRef` 记录确认消息。调研路线同时冻结 `referenceRefs`。资料齐全后将记录关闭为 `CLOSED`，并给 `grillingRef` 绑定摘要，随后才允许阶段推进、准备实施包或登记执行单元。
 
 `visual.moduleDesignRef` 指向带摘要的设计清单，清单记录 `schemaVersion: "1.0"`、`workItemId`、`modulePlanRef`、`baselineRef` 和 `entries`。V1 `entries` 的全部要素、机制、状态、步骤、转换及进度沿用原有 `kind` 和 `id`。`rules.flows` 的每项用 `kind: "flow"` 和该流程的 `id` 登记，步骤及其顺序沿用冻结的 V1 方案。每项绑定已确认的 `targetRef: {path,sha256}`，同一份稿可以对应多项。Figma 图片路线还用 `designRef` 引用对应的可编辑节点快照。同一条目需要多张稿时，用 `additionalTargets` 数组登记其余目标的 `targetRef` 及适用的 `designRef`。V2 图片目标覆盖当前模块全部二维元素和必要状态，单张不能清楚容纳时拆分多张。3D 世界按[场景设计合同](world3d-scenes.md#world-camera-designs)使用空间、方向和适用状态规格，`worldViews` 按需登记。
 

@@ -1,5 +1,6 @@
 /** 本文件仅用合成材料验证控制协议，不运行引擎或代替用户验收。 */
 import assert from 'node:assert/strict';
+import { visualResearchFixture } from './visual-research-fixture.mjs';
 import { existsSync, linkSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
@@ -66,7 +67,7 @@ function imageBaseline(f, target) {
     candidateId: 'a', decision: 'APPROVED', userMessageRef: 'test-only://baseline-selection',
     targetRef: selected.path, targetSha256: selected.sha256, qualityChecks,
   });
-  return f.write('reviews/ui-global-baseline.json', { schemaVersion: '1.0', baselineId: 'image-baseline', projectId: f.work.projectId, stack: f.work.stack, candidates, selectedCandidateId: 'a', selectionReviewRef });
+  return f.write('reviews/ui-global-baseline.json', { schemaVersion: '1.0', baselineId: 'image-baseline', projectId: f.work.projectId, stack: f.work.stack, visualResearchRef: visualResearchFixture(f.repo, f.work.projectId, f.work.stack), candidates, selectedCandidateId: 'a', selectionReviewRef });
 }
 
 /** 构造当前或旧工作项留下的真实引用关系；文件内容均为合成测试数据。 */

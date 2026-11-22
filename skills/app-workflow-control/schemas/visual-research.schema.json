@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "全局视觉产品调研与美术参考",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "projectId", "stack", "productResearch", "artReferences"],
+  "properties": {
+    "schemaVersion": { "const": "1.0" },
+    "projectId": { "type": "string", "minLength": 1 },
+    "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox", "flutter", "expo", "esp32", "nodejs"] },
+    "productResearch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["market", "competitor", "audience"],
+      "properties": {
+        "market": { "$ref": "#/$defs/finding" },
+        "competitor": { "$ref": "#/$defs/finding" },
+        "audience": { "$ref": "#/$defs/finding" }
+      }
+    },
+    "artReferences": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["source", "observation", "applicability"],
+        "properties": {
+          "source": { "$ref": "#/$defs/source" },
+          "observation": { "type": "string", "minLength": 1 },
+          "applicability": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "oneOf": [{ "required": ["url"] }, { "required": ["fileRef"] }],
+      "properties": {
+        "url": { "type": "string", "pattern": "^[Hh][Tt][Tt][Pp][Ss]?://" },
+        "fileRef": { "$ref": "work-item.schema.json#/$defs/visualFileIdentity" }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "finding"],
+      "properties": {
+        "source": { "$ref": "#/$defs/source" },
+        "finding": { "type": "string", "minLength": 1 }
+      }
+    }
+  }
+}
