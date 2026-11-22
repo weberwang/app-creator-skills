@@ -4,6 +4,7 @@ import { VISUAL_STAGES } from './constants.mjs';
 import { repoPath, requireFile, fileIdentityKey, WorkflowError } from './io.mjs';
 import { isWorld3D } from './world3d-contract.mjs';
 import { assertFrozenWorldHud, invalidateWorldHud } from './world3d-hud.mjs';
+import { invalidateSupplementalDecompositionReviews } from './module-design-targets.mjs';
 
 /** 历史引用可能已损坏，回退只尽力追踪，不因文件错误阻止登记失效。 */
 function historicalJson(repo, ref) {
@@ -21,6 +22,7 @@ export function invalidateWorld3DEvidence(repo, work, invalidatedRefs, earliestS
   const contract = historicalJson(repo, ref);
   const cutoff = VISUAL_STAGES.indexOf(earliestStage);
   const stageNumber = cutoff + 1;
+  if (stageNumber <= 3) invalidateSupplementalDecompositionReviews(work, invalidatedRefs);
   const seen = new Set();
   /** 原始观测失效需追到底，源文件和上游确认依据不因下游重验被重复作废。 */
   function mark(reference) {

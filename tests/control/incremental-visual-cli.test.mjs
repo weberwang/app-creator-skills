@@ -331,6 +331,15 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   put(repo, targetPath, current);
   await advanceVisual({ repo, workItem: targetPath, to: 'V3' });
   current = loadWork(repo, targetPath); stageTargets(repo, current, 'V3', { inherited: ['old'] }); put(repo, targetPath, current);
+  // 首批目标的有效复用确认只覆盖自身，新增目标须单独确认才能整批推进。
+  const newReviews = current.visual.targets[1].reviews;
+  const decomposition = newReviews.V3Decomposition;
+  delete newReviews.V3Decomposition;
+  put(repo, targetPath, current);
+  await assert.rejects(advanceVisual({ repo, workItem: targetPath, to: 'V4' }), /new 缺少 V3Decomposition 确认/);
+  assert.equal(loadWork(repo, targetPath).visual.stage, 'V3');
+  newReviews.V3Decomposition = decomposition;
+  put(repo, targetPath, current);
   await advanceVisual({ repo, workItem: targetPath, to: 'V4' });
   current = loadWork(repo, targetPath); stageTargets(repo, current, 'V4', { inherited: ['old'] }); put(repo, targetPath, current);
   await runStage(repo, targetPath, 'V4');

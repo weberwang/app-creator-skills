@@ -304,6 +304,8 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
     }
     approved.push({ ref: extra.figmaDesignRef, snapshot: target });
   }
+  const designPaths = approved.map(({ ref }) => fileIdentityKey(repo, ref.path));
+  insist(new Set(designPaths).size === designPaths.length, '同一可编辑稿不能重复登记为多张状态稿');
   if (direct && approved.length > 1) ids(review.figmaTargetRefs?.map((ref) => `${ref.path}:${ref.sha256}`), approved.map(({ ref }) => `${ref.path}:${ref.sha256}`), '同稿状态授权');
   if (work.stack === 'esp32') for (const { snapshot } of approved) {
     const board = frozen(repo, doc.boardProfileRef, 'ESP32 实际硬件', work);
@@ -326,6 +328,10 @@ export function validateFigmaAppStage(repo, work, stage, doc) {
   for (const mapping of handoff.mappings) {
     const target = approved.find(({ ref }) => sameFigmaRef(repo, ref, mapping.figmaDesignRef ?? doc.figmaDesignRef))?.snapshot;
     insist(target && typeof mapping.designItemId === 'string' && mapping.designItemId.trim() && target.nodes.some((node) => node.id === mapping.nodeId) && mapping.stateId === target.stateId && isDeepStrictEqual(mapping.viewport, target.viewport), '交接设计项、节点或状态/视口错绑');
+  }
+  // 每张已确认的状态稿都要参与 V3 交接，即使只包含无样式的结构容器。
+  for (const { ref } of approved) {
+    insist(handoff.mappings.some((mapping) => sameFigmaRef(repo, ref, mapping.figmaDesignRef ?? doc.figmaDesignRef)), `Figma 设计稿 ${ref.path} 缺少拆解映射`);
   }
   if (doc.designReconstructionRef) {
     const plan = frozen(repo, doc.designReconstructionRef, 'Flutter 原生计划', work);

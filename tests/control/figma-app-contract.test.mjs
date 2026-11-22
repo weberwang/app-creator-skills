@@ -464,6 +464,17 @@ test('ESP32额外状态同样受实际分辨率、字体与预算约束', (t) =>
   }
 });
 
+test('同一个可编辑节点稿不能重复登记为另一张状态稿', (t) => {
+  const f = fixture(t);
+  f.work.visual.designSource = { kind: 'figma-direct', userMessageRef: 'test://direct', scope: '当前模块' };
+  f.doc.referenceTarget = f.snapshot.previewRef;
+  const current = f.work.visual.reviews.V2;
+  const review = JSON.parse(readFileSync(join(f.repo, current.path), 'utf8'));
+  f.work.visual.reviews.V2 = write(f.repo, 'direct-review.json', { ...review, figmaDesignRef: f.doc.figmaDesignRef });
+  f.doc.additionalTargets = [{ referenceTarget: f.doc.referenceTarget, figmaDesignRef: f.doc.figmaDesignRef }];
+  assert.throws(() => validateFigmaAppStage(f.repo, f.work, 'V2', f.doc), /同一可编辑稿不能重复登记/);
+});
+
 test('Figma V2 正式模块先核对基础视觉，设计提案按精确批准执行', async (t) => {
   const f = fixture(t);
   const created = await initializeWork({ repo: f.repo, args: { id: 'authorized-design', stack: 'flutter', type: 'PAGE', objective: '合成设计动作', 'design-intent': 'proposal' } });

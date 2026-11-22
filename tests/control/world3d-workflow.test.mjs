@@ -309,6 +309,42 @@ for (const returnScope of ['visual:V5', 'implementation']) test(`无图片 3D �
   assert.equal(f.paths.some((path) => /\.(?:png|jpe?g|webp)$/i.test(path)), false);
 });
 
+test('三维场景逐张确认独立二维稿后才能从 V3 进入 V4', async (t) => {
+  const { repo, workPath, work, fixture: f } = await prepareWorld3DStage(t, 'V3', {
+    stack: 'threejs',
+    /** 将两张正式二维稿登记在真实的 V2 模块设计快照中。 */
+    beforeEngineering({ fixture, work, stage }) {
+      if (stage !== 'V2') return;
+      const design = fixture.read(work.visual.moduleDesignRef);
+      design.scene2dDesignRefs = [fixture.write('design/sprites.png', '合成二维精灵稿'), fixture.write('design/indicators.png', '合成场景指示稿')];
+      design.entries[0].additionalTargets = design.scene2dDesignRefs.map((targetRef) => ({ targetRef }));
+      work.visual.moduleDesignRef = fixture.write(work.visual.moduleDesignRef.path, design);
+      const approval = fixture.read(work.visual.moduleDesignReviewRef);
+      work.visual.moduleDesignReviewRef = fixture.write(work.visual.moduleDesignReviewRef.path, { ...approval, subjectRef: work.visual.moduleDesignRef });
+    },
+  });
+  attachWorld3DPhase(f, 'V3', work);
+  const [sprites, indicators] = f.read(work.visual.moduleDesignRef).scene2dDesignRefs;
+  /** 写入每份合成稿件的独立拆解材料和用户确认记录。 */
+  function confirmDecomposition(name, referenceTarget) {
+    const artifact = f.write(`design/${name}-decomposition.json`, { elements: [name] });
+    return f.write(`reviews/${name}-decomposition.json`, {
+      schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId,
+      candidateId: work.visual.candidateId, stage: 'V3', purpose: 'decomposition', decision: 'APPROVED',
+      userMessageRef: 'test://draft-decomposition', referenceTarget, targetRef: artifact.path, targetSha256: artifact.sha256,
+    });
+  }
+  work.visual.supplementalDecompositionReviews = [confirmDecomposition('sprites', sprites)];
+  await putJson(repo, workPath, work);
+  const savedV3 = readFileSync(resolve(repo, workPath));
+  await assert.rejects(advanceVisual({ repo, workItem: workPath, to: 'V4' }), /缺少 V3 拆解确认：design\/indicators\.png/);
+  assert.deepEqual(readFileSync(resolve(repo, workPath)), savedV3);
+  work.visual.supplementalDecompositionReviews.push(confirmDecomposition('indicators', indicators));
+  await putJson(repo, workPath, work);
+  await advanceVisual({ repo, workItem: workPath, to: 'V4' });
+  assert.equal(loadWork(repo, workPath).visual.stage, 'V4');
+});
+
 test('V3 高风险规格推进后不能通过重绑 V4 封套降级风险或更换模型规格', async (t) => {
   const fixture = createWorld3DFixture(t, { stack: 'unity', productionRisk: 'high' });
   const { repo, work } = await prepareWorld3DStage(t, 'V4', { fixture });

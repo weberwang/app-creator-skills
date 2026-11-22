@@ -456,6 +456,10 @@
         "moduleDesignReviewRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },
+        "supplementalDecompositionReviews": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/visualFileIdentity" }
+        },
         "moduleRuntimeRef": {
           "$ref": "#/$defs/visualFileIdentity"
         },

@@ -4,8 +4,9 @@ import { linkSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync }
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
-import { collectWorkReferencePaths } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
-import { assertModuleDraftUnchanged, assertModuleVisualDesign } from '../../skills/app-workflow-control/scripts/runtime/module-visual-design.mjs';
+import { assertVisualReview, collectWorkReferencePaths, validateHumanReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
+import { assertModuleDraftUnchanged, assertModuleVisualDesign, assertSupplementalDecompositionReviews } from '../../skills/app-workflow-control/scripts/runtime/module-visual-design.mjs';
+import { invalidateSingleDomainEvidence } from '../../skills/app-workflow-control/scripts/runtime/visual-domain-invalidation.mjs';
 import { worldViewFixture } from './world3d-completed-fixture.mjs';
 
 /** 使用实际文件和摘要构建可重复的模块设计检查数据。 */
@@ -62,6 +63,91 @@ function fixture(t) {
   confirm();
   return { repo, plan, work, design, write, confirm, main, extra };
 }
+
+/** 以真实校验格式写入合成拆解确认，供不同视觉路线共用。 */
+function decomposition(f, path, referenceTarget, artifact, changes = {}) {
+  const { work } = f;
+  return f.write(path, {
+    schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, targetId: work.visual.objectId,
+    candidateId: work.visual.candidateId, hostId: work.visual.hostId, layerType: work.visual.layerType,
+    stage: 'V3', purpose: 'decomposition', decision: 'APPROVED', userMessageRef: 'test://decomposition',
+    referenceTarget, targetRef: artifact.path, targetSha256: artifact.sha256, ...changes,
+  });
+}
+
+test('弹窗存在未确认的状态稿时阻断 V3，逐稿检查宿主、重复确认、材料摘要与返修', (t) => {
+  const f = fixture(t);
+  const retry = f.write('retry.png', '合成重试状态');
+  const artifact = f.write('decomposition.json', { state: 'retry' });
+  const { work } = f;
+  work.workItemType = 'DISPLAY_LAYER';
+  work.visual = {
+    objectId: 'result-popup', hostId: 'level', layerType: 'modal', stage: 'V3', candidateId: 'selected',
+    reviews: { V2: f.write('popup-review.json', { referenceTarget: f.main, approvedTargetRefs: [f.extra, retry] }) },
+  };
+  const extra = decomposition(f, 'extra-confirmation.json', f.extra, artifact);
+  const retryReview = decomposition(f, 'retry-confirmation.json', retry, artifact);
+  work.visual.supplementalDecompositionReviews = [extra];
+  assert.throws(() => assertVisualReview(f.repo, work, 'V3'), /缺少 V3 拆解确认：retry.png/);
+  /** 局部校验使用生产代码的用户确认规则，独立于主稿的原生清单夹具。 */
+  const check = () => assertSupplementalDecompositionReviews(f.repo, work, validateHumanReview);
+  work.visual.supplementalDecompositionReviews.push(extra);
+  assert.throws(check, /重复登记/);
+  work.visual.supplementalDecompositionReviews[1] = decomposition(f, 'wrong-host.json', retry, artifact, { hostId: 'other' });
+  assert.throws(check, /未绑定当前工作项、对象及宿主/);
+  const designCopy = f.write('copied-design.png', '已确认进度稿');
+  work.visual.supplementalDecompositionReviews[1] = decomposition(f, 'copied-design-review.json', retry, designCopy);
+  assert.throws(check, /拆解材料必须与 V2 原稿及确认记录独立/);
+  work.visual.supplementalDecompositionReviews[1] = retryReview;
+  assert.doesNotThrow(check);
+  assert(collectWorkReferencePaths(work, f.repo).includes(artifact.path));
+  f.write(artifact.path, '材料发生变化');
+  assert.throws(check, /拆解材料.*重新冻结/);
+  const invalidated = [];
+  invalidateSingleDomainEvidence(f.repo, work, invalidated, 'V3');
+  assert.equal(work.visual.supplementalDecompositionReviews, undefined);
+  assert.deepEqual(invalidated.map(({ path }) => path), [extra.path, retryReview.path]);
+});
+
+test('Figma 共用效果图的两个状态稿仍分别确认当前拆解交接', (t) => {
+  const f = fixture(t);
+  const { work } = f;
+  const main = f.write('frame-main.json', { state: 'main' });
+  const extra = f.write('frame-extra.json', { state: 'extra' });
+  const handoff = f.write('handoff.json', { mappings: ['main', 'extra'] });
+  work.workItemType = 'PAGE';
+  work.stack = 'expo';
+  work.visual = { objectId: 'page', candidateId: 'selected', stage: 'V3',
+    reviews: { V2: f.write('v2.json', { referenceTarget: f.main }) },
+    domainEvidenceRef: f.write('figma-domain.json', { referenceTarget: f.main, figmaDesignRef: main, figmaHandoffRef: handoff,
+      additionalTargets: [{ referenceTarget: f.main, figmaDesignRef: extra }] }),
+  };
+  work.visual.supplementalDecompositionReviews = [decomposition(f, 'main-review.json', f.main, handoff, { figmaDesignRef: main })];
+  /** 原生拆解交接可以共用，但确认必须指明实际节点稿。 */
+  const check = () => assertSupplementalDecompositionReviews(f.repo, work, validateHumanReview);
+  assert.throws(check, /缺少 V3 拆解确认：frame-extra.json/);
+  const stale = f.write('old-handoff.json', { mappings: ['main'] });
+  work.visual.supplementalDecompositionReviews.push(decomposition(f, 'old-extra-review.json', f.main, stale, { figmaDesignRef: extra }));
+  assert.throws(check, /未绑定当前 Figma 拆解交接/);
+  work.visual.supplementalDecompositionReviews[1] = decomposition(f, 'extra-review.json', f.main, handoff, { figmaDesignRef: extra });
+  assert.doesNotThrow(check);
+});
+
+test('三维场景独立二维稿需要拆解确认，共用 HUD 稿和机位预览沿各自的合同', (t) => {
+  const f = fixture(t);
+  f.work.visual.designRoute = 'world-3d';
+  f.work.visual.candidateId = 'selected';
+  f.work.visual.hud = { targets: [{ referenceTarget: f.main }] };
+  f.design.scene2dDesignRefs = [f.main, f.extra];
+  f.design.worldViews = [{ designRef: f.write('camera.png', '机位预览') }];
+  f.confirm();
+  /** 只核对本次引入的独立二维内容确认，不重复校验 HUD 或空间原生封套。 */
+  const check = () => assertSupplementalDecompositionReviews(f.repo, f.work, validateHumanReview);
+  assert.throws(check, /缺少 V3 拆解确认：extra\.png$/);
+  const breakdown = f.write('sprites.json', { elements: ['sprite'] });
+  f.work.visual.supplementalDecompositionReviews = [decomposition(f, 'sprite-review.json', f.extra, breakdown)];
+  assert.doesNotThrow(check);
+});
 
 test('同一张确认稿可覆盖多个条目，每条冻结流程仍须单独绑定', (t) => {
   const f = fixture(t);

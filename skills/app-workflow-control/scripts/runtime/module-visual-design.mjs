@@ -1,7 +1,7 @@
 import { statSync } from 'node:fs';
 import { fileIdentityKey, readJson, repoPath, WorkflowError } from './io.mjs';
 import { productionIdentity } from './production-scope.mjs';
-import { moduleDesignTargets } from './module-design-targets.mjs';
+import { moduleDesignInputRefs, moduleDesignTargets } from './module-design-targets.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
 import { world3dFile } from './world3d-contract.mjs';
 import { withWorld3DFileSnapshots, world3DFileIdentity } from './world3d-file-snapshots.mjs';
@@ -49,6 +49,63 @@ function approvedDesigns(repo, work, worldContract, manifest) {
   }
   return [review.referenceTarget, ...(review.approvedTargetRefs ?? [])]
     .map((targetRef) => ({ targetRef }));
+}
+
+/** 取出未由场景目标或单目标主稿确认链接管的实际设计稿。 */
+function supplementalDecompositionTargets(repo, work) {
+  const { visual } = work;
+  if (visual.designRoute === 'world-3d') {
+    if (!visual.moduleDesignRef) return [];
+    const design = frozenJson(repo, visual.moduleDesignRef, '模块设计稿清单');
+    return (design.scene2dDesignRefs ?? [])
+      .filter((ref) => !visual.hud?.targets?.some(({ referenceTarget }) => sameRef(repo, ref, referenceTarget)))
+      .map((targetRef) => ({ targetRef }));
+  }
+  if (work.workItemType === 'SCENE') return [];
+  const designs = approvedDesigns(repo, work);
+  // Figma 多稿可以共用交接文件，以各自的可编辑节点稿区分确认范围。
+  if (isFigmaApp(work)) return designs.length > 1 ? designs : [];
+  return designs.slice(1);
+}
+
+/** 核对每张补充稿的拆解确认与冻结证据，按路径和摘要识别对应稿件。 */
+export function assertSupplementalDecompositionReviews(repo, work, validateHumanReview) {
+  const { visual } = work;
+  const pending = supplementalDecompositionTargets(repo, work);
+  const refs = visual.supplementalDecompositionReviews ?? [];
+  if (!pending.length && !refs.length) return;
+  const figma = pending.some(({ designRef }) => designRef);
+  const handoff = figma ? frozenJson(repo, visual.domainEvidenceRef, 'Figma 领域合同').figmaHandoffRef : null;
+  const frozenInputs = [...refs, ...Object.values(visual.reviews ?? {}), ...pending.flatMap(({ targetRef, designRef }) => [targetRef, designRef])].filter(Boolean);
+  if (visual.moduleDesignRef) frozenInputs.push(...moduleDesignInputRefs(frozenJson(repo, visual.moduleDesignRef, '模块设计稿清单')));
+  const seen = new Set();
+  for (const ref of refs) {
+    const label = `V3 拆解确认 ${ref.path}`;
+    const path = fileIdentityKey(repo, productionIdentity(repo, ref, label));
+    if (seen.has(path)) throw new WorkflowError(`${label} 重复登记`);
+    seen.add(path);
+    const review = validateHumanReview(repo, ref, {
+      objectId: visual.objectId, candidateId: visual.candidateId, stage: 'V3', purpose: 'decomposition', requireTarget: true,
+    });
+    if (review.workItemId !== work.workItemId || review.targetId !== visual.objectId
+      || review.hostId !== visual.hostId || review.layerType !== visual.layerType) {
+      throw new WorkflowError(`${label} 未绑定当前工作项、对象及宿主`);
+    }
+    const index = pending.findIndex(({ targetRef, designRef }) => sameRef(repo, targetRef, review.referenceTarget)
+      && sameOptionalRef(repo, designRef, review.figmaDesignRef));
+    if (index === -1) throw new WorkflowError(`${label} 重复或未绑定 V2 已确认的设计稿`);
+    const artifact = { path: review.targetRef, sha256: review.targetSha256 };
+    const artifactPath = fileIdentityKey(repo, productionIdentity(repo, artifact, `${label} 的拆解材料`));
+    // 冻结原稿或确认记录的副本都不能代替实际拆解材料。
+    if (frozenInputs.some((input) => input.sha256 === artifact.sha256 || fileIdentityKey(repo, input.path) === artifactPath)) {
+      throw new WorkflowError(`${label} 的拆解材料必须与 V2 原稿及确认记录独立`);
+    }
+    if (figma && !sameRef(repo, handoff, artifact)) throw new WorkflowError(`${label} 未绑定当前 Figma 拆解交接`);
+    pending.splice(index, 1);
+  }
+  if (pending.length) {
+    throw new WorkflowError(`以下 V2 设计稿缺少 V3 拆解确认：${pending.map(({ targetRef, designRef }) => (designRef ?? targetRef).path).join('、')}`);
+  }
 }
 
 /** 判断清单条目是否绑定了一个完整的已确认目标。 */

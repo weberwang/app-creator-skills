@@ -18,7 +18,7 @@ Web 清单有带编号的拆解区域时，领域证据还提供 `visualConfirma
 
 Flutter PAGE 和 DISPLAY_LAYER 的 V2 绑定当前对象、`figmaDesignRef: {path,sha256}` 及已确认原图到忠实重建节点的转换关系；原图确认与还原授权有效时不要求用户再选一次重建预览，不预先要求布局产物。V3–V5 以 `figmaHandoffRef` 将节点和设计项对应起来并冻结 `layoutSpecRef` 和 `designReconstructionRef`；可直接从已选节点提取关系和边界，不强制重新绘图或重复人工确认。自适应布局规格的 `page.id` 须与对象一致，[设计还原合同](../../flutter-domain-contracts/references/design-reconstruction.md)逐项连接目标、组件或素材、消费者与当前证据。`visualValidationMode` 默认 `usability`，仍须还原目标布局、层级、形状、排版及视觉特征；仅 `exact` 强制完整 fidelity 矩阵。V5 绑定当前目标、正式组合、视口、状态、语言、文字倍率及适配条件；截图由用户人工检查。
 
-Flutter DISPLAY_LAYER 的 V2、V4 和 V5 人工确认还须记录当前 `hostId` 和 `layerType`；Figma 交接已经表达的 V3 拆解与布局不要求再设独立人工批准。V5 领域证据使用 `runtimeContextRef: {path,sha256}` 引用运行上下文 JSON，V5 人工确认引用同一文件。上下文记录 `schemaVersion`、`workItemId`、`objectId`、`candidateId`、`hostId`、`layerType` 和 `interactions`；分别记录 `open`、`close`、`focus-restore` 的实际证据或不适用原因。更换宿主或层类型须重新确认并验证受影响上下文，不要求宿主另建工作项或等待宿主 V5。
+Flutter DISPLAY_LAYER 的人工确认都须记录当前 `hostId` 和 `layerType`。单稿 Figma 由原生交接覆盖 V3 拆解和布局。多稿 Figma 还须按[阶段门禁](version-visual-gate.md#实现验收与返工)逐稿确认拆解，可共用同一原生交接。V5 领域证据使用 `runtimeContextRef: {path,sha256}` 引用运行上下文 JSON，V5 人工确认引用同一文件。上下文记录 `schemaVersion`、`workItemId`、`objectId`、`candidateId`、`hostId`、`layerType` 和 `interactions`；分别记录 `open`、`close`、`focus-restore` 的实际证据或不适用原因。更换宿主或层类型须重新确认并验证受影响上下文，不要求宿主另建工作项或等待宿主 V5。
 
 额外视口目标也可沿有效的 V2 视觉复用链引用来源确认；完整阶段继承的来源必须已完成 V5；仅引用有效已确认原图时核对同一目标、摘要和真实消息即可，不继承来源工程结论。当前 V4/V5 材料仍须重新验证。
 

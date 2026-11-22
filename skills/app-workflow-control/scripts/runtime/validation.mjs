@@ -107,6 +107,7 @@ function validateVisual(work) {
   if (work.visual.functionDependencies !== undefined && !Array.isArray(work.visual.functionDependencies)) throw new WorkflowError('visual.functionDependencies 必须为数组');
   if (work.visual.functionBaselineRef !== undefined && (!work.visual.functionBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.functionBaselineRef.sha256 ?? ''))) throw new WorkflowError('功能基线引用必须包含路径和 SHA-256');
   for (const name of ['modulePlanRef', 'moduleDesignRef', 'moduleDesignReviewRef', 'moduleRuntimeRef', 'versionDesignSnapshotRef']) if (work.visual[name] !== undefined && (!work.visual[name]?.path || !/^[a-f0-9]{64}$/.test(work.visual[name].sha256 ?? ''))) throw new WorkflowError(`${name} 必须绑定路径和 SHA-256`);
+  if (work.visual.supplementalDecompositionReviews !== undefined && !Array.isArray(work.visual.supplementalDecompositionReviews)) throw new WorkflowError('visual.supplementalDecompositionReviews 必须为数组');
   if (work.visual.sceneDesignRef !== undefined && (route !== 'world-2d' || !work.visual.sceneDesignRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.sceneDesignRef.sha256 ?? ''))) throw new WorkflowError('场景设计引用仅用于 world-2d，且必须绑定路径和 SHA-256');
   if (work.visual.modelBaselineRef !== undefined && (!world3d || !work.visual.modelBaselineRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelBaselineRef.sha256 ?? ''))) throw new WorkflowError('模型基线仅用于 world-3d，且必须绑定路径和 SHA-256');
   if (work.visual.modelProductionBasisRef !== undefined && (!world3d || !work.visual.modelProductionBasisRef?.path || !/^[a-f0-9]{64}$/.test(work.visual.modelProductionBasisRef.sha256 ?? ''))) throw new WorkflowError('模型生产基线仅用于 world-3d，且必须绑定路径和 SHA-256');
@@ -238,6 +239,13 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
     if (ref?.path && repo) repoPath(repo, ref.path, 'visual 场景证据引用');
     if (ref?.path && work.invalidatedRefs?.some((item) => item.path === ref.path)) throw new WorkflowError('visual 重新绑定了 RETURN 已作废引用');
     if (ref?.path && work.invalidatedRefs?.some((item) => repo ? fileIdentityKey(repo, item.path) === fileIdentityKey(repo, ref.path) : item.path === ref.path)) throw new WorkflowError(`视觉清单重新绑定已作废引用：${ref.path}`);
+  }
+  // 返修已撤销的拆解确认不可借同一个文件路径重新绑定。
+  for (const ref of work.visual?.supplementalDecompositionReviews ?? []) {
+    requireText(ref?.path, 'V3 补充拆解确认路径');
+    if (!/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('V3 补充拆解确认必须绑定 SHA-256');
+    if (repo) repoPath(repo, ref.path, 'V3 补充拆解确认路径');
+    if (work.invalidatedRefs?.some((item) => repo ? fileIdentityKey(repo, item.path) === fileIdentityKey(repo, ref.path) : item.path === ref.path)) throw new WorkflowError(`V3 拆解确认重新绑定已作废引用：${ref.path}`);
   }
   if (work.assetReviewRef && !/^[a-f0-9]{64}$/.test(work.assetReviewRef.sha256 ?? '')) throw new WorkflowError('assetReviewRef 必须绑定 SHA-256');
   if (work.transitionHistory !== undefined && !Array.isArray(work.transitionHistory)) throw new WorkflowError('Work Item.transitionHistory 必须为数组');

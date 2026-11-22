@@ -5,6 +5,7 @@ import { repoPath, requireFile, fileIdentityKey } from './io.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
 import { isWorld3D } from './world3d-contract.mjs';
 import { invalidateWorld3DEvidence } from './world3d-lifecycle.mjs';
+import { invalidateSupplementalDecompositionReviews } from './module-design-targets.mjs';
 
 /** 仅从路径合法且摘要匹配的 JSON 中继续追溯，缺失或损坏不得阻止 RETURN。 */
 function frozenJson(repo, ref) {
@@ -20,6 +21,7 @@ function frozenJson(repo, ref) {
 /** 领域封套及下游冻结引用按最早影响阶段作废，不删除任何历史文件。 */
 export function invalidateSingleDomainEvidence(repo, work, invalidatedRefs, earliestStage) {
   if (isWorld3D(work)) return invalidateWorld3DEvidence(repo, work, invalidatedRefs, earliestStage);
+  if (['V1', 'V2', 'V3'].includes(earliestStage)) invalidateSupplementalDecompositionReviews(work, invalidatedRefs);
   const envelope = work.visual.domainEvidenceRef;
   if (envelope?.path) invalidatedRefs.push({ path: envelope.path, state: work.visual.stage });
   const figma = isFigmaApp(work);

@@ -2,7 +2,8 @@ import { GATES, PROTECTED_ACTIONS, WORK_STAGES, TRANSITIONS, VERSION, VISUAL_STA
 import { existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { assertModuleRuntimeCoverage, readModulePlan } from './module-plan.mjs';
-import { moduleDesignInputRefs } from './module-design-targets.mjs';
+import { moduleDesignInputRefs, supplementalDecompositionReferencePaths } from './module-design-targets.mjs';
+import { assertSupplementalDecompositionReviews } from './module-visual-design.mjs';
 import { readFileSync } from 'node:fs';
 import { readJson, requireFile, repoPath, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, requireOneOf, requireText } from './validation.mjs';
@@ -156,6 +157,7 @@ export function collectWorkReferencePaths(work, repo) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
+  paths.push(...supplementalDecompositionReferencePaths(work, repo));
   for (const dependency of work.productionDependencies ?? []) collect(dependency.workItemRef);
   collect(work.visual?.coverageRef);
   collect(work.visual?.integrationEvidenceRef);
@@ -483,6 +485,7 @@ export function assertGates(work, gates) {
 /** 视觉人工确认按唯一对象与阶段绑定，V3 拆解和布局必须分别确认。 */
 export function assertVisualReview(repo, work, stage) {
   if (!work.visual) return;
+  if (['V3', 'V4', 'V5'].includes(stage)) assertSupplementalDecompositionReviews(repo, work, validateHumanReview);
   if (isWorld2D(work)) validateWorld2DDesign(repo, work, { requireConfirmation: true });
   if (isWorld3D(work)) {
     assertWorld3DShape(work);
