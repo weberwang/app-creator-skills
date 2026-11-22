@@ -4,6 +4,8 @@
 
 ## 第 4 阶段冻结全局视觉
 
+定义方向和制作代表稿前，执行[产品调研与美术设定参考](../../app-creator-workflow/references/professional-conventions.md#product-market-research)，将查证或有效复用的产品参考转成当前视觉 brief 的设计依据。
+
 基础工程 Work Item 完成原有工程验收。其 `foundationVisualRef: {path,sha256}` 指向 JSON，字段为 `schemaVersion: "1.0"`、`projectId`、`stack`、`foundationWorkItemPath` 及 `baselines`。各基线记录 `{route,ref:{path,sha256}}`。路线取 `image`、`figma-app` 或 `world-3d`，直接 Figma 条目保留已获授权的 `designSource`。各路线使用既有基线合同，记录用户对代表稿及全局方向的确认，并将清单的准确路径与摘要纳入基础工程的 `systemCoverage.modules[].designRefs`。正式模块绑定同一个 `foundationVisualRef` 和当前路线对应的 `globalVisualBaselineRef`。
 
 ## V1 确认方案
@@ -25,6 +27,8 @@
 ## V2 生成并确认模块稿
 
 V2 展示 V1 已确认的当前模块全部适用要素和必要状态，用于用户确认及 V3 拆解交接。全局视觉方向沿用第 4 阶段的冻结基线。跨模块内容只引用当前交互、状态或布局所需的宿主上下文；同一场景含多个模块时，按当前模块的范围确认稿件。
+
+出稿或实施前发现方案无法从已确认依据中明确时，执行[模块设计方案决策](../../app-creator-workflow/references/workflow.md#module-design-decision)，待用户选择调研或人工调整并明确方案后再推进受影响的设计。变更沿用 V1、V2 和现有用户确认记录。
 
 `visual.moduleDesignRef` 指向带摘要的设计清单，清单记录 `schemaVersion: "1.0"`、`workItemId`、`modulePlanRef`、`baselineRef` 和 `entries`。V1 `entries` 的全部要素、机制、状态、步骤、转换及进度沿用原有 `kind` 和 `id`。`rules.flows` 的每项用 `kind: "flow"` 和该流程的 `id` 登记，步骤及其顺序沿用冻结的 V1 方案。每项绑定已确认的 `targetRef: {path,sha256}`，同一份稿可以对应多项。Figma 图片路线还用 `designRef` 引用对应的可编辑节点快照。同一条目需要多张稿时，用 `additionalTargets` 数组登记其余目标的 `targetRef` 及适用的 `designRef`。V2 图片目标覆盖当前模块全部二维元素和必要状态，单张不能清楚容纳时拆分多张。3D 世界按[场景设计合同](world3d-scenes.md#world-camera-designs)使用空间、方向和适用状态规格，`worldViews` 按需登记。
 
