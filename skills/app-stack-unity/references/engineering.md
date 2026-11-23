@@ -20,6 +20,16 @@
 
 在技术设计和工作包中登记目录、模块/程序集边界、资源和文件所有权、场景周期、输入、保存、错误处理、测试入口和平台预算。只为用户选定的平台实现平台服务。
 
+<a id="unity-camera-control"></a>
+
+## Unity 原生镜头控制
+
+Unity 2D 和 3D 项目的动态玩法镜头统一使用 Unity 官方包 **Cinemachine**（`com.unity.cinemachine`）。在首次实现动态镜头前，通过 Unity Package Manager 核实并使用与目标 Editor 兼容的版本，将实际解析版本纳入工程依赖。只需固定机位的场景可直接配置 Unity `Camera`。[Unity 官方包说明](https://github.com/Unity-Technologies/com.unity.cinemachine/blob/main/appcollector.yaml)
+
+- **镜头配置**。在实际渲染 `Camera` 上配置 `CinemachineBrain`，使用 Cinemachine 的机位与组件实现当前需求中的跟随、瞄准、阻尼、镜头边界、缩放、机位切换与混合。需要镜头震动时使用 Cinemachine 的反馈能力。正式参数和引用保存在可编辑的 Scene／Prefab 及其关联资源中。
+- **控制权**。玩法层提供跟随目标、模式、机位切换请求或震动事件。表现层通过 Cinemachine 配置或接口接收请求，由 `CinemachineBrain` 统一向渲染 `Camera` 输出镜头位置、朝向和镜头参数。脚本不得和 Brain 同时写入这些属性，射线、投影和世界转 HUD 读取当前实际渲染相机。
+- **交接与验证**。V1 按适用的跟随、切换和恢复路径验证代表镜头。V3 在已有布局或玩法规格交接机位、目标、边界、过渡及恢复策略。V5 回读正式配置，并在实际宿主检查活动机位、目标更换、边界、切换或打断、场景退出及适用的 HUD／输入一致性。画面构图和衔接手感由用户人工检查。
+
 ## Unity Editor 写入
 
 - 每个工程维护一个正式 Editor 写入者。`ProjectSettings/`、包清单、Build Settings、跨场景入口和共享 asmdef 串行写入。

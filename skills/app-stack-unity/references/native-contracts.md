@@ -98,6 +98,8 @@
 
 项目创建与 Editor/构建操作交给 `unity:new-unity-project`、`unity:unity-cli`；UPM 交给 `unity:unity-package-management`；BiRP→URP 和 Render Graph 专项分别交给 `unity:migrate-birp-to-urp`、`unity:validate-urp-render-graph-renderer-feature`。本角色只决定架构、预算、依赖和验收边界，不重复维护插件操作步骤。
 
+涉及动态玩法镜头时，按[原生镜头控制规范](engineering.md#unity-camera-control)在技术方案登记 Cinemachine 依赖及渲染相机的控制权。
+
 1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建；采用 SDK 时按[统一初始化合同](../../unity-development-workflow/references/sdk-initialization.md)登记唯一入口、真实前置、完成信号、失败隔离和重试所有者。
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。文本按 [UniText 与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)设计统一加载、语言服务与绑定，实施前检查安装，异常时由用户选择修复或回退 TMP，所有文案消费者均不按语言判断翻译。
 3. 国际化是 S00 必需的项目级启动能力，单场景也必须完成；其余业务复用能力仅在至少两个场景共同需要时上移 Foundation/Shared，为公共接口建立消费者和变更影响清单，不为国际化伪造第二个场景。
@@ -129,6 +131,8 @@
 #### 实现与交接
 
 Editor/Scene/Prefab 操作交给 `unity:unity-cli`；新增显示元素和动态模板按[编辑器显示元素还原](../../app-domain-toolkit/references/editor-display-authoring.md)保存回读。未指定 UI 技术时先用 `unity:ui`；NavMesh、3D 碰撞、多人和 LiveOps 分别路由到 `unity:initialize-ai-navigation`、`unity:physics-3d-collision`、`unity:setup-multiplayer-services`、`unity:build-live-game`。本角色保留玩法规则、状态所有权、接口和场景增量，不复制插件专项实现指南。
+
+涉及镜头跟随、缩放或机位切换时，按[原生镜头控制规范](engineering.md#unity-camera-control)通过 Cinemachine 配置和接入正式场景。
 
 按[公共资源登记与使用](../../unity-development-workflow/references/shared-asset-usage.md)从总表解析资源身份与实际引用，在当前场景/显示层合同维护消费节点和变更影响；只控制本地实例、文案和动态状态，不修改共享源或为每个消费者复制公共资产。
 
@@ -222,6 +226,8 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 #### 工作流程
 
 以下是发生对应变化时的阶段职责；涉及显示元素设计或可见表现的新增与修改均先在模块任务中界定范围、V1 确认方案，再按控制面复用有效前置事实，不把列表当作每次必须重新制作全部 V2–V5 产物的顺序。
+
+镜头反馈按[原生镜头控制规范](engineering.md#unity-camera-control)交给 Cinemachine，沿用有效机位及渲染相机的控制权。
 
 1. **V2 明确反馈意图**：对核心事件记录玩家应理解的信息、触发时机和预期感受，并确定视觉、音频、镜头、时间与交互反馈是否适用。此处与美术 brief、主题和可读性目标一致。
 2. **V3 冻结事件映射**：为每个事件记录来源、参数、表现通道、强度、时长、触发条件、时间来源、优先级、重复/叠加策略、中断处理、完成行为及负责对象。具体格式见[动画意图与反馈时间轴合同](../../unity-development-workflow/references/animation-intent-contract.md)。
