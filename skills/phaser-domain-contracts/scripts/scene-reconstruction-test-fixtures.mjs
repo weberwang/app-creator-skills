@@ -347,6 +347,7 @@ export function textNode(overrides = {}) {
       font_loaded: true,
       fallback_detected: false,
       actual_content: "开始游戏",
+      actual_visible: true,
       actual_geometry_unit: "logical-px",
       actual_coordinate_space: "viewport-logical",
       actual_font_resources: ["assets/fonts/game-sans.woff2"],

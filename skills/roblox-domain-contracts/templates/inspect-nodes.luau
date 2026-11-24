@@ -102,6 +102,18 @@ while index <= #queue do
 	end
 	-- 文字填色和透明度与背景属性分开回读，数据保持原生 0–1 范围。
 	if instance:IsA("TextLabel") or instance:IsA("TextButton") or instance:IsA("TextBox") then
+		add(values, "Text", instance.Text)
+		if instance:IsA("TextBox") then add(values, "PlaceholderText", instance.PlaceholderText) end
+		-- 父级隐藏或容器透明会让子级整体不可见，逐级读取当前实际状态。
+		local visible = true
+		local current = instance
+		while current do
+			if current:IsA("GuiObject") and not current.Visible then visible = false end
+			if current:IsA("LayerCollector") and not current.Enabled then visible = false end
+			if current:IsA("CanvasGroup") and current.GroupTransparency >= 1 then visible = false end
+			current = current.Parent
+		end
+		add(values, "VisibleInHierarchy", visible)
 		add(values, "FontFace", { family = instance.FontFace.Family, weight = instance.FontFace.Weight.Name, style = instance.FontFace.Style.Name })
 		add(values, "TextSize", instance.TextSize)
 		add(values, "TextColor3", { r = instance.TextColor3.R, g = instance.TextColor3.G, b = instance.TextColor3.B })

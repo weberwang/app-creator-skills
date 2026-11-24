@@ -90,7 +90,7 @@ node skills/phaser4-game-asset-integration/scripts/remove-background-local.mjs -
 
 `effect-image` 清单中只有被 fixed coverage 实际引用的资源必须声明 `ownership_type=fixed-production-visual` 并反向完整绑定 `coverage_region_ids`；同一清单中未被效果图引用的 Boot、Loading 或其他场景资产保持普通字段，且禁止伪造这两个还原专用字段。普通 `not-applicable` 清单也禁止还原专用字段。所有资源仍须声明具体 `scene_id` 或受控 `shared` 归属。处于 `producing`、`review` 或 `accepted` 的资源还必须绑定当前基线；`accepted` 必须保留来源或生成记录、适用的版权/许可信息、唯一输出、Phaser/玩法视觉与一致性证据。
 
-`reuse-existing` 的 `reuse_source` 是可复核的精确身份，不是路径备注：必须同时记录 `source_asset_id`、`source_manifest`、`source_file`、`license_record`、`compatibility_evidence`、`visual_baseline_id/version` 及适用 scene/state。`source_manifest` 必须是独立的不可变 `asset-reuse-snapshot/1.0` JSON 快照，根节点为 `snapshot_schema`、`snapshot_id`、`asset`，禁止指向当前 `docs/visual-assets.json`；`asset` 记录 accepted 资源的基线、许可、scene/shared 归属、适用 scene/state、来源、runtime_outputs、Phaser/玩法/一致性证据，`source_manifest_sha256` 仅作可选追踪，验收按实际快照检查。`--check-files` 会解析快照并核对实际源文件及适用证据，不比较摘要；缺失、漂移、错误基线/许可/归属或 accepted 证据不全都不得通过。冻结 `reference_target.original_file` 默认必须是完整合法的 8 位非交错 RGB/RGBA PNG，且扫描行完整、IHDR 宽高必须与每个目标画布一致。
+图片复用按[三栈共用的图片复用证据合同](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#图片复用证据合同)执行。冻结的目标原图须为完整的 8 位非交错 RGB/RGBA PNG，且扫描行完整，IHDR 宽高与目标画布一致。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#机器清单最低字段)。
 

@@ -104,15 +104,27 @@ function addReview(repo, work, target, name) {
 }
 
 /** 构造正式候选绑定所需的模拟美术记录和目标素材评审。 */
-function addAssetsAndArt(repo, work, target) {
+function addAssetsAndArt(repo, work, target, { updateAssets = true } = {}) {
   const userMessageRef = `synthetic-${work.workItemId}-${target.targetId}`;
   // 背景与图标已经替换成当前素材，文字仍必须独立读取并和设计目标比较。
-  const assets = ['background', 'icon'].map((kind) => ({
-    assetId: `${target.targetId}-${kind}`, assetType: 'image',
-    output: put(repo, `proof/${work.workItemId}-${target.targetId}-${kind}.png`, `当前 ${kind} 素材`).path,
-    sourceRef: 'synthetic', sourceKind: 'hand-authored',
-  }));
-  target.assetReviewRef = put(repo, `proof/${work.workItemId}-${target.targetId}-assets.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId: target.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef, qualityChecks: quality(repo), assets });
+  if (updateAssets) {
+    const assets = ['background', 'icon'].map((kind) => ({
+      assetId: `${target.targetId}-${kind}`, assetType: 'image',
+      output: put(repo, `proof/${work.workItemId}-${target.targetId}-${kind}.png`, `当前 ${kind} 素材`).path,
+      sourceRef: 'synthetic', sourceKind: 'hand-authored',
+    }));
+    const layoutReview = JSON.parse(readFileSync(join(repo, target.reviews.V3Layout.path), 'utf8'));
+    const planRef = layoutReview.layoutSpecRef;
+    const plan = JSON.parse(readFileSync(join(repo, planRef.path), 'utf8'));
+    let textRestorationRef;
+    if (plan.nodes.some((node) => node.renderKind === 'TEXT' && node.expectedActive !== false)) {
+      // 资源试装和正式运行保留独立的测量文件与批次。
+      const outputPath = `${work.evidenceRoot}/V4-${target.targetId}-text-restoration.json`;
+      const report = unityLayoutMeasurement(plan, planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath });
+      textRestorationRef = put(repo, outputPath, { ...report, runId: 'synthetic-trial' });
+    }
+    target.assetReviewRef = put(repo, `proof/${work.workItemId}-${target.targetId}-assets.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId: target.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef, qualityChecks: quality(repo), assets, ...(textRestorationRef ? { textRestorationRef } : {}) });
+  }
   const budget = { brightnessContrast: 'test', screenCoverage: 'test', duration: 'test', triggerFrequency: 'test', maxConcurrent: 1, recovery: 'test', blendPolicy: 'test' };
   const brief = put(repo, `proof/${work.workItemId}-brief.json`, { schemaVersion: '1.0', projectId: work.projectId, theme: 'test', audience: { facts: ['test'], assumptions: [] }, coreLoop: 'test', experienceGoals: ['test'], viewingContext: 'test', visualHierarchy: ['test'], intensityBudget: { normal: budget, operation: budget, peak: budget, measurementMethod: 'test' } });
   put(repo, 'proof/synthetic.bin', '合成运行文件');
@@ -204,7 +216,7 @@ function stageTargets(repo, work, stage, { inherited = [] } = {}) {
       if (stage === 'V3') { addReview(repo, work, target, 'V3Decomposition'); addReview(repo, work, target, 'V3Layout'); }
     }
     if (stage === 'V4' || stage === 'V5') {
-      const art = addAssetsAndArt(repo, work, target);
+      const art = addAssetsAndArt(repo, work, target, { updateAssets: stage === 'V4' });
       if (stage === 'V4') addReview(repo, work, target, 'V4');
       if (stage === 'V5') { addReview(repo, work, target, 'V5'); extras.push({ category: 'art-experience-acceptance', status: 'PASS', targetId: target.targetId, path: art }); }
     }
@@ -248,8 +260,16 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   await advanceVisual({ repo, workItem: sourcePath, to: 'V4' });
   source = loadWork(repo, sourcePath); stageTargets(repo, source, 'V4'); put(repo, sourcePath, source);
   await runStage(repo, sourcePath, 'V4');
+  source = loadWork(repo, sourcePath);
+  const v4Root = source.evidenceRoot;
+  const v4AssetReview = structuredClone(source.visual.targets[0].assetReviewRef);
   await advanceVisual({ repo, workItem: sourcePath, to: 'V5' });
-  source = loadWork(repo, sourcePath); const sourceExtras = stageTargets(repo, source, 'V5'); put(repo, sourcePath, source);
+  source = loadWork(repo, sourcePath);
+  assert.notEqual(source.evidenceRoot, v4Root);
+  assert.deepEqual(source.visual.targets[0].assetReviewRef, v4AssetReview);
+  const sourceExtras = stageTargets(repo, source, 'V5');
+  assert.deepEqual(source.visual.targets[0].assetReviewRef, v4AssetReview);
+  put(repo, sourcePath, source);
   await runStage(repo, sourcePath, 'V5', sourceExtras, async () => {
     const target = loadWork(repo, sourcePath).visual.targets[0];
     const domain = JSON.parse(readFileSync(join(repo, target.domainEvidenceRef.path), 'utf8'));

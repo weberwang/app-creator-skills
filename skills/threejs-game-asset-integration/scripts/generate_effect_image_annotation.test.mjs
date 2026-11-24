@@ -10,6 +10,7 @@ import { computeRegionDefinitionSha256, renderEffectImageAnnotation } from "./ef
 import { annotationProductionContract, asciiGlyph, decodePngRgba, effectImageFontGlyph, encodePngRgba } from "./effect_image_raster.mjs";
 import { EFFECT_IMAGE_FONT_PROVENANCE } from "./effect_image_font.mjs";
 import { validateAnnotatedPng } from "./validate_visual_manifest.mjs";
+import { prepareReuseFixture } from "./visual-manifest-test-fixtures.mjs";
 import { deriveAtomicImageRequirements } from "../../threejs-domain-contracts/scripts/visual-production-contract.mjs";
 
 /** 计算测试证据的标准 SHA-256 字符串。 */
@@ -50,6 +51,7 @@ function annotationManifest(targetSha) {
     visualStageModel: 'function-first-v1', visualStage: "V4",
     visualStageState: "v3-production-planning-complete",
     effect_image_reconstruction: { applicability: "effect-image", lifecycle: "v3-ready" },
+    visual_baseline: { id: "fixture-baseline", version: "1.0" },
     reference_target: { candidate_id: "candidate-1", original_file: "reference.png", target_sha256: targetSha, frozen_at: "2026-08-15T00:00:00Z", status: "reference-target-frozen", scene_ids: ["main"], state_ids: ["default"] },
     coverage_audit: {
       canvases: [{ scene_id: "main", state_id: "default", width: 32, height: 24 }],
@@ -68,11 +70,7 @@ function annotationManifest(targetSha) {
 /** 为“复用”标注夹具写入可复算的 accepted asset-reuse-snapshot 证据。 */
 async function addReuseEvidence(root, manifest) {
   const region = manifest.coverage_audit.regions.find((item) => item.id === "badge");
-  const sourceBytes = minimalPng(8, 6); const compatibilityBytes = Buffer.from(JSON.stringify({ status: "passed" }));
-  const sourceSha = sha256(sourceBytes); const sourceManifest = { status: "accepted", source_file: "badge.png", source_sha256: sourceSha }; const snapshotBytes = Buffer.from(JSON.stringify(sourceManifest));
-  const snapshot = { schema: "asset-reuse-snapshot/1.0", source_asset_id: "badge", source_manifest_file: "docs/reuse-snapshot.json", source_manifest_sha256: sha256(snapshotBytes), source_file: "badge.png", source_sha256: sourceSha, compatibility_evidence_file: "evidence/badge-consistency.json", compatibility_evidence_sha256: sha256(compatibilityBytes), accepted_at: "2026-08-15T00:00:00Z", source_status: "accepted" };
-  region.reuse_snapshot = snapshot;
-  for (const [path, bytes] of [["docs/reuse-snapshot.json", snapshotBytes], ["badge.png", sourceBytes], ["public/badge.png", sourceBytes], ["evidence/badge-consistency.json", compatibilityBytes], ["docs/license.md", Buffer.from("license")]]) { const target = join(root, path); await mkdir(dirname(target), { recursive: true }); await writeFile(target, bytes); }
+  await prepareReuseFixture(root, manifest, region, minimalPng(8, 6));
 }
 
 test("生成独立效果图标注 PNG、右栏说明和绑定提案", async () => {
@@ -125,10 +123,10 @@ test("生成独立效果图标注 PNG、右栏说明和绑定提案", async () =
   const missingTechnical = structuredClone(proposal); delete missingTechnical.technical_analysis; const missingTechnicalErrors = []; validateAnnotatedPng(pngBytes, original, manifest.coverage_audit.regions, missingTechnical, "annotation", missingTechnicalErrors); assert(missingTechnicalErrors.some((item) => item.includes("technical_analysis")), "缺少 technical_analysis 必须拒绝正式标注");
 });
 
-test("缺失或错误的冻结目标、复用来源和状态分析摘要不阻断有效图像标注", async () => {
+test("复用来源缺失摘要时不得生成正式标注", async () => {
   const root = await mkdtemp(join(tmpdir(), "effect-annotation-stale-digests-"));
   const original = minimalPng(32, 24);
-  const manifest = annotationManifest("invalid-target-digest");
+  const manifest = annotationManifest(sha256(original));
   await writeFile(join(root, "reference.png"), original);
   await addReuseEvidence(root, manifest);
   const badge = manifest.coverage_audit.regions.find((region) => region.id === "badge");
@@ -142,9 +140,7 @@ test("缺失或错误的冻结目标、复用来源和状态分析摘要不阻�
   await writeFile(manifestPath, JSON.stringify(manifest));
 
   const code = await generateAnnotation([manifestPath, "--project-root", root, "--scene-id", "main", "--state-id", "default", "--output", "evidence/annotation.png", "--proposal", "evidence/annotation-proposal.json"]);
-  assert.equal(code, 0);
-  const decoded = decodePngRgba(await readFile(join(root, "evidence/annotation.png")));
-  assert.equal(decoded.metadata.schema, "effect-image-annotation/png/1");
+  assert.equal(code, 1);
 });
 
 test("正式标注生成必须同时输出拆解分析技术文件", async () => {

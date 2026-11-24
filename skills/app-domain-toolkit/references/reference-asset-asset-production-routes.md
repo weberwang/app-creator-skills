@@ -28,7 +28,7 @@ V4 为每个资源选择一条主路线，并在机器清单记录场景或 shar
 
 > 适用技术栈：cocos、phaser、threejs。
 
-复用不是“看起来相似”或“语义相同”：`reuse` 必须登记精确资产身份或通过既有 `asset-reuse-snapshot/1.0` 的 target/candidate 保真比较，并提供视觉和兼容性证据；缺失时直接回退方案阶段。整屏截图不得作为交互场景来源，必须交付原子部件并由正式 Scene 装配；这里禁止的是整屏捕获交付，不是独立图片资产。
+`reuse` 使用[图片复用证据合同](#图片复用证据合同)锁定已验收素材和当前区域。交互场景交付原子部件并由正式 Scene 装配。
 
 ## 功能与场景阶段的共享规划
 
@@ -65,6 +65,21 @@ V4 为每个资源选择一条主路线，并在机器清单记录场景或 shar
 > 适用技术栈：cocos、phaser、threejs。
 
 - 后续生产先查已登记且适用的正式资源，再逐目标核实使用条件；通过后按既有 `reuse-existing` 与不可变 `asset-reuse-snapshot/1.0` 合同绑定 accepted 来源、文件、许可、基线、适用状态及证据。已生成资源保留真实生成记录，不因后来共用而回写成复用来源；已冻结必须独立生成的区域不得因发现共享候选而跳过生成或静默换源，方法变更仍按现有 Change Request 规则处理。登记共享不授权删除独立产物或改写历史确认。
+
+## 图片复用证据合同
+
+适用于 Cocos、Phaser 和 Three.js 的 `effect-image` 区域。每个 `reuse-existing` 区域绑定一个已验收图片版本。相同资产在不同位置或状态使用时，每个区域分别记录兼容结论。一个按钮的图标和底板若采用不同图片，分别按各自区域和素材核对。
+
+| 记录 | 必须绑定的内容 |
+| --- | --- |
+| 区域 `reuse_snapshot` | `schema: asset-reuse-snapshot/1.0`、`source_asset_id`、`source_status: accepted`、`accepted_at`、`source_file`、`source_manifest_file`、`compatibility_evidence_file`，以及三个文件各自的 `source_sha256`、`source_manifest_sha256`、`compatibility_evidence_sha256`。摘要格式为 `sha256:<64 位小写十六进制>`。 |
+| `source_manifest_file` | 独立的已验收来源 JSON，记录 `status: accepted`、`asset_id`、`source_file`、`source_sha256`、`accepted_at`、`visual_baseline_id`、`visual_baseline_version` 和项目内有效的 `license_ref`。 |
+| `compatibility_evidence_file` | `schema: asset-reuse-compatibility/1.0`、`status: passed`、`source_asset_id`、`source_file`、`source_sha256` 与 `target`。目标记录包括 `scene_id`、`state_id`、`region_id`、`asset_id`、`bounds`（`x/y/width/height`）、`target_sha256`、`visual_baseline_id` 和 `visual_baseline_version`。 |
+| V3 `reuse_suitability` | `eligible: true`，并用 `exact_asset_identity: {asset_id, source_sha256}` 和 `evidence: {path, sha256}` 引用区域快照中的同一素材和证据。 |
+
+兼容证据的 `checks.purpose/state/size` 必须为 `match`。按目标规格给 `checks.alpha/slicing` 填 `match` 或 `not-applicable`。样式逐项检查 `checks.style.silhouette/material/lighting/palette/ornament`，可填 `match`、`minor-difference` 或 `material-difference`。任一项明显不同，或仍缺少结论，该区域应独立制作或继续评估。比如两个按钮都用于确认，同一个勾选图标可以在核对后共用，木纹底板与玻璃底板应分别制作。可在 `notes` 记录对照依据及允许的轻微差异。
+
+标注前读取实际文件并复算摘要，核对当前目标原图和区域位置。原有 V3 标注与提案的人工确认同时审阅复用位置和实际对照。含复用区域的确认组在受保护的 ledger 条目记录提案实际 `proposal_sha256`。后续每次校验均核对该摘要。V4/V5 重新核对证据与正式运行图片字节。素材、目标位置或兼容结论变化时，更新受影响区域的提案和确认。机器校验文件与结构化结论，用户检查实际显示。
 
 ## 其他资产路线约束
 
@@ -204,4 +219,4 @@ V4 按每个 `annotation_number/region_id` 写入上述合同和错误定位；I
 
 > 适用技术栈：cocos、phaser、threejs。
 
-V4 结构设计运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V4`；V5 正式验收固定运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V5 --check-files --project-root .`，V5 正式验收固定运行同命令但使用 `--stage V5`，不得只验证 JSON 字段。效果图清单必须以根 `workItemId`、`candidateVersion` 绑定当前工作项和候选版本，并与实施包的任务、版本和范围一致。
+V4 结构设计运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V4`。V5 清单与文件检查运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V5 --check-files --project-root .`。含文字时，V4 资源验收与 V5 正式验收分别通过公共工作流绑定[实际组件回读](reference-ui-layout-contract.md#文本运行验收)。效果图清单必须以根 `workItemId`、`candidateVersion` 绑定当前工作项和候选版本，并与实施包的任务、版本和范围一致。

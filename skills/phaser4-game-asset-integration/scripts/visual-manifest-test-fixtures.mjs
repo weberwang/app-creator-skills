@@ -464,6 +464,84 @@ export function minimalPng(width = 1, height = 1, raw = Buffer.alloc(height * (w
   await writeFile(join(root, "art/hero.png"), minimalPng(64, 96)); if (includeAi && manifest) await writeManifestTransparentFixtures(root, manifest);
 }
 
+
+/** 为目标区域建立可核查的已验收素材版本和逐项适配证据。 */
+export async function prepareReuseFixture(root, manifest, region, sourceBytes) {
+  const snapshot = {
+    schema: "asset-reuse-snapshot/1.0",
+    source_asset_id: region.asset_id,
+    source_file: region.expected_assets[0].source_file,
+    source_sha256: sha256Bytes(sourceBytes),
+    source_manifest_file: "docs/reuse-snapshot.json",
+    compatibility_evidence_file: "evidence/visual/reuse-compatibility.json",
+    accepted_at: "2026-08-15T00:05:00Z",
+    source_status: "accepted",
+  };
+  const sourceManifest = {
+    status: "accepted",
+    asset_id: snapshot.source_asset_id,
+    source_file: snapshot.source_file,
+    source_sha256: snapshot.source_sha256,
+    accepted_at: snapshot.accepted_at,
+    visual_baseline_id: manifest.visual_baseline.id,
+    visual_baseline_version: manifest.visual_baseline.version,
+    license_ref: "docs/license.md",
+  };
+  const compatibility = {
+    schema: "asset-reuse-compatibility/1.0",
+    status: "passed",
+    source_asset_id: snapshot.source_asset_id,
+    source_file: snapshot.source_file,
+    source_sha256: snapshot.source_sha256,
+    target: {
+      scene_id: region.scene_id,
+      state_id: region.state_id,
+      region_id: region.id,
+      asset_id: region.asset_id,
+      bounds: structuredClone(region.bounds),
+      target_sha256: manifest.reference_target.target_sha256,
+      visual_baseline_id: manifest.visual_baseline.id,
+      visual_baseline_version: manifest.visual_baseline.version,
+    },
+    checks: {
+      purpose: "match", state: "match", size: "match", alpha: "match", slicing: "not-applicable",
+      style: { silhouette: "match", material: "match", lighting: "match", palette: "match", ornament: "match" },
+    },
+  };
+  const sourceManifestBytes = Buffer.from(JSON.stringify(sourceManifest));
+  const compatibilityBytes = Buffer.from(JSON.stringify(compatibility));
+  snapshot.source_manifest_sha256 = sha256Bytes(sourceManifestBytes);
+  snapshot.compatibility_evidence_sha256 = sha256Bytes(compatibilityBytes);
+  region.reuse_snapshot = snapshot;
+  const route = manifest.scene_reconstruction_contract?.coverage_regions?.find((item) => item.region_id === region.id);
+  if (route) {
+    Object.assign(route.visual_route_analysis, {
+      implementation_plan_mode: "reuse-existing", production_method: "reuse", delivery_kind: "existing-asset",
+      reuse_suitability: {
+        eligible: true,
+        exact_asset_identity: { asset_id: snapshot.source_asset_id, source_sha256: snapshot.source_sha256 },
+        evidence: { path: snapshot.compatibility_evidence_file, sha256: snapshot.compatibility_evidence_sha256 },
+      },
+    });
+    route.production_method = "reuse";
+    route.delivery_kind = "existing-asset";
+    route.implementation_plan = { mode: "reuse-existing" };
+  }
+  const files = [
+    [snapshot.source_file, sourceBytes],
+    [snapshot.source_manifest_file, sourceManifestBytes],
+    [snapshot.compatibility_evidence_file, compatibilityBytes],
+    ["docs/license.md", Buffer.from("已授权用于本项目")],
+    [region.expected_assets[0].runtime_file, sourceBytes],
+  ];
+  for (const [path, bytes] of files) {
+    const target = join(root, path);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, bytes);
+  }
+  return { snapshot, sourceManifest, compatibility };
+}
+
 /** 构造新版不可变位图复用快照；旧 reuse_source 字段不再进入测试合同。 */
 export function reuseSnapshot(overrides = {}) {
   return {

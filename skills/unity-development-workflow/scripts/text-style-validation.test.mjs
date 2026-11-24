@@ -20,6 +20,8 @@ function fixture() {
         { name: 'alignment', componentType: 'Example.Text', propertyPath: 'alignment', expectedValue: 'center' },
         { name: 'wrap', componentType: 'Example.Text', propertyPath: 'wrap', expectedValue: 'false' },
         { name: 'fill', componentType: 'Example.Text', propertyPath: 'color', expectedValue: '#FFFFFFFF' },
+        { name: 'content', componentType: 'Example.Text', propertyPath: 'text', expectedValue: '+50' },
+        { name: 'visible', componentType: 'Example.Text', propertyPath: 'visible', expectedValue: 'true' },
       ],
     },
   };
@@ -32,6 +34,21 @@ function fixture() {
 test('确认稿目标与真实属性相符时通过', () => {
   const { node, observations } = fixture();
   assert.deepEqual(validateTextStyle(node, observations), []);
+});
+
+test('文字缺读、空白、内容变化或隐藏时无法通过', () => {
+  const { node, observations } = fixture();
+  for (const name of ['content', 'visible']) {
+    assert.match(validateTextStyle(node, observations.filter((item) => item.name !== name)).join('\n'), new RegExp(`${name}.*未验证`));
+  }
+  const content = observations.find(({ name }) => name === 'content');
+  for (const text of ['', '   ', '50']) {
+    content.actualValue = text;
+    assert.match(validateTextStyle(node, observations).join('\n'), /content.*不一致/);
+  }
+  content.actualValue = '+50';
+  observations.find(({ name }) => name === 'visible').actualValue = 'false';
+  assert.match(validateTextStyle(node, observations).join('\n'), /visible.*不一致/);
 });
 
 test('缺少目标、实际数据或实际属性路径变化时保持未验证', () => {
@@ -111,6 +128,9 @@ test('V5 布局入口对活动文字节点校验样式回读', () => {
       targetRect: null, tolerance: null, delta: null, status: 'PASS', componentSnapshot: snapshot }],
   };
   assert.deepEqual(validateUiLayoutRuntime(plan, report), []);
+  snapshot.textStyle.find(({ name }) => name === 'content').actualValue = '';
+  assert.match(validateUiLayoutRuntime(plan, report).join('\n'), /content.*不一致/);
+  snapshot.textStyle.find(({ name }) => name === 'content').actualValue = '+50';
   snapshot.textStyle[1].actualValue = '22';
   assert.match(validateUiLayoutRuntime(plan, report).join('\n'), /fontSize.*不一致/);
   snapshot.textStyle = [];

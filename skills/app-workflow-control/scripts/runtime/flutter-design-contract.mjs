@@ -9,7 +9,8 @@ import { assertVisualReuse, resolveReuseOwner } from './visual-reuse-binding.mjs
 import { isFigmaApp, readFigmaSnapshot } from './figma-app-contract.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
 import { flutterTextColorIssues } from './text-paint.mjs';
-import { flutterTextStyle } from './native-text-appearance.mjs';
+import { flutterTextStyle, validateTextPresence } from './native-text-appearance.mjs';
+import { readV4TextRestoration } from './v4-text-restoration.mjs';
 import { validateAppNineSlicePlan, validateAppNineSliceMeasurements, validateAppNineSliceMinimums } from './app-nine-slice.mjs';
 
 let validatePlan;
@@ -346,7 +347,37 @@ export function validateFlutterAssetReview(repo, work, record, supplied) {
   }
 }
 
-/** V3 规划、V4 生产、V5 当前组合分别收口；usability 也必须覆盖已确认设计。 */
+/** V4 逐状态核对实际试装文字，确保同一节点不能复用其他组件的读数。 */
+function validateFlutterTextRestoration(repo, work, doc, plan) {
+  const targets = plan.elements.flatMap((element) => {
+    const implementation = plan.implementations.find((item) => item.id === element.implementationId);
+    const style = flutterTextStyle(implementation.requirements.appearance.value);
+    return style ? element.conditionIds.map((conditionId) => ({ designItemId: element.id, conditionId, style })) : [];
+  });
+  if (!targets.length) return;
+  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId);
+  check(report.format === 'flutter-text-restoration-v1' && report.workItemId === work.workItemId
+    && report.candidateId === work.visual.candidateId && sameRef(report.designReconstructionRef, doc.designReconstructionRef)
+    && typeof report.runId === 'string' && report.runId.trim() && Array.isArray(report.entries),
+    'Flutter V4 文字试装未绑定当前工作项、候选、设计和采集批次');
+  sameIds(report.entries.map((item) => `${item?.designItemId}/${item?.conditionId}`),
+    targets.map((item) => `${item.designItemId}/${item.conditionId}`), 'Flutter V4 文字节点和状态');
+  const components = new Set();
+  for (const target of targets) {
+    const actual = report.entries.find((item) => item.designItemId === target.designItemId && item.conditionId === target.conditionId);
+    const key = `${target.conditionId}/${actual.runtimeNodeId}`;
+    check(typeof actual.runtimeNodeId === 'string' && actual.runtimeNodeId.trim() && !components.has(key), `Flutter V4 ${target.designItemId} 缺少唯一实际文字组件`);
+    components.add(key);
+    validateTextPresence(actual, `Flutter V4 文字 ${target.designItemId}/${target.conditionId}`);
+    for (const [name, expected] of Object.entries(target.style)) {
+      const source = actual.propertySources?.[name];
+      check(typeof source?.componentType === 'string' && source.componentType.trim() && typeof source.propertyPath === 'string' && source.propertyPath.trim(), `Flutter V4 ${target.designItemId}/${name} 缺少组件属性回读`);
+      check(isDeepStrictEqual(actual.values?.[name], expected), `Flutter V4 ${target.designItemId}/${name} 试装值与目标不一致`);
+    }
+  }
+}
+
+/** V3 规划、V4 还原试装、V5 正式组合均覆盖已确认设计。 */
 export function validateFlutterDesign(repo, work, stage, doc) {
   const plan = planFor(repo, work, doc);
   // Figma 稿的结构和布局由公共交接合同冻结；不重复要求两张图与两份人工确认。
@@ -359,6 +390,7 @@ export function validateFlutterDesign(repo, work, stage, doc) {
   const assets = json(repo, work, work.assetReviewRef, '正式资源验收');
   validateFlutterAssetReview(repo, work, assets, { doc, plan, reports });
   reviewFor(repo, work, doc, plan, 'V4', 'imported-assets', 'V4');
+  validateFlutterTextRestoration(repo, work, doc, plan);
   if (stage !== 'V5') return;
   const comparison = json(repo, work, doc.comparisonRef, '当前组合对照');
   context(work, comparison, '当前组合对照');
@@ -404,6 +436,7 @@ export function validateFlutterDesign(repo, work, stage, doc) {
       for (const target of textTargets) {
         const actual = output.entries.find((entry) => entry.designItemId === target.designItemId);
         check(typeof actual.runtimeNodeId === 'string' && actual.runtimeNodeId.trim(), `${target.designItemId} 文字缺少实际组件身份`);
+        validateTextPresence(actual, `Flutter 文字 ${target.designItemId}/${condition.id}`);
         // 同一状态的多个文字节点必须各自回读，不能用一个组件的相同样式冒充其他节点。
         check(!runtimeNodes.has(actual.runtimeNodeId), `${target.designItemId}/${condition.id} 的文字组件 ${actual.runtimeNodeId} 已被其他设计节点使用`);
         runtimeNodes.add(actual.runtimeNodeId);

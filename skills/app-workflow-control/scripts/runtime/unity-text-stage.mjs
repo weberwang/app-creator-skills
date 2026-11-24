@@ -1,9 +1,10 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { validateUiLayoutPlan } from '../../../unity-development-workflow/scripts/layout-plan-validation.mjs';
-import { readVerifiedUiLayoutMeasurement } from '../../../unity-domain-contracts/scripts/runtime/ui-layout-evidence.mjs';
+import { readVerifiedUiLayoutMeasurement, verifyUiLayoutMeasurement } from '../../../unity-domain-contracts/scripts/runtime/ui-layout-evidence.mjs';
 import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
+import { readV4TextRestoration } from './v4-text-restoration.mjs';
 
 /** 阶段回退已经废弃的路线和测量不得在新记录中重新引用。 */
 function requireCurrentPath(repo, work, path, label) {
@@ -49,7 +50,7 @@ function requireTextCoverage(plan, split, visibleText) {
   }
 }
 
-/** 从同一份 V3 确认记录读取原生布局计划，V5 沿用其身份和公开运行证据。 */
+/** 从 V3 计划核对 V4 试装和 V5 正式运行中的文字。 */
 export function validateUnityTextStage(repo, work, target, stage, native, evidence) {
   if (stage === 'V2') return;
   const review = readJson(repo, target.reviews?.V3Layout?.path, 'Unity V3 布局确认');
@@ -67,7 +68,26 @@ export function validateUnityTextStage(repo, work, target, stage, native, eviden
   if (split.sourceImage?.path !== target.referenceTarget.path) throw new WorkflowError('Unity 设计拆解未绑定 V2 确认目标');
   const visibleText = plan.nodes.filter((node) => node.renderKind === 'TEXT' && node.expectedActive !== false);
   requireTextCoverage(plan, split, visibleText);
-  if (stage !== 'V5' || !visibleText.length) return;
+  if (!['V4', 'V5'].includes(stage) || !visibleText.length) return;
+
+  const assetReviewRef = work.workItemType === 'SCENE' ? target.assetReviewRef ?? null : work.assetReviewRef;
+  const restoration = readV4TextRestoration(repo, work, target.candidateId, assetReviewRef);
+  // uGUI 试装可只采集文字；UI Toolkit 采集器提供完整布局报告。
+  if (restoration.report.textOnly === true && plan.uiSystem !== 'UGUI') {
+    throw new WorkflowError('Unity UI Toolkit V4 文字试装需要实际布局组件报告');
+  }
+  const options = { taskId: work.workItemId, layoutPlanSha256: ref.sha256, textOnly: restoration.report.textOnly === true };
+  if (stage === 'V4') {
+    readVerifiedUiLayoutMeasurement(repo, work, {
+      candidateId: target.candidateId, uiLayoutMeasurementRef: { path: restoration.ref.path },
+    }, plan, options);
+  } else {
+    // V5 已切换证据目录，使用资源评审冻结的 V4 原文件重新核对。
+    verifyUiLayoutMeasurement(plan, restoration.report, {
+      ...options, candidateId: target.candidateId, path: repoPath(repo, restoration.ref.path).relative,
+    });
+  }
+  if (stage === 'V4') return;
 
   const refMeasurement = evidence?.uiLayoutMeasurementRef;
   const nodes = visibleText.map((node) => node.id).join('、');
@@ -80,8 +100,10 @@ export function validateUnityTextStage(repo, work, target, stage, native, eviden
   if (!currentLayout || fileIdentityKey(repo, currentLayout.path) !== measurementKey) {
     throw new WorkflowError(`Unity V5 文字节点 ${nodes} 的布局测量须与当前目标的 runtime-layout 证据指向同次运行文件`);
   }
-  readVerifiedUiLayoutMeasurement(repo, work, evidence, plan, {
+  const finalReport = readVerifiedUiLayoutMeasurement(repo, work, evidence, plan, {
     taskId: work.workItemId, layoutPlanSha256: ref.sha256,
     textOnly: native.responsiveContract.uiSystem === 'World Space Canvas',
   });
+  // V5 必须重新读取正式组合，不能沿用 V4 的试装批次或复制文件。
+  if (restoration.report.runId === finalReport.runId) throw new WorkflowError('Unity V5 文字运行不能复用 V4 试装采集批次');
 }

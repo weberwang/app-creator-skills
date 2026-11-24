@@ -64,6 +64,16 @@
     "qualityChecks": {
       "$ref": "human-review.schema.json#/properties/qualityChecks"
     },
+    "textRestorationRef": {
+      "description": "当前目标在 V4 与资源一起试装时的实际文字回读文件",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+      }
+    },
     "assets": {
       "type": "array",
       "minItems": 1,

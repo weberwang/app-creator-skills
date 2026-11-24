@@ -40,8 +40,10 @@ function anchor(value, label) { vector(value, ['x', 'y'], label); }
 /** 每个文字节点冻结可核实样式，待人工确认的属性保留明确原因。 */
 function validateTextStyle(style, label) {
   object(style, label);
-  const supported = new Set(['sourceTarget', 'stateId', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'color', 'transparency', 'horizontalAlignment', 'verticalAlignment', 'wrapped', 'scaled', 'lineHeight', 'strokeColor', 'strokeTransparency', 'unconfirmed']);
+  const supported = new Set(['sourceTarget', 'stateId', 'content', 'expectedVisible', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'color', 'transparency', 'horizontalAlignment', 'verticalAlignment', 'wrapped', 'scaled', 'lineHeight', 'strokeColor', 'strokeTransparency', 'unconfirmed']);
   for (const name of Object.keys(style)) if (!supported.has(name)) throw new WorkflowError(`${label}.${name} 没有原生回读合同，须明确记录待确认原因`);
+  if (style.content !== undefined) text(style.content, `${label}.content`);
+  if (style.expectedVisible !== undefined && typeof style.expectedVisible !== 'boolean') throw new WorkflowError(`${label}.expectedVisible 必须是布尔值`);
   text(style.fontFamily, `${label}.fontFamily`);
   if (!Number.isFinite(style.fontSize) || style.fontSize <= 0) throw new WorkflowError(`${label}.fontSize 必须是正数`);
   vector(style.color, ['r', 'g', 'b'], `${label}.color`);
@@ -390,6 +392,27 @@ export function validateScreenReadback(repo, layout, nodes, capture, { runtime =
     if (actual.className !== node.className) throw new WorkflowError('屏幕 GUI 实际类型与布局规格不一致');
     validateObservedSlice(node, actual, runtime);
     if (TEXT_CLASSES.has(node.className)) {
+      // 输入框为空时可显示占位文字，实际显示内容仍须来自同一实例的原生属性。
+      const value = actual.properties.Text;
+      const placeholder = actual.properties.PlaceholderText;
+      if (typeof value !== 'string' || (node.className === 'TextBox' && typeof placeholder !== 'string')) {
+        throw new WorkflowError(`文字节点 ${node.id} 缺少 Text 或占位文字的实际回读`);
+      }
+      const content = value.trim() ? value : node.className === 'TextBox' ? placeholder : value;
+      const expectedVisible = node.textStyle.expectedVisible !== false;
+      if (actual.properties.VisibleInHierarchy !== expectedVisible) throw new WorkflowError(`文字节点 ${node.id} 的有效可见性与确认稿状态不一致或缺少回读`);
+      if (expectedVisible && !content.trim()) throw new WorkflowError(`文字节点 ${node.id} 的实际内容为空`);
+      // 填色全透明时描边仍可显示，只有两者都透明才能判定文字不可见。
+      if (expectedVisible && actual.properties.TextTransparency === 1) {
+        if (typeof actual.properties.TextStrokeTransparency !== 'number' || actual.properties.TextStrokeTransparency < 0
+          || actual.properties.TextStrokeTransparency > 1 || !Number.isFinite(actual.properties.TextStrokeTransparency)) {
+          throw new WorkflowError(`文字节点 ${node.id} 填色透明时缺少有效描边透明度回读`);
+        }
+        if (actual.properties.TextStrokeTransparency === 1) throw new WorkflowError(`文字节点 ${node.id} 的填色与描边均完全透明`);
+      }
+      if (expectedVisible && node.textStyle.content !== undefined && content !== node.textStyle.content) {
+        throw new WorkflowError(`文字节点 ${node.id} 的实际内容与确认稿不一致`);
+      }
       const face = actual.properties.FontFace;
       // TextScaled 由引擎动态求字号，配置 TextSize 不能冒充实际渲染字号。
       if (actual.properties.TextScaled !== false) throw new WorkflowError(`文字节点 ${node.id} 的实际字号未验证：TextScaled 已启用或缺少回读`);

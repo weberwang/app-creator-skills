@@ -55,7 +55,7 @@ namespace Project.UnityWorkflow.VisualQA
                     count++;
                 }
                 if (count == 1 && !string.IsNullOrWhiteSpace(probe.propertyPath)
-                    && TryReadComponent(matched, probe.propertyPath, out string value))
+                    && TryReadComponent(matched, probe, out string value))
                 {
                     observation.status = "MEASURED";
                     observation.actualValue = value;
@@ -66,13 +66,22 @@ namespace Project.UnityWorkflow.VisualQA
         }
 
         /// <summary>文字效果可从实际参与渲染的材质读取，组件字段仍使用现有序列化路径。</summary>
-        private static bool TryReadComponent(Component component, string path, out string value)
+        private static bool TryReadComponent(Component component, LayoutTextStyleProbe probe, out string value)
         {
-            if (!path.StartsWith("material.", StringComparison.Ordinal))
+            string path = probe.propertyPath;
+            if (probe.name == "visible" && path == "visible")
+            {
+                return TryReadComponentVisibility(component, out value);
+            }
+            if (probe.name == "content" || !path.StartsWith("material.", StringComparison.Ordinal))
             {
                 using (var serialized = new SerializedObject(component))
                 {
-                    return TryRead(serialized.FindProperty(path), out value);
+                    // 内容只接受真实文字字段，字号等数值属性不能充当文字证据。
+                    var property = serialized.FindProperty(path);
+                    value = string.Empty;
+                    return (probe.name != "content" || property?.propertyType == SerializedPropertyType.String)
+                        && TryRead(property, out value);
                 }
             }
 
@@ -89,6 +98,29 @@ namespace Project.UnityWorkflow.VisualQA
             return !string.IsNullOrEmpty(value);
         }
 
+        /// <summary>读取实际绘制组件的启用、剔除和整体透明状态。</summary>
+        private static bool TryReadComponentVisibility(Component component, out string value)
+        {
+            value = string.Empty;
+            bool visible;
+            if (component is Graphic graphic)
+            {
+                // 字体色可以透明并保留描边，只检查影响整层绘制的透明度。
+                CanvasRenderer canvas = graphic.canvasRenderer;
+                visible = graphic.isActiveAndEnabled && canvas != null && !canvas.cull
+                    && canvas.GetAlpha() > 0f && canvas.GetInheritedAlpha() > 0f;
+            }
+            else
+            {
+                Renderer renderer = component as Renderer ?? component.GetComponent<Renderer>();
+                if (renderer == null) return false;
+                visible = renderer.gameObject.activeInHierarchy && renderer.enabled
+                    && (!(component is Behaviour behaviour) || behaviour.isActiveAndEnabled);
+            }
+            value = visible ? "true" : "false";
+            return true;
+        }
+
         /// <summary>从当前 Panel 的元素和解析样式读取项目指定的公开属性。</summary>
         public static List<LayoutTextStyleObservation> CaptureUiToolkit(VisualElement element, List<LayoutTextStyleProbe> probes)
         {
@@ -103,28 +135,50 @@ namespace Project.UnityWorkflow.VisualQA
                     componentType = probe.componentType,
                     propertyPath = probe.propertyPath
                 };
-                const string prefix = "resolvedStyle.";
-                if (element.GetType().FullName == probe.componentType && probe.propertyPath != null
-                    && probe.propertyPath.StartsWith(prefix, StringComparison.Ordinal))
+                if (element.GetType().FullName == probe.componentType
+                    && TryReadUiToolkit(element, probe, out string value))
                 {
-                    // 只使用当前 Unity 版本实际提供的解析属性，不以推测的插件字段填补缺失。
-                    var property = typeof(IResolvedStyle).GetProperty(probe.propertyPath.Substring(prefix.Length));
-                    try
-                    {
-                        if (property != null && TryConvert(property.GetValue(element.resolvedStyle), out string value))
-                        {
-                            observation.status = "MEASURED";
-                            observation.actualValue = value;
-                        }
-                    }
-                    catch (System.Reflection.TargetInvocationException)
-                    {
-                        // 属性无法读取时保留 UNAVAILABLE，由验证器报告未验证。
-                    }
+                    observation.status = "MEASURED";
+                    observation.actualValue = value;
                 }
                 result.Add(observation);
             }
             return result;
+        }
+
+        /// <summary>文本和可见性取自元素本身，其他属性沿用解析样式探针。</summary>
+        private static bool TryReadUiToolkit(VisualElement element, LayoutTextStyleProbe probe, out string value)
+        {
+            value = string.Empty;
+            if (probe.name == "content")
+            {
+                if (probe.propertyPath != "text" || !(element is TextElement text)) return false;
+                value = text.text ?? string.Empty;
+                return true;
+            }
+            if (probe.name == "visible" && probe.propertyPath == "visible")
+            {
+                bool visible = element.panel != null && element.visible;
+                // display 和 opacity 在祖先上生效，检查实际层级。
+                for (VisualElement current = element; current != null && visible; current = current.parent)
+                {
+                    visible = current.resolvedStyle.display != DisplayStyle.None && current.resolvedStyle.opacity > 0f;
+                }
+                value = visible ? "true" : "false";
+                return true;
+            }
+            const string prefix = "resolvedStyle.";
+            if (probe.propertyPath == null || !probe.propertyPath.StartsWith(prefix, StringComparison.Ordinal)) return false;
+            var property = typeof(IResolvedStyle).GetProperty(probe.propertyPath.Substring(prefix.Length));
+            try
+            {
+                return property != null && TryConvert(property.GetValue(element.resolvedStyle), out value);
+            }
+            catch (System.Reflection.TargetInvocationException)
+            {
+                // 属性无法读取时由验证器保持未验证。
+                return false;
+            }
         }
 
         /// <summary>将解析样式转换为与组件采集一致的稳定表示。</summary>

@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { hasPreciseApproval } from './approval.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
-import { validateNativeTextReadback } from './native-text-appearance.mjs';
+import { validateNativeTextReadback, validateV4NativeTextRestoration } from './native-text-appearance.mjs';
 import { collectAppNineSliceNodes, validateAppLayoutNineSlices, validateAppNineSliceAsset } from './app-nine-slice.mjs';
 
 const require = createRequire(import.meta.url);
@@ -170,5 +170,6 @@ export function validateExpo(repo, work, stage, doc, identity, textAppearance) {
     validateAppNineSliceAsset(repo, slice, 'Expo');
   }
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);
+  validateV4NativeTextRestoration(repo, work, textAppearance);
   if (stage === 'V5') checkRuntime(repo, work, doc, profile, identity, textAppearance, slices);
 }

@@ -12,6 +12,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
 import { validateReuseProductionGate } from "./visual-confirmation-reuse-gates.mjs";
+import { validateReuseSuitability as validateSharedReuseSuitability } from "../../app-domain-toolkit/scripts/visual/asset-reuse-contract.mjs";
 import { validateFixedVisualProductionMethod } from "./visual-decomposition-confirmation.mjs";
 import { validateNativeRenderContract, validateNativeRuntimeEvidence } from "./native-render-contract.mjs";
 
@@ -112,7 +113,6 @@ const NATIVE_ELEMENT_TYPES = new Set([
   "shader",
 ]);
 const DISTINCTIVE_FEATURE_PATTERN = /特色|复杂|distinctive|complex|材质|纹理|texture|material|不规则|非规则|irregular|定制描边|custom\s*(?:outline|stroke)|阴影|shadow|高光|highlight|装饰纹样|品牌|brand|像素美术|pixel\s*(?:art)?|绘制细节|paint(?:ed)?\s*detail|插画|illustration/i;
-const SEMANTIC_REUSE_PATTERN = /semantic|语义|相似|similar|same[-_ ]?kind|looks[-_ ]?similar|看起来一样|同类|同义/i;
 
 /** 统一拒绝已废止的单区域混合输入，避免 composite 路线和遗留字段分别报重复错误。 */
 function compositeRouteError(stage, contract, region, actual) {
@@ -195,18 +195,6 @@ function approvedExceptionIds(region) {
   return new Set((Array.isArray(values) ? values : []).filter(nonEmptyString));
 }
 
-/** 对复用身份做最小审计，阻断只写“相似/同语义”的伪证据。 */
-function hasPreciseReuseIdentity(identity) {
-  if (!isObject(identity)) return false;
-  const identityKeys = [
-    "asset_id",
-    "source_asset_id",
-    "comparison_id",
-  ];
-  return identityKeys.some((key) => nonEmptyString(identity[key]))
-    && !SEMANTIC_REUSE_PATTERN.test(searchableFeatures(identity));
-}
-
 /** 验证 native_suitability，并把资格证据与路线选择分开记录。 */
 function validateNativeSuitability(analysis, region, contract, stage, errors, context) {
   const suitability = analysis.native_suitability;
@@ -244,12 +232,9 @@ function validateReuseSuitability(analysis, region, contract, stage, errors) {
   }
   if (typeof suitability.eligible !== "boolean") errors.push(routeError(stage, contract, region, "reuse_suitability.eligible 必须是布尔值", { missing: "reuse_suitability.eligible" }));
   if (!hasEvidence(suitability.evidence)) errors.push(routeError(stage, contract, region, "reuse_suitability 缺少视觉/兼容性证据", { missing: "reuse_suitability.evidence" }));
-  const identity = suitability.exact_asset_identity;
+  // 逐项校验复用事实，说明文字不参与语义关键词匹配。
   if (suitability.eligible === true) {
-    const semanticOnlyEvidence = SEMANTIC_REUSE_PATTERN.test(searchableFeatures(suitability.evidence));
-    if (!hasPreciseReuseIdentity(identity) || semanticOnlyEvidence) errors.push(routeError(stage, contract, region, "reuse 必须绑定精确资产 ID 或比较记录 ID，并提供视觉兼容证据；语义相似不等价", { expected: "exact_asset_identity.asset_id/source_asset_id/comparison_id + precise evidence", actual: JSON.stringify({ identity: identity ?? "missing", evidence: suitability.evidence }) }));
-  } else if (!(identity === "not-applicable" || identity === undefined || (isObject(identity) && Object.keys(identity).length > 0))) {
-    errors.push(routeError(stage, contract, region, "reuse_suitability.exact_asset_identity 无效", { actual: String(identity) }));
+    for (const message of validateSharedReuseSuitability(analysis, region)) errors.push(routeError(stage, contract, region, message));
   }
   if (analysis.production_method === "reuse" && suitability.eligible !== true) errors.push(routeError(stage, contract, region, "production_method=reuse 必须通过精确复用资格分析", { expected: "reuse_suitability.eligible=true", actual: String(suitability.eligible ?? "missing") }));
 }
@@ -375,18 +360,19 @@ export function validateSceneVisualRouteAnalysis(region, contract = {}, options 
 
   const distinctive = isDistinctiveVisual(analysis);
   validateNativeSuitability(analysis, region, contract, stage, errors, { distinctive });
-  validateReuseSuitability(analysis, region, contract, stage, errors);
+  const reuseRegion = options.reuseRegion ?? region;
+  validateReuseSuitability(analysis, reuseRegion, contract, stage, errors);
   if (analysis.production_method === "reuse" && options.checkFiles === true) {
-    // 文件阶段复用既有 asset-reuse-snapshot 门，路线分析只负责先阻断语义相似的伪复用。
+    // 文件阶段再次核对来源文件与当前目标，路线分析只绑定结构化资格证据。
     const gateRegion = {
-      ...region,
-      id: region.region_id ?? region.id,
+      ...reuseRegion,
+      id: reuseRegion.region_id ?? reuseRegion.id,
       production_method: analysis.production_method,
       implementation_plan: {
         ...(isObject(region.implementation_plan) ? region.implementation_plan : {}),
         mode: analysis.implementation_plan_mode,
       },
-      reuse_snapshot: region.reuse_snapshot ?? analysis.reuse_snapshot,
+      reuse_snapshot: reuseRegion.reuse_snapshot ?? analysis.reuse_snapshot,
     };
     errors.push(...validateReuseProductionGate(gateRegion, {
       stage,
@@ -481,7 +467,10 @@ export function validateSceneVisualRouteContract(contract, manifest = null, opti
   const manifestRegions = new Map((Array.isArray(manifest?.coverage_audit?.regions) ? manifest.coverage_audit.regions : []).filter(isObject).map((item) => [item.id ?? item.region_id, item]));
   const units = Array.isArray(manifest?.visualProductionUnits) ? manifest.visualProductionUnits : [];
   for (const region of regions) {
-    errors.push(...validateSceneVisualRouteAnalysis(region, contract, { ...options, stage }));
+    const coverage = manifestRegions.get(region?.region_id ?? region?.id);
+    // 场景与清单同时声明来源时必须一致，避免借复制品绕过区域合同。
+    if (region?.reuse_snapshot && coverage?.reuse_snapshot && !isDeepStrictEqual(region.reuse_snapshot, coverage.reuse_snapshot)) errors.push(routeError(stage, contract, region, "场景复用快照与 coverage 区域不一致"));
+    errors.push(...validateSceneVisualRouteAnalysis(region, contract, { ...options, stage, reuseRegion: coverage ?? region, reuseManifest: manifest }));
     const analysis = region?.visual_route_analysis;
     if (!isObject(analysis)) continue;
     if (analysis.selected_route === SCENE_VISUAL_ROUTES.COCOS_NATIVE) {

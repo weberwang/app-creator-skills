@@ -23,6 +23,8 @@ export function unityLayoutFixture(write, target, { prefix, sceneId = target.sce
       { name: 'font', componentType: 'Example.Text', propertyPath: 'font', expectedValue: 'Assets/Fonts/Actual.asset' },
       { name: 'fontSize', componentType: 'Example.Text', propertyPath: 'size', expectedValue: '24' },
       { name: 'fill', componentType: 'Example.Text', propertyPath: 'color', expectedValue: '#FFFFFFFF' },
+      { name: 'content', componentType: 'Example.Text', propertyPath: 'text', expectedValue: '确认' },
+      { name: 'visible', componentType: 'Example.Text', propertyPath: 'visible', expectedValue: 'true' },
     ] };
   }
   const splitRef = write(source.splitPlanRef.path, {

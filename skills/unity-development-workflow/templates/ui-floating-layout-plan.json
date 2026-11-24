@@ -181,6 +181,8 @@
       "textStyle": {
         "source": "Artifacts/UI/shop-popup-confirmed.png",
         "attributes": [
+          { "name": "content", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认当前状态的文字内容" },
+          { "name": "visible", "status": "PENDING_HUMAN", "reason": "模板未绑定项目文字组件的可见性探针" },
           { "name": "font", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认实际字体" },
           { "name": "fontSize", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认实际字号" },
           { "name": "fill", "status": "PENDING_HUMAN", "reason": "模板未绑定项目确认稿，待确认字色及透明度" }

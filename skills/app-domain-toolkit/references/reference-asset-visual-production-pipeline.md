@@ -136,7 +136,7 @@ UI 底板、按钮皮肤和框体在当前拆解里完成“九宫格适用决�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-固定视觉区域区分 `bitmap-decomposition` 与 `independent-production`；代理内部按 ownership/实现分类 → 状态分析 → 唯一原子 component/placements → proposal 技术 JSON 与编号 PNG 的顺序维护事实。用户直接检查 PNG 的编号、视觉框、中文摘要和“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签，并确认图像；坐标、状态、组件/placement、生产合同、atomic requirements 和资源映射留在 JSON，供代理和机器门使用。拆位图仍须通过 `node scripts/generate_effect_image_annotation.mjs ... --output ...png --proposal ...json` 生成绑定实际目标、region ID 与区域定义的提案；confirmation 仍记录实际 proposal/decision、PNG 身份和用户原文，但不要求用户另行确认这些文字或技术字段。开始裁切、抠图、分层、AI 分割/补全或派生位图前，必须运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3 --check-files --project-root .`，结构和文件证据均通过才可执行；PNG 必须由共享无依赖确定性栅格渲染器产出，文件检查会校验 PNG 魔数/MIME/尺寸/用户说明元数据与区域覆盖，同时读取 proposal 与实际区域定义复核技术合同，不校验摘要；正式流程不生成或接受 SVG 标注。`reuse-existing` 的 `source_manifest` 必须是不可变 `asset-reuse-snapshot/1.0`，并用 `source_file` 完成精确身份复核；bitmap 路线资产使用 `ai-composite-raster`。只有 V5 完成后声明 `v5-complete`，case 必须全部满足当前验证模式，并在 `exact` 或明确全覆盖需求时逐一覆盖冻结目标的每个 scene/state 组合。其余条件确认按既有规则触发，`AUTO` 绑定判定证据；owner_type 属于合同/F2 专业事实，不能由验证器从像素推断。
+固定视觉区域区分 `bitmap-decomposition` 与 `independent-production`；代理内部按 ownership/实现分类 → 状态分析 → 唯一原子 component/placements → proposal 技术 JSON 与编号 PNG 的顺序维护事实。用户直接检查 PNG 的编号、视觉框、中文摘要和“新建图片资产 / 复用现有图片 / 程序绘制或动态逻辑”标签，并确认图像；坐标、状态、组件/placement、生产合同、atomic requirements 和资源映射留在 JSON，供代理和机器门使用。拆位图仍须通过 `node scripts/generate_effect_image_annotation.mjs ... --output ...png --proposal ...json` 生成绑定实际目标、region ID 与区域定义的提案；confirmation 仍记录实际 proposal/decision、PNG 身份和用户原文，但不要求用户另行确认这些文字或技术字段。开始裁切、抠图、分层、AI 分割/补全或派生位图前，必须运行 `node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V3 --check-files --project-root .`，结构和文件证据均通过才可执行；PNG 必须由共享无依赖确定性栅格渲染器产出，文件检查会校验 PNG 魔数/MIME/尺寸/用户说明元数据与区域覆盖，同时读取 proposal 与实际区域定义复核技术合同。正式流程使用 PNG 标注。`reuse-existing` 按[图片复用证据合同](reference-asset-asset-production-routes.md#图片复用证据合同)复算来源、兼容记录和目标图摘要，并核对正式运行图片版本。bitmap 路线资产使用 `ai-composite-raster`。只有 V5 完成后声明 `v5-complete`，case 必须全部满足当前验证模式，并在 `exact` 或明确全覆盖需求时逐一覆盖冻结目标的每个 scene/state 组合。其余条件确认按既有规则触发，`AUTO` 绑定判定证据；owner_type 属于合同/F2 专业事实，不能由验证器从像素推断。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -302,7 +302,7 @@ V5 直接在正式场景中实现并校准 V3 布局和 V4 正式资源。V5 要
 
 > 适用技术栈：cocos、phaser、threejs。
 
-效果图路线按 `V2 → V3 → V4 → V5` 单向推进：第 4 阶段确认全局视觉方向；V2 生成并确认覆盖模块全部适用状态和进度的 reference target、scene master、宿主上下文图、`reference_technical_conflicts`、整屏构图、布局/响应式关系、逐区域事实、项目 tolerance 和初步还原草案，V3 从该稿提取并绑定拆解图、proposal 技术 JSON、合同回对、coverage、component×state、当前候选版本和拆解方案确认；V3→V4 缺拆解字段时补齐当前交接。模块稿缺要素或需要变更时回 V2 补齐确认，全局视觉方向变化回第 4 阶段。V4 绑定资源生产实施包与资源合同，完成资源级验收；V5 绑定正式 Scene 结构、运行时组合与 `scene_asset_usage`，执行真实文件门、F2 两类机器证据、F3 runtime replay 和正式 Scene consumption。
+效果图路线按 `V2 → V3 → V4 → V5` 单向推进：第 4 阶段确认全局视觉方向；V2 生成并确认覆盖模块全部适用状态和进度的 reference target、scene master、宿主上下文图、`reference_technical_conflicts`、整屏构图、布局/响应式关系、逐区域事实、项目 tolerance 和初步还原草案，V3 从该稿提取并绑定拆解图、proposal 技术 JSON、合同回对、coverage、component×state、当前候选版本和拆解方案确认；V3→V4 缺拆解字段时补齐当前交接。模块稿缺要素或需要变更时回 V2 补齐确认，全局视觉方向变化回第 4 阶段。V4 绑定资源生产实施包与资源合同，与其他资源同批完成文字还原、试装和资源验收；V5 绑定正式 Scene 结构、运行时组合与 `scene_asset_usage`，执行真实文件门、F2 两类机器证据、F3 runtime replay 和正式 Scene consumption。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -320,6 +320,8 @@ V5 直接在正式场景中实现并校准 V3 布局和 V4 正式资源。V5 要
 成功：node scripts/validate_visual_manifest.mjs docs/visual-assets.json --stage V5 --check-files --project-root .
 典型输出：结构合同、正式场景运行组合、F2、fidelity、runtime 和文件证据全部通过，退出码 0。
 ```
+
+含文字的正式 V5 验收在公共工作流中另行绑定并核对同批实际组件报告。
 
 ## 全局视觉一致性输入
 

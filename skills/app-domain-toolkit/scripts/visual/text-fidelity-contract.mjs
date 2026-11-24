@@ -50,8 +50,10 @@ export function validateNativeTextEvidence(node, read, route, options) {
   const entries = Array.isArray(references) ? references : [references];
   const reports = entries.filter((item) => object(item) && text(item.path) && /^[a-f0-9]{64}$/.test(item.sha256 ?? ''));
   if (reports.length !== 1) return ['原生文字读数必须唯一引用含 path 与 sha256 的运行 JSON'];
-  // 文字和公共布局验收消费同一份报告，避免旧批次记录借用当前视觉证据。
-  if (!equal(reports[0], identity.runtimeEvidenceRef)) return ['原生文字运行 JSON 未绑定当前目标的 runtime-layout 证据'];
+  // 试装与正式运行各用当前阶段冻结的报告，避免旧批次借用当前证据。
+  if (!equal(reports[0], identity.runtimeEvidenceRef)) return [identity.visualStage === "V4"
+    ? "原生文字试装 JSON 未绑定当前 V4 资源评审的 textRestorationRef"
+    : "原生文字运行 JSON 未绑定当前目标的 runtime-layout 证据"];
   try {
     const root = realpathSync(options.textReadbackProjectRoot ?? options.projectRoot);
     const path = reports[0].path.replaceAll('\\', '/');
@@ -64,6 +66,9 @@ export function validateNativeTextEvidence(node, read, route, options) {
     const report = JSON.parse(bytes.toString('utf8'));
     if (report.schemaVersion !== 'web-native-text-readback/1.0' || report.measurementSource !== 'runtime-component'
       || !text(report.runId) || !Array.isArray(report.nodes)) throw new Error('运行 JSON 缺少原生采集来源、runId 或节点');
+    if (identity.visualStage !== "V4" && (report.visualStage === "V4" || report.runId === options.textTrialRunId)) {
+      throw new Error("V4 试装读数不能作为 V5 正式运行证据");
+    }
     for (const [key, expected] of Object.entries(identity)) {
       if (key !== 'runtimeEvidenceRef' && !equal(report[key], expected)) throw new Error(`运行 JSON 的 ${key} 未绑定当前目标`);
     }
@@ -77,6 +82,8 @@ export function validateNativeTextEvidence(node, read, route, options) {
     const fields = route === 'image-text'
       ? ['renderer', 'actual_bounds', 'actual_geometry_unit', 'actual_coordinate_space', 'actual_test_id', 'actual_image_path', 'actual_image_sha256', 'actual_image_tint', 'actual_image_opacity', 'actual_semantic']
       : ['renderer', 'font_loaded', 'fallback_detected', 'actual_bounds', 'glyph_bounds', 'baseline', 'actual_geometry_unit', 'actual_coordinate_space', 'actual_test_id', 'actual_content', 'actual_font_resources', 'actual_typography'];
+    // 文字组件存在并能读出样式时，仍可能因自身或父节点的显示状态而漏掉整段文字。
+    fields.push('actual_visible');
     if (route === 'image-text') {
       const tint = node.typography_target?.image_tint;
       const opacity = node.typography_target?.image_opacity;
@@ -270,6 +277,7 @@ function expectedContent(node, read, errors) {
 /** 检查 V5 三栈共用目标与实际事实；返回错误供调用者附加场景上下文。 */
 export function validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline }) {
   const errors = [];
+  if (read("actual_visible") !== true) errors.push("actual_visible 必须为 true，确认稿文字须在当前运行状态实际可见");
   const typography = node.typography_target ?? {};
   if (typography.font_identity?.status === "unresolved") errors.push("font_identity 字体目标仍待人工确认");
   const pending = pendingTextAttributes(typography);
@@ -323,6 +331,7 @@ export function validateTextFidelity({ node, raw, read, route, region, tolerance
 
   if (route === "image-text") {
     const paths = declaredResources.filter((resource) => ["image", "image-text", "raster-image", "sprite"].includes(resource?.kind)).map((resource) => resource.path);
+    if (read("actual_image_opacity") === 0) errors.push("实际文字图片全透明，无法计为已显示");
     if (!text(read("actual_image_path")) || !paths.includes(read("actual_image_path"))) errors.push("actual_image_path 必须绑定冻结图片资源");
     if (!equal(read("actual_semantic"), node.accessible_semantic)) errors.push("actual_semantic 必须绑定冻结可访问语义");
   } else {

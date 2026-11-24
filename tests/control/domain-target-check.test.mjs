@@ -10,7 +10,7 @@ import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import addFormats from '../../skills/app-skill-runtime/ajv-formats.mjs';
 import { validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
 import { validateMultiVisualStage } from '../../skills/app-workflow-control/scripts/runtime/multi-visual-contract.mjs';
-import { unityLayoutFixture } from './unity-text-fixture.mjs';
+import { unityLayoutFixture, unityLayoutMeasurement } from './unity-text-fixture.mjs';
 import { assertAssetReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { minimalPng, validManifest } from '../../skills/cocos-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
@@ -83,7 +83,7 @@ test('未安装当前栈领域脚本时明确阻断而非跳过', (t) => {
   const { repo, work, target } = webFixture(t);
   const runtime = join(repo, 'isolated', 'skills', 'app-workflow-control', 'scripts', 'runtime');
   mkdirSync(runtime, { recursive: true });
-  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
+  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs', 'v4-text-restoration.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
   const moduleUrl = pathToFileURL(join(runtime, 'domain-target-check.mjs')).href;
   const script = `import {validateDomainTarget} from ${JSON.stringify(moduleUrl)}; const [repo,work,target]=JSON.parse(process.argv[1]); try {validateDomainTarget(repo,work,target,'V2'); process.exitCode=1;} catch(e) {process.stdout.write(e.message);}`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, JSON.stringify([repo, work, target])], { encoding: 'utf8', windowsHide: true });
@@ -256,6 +256,65 @@ test('Unity V3–V5 经领域门接受完整合同，并拒绝候选、场景和
   missing.responsiveEvidence.screen.path = 'evidence/missing.bin';
   put(repo, 'docs/native-evidence.json', missing);
   assert.throws(() => validateDomainTarget(repo, work, target, 'V5'), /不存在/);
+});
+
+test('Unity V4 从资源评审核对文字试装，V5 使用新的正式运行批次', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-v4-text-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const save = (path, value) => { put(repo, path, value); return { path, sha256: createHash('sha256').update(readFileSync(join(repo, path))).digest('hex') }; };
+  const image = Buffer.from('确认稿');
+  const referenceTarget = save('visual/target.png', image);
+  const target = { targetId: 'view-1', candidateId: 'c1', sceneId: 'Main', stateId: 'default', viewport: { width: 1920, height: 1080 }, referenceTarget, domainEvidenceRef: { path: 'docs/unity-domain.json' } };
+  const work = { workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stack: 'unity', evidenceRoot: 'evidence', evidenceRef: { path: 'evidence/manifest.json' } };
+  const layout = unityLayoutFixture(save, target, { prefix: 'docs/text', withText: true });
+  target.reviews = { V3Layout: save('docs/text-review.json', { layoutSpecRef: layout.planRef }) };
+  const native = { schemaVersion: '1.0', visualStageModel: 'function-first-v1', workItemId: 'WI-1', projectId: 'p1', workItemType: 'SCENE', stageId: 'scene-production', globalState: 'REVIEW', scene: { sceneId: 'Main', stage: 'V4', status: 'IN_PROGRESS' }, responsiveContract: unityContract(), baselineHash: 'sha256:abc', revision: 0, objective: '场景验收', moduleIds: ['scene'], allowedPaths: ['Assets/**'], forbiddenPaths: ['Library/**'], allowedActions: ['unity-code-change'], actionLevel: 'A3', actionType: 'unity-code-change', gateStatus: { F0: 'PASS', F1: 'PASS', F2: 'PASS', F3: 'NOT_RUN', F4: 'NOT_RUN' } };
+  put(repo, 'docs/native-work.json', native);
+  put(repo, 'docs/native-evidence.json', unityEvidence('V4', target.candidateId));
+  put(repo, target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
+  const report = unityLayoutMeasurement(layout.plan, layout.planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath: 'evidence/v4-text.json' });
+  report.textOnly = true;
+  const assetReview = { schemaVersion: '1.0', workItemId: work.workItemId, stack: 'unity', visualStage: 'V4', candidateId: target.candidateId };
+  const updateReport = () => {
+    assetReview.textRestorationRef = save(report.outputPath, report);
+    target.assetReviewRef = save('docs/assets.json', assetReview);
+  };
+  target.assetReviewRef = save('docs/assets.json', assetReview);
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V4'), /textRestorationRef/);
+  updateReport();
+  assert.equal(validateDomainTarget(repo, work, target, 'V4'), true);
+  const measurement = report.measurements[0];
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'visible').actualValue = 'false';
+  updateReport();
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V4'), /visible.*不一致/);
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'visible').actualValue = 'true';
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'content').actualValue = '';
+  updateReport();
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V4'), /content.*不一致/);
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'content').actualValue = '确认';
+  measurement.componentSnapshot.active = false;
+  updateReport();
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V4'), /缺少活动的实际组件/);
+  measurement.componentSnapshot.active = true;
+  updateReport();
+  putUnityArtFixture(repo, target.candidateId, target);
+  const finalReport = unityLayoutMeasurement(layout.plan, layout.planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath: 'evidence/v5-layout.json' });
+  put(repo, finalReport.outputPath, finalReport);
+  put(repo, 'evidence/manifest.json', { workItemId: work.workItemId, stack: work.stack, visualStage: 'V5', items: [
+    { category: 'runtime-layout', status: 'PASS', targetId: target.targetId, path: finalReport.outputPath },
+    { category: 'art-experience-acceptance', status: 'PASS', targetId: target.targetId, path: 'evidence/acceptance.json' },
+  ] });
+  put(repo, 'docs/native-work.json', { ...native, scene: { ...native.scene, stage: 'V5' } });
+  const evidence = unityEvidence('V5', target.candidateId);
+  evidence.uiLayoutMeasurementRef = { path: finalReport.outputPath };
+  put(repo, 'docs/native-evidence.json', evidence);
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V5'), /不能复用 V4/);
+  finalReport.runId = 'final-run';
+  put(repo, finalReport.outputPath, finalReport);
+  assert.equal(validateDomainTarget(repo, work, target, 'V5'), true);
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'content').actualValue = '';
+  updateReport();
+  assert.throws(() => validateDomainTarget(repo, work, target, 'V5'), /content.*不一致/);
 });
 
 /** 使用真实领域和公共合同校验器，构造两目标的合成合同数据。 */

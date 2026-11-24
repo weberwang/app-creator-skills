@@ -7,7 +7,7 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 
 多状态场景和复杂页面按[分批生产](../app-domain-toolkit/references/incremental-production.md#累计对象与视觉增量)连接功能范围与视觉目标；只为需要独立确认的显示差异规划目标，不为每个步骤或数据值强制生图。
 
-接入 [app-creator-workflow](../app-creator-workflow/SKILL.md) 的全局基线与 V1–V5，按[公共执行规范](../app-creator-workflow/references/professional-execution.md)交接。第 4 阶段确认并冻结全局视觉方向与代表稿；V1 确认模块方案，V2 生成并确认覆盖全部适用状态和进度的模块稿，V3 拆解同一确认稿，V4 准备资源，V5 完整实现与验收。
+接入 [app-creator-workflow](../app-creator-workflow/SKILL.md) 的全局基线与 V1–V5，按[公共执行规范](../app-creator-workflow/references/professional-execution.md)交接。第 4 阶段确认并冻结全局视觉方向与代表稿；V1 确认模块方案，V2 生成并确认覆盖全部适用状态和进度的模块稿，V3 拆解同一确认稿，V4 同批还原文字与其他资源并验收试装，V5 完整实现与正式运行验收。
 
 场景、页面、HUD、弹出层、素材和交互显示对象共用[体验、视觉方向与意图表达](references/interface-intent.md#design-basis)这一权威：市场、竞品、受众与参考分析必须按[统一要求](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或核实复用，缺失或变化部分先补齐；再按本批真实行为、压力和状态形成方向，区分硬约束、方向与探索空间，确定信息、空间归属及必要文字。每次生图按[制作输入与发送前检查](references/style-and-production.md#生成前约束)将适用分析转成真实提示词，后台细节留在工程规格；检查纳入现有审阅。正式页面保留必要文案与无障碍标签。
 

@@ -1,6 +1,6 @@
 import { matchesFrozenTextValue } from '../../app-domain-toolkit/scripts/visual/text-fidelity-contract.mjs';
 
-const REQUIRED_TEXT_ATTRIBUTES = ['font', 'fontSize', 'fill'];
+const REQUIRED_TEXT_ATTRIBUTES = ['font', 'fontSize', 'fill', 'content', 'visible'];
 
 /** 同一计划可共享属性目标，文字节点仍各自记录设计来源与运行身份。 */
 function textAttributes(node, styles) {
@@ -38,12 +38,27 @@ export function validateTextStyleTarget(node, styles = {}) {
       errors.push(`${label} 的 fill.expectedValue 必须含 RGBA 颜色和透明度。`);
     } else if (name === 'fontSize' && !(Number.isFinite(Number(item.expectedValue)) && Number(item.expectedValue) > 0)) {
       errors.push(`${label} 的 fontSize.expectedValue 必须是正数。`);
+    } else if (name === 'visible' && (item.propertyPath !== 'visible' || item.expectedValue !== 'true')) {
+      errors.push(`${label} 的 visible 必须绑定有效可见性探针，并以 true 为目标。`);
     }
   }
   for (const name of REQUIRED_TEXT_ATTRIBUTES) {
     if (!names.has(name)) errors.push(`${label} 缺少 ${name} 目标或明确的待确认原因。`);
   }
+  // 文字内容和可见性必须来自同一真实绘制组件，避免读到其他组件的显示状态。
+  const content = attributes.find((item) => item?.name === 'content');
+  const visible = attributes.find((item) => item?.name === 'visible');
+  if (content?.componentType && visible?.componentType && content.componentType !== visible.componentType) {
+    errors.push(`${label} 的 content 和 visible 必须绑定同一文字组件。`);
+  }
   return errors;
+}
+
+/** 文字按原样核对，填色允许十六进制字母大小写差异。 */
+function matchesTextAttribute(name, expected, actual) {
+  if (name === 'content' || name === 'visible') return expected === actual;
+  if (name === 'fill') return expected.toUpperCase() === actual.toUpperCase();
+  return matchesFrozenTextValue(expected, actual);
 }
 
 /** 核对已确认文字属性与实际组件序列化属性，缺失值保留为未验证。 */
@@ -61,9 +76,7 @@ export function validateTextStyle(node, observations, styles = {}) {
       || matched[0].propertyPath !== attribute.propertyPath || matched[0].status !== 'MEASURED'
       || typeof matched[0].actualValue !== 'string') {
       errors.push(`文字节点 ${node.id} 的 ${attribute.name} 缺少绑定实际组件的属性回读，未验证。`);
-    } else if (attribute.name === 'fill'
-      ? attribute.expectedValue.toUpperCase() !== matched[0].actualValue.toUpperCase()
-      : !matchesFrozenTextValue(attribute.expectedValue, matched[0].actualValue)) {
+    } else if (!matchesTextAttribute(attribute.name, attribute.expectedValue, matched[0].actualValue)) {
       errors.push(`文字节点 ${node.id} 的 ${attribute.name} 实际值与确认稿目标不一致。`);
     }
   }
@@ -102,7 +115,9 @@ export function mergeTextStyleEvidence(report, evidence, errors) {
       else if (combined[index].componentType !== observation.componentType || combined[index].propertyPath !== observation.propertyPath) {
         errors.push(`补充文字证据节点 ${entry.id} 的 ${observation.name} 属性来源不一致。`);
       } else if (combined[index].status === 'MEASURED') {
-        if (observation.status !== 'MEASURED' || !matchesFrozenTextValue(combined[index].actualValue, observation.actualValue)) {
+        if (observation.status !== 'MEASURED' || typeof observation.actualValue !== 'string'
+          || typeof combined[index].actualValue !== 'string'
+          || !matchesTextAttribute(observation.name, combined[index].actualValue, observation.actualValue)) {
           errors.push(`补充文字证据节点 ${entry.id} 的 ${observation.name} 与已有实测冲突。`);
         }
       } else combined[index] = observation;

@@ -442,6 +442,63 @@ test('V4 缺少文字颜色或透明度回读均不能通过', (t) => {
   assert.throws(() => verifyVisual(fixture, 'V4'), /transparency/);
 });
 
+test('V4 按确认稿检查文字内容及当前状态的有效可见性', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V4', layer: true });
+  const style = fixture.layout.nodes[1].textStyle;
+  style.content = '确认';
+  assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'edit', (nodes) => { delete nodes[1].properties.Text; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /缺少 Text/);
+  updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.Text = '  '; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /实际内容为空/);
+  updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.Text = '取消'; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /内容与确认稿不一致/);
+  updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.Text = '确认'; nodes[1].properties.VisibleInHierarchy = false; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /有效可见性/);
+  style.expectedVisible = false;
+  assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'edit', (nodes) => { delete nodes[1].properties.VisibleInHierarchy; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /有效可见性/);
+});
+
+test('TextBox 的可见占位文字属于当前状态的实际内容', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V4', layer: true });
+  const node = fixture.layout.nodes[1];
+  node.className = 'TextBox';
+  node.textStyle.content = '输入';
+  updateScreenCapture(fixture, 'edit', (nodes) => {
+    nodes[1].className = 'TextBox';
+    nodes[1].properties.Text = '';
+    nodes[1].properties.PlaceholderText = '输入';
+  });
+  assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'edit', (nodes) => { delete nodes[1].properties.PlaceholderText; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /占位文字.*回读/);
+});
+
+test('文字填色和描边均透明时不视为可见', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V4', layer: true });
+  fixture.layout.nodes[1].textStyle.transparency = 1;
+  updateScreenCapture(fixture, 'edit', (nodes) => {
+    nodes[1].properties.TextTransparency = 1;
+    nodes[1].properties.TextStrokeTransparency = 1;
+  });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /填色与描边均完全透明/);
+  updateScreenCapture(fixture, 'edit', (nodes) => { delete nodes[1].properties.TextStrokeTransparency; });
+  assert.throws(() => verifyVisual(fixture, 'V4'), /缺少有效描边透明度/);
+  updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.TextStrokeTransparency = 0; });
+  assert.equal(verifyVisual(fixture, 'V4').scope, 'record-consistency');
+});
+
+test('V5 复验正式实例的文字与有效可见状态', (t) => {
+  const fixture = createRobloxVisualFixture(t, { stage: 'V5', layer: true });
+  assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.Text = ''; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /实际内容为空/);
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.Text = '确认'; nodes[1].properties.VisibleInHierarchy = false; });
+  assert.throws(() => verifyVisual(fixture, 'V5'), /有效可见性/);
+});
+
 test('V3 普通 GUI 必须声明 AnchorPoint、双轴尺寸控制和唯一位置控制者', (t) => {
   const fixture = createRobloxVisualFixture(t, { stage: 'V3', layer: true });
   assert.equal(verifyVisual(fixture, 'V3').scope, 'record-consistency');

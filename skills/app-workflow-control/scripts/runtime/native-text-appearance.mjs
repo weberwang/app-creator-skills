@@ -2,6 +2,7 @@ import { isDeepStrictEqual } from 'node:util';
 import { extractFigmaNodeStyle } from './figma-design-properties.mjs';
 import { readJson, WorkflowError } from './io.mjs';
 import { comparableTextFill, hasCompleteTextFill, isTextChannel } from './text-paint.mjs';
+import { readV4TextRestoration } from './v4-text-restoration.mjs';
 
 /** 将每个已确认文字条目绑定到自身填色与透明度，容器样式不能作为替代。 */
 function requireAppearance(entry, label, { allowPending = false } = {}) {
@@ -84,18 +85,40 @@ export function collectLayoutTextAppearance(layout, layoutRef, designRef, { allo
   });
 }
 
+/** 检查同次原生运行中节点的文字及整体可见性，防止只回读样式掩盖漏字。 */
+export function validateTextPresence(actual, label) {
+  if (typeof actual?.actualContent !== 'string' || !actual.actualContent.trim()) throw new WorkflowError(`${label} 的 actualContent 为空或缺失`);
+  if (actual.visible !== true) throw new WorkflowError(`${label} 的 visible 必须为 true，包含父级可见状态`);
+  // 整体透明度为零时文字及描边都不可见；单独填色 Alpha 不代表整体不可见。
+  const opacity = actual.textOpacity ?? actual.values?.textOpacity;
+  const opacityValue = typeof opacity === 'object' && opacity !== null ? opacity.value : opacity;
+  if (opacityValue === 0) throw new WorkflowError(`${label} 的整体文字透明度为 0，实际不可见`);
+  for (const name of ['actualContent', 'visible']) {
+    const source = actual.propertySources?.[name];
+    if (typeof source?.componentType !== 'string' || !source.componentType.trim()
+      || typeof source.propertyPath !== 'string' || !source.propertyPath.trim()) {
+      throw new WorkflowError(`${label} 的 ${name} 缺少实际组件或父级属性回读来源`);
+    }
+  }
+}
+
 /** 校验实际读取的文字颜色，且记录须属于同一次构建和运行。 */
 export function validateNativeTextReadback(repo, runtime, expected, stack, identity) {
   if (!Array.isArray(expected)) throw new WorkflowError(`${stack} 运行校验缺少冻结的文字颜色和透明度目标`);
   if (expected.length === 0 && runtime.textReadbackRef === undefined) return;
   const report = readJson(repo, identity(repo, runtime.textReadbackRef, `${stack} 文字颜色实际读数`), '文字颜色实际读数');
-  if (report?.schemaVersion !== '1.0' || report.source !== `${stack}-native`
+  if (report?.schemaVersion !== '1.0' || report.source !== `${stack}-native` || report.visualStage === 'V4'
     || !isDeepStrictEqual(report.buildIdentityRef, runtime.buildIdentityRef)
     || !isDeepStrictEqual(report.runEvidenceRef, runtime.runEvidenceRef)
     || !Array.isArray(report.entries)) throw new WorkflowError(`${stack} 文字读数须绑定当前构建和运行`);
+  validateNativeTextEntries(report.entries, expected, stack);
+}
+
+/** 试装与正式运行共用节点、内容、可见性和属性来源校验。 */
+function validateNativeTextEntries(entries, expected, stack) {
   const observations = new Map();
   const nativeNodes = new Set();
-  for (const observed of report.entries) {
+  for (const observed of entries) {
     if (typeof observed?.runtimeNodeId !== 'string' || !observed.runtimeNodeId.trim()) throw new WorkflowError(`${stack} 文字读数缺少实际文字组件身份`);
     const key = JSON.stringify([observed?.targetPath, observed?.targetSha256, observed?.stateId, observed?.nodeId]);
     if (observations.has(key)) throw new WorkflowError(`${stack} 文字 ${observed.nodeId} 读数重复`);
@@ -109,6 +132,7 @@ export function validateNativeTextReadback(repo, runtime, expected, stack, ident
     const label = `${stack} 文字 ${target.nodeId} 实际读数`;
     const observed = observations.get(key);
     requireAppearance(observed, label);
+    validateTextPresence(observed, label);
     if (!isDeepStrictEqual(comparableTextFill(observed.textFill), comparableTextFill(target.textFill))) throw new WorkflowError(`${label} 的字体颜色或填色 Alpha 与确认稿不一致`);
     if (observed.textOpacity !== target.textOpacity) throw new WorkflowError(`${label} 的文字透明度与确认稿不一致`);
     // 每个可核实样式都要来自具体组件属性，单纯复制设计值无法代替回读。
@@ -123,4 +147,17 @@ export function validateNativeTextReadback(repo, runtime, expected, stack, ident
     observations.delete(key);
   }
   if (observations.size) throw new WorkflowError(`${stack} 文字读数包含未绑定设计的节点`);
+}
+
+/** V4 试装报告冻结实际批次和当前候选，并逐项对照设计文字。 */
+export function validateV4NativeTextRestoration(repo, work, expected) {
+  if (!Array.isArray(expected)) throw new WorkflowError(`${work.stack} V4 缺少冻结文字目标`);
+  if (!expected.length) return;
+  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId);
+  if (report.schemaVersion !== '1.0' || report.source !== `${work.stack}-native` || report.visualStage !== 'V4'
+    || report.workItemId !== work.workItemId || report.candidateId !== work.visual.candidateId
+    || typeof report.runId !== 'string' || !report.runId.trim() || !Array.isArray(report.entries)) {
+    throw new WorkflowError(`${work.stack} V4 文字试装读数未绑定当前工作项、候选和采集批次`);
+  }
+  validateNativeTextEntries(report.entries, expected, work.stack);
 }

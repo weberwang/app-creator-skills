@@ -4,6 +4,7 @@
  * 该模块只依赖 workflow-control 的纯校验入口，不反向依赖清单主入口，
  * 让 annotation/proposal/decision 的 scene/state 分组门可以被文件门安全复用。
  */
+import { validateReuseSnapshot } from "../../app-domain-toolkit/scripts/visual/asset-reuse-contract.mjs";
 import { buildVisualConfirmationAuthorityByRegion, validateVisualDecompositionConfirmations } from "../../threejs-domain-contracts/scripts/visual-decomposition-confirmation.mjs";
 import { validateLayoutAnnotationConfirmation } from "../../threejs-domain-contracts/scripts/layout_annotation_confirmation.mjs";
 import { auditProductionContract, resolveProductionContract, validateV5ProductionGate } from "../../threejs-domain-contracts/scripts/visual-production-contract.mjs";
@@ -49,12 +50,7 @@ export function validateImplementationPlan(plan, region, assetById, label, error
     const source = region.reuse_snapshot;
     const asset = assetById.get(region.asset_id ?? (Array.isArray(region.asset_ids) ? region.asset_ids[0] : undefined));
     if (!isObject(source)) { errors.push(`${label}.reuse_snapshot 必须是对象`); return plan.mode; }
-    if (source.schema !== "asset-reuse-snapshot/1.0") errors.push(`${label}.reuse_snapshot.schema 必须为 asset-reuse-snapshot/1.0`);
-    for (const field of ["source_file", "source_manifest_file", "compatibility_evidence_file", "accepted_at", "source_status"]) if (!Object.hasOwn(source, field)) errors.push(`${label}.reuse_snapshot.${field} 必须是可追溯来源字段`);
-    if (nonEmptyString(source.source_file) && !/\.(?:png|jpe?g)$/i.test(source.source_file)) errors.push(`${label}.reuse_snapshot.source_file 必须是 PNG/JPG 位图`);
-    if (nonEmptyString(source.source_manifest_file) && !source.source_manifest_file.toLowerCase().endsWith(".json")) errors.push(`${label}.reuse_snapshot.source_manifest_file 必须是 JSON 快照文件`);
-    if (nonEmptyString(source.accepted_at) && Number.isNaN(Date.parse(source.accepted_at))) errors.push(`${label}.reuse_snapshot.accepted_at 必须是可解析时间`);
-    if (source.source_status !== "accepted") errors.push(`${label}.reuse_snapshot.source_status 必须为 accepted`);
+    for (const message of validateReuseSnapshot(source)) errors.push(`${label} ${message}`);
     if (!asset || asset.status !== "accepted") errors.push(`${label} reuse-existing 必须映射 status=accepted 的既有资源`);
     if (nonEmptyString(source.source_asset_id) && source.source_asset_id !== region.asset_id) errors.push(`${label}.reuse_snapshot.source_asset_id 必须等于区域 asset_id`);
   }

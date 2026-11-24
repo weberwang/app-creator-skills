@@ -47,13 +47,13 @@ Toolkit 只读加载场景，从实际 Screen/Canvas/Panel 取得同批 viewport
 
 UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)验证所有消费者，不能把本页几何报告作为插件安装、配置加载或语言切换证据。uGUI 测量器支持默认显示器的 Screen Space Overlay/Camera Canvas，也能按实际组件序列化属性回读文字样式；文字内容、字形生成和语言绑定仍须独立验证。
 
-每个活动 `TEXT` 节点在 V3 布局计划的 `textStyle` 记录确认稿来源 `source` 和 `attributes`。每项包含语义名称 `name`、项目实际安装的组件完整类型名 `componentType`、实际属性 `propertyPath` 和已确认目标的 `expectedValue`。必须包含字体（font）、字号（fontSize）和字体颜色（fill，按确认稿记录文字本身的 RGBA 值），并逐项覆盖设计可核实的字重、行高、字距、对齐、换行、渐变和描边阴影等适用效果；设计事实不足时保持待验证。为同节点测量请求的 `textStyle` 填入对应 `name`、`componentType`、`propertyPath`。uGUI 从目标组件的序列化属性读取；UI Toolkit 从实际元素类型和当前 Unity 版本提供的 `resolvedStyle.属性名` 读取解析样式。无法唯一定位组件或属性类型不支持时回报 `UNAVAILABLE`。字符串直接比较，浮点数采用不随地区变化的往返表示，布尔为 `true`/`false`，枚举为序列化整数，颜色为大写 `#RRGGBBAA`，资源引用为项目资源路径。字号和其他属性先明确相同单位与真实组件语义，不能直接比较不同单位。缺少快照、来源、属性或回读不匹配时该文字项保持未验证。
+每个活动 `TEXT` 节点在 V3 布局计划的 `textStyle` 记录确认稿来源 `source` 和 `attributes`。每项包含语义名称 `name`、项目实际安装的组件完整类型名 `componentType`、实际属性 `propertyPath` 和已确认目标的 `expectedValue`。必须包含实际显示文字（content）、有效可见性（visible）、字体（font）、字号（fontSize）和字体颜色（fill，按确认稿记录文字本身的 RGBA 值），并逐项覆盖设计可核实的字重、行高、字距、对齐、换行、渐变和描边阴影等适用效果；设计事实不足时保持待验证。为同节点测量请求的 `textStyle` 填入对应 `name`、`componentType`、`propertyPath`。uGUI 从目标组件的序列化属性读取；UI Toolkit 从实际元素类型和当前 Unity 版本提供的 `resolvedStyle.属性名` 读取解析样式，并由文字元素的 `text` 属性读取内容。`content` 的实际值须与当前状态预期文本逐字一致，空白视为遗漏。`visible` 使用同类型文字组件和 `visible` 路径，核对实际启用与有效可见性。缺失、空白或隐藏文字阻止 V4 试装及 V5 验收。无法唯一定位组件或属性类型不支持时回报 `UNAVAILABLE`。字符串直接比较，浮点数采用不随地区变化的往返表示，布尔为 `true`/`false`，枚举为序列化整数，颜色为大写 `#RRGGBBAA`，资源引用为项目资源路径。字号和其他属性先明确相同单位与真实组件语义，不能直接比较不同单位。缺少快照、来源、属性或回读不匹配时该文字项保持未验证。
 
 对于目标明确而采集器不支持的属性，使用项目已有 Unity Editor 测量接口实际回读并将补充 JSON 保存在当前 `evidenceRoot`。V5 的 `uiLayoutMeasurementRef.textEvidencePath` 引用该文件，独立运行 `layout-runtime-check` 时可用 `--text-evidence <项目内JSON路径>`。JSON 顶层记录 `measurementSource: UNITY_EDITOR_LOADED_SCENE` 及与布局报告一致的 `runId`、`frameCount`、`scenePath`、`stateId`、`uiSystem`。`measurements` 数组每项绑定同一节点 `id`、实际 `objectPath`（UI Toolkit 还需 `elementName`）和与采集器一致的 `textStyle` 属性数组。仅同批、同对象且与已有实测不冲突的属性参与目标比较。保留实际 Unity 采集调用及原始结果。无法获取时保持未验证并按真实约束调整计划或素材路线。
 
 组件渲染材质的适用属性可使用 `material.color.<着色器属性名>` 或 `material.float.<着色器属性名>` 作为原生探针路径。支持的渲染材质来自当前 `Graphic` 或 `Renderer`，存在材质属性块覆盖时由项目原生探针补充实际读数。
 
-World Space Canvas 的视觉目标可用同一采集器的 `textOnly: true`，使用 `uiSystem: UGUI` 并提供每个可见文字节点的 `id`、实际 `objectPath` 和 `textStyle` 探针。世界文字的组件和材质读数随同一运行报告交接，世界框体与投影继续用适用的原生世界证据核对。目标截图、可读性和遮挡由用户人工确认。
+V4 uGUI 文字试装和 World Space Canvas 的视觉目标可用同一采集器的 `textOnly: true`，使用 `uiSystem: UGUI` 并提供每个可见文字节点的 `id`、实际 `objectPath` 和 `textStyle` 探针。世界文字的组件和材质读数随同一运行报告交接，世界框体与投影继续用适用的原生世界证据核对。目标截图、可读性和遮挡由用户人工确认。
 
 ## 外部写入登记的边界
 
@@ -73,7 +73,7 @@ node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layo
 
 显式运行上述文件工具：它读取传入的布局计划和报告，检查同批根、节点覆盖、父/参照绑定、属性控制权、原生尺寸和中心关系，并读取计划引用的拆解、Prefab 结构与 VERIFIED 装配材料进行对账。V5 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。声明 targetRect/tolerance 的节点从报告矩形重新计算 delta 并检查 maxAbsDelta；未声明容差时仍按适用结构、边界、中心与尺寸规则检查，不将默认 usability 升级为整屏 exact。报告或节点为 FAIL 时修复后重验。工具只核对提交的数据，不能证明报告确由 Unity 采集，也不读取运行中的正式对象；采集来源和 scene/state/candidate 等身份须由执行者与当前工作项另行核对。
 
-Unity 原生实施包以 `uiLayoutPlanRef: {path}` 引用布局计划，装配交付沿用 `splitPlanRef`、`prefabStructureRef` 和 `prefabAssemblyRef`。公共工作流以既有 V3 布局确认的 `layoutSpecRef: {path,sha256}` 冻结相同计划，逐场景状态核对其拆解来源及文字目标。V5 有保留文字时，原生 Evidence Manifest 用 `uiLayoutMeasurementRef: {path,textEvidencePath?}` 关联实际采集，公共 Evidence Manifest 的当前目标 `runtime-layout` 项引用同一报告路径。正式 V5 门调用 `layout-runtime-check` 使用的原生运行校验，重新核对报告、计划摘要、工作项、候选、实际 Scene 与状态。技术修复后按现有流程复验。装配、交互和截图人工验收分别留在现有证据项中。
+Unity 原生实施包以 `uiLayoutPlanRef: {path}` 引用布局计划，装配交付沿用 `splitPlanRef`、`prefabStructureRef` 和 `prefabAssemblyRef`。公共工作流以既有 V3 布局确认的 `layoutSpecRef: {path,sha256}` 冻结相同计划，逐场景状态核对其拆解来源及文字目标。V4 有保留文字时，资源评审的 `textRestorationRef: {path,sha256}` 冻结本候选试装采集，与 V3 的布局计划、目标状态和文字内容逐项对照。uGUI 可使用纯文字报告，UI Toolkit 使用现有完整布局报告。V5 采集新的运行批次，有保留文字时，原生 Evidence Manifest 用 `uiLayoutMeasurementRef: {path,textEvidencePath?}` 关联实际采集，公共 Evidence Manifest 的当前目标 `runtime-layout` 项引用同一报告路径。正式 V5 门调用 `layout-runtime-check` 使用的原生运行校验，重新核对报告、计划摘要、工作项、候选、实际 Scene 与状态。技术修复后按现有流程复验。装配、交互和截图人工验收分别留在现有证据项中。
 
 V5 先将装配节点 `name` 与 uGUI 实测 `objectPath` 的末段或 UI Toolkit 的 `elementName` 对应，再核对实测父路径和定位参照。本检查验证节点身份、层级与布局事实；当前测量器没有采集 Prefab 实例来源 GUID，资产来源验收仍需相应资源证据。
 

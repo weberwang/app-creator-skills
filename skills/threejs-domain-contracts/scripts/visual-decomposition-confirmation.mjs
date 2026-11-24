@@ -4,8 +4,8 @@
  * 效果图原子拆解的人工确认合同。
  *
  * 该合同只允许一次明确的人工确认，并把编号 PNG、提案、冻结目标、
- * 区域定义、状态与资产需求绑定到同一身份。摘要仅可作为追踪信息，
- * 实际文件结构、区域事实和人工决定承担验收职责。旧的 AUTO 或隐式推断记录
+ * 区域定义、状态与资产需求绑定到同一身份。复用区域另以受信提案摘要锁定素材版本，
+ * 其余检查使用实际文件结构、区域事实和人工决定。旧的 AUTO 或隐式推断记录
  * 不会被转换为新记录；缺少新字段时必须重新生成并确认。
  */
 import { createHash } from "node:crypto";
@@ -159,6 +159,12 @@ function validateProposalDecompositionElements(proposal, regions, canvas, contex
     const expected = elements.filter((element) => element.region_id === regionIdOf(region));
     const item = technicalRegions.find((candidate) => candidate?.region_id === regionIdOf(region));
     if (!item || canonicalJson(item.decomposition_elements) !== canonicalJson(expected)) errors.push(confirmationError({ ...context, annotation_number: region.annotation_number, region_id: regionIdOf(region) }, "proposal_file technical_analysis 区域未保留同一语义元素与父级", { missing: "technical_analysis.regions.decomposition_elements" }));
+    // 复用快照的摘要就是已审阅素材版本，必须与权威提案逐值一致。
+    if (canonicalJson(item?.technical_definition?.reuse_snapshot) !== canonicalJson(region.reuse_snapshot)) {
+      errors.push(confirmationError({ ...context, annotation_number: region.annotation_number, region_id: regionIdOf(region) },
+        "proposal_file 未冻结当前区域的 reuse_snapshot，素材或兼容结论变更后须更新原提案确认",
+        { missing: "technical_analysis.regions.technical_definition.reuse_snapshot" }));
+    }
     const metadataRegion = Array.isArray(metadataRegions) ? metadataRegions.find((candidate) => candidate?.region_id === regionIdOf(region)) : null;
     if (!metadataRegion || canonicalJson(metadataRegion.decomposition_elements) !== canonicalJson(expected)) errors.push(confirmationError({ ...context, annotation_number: region.annotation_number, region_id: regionIdOf(region) }, "拆解图 metadata 未逐区域绑定同一语义元素与父级", { missing: "annotation-meta.region.decomposition_elements" }));
   }
@@ -275,6 +281,8 @@ function resolveAuthority(region, options = {}, context = {}, errors = []) {
     ledgerFile: source.ledgerFile,
     receiptId: source.receiptId,
     receiptFile: source.receiptFile,
+    proposalFile: source.proposalFile,
+    reuseProposalSha256: source.reuseProposalSha256,
     userDecisionReceipt: source.userDecisionReceipt ?? source.user_decision_receipt,
     sceneId: current.sceneId ?? current.scene_id ?? source.sceneId ?? source.scene_id,
     stateId: current.stateId ?? current.state_id ?? source.stateId ?? source.state_id,
@@ -353,6 +361,14 @@ export function validateVisualDecompositionConfirmationRecord(record, region, co
     const proposal = readConfirmationFile(authority.projectRoot, record.proposal_file, "proposal_file", local, errors, true);
     const decision = readConfirmationFile(authority.projectRoot, record.decision_record_file, "decision_record_file", local, errors, true);
     const receipt = readConfirmationFile(authority.projectRoot, record.user_decision_receipt_file, "user_decision_receipt_file", local, errors, true);
+    // 保护已确认的复用决定，即使当前清单和原路径提案同时被改写也须重新审阅。
+    const groupedReuse = Array.isArray(options.allRegions) && options.allRegions.some((item) => planModeOf(item) === "reuse-existing");
+    if (planModeOf(region) === "reuse-existing" || groupedReuse) {
+      const digest = proposal && `sha256:${createHash("sha256").update(proposal.bytes).digest("hex")}`;
+      if (!digest || digest !== authority.reuseProposalSha256 || record.proposal_file !== authority.proposalFile) {
+        error("复用提案必须匹配受保护 ledger 的 proposal_file 与 proposal_sha256", { missing: "ledger.proposal_sha256" });
+      }
+    }
     const proposalData = proposal?.json;
     const decisionData = decision?.json;
     const receiptData = receipt?.json;

@@ -53,8 +53,12 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, buildIdentityRef: write(repo, 'build.json', build), environment: 'host-simulator', runEvidenceRef: evidence, interactionEvidenceRef: evidence, performanceEvidenceRef: evidence, ...host };
   const textReadback = { schemaVersion: '1.0', source: 'esp32-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
     entries: [{ targetPath: doc.layoutSpecRef.path, targetSha256: doc.layoutSpecRef.sha256, nodeId: 'title', runtimeNodeId: 'home.title', ...textAppearance,
-      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'textFill', 'textOpacity'].map((name) => [name, { componentType: 'lv_label', propertyPath: name }])) }] };
+      actualContent: '合成文字', visible: true,
+      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'textFill', 'textOpacity', 'actualContent', 'visible'].map((name) => [name, { componentType: 'lv_label', propertyPath: name }])) }] };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
+  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4' };
+  work.assetReviewRef = write(repo, 'v4-asset-review.json', { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
+    visualStage: 'V4', candidateId: visual.candidateId, textRestorationRef: write(repo, 'v4-text.json', v4Text) });
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 同步上下文、V5 用户确认与外层证据，模拟绑定后的最终输入。 */
   function save() {
@@ -63,8 +67,36 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
     visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   }
   save();
-  return { repo, work, doc, board, layout, assets, runtime, textReadback, build, host, referenceTarget, save };
+  return { repo, work, doc, board, layout, assets, runtime, textReadback, v4Text, build, host, referenceTarget, save };
 }
+
+test('ESP32 V4 文字试装必须覆盖实际文字和可见性', (t) => {
+  const f = fixture(t, { stage: 'V4' });
+  const originalRef = f.work.assetReviewRef;
+  delete f.work.assetReviewRef;
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V4'), /资源评审.*缺少/);
+  f.work.assetReviewRef = originalRef;
+  /** 固定本次试装报告和对应资源评审。 */
+  function check() {
+    const review = JSON.parse(readFileSync(join(f.repo, f.work.assetReviewRef.path), 'utf8'));
+    review.textRestorationRef = write(f.repo, 'v4-text-change.json', f.v4Text);
+    f.work.assetReviewRef = write(f.repo, 'v4-asset-review-change.json', review);
+    return validateSingleDomainTarget(f.repo, f.work, 'V4');
+  }
+  assert.equal(check(), true);
+  f.v4Text.visualStage = 'V5';
+  assert.throws(check, /文字试装读数未绑定/);
+  f.v4Text.visualStage = 'V4';
+  const item = f.v4Text.entries[0];
+  item.actualContent = '';
+  assert.throws(check, /actualContent.*为空/);
+  item.actualContent = '合成文字';
+  item.visible = false;
+  assert.throws(check, /visible.*true/);
+  item.visible = true;
+  f.v4Text.entries.shift();
+  assert.throws(check, /文字.*缺少/);
+});
 
 test('ESP32 页面可分别校验 V2 至 V5 阶段材料', (t) => {
   for (const stage of ['V2', 'V3', 'V4', 'V5']) {
@@ -89,6 +121,36 @@ test('ESP32 要求冻结文字目标并核对同次运行的颜色与透明度',
   v5.runtime.textReadbackRef = write(v5.repo, 'text-readback.json', v5.textReadback);
   v5.save();
   assert.throws(() => validateSingleDomainTarget(v5.repo, v5.work, 'V5'), /实际读数.*缺少完整的字体颜色/);
+});
+
+test('ESP32 V5 拒绝文字组件未显示或内容为空', (t) => {
+  const f = fixture(t);
+  /** 固定当前读数并调用正式阶段入口。 */
+  function check() {
+    f.runtime.textReadbackRef = write(f.repo, 'text-presence.json', f.textReadback);
+    f.save();
+    return validateSingleDomainTarget(f.repo, f.work, 'V5');
+  }
+  assert.equal(check(), true);
+  f.textReadback.visualStage = 'V4';
+  assert.throws(check, /绑定当前构建和运行/);
+  delete f.textReadback.visualStage;
+  const entry = f.textReadback.entries[0];
+  entry.actualContent = '';
+  assert.throws(check, /actualContent.*为空/);
+  entry.actualContent = '合成文字';
+  entry.visible = false;
+  assert.throws(check, /visible.*true/);
+  entry.visible = true;
+  const originalOpacity = entry.textOpacity;
+  entry.textOpacity = 0;
+  assert.throws(check, /整体文字透明度为 0/);
+  entry.textOpacity = originalOpacity;
+  delete entry.propertySources.actualContent;
+  assert.throws(check, /actualContent.*回读来源/);
+  entry.propertySources.actualContent = { componentType: 'lv_label', propertyPath: 'text' };
+  f.textReadback.entries.shift();
+  assert.throws(check, /文字.*缺少/);
 });
 
 test('ESP32 样式绑定当前目标、状态和字体实际读数', (t) => {
@@ -151,6 +213,11 @@ test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) =
   f.textReadback.buildIdentityRef = f.runtime.buildIdentityRef;
   f.textReadback.entries[0].targetPath = f.doc.layoutSpecRef.path;
   f.textReadback.entries[0].targetSha256 = f.doc.layoutSpecRef.sha256;
+  f.v4Text.entries[0].targetPath = f.doc.layoutSpecRef.path;
+  f.v4Text.entries[0].targetSha256 = f.doc.layoutSpecRef.sha256;
+  const trialReview = JSON.parse(readFileSync(join(f.repo, f.work.assetReviewRef.path), 'utf8'));
+  trialReview.textRestorationRef = write(f.repo, 'v4-text-slice.json', f.v4Text);
+  f.work.assetReviewRef = write(f.repo, 'v4-asset-review-slice.json', trialReview);
   f.runtime.textReadbackRef = write(f.repo, 'text-slice.json', f.textReadback);
   const sample = { nodeId: 'title', conditionId: 'minimum', runtimeNodeId: 'screen.panel', sourcePath: imageRef.path, sourceSize: slice.sourceSize, border: slice.border,
     displaySize: slice.minimumSize, scale: 1, transformScaleX: 1, transformScaleY: 1 };

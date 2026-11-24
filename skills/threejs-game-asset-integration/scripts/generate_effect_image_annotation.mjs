@@ -3,9 +3,10 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { realpathSync } from "node:fs";
-import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
-import { checkReuseSourceFiles, loadManifest, readPngDimensions } from "./validate_visual_manifest.mjs";
+import { loadManifest, readPngDimensions } from "./validate_visual_manifest.mjs";
+import { validateReuseProductionGate } from "../../app-domain-toolkit/scripts/visual/asset-reuse-contract.mjs";
 import { computeRegionDefinitionSha256, PLAN_COLORS, renderEffectImageAnnotation } from "./effect_image_annotation_core.mjs";
 import { annotationProductionContract } from "./effect_image_raster.mjs";
 import { deriveAtomicImageRequirements } from "../../threejs-domain-contracts/scripts/visual-atomic-contract.mjs";
@@ -101,12 +102,7 @@ async function selectRegions(manifest, sceneId, stateId, projectRoot) {
     if (plan.mode === "reuse-existing" && region.owner_type !== "fixed-production-visual") throw new Error(`区域 ${region.id} 的 reuse-existing 必须由 fixed-production-visual 负责`);
     if (plan.mode === "runtime-program" && (!["runtime-program", "runtime-data", "runtime-rendered"].includes(region.owner_type) || Object.hasOwn(region, "asset_id"))) throw new Error(`区域 ${region.id} 的 runtime-program 不得映射生产位图`);
     if (plan.mode === "reuse-existing") {
-      const source = region.reuse_snapshot;
-      if (!isObject(source) || source.schema !== "asset-reuse-snapshot/1.0" || !["source_file", "source_manifest_file", "compatibility_evidence_file", "accepted_at", "source_status"].every((field) => nonEmptyString(source[field]))) throw new Error(`区域 ${region.id} 的 reuse_snapshot 字段不完整`);
-      if (source.source_status !== "accepted" || Number.isNaN(Date.parse(source.accepted_at))) throw new Error(`区域 ${region.id} 的 reuse_snapshot 必须是 accepted 且包含有效 accepted_at`);
-      if (!/\.(?:png|jpe?g)$/i.test(source.source_file)) throw new Error(`区域 ${region.id} 的 reuse_snapshot.source_file 必须是 PNG/JPG`);
-      if (basename(source.source_manifest_file.replace(/\\/g, "/")).toLowerCase() === "visual-assets.json") throw new Error(`区域 ${region.id} 的 reuse_snapshot 必须指向不可变快照，不能指向当前 visual-assets.json`);
-      const reuseErrors = []; await checkReuseSourceFiles(projectRoot, `coverage_audit.regions[${region.annotation_number}]`, source, reuseErrors);
+      const reuseErrors = validateReuseProductionGate(region, { stage: "V3" }, { projectRoot, checkFiles: true, reuseManifest: manifest });
       if (reuseErrors.length) throw new Error(reuseErrors[0]);
     }
     if (region.owner_type === "fixed-production-visual") {

@@ -23,6 +23,46 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
   });
   const validateSchema = validators[0];
 
+  test(`${stack} V4 资源验收要求实际文字试装，V5 拒绝沿用试装批次`, (t) => {
+    const { contract, node, runtime, validate } = scenario();
+    const projectRoot = mkdtempSync(join(tmpdir(), 'v4-text-trial-'));
+    t.after(() => rmSync(projectRoot, { recursive: true, force: true }));
+    const identity = { stack, workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a',
+      referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
+    const trialIdentity = { ...identity, visualStage: 'V4' };
+    const measurement = structuredClone(runtime);
+    const report = { ...trialIdentity, schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', runId: 'trial-a',
+      nodes: [{ textNodeId: node.text_node_id, layoutNodeId: node.layout_node_id, componentPath: 'Canvas/title', measurement }] };
+    const options = sourceOptions({ projectRoot, requireNativeTextReadback: true, textReadbackIdentity: trialIdentity, stage: 'V4' });
+    const manifest = { schema_version: '1.5', assets: [], scene_reconstruction_contract: contract };
+    /** 保存同一试装批次的当前读数与资源评审引用。 */
+    function saveTrial() {
+      const bytes = JSON.stringify(report);
+      writeFileSync(join(projectRoot, 'v4-text.json'), bytes);
+      trialIdentity.runtimeEvidenceRef = { path: 'v4-text.json', sha256: createHash('sha256').update(bytes).digest('hex') };
+      runtime.evidence = [trialIdentity.runtimeEvidenceRef];
+    }
+    saveTrial();
+    const v4 = () => validateManifest(manifest, options).join('\n');
+    assert.doesNotMatch(v4(), /原生文字|runtime_verification|实际字体/);
+    delete node.runtime_verification;
+    assert.match(v4(), /缺少 runtime_verification/);
+    node.runtime_verification = runtime;
+    const actualContent = runtime.actual_content;
+    report.nodes[0].measurement.actual_content = runtime.actual_content = '';
+    saveTrial();
+    assert.match(v4(), /actual_content/);
+    report.nodes[0].measurement.actual_content = runtime.actual_content = actualContent;
+    report.nodes[0].measurement.actual_visible = runtime.actual_visible = false;
+    saveTrial();
+    assert.match(v4(), /actual_visible 必须为 true/);
+    report.nodes[0].measurement.actual_visible = runtime.actual_visible = true;
+    delete report.visualStage;
+    saveTrial();
+    assert.match(v4(), /visualStage 未绑定当前目标/);
+    assert.match(validate({ ...options, stage: 'V5', textReadbackIdentity: { ...identity, runtimeEvidenceRef: trialIdentity.runtimeEvidenceRef }, textTrialRunId: report.runId }).join('\n'), /V4 试装读数不能作为 V5/);
+  });
+
   /** 构造有效文本，并通过真实场景合同的 V5 门检查。 */
   function scenario() {
     const contract = textEffectImageContract();
@@ -76,6 +116,19 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     }
     saveReport();
     assert.doesNotMatch(value.validate(options).join('\n'), /原生文字/);
+    const [observed] = report.nodes.splice(0, 1);
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /缺少唯一的实际组件读数/);
+    report.nodes.push(observed);
+    // 样式读数相同也无法代表已显示，必须核对同次运行的有效可见状态。
+    observed.measurement.actual_visible = false;
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /actual_visible.*原生运行读数/);
+    value.runtime.actual_visible = false;
+    assert.match(value.validate(options).join('\n'), /actual_visible 必须为 true/);
+    observed.measurement.actual_visible = true;
+    value.runtime.actual_visible = true;
+    saveReport();
     // 实际视觉清单入口也必须把原生读数选项传到同一文本校验器。
     delete value.contract.effect_image_reconstruction;
     const manifest = { schema_version: '1.5', assets: [], scene_reconstruction_contract: value.contract };
@@ -118,7 +171,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     value.node.accessible_semantic = { text: '开始游戏' };
     value.node.typography_target.image_tint = { r: 1, g: 1, b: 1 };
     value.node.typography_target.image_opacity = 1;
-    value.node.runtime_verification = { renderer: 'image-text', actual_bounds: value.node.target_bounds, actual_geometry_unit: 'logical-px', actual_coordinate_space: 'viewport-logical', actual_test_id: value.node.planned_test_id, passed: true, asset_consumed: true, actual_image_path: 'title.png', actual_image_sha256: imageSha, actual_image_tint: { r: 1, g: 1, b: 1 }, actual_image_opacity: 1, actual_semantic: { text: '开始游戏' }, semantic_evidence: ['semantic.json'] };
+    value.node.runtime_verification = { actual_visible: true, renderer: 'image-text', actual_bounds: value.node.target_bounds, actual_geometry_unit: 'logical-px', actual_coordinate_space: 'viewport-logical', actual_test_id: value.node.planned_test_id, passed: true, asset_consumed: true, actual_image_path: 'title.png', actual_image_sha256: imageSha, actual_image_tint: { r: 1, g: 1, b: 1 }, actual_image_opacity: 1, actual_semantic: { text: '开始游戏' }, semantic_evidence: ['semantic.json'] };
     const runtime = value.node.runtime_verification;
     const report = { schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', runId: 'run-a', ...identity, nodes: [{ textNodeId: value.node.text_node_id, layoutNodeId: value.node.layout_node_id, componentPath: 'Canvas/title', measurement: structuredClone(runtime) }] };
     const options = { projectRoot, requireNativeTextReadback: true, textReadbackIdentity: identity };
@@ -131,6 +184,15 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     }
     saveReport();
     assert.doesNotMatch(value.validate(options).join('\n'), /原生文字/);
+    value.node.typography_target.image_opacity = 0;
+    runtime.actual_image_opacity = 0;
+    report.nodes[0].measurement.actual_image_opacity = 0;
+    saveReport();
+    assert.match(value.validate(options).join('\n'), /文字图片全透明/);
+    value.node.typography_target.image_opacity = 1;
+    runtime.actual_image_opacity = 1;
+    report.nodes[0].measurement.actual_image_opacity = 1;
+    saveReport();
     runtime.actual_image_opacity = 0.5;
     assert.match(value.validate(options).join('\n'), /opacity 与目标不一致/);
     runtime.actual_image_opacity = 1;
@@ -362,7 +424,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     value.node.ownership = "asset";
     value.node.required_resources = [{ kind: "image", path: "assets/brand.png" }];
     value.node.accessible_semantic = { text: "开始游戏", role: "button" };
-    value.node.runtime_verification = { renderer: "image-text", actual_bounds: { ...value.node.target_bounds }, actual_geometry_unit: "logical-px", actual_coordinate_space: "viewport-logical", actual_test_id: value.node.planned_test_id, evidence: ["evidence/image.json"], passed: true, asset_consumed: true, actual_image_path: "assets/brand.png", actual_semantic: { role: "button", text: "开始游戏" }, semantic_evidence: ["evidence/semantic.json"] };
+    value.node.runtime_verification = { actual_visible: true, renderer: "image-text", actual_bounds: { ...value.node.target_bounds }, actual_geometry_unit: "logical-px", actual_coordinate_space: "viewport-logical", actual_test_id: value.node.planned_test_id, evidence: ["evidence/image.json"], passed: true, asset_consumed: true, actual_image_path: "assets/brand.png", actual_semantic: { role: "button", text: "开始游戏" }, semantic_evidence: ["evidence/semantic.json"] };
     assert.deepEqual(value.validate(), []);
     value.node.typography_target.fill = "#ffffff";
     rejects(value, "颜色及透明度");
@@ -389,7 +451,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     node.runtime_verification.comparison = { target_measurement: {} };
     assert.equal(validateSchema(node), false);
     const imageNode = textNode({ implementation_route: "image-text", ownership: "visual", required_resources: [{ kind: "image", path: "assets/brand.png" }], accessible_semantic: { text: "开始游戏" } });
-    imageNode.runtime_verification = { renderer: "image-text", actual_bounds: imageNode.target_bounds, actual_geometry_unit: "logical-px", actual_coordinate_space: "viewport-logical", actual_test_id: imageNode.planned_test_id, evidence: ["image.json"], passed: true, asset_consumed: true, actual_image_path: "assets/brand.png", actual_semantic: { text: "开始游戏" }, semantic_evidence: ["semantic.json"] };
+    imageNode.runtime_verification = { actual_visible: true, renderer: "image-text", actual_bounds: imageNode.target_bounds, actual_geometry_unit: "logical-px", actual_coordinate_space: "viewport-logical", actual_test_id: imageNode.planned_test_id, evidence: ["image.json"], passed: true, asset_consumed: true, actual_image_path: "assets/brand.png", actual_semantic: { text: "开始游戏" }, semantic_evidence: ["semantic.json"] };
     assert.equal(validateSchema(imageNode), true, JSON.stringify(validateSchema.errors));
   });
 

@@ -11,6 +11,7 @@ import { initializeWork } from '../skills/app-workflow-control/scripts/runtime/w
 import { attachFigmaBaselineFixture } from './control/figma-app-fixture.mjs';
 import { createSystemCoverage } from './control/system-coverage-fixture.mjs';
 import { syntheticDesignPng } from './control/visual-image-fixture.mjs';
+import { visualResearchFixture } from './control/visual-research-fixture.mjs';
 
 /** 在独立临时项目中建立有效工作项，并在测试后清理。 */
 async function fixture(t, { id = 'boundary', stack = 'flutter', projectId = 'shared-project', type = 'FOUNDATION' } = {}) {
@@ -120,6 +121,7 @@ test('同项目同技术栈视觉基线可跨工作项复用，错项目或错�
   put(first.repo, baselinePath, JSON.stringify({
     schemaVersion: '1.0', baselineId: 'visual-baseline-1', projectId: first.work.projectId,
     stack: first.work.stack, candidates, selectedCandidateId: 'direction-a',
+    visualResearchRef: visualResearchFixture(first.repo, first.work.projectId, first.work.stack),
     selectionReviewRef: { path: selectionReview, sha256: createHash('sha256').update(readFileSync(join(first.repo, selectionReview))).digest('hex') },
   }));
   second.globalVisualBaselineRef = { path: baselinePath, sha256: createHash('sha256').update(readFileSync(join(first.repo, baselinePath))).digest('hex') };

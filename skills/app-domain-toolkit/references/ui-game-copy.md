@@ -55,7 +55,7 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-V5 正式界面消费 V3 确认的可见表达和文字/资源节点。`text_decomposition` 的 `content/source` 指向实际显示内容与来源；`node_presentations[layout_node_id].text` 填入对应短标签或代表性数值，不填业务描述。运行时文字组件、本地化键和动态更新读取同一表达与真实数据，不能直接绑定 GDD/brief 的描述、设计理由或验收字段。此规则覆盖按钮、HUD、弹窗、Toast 和奖励浮字；普通资产和无效果图路径同样适用。
+V4 按 V3 确认的可见表达还原文字，并与同一状态的视觉资源一起试装。V5 在正式界面复验该还原结果。`text_decomposition` 的 `content/source` 指向实际显示内容与来源；`node_presentations[layout_node_id].text` 填入对应短标签或代表性数值，不填业务描述。运行时文字组件、本地化键和动态更新读取同一表达与真实数据，不能直接绑定 GDD/brief 的描述、设计理由或验收字段。此规则覆盖按钮、HUD、弹窗、Toast 和奖励浮字；普通资产和无效果图路径同样适用。
 
 > 适用技术栈：cocos、phaser、threejs。
 

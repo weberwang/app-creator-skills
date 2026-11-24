@@ -66,8 +66,12 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const snapshot = JSON.parse(readFileSync(join(repo, doc.figmaDesignRef.path), 'utf8'));
   const textReadback = { schemaVersion: '1.0', source: 'expo-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
     entries: collectFigmaTextAppearance([{ ref: doc.figmaDesignRef, snapshot }]).map((entry) => ({ ...entry, runtimeNodeId: snapshot.nodes.find((node) => node.id === entry.nodeId).designItemId,
-      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight', 'textFill', 'textOpacity'].map((name) => [name, { componentType: 'Text', propertyPath: `style.${name}` }])) })) };
+      actualContent: '合成文字', visible: true,
+      propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight', 'textFill', 'textOpacity', 'actualContent', 'visible'].map((name) => [name, { componentType: 'Text', propertyPath: `style.${name}` }])) })) };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
+  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4' };
+  work.assetReviewRef = write(repo, 'v4-asset-review.json', { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
+    visualStage: 'V4', candidateId: visual.candidateId, textRestorationRef: write(repo, 'v4-text.json', v4Text) });
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 更新运行证据及当前确认引用，避免覆盖其他历史阶段材料。 */
   function save() {
@@ -77,8 +81,36 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
     visual.domainEvidenceRef = write(repo, 'domain.json', doc);
   }
   save();
-  return { repo, work, doc, profile, layout, assets, build, runtime, textReadback, host, referenceTarget, save };
+  return { repo, work, doc, profile, layout, assets, build, runtime, textReadback, v4Text, host, referenceTarget, save };
 }
+
+test('Expo V4 文字试装必须覆盖实际文字和可见性', (t) => {
+  const f = fixture(t, { stage: 'V4' });
+  const originalRef = f.work.assetReviewRef;
+  delete f.work.assetReviewRef;
+  assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V4'), /资源评审.*缺少/);
+  f.work.assetReviewRef = originalRef;
+  /** 固定本次试装报告和对应资源评审。 */
+  function check() {
+    const review = JSON.parse(readFileSync(join(f.repo, f.work.assetReviewRef.path), 'utf8'));
+    review.textRestorationRef = write(f.repo, 'v4-text-change.json', f.v4Text);
+    f.work.assetReviewRef = write(f.repo, 'v4-asset-review-change.json', review);
+    return validateSingleDomainTarget(f.repo, f.work, 'V4');
+  }
+  assert.equal(check(), true);
+  f.v4Text.visualStage = 'V5';
+  assert.throws(check, /文字试装读数未绑定/);
+  f.v4Text.visualStage = 'V4';
+  const item = f.v4Text.entries[0];
+  item.actualContent = '';
+  assert.throws(check, /actualContent.*为空/);
+  item.actualContent = '合成文字';
+  item.visible = false;
+  assert.throws(check, /visible.*true/);
+  item.visible = true;
+  f.v4Text.entries.shift();
+  assert.throws(check, /文字.*缺少/);
+});
 
 test('Expo 页面和显示层分别通过 V2–V5，Web 独立记录其构建和运行', (t) => {
   for (const layer of [false, true]) for (const stage of ['V2', 'V3', 'V4', 'V5']) {
@@ -112,6 +144,36 @@ test('Expo V5 对照当前文字填色、Alpha 与透明度的实际读数', (t)
     assert.throws(() => validateSingleDomainTarget(f.repo, f.work, 'V5'), message);
     observed[field] = original;
   }
+});
+
+test('Expo V5 拒绝文字组件未显示或内容为空', (t) => {
+  const f = fixture(t);
+  /** 固定当前读数并调用正式阶段入口。 */
+  function check() {
+    f.runtime.textReadbackRef = write(f.repo, 'text-presence.json', f.textReadback);
+    f.save();
+    return validateSingleDomainTarget(f.repo, f.work, 'V5');
+  }
+  assert.equal(check(), true);
+  f.textReadback.visualStage = 'V4';
+  assert.throws(check, /绑定当前构建和运行/);
+  delete f.textReadback.visualStage;
+  const entry = f.textReadback.entries[0];
+  entry.actualContent = '';
+  assert.throws(check, /actualContent.*为空/);
+  entry.actualContent = '合成文字';
+  entry.visible = false;
+  assert.throws(check, /visible.*true/);
+  entry.visible = true;
+  const originalOpacity = entry.textOpacity;
+  entry.textOpacity = 0;
+  assert.throws(check, /整体文字透明度为 0/);
+  entry.textOpacity = originalOpacity;
+  delete entry.propertySources.visible;
+  assert.throws(check, /visible.*回读来源/);
+  entry.propertySources.visible = { componentType: 'Text', propertyPath: 'visible' };
+  f.textReadback.entries.shift();
+  assert.throws(check, /文字.*缺少/);
 });
 
 test('Expo 逐状态校验字体和组件样式读数，拒绝旧设计与旧运行', (t) => {

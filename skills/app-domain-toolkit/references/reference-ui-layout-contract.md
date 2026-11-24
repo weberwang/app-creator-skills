@@ -177,15 +177,19 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 ## 文本运行验收
 
-> 适用技术栈：cocos、phaser、threejs；由场景 `text_decomposition` 的 V5 验收入口调用共享文本比较器，不将本协议套到 Unity 或 Flutter 的原生记录。
+> 适用技术栈：cocos、phaser、threejs；由场景 `text_decomposition` 的 V4 资源验收和 V5 正式运行入口调用共享文本比较器，不将本协议套到 Unity 或 Flutter 的原生记录。
+
+V4 试装和 V5 正式运行的读数与各自的 `runtime_verification` 都要记录 `actual_visible`。按当前状态从实际文字或图片组件及父级读取有效显示状态。组件自身启用、父级可见、有效透明度和视口或裁切范围共同决定文字是否实际显示。已确认应显示的文字缺少组件、缺少读数或 `actual_visible` 不为 `true` 时，该节点保持未通过。
+
+独立视觉清单命令用于清单与文件检查。公共工作流在 V4 将与资源一起还原的实际文字报告冻结到 Asset Review 的 `textRestorationRef: {path, sha256}`，报告声明 `visualStage: V4`。V5 复验正式组件，用新的采集批次并绑定到同批 `runtime-layout`。
 
 目标只读取冻结文本节点的 `target_bounds`、`typography_target`、文案/来源和资源；候选只读取 `runtime_verification` 的实际值。可选的 `target_*`/`candidate_*` 副本必须分别与冻结目标/实际测量一致，禁止通过 `target_measurement`、`candidate_measurement` 或空对象替换比较事实。基准条件应与目标一致；适配所需的目标变化先更新受影响规格与证据，不能把运行结果反写为目标。
 
 程序文本、位图字体和混合路线必须提交 `actual_content`、`actual_font_resources` 和 `actual_typography`。后者包括 `font_family`、`font_size`、`font_size_unit`、`font_weight`、`font_style`、`line_height`、`letter_spacing`、`alignment`、`fill`、`stroke`、`shadow`、`wrap`、`line_count`，分别核对冻结事实；字体资源消费路径绑定同一节点的 `required_resources`。原字体未识别时保留观察事实，程序文字的明确替代字体写入 `font_resolution.family`，不能冒充原字体。实际字形框、基线、字体加载状态、渲染器、测试身份与证据仍按对应路线核对；`actual_geometry_unit` 与 `actual_coordinate_space` 必须绑定冻结的几何单位与空间，不能只给出无单位矩形。
 
-Cocos、Phaser、Three.js 的普通视觉路线中，布局或覆盖区域明确分类为文字时，同样按 `text_decomposition` 为对应节点和状态交接样式；确认稿是位图时由人工登记其中的文字，无法核实的字重、字形、行高、字距、对齐、描边、阴影或换行，在 `typography_target.pending_attributes` 中逐项记录 `property` 和 `reason`，无需填写猜测值。V5 在该节点已有的 `runtime_verification.evidence` 中引用唯一原生运行 JSON 的 `{path, sha256}`，并与当前目标的公共 `runtime-layout` 使用同一文件。该文件以 `web-native-text-readback/1.0` 记录 `measurementSource: runtime-component`、实际 `runId`、`workItemId`、`stack`、`sceneId`、`stateId`、`candidateId` 和 `referenceTarget`。其 `nodes` 条目使用 `textNodeId`、`layoutNodeId`、实际 `componentPath` 与 `measurement` 保存本节点运行属性，字段值与 `runtime_verification` 逐项一致并与 V3 目标比较。不同目标、候选、状态或实际属性不能复用旧读数。待确认属性和字体样式差异均保持未通过，其他视觉差异的例外和通用容差不能替代样式匹配。截图继续交用户人工验收。
+Cocos、Phaser、Three.js 的普通视觉路线中，布局或覆盖区域明确分类为文字时，同样按 `text_decomposition` 为对应节点和状态交接样式；确认稿是位图时由人工登记其中的文字，无法核实的字重、字形、行高、字距、对齐、描边、阴影或换行，在 `typography_target.pending_attributes` 中逐项记录 `property` 和 `reason`，无需填写猜测值。V4 和 V5 都在该节点的 `runtime_verification.evidence` 中引用唯一原生运行 JSON 的 `{path, sha256}`。V4 与当前资源评审的 `textRestorationRef` 一致，V5 与当前目标的公共 `runtime-layout` 一致。该文件以 `web-native-text-readback/1.0` 记录 `measurementSource: runtime-component`、实际 `runId`、`workItemId`、`stack`、`sceneId`、`stateId`、`candidateId` 和 `referenceTarget`。其 `nodes` 条目使用 `textNodeId`、`layoutNodeId`、实际 `componentPath` 与 `measurement` 保存本节点运行属性，字段值与 `runtime_verification` 逐项一致并与 V3 目标比较。不同目标、候选、状态或实际属性不能复用旧读数。待确认属性和字体样式差异均保持未通过，其他视觉差异的例外和通用容差不能替代样式匹配。截图继续交用户人工验收。
 
-图片字标的 `typography_target.image_tint` 使用 0–1 的 `{r, g, b}`，`image_opacity` 使用 0–1 的比例。V5 原生测量记录 `actual_image_tint`、`actual_image_opacity`、`actual_image_path` 和 `actual_image_sha256`，与冻结目标及图片资源内容核对。图片字形和烘焙效果仍由用户人工确认。
+图片字标的 `typography_target.image_tint` 使用 0–1 的 `{r, g, b}`，`image_opacity` 使用 0–1 的比例。试装和正式原生测量均记录 `actual_image_tint`、`actual_image_opacity`、`actual_image_path` 和 `actual_image_sha256`，与冻结目标及图片资源内容核对。图片字形和烘焙效果仍由用户人工确认。
 
 每个文字目标的 `fill` 必须同时冻结文字颜色及透明度，使用 `#RRGGBBAA`，或 `{color: "#RRGGBB", opacity: 0..1}`；渐变使用 `stops` 数组逐色标记录颜色和透明度，并保留实际渐变参数。程序文本、位图字体和混合路线的 `actual_typography.fill` 按真实文字组件采集同一形式并逐项比较，缺失、颜色或透明度不同均不能通过。图片字标的颜色与透明度目标仍须记录，实际图内颜色和显示结果通过既有用户人工审阅对照，不虚构字体组件读数。
 

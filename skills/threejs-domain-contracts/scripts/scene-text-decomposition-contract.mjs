@@ -370,7 +370,7 @@ function validateImplementationRoute(node, contract, stage, errors, { typography
 }
 
 /** 验证 V4/V5 的实际 renderer、字体加载、bounds、基线、测试 ID 和证据。 */
-function validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceDefinitions, isV4Runtime, options) {
+function validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceDefinitions, options) {
   const raw = field(node, "runtime_verification", "runtimeVerification", "runtime_measurement", "runtimeMeasurement", "measurement");
   if (!isObject(raw)) {
     pushRuntimeError(errors, stage, contract, node, "text_node 缺少 runtime_verification/measurement", { missing: "runtime_verification" });
@@ -399,11 +399,10 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
   if (!passed) pushRuntimeError(errors, stage, contract, node, "runtime_verification 必须明确 passed", { missing: "runtime_verification.passed=true", actual: JSON.stringify(read("passed", "result", "status")) });
 
   if (route === "image-text") {
-    if (read("asset_consumed", "assetConsumed", "image_consumed", "imageConsumed") !== true) pushRuntimeError(errors, stage, contract, node, "image-text 必须证明图片资产已被正式 Scene 消费", { missing: "runtime_verification.asset_consumed=true" });
+    if (read("asset_consumed", "assetConsumed", "image_consumed", "imageConsumed") !== true) pushRuntimeError(errors, stage, contract, node, stage === "V4" ? "image-text 必须证明图片资产已在 V4 试装中实际显示" : "image-text 必须证明图片资产已被正式 Scene 消费", { missing: "runtime_verification.asset_consumed=true" });
     if (!hasEvidence(read("semantic_evidence", "semanticEvidence", "accessible_semantic_evidence", "accessibleSemanticEvidence"))) pushRuntimeError(errors, stage, contract, node, "image-text 必须提供可访问语义证据", { missing: "runtime_verification.semantic_evidence" });
   }
 
-  if (!isV4Runtime) return;
   if (options.requireNativeTextReadback === true) {
     for (const message of validateNativeTextEvidence(node, read, route, options)) {
       pushRuntimeError(errors, stage, contract, node, message);
@@ -417,7 +416,7 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
 
 /** 验证单个 text_node 的稳定身份、目标事实、引用完整性和 V4/V4/V5 规则。 */
 export function validateTextNode(node, context = {}) {
-  const { contract, stage = "V2", regions, layoutInfo, toleranceDefinitions, isV4Runtime = false } = context;
+  const { contract, stage = "V2", regions, layoutInfo, toleranceDefinitions } = context;
   const errors = [];
   const regionMap = regionIndex(contract, regions);
   const layoutMap = layoutIndex(contract, layoutInfo);
@@ -468,9 +467,9 @@ export function validateTextNode(node, context = {}) {
   const typographyResult = validateTypography(node, contract, stage, errors);
   let route;
   if (routeRequired) route = validateImplementationRoute(node, contract, stage, errors, typographyResult);
-  if (["V5", "VALIDATING"].includes(stageName)) {
-    // 显式 V5 也必须执行 target/candidate/tolerance 比较，不能只在 VALIDATING 别名下开启验收分支。
-    validateRuntimeVerification(node, contract, stage, errors, route, region, toleranceMap, isV4Runtime || stageName === "V5" || stageName === "VALIDATING", context);
+  // V4 资源验收复用同一文字比较器，试装和正式运行各自核对实际读数。
+  if (["V5", "VALIDATING"].includes(stageName) || (stageName === "V4" && context.requireNativeTextReadback)) {
+    validateRuntimeVerification(node, contract, stageName, errors, route, region, toleranceMap, context);
   }
   return errors;
 }

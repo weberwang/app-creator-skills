@@ -52,20 +52,25 @@ export function validateUiLayoutPackage(pkg, work, repo) {
   catch (error) { return [`UI布局计划无效：${error.message}`]; }
 }
 
+/** 校验已读取报告的身份和内容，供当前及已冻结的历史测量共同使用。 */
+export function verifyUiLayoutMeasurement(plan, report, { candidateId, path, textStyleEvidence, ...options }) {
+  if (typeof candidateId !== 'string' || !candidateId.trim()) throw new Error('布局运行证据必须绑定当前 candidateId');
+  if (report.outputPath !== path) throw new Error('布局报告 outputPath 与实际证据引用不符');
+  const errors = validateUiLayoutRuntime(plan, report, { ...options, candidateId, scenePath: plan.scenePath, textStyleEvidence });
+  if (errors.length) throw new Error(errors.join('；'));
+  return report;
+}
+
 /** 重用真实布局快照和同批补充属性的原生读取、比较及证据目录校验。 */
 export function readVerifiedUiLayoutMeasurement(repo, work, evidence, plan, options = {}) {
   if (!evidence?.uiLayoutMeasurementRef) throw new Error('V5 布局缺少 uiLayoutMeasurementRef，必须采集实际组件和材质属性');
   if (typeof work.evidenceRoot !== 'string' || !work.evidenceRoot.trim()) throw new Error('布局运行证据缺少当前 evidenceRoot');
-  if (typeof evidence.candidateId !== 'string' || !evidence.candidateId.trim()) throw new Error('布局运行证据必须绑定当前 candidateId');
   const { path: measurementPath, textEvidencePath } = evidence.uiLayoutMeasurementRef;
   const { value: report, path } = readProjectJson(repo, { path: measurementPath }, 'uiLayoutMeasurementRef', work.evidenceRoot);
-  if (report.outputPath !== path) throw new Error('布局报告 outputPath 与实际证据引用不符');
   // 补充采集与布局报告使用同一证据边界；运行校验同时对照对象路径和采集批次。
   const textStyleEvidence = textEvidencePath === undefined ? undefined
     : readProjectJson(repo, { path: textEvidencePath }, 'uiLayoutMeasurementRef.textEvidencePath', work.evidenceRoot).value;
-  const errors = validateUiLayoutRuntime(plan, report, { ...options, candidateId: evidence.candidateId, scenePath: plan.scenePath, textStyleEvidence });
-  if (errors.length) throw new Error(errors.join('；'));
-  return report;
+  return verifyUiLayoutMeasurement(plan, report, { ...options, candidateId: evidence.candidateId, path, textStyleEvidence });
 }
 
 /** 检查当前计划和同批真实运行证据，不从静态PASS或旧inspect缓存推断成功。 */

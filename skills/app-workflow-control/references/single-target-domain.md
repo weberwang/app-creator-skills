@@ -20,6 +20,8 @@ Flutter PAGE 和 DISPLAY_LAYER 的 V2 绑定当前对象、`figmaDesignRef: {pat
 
 Flutter DISPLAY_LAYER 的人工确认都须记录当前 `hostId` 和 `layerType`。单稿 Figma 由原生交接覆盖 V3 拆解和布局。多稿 Figma 还须按[阶段门禁](version-visual-gate.md#实现验收与返工)逐稿确认拆解，可共用同一原生交接。V5 领域证据使用 `runtimeContextRef: {path,sha256}` 引用运行上下文 JSON，V5 人工确认引用同一文件。上下文记录 `schemaVersion`、`workItemId`、`objectId`、`candidateId`、`hostId`、`layerType` 和 `interactions`；分别记录 `open`、`close`、`focus-restore` 的实际证据或不适用原因。更换宿主或层类型须重新确认并验证受影响上下文，不要求宿主另建工作项或等待宿主 V5。
 
+Flutter、Expo 和 ESP32 对应已确认应显示的文字，在 V4 随资源一起完成组件或文字图片试装。资源评审的 `textRestorationRef: {path, sha256}` 绑定当前工作项、候选、设计节点、状态及试装批次的原生读数。Flutter 试装报告使用 `format: flutter-text-restoration-v1`、`workItemId`、`candidateId`、`designReconstructionRef`、`runId` 和按 `designItemId/conditionId` 对应的 `entries`。Expo 和 ESP32 试装报告使用 `schemaVersion: 1.0`、`source: expo-native/esp32-native`、`workItemId`、`candidateId`、`visualStage: V4`、`runId` 和按冻结设计节点对应的 `entries`。每条读数须有实际组件身份、非空的 `actualContent`、有效显示状态 `visible: true` 和对应样式属性。V5 在正式运行中再次逐节点核对这些事实。在 `propertySources` 中记录内容和可见性的实际组件或父级属性来源。组件缺失、内容为空或在当前状态不可见时，回读未通过。动态文字使用当前采集状态和真实测试数据。
+
 额外视口目标也可沿有效的 V2 视觉复用链引用来源确认；完整阶段继承的来源必须已完成 V5；仅引用有效已确认原图时核对同一目标、摘要和真实消息即可，不继承来源工程结论。当前 V4/V5 材料仍须重新验证。
 
 V1 不需要这些视觉领域证据，也不强制白盒。缺失文件、错阶段、错对象或错宿主时修复证据并重新校验，不通过手写 PASS 替代实际领域合同。

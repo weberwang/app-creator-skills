@@ -62,7 +62,7 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 4. 按“ownership/F2 事实与实现分类（region 绑定 `ownership_evidence`）→ 先完成状态分析 → 按唯一原子部件登记 placements → 生成左原图+右说明栏 PNG → 等待 `bitmap-decomposition` 的 `generate-now` 区域一次精确确认 → 完整文件校验 → 生产”的顺序执行。用无新增依赖的确定性栅格脚本生成 PNG：
    `node scripts/generate_effect_image_annotation.mjs docs/visual-assets.json --project-root . --scene-id <scene> --state-id <state> --output evidence/coverage/<scene>-<state>-annotation.png --proposal evidence/coverage/<scene>-<state>-proposal.json`。正式生成必须带 `--proposal <file>.json`；省略该参数直接失败，不生成只有用户图示的成功产物。
-   标注图必须同时可见三类用户标签：`generate-now`（新建图片资产）、`reuse-existing`（复用现有图片）和 `runtime-program`（程序绘制或动态逻辑）；后两者不触发位图拆解确认，但不能从标注图中省略。PNG 右侧每个编号只显示用户摘要和上述中文标签，左侧只画区域/原子框与稳定编号，不显示 placement ID、坐标尺寸、组件/实例/状态/资产 ID 或英文结构字段。`--proposal` 输出的是拆解分析技术 JSON，必须完整保存画布尺寸、区域和 component/placement bounds、状态分析、生产合同、atomic requirements 与资源映射；它与 PNG 元数据、实际区域定义及 confirmation 的任务归属共同构成技术审计链；SHA 仅作可选追踪。`reuse-existing` 必须指向不可变 `asset-reuse-snapshot/1.0` 中的 `accepted` 资源、当前 scene/state、视觉基线、许可记录和兼容性证据，并填写精确的 `source_file`（连同对应路径字段）；禁止把当前 `visual-assets.json` 自引为快照，文件检查会解析快照并复核实际来源与业务归属，不比较 SHA。
+   标注图必须同时可见三类用户标签：`generate-now`（新建图片资产）、`reuse-existing`（复用现有图片）和 `runtime-program`（程序绘制或动态逻辑）；后两者不触发位图拆解确认，但不能从标注图中省略。PNG 右侧每个编号只显示用户摘要和上述中文标签，左侧只画区域/原子框与稳定编号，不显示 placement ID、坐标尺寸、组件/实例/状态/资产 ID 或英文结构字段。`--proposal` 输出的是拆解分析技术 JSON，必须完整保存画布尺寸、区域和 component/placement bounds、状态分析、生产合同、atomic requirements 与资源映射；它与 PNG 元数据、实际区域定义及 confirmation 的任务归属共同构成技术审计链。复用区域按[图片复用证据合同](reference-asset-asset-production-routes.md#图片复用证据合同)核对已验收素材、源文件与兼容证据的实际摘要，并在技术提案冻结当前区域的复用快照。
 
 > 适用技术栈：cocos、phaser、threejs。
 

@@ -10,8 +10,7 @@ import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mj
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { validateFlutterDesign } from './flutter-design-contract.mjs';
 import { isFigmaApp, validateFigmaAppStage } from './figma-app-contract.mjs';
-import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
-import { validateWebTextStage } from './web-text-stage.mjs';
+import { validateWebTextStage, webTextReadbackOptions } from './web-text-stage.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -83,13 +82,10 @@ async function validateWeb(repo, work, stage, doc) {
     const authority = await loadDomainConfirmationAuthority(repo, work, manifest, doc);
     const verifiedOptions = {
       ...options, authority, workItemId: work.workItemId, candidateVersion: work.visual.candidateId,
-      // 独立显示层的文字回读绑定实际宿主及本层目标。
-      requireNativeTextReadback: stage === 'V5',
-      textReadbackIdentity: {
-        stack: work.stack, workItemId: work.workItemId, sceneId: work.visual.hostId, stateId: doc.stateId,
+      ...webTextReadbackOptions(repo, work, manifest, {
+        targetId: work.visual.objectId, sceneId: work.visual.hostId, stateId: doc.stateId,
         candidateId: work.visual.candidateId, referenceTarget: doc.referenceTarget,
-        runtimeEvidenceRef: stage === 'V5' ? readTargetRuntimeLayoutRef(repo, work, work.visual.objectId) : null,
-      },
+      }, stage),
     };
     errors = validator.validateManifest(manifest, { ...verifiedOptions, checkFiles: true, forceLayoutSourceFiles: true, workItemType: 'DISPLAY_LAYER' });
     errors.push(...await validator.checkManifestFiles(manifest, repo, verifiedOptions));

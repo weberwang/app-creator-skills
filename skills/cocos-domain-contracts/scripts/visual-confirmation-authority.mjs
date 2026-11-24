@@ -149,7 +149,8 @@ export function loadVisualConfirmationAuthority(work, { projectRoot, manifest, c
       workItemId: entry.work_item_id, candidateVersion: entry.candidate_version,
       userDecisionReceipt: receiptFile?.json, annotationFile: entry.annotation_file,
       annotationWidth: entry.annotation_width, annotationHeight: entry.annotation_height, annotationSchema: entry.annotation_schema, annotationLayout: entry.annotation_layout,
-      proposalId: entry.proposal_id, proposalFile: entry.proposal_file, decisionRecordFile: entry.decision_record_file,
+      proposalId: entry.proposal_id, proposalFile: entry.proposal_file, reuseProposalSha256: entry.proposal_sha256,
+      decisionRecordFile: entry.decision_record_file,
     });
   }
   if (errors.length) return { authority: { loaderErrors: errors }, authorityByGroup: {}, errors };

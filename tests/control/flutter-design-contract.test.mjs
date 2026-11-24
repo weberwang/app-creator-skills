@@ -39,6 +39,9 @@ function rebind(f) {
   }
   f.doc.implementationEvidenceRefs = (f.reports ?? []).map(({ report }, index) => write(f.repo, `report-${index}.json`, report));
   if (f.asset) {
+    const trial = JSON.parse(readFileSync(join(f.repo, f.asset.textRestorationRef.path), 'utf8'));
+    trial.designReconstructionRef = f.doc.designReconstructionRef;
+    f.asset.textRestorationRef = write(f.repo, 'v4-text-rebound.json', trial);
     for (const [index, asset] of f.asset.assets.entries()) {
       const implementation = f.plan.implementations[index];
       asset.implementationEvidenceRef = f.doc.implementationEvidenceRefs[index];
@@ -222,6 +225,39 @@ test('文字目标与实际值必须包含字体颜色和透明度', (t) => {
   }
 });
 
+test('Flutter V4 试装不得漏字或隐藏文字', (t) => {
+  const f = fixture(t, 'V4');
+  const missing = { ...f.asset };
+  delete missing.textRestorationRef;
+  const saved = f.work.assetReviewRef;
+  f.work.assetReviewRef = write(f.repo, 'v4-asset-no-text.json', missing);
+  const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V4.path), 'utf8'));
+  review.assetReviewRef = f.work.assetReviewRef;
+  f.work.visual.reviews.V4 = write(f.repo, 'v4-review-no-text.json', review);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V4', f.doc), /textRestorationRef.*缺少/);
+  f.work.assetReviewRef = saved;
+  const report = JSON.parse(readFileSync(join(f.repo, f.asset.textRestorationRef.path), 'utf8'));
+  /** 更新资源评审引用，确保每个反例都经正式 V4 入口。 */
+  function check() {
+    f.asset.textRestorationRef = write(f.repo, 'v4-text-change.json', report);
+    f.work.assetReviewRef = write(f.repo, 'v4-asset-change.json', f.asset);
+    const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V4.path), 'utf8'));
+    review.assetReviewRef = f.work.assetReviewRef;
+    f.work.visual.reviews.V4 = write(f.repo, 'v4-review-change.json', review);
+    return validateFlutterDesign(f.repo, f.work, 'V4', f.doc);
+  }
+  assert.doesNotThrow(check);
+  const item = report.entries[0];
+  item.actualContent = '';
+  assert.throws(check, /actualContent.*为空/);
+  item.actualContent = '合成文字';
+  item.visible = false;
+  assert.throws(check, /visible.*true/);
+  item.visible = true;
+  report.entries.shift();
+  assert.throws(check, /文字节点和状态/);
+});
+
 test('Flutter V5 文字必须读取当前运行的组件样式', (t) => {
   const f = fixture(t);
   const comparison = JSON.parse(readFileSync(join(f.repo, f.doc.comparisonRef.path), 'utf8'));
@@ -240,6 +276,19 @@ test('Flutter V5 文字必须读取当前运行的组件样式', (t) => {
   }
   assert.doesNotThrow(check);
   const entry = output.entries.find((item) => item.designItemId === 'heading');
+  entry.actualContent = '';
+  assert.throws(check, /heading.*actualContent.*为空/);
+  entry.actualContent = '合成文字';
+  entry.visible = false;
+  assert.throws(check, /heading.*visible/);
+  entry.visible = true;
+  const originalOpacity = entry.values.textOpacity;
+  entry.values.textOpacity = { ...originalOpacity, value: 0 };
+  assert.throws(check, /heading.*整体文字透明度为 0/);
+  entry.values.textOpacity = originalOpacity;
+  delete entry.propertySources.visible;
+  assert.throws(check, /heading.*visible.*回读来源/);
+  entry.propertySources.visible = { componentType: 'RenderParagraph', propertyPath: 'visible' };
   entry.values.fontFamily = 'prototype-font';
   assert.throws(check, /heading\/default-phone\/fontFamily.*不一致/);
   entry.values.fontFamily = f.plan.implementations[0].requirements.appearance.value.normalized.typography.family;

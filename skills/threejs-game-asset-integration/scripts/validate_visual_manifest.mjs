@@ -3,6 +3,7 @@
 import { readFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
+import { isDeepStrictEqual } from "node:util";
 import { realpathSync, statSync } from "node:fs";
 import { inflateSync } from "node:zlib";
 import { getVisualRegionDefinitionAliasConflicts, normalizeVisualRegionDefinition, PLAN_COLORS, PLAN_LABELS } from "./effect_image_annotation_core.mjs";
@@ -382,8 +383,9 @@ export function validateManifest(data, options = {}) {
     if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.some((item) => item?.conclusion !== "passed")) errors.push("V5 complete 的 fidelity_cases 必须全部 passed");
   } else if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.length > 0) validateVisualManifestFidelityCases(data.fidelity_cases, target, candidate, baseline, errors, { mode: visualValidationMode });
   const strictProductionContract = reconstruction?.applicability === "effect-image";
-  // 普通路线的文字仍由相同 V3/V5 节点与运行读数合同约束。
-  if (!strictProductionContract && data.scene_reconstruction_contract && ["V3", "V5"].includes(requestedStage)) {
+  // V4 公共验收只加入文字与资源的试装核对，其他正式场景证据仍由 V5 检查。
+  const verifyTrialText = requestedStage === "V4" && options.requireNativeTextReadback === true;
+  if (data.scene_reconstruction_contract && (verifyTrialText || (!strictProductionContract && ["V3", "V5"].includes(requestedStage)))) {
     const contract = data.scene_reconstruction_contract;
     let layoutInfo;
     errors.push(...validateSceneTextDecomposition(contract, { ...options, stage: requestedStage, manifest: data, regions: contract.coverage_regions, layoutInfo }));
@@ -393,8 +395,8 @@ export function validateManifest(data, options = {}) {
     const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (reconstruction.lifecycle === "v5-complete" ? "V5" : "V3");
     // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
-    // V4 只验收资源生产结果；正式 Scene、同屏组合和运行时消费统一留到 V5。
-    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
+    // 正式 Scene 和运行时消费由 V5 检查，V4 文字试装在上方单独核对。
+    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
     errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage: "V3", requireManualConfirmation: false }));
@@ -450,7 +452,13 @@ export function validateManifest(data, options = {}) {
     }
     if (Object.keys(assetContract).length > 0) {
       const assetContext = { stage: "V3", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, observedMethod: assetContract.production_method ?? "unspecified" };
-      errors.push(...validateProductionContract(asset, assetContext, { requireComplete: true }));
+      // 复用证据归属于具体消费区域，平面资产条目只在有同一资产的复用区域时借用其合同。
+      const mappedRegions = fixedMappings.get(asset.id) ?? [];
+      const reuseRegion = assetContract.production_method === "reuse" && mappedRegions.length
+        ? data.coverage_audit.regions.find((region) => mappedRegions.includes(region?.id ?? region?.region_id)
+          && resolveProductionContract(region).production_method === "reuse")
+        : undefined;
+      errors.push(...validateProductionContract(asset, assetContext, { requireComplete: true, reuseRegion }));
       if (assetContract.image_generation_required === true) {
         const regionId = asset.coverage_region_id ?? asset.coverageRegionId ?? asset.coverage_region_ids?.[0] ?? asset.coverageRegionIds?.[0];
         const coverageRegion = data.coverage_audit?.regions?.find((item) => (item?.region_id ?? item?.regionId ?? item?.id) === regionId);
@@ -649,6 +657,8 @@ function validateTechnicalProposal(proposal, regions, canvas, label, errors) {
     if (!isObject(item.state_analysis) && region.owner_type === "fixed-production-visual") errors.push(`${label}.proposal 技术文件 ${region.id} 缺少 state_analysis`);
     // confirmation 是可变的人工记录，技术定义比较只覆盖区域合同本身。
     const { confirmation: _confirmation, ...technicalDefinition } = region;
+    // 复用来源的摘要属于冻结身份，不能被普通注释元数据的摘要忽略规则剔除。
+    if (!isDeepStrictEqual(item.technical_definition?.reuse_snapshot, region.reuse_snapshot)) errors.push(`${label}.proposal 技术文件 ${region.id} reuse_snapshot 与当前区域不一致`);
     if (canonicalAnnotationJson(item.technical_definition) !== canonicalAnnotationJson(technicalDefinition)) errors.push(`${label}.proposal 技术文件 ${region.id} technical_definition 与当前区域不一致`);
   }
 }
@@ -725,13 +735,6 @@ async function loadEvidenceFile(projectRoot, label, relativePath, kind, errors) 
 function checkSnapshotPath(projectRoot, label, value, errors) {
   try { if (!isFile(projectPath(projectRoot, value))) errors.push(`${label} 文件不存在：${value}`); }
   catch (error) { errors.push(`${label}：${error.message}`); }
-}
-
-/** 校验不可变复用快照的最小身份，避免把当前机器清单伪装成历史证据。 */
-export async function checkReuseSourceFiles(projectRoot, label, source, errors) {
-  // 复用证据统一交给 workflow 的不可变快照门，避免资产层和工作流层各自解释两套字段。
-  const context = { stage: "V4", annotation_number: "?", region_id: label, expectedMethod: "reuse", observedMethod: "reuse" };
-  errors.push(...validateReuseProductionGate({ production_method: "reuse", reuse_snapshot: source, implementation_plan: { mode: "reuse-existing" } }, context, { projectRoot, checkFiles: true }));
 }
 
 /** 校验拆解提案和决定记录与当前确认的逐字段交叉绑定。 */
@@ -840,8 +843,7 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
     for (const conflict of getVisualRegionDefinitionAliasConflicts(region)) errors.push(`coverage_audit.regions[${index}] 区域合同别名取值冲突：${conflict.field}（${conflict.sources.join("/")}）`);
     if (canonicalRegion.owner_type === "fixed-production-visual" && isObject(canonicalRegion.state_analysis) && nonEmptyString(canonicalRegion.state_analysis.evidence)) await loadEvidenceFile(projectRoot, `coverage_audit.regions[${index}].state_analysis.evidence`, canonicalRegion.state_analysis.evidence, "file", errors);
     validateReusePlanRelation(region, label, errors);
-    const productionMethod = resolveProductionContract(region).production_method;
-    if (productionMethod === "reuse" && region?.implementation_plan?.mode === "reuse-existing" && isObject(region.reuse_snapshot)) await checkReuseSourceFiles(projectRoot, label, region.reuse_snapshot, errors);
+    errors.push(...validateReuseProductionGate(region, { stage, region_id: label }, { projectRoot, checkFiles: true, reuseManifest: data }));
     const confirmation = region?.confirmation; const isFormalConfirmation = isObject(confirmation) && confirmation.confirmation_schema === "visual-decomposition-confirmation/1.0";
     const requiresManualDecomposition = canonicalRegion.owner_type === "fixed-production-visual" && canonicalRegion.production_origin === "bitmap-decomposition" && region?.implementation_plan?.mode !== "reuse-existing";
     if (isFormalConfirmation) {
@@ -951,7 +953,14 @@ export async function main(argv = process.argv.slice(2)) {
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));
     const uniqueErrors = [...new Set(errors)];
     if (uniqueErrors.length) { console.error("视觉资源清单无效："); for (const error of uniqueErrors) console.error(`- ${error}`); return 1; }
-    console.log("视觉资源清单验证通过。"); return 0;
+    console.log("视觉资源清单验证通过。");
+    // 独立清单命令缺少公共运行证据身份，正式文字验收由工作流绑定实际采集。
+    const stage = args.stage ?? data.visualStage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : null);
+    const textNodes = data.scene_reconstruction_contract?.text_decomposition?.text_nodes;
+    if (stage === "V5" && Array.isArray(textNodes) && textNodes.length) {
+      console.log("正式 V5 文字验收须通过 app-workflow 绑定同批 runtime-layout 组件读数。");
+    }
+    return 0;
   } catch (error) { console.error(`视觉资源清单无效：${error.message}`); return 1; }
 }
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) process.exitCode = await main();

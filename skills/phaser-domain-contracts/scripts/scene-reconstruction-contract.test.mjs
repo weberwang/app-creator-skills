@@ -424,7 +424,7 @@ test("完整 reconstruction/layout/V4/V5/F2/F3/V5 happy path 通过场景级门"
   assert.deepEqual(validateV5ProductionGate(gateManifest, { requireSceneReconstruction: true }), []);
 });
 
-test("V4 资源阶段不要求正式 Scene 组合或文本 runtime verification", () => {
+test("V4 独立结构校验无需正式 Scene 组合或公共文字试装读数", () => {
   const value = textEffectImageContract();
   delete value.combination_preacceptance;
   delete value.text_decomposition.text_nodes[0].runtime_verification;
@@ -535,6 +535,7 @@ test("bitmap-text 和 image-text 成功路径分别绑定所需资源与语义�
       evidence: ["evidence/text/hud-title-image.json"],
       passed: true,
       asset_consumed: true,
+      actual_visible: true,
       actual_geometry_unit: "logical-px",
       actual_coordinate_space: "viewport-logical",
       actual_image_path: "assets/text/start.png",
@@ -734,7 +735,7 @@ test("语义相似图标没有精确身份时不得 reuse，混合区域必须�
     reuse_suitability: { eligible: true, exact_asset_identity: { reason: "semantic-similar icon" }, evidence: ["evidence/route/icon-similar.json"] },
   };
   const similarErrors = validateSceneReconstructionContract(similar, effectImageManifest(similar), { stage: "V4" });
-  assert(similarErrors.some((item) => item.includes("精确资产 ID") && item.includes("语义相似不等价")), similarErrors.join("\n"));
+  assert(similarErrors.some((item) => item.includes("exact_asset_identity") || item.includes("asset-reuse-snapshot/1.0")), similarErrors.join("\n"));
 
   // 独立 image-asset 与 phaser-native region 仍是合法混合场景合同，两者不再包装为单一区域路线。
   const independentRoutes = effectImageContract();

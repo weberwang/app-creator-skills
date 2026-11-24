@@ -110,6 +110,17 @@ export function attachFlutterDesignFixture(repo, work, doc) {
     assets: plan.implementations.map((item, index) => ({ assetId: item.id, assetType: 'native-component', output: item.consumers[0].sourcePath,
       componentEvidenceRef: reports[index].ref.path, implementationEvidenceRef: reports[index].ref, designItemIds: item.designItemIds, consumerIds: item.consumers.map((consumer) => consumer.id) })),
   };
+  const textEntries = plan.elements.flatMap((element) => {
+    const implementation = plan.implementations.find((item) => item.id === element.implementationId);
+    const values = flutterTextStyle(implementation.requirements.appearance.value);
+    return values ? element.conditionIds.map((conditionId) => ({ designItemId: element.id, conditionId,
+      runtimeNodeId: `${element.id}.text`, values, actualContent: '合成文字', visible: true,
+      propertySources: Object.fromEntries([...Object.keys(values), 'actualContent', 'visible'].map((name) => [name, { componentType: 'RenderParagraph', propertyPath: name }])) })) : [];
+  });
+  asset.textRestorationRef = writeDesignFixture(repo, `${base}/v4-text.json`, {
+    format: 'flutter-text-restoration-v1', workItemId: work.workItemId, candidateId: work.visual.candidateId,
+    designReconstructionRef: doc.designReconstructionRef, runId: 'synthetic-v4', entries: textEntries,
+  });
   work.assetReviewRef = writeDesignFixture(repo, work.assetReviewRef?.path ?? `${base}/assets.json`, asset);
   review('V4', 'V4', 'imported-assets', { assetReviewRef: work.assetReviewRef });
   if (doc.visualStage === 'V5') {
@@ -119,8 +130,8 @@ export function attachFlutterDesignFixture(repo, work, doc) {
         const entries = plan.elements.filter((element) => element.conditionIds.includes(conditions.id)).flatMap((element) => {
           const implementation = plan.implementations.find((entry) => entry.id === element.implementationId);
           const values = flutterTextStyle(implementation.requirements.appearance.value);
-          return values ? [{ designItemId: element.id, runtimeNodeId: `${element.id}.text`, values,
-            propertySources: Object.fromEntries(Object.keys(values).map((name) => [name, { componentType: 'RenderParagraph', propertyPath: name }])) }] : [];
+          return values ? [{ designItemId: element.id, runtimeNodeId: `${element.id}.text`, values, actualContent: '合成文字', visible: true,
+            propertySources: Object.fromEntries([...Object.keys(values), 'actualContent', 'visible'].map((name) => [name, { componentType: 'RenderParagraph', propertyPath: name }])) }] : [];
         });
         const runId = `synthetic-${conditions.id}`;
         const captureOutputRef = writeDesignFixture(repo, `${base}/capture-output-${conditions.id}.json`, {

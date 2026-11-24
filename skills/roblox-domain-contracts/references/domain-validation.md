@@ -36,7 +36,7 @@ V5 `runtimeContextRef` 包含 Client 身份、运行节点映射、完整源集�
 
 V3 核对上述计划、引用和公共相对关系，不要求 V5 的正式对象提前装配。V4/V5 的 `layout.editObservationRef` 引用同一 Studio、同一已保存 Place 的 Edit `execute_luau` 结构化回读，包含实际节点 `Position`、`Size`、`SizeConstraint`、`AnchorPoint`、`AutomaticSize`、`IsGuiObject`、`LayoutControllers`、`FlexItems` 及 `SizeModifiers`；容器和组件还须包含各自实际属性。V5 再对 PlayerGui 当前客户端实例及其真实父布局执行同样的回读绑定。`inspect-nodes.luau` 自动枚举所选 GUI 的布局、Flex 和尺寸修饰器，目标节点和必要外部父级仍由执行者按实际项目填写。
 
-每个 `TextLabel`、`TextButton`、`TextBox` 在 V3 的布局节点记录 `textStyle.sourceTarget`（确认稿路径与 SHA-256）、`stateId`、`fontFamily`、`fontSize`、填色 `color: {r, g, b}` 和 `transparency`。字重、字形、对齐、换行、自动缩放、行高及描边等设计中可核实的属性也写入 `textStyle`。仅有位图且无法核实的属性在 `unconfirmed` 中逐项记录 `property` 和 `reason`，人工确认后再填写实际目标。分别在 V4 的 Edit 回读及 V5 的 Client 回读同一个实例的字体、字号及全部已声明属性，按节点、状态与确认稿逐项核对。V5 存在待确认属性、目标或回读缺失、属性不一致时保持未通过。`inspect-nodes.luau` 采集原生 FontFace、TextSize、文字颜色、透明度及排版、描边属性，效果与可读性由用户人工确认。
+每个 `TextLabel`、`TextButton`、`TextBox` 在 V3 的布局节点记录 `textStyle.sourceTarget`（确认稿路径与 SHA-256）、`stateId`、`fontFamily`、`fontSize`、填色 `color: {r, g, b}` 和 `transparency`。固定文本可在 `content` 冻结确认稿内容，当前状态有意隐藏时声明 `expectedVisible: false`。字重、字形、对齐、换行、自动缩放、行高及描边等设计中可核实的属性也写入 `textStyle`。仅有位图且无法核实的属性在 `unconfirmed` 中逐项记录 `property` 和 `reason`，人工确认后再填写实际目标。分别在 V4 的 Edit 回读及 V5 的 Client 回读同一个实例的文字内容、有效可见状态、字体、字号及全部已声明属性，按节点、状态与确认稿逐项核对。应显示的文字缺失、为空或实际隐藏时不能通过，有固定文字目标时逐字比较。输入框为空且显示占位文字时核对实际占位文字。V5 存在待确认属性、目标或回读缺失、属性不一致时保持未通过。`inspect-nodes.luau` 采集原生 Text、输入框占位文字、父级可见性、FontFace、TextSize、文字颜色、透明度及排版、描边属性，效果与可读性由用户人工确认。
 
 启用 `TextScaled` 时，当前原生回读无法取得引擎最终渲染字号，保持实际字号未验证；缺少 `TextScaled` 回读同样不能通过。关闭自动缩放后按实际 `TextSize` 对照目标。
 

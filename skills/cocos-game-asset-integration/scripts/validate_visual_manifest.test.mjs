@@ -21,6 +21,7 @@ import { loadVisualConfirmationAuthority } from "../../cocos-domain-contracts/sc
 import { CORE_TEMPLATES, OPTIONAL_TEMPLATES } from "../../cocos-game-orchestrator/scripts/project_doc_templates.mjs";
 
 import { EMPTY_DOCUMENT_FINGERPRINT, STRUCTURAL_FILE_GATE_OPTIONS, visualComponentContract, addManualConfirmationRecords, nonEmptyString, imageNormalizationRecord, validManifest, attachSceneReconstructionContract, validOrdinaryManifest, validAiManifest, bitmapManifest, multiConfirmationGroupManifest, sha256Bytes, canonicalJson, canonicalSha, prerequisiteListSha, pngCrc32, minimalPng, createFixtureFiles, reuseSnapshot, writeConfirmationFixtureFiles, loadFixtureAuthority, checkManifestFiles, refreshRegionDerivedContracts } from "./visual-manifest-test-fixtures.mjs";
+import { prepareReuseFixture } from "./visual-manifest-test-fixtures.mjs";
 
 /** 结构测试显式提供已解析的规范节点文档，正式文件门仍强制读真实工件。 */
 function validateManifest(data, options = {}) { return validateManifestSource(data, fixtureLayoutSourceOptions(options)); }
@@ -245,17 +246,47 @@ test("reuse 快照缺 schema 或来源字段时拒绝", () => {
   assert(validateManifest(missing).some((item) => item.includes("source_manifest_file")));
 });
 test("reuse-existing 文件身份必须绑定 accepted 源快照、源文件和兼容证据", async () => {
-  const root = await mkdtemp(join(tmpdir(), "visual-reuse-files-")); const manifest = validManifest(); const region = manifest.coverage_audit.regions[1];
-  const sourceBytes = minimalPng(64, 96); const compatibility = JSON.stringify({ status: "passed" });
-  const sourceManifest = { status: "accepted", source_file: "art/hero.png", source_sha256: sha256Bytes(sourceBytes) }; const sourceManifestBytes = Buffer.from(JSON.stringify(sourceManifest));
-  const snapshot = reuseSnapshot({ source_asset_id: "hero-idle", source_manifest_sha256: sha256Bytes(sourceManifestBytes), source_sha256: sha256Bytes(sourceBytes), compatibility_evidence_sha256: sha256Bytes(Buffer.from(compatibility)) });
-  region.production_method = "reuse"; region.delivery_kind = "existing-asset"; region.implementation_plan = { mode: "reuse-existing", summary: "复用已验收主角资源" }; region.reuse_snapshot = snapshot;
-  Object.assign(manifest.assets[0], { production_method: "reuse", delivery_kind: "existing-asset" }); Object.assign(manifest.production_contract_audit.units[0], { observed_method: "reuse", observed_delivery_kind: "existing-asset" });
-  refreshRegionDerivedContracts(manifest, region); addManualConfirmationRecords(manifest); await createFixtureFiles(root); await writeFile(join(root, "art/hero.png"), sourceBytes); await writeFile(join(root, "evidence/visual/hero-consistency.json"), compatibility); await writeFile(join(root, "docs/reuse-snapshot.json"), sourceManifestBytes); await writeConfirmationFixtureFiles(root, manifest);
+  const root = await mkdtemp(join(tmpdir(), "visual-reuse-files-"));
+  const manifest = validManifest();
+  const region = manifest.coverage_audit.regions[1];
+  region.production_method = "reuse";
+  region.delivery_kind = "existing-asset";
+  region.implementation_plan = { mode: "reuse-existing", summary: "复用已验收主角资源" };
+  Object.assign(manifest.assets[0], { production_method: "reuse", delivery_kind: "existing-asset" });
+  Object.assign(manifest.production_contract_audit.units[0], { observed_method: "reuse", observed_delivery_kind: "existing-asset" });
+  await createFixtureFiles(root);
+  const { snapshot } = await prepareReuseFixture(root, manifest, region, minimalPng(64, 96));
+  refreshRegionDerivedContracts(manifest, region);
+  addManualConfirmationRecords(manifest);
+  await writeConfirmationFixtureFiles(root, manifest);
   assert.deepEqual(await checkManifestFiles(manifest, root), []);
-  await writeFile(join(root, "art/hero.png"), Buffer.from("source-drift")); const corruptSourceErrors = await checkManifestFiles(manifest, root); assert(corruptSourceErrors.some((item) => item.includes("source_file") && item.includes("真实 PNG/JPEG")), corruptSourceErrors.join("\n"));
-  await writeFile(join(root, "art/hero.png"), sourceBytes); await writeFile(join(root, "evidence/visual/hero-consistency.json"), JSON.stringify({ status: "rejected" })); assert((await checkManifestFiles(manifest, root)).some((item) => item.includes("compatibility evidence")));
-  const drifted = { ...sourceManifest, source_file: "art/other.png" }; const driftedBytes = Buffer.from(JSON.stringify(drifted)); await writeFile(join(root, "docs/reuse-snapshot.json"), driftedBytes); snapshot.source_manifest_sha256 = sha256Bytes(driftedBytes); assert((await checkManifestFiles(manifest, root)).some((item) => item.includes("source_file") && item.includes("source manifest")));
+
+  const originalAuthority = await loadFixtureAuthority(root, manifest);
+  assert(originalAuthority);
+
+  // 同内容的另一个来源记录仍改变了用户已确认的区域快照。
+  const alternateManifest = "docs/reuse-snapshot-alternate.json";
+  await writeFile(join(root, alternateManifest), await readFile(join(root, snapshot.source_manifest_file)));
+  const previousManifest = snapshot.source_manifest_file;
+  snapshot.source_manifest_file = alternateManifest;
+  const replacedSnapshotErrors = await checkManifestFiles(manifest, root);
+  assert(replacedSnapshotErrors.some((item) => item.includes("technical_definition") || item.includes("复用快照")), replacedSnapshotErrors.join("\n"));
+  // 即使同步改写原路径提案，已冻结的用户确认仍指向旧提案内容。
+  const proposalPath = join(root, region.confirmation.proposal_file);
+  const originalProposal = await readFile(proposalPath);
+  const modifiedProposal = JSON.parse(originalProposal.toString("utf8"));
+  const proposalRegion = modifiedProposal.technical_analysis.regions.find((item) => item.region_id === region.id);
+  proposalRegion.technical_definition.reuse_snapshot = structuredClone(snapshot);
+  await writeFile(proposalPath, JSON.stringify(modifiedProposal));
+  const modifiedProposalErrors = await checkManifestFiles(manifest, root, { authority: originalAuthority });
+  assert(modifiedProposalErrors.some((item) => item.includes("ledger.proposal_sha256")), modifiedProposalErrors.join("\n"));
+  await writeFile(proposalPath, originalProposal);
+  snapshot.source_manifest_file = previousManifest;
+
+  // 合法 PNG 被原地替换也必须使来源版本失效，不能只凭文件头放行。
+  await writeFile(join(root, snapshot.source_file), minimalPng(128, 192));
+  const errors = await checkManifestFiles(manifest, root);
+  assert(errors.some((item) => item.includes("source") && (item.includes("sha256") || item.includes("SHA-256") || item.includes("摘要"))), errors.join("\n"));
 });
 test("拆解人工确认绑定用户原文和 accepted 身份，不要求消息摘要", () => { const missingDigest = bitmapManifest(); const confirmation = missingDigest.coverage_audit.regions[1].confirmation; delete confirmation.user_message_sha256; confirmation.confirmation_sha256 = { stale: true }; confirmation.target_sha256 = 23; assert(!validateManifest(missingDigest).some((item) => item.includes("user_message_sha256") || item.includes("confirmation_sha256") || item.includes("target_sha256"))); const missingText = bitmapManifest(); delete missingText.coverage_audit.regions[1].confirmation.user_original_text; assert(validateManifest(missingText).some((item) => item.includes("user_original_text"))); const forged = bitmapManifest(); forged.coverage_audit.regions[1].confirmation.confirmation_mode = "auto"; assert(validateManifest(forged).some((item) => item.includes("confirmation_mode 必须为 manual"))); });
 
@@ -284,12 +315,27 @@ test("多 scene/state 确认拒绝串组文件和漏组文件", async () => {
 });
 test("拆解提案前必须绑定已有 ownership 审阅证据", () => { const manifest = bitmapManifest(); delete manifest.coverage_audit.regions[1].ownership_evidence; assert(validateManifest(manifest).some((item) => item.includes("ownership_evidence"))); });
 test("reuse 快照文件漂移或来源状态变化时拒绝", async () => {
-  const root = await mkdtemp(join(tmpdir(), "visual-reuse-snapshot-drift-")); const manifest = validManifest(); const region = manifest.coverage_audit.regions[1]; const sourceBytes = minimalPng(64, 96); const compatibility = JSON.stringify({ status: "passed" });
-  const sourceManifest = { status: "accepted", source_file: "art/hero.png", source_sha256: sha256Bytes(sourceBytes) }; const sourceManifestBytes = Buffer.from(JSON.stringify(sourceManifest)); const snapshot = reuseSnapshot({ source_asset_id: "hero-idle", source_manifest_sha256: sha256Bytes(sourceManifestBytes), source_sha256: sha256Bytes(sourceBytes), compatibility_evidence_sha256: sha256Bytes(Buffer.from(compatibility)) });
-  region.production_method = "reuse"; region.delivery_kind = "existing-asset"; region.implementation_plan = { mode: "reuse-existing", summary: "复用快照资源" }; region.reuse_snapshot = snapshot; Object.assign(manifest.assets[0], { production_method: "reuse", delivery_kind: "existing-asset" }); Object.assign(manifest.production_contract_audit.units[0], { observed_method: "reuse", observed_delivery_kind: "existing-asset" }); refreshRegionDerivedContracts(manifest, region); addManualConfirmationRecords(manifest);
-  await createFixtureFiles(root); await writeFile(join(root, "art/hero.png"), sourceBytes); await writeFile(join(root, "evidence/visual/hero-consistency.json"), compatibility); await writeFile(join(root, "docs/reuse-snapshot.json"), sourceManifestBytes); await writeConfirmationFixtureFiles(root, manifest); assert.deepEqual(await checkManifestFiles(manifest, root), []);
-  const rejected = structuredClone(manifest); rejected.coverage_audit.regions[1].reuse_snapshot.source_status = "rejected"; assert((await checkManifestFiles(rejected, root)).some((item) => item.includes("source_status") && item.includes("accepted")));
-  await writeFile(join(root, "art/hero.png"), Buffer.from("drift")); const corruptSourceErrors = await checkManifestFiles(manifest, root); assert(corruptSourceErrors.some((item) => item.includes("source_file") && item.includes("真实 PNG/JPEG")), corruptSourceErrors.join("\n"));
+  const root = await mkdtemp(join(tmpdir(), "visual-reuse-snapshot-drift-"));
+  const manifest = validManifest();
+  const region = manifest.coverage_audit.regions[1];
+  region.production_method = "reuse";
+  region.delivery_kind = "existing-asset";
+  region.implementation_plan = { mode: "reuse-existing", summary: "复用快照资源" };
+  Object.assign(manifest.assets[0], { production_method: "reuse", delivery_kind: "existing-asset" });
+  Object.assign(manifest.production_contract_audit.units[0], { observed_method: "reuse", observed_delivery_kind: "existing-asset" });
+  await createFixtureFiles(root);
+  const { snapshot } = await prepareReuseFixture(root, manifest, region, minimalPng(64, 96));
+  refreshRegionDerivedContracts(manifest, region);
+  addManualConfirmationRecords(manifest);
+  await writeConfirmationFixtureFiles(root, manifest);
+  assert.deepEqual(await checkManifestFiles(manifest, root), []);
+
+  const rejected = structuredClone(manifest);
+  rejected.coverage_audit.regions[1].reuse_snapshot.source_status = "rejected";
+  assert((await checkManifestFiles(rejected, root)).some((item) => item.includes("source_status") && item.includes("accepted")));
+  await writeFile(join(root, snapshot.compatibility_evidence_file), JSON.stringify({ status: "passed" }));
+  const errors = await checkManifestFiles(manifest, root);
+  assert(errors.some((item) => item.includes("compatibility") || item.includes("兼容")), errors.join("\n"));
 });
 
 test("区域生产合同变化依业务规则校验，不依赖区域摘要", () => {

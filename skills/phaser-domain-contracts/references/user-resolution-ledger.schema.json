@@ -49,7 +49,7 @@
         "annotation_identity_sha256": {"description":"仅作为可选摘要记录，不参与验收或放行。"},
         "proposal_id": {"type": "string", "minLength": 1},
         "proposal_file": {"type": "string", "minLength": 1},
-        "proposal_sha256": {"description":"仅作为可选摘要记录，不参与验收或放行。"},
+        "proposal_sha256": {"description":"包含图片复用的确认组必须记录提案实际 SHA-256，用于冻结已审阅的复用快照。"},
         "decision_record_file": {"type": "string", "minLength": 1}
       }
     }

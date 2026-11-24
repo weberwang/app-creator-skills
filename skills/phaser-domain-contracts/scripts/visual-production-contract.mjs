@@ -8,6 +8,7 @@
 import { readFileSync } from "node:fs";
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { atomicImageRequirementsEqual, canonicalStateId, deriveAtomicImageRequirements, hasRuntimeImplementationField, normalizeAtomicImageRequirements, normalizeProjectRelativePath, validateComponentAuditEvidence, validateVisualComponentContract, normalizeComponentExpectedAsset, visualComponentContractDifferences } from "./visual-component-contract.mjs";
 import { normalizeProductionExpectedAssets as normalizeExpectedAssets } from "./visual-atomic-contract.mjs";
 import { isPngOrJpegMagic, isRasterDelivery, resolveOutputMetadata } from "./visual-raster-contract.mjs";
@@ -107,7 +108,7 @@ export function validateProductionContract(contract, context = {}, options = {})
   const current = resolveProductionContract(contract);
   // 先审查区域是否为真实图片交付，再审查通用生产字段，避免程序绘制伪装成视觉资产。
   errors.push(...validateFixedVisualProductionMethod(contract, context));
-  errors.push(...validateReuseProductionGate(contract, context, options));
+  errors.push(...validateReuseProductionGate(options.reuseRegion ?? contract, context, options));
   const label = contractContext(contract, context.stage ?? "V4", { ...context, observedMethod: current.production_method ?? "unspecified" });
   const error = (message, details = {}) => errors.push(productionContractError(label, message, {
     expectedMethod: details.expectedMethod ?? current.production_method ?? "explicit-production-method",
@@ -294,7 +295,7 @@ export function validateVisualProductionCoverage(manifest, options = {}) {
       : (nonEmptyString(regionContract.asset_id) ? [regionContract.asset_id] : []);
     const asset = assets.get(regionAssetIds[0]);
     const contract = { ...(asset ?? {}), ...region, ...resolveProductionContract(asset ?? {}), ...regionContract };
-    errors.push(...validateProductionContract(contract, context, { ...options, requireComplete: true }));
+    errors.push(...validateProductionContract(contract, context, { ...options, requireComplete: true, reuseRegion: region, reuseManifest: manifest }));
     // 状态分析必须先于组件拆解，且每个 required 状态都要落到原子资产或合法图集切片。
     // 组件校验保留 coverage 原对象，确保 camel/nested 别名和热区的越权字段不会在合并合同前被抹掉。
     errors.push(...validateVisualComponentContract(region, context, { requireImageAssets: true }));
@@ -442,7 +443,7 @@ export function auditProductionContract(manifest, options = {}) {
     if (fixedVisual && (options.checkFiles !== true || !options.projectRoot)) errors.push(productionContractError(context, "V5 fixed-production-visual actual/runtime 必须通过 check-files/project-root PNG/JPEG 魔数核验", { missing: "checkFiles=true,projectRoot" }));
     if (!unit) { errors.push(productionContractError(context, "production_contract_audit 缺少逐区域记录", { missing: "production_contract_audit.units" })); continue; }
     const expected = resolveProductionContract(region);
-    errors.push(...validateReuseProductionGate(region, context, options));
+    errors.push(...validateReuseProductionGate(region, context, { ...options, reuseManifest: manifest }));
     errors.push(...validateVisualComponentContract(region, context, { requireImageAssets: true }));
     // 新版场景合同启用后，V5 还要验证资源放进目标 Scene 后的显示、材质和邻接关系；
     // 没有合同的旧夹具由上游场景合同门统一报“方案缺失”，不在工程审计重复造错。
@@ -559,7 +560,7 @@ export function validateProductionAuditShape(manifest, options = {}) {
     if (!nonEmptyString(unit?.observed_delivery_kind ?? unit?.delivery_kind)) error("缺少 observed_delivery_kind", "observed_delivery_kind");
     const region = regions.find((item) => item.annotation_number === unit?.annotation_number && item.id === unit?.region_id);
     if (region) {
-      errors.push(...validateReuseProductionGate(region, context, options));
+      errors.push(...validateReuseProductionGate(region, context, { ...options, reuseManifest: manifest }));
       errors.push(...validateVisualComponentContract(region, context, { requireImageAssets: true }));
       errors.push(...validateComponentAuditEvidence(region, unit, context, { manifestAssets: assets }));
     }
@@ -750,11 +751,13 @@ export function validateVisualProductionUnits(pkg, manifest = null, options = {}
   const reconstructionRegions = new Map((manifest?.scene_reconstruction_contract?.coverage_regions ?? manifest?.scene_reconstruction_contract?.coverageRegions ?? []).filter(isObject).flatMap((item) => [item.id, item.region_id, item.regionId].filter(nonEmptyString).map((id) => [id, item])));
   const seen = new Set(); const seenAnnotations = new Set(); const outputs = new Map(); const crossUnitPaths = new Map(); const generationRecordIds = new Map();
   for (const [index, unit] of units.entries()) {
-    const context = contractContext(unit ?? {}, "V4", { annotation_number: unit?.annotation_number ?? "?", region_id: unit?.region_id ?? "?", observedMethod: unit?.production_method ?? "missing" });
+    const context = contractContext(unit ?? {}, options.stage ?? "V4", { annotation_number: unit?.annotation_number ?? "?", region_id: unit?.region_id ?? "?", observedMethod: unit?.production_method ?? "missing" });
     const error = (message, details = {}) => errors.push(productionContractError(context, `visualProductionUnits[${index}] ${message}`, details));
-    errors.push(...validateProductionContract(unit ?? {}, context, { ...options, requireComplete: true }));
     const key = `${unit?.annotation_number}\0${unit?.region_id}`;
     const region = regionByKey.get(key);
+    errors.push(...validateProductionContract(unit ?? {}, context, { ...options, requireComplete: true, reuseRegion: region ?? unit, reuseManifest: manifest }));
+    // 实施单元不得静默更换已冻结的区域复用来源。
+    if (region && unit?.production_method === "reuse" && !isDeepStrictEqual(unit.reuse_snapshot, region.reuse_snapshot)) error("reuse_snapshot 与 coverage 不一致");
     // 实施包必须镜像 coverage 的 owner；运行时逻辑不能被强制伪装成固定图片组件。
     errors.push(...validateVisualComponentContract({ ...(region ?? {}), ...(unit ?? {}), owner_type: unit?.owner_type ?? region?.owner_type ?? "fixed-production-visual", bounds: region?.bounds ?? unit?.bounds }, context, { requireImageAssets: true }));
     if (!nonEmptyString(unit?.unitId)) error("缺少 unitId", { missing: "unitId" });
@@ -862,7 +865,7 @@ export function validateVisualImplementationPackageBinding(pkg, options = {}) {
   if (stage === "V3" || stage === "V5") errors.push(...validateSceneReconstructionGate(manifest, { stage, displayLayerScope }));
   errors.push(...validateVisualDecompositionConfirmationBinding(pkg, manifest, { stage: "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
   errors.push(...validateVisualProductionCoverage(manifest, { stage, requireManualConfirmation: true, checkFiles: options.checkFiles === true || stage === "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
-  errors.push(...validateVisualProductionUnits(pkg, manifest, options));
+  errors.push(...validateVisualProductionUnits(pkg, manifest, { ...options, stage }));
   if (stage === "V4" || stage === "V5") {
     // V4 核验资源与部件事实；运行消费和同屏 Scene 组合仅在 V5 执行。
     errors.push(...validateProductionAuditShape(manifest, { stage }));

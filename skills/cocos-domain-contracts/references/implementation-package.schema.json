@@ -3158,8 +3158,9 @@
     },
     "textRuntimeVerification": {
       "type": "object",
-      "required": ["renderer","actual_bounds","actual_geometry_unit","actual_coordinate_space","actual_test_id","evidence","passed"],
+      "required": ["renderer","actual_bounds","actual_visible","actual_geometry_unit","actual_coordinate_space","actual_test_id","evidence","passed"],
       "properties": {
+        "actual_visible": {"const":true},
         "renderer": {
           "oneOf": [
             {
@@ -4927,74 +4928,17 @@
         },
         "reuse_suitability": {
           "type": "object",
-          "required": [
-            "eligible",
-            "exact_asset_identity",
-            "evidence"
-          ],
+          "required": ["eligible", "exact_asset_identity", "evidence"],
           "properties": {
-            "eligible": {
-              "type": "boolean"
-            },
-            "exact_asset_identity": {
-              "oneOf": [
-                {
-                  "const": "not-applicable"
-                },
-                {
-                  "type": "object",
-                  "minProperties": 1,
-                  "properties": {
-                    "asset_id": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "source_asset_id": {
-                      "type": "string",
-                      "minLength": 1
-                    },
-                    "source_sha256": {
-                      "description": "仅作为可选摘要记录，不参与验收或放行。"
-                    },
-                    "source_manifest_sha256": {
-                      "description": "仅作为可选摘要记录，不参与验收或放行。"
-                    },
-                    "target_sha256": {
-                      "description": "仅作为可选摘要记录，不参与验收或放行。"
-                    },
-                    "candidate_sha256": {
-                      "description": "仅作为可选摘要记录，不参与验收或放行。"
-                    },
-                    "comparison_id": {
-                      "type": "string",
-                      "minLength": 1
-                    }
-                  },
-                  "anyOf": [
-                    {
-                      "required": [
-                        "asset_id"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "source_asset_id"
-                      ]
-                    },
-                    {
-                      "required": [
-                        "comparison_id"
-                      ]
-                    }
-                  ],
-                  "additionalProperties": true
-                }
-              ]
-            },
-            "evidence": {
-              "$ref": "#/$defs/evidenceValue"
-            }
+            "eligible": {"type": "boolean"},
+            "exact_asset_identity": {"oneOf": [{"const": "not-applicable"}, {"type": "object", "minProperties": 1}]},
+            "evidence": {"$ref": "#/$defs/evidenceValue"}
           },
+          "if": {"properties": {"eligible": {"const": true}}},
+          "then": {"properties": {
+            "exact_asset_identity": {"type": "object", "required": ["asset_id", "source_sha256"], "properties": {"asset_id": {"type": "string", "minLength": 1}, "source_sha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}},
+            "evidence": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}}}
+          }},
           "additionalProperties": true
         },
         "final_owner": {
@@ -6864,15 +6808,23 @@
       "additionalProperties": false,
       "required": [
         "schema",
+        "source_asset_id",
         "source_file",
+        "source_sha256",
         "source_manifest_file",
+        "source_manifest_sha256",
         "compatibility_evidence_file",
+        "compatibility_evidence_sha256",
         "accepted_at",
         "source_status"
       ],
       "properties": {
         "schema": {
           "const": "asset-reuse-snapshot/1.0"
+        },
+        "source_asset_id": {
+          "type": "string",
+          "minLength": 1
         },
         "source_file": {
           "type": "string",
@@ -6883,17 +6835,20 @@
           "minLength": 1
         },
         "source_manifest_sha256": {
-          "description": "仅作为可选摘要记录，不参与验收或放行。"
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
         },
         "source_sha256": {
-          "description": "仅作为可选摘要记录，不参与验收或放行。"
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
         },
         "compatibility_evidence_file": {
           "type": "string",
           "minLength": 1
         },
         "compatibility_evidence_sha256": {
-          "description": "仅作为可选摘要记录，不参与验收或放行。"
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
         },
         "accepted_at": {
           "type": "string",
