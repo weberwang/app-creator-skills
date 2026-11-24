@@ -64,6 +64,24 @@ for (const stack of stacks) {
       assert.deepEqual(errors, []);
     });
 
+    await t.test("有合格图片时程序绘制不能优先，运行时数据仍可独立处理", async (st) => {
+      const f = await makeFixture(st, stack);
+      const contract = f.manifest.scene_reconstruction_contract;
+      const drawing = structuredClone(contract.coverage_regions.find((item) =>
+        item.visual_route_analysis.native_suitability.primitive_basis.includes("basic-geometry")));
+      const options = { stage: "V3", reuseRegion: f.region };
+      assert.deepEqual(f.validateSceneVisualRouteAnalysis(drawing, contract, options), []);
+      // 沿用合成的已验收快照，只改变该区域声明的实现路线。
+      drawing.region_id = f.sceneRegion.region_id;
+      drawing.visual_route_analysis.reuse_suitability = f.sceneRegion.visual_route_analysis.reuse_suitability;
+      assert.match(f.validateSceneVisualRouteAnalysis(drawing, contract, options).join("\n"), /程序绘制为末选/);
+
+      const data = structuredClone(contract.coverage_regions.find((item) =>
+        item.visual_route_analysis.element_type === "dynamic-data"));
+      data.visual_route_analysis.reuse_suitability = f.sceneRegion.visual_route_analysis.reuse_suitability;
+      assert.doesNotMatch(f.validateSceneVisualRouteAnalysis(data, contract, options).join("\n"), /程序绘制为末选/);
+    });
+
     await t.test("占位证据或任意资产 ID 不能代表当前来源", async (st) => {
       const f = await makeFixture(st, stack);
       const analysis = f.sceneRegion.visual_route_analysis;

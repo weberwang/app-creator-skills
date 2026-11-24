@@ -25,7 +25,7 @@
 
 ## 视觉资产路线
 
-图片与 UI 路线从 V2 正式视觉目标出发，把图片外观和程序行为拆成独立交付单元；V1 功能验证不等待正式视觉。3D 世界可使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，在整体空间和方向人工确认后，按[Cocos 模型工作流](./workflow-integration.md)交接代表模块、分批导入与正式替换，不强制拆图或逐对象生图。独立图片、可复用资源与 Creator 原生节点/Label/运行逻辑分别标记，并绑定实际 Node 或 Prefab 消费者。仅在目标视觉可以被具体 Creator UI 组件或 shader 真实还原时选择原生绘制。不要把整个页面或效果图单图铺在 Scene 中作为实施完成。
+图片与 UI 路线从 V2 正式视觉目标出发，把图片外观和程序行为拆成独立交付单元；V1 功能验证不等待正式视觉。3D 世界可使用[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，在整体空间和方向人工确认后，按[Cocos 模型工作流](./workflow-integration.md)交接代表模块、分批导入与正式替换，不强制拆图或逐对象生图。独立图片、可复用资源与 Creator 原生节点/Label/运行逻辑分别标记，并绑定实际 Node 或 Prefab 消费者。按[正式视觉实现优先级](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#正式视觉实现优先级)先复用合格资源，再独立制作。两种方式都不能满足约束时，才由实际 Creator 组件或 Shader 完整绘制。不要把整个页面或效果图单图铺在 Scene 中作为实施完成。
 
 图像资产核对目标组件状态、有效主体边界、纹理分辨率、导入类型、透明度、边缘、颜色与状态变化。普通图片可直接展示真实候选供用户检查；引擎资源导入和视觉显示验收分别进行。复杂透明边缘、玻璃、发光或半透明边缘应保留适当遮罩或重新创作，不能阈值抠除。
 

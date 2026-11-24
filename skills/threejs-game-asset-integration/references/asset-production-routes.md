@@ -24,7 +24,7 @@
 
 `effect-image` 的忠实还原以冻结参考中的可观察视觉事实为准，由 three.js/DOM 装配、布局、交互和状态行为；本分支仅处理二维屏幕空间表现，不把普通游戏 UI 一律图片化，也不改变非效果图工作流的默认路线。包含三维世界、角色模型或关卡的目标走[三维模型与关卡管线](../../app-stack-threejs/references/native-contracts.md#mode-threejs-game-model-pipeline)，本节不将其拆成二维 coverage。每个 `scene_reconstruction_contract.coverage_regions[]` 必须填写唯一的 `visual_route_analysis`，在 V2/V3/V4+ 逐阶段回对元素类别、观察到的材质/轮廓/光影/装饰特征、是否具有明显美术特征、动态要求、原生适用性证据、复用适用性证据、最终 owner、`implementation_plan.mode`、生产方式和交付类型。路线结论必须能从冻结图中的可观察事实和项目实际 three.js 实现的绘制能力复核；“按钮”“面板”等语义名称，以及单独的静态/动态标记，均不能决定路线。
 
-视觉来源与场景装配是两个独立决策。每个二维 coverage region 只能根据冻结参考图的可观察事实选择 `image-asset` 或 `threejs-native`，再用独立的 `assembly_analysis` 证明正式 Scene 采用原子装配且没有整屏捕获。文本交给 `text_decomposition` 判断 DOM/CSS2D 文本、项目自建文本网格/纹理或固定字图。纯色矩形、基础几何、规则边框、可确定性表达的简单规则渐变、遮罩和进度填充，在项目实际 three.js 实现能精确表达冻结外观时可选 `threejs-native`，无论它们是静态还是动态；特色插画、复杂纹饰、不规则轮廓、复杂材质及明显具有美术特征的装饰继续使用独立图片路线。不得仅凭元素名称或静态/动态标记选择路线。`uses_full_screen_capture=false` 不得推导 `runtime-program`；原子 `Sprite`、项目自建九宫格网格、独立背景块和其他图片部件仍是结构化实现。
+视觉来源与场景装配是两个独立决策。每个二维 coverage region 只能根据冻结参考图的可观察事实选择 `image-asset` 或 `threejs-native`，再用独立的 `assembly_analysis` 证明正式 Scene 采用原子装配且没有整屏捕获。文本交给 `text_decomposition` 判断 DOM/CSS2D 文本、项目自建文本网格/纹理或固定字图。边框、几何、填充、可见遮罩与动态效果按[正式视觉实现优先级](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#正式视觉实现优先级)先评估素材。只有复用和独立制作均无法满足约束，且 Three.js 实际绘制能力能完整还原外观和状态时，才选 `threejs-native` 承担可见外观。不得仅凭元素名称或静态/动态标记选择路线。`uses_full_screen_capture=false` 不得推导 `runtime-program`；原子 `Sprite`、项目自建九宫格网格、独立背景块和其他图片部件仍是结构化实现。
 
 `native_suitability` 必须记录实际 ThreeJS 绘制能力、可审计资格证据和冻结的 `render_contract`：`renderer`、逻辑尺寸 `dimensions.width/height`、`colors`、`line_width`、`corner_radius`、`gradient`、`opacity`、`applicable_states` 与 `unsupported_features`。颜色和渐变 stops 的 `color` 使用 `#RRGGBB`；`gradient.type=none` 时 `stops` 必须为空数组；线性渐变记录 `angle`（0–360）及按顺序排列的 stops。合同冻结参考中观察到的精确值；ThreeJS 不支持或不能确定性表达的视觉特征列入 `unsupported_features` 并阻断该原生路线，不能用近似替代后通过。特色视觉选择原生路线时仍须提交等价性证据，并绑定预先声明的容差或精确例外。
 
@@ -36,8 +36,8 @@
 
 | 来源路线 | 适用范围 | 必须满足的硬门 |
 | --- | --- | --- |
-| `image-asset` | 特色插画、复杂纹饰、不规则轮廓、复杂材质及其他项目实际 three.js 实现不能确定性复现的明显美术特征 | `fixed-production-visual`；适用的 `image-generation`/`authored-raster`/`reuse` 合同及对应交付类型。`Sprite`、项目自建九宫格网格、atlas slice 仍属于图片资产路线，因为视觉来源是纹理 |
-| `threejs-native` | 项目实际 three.js 能力可精确表达的二维文本/几何/遮罩/进度表现，以及运行时布局、交互逻辑、动态数据、粒子/Shader/程序特效；静态基础几何同样可选 | 文本必须委托 `text_decomposition`；非文本填写完整 `native_suitability`、原语和 `render_contract`；按真实用途记录 `runtime-data`/`runtime-rendered`/`runtime-program` 与 `threejs-graphics`/`runtime-program`。资格不由静态/动态声明单独成立。特色视觉仍须用等价性证据绑定预声明容差或精确例外 |
+| `image-asset` | 符合冻结外观和状态要求的已验收素材及独立制作素材，包括基础表面、边框、图标和特色美术 | `fixed-production-visual`；适用的 `image-generation`/`authored-raster`/`reuse` 合同及对应交付类型。`Sprite`、项目自建九宫格网格、atlas slice 仍属于图片资产路线，因为视觉来源是纹理 |
+| `threejs-native` | 项目实际 three.js 能力可精确表达的二维文本/几何/遮罩/进度表现，以及运行时布局、交互逻辑、动态数据、粒子/Shader/程序特效；可见外观的程序绘制为末选 | 文本必须委托 `text_decomposition`；非文本填写完整 `native_suitability`、原语和 `render_contract`；按真实用途记录 `runtime-data`/`runtime-rendered`/`runtime-program` 与 `threejs-graphics`/`runtime-program`。资格不由静态/动态声明单独成立。特色视觉仍须用等价性证据绑定预声明容差或精确例外 |
 | 混合来源与行为装配 | 一个可交互组件由原生外观、独立图片和程序文本等不同来源构成 | 依照可观察边界拆成独立 coverage region，分别记录 owner、生产合同和布局/资源绑定；行为装配通过明确组件/节点引用接线，禁止单一区域 `composite` 闭环 |
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-asset-production-routes.md#effect-image-全元素视觉路线)。

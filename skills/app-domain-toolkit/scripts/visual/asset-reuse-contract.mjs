@@ -97,6 +97,16 @@ export function validateReuseSnapshot(snapshot) {
   return errors;
 }
 
+/** 用合同中的生产方式与原语识别可见外观的程序绘制。 */
+function usesProgramDrawing(analysis) {
+  if (["text", "text-node", "label", "caption"].includes(analysis.element_type)) return false;
+  if (["cocos-graphics", "phaser-graphics", "threejs-graphics"].includes(analysis.production_method)) return true;
+  if (analysis.production_method !== "runtime-program") return false;
+  const primitives = analysis.native_suitability?.primitive_basis;
+  return analysis.delivery_kind === "runtime-drawing" || (Array.isArray(primitives) && primitives.some((item) =>
+    ["pure-color", "basic-geometry", "regular-line", "regular-gradient", "progress-fill", "program-effect"].includes(item)));
+}
+
 /** 核对 V3 路线分析引用的是当前区域的同一份结构化比较证据。 */
 export function validateReuseSuitability(analysis, region) {
   const suitability = analysis?.reuse_suitability;
@@ -114,6 +124,10 @@ export function validateReuseSuitability(analysis, region) {
   if (!isRecord(evidence) || !hasText(evidence.path) || !isDigest(evidence.sha256)
       || pathKey(evidence.path) !== pathKey(snapshot?.compatibility_evidence_file) || evidence.sha256 !== snapshot?.compatibility_evidence_sha256) {
     errors.push("reuse_suitability.evidence 必须绑定当前快照的结构化兼容证据路径与 SHA-256");
+  }
+  // 同一区域已有明确适配的已验收素材，程序绘制不能跳过本次复用结论。
+  if (errors.length === 0 && usesProgramDrawing(analysis)) {
+    errors.push("当前区域已有合格的已验收图片，程序绘制为末选，应使用 reuse-existing");
   }
   return errors;
 }
