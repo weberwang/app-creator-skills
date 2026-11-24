@@ -53,7 +53,7 @@ V5 的合同还必须声明 `combination_preacceptance`，固定视觉实施单�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-效果图相关 Schema 统一使用 `origin=provided|generated`。generated 的 `reference_target`、上下文效果图、V3 artifact 或原子 expected asset 必须带 `generation_record`；provided 禁止带生成记录。generation record 的身份字段、完整 `style_reference_inputs`、canonical 全局视觉一致性提示词、`style_drift_policy=forbid`、实际 `full_prompt`、输出文件、`consistency_status=passed` 与 `consistency_evidence` 由共享合同进一步校验，Schema 不承担项目具体美术风格解释。
+效果图相关 Schema 统一使用 `origin=provided|generated`。已经生成的 `reference_target`、上下文效果图和 V3 拆解工件须带各自的 `generation_record`。V3 的原子 expected asset 仅冻结生产规格和预定路径，V4 生产后核对实际生成记录。provided 文件禁止携带生成记录。generation record 的身份字段、完整 `style_reference_inputs`、canonical 全局视觉一致性提示词、`style_drift_policy=forbid`、实际 `full_prompt`、输出文件、`consistency_status=passed` 与 `consistency_evidence` 由共享合同进一步校验，Schema 不承担项目具体美术风格解释。
 
 > 适用技术栈：phaser、threejs。
 

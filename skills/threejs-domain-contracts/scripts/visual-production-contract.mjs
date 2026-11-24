@@ -5,6 +5,8 @@
  * 机器可读语义。它不调用 图像生成，也不根据文件后缀或效果图来源猜测
  * 生产方式；所有生产方式都必须在合同中显式声明。
  */
+import { isPlannedVisualAsset } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
+import { deliveryKindForProductionMethod } from "../../app-domain-toolkit/scripts/visual/visual-delivery-kind.mjs";
 import { readFileSync } from "node:fs";
 import { existsSync, statSync } from "node:fs";
 import { resolve } from "node:path";
@@ -140,13 +142,10 @@ export function validateProductionContract(contract, context = {}, options = {})
     if (!isRasterDelivery(current.delivery_kind, contract.mime_type ?? contract.mimeType)) error("image_generation_required=true 强制 delivery_kind=raster-image，SVG/Graphics/CanvasTexture/runtime drawing 不能等价完成", { expectedMethod: "image-generation", observedMethod: current.production_method ?? "unspecified" });
     if (current.generation_record_required !== true) error("image_generation_required=true 必须同时 generation_record_required=true", { missing: "generation_record_required" }); const inventory = current.component_inventory; if (isObject(inventory) && (inventory.delivery_mode !== "individual" || inventory.atlas_allowed !== false)) error("图像生成 只能使用 individual 且 atlas_allowed=false，禁止组图/atlas");
   }
-  const expectedDelivery = new Map([
-    ["image-generation", "raster-image"], ["authored-raster", "raster-image"], ["authored-svg", "vector-image"],
-    ["threejs-graphics", "runtime-drawing"], ["runtime-program", "runtime-program"], ["reuse", "existing-asset"], ["authored-model", "gltf-model"], // 三维模型独立交付，不能归类为二维图片或运行绘制。
-  ]).get(current.production_method);
+  // 三维模型沿用独立交付类型，二维路线共享生产方式的映射。
+  const expectedDelivery = current.production_method === "authored-model" ? "gltf-model" : deliveryKindForProductionMethod(current.production_method);
   if (expectedDelivery && current.delivery_kind !== expectedDelivery) error(`${current.production_method} 必须使用 delivery_kind=${expectedDelivery}`, { expectedMethod: current.production_method, observedMethod: current.production_method });
   if (current.production_method === "image-generation" && current.image_generation_required !== true) error("production_method=image-generation 不得将 image_generation_required 声明为 false");
-  if (current.image_generation_required === true && current.substitution_policy !== "user-change-request-only") error("图像生成 必须使用 substitution_policy=user-change-request-only", { missing: "substitution_policy=user-change-request-only" });
   if (current.production_method !== "image-generation" && current.image_generation_required === true) error("非 image-generation 方法不得声明 image_generation_required=true", { observedMethod: current.production_method });
   const fileProductionMethods = ["image-generation", "authored-raster", "authored-svg", "reuse", "authored-model"];
   if (fileProductionMethods.includes(current.production_method) && hasRuntimeImplementationField(contract)) error(`${current.production_method} 文件交付不得携带 runtime_implementation`, { missing: "runtime_implementation" });
@@ -182,6 +181,23 @@ export function validateImageGenerationContract(asset, contract, context = {}, o
   }));
   const rawGeneration = asset?.generation_record;
   const expectedComponent = options.expectedAsset ? normalizeComponentExpectedAsset(options.expectedAsset) : null;
+  if (options.requireRuntimeConsumption !== true && isPlannedVisualAsset(asset, context.stage)) {
+    // 计划文件可暂不存在，但必须匹配当前原子资源的冻结路径且不能逃逸项目。
+    const declared = expectedComponent ?? (Array.isArray(contract.expected_assets)
+      ? contract.expected_assets.map(normalizeComponentExpectedAsset).find((item) => item.asset_id === asset.id)
+      : null);
+    const plannedPaths = [
+      ["source_file", collectImageGenerationPathValues(asset, ["source_file", "sourceFile", "source_files", "sourceFiles"]), declared?.source_file],
+      ["runtime_outputs", collectImageGenerationPathValues(asset, ["runtime_outputs", "runtimeOutputs"]), declared?.runtime_file],
+    ];
+    for (const [field, paths, expected] of plannedPaths) {
+      const target = normalizeProjectRelativePath(expected);
+      if (!target || paths.length === 0 || paths.some((path) => normalizeProjectRelativePath(path) !== target)) {
+        error(`计划 ${field} 必须使用当前 expected_assets 对应的项目内路径`, { missing: `expected_assets.${field}` });
+      }
+    }
+    return errors;
+  }
   let generation = rawGeneration;
   // component_records 允许共享公共提示词，但身份和输出路径必须来自当前 component×state 的独立记录。
   let componentGenerationRecord = rawGeneration;
@@ -325,11 +341,12 @@ export function validateVisualProductionCoverage(manifest, options = {}) {
         errors.push(...validateImageGenerationContract(componentAsset, { ...contract, expected_assets: [expectedComponent] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(regionId) ?? {}) } }, { expectedAsset: expectedComponent, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest?.reference_target?.original_file, visual_baseline: manifest?.visual_baseline, identity: manifestEvidenceIdentity(manifest), candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
       }
     } else if (contract.generation_record_required === true) {
-      for (const registeredAsset of contractAssets) if (!isObject(registeredAsset.generation_record)) errors.push(productionContractError(context, "合同要求 generation_record，但原子资产缺少生成记录", { missing: `assets.${registeredAsset.id}.generation_record` }));
+      for (const registeredAsset of contractAssets) if (!isPlannedVisualAsset(registeredAsset, stage) && !isObject(registeredAsset.generation_record)) errors.push(productionContractError(context, "合同要求 generation_record，但原子资产缺少生成记录", { missing: `assets.${registeredAsset.id}.generation_record` }));
     }
     const changeRequestId = region.production_method_change_request_id ?? region.productionMethodChangeRequestId ?? region.change_request_id ?? region.changeRequestId;
     const methodChanged = region.production_method_changed === true || region.productionMethodChanged === true || nonEmptyString(changeRequestId);
     if (methodChanged) {
+      if (contract.substitution_policy === "forbid") errors.push(productionContractError(context, "substitution_policy=forbid 不允许替换生产方式"));
       const request = nonEmptyString(changeRequestId) ? requestById.get(changeRequestId) : null;
       if (!request) {
         errors.push(productionContractError({ ...context, expectedMethod: contract.production_method, observedMethod: contract.production_method }, "production_method 变更必须绑定 ACCEPTED Change Request", { missing: "change_request_id" }));
@@ -654,7 +671,7 @@ export async function validateV5VisualManifest(manifest, options = {}) {
   const evidenceOptions = { requireEvidenceIdentity: options.requireEvidenceIdentity !== false, identity, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority };
   const errors = [
     ...validateSceneReconstructionGate(manifest, { stage: "V5", displayLayerScope: options.displayLayerScope }),
-    ...validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: true, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }),
+    ...validateVisualProductionCoverage(manifest, { stage: "V5", requireManualConfirmation: true, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }),
     ...validateProductionAuditShape(manifest, { ...options, stage: "V5", authority: options.authority }),
     ...validateV5ProductionGate(manifest, { ...options, ...evidenceOptions, requireSceneReconstruction: true }),
   ];

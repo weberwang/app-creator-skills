@@ -165,6 +165,20 @@ test("manifest 尺寸门核对 V4 actual_assets，且不依赖 human_review", ()
   assert(errors.some((item) => item.includes("V4 actual_assets 实际输出尺寸漂移")));
 });
 
+test("V3 计划图仅检查 expected 尺寸，实际输出或 V4 均需回读尺寸", () => {
+  const current = region();
+  const planned = { id: "hero-default", status: "planned" };
+  const manifest = { coverage_audit: { regions: [current] }, assets: [planned] };
+  assert.deepEqual(validateImageGenerationSizeManifest(manifest, { stage: "V3" }), []);
+  assert(validateImageGenerationSizeManifest(manifest, { stage: "V4" }).some((item) => item.includes("实际输出尺寸")));
+  current.expected_assets[0].width = 44;
+  assert(validateImageGenerationSizeManifest(manifest, { stage: "V3" }).some((item) => item.includes("精确使用机器计算的最小尺寸")));
+  current.expected_assets[0].width = 45;
+  planned.width = 44;
+  planned.height = 30;
+  assert(validateImageGenerationSizeManifest(manifest, { stage: "V3" }).some((item) => item.includes("实际输出尺寸")));
+});
+
 test("组件显示尺寸计算返回各轴最大值", () => {
   const current = region();
   current.component_inventory.components[0].placements.push({ placement_id: "hero-2", bounds: { x: 0, y: 0, width: 41, height: 7 }, interaction_required: false });

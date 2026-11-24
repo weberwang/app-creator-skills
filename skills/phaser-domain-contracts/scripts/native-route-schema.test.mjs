@@ -121,18 +121,9 @@ test("运行消费证据可选且生成图片冻结合同仍在", () => {
   assert.equal(runtimeImplementation.properties.render_contract.$ref, "#/$defs/nativeRenderContract");
   assert.equal(runtimeImplementation.required.includes("render_contract"), false);
 
-  const pending = [implementationPackage];
-  let frozenSubstitutionPolicyFound = false;
-  while (pending.length > 0) {
-    const value = pending.pop();
-    if (!value || typeof value !== "object") continue;
-    if (
-      value.properties?.image_generation_required?.const === true &&
-      value.properties?.substitution_policy?.const === "user-change-request-only"
-    ) {
-      frozenSubstitutionPolicyFound = true;
-    }
-    pending.push(...Object.values(value));
-  }
-  assert.equal(frozenSubstitutionPolicyFound, true);
+  const productionUnit = implementationPackage.$defs.visualProductionUnit;
+  assert.deepEqual(productionUnit.properties.substitution_policy.enum, ["forbid", "user-change-request-only"]);
+  const generated = productionUnit.allOf.filter((rule) => rule.then?.properties?.generation_record_required?.const === true);
+  assert(generated.length > 0);
+  assert(generated.every((rule) => rule.then.properties.substitution_policy === undefined));
 });

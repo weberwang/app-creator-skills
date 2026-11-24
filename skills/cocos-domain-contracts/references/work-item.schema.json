@@ -4726,6 +4726,8 @@
         }
       },
       "allOf": [
+        {"if": {"properties": {"production_method": {"const": "runtime-program"}}},"then": {"properties": {"delivery_kind": {"const": "runtime-program"}}}},
+        {"if": {"properties": {"production_method": {"const": "cocos-graphics"}}},"then": {"properties": {"delivery_kind": {"const": "runtime-drawing"}}}},
         {
           "if": {
             "properties": {
@@ -5522,23 +5524,6 @@
         }
       },
       "allOf": [
-        {
-          "if": {
-            "required": [
-              "origin"
-            ],
-            "properties": {
-              "origin": {
-                "const": "generated"
-              }
-            }
-          },
-          "then": {
-            "required": [
-              "generation_record"
-            ]
-          }
-        },
         {
           "if": {
             "required": [

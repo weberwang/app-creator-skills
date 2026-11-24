@@ -783,6 +783,57 @@ test("六按钮只有第一张有 generation_record 时，V4 必须逐部件拒�
   assert(errors.some((item) => item.includes("component_id=component-6") && item.includes("generation_record")), errors.join("\n"));
 });
 
+test("V3 计划资源允许等待生成，已提交证据和 V4 资源仍必须完整", () => {
+  const manifest = multiImageGenerationManifest(2);
+  for (const asset of manifest.assets) {
+    asset.status = "planned";
+    delete asset.generation_record;
+    delete asset.runtime_consumption;
+    delete asset.output_file;
+    delete asset.width;
+    delete asset.height;
+    delete asset.alpha;
+    delete asset.sha256;
+  }
+  const preflight = validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false });
+  assert(!preflight.some((item) => item.includes("缺少 generation_record")), preflight.join("\n"));
+  const v4 = validateVisualProductionCoverage(manifest, { stage: "V4", requireManualConfirmation: false });
+  assert(v4.some((item) => item.includes("缺少 generation_record")), v4.join("\n"));
+  const savedSource = manifest.assets[0].source_file;
+  for (const path of ["../outside.png", "other/image.png"]) {
+    manifest.assets[0].source_file = path;
+    assert(validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false })
+      .some((item) => item.includes("计划 source_file")));
+  }
+  manifest.assets[0].source_file = savedSource;
+  const savedRuntime = manifest.assets[0].runtime_outputs;
+  manifest.assets[0].runtime_outputs = ["public/other.png"];
+  assert(validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false })
+    .some((item) => item.includes("计划 runtime_outputs")));
+  manifest.assets[0].runtime_outputs = savedRuntime;
+  manifest.assets[0].width = 32;
+  manifest.assets[0].height = 32;
+  assert(validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false })
+    .some((item) => item.includes("缺少 generation_record")));
+  delete manifest.assets[0].width;
+  delete manifest.assets[0].height;
+  manifest.assets[0].output = { width: 32, height: 32, mime_type: "image/png" };
+  assert(validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false })
+    .some((item) => item.includes("缺少 generation_record")));
+  delete manifest.assets[0].output;
+  manifest.assets[0].generation_record = {};
+  const partial = validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false });
+  assert(partial.some((item) => item.includes("generation_record.record_id")), partial.join("\n"));
+  delete manifest.assets[0].generation_record;
+  manifest.assets[0].output_file = "assets/claimed.png";
+  assert(validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false })
+    .some((item) => item.includes("缺少 generation_record")));
+  delete manifest.assets[0].output_file;
+  manifest.assets[0].status = "producing";
+  const producing = validateVisualProductionCoverage(manifest, { stage: "V3", requireManualConfirmation: false });
+  assert(producing.some((item) => item.includes("缺少 generation_record")), producing.join("\n"));
+});
+
 test("多部件 图像生成 不得复用同一个 generation_record.record_id", () => {
   const manifest = multiImageGenerationManifest(2);
   manifest.assets[1].generation_record = { ...structuredClone(manifest.assets[0].generation_record), component_id: "component-2", asset_id: "asset-2", source_file: "art/component-2.png", runtime_file: "public/component-2.png" };

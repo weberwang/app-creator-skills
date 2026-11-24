@@ -11,6 +11,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
 import { isDeepStrictEqual } from "node:util";
+import { deliveryKindForProductionMethod } from "../../app-domain-toolkit/scripts/visual/visual-delivery-kind.mjs";
 import { validateReuseProductionGate } from "./visual-confirmation-reuse-gates.mjs";
 import { validateReuseSuitability as validateSharedReuseSuitability } from "../../app-domain-toolkit/scripts/visual/asset-reuse-contract.mjs";
 import { validateFixedVisualProductionMethod } from "./visual-decomposition-confirmation.mjs";
@@ -387,6 +388,11 @@ export function validateSceneVisualRouteAnalysis(region, contract = {}, options 
   const owner = analysis.final_owner;
   const method = analysis.production_method;
   const delivery = analysis.delivery_kind;
+  // 生产方式和交付类型使用同一映射，避免场景方案与后续生产门相互冲突。
+  const expectedDelivery = deliveryKindForProductionMethod(method);
+  if (expectedDelivery && delivery !== expectedDelivery) {
+    errors.push(routeError(stage, contract, region, `${method} 必须使用 delivery_kind=${expectedDelivery}`, { expected: expectedDelivery, actual: delivery }));
+  }
   const isTextElement = TEXT_ELEMENT_TYPES.has(analysis.element_type);
   const hasCompositeInput = route === COMPOSITE_ROUTE || Object.hasOwn(analysis, "composite_parts");
   if (hasCompositeInput) {

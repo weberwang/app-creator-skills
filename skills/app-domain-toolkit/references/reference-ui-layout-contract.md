@@ -179,6 +179,8 @@ Camera 合同必须说明逻辑 viewport 如何映射到物理 backing，zoom �
 
 > 适用技术栈：cocos、phaser、threejs；由场景 `text_decomposition` 的 V4 资源验收和 V5 正式运行入口调用共享文本比较器，不将本协议套到 Unity 或 Flutter 的原生记录。
 
+V3 拆解的原生文本区域使用 `production_method=runtime-program` 和 `delivery_kind=runtime-program`，并由 `text_decomposition_ref` 绑定文字节点。文字节点的 `implementation_route` 记录实际文字渲染方式。
+
 V4 试装和 V5 正式运行的读数与各自的 `runtime_verification` 都要记录 `actual_visible`。按当前状态从实际文字或图片组件及父级读取有效显示状态。组件自身启用、父级可见、有效透明度和视口或裁切范围共同决定文字是否实际显示。已确认应显示的文字缺少组件、缺少读数或 `actual_visible` 不为 `true` 时，该节点保持未通过。
 
 独立视觉清单命令用于清单与文件检查。公共工作流在 V4 将与资源一起还原的实际文字报告冻结到 Asset Review 的 `textRestorationRef: {path, sha256}`，报告声明 `visualStage: V4`。V5 复验正式组件，用新的采集批次并绑定到同批 `runtime-layout`。

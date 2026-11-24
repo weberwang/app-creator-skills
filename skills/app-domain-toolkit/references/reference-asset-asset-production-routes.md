@@ -203,7 +203,7 @@ V4 按每个 `annotation_number/region_id` 写入上述合同和错误定位；I
 
 > 适用技术栈：cocos、phaser、threejs。
 
-生产方式变化只能使用 `ACCEPTED` 的 Change Request，并绑定区域、工作项、候选版本、用户原文和决定时间。V5/F2/V5 发现缺少生成记录、输出文件、实际消费或未批准替换时必须拒绝，不得以补一张截图或相似度结论放行。
+图片的 `substitution_policy` 可选 `forbid` 或 `user-change-request-only`。前者禁止替换。后者仅允许绑定同一区域、工作项、候选版本、用户原文及决定时间的 `ACCEPTED` Change Request。V4 核对生成记录和输出文件，V5 核对正式运行消费。
 
 ## 机器清单最低字段
 

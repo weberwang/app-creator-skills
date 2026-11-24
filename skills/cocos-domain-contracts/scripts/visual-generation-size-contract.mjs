@@ -7,6 +7,7 @@
  * 图片生产基线 DPR 计算，并强制画布不额外添加 padding；运行时实际 DPR
  * 由设备动态解析，不能反向改变生产尺寸合同。
  */
+import { isPlannedVisualAsset } from "./visual-planned-asset.mjs";
 import { normalizeComponentInventory } from "./visual-component-contract.mjs";
 import { isNineSliceStretch, equalNineSliceContracts, validateNineSliceContract, validateNineSliceTargetBounds } from "../../cocos-game-ui-layout/scripts/nine-slice-contract.mjs";
 import { resolveOutputMetadata } from "./visual-raster-contract.mjs";
@@ -188,7 +189,9 @@ export function validateImageGenerationSizeContract(asset, contract, context = {
     errors.push(sizeError(local, `expected_assets 必须精确使用机器计算的最小尺寸（按逻辑像素×最大缩放×图片生产基线 ${IMAGE_PRODUCTION_DPR} 向上取整）`, { expected: minimum, actual: expectedSize }));
   }
   const metadata = resolveOutputMetadata(asset ?? {});
-  if (asset && (metadata.width !== minimum.width || metadata.height !== minimum.height)) {
+  // V3 尚未制作的 planned 资源只校验计划尺寸；一旦声明实际宽高或进入后续阶段仍严格回读。
+  const awaitingOutput = isPlannedVisualAsset(asset, context.stage) && metadata.width === undefined && metadata.height === undefined;
+  if (asset && !awaitingOutput && (metadata.width !== minimum.width || metadata.height !== minimum.height)) {
     errors.push(sizeError(local, "图像生成 实际输出尺寸必须精确等于最小尺寸", { expected: minimum, actual: { width: metadata.width, height: metadata.height } }));
   }
   if (options.actualAsset) {

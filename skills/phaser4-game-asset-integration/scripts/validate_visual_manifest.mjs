@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { isPlannedVisualAsset } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -382,6 +383,7 @@ export function validateManifest(data, options = {}) {
     if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.some((item) => item?.conclusion !== "passed")) errors.push("V5 complete 的 fidelity_cases 必须全部 passed");
   } else if (Array.isArray(data.fidelity_cases) && data.fidelity_cases.length > 0) validateVisualManifestFidelityCases(data.fidelity_cases, target, candidate, baseline, errors, { mode: visualValidationMode });
   const strictProductionContract = reconstruction?.applicability === "effect-image";
+  const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3");
   // V4 公共验收只加入文字与资源的试装核对，其他正式场景证据仍由 V5 检查。
   const verifyTrialText = requestedStage === "V4" && options.requireNativeTextReadback === true;
   if (data.scene_reconstruction_contract && (verifyTrialText || (!strictProductionContract && ["V3", "V5"].includes(requestedStage)))) {
@@ -391,14 +393,13 @@ export function validateManifest(data, options = {}) {
   }
   if (strictProductionContract) {
     // 清单声明的阶段是实际身份，生命周期不能把 V5 记录降级为 V3。
-    const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (reconstruction.lifecycle === "v5-complete" ? "V5" : "V3");
     // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
     // 正式 Scene 和运行时消费由 V5 检查，V4 文字试装在上方单独核对。
     if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
-    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage: "V3", requireManualConfirmation: false }));
+    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage, requireManualConfirmation: false }));
     errors.push(...validateImageGenerationSizeManifest(data, { stage }));
     const requireAudit = stage === "V4" || stage === "V5" || reconstruction.lifecycle === "v5-complete";
     const requireRuntime = stage === "V5" || reconstruction.lifecycle === "v5-complete";
@@ -440,7 +441,8 @@ export function validateManifest(data, options = {}) {
     } else if ("ownership_type" in asset || "coverage_region_ids" in asset) errors.push(`${label} 非效果图项目不得声明 ownership_type 或 coverage_region_ids`);
     const assetContract = strictProductionContract ? resolveProductionContract(asset) : {};
     if (strictProductionContract && assetContract.owner_type === "fixed-production-visual") {
-      errors.push(...validateVisualEffectImageOrigin(asset, {
+      // V3 只读计划。实际生成来源和证据随 V4 产物核对。
+      if (assetContract.image_generation_required !== true || !isPlannedVisualAsset(asset, stage)) errors.push(...validateVisualEffectImageOrigin(asset, {
         label,
         visual_baseline: baseline,
         target_sha256: data.reference_target?.target_sha256,
@@ -449,7 +451,7 @@ export function validateManifest(data, options = {}) {
       if (assetContract.image_generation_required === true && asset.origin !== "generated") errors.push(`${label} image_generation_required=true 必须声明 origin=generated`);
     }
     if (Object.keys(assetContract).length > 0) {
-      const assetContext = { stage: "V3", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, observedMethod: assetContract.production_method ?? "unspecified" };
+      const assetContext = { stage, annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, observedMethod: assetContract.production_method ?? "unspecified" };
       // 复用证据归属于具体消费区域，平面资产条目只在有同一资产的复用区域时借用其合同。
       const mappedRegions = fixedMappings.get(asset.id) ?? [];
       const reuseRegion = assetContract.production_method === "reuse" && mappedRegions.length
@@ -801,6 +803,7 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
   if ((data?.visualStage !== undefined || data?.visual_stage !== undefined || data?.visualStageState !== undefined || data?.effect_image_reconstruction?.applicability === "effect-image") && data.visualStageModel !== "function-first-v1") errors.push("阶段记录必须声明 visualStageModel=function-first-v1");
   // 文件审计必须使用清单声明的阶段，与结构门保持一致。
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase(); if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5"); const lifecycle = data.effect_image_reconstruction?.lifecycle; const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (lifecycle === "v5-complete" ? "V5" : "V3");
+  if (requestedStage && (data.visualStage ?? data.visual_stage) && requestedStage !== String(data.visualStage ?? data.visual_stage).toUpperCase()) errors.push("文件门请求阶段与清单声明阶段不一致");
   const isEffectImage = data.effect_image_reconstruction?.applicability === "effect-image";
   const requireAudit = isEffectImage && (["V4", "V5"].includes(stage) || lifecycle === "v5-complete"); const requireRuntime = isEffectImage && (stage === "V5" || lifecycle === "v5-complete");
   // V3/V4/V5 文件门直接读取资源清单，不依赖额外草图文件。
@@ -874,8 +877,13 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
   }
   data.assets.forEach((asset, index) => {
     if (!isObject(asset)) return; const assetPaths = []; const contract = resolveProductionContract(asset);
-    if (contract.image_generation_required === true) {
-      errors.push(...validateEvidenceIdentity(asset.runtime_consumption, { stage: "V3", annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, expectedMethod: "image-generation", observedMethod: contract.production_method ?? "missing" }, manifestEvidenceIdentity(data), { projectRoot }));
+    // 计划文件无需存在，但已存在父目录不能通过链接逃逸项目边界。
+    if (contract.image_generation_required === true && isPlannedVisualAsset(asset, stage)) {
+      const plannedPaths = [asset.source_file, asset.sourceFile, asset.source_files, asset.sourceFiles, asset.runtime_outputs, asset.runtimeOutputs].flatMap((value) => Array.isArray(value) ? value : [value]);
+      for (const path of plannedPaths.filter(nonEmptyString)) try { projectPath(projectRoot, path); } catch (error) { errors.push(`assets[${index}].planned_path：${error.message}`); }
+    }
+    if (contract.image_generation_required === true && !isPlannedVisualAsset(asset, stage)) {
+      errors.push(...validateEvidenceIdentity(asset.runtime_consumption, { stage, annotation_number: asset.coverage_annotation_number ?? "?", region_id: asset.coverage_region_id ?? asset.id, expectedMethod: "image-generation", observedMethod: contract.production_method ?? "missing" }, manifestEvidenceIdentity(data), { projectRoot }));
       if (nonEmptyString(asset.source_file)) assetPaths.push(["production_contract.source_file", asset.source_file]);
       if (Array.isArray(asset.source_files)) for (const value of asset.source_files) if (nonEmptyString(value)) assetPaths.push(["production_contract.source_files", value]);
       if (nonEmptyString(asset.output_file)) assetPaths.push(["production_contract.output_file", asset.output_file]);
@@ -905,7 +913,7 @@ export async function checkManifestFiles(data, projectRoot, options = {}) {
   }
   for (const [index, asset] of data.assets.entries()) {
     const contract = isObject(asset) ? resolveProductionContract(asset) : {};
-    if (contract.image_generation_required !== true) continue;
+    if (contract.image_generation_required !== true || isPlannedVisualAsset(asset, stage)) continue;
     const metadata = resolveOutputMetadata(asset); if (!nonEmptyString(metadata.file)) continue;
     try {
       const outputPath = projectPath(projectRoot, metadata.file); if (!isFile(outputPath)) errors.push(`assets[${index}].production_contract.output 文件不存在：${metadata.file}`);

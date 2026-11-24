@@ -185,6 +185,80 @@ test("风格指纹是可选摘要记录，不限制格式或类型", () => { con
 test("阶段证据文档不得作为冻结基线哈希正文", () => { const manifest = validManifest(); manifest.visual_baseline.document = "docs/visual-design.md"; assert(validateManifest(manifest).some((item) => item.includes("不可变 docs/visual-baseline.md"))); });
 test("资源仍绑定基线版本，但摘要漂移不阻断", () => { const staleVersion = validManifest(); staleVersion.assets[0].visual_baseline_version = "2.0.0"; assert(validateManifest(staleVersion).some((item) => item.includes("visual_baseline_version 与"))); const staleDigest = validManifest(); staleDigest.assets[0].style_fingerprint = { stale: true }; assert(!validateManifest(staleDigest).some((item) => item.includes("style_fingerprint") || item.includes("SHA"))); });
 test("AI 生成包字段完整", async () => { const root = await mkdtemp(join(tmpdir(), "visual-manifest-ai-package-")); const valid = validAiManifest(); await createFixtureFiles(root, true, valid); assert.deepEqual(validateManifest(valid, { ...STRUCTURAL_FILE_GATE_OPTIONS, projectRoot: root }), []); const manifest = validAiManifest(); delete manifest.assets[0].generation_record.global_prompt_prefix; assert(validateManifest(manifest, { ...STRUCTURAL_FILE_GATE_OPTIONS, projectRoot: root }).some((item) => item.includes("global_prompt_prefix"))); });
+test("V3 完整清单的 planned 资产允许尚未生成，V4 不得沿用此例外", () => {
+  const manifest = validAiManifest();
+  manifest.visualStage = "V3";
+  manifest.visualStageState = "v3-production-planning-complete";
+  manifest.effect_image_reconstruction.lifecycle = "v3-ready";
+  manifest.fidelity_cases = [];
+  delete manifest.production_contract_audit;
+  const asset = manifest.assets[0];
+  asset.status = "planned";
+  for (const field of ["generation_record", "runtime_consumption", "output_file", "width", "height", "alpha", "sha256", "normalization_record"]) delete asset[field];
+  const v3 = validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS });
+  assert.deepEqual(v3, []);
+  const validSource = asset.source_file;
+  asset.source_file = "../outside.png";
+  assert(validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS }).some((item) => item.includes("计划 source_file")));
+  asset.source_file = "other/picture.png";
+  assert(validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS }).some((item) => item.includes("计划 source_file")));
+  asset.source_file = validSource;
+  const validOutputs = asset.runtime_outputs;
+  asset.runtime_outputs = ["public/wrong.png"];
+  assert(validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS }).some((item) => item.includes("计划 runtime_outputs")));
+  asset.runtime_outputs = validOutputs;
+  asset.width = 64;
+  asset.height = 96;
+  assert(validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS }).some((item) => item.includes("缺少 generation_record")));
+  delete asset.width;
+  delete asset.height;
+  manifest.visualStage = "V4";
+  manifest.visualStageState = "v4-formal-acceptance-complete";
+  const v4 = validateManifest(manifest, { stage: "V4", ...STRUCTURAL_FILE_GATE_OPTIONS });
+  assert(v4.some((item) => item.includes("缺少 generation_record")), v4.join("\n"));
+  manifest.visualStage = "V3";
+  manifest.visualStageState = "v3-production-planning-complete";
+  asset.generation_record = {};
+  const submitted = validateManifest(manifest, { stage: "V3", ...STRUCTURAL_FILE_GATE_OPTIONS });
+  assert(submitted.some((item) => item.includes("generation_record.record_id")), submitted.join("\n"));
+});
+test("V3 计划资产的文件门等待生产，已提交文件或 V4 仍核对", async () => {
+  const root = await mkdtemp(join(tmpdir(), "visual-planned-asset-"));
+  const asset = {
+    id: "planned-image", status: "planned", source_file: "source/picture.png",
+    runtime_outputs: ["assets/picture.png"],
+    production_method: "image-generation", image_generation_required: true,
+  };
+  const manifest = { visualStageModel: "function-first-v1", visualStage: "V3", assets: [asset] };
+  const v3 = await runManifestFileCheck(manifest, root, { stage: "V3" });
+  assert.deepEqual(v3, []);
+  manifest.visualStage = "V4";
+  const downgrade = await runManifestFileCheck(manifest, root, { stage: "V3" });
+  assert(downgrade.some((item) => item.includes("阶段不一致")));
+  const v4 = await runManifestFileCheck(manifest, root, { stage: "V4" });
+  assert(v4.some((item) => /source_file.*不存在/.test(item)), v4.join("\n"));
+  manifest.visualStage = "V3";
+  asset.generation_record = {};
+  const submitted = await runManifestFileCheck(manifest, root, { stage: "V3" });
+  assert(submitted.some((item) => /source_file.*不存在/.test(item)), submitted.join("\n"));
+});
+test("V3 待生成计划路径的现有父目录不得通过链接逃出项目", async (t) => {
+  const root = await mkdtemp(join(tmpdir(), "visual-plan-root-"));
+  const outside = await mkdtemp(join(tmpdir(), "visual-plan-outside-"));
+  await mkdir(join(root, "assets"));
+  try { await symlink(outside, join(root, "assets", "external"), "junction"); }
+  catch (error) {
+    if (["EPERM", "EACCES", "ENOSYS"].includes(error.code)) return t.skip("当前环境不允许创建测试链接");
+    throw error;
+  }
+  const asset = {
+    id: "planned-image", status: "planned", source_file: "source/picture.png",
+    runtime_outputs: ["assets/external/picture.png"],
+    production_method: "image-generation", image_generation_required: true,
+  };
+  const errors = await runManifestFileCheck({ visualStageModel: "function-first-v1", visualStage: "V3", assets: [asset] }, root, { stage: "V3" });
+  assert(errors.some((item) => item.includes("planned_path") && item.includes("逃逸")), errors.join("\n"));
+});
 test("任意路线使用 generation_record 时必须提供完整公共生成身份", () => { const forged = validManifest(); delete forged.assets[0].source_file; forged.assets[0].generation_record = { x: 1 }; assert(validateManifest(forged).some((item) => item.includes("generation_record.record_id"))); const generated = validManifest(); delete generated.assets[0].source_file; generated.assets[0].generation_record = { record_id: "gen-1", generator: "aseprite-cli", generator_version: "1.3", created_at: "2026-08-15T00:00:00Z", command_or_recipe: "aseprite -b hero.aseprite --save-as hero.png", input_sources: ["spec:hero-idle"], parameters: { scale: 1 } }; assert.deepEqual(validateManifest(generated, STRUCTURAL_FILE_GATE_OPTIONS), []); });
 test("预算必须是正数", () => { const manifest = validManifest(); manifest.budgets.max_texture_size = null; assert(validateManifest(manifest).some((item) => item.includes("max_texture_size 必须是正数"))); });
 test("PNG 必须具备支持的 IHDR 组合和完整扫描行", () => { assert.deepEqual(readPngDimensions(minimalPng(1, 1)), { width: 1, height: 1 }); assert.equal(readPngDimensions(minimalPng(1, 1, Buffer.alloc(0))), null); assert.equal(readPngDimensions(minimalPng(1, 1, Buffer.from([5, 0, 0, 0, 0]))), null); });

@@ -7,7 +7,7 @@ import test from "node:test";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { validateDisplayLayerPlanning, validateSceneReconstructionContract as validateSceneReconstructionContractImpl, validateStructuredFidelityCases as validateStructuredFidelityCasesImpl } from "./scene-reconstruction-contract.mjs";
-import { validateSceneVisualRouteContract } from "./scene-visual-route-contract.mjs";
+import { validateSceneVisualRouteAnalysis, validateSceneVisualRouteContract } from "./scene-visual-route-contract.mjs";
 import { refreshFixtureLayoutExecution } from "./scene-reconstruction-test-fixtures.mjs";
 import { validateSceneAssetUsageContract, validateSceneCombinationPreacceptance as validateSceneCombinationPreacceptanceImpl, validateV5ProductionGate as validateV5ProductionGateImpl, validateVisualImplementationPackageBinding as validateVisualImplementationPackageBindingImpl } from "./visual-production-contract.mjs"; import { computeLayoutAnnotationConfirmationSha256, computeLayoutUserMessageSha256 } from "./layout_annotation_confirmation.mjs";
 import { fixtureLayoutDocument, fixtureLayoutSourceOptions, fixtureLayoutNodes, isolateFixtureV2Layout, registerFixtureV2Layout } from "./v2-layout-source-test-fixtures.mjs";
@@ -870,6 +870,28 @@ test("文本视觉路线委托 text_decomposition，普通非 effect-image 合�
   };
   assert.deepEqual(validateSceneReconstructionContract(value, effectImageManifest(value), { stage: "V4" }), []);
   assert.deepEqual(validateSceneReconstructionContract(contract(), manifest(), { stage: "V4" }), []);
+});
+
+test("V3 原生文本与绘制路线的生产方式和交付类型必须匹配", () => {
+  const value = textEffectImageContract();
+  const region = value.coverage_regions[0];
+  region.visual_route_analysis = {
+    ...region.visual_route_analysis,
+    element_type: "text",
+    dynamic_requirements: { is_dynamic: false, description: "固定标题文本" },
+    text_decomposition_ref: "hud.title.label",
+  };
+  const check = () => validateSceneVisualRouteAnalysis(region, value, { stage: "V3" });
+  assert.deepEqual(check(), []);
+
+  // 文字路线保持 runtime-program 的交付语义，不能借绘制交付类型绕开生产合同。
+  region.visual_route_analysis.delivery_kind = "runtime-drawing";
+  assert.match(check().join("\n"), /runtime-program 必须使用 delivery_kind=runtime-program/);
+
+  region.visual_route_analysis.production_method = "cocos-graphics";
+  assert.deepEqual(check(), []);
+  region.visual_route_analysis.delivery_kind = "runtime-program";
+  assert.match(check().join("\n"), /cocos-graphics 必须使用 delivery_kind=runtime-drawing/);
 });
 
 test("visual_route_analysis 必须与 coverage/实施计划/实施包字段一致", () => {
