@@ -205,8 +205,8 @@ test('ESP32 V3 可交接真实待确认项，V5 保持未完成', (t) => {
 
 test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) => {
   const f = fixture(t);
-  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
-  const slice = { implementation: 'project-gui', sourcePath: imageRef.path, sourceSize: { width: 30, height: 24 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
+  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 16, 12));
+  const slice = { implementation: 'project-gui', sourcePath: imageRef.path, sourceSize: { width: 16, height: 12 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
   f.layout.nodes.find((node) => node.id === 'title').nineSlice = slice;
   f.doc.layoutSpecRef = write(f.repo, 'layout-slice.json', f.layout);
   f.work.visual.reviews.V3Layout = write(f.repo, 'review-v3-slice.json', { ...f.host, layoutSpecRef: f.doc.layoutSpecRef });
@@ -242,6 +242,8 @@ test('ESP32 运行门验证九宫源帧、倍率与最小显示框', async (t) =
   sample.scale = 1.000000001; await assert.rejects(run, /倍率.*严格/);
   sample.scale = 1; sample.displaySize = { width: 20, height: 7 }; await assert.rejects(run, /中心/);
   sample.displaySize = { width: 20, height: 17 }; await assert.rejects(run, /最小显示框/);
+  slice.sourceSize = { width: 24, height: 12 }; f.doc.layoutSpecRef = write(f.repo, 'layout-slice-large.json', f.layout);
+  await assert.rejects(() => validateEsp32(f.repo, f.work, 'V3', f.doc, identity), /不得大于显示框/);
 });
 
 test('ESP32 按像素网格包络 Figma 直线，V2 源几何与 V3 原生容器保持可追溯', async (t) => {

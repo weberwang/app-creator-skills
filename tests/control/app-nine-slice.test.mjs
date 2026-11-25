@@ -4,15 +4,16 @@ import { collectAppNineSliceNodes, validateAppLayoutNineSlices, validateAppNineS
 
 /** 制作真实值形状的协议数据，避免把测试样本当成实际采集。 */
 function fixture() {
-  const slice = { implementation: 'custom', sourcePath: 'assets/panel.png', sourceSize: { width: 30, height: 24 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
+  const slice = { implementation: 'custom', sourcePath: 'assets/panel.png', sourceSize: { width: 16, height: 12 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
   const target = { nodeId: 'panel', conditionId: 'phone', slice };
   const sample = { nodeId: 'panel', conditionId: 'phone', runtimeNodeId: 'screen.panel', sourcePath: slice.sourcePath, sourceSize: slice.sourceSize, border: slice.border, scale: 1, transformScaleX: 1, transformScaleY: 1, displaySize: { width: 20, height: 16 } };
   return { slice, target, sample };
 }
 
-test('九宫格实际倍率必须严格为数字 1，源帧与显示框的中心必须为正', () => {
+test('九宫格实际倍率必须严格为数字 1，源帧与显示框的中心必须为正且禁止大图缩小', () => {
   const { slice, target, sample } = fixture();
   assert.doesNotThrow(() => validateAppNineSlicePlan(slice, slice.sourcePath, '计划'));
+  assert.throws(() => validateAppNineSlicePlan({ ...slice, sourceSize: { width: 24, height: 16 } }, slice.sourcePath, '计划'), /不得大于显示框/);
   assert.doesNotThrow(() => validateAppNineSliceMeasurements([target], [sample], '运行'));
   for (const scale of [undefined, '1', 1.000000001, 0.5, 2]) {
     assert.throws(() => validateAppNineSliceMeasurements([target], [{ ...sample, scale }], '运行'), /倍率/);

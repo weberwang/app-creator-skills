@@ -608,6 +608,12 @@
         "anchoredPosition": {
           "$ref": "./common.schema.json#/$defs/vector2"
         },
+        "localScale": {
+          "$ref": "./common.schema.json#/$defs/vector2"
+        },
+        "effectiveScale": {
+          "$ref": "./common.schema.json#/$defs/vector2"
+        },
         "localSize": {
           "$ref": "#/$defs/snapshotSize"
         },
@@ -859,6 +865,12 @@
         },
         "sliceScale": {
           "type": "number"
+        },
+        "localScale": {
+          "$ref": "./common.schema.json#/$defs/vector2"
+        },
+        "effectiveScale": {
+          "$ref": "./common.schema.json#/$defs/vector2"
         }
       }
     },

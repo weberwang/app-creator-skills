@@ -417,10 +417,10 @@ test('Flutter V3 和 V5 按消费者检查九宫格真实倍率和最小显示�
   const f = fixture(t, 'V5'); const implementation = f.plan.implementations[0];
   implementation.kind = 'image';
   implementation.production = { identity: 'independent', consumerIds: implementation.consumers.map((item) => item.id),
-    sourceRegion: f.plan.elements[0].region, outputPath: 'panel.png', outputSize: { width: 30, height: 24 }, displaySize: { width: 20, height: 16 }, density: 1,
+    sourceRegion: f.plan.elements[0].region, outputPath: 'panel.png', outputSize: { width: 16, height: 12 }, displaySize: { width: 20, height: 16 }, density: 1,
     background: 'transparent', transparentInsets: { top: 0, right: 0, bottom: 0, left: 0 }, edgePolicy: '保留透明边缘',
     slice: { left: 4, right: 5, top: 3, bottom: 4 }, nineSlice: { minimumSize: { width: 20, height: 16 } } };
-  const bytes = encodePngRgba(30, 24, Buffer.alloc(30 * 24 * 4)); writeFileSync(join(f.repo, 'panel.png'), bytes);
+  const bytes = encodePngRgba(16, 12, Buffer.alloc(16 * 12 * 4)); writeFileSync(join(f.repo, 'panel.png'), bytes);
   const assetRef = { path: 'panel.png', sha256: createHash('sha256').update(bytes).digest('hex') };
   f.reports[0].report.imported = { assetRef, provenanceRef: write(f.repo, 'provenance.json', { source: 'hand-authored' }),
     importEvidenceRef: write(f.repo, 'load.txt', '合成资源加载输出'), production: structuredClone(implementation.production), consumerIds: implementation.production.consumerIds };
@@ -435,7 +435,7 @@ test('Flutter V3 和 V5 按消费者检查九宫格真实倍率和最小显示�
   const textOutput = JSON.parse(readFileSync(join(f.repo, capture.captureOutputRef.path), 'utf8'));
   textOutput.designReconstructionRef = f.doc.designReconstructionRef;
   capture.captureOutputRef = write(f.repo, 'slice-text-output.json', textOutput);
-  const sample = { nodeId: 'heading', conditionId: item.conditionId, runtimeNodeId: 'Heading', sourcePath: 'panel.png', sourceSize: { width: 30, height: 24 },
+  const sample = { nodeId: 'heading', conditionId: item.conditionId, runtimeNodeId: 'Heading', sourcePath: 'panel.png', sourceSize: { width: 16, height: 12 },
     border: implementation.production.slice, scale: 1, transformScaleX: 1, transformScaleY: 1, displaySize: { width: 20, height: 16 } };
   /** 每次变异均重新绑定当前采集证据和人工确认引用。 */
   function bindCapture() {
@@ -452,6 +452,12 @@ test('Flutter V3 和 V5 按消费者检查九宫格真实倍率和最小显示�
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /中心/);
   sample.displaySize.width = 21; bindCapture();
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V5', f.doc), /最小显示框/);
+  implementation.production.outputSize = { width: 24, height: 16 };
+  writeFileSync(join(f.repo, 'panel.png'), encodePngRgba(24, 16, Buffer.alloc(24 * 16 * 4)));
+  rebind(f);
+  assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /不得大于显示框/);
+  implementation.production.outputSize = { width: 16, height: 12 };
+  writeFileSync(join(f.repo, 'panel.png'), encodePngRgba(16, 12, Buffer.alloc(16 * 12 * 4)));
   implementation.production.density = 2; rebind(f);
   assert.throws(() => validateFlutterDesign(f.repo, f.work, 'V3', f.doc), /密度必须严格为 1/);
 });

@@ -109,6 +109,10 @@ export function validateNineSliceTargetBounds(contract, bounds, label = "target_
     || bounds.height <= normalized.borders.top + normalized.borders.bottom) {
     throw new RangeError(`${label} 必须大于九宫格左右/上下边宽之和，保留正尺寸中心区域`);
   }
+  // 禁止以大图缩小适配目标显示框，必须使用紧凑小图通过九宫格拉伸放大。
+  if (bounds.width + 1e-4 < normalized.source_size.width || bounds.height + 1e-4 < normalized.source_size.height) {
+    throw new RangeError(`${label} 不得小于九宫格源帧 source_size，禁止大图缩小，请改用紧凑小图拉伸放大`);
+  }
   return normalized;
 }
 

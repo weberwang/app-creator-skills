@@ -269,13 +269,13 @@ function makeSlicedImageFixture(t, className = 'ImageLabel') {
   node.className = className;
   delete node.textStyle;
   node.nineSlice = {
-    assetId: '42', sliceScale: 1, sourceSize: { width: 40, height: 30 },
+    assetId: '42', sliceScale: 1, sourceSize: { width: 20, height: 16 },
     imageRectOffset: { x: 0, y: 0 }, imageRectSize: { x: 0, y: 0 },
-    center: { minX: 5, minY: 4, maxX: 34, maxY: 25 },
-    minimumDisplaySize: { width: 12, height: 10 },
+    center: { minX: 5, minY: 4, maxX: 14, maxY: 11 },
+    minimumDisplaySize: { width: 24, height: 20 },
   };
   fixture.runtime.bindings[1].className = className;
-  const bytes = syntheticDesignPng('slice', 40, 30);
+  const bytes = syntheticDesignPng('slice', 20, 16);
   const source = { path: `${fixture.work.evidenceRoot}/source.png`, sha256: createHash('sha256').update(bytes).digest('hex') };
   writeFileSync(join(fixture.repo, source.path), bytes);
   const path = node.instancePath;
@@ -289,7 +289,7 @@ function makeSlicedImageFixture(t, className = 'ImageLabel') {
     nodes[1].className = className;
     Object.assign(nodes[1].properties, { Image: 'rbxassetid://42', ScaleType: 'Slice', SliceScale: 1,
       SliceCenter: structuredClone(node.nineSlice.center), ImageRectOffset: { x: 0, y: 0 }, ImageRectSize: { x: 0, y: 0 },
-      AbsoluteSize: which === 'runtime' ? { x: 12, y: 10 } : { x: 24, y: 18 }, AncestorUIScales: [] });
+      AbsoluteSize: which === 'runtime' ? { x: 24, y: 20 } : { x: 40, y: 30 }, AncestorUIScales: [] });
   });
   return fixture;
 }
@@ -304,20 +304,22 @@ test('Roblox 九宫格核对计划、实际倍率、源帧和最小显示框', (
     slice.sliceScale = 1;
     slice.minimumDisplaySize.width = 11;
     assert.throws(() => verifyVisual(fixture, 'V5'), /中心/);
-    slice.minimumDisplaySize.width = 12;
+    slice.minimumDisplaySize.width = 18;
+    assert.throws(() => verifyVisual(fixture, 'V5'), /不得大于显示框/);
+    slice.minimumDisplaySize.width = 24;
     updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.SliceScale = 0.5; });
     assert.throws(() => verifyVisual(fixture, 'V5'), /SliceScale/);
     updateScreenCapture(fixture, 'edit', (nodes) => { nodes[1].properties.SliceScale = 1; });
     updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.SliceScale = 1.0000001; });
     assert.throws(() => verifyVisual(fixture, 'V5'), /倍率.*1/);
-    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.SliceScale = 1; nodes[1].properties.AbsoluteSize = { x: 11, y: 18 }; });
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.SliceScale = 1; nodes[1].properties.AbsoluteSize = { x: 23, y: 30 }; });
     assert.throws(() => verifyVisual(fixture, 'V5'), /实际显示框/);
-    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 24, y: 18 }; nodes[1].properties.AncestorUIScales = [{ scale: 0.5 }]; });
+    updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 40, y: 30 }; nodes[1].properties.AncestorUIScales = [{ scale: 0.5 }]; });
     assert.throws(() => verifyVisual(fixture, 'V5'), /UIScale/);
     updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AncestorUIScales = []; });
-    slice.sourceSize.width = 39;
+    slice.sourceSize.width = 19;
     assert.throws(() => verifyVisual(fixture, 'V5'), /实际上传图片尺寸/);
-    slice.sourceSize.width = 40;
+    slice.sourceSize.width = 20;
     delete slice.center;
     assert.throws(() => verifyVisual(fixture, 'V5'), /SliceCenter/);
   }
@@ -332,26 +334,26 @@ test('九宫格实际 Slice 不能通过未声明或遗失回读绕过', (t) => 
 test('Roblox 九宫格图集源帧按实际区域与上传图尺寸核对', (t) => {
   const fixture = makeSlicedImageFixture(t);
   const slice = fixture.layout.nodes[1].nineSlice;
-  slice.sourceSize = { width: 32, height: 20 };
-  slice.imageRectOffset = { x: 8, y: 7 };
-  slice.imageRectSize = { x: 32, y: 20 };
-  slice.center = { minX: 13, minY: 11, maxX: 34, maxY: 22 };
+  slice.sourceSize = { width: 16, height: 12 };
+  slice.imageRectOffset = { x: 4, y: 4 };
+  slice.imageRectSize = { x: 16, y: 12 };
+  slice.center = { minX: 9, minY: 8, maxX: 14, maxY: 11 };
   for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => {
     Object.assign(nodes[1].properties, { SliceCenter: structuredClone(slice.center), ImageRectOffset: structuredClone(slice.imageRectOffset), ImageRectSize: structuredClone(slice.imageRectSize) });
   });
   assert.equal(verifyVisual(fixture, 'V5').scope, 'record-consistency');
-  slice.imageRectOffset.x = 9;
-  for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => { nodes[1].properties.ImageRectOffset.x = 9; });
+  slice.imageRectOffset.x = 5;
+  for (const which of ['edit', 'runtime']) updateScreenCapture(fixture, which, (nodes) => { nodes[1].properties.ImageRectOffset.x = 5; });
   assert.throws(() => verifyVisual(fixture, 'V5'), /超出实际上传图片尺寸/);
 });
 
 test('最小宽高可来自不同实际视口，缺任一轴保持未验证', (t) => {
   const fixture = makeSlicedImageFixture(t);
-  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 12, y: 18 }; });
+  updateScreenCapture(fixture, 'runtime', (nodes) => { nodes[1].properties.AbsoluteSize = { x: 24, y: 30 }; });
   assert.throws(() => verifyVisual(fixture, 'V5'), /缺少实际最小宽或最小高/);
   const raw = JSON.parse(fixture.observation.record.response.content[0].text);
   const actual = raw.nodes[1];
-  actual.properties.AbsoluteSize = { x: 24, y: 10 };
+  actual.properties.AbsoluteSize = { x: 40, y: 20 };
   const minimum = fixture.capture({ context: 'Client', toolName: 'execute_luau', targetPath: actual.instancePath,
     actual: JSON.stringify({ nodes: [actual] }) });
   fixture.runtime.minimumSliceObservations = [{ nodeId: 'child-a', observationRef: minimum.ref }];

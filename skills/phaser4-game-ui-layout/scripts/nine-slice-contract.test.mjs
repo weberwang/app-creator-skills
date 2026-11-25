@@ -52,11 +52,13 @@ test("九宫格拉伸只排除权威背景和结构容器，不用职责子串�
   assert.equal(isNineSliceStretchTargetAllowed({ element_type: "component", role: "background", visual_route_analysis: { element_type: "panel" } }), true);
 });
 
-test("300×180目标保留边角逻辑尺寸且留有中心，过小目标被拒绝", () => {
+test("300×180目标保留边角逻辑尺寸且留有中心，过小目标与大图缩小被拒绝", () => {
   const target = validateNineSliceTargetBounds(panel, { x: 0, y: 0, width: 300, height: 180 });
   assert.deepEqual(target.borders, panel.borders);
   assert.throws(() => validateNineSliceTargetBounds(panel, { x: 0, y: 0, width: 24, height: 80 }), /大于/);
   assert.throws(() => validateNineSliceTargetBounds(panel, { x: 0, y: 0, width: 80, height: 20 }), /大于/);
+  assert.throws(() => validateNineSliceTargetBounds(panel, { x: 0, y: 0, width: 80, height: 64 }), /不得小于九宫格源帧/);
+  assert.throws(() => validateNineSliceTargetBounds(panel, { x: 0, y: 0, width: 96, height: 50 }), /不得小于九宫格源帧/);
 });
 
 test("决策比较保留正反选择差异", () => {

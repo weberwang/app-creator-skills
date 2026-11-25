@@ -209,8 +209,8 @@ test('Expo 逐状态校验字体和组件样式读数，拒绝旧设计与旧运
 
 test('Expo 运行门验证九宫图真实倍率、中心和最小样本', (t) => {
   const f = fixture(t);
-  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 30, 24));
-  const slice = { implementation: 'project-native', sourcePath: imageRef.path, sourceSize: { width: 30, height: 24 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
+  const imageRef = write(f.repo, 'panel.png', syntheticDesignPng('panel', 16, 12));
+  const slice = { implementation: 'project-native', sourcePath: imageRef.path, sourceSize: { width: 16, height: 12 }, border: { left: 4, right: 5, top: 3, bottom: 4 }, minimumSize: { width: 20, height: 16 } };
   f.layout.nodes.find((node) => node.id === 'title').nineSlice = slice;
   f.doc.layoutSpecRef = write(f.repo, 'layout-slice.json', f.layout);
   f.assets.layoutSpecRef = f.doc.layoutSpecRef; f.assets.items[0].runtimeRef = imageRef;
@@ -239,6 +239,9 @@ test('Expo 运行门验证九宫图真实倍率、中心和最小样本', (t) =>
   sample.scale = 1.000000001; assert.throws(run, /倍率.*严格/);
   sample.scale = 1; sample.displaySize = { width: 9, height: 16 }; assert.throws(run, /中心/);
   sample.displaySize = { width: 21, height: 16 }; assert.throws(run, /最小显示框/);
+  slice.sourceSize = { width: 24, height: 12 }; f.doc.layoutSpecRef = write(f.repo, 'layout-slice-large.json', f.layout);
+  assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /不得大于显示框/);
+  slice.sourceSize = { width: 16, height: 12 };
   slice.implementation = 'capInsets'; f.doc.layoutSpecRef = write(f.repo, 'layout-slice-ios.json', f.layout);
   assert.throws(() => validateExpo(f.repo, f.work, 'V3', f.doc, identity), /仅在 iOS/);
 });

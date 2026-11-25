@@ -1,5 +1,7 @@
 "use strict";
 
+const EPSILON = 1e-4;
+
 /** 对源帧和同一逻辑单位的实际显示框分别检查，固定边宽以源帧像素计。 */
 function validateNineSliceRuntime(input, label = "九宫格") {
   const { scale, sourceSize, border, displaySize } = input;
@@ -24,6 +26,11 @@ function validateNineSliceRuntime(input, label = "九宫格") {
   }
   if (displaySize && (displaySize.width <= horizontal || displaySize.height <= vertical)) {
     errors.push(`${label} 显示框必须为可拉伸中心保留正宽高。`);
+  }
+  // 禁止以大图缩小适配九宫格显示框，必须使用紧凑小图经九宫格拉伸放大。
+  if ([sourceSize?.width, sourceSize?.height, displaySize?.width, displaySize?.height].every((value) => Number.isFinite(value) && value > 0)
+    && (sourceSize.width > displaySize.width + EPSILON || sourceSize.height > displaySize.height + EPSILON)) {
+    errors.push(`${label} 源帧尺寸不得大于显示框，禁止大图缩小，请改用紧凑小图拉伸放大。`);
   }
   return errors;
 }

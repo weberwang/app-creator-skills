@@ -345,6 +345,35 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(snapshot.nativeSize.height, Is.EqualTo(overrideSprite.rect.height / image.pixelsPerUnit).Within(0.001f));
         }
 
+        /// <summary>验证 uGUI 快照采集 localScale 与排除根 Canvas 后的祖先累乘 effectiveScale。</summary>
+        [Test]
+        public void MeasureUguiSnapshot_CapturesLocalAndEffectiveScaleExcludingRootCanvas()
+        {
+            RectTransform target = CreateUguiHierarchy();
+            RectTransform parent = target.parent as RectTransform;
+            RectTransform rootCanvas = parent.parent as RectTransform;
+            rootCanvas.localScale = new Vector3(0.5f, 0.5f, 1f);
+            parent.localScale = new Vector3(2f, 1.5f, 1f);
+            target.localScale = new Vector3(0.5f, 2f, 1f);
+            SaveCurrentScene();
+
+            LayoutMeasurementReport report = Measure("scale-snapshot.json", new LayoutMeasurementTarget
+            {
+                id = "scaled-card",
+                referenceId = "panel-reference",
+                objectPath = "Canvas/Panel/Card",
+                parentObjectPath = "Canvas/Panel"
+            });
+
+            LayoutRectTransformSnapshot rectSnapshot = report.measurements[0].componentSnapshot.rectTransform;
+            Assert.That(rectSnapshot.localScale, Is.Not.Null);
+            Assert.That(rectSnapshot.effectiveScale, Is.Not.Null);
+            Assert.That(rectSnapshot.localScale.x, Is.EqualTo(0.5f).Within(0.001f));
+            Assert.That(rectSnapshot.localScale.y, Is.EqualTo(2f).Within(0.001f));
+            Assert.That(rectSnapshot.effectiveScale.x, Is.EqualTo(1f).Within(0.001f));
+            Assert.That(rectSnapshot.effectiveScale.y, Is.EqualTo(3f).Within(0.001f));
+        }
+
         /// <summary>验证非零左右和上下留白映射到 Panel 根坐标时保留安全区原点。</summary>
         [Test]
         public void PanelSafeArea_MapsInsetsFromPanelRootOrigin()

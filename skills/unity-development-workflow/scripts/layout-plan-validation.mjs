@@ -2,6 +2,7 @@ import { computeTargetBounds } from "./layout-geometry.mjs";
 import { validateUiLayoutPlanShape } from "./layout-plan-shape.mjs";
 import relativeLayoutPolicy from "../../app-ui-layout/scripts/relative-layout-policy.cjs";
 import { validateNativePositionPlan } from "./layout-native-docking.mjs";
+import { validateNineSliceDecision } from "./nine-slice-contract.mjs";
 
 const { validateRelativeLayoutNodes } = relativeLayoutPolicy;
 
@@ -167,6 +168,22 @@ function validatePlanSemantics(plan, errors) {
       }
       if (center?.mode === "strict" && center.offset !== undefined && center.offset !== 0) {
         errors.push(`节点 ${node.id} 的 ${axis} strict 居中必须使用零偏移。`);
+      }
+    }
+
+    // 在 V3 阶段强制校验九宫格与 imageSizing 一致性，并阻止大图缩小规划。
+    const sizingMode = binding.uiLayout.imageSizing?.mode;
+    if (sizingMode === "SLICED" && node.nineSlice?.mode !== "stretch") {
+      errors.push(`节点 ${node.id} 的 SLICED imageSizing 必须绑定 mode=stretch 的 nineSlice。`);
+    }
+    if (node.nineSlice?.mode === "stretch" && sizingMode !== "SLICED") {
+      errors.push(`节点 ${node.id} 的 stretch nineSlice 必须与 SLICED imageSizing 一致。`);
+    }
+    if (node.nineSlice !== undefined) {
+      const targetSize = node.nineSlice?.mode === "stretch" ? node.bounds : null;
+      errors.push(...validateNineSliceDecision(node.nineSlice, targetSize).map((message) => `节点 ${node.id}：${message}`));
+      if (node.nineSlice?.mode === "stretch" && binding.uiLayout.minimumSize) {
+        errors.push(...validateNineSliceDecision(node.nineSlice, binding.uiLayout.minimumSize).map((message) => `节点 ${node.id}（minimumSize）：${message}`));
       }
     }
   }

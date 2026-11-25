@@ -1,4 +1,9 @@
-import { validateNineSliceDecision, validateNineSlicePixelMultiplier } from "./nine-slice-contract.mjs";
+import {
+  validateNineSliceDecision,
+  validateNineSliceNoDownscale,
+  validateNineSlicePixelMultiplier,
+  validateNineSliceUnitScale,
+} from "./nine-slice-contract.mjs";
 import { validateUiLayoutPlan } from "./layout-plan-validation.mjs";
 import { validateNativePositionSnapshot } from "./layout-native-docking.mjs";
 import { mergeTextStyleEvidence, validateTextStyle, validateWorldTextReadback } from "./text-style-validation.mjs";
@@ -459,14 +464,26 @@ function validateSlicedSizing(node, snapshot, uiSystem, errors) {
     if (!isRecord(image)) return;
     if (image.type !== "Sliced" || image.hasBorder !== true) errors.push(`节点 ${node.id} 的实际 uGUI Image 必须启用 Sliced 与边框。`);
     compareSourceAndBorder(node.id, decision, image.sourceSize, image.border, errors);
-    // Border 是源图像素，本地显示框须按 Image 的真实 PPU 换算后比较。
-    if (snapshot.active === true && Number.isFinite(image.imagePixelsPerUnit) && image.imagePixelsPerUnit > 0) {
-      const local = image.localSize;
-      if (!local || !Number.isFinite(local.width) || !Number.isFinite(local.height)
-        || decision.border[0] / image.imagePixelsPerUnit + decision.border[2] / image.imagePixelsPerUnit >= local.width
-        || decision.border[1] / image.imagePixelsPerUnit + decision.border[3] / image.imagePixelsPerUnit >= local.height) {
-        errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+    if (Number.isFinite(image.imagePixelsPerUnit) && image.imagePixelsPerUnit > 1 + EPSILON) {
+      errors.push(`节点 ${node.id} 的九宫格 Image.imagePixelsPerUnit 大于 1，禁止通过提高 Sprite PPU 缩小大图。`);
+    }
+    // Border 是源图像素，本地显示框须按 Image 的真实 PPU 换算后比较；同时禁止大图缩小与节点/祖先缩放。
+    if (snapshot.active === true) {
+      if (Number.isFinite(image.imagePixelsPerUnit) && image.imagePixelsPerUnit > 0) {
+        const local = image.localSize;
+        if (!local || !Number.isFinite(local.width) || !Number.isFinite(local.height)
+          || decision.border[0] / image.imagePixelsPerUnit + decision.border[2] / image.imagePixelsPerUnit >= local.width
+          || decision.border[1] / image.imagePixelsPerUnit + decision.border[3] / image.imagePixelsPerUnit >= local.height) {
+          errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+        }
+        const sourceIssues = validateNineSliceNoDownscale(decision.sourceSize, local, `节点 ${node.id} 的九宫格本地显示框`, 1);
+        errors.push(...sourceIssues);
+        if (sourceIssues.length === 0) {
+          errors.push(...validateNineSliceNoDownscale(decision.sourceSize, local, `节点 ${node.id} 的九宫格原生显示尺寸`, 1 / image.imagePixelsPerUnit));
+        }
       }
+      errors.push(...validateNineSliceUnitScale(snapshot.rectTransform?.localScale, `节点 ${node.id} 的 RectTransform.localScale`));
+      errors.push(...validateNineSliceUnitScale(snapshot.rectTransform?.effectiveScale, `节点 ${node.id} 的 RectTransform.effectiveScale`));
     }
     return;
   }
@@ -476,10 +493,15 @@ function validateSlicedSizing(node, snapshot, uiSystem, errors) {
   const actualBorder = [style.sliceLeft, style.sliceBottom, style.sliceRight, style.sliceTop];
   compareSourceAndBorder(node.id, decision, null, actualBorder, errors);
   // 已采集的 resolvedStyle 宽高是布局局部点，避免使用可能受变换影响的屏幕包围盒。
-  if (snapshot.active === true && (!Number.isFinite(style.width) || !Number.isFinite(style.height)
-    || decision.border[0] + decision.border[2] >= style.width
-    || decision.border[1] + decision.border[3] >= style.height)) {
-    errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+  if (snapshot.active === true) {
+    if (!Number.isFinite(style.width) || !Number.isFinite(style.height)
+      || decision.border[0] + decision.border[2] >= style.width
+      || decision.border[1] + decision.border[3] >= style.height) {
+      errors.push(`节点 ${node.id} 的九宫格实际显示框没有正尺寸中心。`);
+    }
+    errors.push(...validateNineSliceNoDownscale(decision.sourceSize, { width: style.width, height: style.height }, `节点 ${node.id} 的九宫格实际显示框`, 1));
+    errors.push(...validateNineSliceUnitScale(style.localScale, `节点 ${node.id} 的 UI Toolkit localScale`));
+    errors.push(...validateNineSliceUnitScale(style.effectiveScale, `节点 ${node.id} 的 UI Toolkit effectiveScale`));
   }
 }
 

@@ -347,9 +347,32 @@ namespace Project.UnityWorkflow.VisualQA
                 pivot = ToVectorSnapshot(transform.pivot),
                 sizeDelta = ToVectorSnapshot(transform.sizeDelta),
                 anchoredPosition = ToVectorSnapshot(transform.anchoredPosition),
+                localScale = new LayoutVector2 { x = transform.localScale.x, y = transform.localScale.y },
+                effectiveScale = CaptureUguiEffectiveScale(transform),
                 localSize = ToSizeSnapshot(transform.rect.size),
                 drivenBy = drivenBy == null ? string.Empty : drivenBy.GetType().FullName
             };
+        }
+
+        /// <summary>沿 uGUI 父链累乘节点缩放，遇到根 Canvas 时停止以排除 CanvasScaler 屏幕适配缩放。</summary>
+        private static LayoutVector2 CaptureUguiEffectiveScale(Transform transform)
+        {
+            float scaleX = 1f;
+            float scaleY = 1f;
+            for (Transform current = transform; current != null; current = current.parent)
+            {
+                Canvas owningCanvas = current.GetComponent<Canvas>();
+                if (owningCanvas != null && owningCanvas.isRootCanvas)
+                {
+                    break;
+                }
+
+                Vector3 currentScale = current.localScale;
+                scaleX *= currentScale.x;
+                scaleY *= currentScale.y;
+            }
+
+            return new LayoutVector2 { x = scaleX, y = scaleY };
         }
 
         /// <summary>采集 LayoutGroup 的实际轴向配置；GridLayoutGroup 以真实 cellSize 表达。</summary>
@@ -473,8 +496,25 @@ namespace Project.UnityWorkflow.VisualQA
                 sliceRight = style.unitySliceRight,
                 sliceTop = style.unitySliceTop,
                 sliceBottom = style.unitySliceBottom,
-                sliceScale = style.unitySliceScale
+                sliceScale = style.unitySliceScale,
+                localScale = new LayoutVector2 { x = style.scale.value.x, y = style.scale.value.y },
+                effectiveScale = CaptureUiToolkitEffectiveScale(element)
             };
+        }
+
+        /// <summary>沿 UI Toolkit 元素及其祖先累乘实际计算缩放，暴露中间容器引入的额外缩放。</summary>
+        private static LayoutVector2 CaptureUiToolkitEffectiveScale(VisualElement element)
+        {
+            float scaleX = 1f;
+            float scaleY = 1f;
+            for (VisualElement current = element; current != null; current = current.parent)
+            {
+                Vector3 currentScale = current.resolvedStyle.scale.value;
+                scaleX *= currentScale.x;
+                scaleY *= currentScale.y;
+            }
+
+            return new LayoutVector2 { x = scaleX, y = scaleY };
         }
 
         /// <summary>解析真实 Panel 背景中的 Sprite、纹理或矢量资源 GUID。</summary>

@@ -109,7 +109,7 @@ test("同一几何允许不同视觉对齐决策，中心选项不由测量反�
 
 /** V3 九宫格正反决策穿过拆解、布局节点和人工可见旁栏事实。 */
 test("V3九宫格正反决策在确认旁栏显示源尺寸与四边切片值", () => {
-  const panelNineSlice = { mode: "stretch", reason: "底板四角和描边保持固定尺寸", source_size: { width: 96, height: 64 }, borders: { left: 12, right: 12, top: 10, bottom: 10 } };
+  const panelNineSlice = { mode: "stretch", reason: "底板四角和描边保持固定尺寸", source_size: { width: 32, height: 24 }, borders: { left: 8, right: 8, top: 6, bottom: 6 } };
   const iconNineSlice = { mode: "not-applicable", reason: "图标为固定尺寸，不需要拉伸" };
   const region = {
       id: "hud", scene_id: "main", state_id: "default", owner_type: "fixed-production-visual", visual_route_analysis: { element_type: "panel" }, bounds: { x: 0, y: 0, width: 96, height: 64 },
@@ -132,7 +132,7 @@ test("V3九宫格正反决策在确认旁栏显示源尺寸与四边切片值", 
   assert.deepEqual(panelFact.nine_slice, panelNineSlice);
   assert.deepEqual(iconFact.nine_slice, iconNineSlice);
   const rows = deriveLayoutAnnotationRows(facts);
-  assert.match(rows.find((row) => row.layout_node_id === panelFact.layout_node_id).text, /九宫格=stretch 源图=96×64 边界\(L\/R\/T\/B\)=12\/12\/10\/10/);
+  assert.match(rows.find((row) => row.layout_node_id === panelFact.layout_node_id).text, /九宫格=stretch 源图=32×24 边界\(L\/R\/T\/B\)=8\/8\/6\/6/);
   assert.match(rows.find((row) => row.layout_node_id === iconFact.layout_node_id).text, /九宫格=not-applicable（图标为固定尺寸，不需要拉伸）/);
   const source = solidPng(canvas.width, canvas.height);
   const renderContext = { ...context, targetSha256: sha256(source) };

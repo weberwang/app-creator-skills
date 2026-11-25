@@ -24,8 +24,8 @@ V4 允许生产并验证资产自身可复用的资源级 Prefab（如含网格/
 
 1. 枚举 V3 全部资源项，确保每项只有一个生产通道和至少一个消费节点。
 2. `REUSE` 核对实际源路径、精确 Unity GUID、许可、已确认视觉要求、实际 Importer 设置、消费节点和相关 Unity 验证；资源引用错误、授权不足或实际质量不满足时修复，不校验源 SHA 或设置摘要。
-3. 独立生产位图、模型、材质、字体、音频或 VFX。普通 UI/2D 位图默认以 `sourceScale=1` 生产，批准的平台预算或像素美术合同可覆盖该值；九宫格按 1 倍基线制作，使用时的像素倍率／切片缩放严格为 `1`，不适用覆盖，详见[九宫格合同](nine-slice-ui.md)。禁止从高保真效果图裁切、抠取、放大或轻微修饰成运行资源，禁止整图铺底或把整屏截图作为单区域来源。
-4. 导入前按[正式位图尺寸](../../app-asset-workflow/references/technical-processing.md#正式位图尺寸)归一化成品。普通 UI／2D 按 V3 目标与 `sourceScale` 换算，九宫格按冻结源帧，将约定成品宽高写入 `image-task.output.runtimeWidth` 和 `runtimeHeight`。`uwt_import_image` 在写入 Assets 前解码并精确核对该尺寸；直接调用导入服务也须传同样的宽高上下限。生成画布和 `TextureImporter.maxTextureSize` 分别记录。再校验唯一 Unity 实例、Editor 稳定、目标路径和单写者；资源与 `.meta` 归同一单元，禁止猜测或手写 GUID。
+3. 独立生产位图、模型、材质、字体、音频或 VFX。普通 UI/2D 位图默认以 `sourceScale=1` 生产，批准的平台预算或像素美术合同可覆盖该值；九宫格遵循通用九宫格规范，采用刚好包住固定角边与最小拉伸中心的紧凑小图按 1 倍基线制作并经切片拉伸放大，禁止生产大于显示框的大图再缩小（包括禁止拉高 PPU 或缩放节点／祖先缩小），使用时的 sliced／像素倍率（uGUI `Image.pixelsPerUnitMultiplier`、UI Toolkit `sliceScale`）严格固定为 `1`，不适用覆盖，详见[九宫格合同](nine-slice-ui.md)。禁止从高保真效果图裁切、抠取、放大或轻微修饰成运行资源，禁止整图铺底或把整屏截图作为单区域来源。
+4. 导入前按[正式位图尺寸](../../app-asset-workflow/references/technical-processing.md#正式位图尺寸)归一化成品。普通 UI／2D 按 V3 目标与 `sourceScale` 换算，九宫格按冻结的紧凑小图源帧，将约定成品宽高写入 `image-task.output.runtimeWidth` 和 `runtimeHeight`（与 `nineSlice.sourceSize` 一致且不大于目标显示框）。`uwt_import_image` 在写入 Assets 前解码并精确核对该尺寸；直接调用导入服务也须传同样的宽高上下限。生成画布和 `TextureImporter.maxTextureSize` 分别记录。再校验唯一 Unity 实例、Editor 稳定、目标路径和单写者；资源与 `.meta` 归同一单元，禁止猜测或手写 GUID。
 5. 通过 AssetDatabase/对应 Importer 导入并设置平台参数；移动或重命名资源使用 Unity API，避免引用断裂。
 6. 域重载和导入稳定后，复读 GUID、Importer、序列化引用、Addressables/资源登记与 Console；运行最小 EditMode/PlayMode 或隔离 Prefab 验证。
 7. V4 完成资源与导入验收，可提供临时组合预览；V5 在正式宿主 Scene/Prefab/UXML 中完成同屏组合和布局校准。缺项、孤儿资源、占位、旧版本或未验证引用均阻塞。装配绑定 `parentElementId`、`semanticGrouping` 和 `layoutBinding`，不能只凭几何相似证明结构。

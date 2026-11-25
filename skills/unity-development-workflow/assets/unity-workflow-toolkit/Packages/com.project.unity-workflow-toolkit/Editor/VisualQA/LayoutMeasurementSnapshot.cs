@@ -37,6 +37,10 @@ namespace Project.UnityWorkflow.VisualQA
         public LayoutVector2 sizeDelta;
         /// <summary>实际 anchoredPosition。</summary>
         public LayoutVector2 anchoredPosition;
+        /// <summary>节点自身的本地缩放比例。</summary>
+        public LayoutVector2 localScale;
+        /// <summary>沿节点到非根 Canvas 祖先累乘得到的有效局部缩放比例。</summary>
+        public LayoutVector2 effectiveScale;
         /// <summary>RectTransform 当前局部矩形尺寸。</summary>
         public LayoutSize localSize;
         /// <summary>Unity 当前报告的实际驱动对象类型；未驱动时为空。</summary>
@@ -155,6 +159,10 @@ namespace Project.UnityWorkflow.VisualQA
         public float sliceBottom;
         /// <summary>背景九宫格缩放系数。</summary>
         public float sliceScale;
+        /// <summary>元素自身的计算缩放比例。</summary>
+        public LayoutVector2 localScale;
+        /// <summary>沿当前元素及其祖先累乘得到的有效缩放比例。</summary>
+        public LayoutVector2 effectiveScale;
     }
 
     /// <summary>保存一个已安装登记组件观察到的真实外部写入者。</summary>
