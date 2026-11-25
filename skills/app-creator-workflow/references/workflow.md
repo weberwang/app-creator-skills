@@ -168,7 +168,7 @@ V1 明确本批规则、操作、空间与镜头风险。所有真实 `world-3d`
 
 SCENE 是真实游戏场景及常驻 HUD；PAGE 是 Flutter、Expo 应用页面、ESP32 设备页面，以及实际存在的公共导航框架及其语义状态。框架可以是工作项层面的显示对象，不要求为其虚构新的应用路由。DISPLAY_LAYER 是 modal、popup、drawer、toast 等瞬态层，具有独立 objectId、单一 hostId 和关闭/恢复行为；同一实现跨多个宿主时复用代码和资源，按实际宿主上下文分别验证，不能把一个宿主的结果当作全部宿主通过。宿主只提供运行上下文，不要求宿主 V5 完成、不能替瞬态层完成验收；同一个实施包不能混装三种对象类型。
 
-第 4 阶段按[共同设计依据](../../app-asset-workflow/references/interface-intent.md#design-basis)制作代表稿及全局规范，保存来源、版本、摘要与用户确认并冻结方向。第 5 阶段 V1 确认完整模块方案，V2 基于该方向生成、确认覆盖模块全部适用流程、状态及进度的设计稿，V3 使用该确认的同一设计版本。Flutter、Expo 可按[Figma App 路线](../../app-ui-layout/references/figma-app-design.md)完成模块设计；游戏按其图片或空间路线设计。工具或必要确认缺失时记录受阻。
+第 4 阶段按[共同设计依据](../../app-asset-workflow/references/interface-intent.md#design-basis)制作代表稿及全局规范，保存来源、版本、摘要与用户确认并冻结方向。第 5 阶段 V1 确认完整模块方案，V2 基于该方向生成、确认覆盖模块全部适用流程、状态及进度的设计稿，V3 使用该确认的同一设计版本。Flutter、Expo 可按[Figma App 路线](../../app-ui-layout/references/figma-app-design.md)完成模块设计；游戏按其图片或空间路线设计。图片任务按[生图执行分支](../../app-asset-workflow/references/image-generation.md)选择执行方式并将实际原图存入约定目录；必要图稿或确认待完成时记录受阻。
 
 当前视觉设计稿完成后按[单次用户视角审查](../../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对可编辑结构和已知需求；设计截图与运行截图默认由用户人工检查，未经明确授权不得自动分析截图或代写视觉 PASS。适用的去字与设计质量项归入同一轮，不自动循环评议，不将代理评议登记为人工通过。
 

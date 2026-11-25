@@ -27,6 +27,8 @@ V3 从 V2 已确认目标出发，关联适用设计项、状态、真实父子�
 
 首次候选、单素材及后续批次在调用生图工具前都要落实[生成前约束](references/style-and-production.md#生成前约束)。确认设计后的部件生产和返修读取[正式生图](references/style-and-production.md#选稿后的正式生图)，用同一条生产记录交付实际附件、提示词及最终尺寸。涉及界面的效果图先完成[内容与装饰筛选](references/interface-intent.md#在设计与输出前筛选内容)，并把允许出现的文案和图形写进提示词。
 
+第 4 阶段代表稿、V2 模块稿和局部改稿共用[生图执行分支](references/image-generation.md)。按任务选择交付生图提示词、调用本机 Codex 或使用当前宿主的生图工具。调用前按工作流确定最终路径，获得真实原图后进入已有人工选稿。
+
 阶段 5 的正式静态单图在合格素材复用评估后，按[单图路线与 SVG 还原](../app-domain-toolkit/references/svg-single-image-reconstruction.md)选择直接生图或 SVG 重绘后导出 PNG。V3 在现有生产清单记录每个唯一部件和必要状态的路线及理由，V4 按所选路线交付独立运行位图并同批完成适用图文接入。
 
 Unity、Cocos、Roblox 任务新增显示元素时，统一遵循[显示元素的编辑器还原](../app-domain-toolkit/references/editor-display-authoring.md)，同步交付正式可编辑源及适用的动态预览。
