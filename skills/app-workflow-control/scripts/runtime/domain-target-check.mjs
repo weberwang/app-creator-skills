@@ -6,7 +6,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
-import { validateWebTextStage, webTextReadbackOptions } from './web-text-stage.mjs';
+import { webTextReadbackOptions } from './web-text-stage.mjs';
 
 const STACKS = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -105,7 +105,6 @@ async function runDomainChecks({ repo, work, target, stage }) {
   const errors = validator.validateManifest(document, { ...options, checkFiles: true, forceLayoutSourceFiles: true, projectRoot: repo, workItemType: 'SCENE' });
   errors.push(...await validator.checkManifestFiles(document, repo, options));
   if (errors.length) throw new WorkflowError(`${stage} 视觉资源清单失败：${[...new Set(errors)].join('；')}`);
-  validateWebTextStage(repo, document, target.reviews?.V3Layout, target);
 }
 
 /** 同步执行目标领域门并返回实际结果；调用方不能跳过或伪造未安装的校验器。 */

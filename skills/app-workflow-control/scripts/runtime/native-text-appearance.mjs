@@ -103,11 +103,12 @@ export function validateTextPresence(actual, label) {
 }
 
 /** 校验实际读取的文字颜色，且记录须属于同一次构建和运行。 */
-export function validateNativeTextReadback(repo, runtime, expected, stack, identity) {
+export function validateNativeTextReadback(repo, runtime, expected, stack, identity, v4RunId) {
   if (!Array.isArray(expected)) throw new WorkflowError(`${stack} 运行校验缺少冻结的文字颜色和透明度目标`);
   if (expected.length === 0 && runtime.textReadbackRef === undefined) return;
   const report = readJson(repo, identity(repo, runtime.textReadbackRef, `${stack} 文字颜色实际读数`), '文字颜色实际读数');
   if (report?.schemaVersion !== '1.0' || report.source !== `${stack}-native` || report.visualStage === 'V4'
+    || (v4RunId && (typeof report.runId !== 'string' || !report.runId.trim() || report.runId === v4RunId))
     || !isDeepStrictEqual(report.buildIdentityRef, runtime.buildIdentityRef)
     || !isDeepStrictEqual(report.runEvidenceRef, runtime.runEvidenceRef)
     || !Array.isArray(report.entries)) throw new WorkflowError(`${stack} 文字读数须绑定当前构建和运行`);
@@ -149,15 +150,16 @@ function validateNativeTextEntries(entries, expected, stack) {
   if (observations.size) throw new WorkflowError(`${stack} 文字读数包含未绑定设计的节点`);
 }
 
-/** V4 试装报告冻结实际批次和当前候选，并逐项对照设计文字。 */
-export function validateV4NativeTextRestoration(repo, work, expected) {
+/** 冻结 V4 正式布局源的实际采集批次，并逐项对照设计文字。 */
+export function validateV4NativeTextRestoration(repo, work, expected, stage, sourcePath) {
   if (!Array.isArray(expected)) throw new WorkflowError(`${work.stack} V4 缺少冻结文字目标`);
   if (!expected.length) return;
-  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId);
+  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId, { stage, entryPaths: [sourcePath] });
   if (report.schemaVersion !== '1.0' || report.source !== `${work.stack}-native` || report.visualStage !== 'V4'
     || report.workItemId !== work.workItemId || report.candidateId !== work.visual.candidateId
     || typeof report.runId !== 'string' || !report.runId.trim() || !Array.isArray(report.entries)) {
     throw new WorkflowError(`${work.stack} V4 文字试装读数未绑定当前工作项、候选和采集批次`);
   }
   validateNativeTextEntries(report.entries, expected, work.stack);
+  return report.runId;
 }

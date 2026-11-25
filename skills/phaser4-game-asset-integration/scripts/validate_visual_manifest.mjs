@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { isPlannedVisualAsset } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
+import { hasFormalV4Text, isPlannedVisualAsset } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
 import { readFile } from "node:fs/promises";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
@@ -954,6 +954,7 @@ function requiresBitmapFileGate(data) {
 export async function main(argv = process.argv.slice(2)) {
   try {
     const args = parseArgs(argv); const data = await loadManifest(args.manifest);
+    if (hasFormalV4Text(data, args.stage)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 验收");
     if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V3 --check-files --project-root ."); return 2; }
     const errors = validateManifest(data, { stage: args.stage, checkFiles: args.checkFiles, projectRoot: args.projectRoot, workItemType: args.workItemType });
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));

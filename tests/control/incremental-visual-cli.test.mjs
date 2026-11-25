@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 /** 使用 Unity 合成协议材料验证两批增量复用；不会启动编辑器或代表真实人工验收。 */
 import assert from 'node:assert/strict';
 import { visualResearchFixture } from './visual-research-fixture.mjs';
@@ -121,7 +122,8 @@ function addAssetsAndArt(repo, work, target, { updateAssets = true } = {}) {
       // 资源试装和正式运行保留独立的测量文件与批次。
       const outputPath = `${work.evidenceRoot}/V4-${target.targetId}-text-restoration.json`;
       const report = unityLayoutMeasurement(plan, planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath });
-      textRestorationRef = put(repo, outputPath, { ...report, runId: 'synthetic-trial' });
+      const formalIntegration = formalIntegrationFixture(repo, plan.scenePath, assets);
+      textRestorationRef = put(repo, outputPath, { ...report, runId: 'synthetic-trial', formalIntegration });
     }
     target.assetReviewRef = put(repo, `proof/${work.workItemId}-${target.targetId}-assets.json`, { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack, visualStage: 'V4', candidateId: target.candidateId, technicalStatus: 'PASS', humanStatus: 'PASS', userMessageRef, qualityChecks: quality(repo), assets, ...(textRestorationRef ? { textRestorationRef } : {}) });
   }
@@ -259,7 +261,24 @@ test('同一正式场景两批通过真实 CLI 与累计 V2/V3 复用，修改�
   put(repo, sourcePath, source);
   await advanceVisual({ repo, workItem: sourcePath, to: 'V4' });
   source = loadWork(repo, sourcePath); stageTargets(repo, source, 'V4'); put(repo, sourcePath, source);
-  await runStage(repo, sourcePath, 'V4');
+  await runStage(repo, sourcePath, 'V4', [], async () => {
+    const current = loadWork(repo, sourcePath);
+    const target = current.visual.targets[0];
+    const savedReview = target.assetReviewRef;
+    const review = JSON.parse(readFileSync(join(repo, savedReview.path), 'utf8'));
+    assert.equal(review.assets.filter((item) => item.assetType === 'image').length, 2);
+    const report = JSON.parse(readFileSync(join(repo, review.textRestorationRef.path), 'utf8'));
+    delete report.formalIntegration;
+    report.outputPath = `${current.evidenceRoot}/missing-formal-integration.json`;
+    review.textRestorationRef = put(repo, `${current.evidenceRoot}/missing-formal-integration.json`, report);
+    target.assetReviewRef = put(repo, 'proof/missing-formal-integration-review.json', review);
+    put(repo, sourcePath, current);
+    // 图片评审已就绪时，仍要阻止遗漏正式图文接入的 V4 验收。
+    await assert.rejects(transitionWork({ repo, workItem: sourcePath, to: 'PASSED', args: {} }), /正式|formalIntegration/);
+    assert.equal(loadWork(repo, sourcePath).globalState, 'VALIDATING');
+    target.assetReviewRef = savedReview;
+    put(repo, sourcePath, current);
+  });
   source = loadWork(repo, sourcePath);
   const v4Root = source.evidenceRoot;
   const v4AssetReview = structuredClone(source.visual.targets[0].assetReviewRef);

@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -274,7 +275,8 @@ test('Unity V4 从资源评审核对文字试装，V5 使用新的正式运行�
   put(repo, target.domainEvidenceRef.path, { ...target, workItemId: work.workItemId, nativeWorkItemRef: { path: 'docs/native-work.json' }, nativeEvidenceRef: { path: 'docs/native-evidence.json' } });
   const report = unityLayoutMeasurement(layout.plan, layout.planRef, { workItemId: work.workItemId, candidateId: target.candidateId, outputPath: 'evidence/v4-text.json' });
   report.textOnly = true;
-  const assetReview = { schemaVersion: '1.0', workItemId: work.workItemId, stack: 'unity', visualStage: 'V4', candidateId: target.candidateId };
+  report.formalIntegration = formalIntegrationFixture(repo, layout.plan.scenePath);
+  const assetReview = { schemaVersion: '1.0', workItemId: work.workItemId, stack: 'unity', visualStage: 'V4', candidateId: target.candidateId, assets: [{ assetId: 'scene', assetType: 'native-component', output: layout.plan.scenePath }] };
   const updateReport = () => {
     assetReview.textRestorationRef = save(report.outputPath, report);
     target.assetReviewRef = save('docs/assets.json', assetReview);

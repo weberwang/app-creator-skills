@@ -347,15 +347,16 @@ export function validateFlutterAssetReview(repo, work, record, supplied) {
   }
 }
 
-/** V4 逐状态核对实际试装文字，确保同一节点不能复用其他组件的读数。 */
-function validateFlutterTextRestoration(repo, work, doc, plan) {
+/** V4 逐状态核对正式组件文字，只采信与当前实现源码关联的实际读数。 */
+function validateFlutterTextRestoration(repo, work, stage, doc, plan, reports) {
   const targets = plan.elements.flatMap((element) => {
     const implementation = plan.implementations.find((item) => item.id === element.implementationId);
     const style = flutterTextStyle(implementation.requirements.appearance.value);
     return style ? element.conditionIds.map((conditionId) => ({ designItemId: element.id, conditionId, style })) : [];
   });
   if (!targets.length) return;
-  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId);
+  const entryPaths = reports.flatMap(({ report }) => report.sourceRefs.map(({ path }) => path));
+  const { report } = readV4TextRestoration(repo, work, work.visual.candidateId, { stage, entryPaths });
   check(report.format === 'flutter-text-restoration-v1' && report.workItemId === work.workItemId
     && report.candidateId === work.visual.candidateId && sameRef(report.designReconstructionRef, doc.designReconstructionRef)
     && typeof report.runId === 'string' && report.runId.trim() && Array.isArray(report.entries),
@@ -375,9 +376,10 @@ function validateFlutterTextRestoration(repo, work, doc, plan) {
       check(isDeepStrictEqual(actual.values?.[name], expected), `Flutter V4 ${target.designItemId}/${name} 试装值与目标不一致`);
     }
   }
+  return report.runId;
 }
 
-/** V3 规划、V4 还原试装、V5 正式组合均覆盖已确认设计。 */
+/** V3 规划、V4 正式接入、V5 完整运行均覆盖已确认设计。 */
 export function validateFlutterDesign(repo, work, stage, doc) {
   const plan = planFor(repo, work, doc);
   // Figma 稿的结构和布局由公共交接合同冻结；不重复要求两张图与两份人工确认。
@@ -390,7 +392,7 @@ export function validateFlutterDesign(repo, work, stage, doc) {
   const assets = json(repo, work, work.assetReviewRef, '正式资源验收');
   validateFlutterAssetReview(repo, work, assets, { doc, plan, reports });
   reviewFor(repo, work, doc, plan, 'V4', 'imported-assets', 'V4');
-  validateFlutterTextRestoration(repo, work, doc, plan);
+  const v4RunId = validateFlutterTextRestoration(repo, work, stage, doc, plan, reports);
   if (stage !== 'V5') return;
   const comparison = json(repo, work, doc.comparisonRef, '当前组合对照');
   context(work, comparison, '当前组合对照');
@@ -427,6 +429,7 @@ export function validateFlutterDesign(repo, work, stage, doc) {
     if (textTargets.length) {
       // 文本读数使用当前截图的同一采集输出，不能以 V4 源码观测或旧运行日志代替。
       check(typeof capture.runId === 'string' && capture.runId.trim(), `V5 ${condition.id} 文字运行缺少 runId`);
+      check(capture.runId !== v4RunId, `V5 ${condition.id} 文字运行不能复用 V4 采集批次`);
       const output = json(repo, work, capture.captureOutputRef, 'V5 文字组件原始回读');
       check(output.format === 'flutter-text-readback-v1' && output.runId === capture.runId
         && sameRef(output.runtimeRef, item.runtimeRef) && sameRef(output.designReconstructionRef, doc.designReconstructionRef)

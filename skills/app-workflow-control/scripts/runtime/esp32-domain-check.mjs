@@ -119,7 +119,7 @@ function checkConfirmedRef(repo, work, reviewName, field, expected, identity) {
 }
 
 /** 核对真实运行上下文及审批引用；主机模拟不表示硬件运行通过。 */
-async function checkRuntime(repo, work, doc, identity, textAppearance, slices) {
+async function checkRuntime(repo, work, doc, identity, textAppearance, slices, v4RunId) {
   const runtime = readJson(repo, identity(repo, doc.runtimeContextRef, 'ESP32 运行上下文'), 'ESP32 运行上下文');
   for (const [key, expected] of Object.entries({ schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, candidateId: work.visual.candidateId })) {
     if (runtime[key] !== expected) throw new WorkflowError(`ESP32 运行上下文 ${key} 未绑定当前对象`);
@@ -138,7 +138,7 @@ async function checkRuntime(repo, work, doc, identity, textAppearance, slices) {
   }
   const review = readJson(repo, identity(repo, work.visual.reviews?.V5, 'ESP32 V5 用户确认'), 'ESP32 V5 用户确认');
   sameRef(repo, review.runtimeContextRef, doc.runtimeContextRef, 'V5 用户确认运行上下文', identity);
-  validateNativeTextReadback(repo, runtime, textAppearance, 'esp32', identity);
+  validateNativeTextReadback(repo, runtime, textAppearance, 'esp32', identity, v4RunId);
   if (slices.length || runtime.nineSliceMeasurements !== undefined) validateAppLayoutNineSlices(slices, runtime.nineSliceMeasurements, 'ESP32 V5');
   if (work.workItemType !== 'DISPLAY_LAYER') return;
   if (runtime.hostId !== work.visual.hostId || runtime.layerType !== work.visual.layerType) throw new WorkflowError('ESP32 运行上下文未绑定显示层宿主或类型');
@@ -168,6 +168,6 @@ export async function validateEsp32(repo, work, stage, doc, identity, figmaTextA
     validateAppNineSliceAsset(repo, slice, 'ESP32');
   }
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);
-  validateV4NativeTextRestoration(repo, work, textAppearance);
-  if (stage === 'V5') await checkRuntime(repo, work, doc, identity, textAppearance, slices);
+  const v4RunId = validateV4NativeTextRestoration(repo, work, textAppearance, stage, layout.sourcePath);
+  if (stage === 'V5') await checkRuntime(repo, work, doc, identity, textAppearance, slices, v4RunId);
 }

@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 /** 验证 Expo 单目标合同的阶段、原生身份、布局与用户确认绑定。 */
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -64,14 +65,14 @@ function fixture(t, { stage = 'V5', layer = false, platform = 'android' } = {}) 
   const build = { schemaVersion: '1.0', sourceRevision: 'fixture-commit', platform, buildKind: 'development', runtimeKind, ...refs, artifactRef: write(repo, 'app.bin', '合成构建产物'), buildLogRef: write(repo, 'build.log', '合成构建输出') };
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, platform, environment, buildKind: 'development', runtimeKind, ...refs, buildIdentityRef: write(repo, 'build.json', build), runEvidenceRef: evidence, interactionEvidenceRef: evidence, ...host };
   const snapshot = JSON.parse(readFileSync(join(repo, doc.figmaDesignRef.path), 'utf8'));
-  const textReadback = { schemaVersion: '1.0', source: 'expo-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
+  const textReadback = { schemaVersion: '1.0', source: 'expo-native', runId: 'synthetic-v5', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
     entries: collectFigmaTextAppearance([{ ref: doc.figmaDesignRef, snapshot }]).map((entry) => ({ ...entry, runtimeNodeId: snapshot.nodes.find((node) => node.id === entry.nodeId).designItemId,
       actualContent: '合成文字', visible: true,
       propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'fontWeight', 'letterSpacing', 'lineHeight', 'textFill', 'textOpacity', 'actualContent', 'visible'].map((name) => [name, { componentType: 'Text', propertyPath: `style.${name}` }])) })) };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
-  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4' };
+  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4', formalIntegration: formalIntegrationFixture(repo, 'src/home.tsx') };
   work.assetReviewRef = write(repo, 'v4-asset-review.json', { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    visualStage: 'V4', candidateId: visual.candidateId, textRestorationRef: write(repo, 'v4-text.json', v4Text) });
+    visualStage: 'V4', candidateId: visual.candidateId, assets: [{ assetId: 'ui', assetType: 'native-component', output: 'src/home.tsx' }], textRestorationRef: write(repo, 'v4-text.json', v4Text) });
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 更新运行证据及当前确认引用，避免覆盖其他历史阶段材料。 */
   function save() {
@@ -155,6 +156,10 @@ test('Expo V5 拒绝文字组件未显示或内容为空', (t) => {
     return validateSingleDomainTarget(f.repo, f.work, 'V5');
   }
   assert.equal(check(), true);
+  // V5 需重新采集正式组合，不能沿用 V4 的文字运行批次。
+  f.textReadback.runId = f.v4Text.runId;
+  assert.throws(check, /绑定当前构建和运行/);
+  f.textReadback.runId = 'synthetic-v5';
   f.textReadback.visualStage = 'V4';
   assert.throws(check, /绑定当前构建和运行/);
   delete f.textReadback.visualStage;

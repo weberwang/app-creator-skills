@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
@@ -5,6 +6,18 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { validateWebTextStage, webTextReadbackOptions } from '../../skills/app-workflow-control/scripts/runtime/web-text-stage.mjs';
+
+/** 固定与当前视觉单位绑定的 V3 文字、正式入口和原生组件根。 */
+function freezeTarget(freeze, target, manifest, rootComponentPath, entryPath = 'assets/scene.scene') {
+  const frozen = structuredClone(manifest);
+  frozen.visualStage = 'V3';
+  frozen.candidateVersion = target.candidateId;
+  frozen.reference_target = { original_file: target.referenceTarget.path, target_sha256: target.referenceTarget.sha256 };
+  frozen.scene_reconstruction_contract.target_conditions = { scene_id: target.sceneId, state_id: target.stateId };
+  frozen.formalTarget = { entryPath, rootComponentPath };
+  const layoutSpecRef = freeze('v3-target.json', frozen);
+  target.reviews = { ...target.reviews, V3Layout: freeze('v3-layout-review.json', { layoutSpecRef }) };
+}
 
 test('Web V4 文字试装使用资源评审冻结的实际文件', (t) => {
   const repo = mkdtempSync(join(tmpdir(), 'web-text-trial-'));
@@ -18,6 +31,7 @@ test('Web V4 文字试装使用资源评审冻结的实际文件', (t) => {
   const work = { workItemType: 'SCENE', workItemId: 'work', stack: 'cocos' };
   const target = { candidateId: 'current', sceneId: 'shop', stateId: 'loaded', referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
   const scene = { scene_reconstruction_contract: { text_decomposition: { text_nodes: [{ text_node_id: 'price', layout_node_id: 'price-label' }] } } };
+  freezeTarget(freeze, target, scene, 'Panel');
   const read = () => webTextReadbackOptions(repo, work, scene, target, 'V4');
   const readFinal = () => webTextReadbackOptions(repo, work, scene, target, 'V5');
   assert.throws(read, /资源评审.*缺少路径/);
@@ -26,12 +40,13 @@ test('Web V4 文字试装使用资源评审冻结的实际文件', (t) => {
     workItemId: work.workItemId, stack: work.stack, candidateId: target.candidateId, sceneId: target.sceneId, stateId: target.stateId,
     referenceTarget: target.referenceTarget, nodes: [{ textNodeId: 'price', layoutNodeId: 'price-label', componentPath: 'Panel/Price',
       measurement: { actual_content: '50', actual_visible: true } }],
+    formalIntegration: { ...formalIntegrationFixture(repo, 'assets/scene.scene'), rootComponentPath: 'Panel' },
   };
   /** 按资源评审文档的流程冻结一个新的试装报告版本。 */
-  function recordTrial(report) {
+  function recordTrial(report, assets = [{ assetId: 'scene', assetType: 'native-component', output: 'assets/scene.scene' }]) {
     const ref = freeze('trial.json', report);
     target.assetReviewRef = freeze('assets.json', { schemaVersion: '1.0', visualStage: 'V4',
-      workItemId: work.workItemId, stack: work.stack, candidateId: target.candidateId, textRestorationRef: ref });
+      workItemId: work.workItemId, stack: work.stack, candidateId: target.candidateId, assets, textRestorationRef: ref });
     return ref;
   }
   const trialRef = recordTrial(trial);
@@ -39,13 +54,29 @@ test('Web V4 文字试装使用资源评审冻结的实际文件', (t) => {
   assert.equal(readFinal().textTrialRunId, trial.runId);
   freeze('trial.json', { visualStage: 'V4', runId: 'replaced-trial' });
   assert.throws(read, /textRestorationRef.*冻结摘要不符/);
-  recordTrial({});
+  recordTrial({ formalIntegration: trial.formalIntegration });
   assert.throws(readFinal, /试装未绑定/);
   recordTrial({ ...trial, stateId: 'wrong' });
   assert.throws(readFinal, /试装未绑定/);
   recordTrial({ ...trial, nodes: [] });
   assert.throws(readFinal, /节点范围/);
-  assert.equal(webTextReadbackOptions(repo, work, {}, target, 'V4').requireNativeTextReadback, false);
+  recordTrial({ ...trial, formalIntegration: { ...trial.formalIntegration, entryRef: formalIntegrationFixture(repo, 'assets/wrong.scene').entryRef } });
+  assert.throws(read, /当前视觉单位的正式源文件/);
+  recordTrial({ ...trial, nodes: [{ ...trial.nodes[0], componentPath: 'Detached/Price' }] });
+  assert.throws(read, /缺少本次试装的可见内容或实际组件/);
+  const outputRef = freeze('shop-image.png', '当前正式图片');
+  scene.assets = [{ id: 'shop-image', scene_id: target.sceneId, runtime_outputs: [outputRef.path] }];
+  recordTrial(trial);
+  assert.throws(read, /缺少当前领域清单图片/);
+  const assets = [{ assetId: 'shop-image', assetType: 'image', output: outputRef.path }];
+  const current = { ...trial, formalIntegration: { ...trial.formalIntegration, images: [{ assetId: 'shop-image', outputRef, componentPath: 'Detached/Image' }] } };
+  recordTrial(current, assets);
+  assert.throws(read, /图片消费者未绑定 V3 冻结的正式目标根/);
+  current.formalIntegration.images[0].componentPath = 'Panel/Image';
+  const currentRef = recordTrial(current, assets);
+  assert.deepEqual(read().textReadbackIdentity.runtimeEvidenceRef, currentRef);
+  assert.throws(() => webTextReadbackOptions(repo, work, {}, target, 'V4'), /缺少 V3 目标或当前交接/);
+  assert.equal(webTextReadbackOptions(repo, work, {}, { ...target, reviews: {} }, 'V4').requireNativeTextReadback, false);
 });
 
 test('Web V5 文字使用 V3 冻结目标，实际读数不能重定义预期样式', (t) => {
@@ -54,6 +85,7 @@ test('Web V5 文字使用 V3 冻结目标，实际读数不能重定义预期样
   const target = { sceneId: 'shop', stateId: 'loaded', candidateId: 'current', referenceTarget: { path: 'target.png', sha256: '0'.repeat(64) } };
   const design = {
     visualStage: 'V3', candidateVersion: target.candidateId,
+    formalTarget: { entryPath: 'assets/scene.scene', rootComponentPath: 'Canvas' },
     reference_target: { original_file: target.referenceTarget.path, target_sha256: target.referenceTarget.sha256 },
     scene_reconstruction_contract: {
       target_conditions: { scene_id: target.sceneId, state_id: target.stateId },

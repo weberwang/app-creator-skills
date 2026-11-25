@@ -53,7 +53,7 @@ UniText 与固定 JSON 文案按[文本与国际化](text-and-localization.md)�
 
 组件渲染材质的适用属性可使用 `material.color.<着色器属性名>` 或 `material.float.<着色器属性名>` 作为原生探针路径。支持的渲染材质来自当前 `Graphic` 或 `Renderer`，存在材质属性块覆盖时由项目原生探针补充实际读数。
 
-V4 uGUI 文字试装和 World Space Canvas 的视觉目标可用同一采集器的 `textOnly: true`，使用 `uiSystem: UGUI` 并提供每个可见文字节点的 `id`、实际 `objectPath` 和 `textStyle` 探针。世界文字的组件和材质读数随同一运行报告交接，世界框体与投影继续用适用的原生世界证据核对。目标截图、可读性和遮挡由用户人工确认。
+V4 的 uGUI 布局含应显示的 `SPRITE` 节点时，采集包含图片及文字的完整组件快照。没有此类节点的 uGUI 与 World Space Canvas 目标可用同一采集器的 `textOnly: true`，使用 `uiSystem: UGUI` 并提供每个可见文字节点的 `id`、实际 `objectPath` 和 `textStyle` 探针。先把本批图文接入 V3 布局计划指定的正式场景并保存，再按[阶段门禁](../../app-workflow-control/references/version-visual-gate.md#实现验收与返工)在同一报告记录 `formalIntegration`。目标截图、可读性和遮挡由用户人工确认。
 
 ## 外部写入登记的边界
 
@@ -73,7 +73,7 @@ node .\.agents\skills\unity-development-workflow\scripts\workflow-files.mjs layo
 
 显式运行上述文件工具：它读取传入的布局计划和报告，检查同批根、节点覆盖、父/参照绑定、属性控制权、原生尺寸和中心关系，并读取计划引用的拆解、Prefab 结构与 VERIFIED 装配材料进行对账。V5 测量节点的 `id` 必须对应布局包节点 `id`，不得改用 `decompositionElementId` 或临时别名。声明 targetRect/tolerance 的节点从报告矩形重新计算 delta 并检查 maxAbsDelta；未声明容差时仍按适用结构、边界、中心与尺寸规则检查，不将默认 usability 升级为整屏 exact。报告或节点为 FAIL 时修复后重验。工具只核对提交的数据，不能证明报告确由 Unity 采集，也不读取运行中的正式对象；采集来源和 scene/state/candidate 等身份须由执行者与当前工作项另行核对。
 
-Unity 原生实施包以 `uiLayoutPlanRef: {path}` 引用布局计划，装配交付沿用 `splitPlanRef`、`prefabStructureRef` 和 `prefabAssemblyRef`。公共工作流以既有 V3 布局确认的 `layoutSpecRef: {path,sha256}` 冻结相同计划，逐场景状态核对其拆解来源及文字目标。V4 有保留文字时，资源评审的 `textRestorationRef: {path,sha256}` 冻结本候选试装采集，与 V3 的布局计划、目标状态和文字内容逐项对照。uGUI 可使用纯文字报告，UI Toolkit 使用现有完整布局报告。V5 采集新的运行批次，有保留文字时，原生 Evidence Manifest 用 `uiLayoutMeasurementRef: {path,textEvidencePath?}` 关联实际采集，公共 Evidence Manifest 的当前目标 `runtime-layout` 项引用同一报告路径。正式 V5 门调用 `layout-runtime-check` 使用的原生运行校验，重新核对报告、计划摘要、工作项、候选、实际 Scene 与状态。技术修复后按现有流程复验。装配、交互和截图人工验收分别留在现有证据项中。
+Unity 原生实施包以 `uiLayoutPlanRef: {path}` 引用布局计划，装配交付沿用 `splitPlanRef`、`prefabStructureRef` 和 `prefabAssemblyRef`。公共工作流以既有 V3 布局确认的 `layoutSpecRef: {path,sha256}` 冻结相同计划，逐场景状态核对其拆解来源及文字目标。V4 有保留文字时，资源评审的 `textRestorationRef: {path,sha256}` 冻结本候选正式接入采集，与 V3 的布局计划、目标状态和文字内容逐项对照。报告的 `formalIntegration.entryRef` 指向已保存且与计划 `scenePath` 一致的正式场景，`formalIntegration.images` 绑定当前资源评审的图片及实际消费者。uGUI 可使用纯文字报告补充正式图片消费者身份，UI Toolkit 使用现有完整布局报告。V5 采集新的运行批次，有保留文字时，原生 Evidence Manifest 用 `uiLayoutMeasurementRef: {path,textEvidencePath?}` 关联实际采集，公共 Evidence Manifest 的当前目标 `runtime-layout` 项引用同一报告路径。正式 V5 门调用 `layout-runtime-check` 使用的原生运行校验，重新核对报告、计划摘要、工作项、候选、实际 Scene 与状态。技术修复后按现有流程复验。装配、交互和截图人工验收分别留在现有证据项中。
 
 V5 先将装配节点 `name` 与 uGUI 实测 `objectPath` 的末段或 UI Toolkit 的 `elementName` 对应，再核对实测父路径和定位参照。本检查验证节点身份、层级与布局事实；当前测量器没有采集 Prefab 实例来源 GUID，资产来源验收仍需相应资源证据。
 

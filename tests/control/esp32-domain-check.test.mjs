@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 /** 验证 ESP32 阶段证据的文件身份、设备边界及宿主绑定。 */
 import test from 'node:test';
 import assert from 'node:assert/strict';
@@ -51,14 +52,14 @@ function fixture(t, { stage = 'V5', layer = false } = {}) {
   const evidence = write(repo, 'run.log', '合成运行、交互与资源证据');
   const build = { schemaVersion: '1.0', sourceRevision: 'fixture-commit', boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, binaryRef: write(repo, 'app.bin', '合成构建产物'), buildLogRef: write(repo, 'build.log', '合成构建输出') };
   const runtime = { schemaVersion: '1.0', workItemId: work.workItemId, objectId: visual.objectId, candidateId: visual.candidateId, boardProfileRef, layoutSpecRef: doc.layoutSpecRef, layoutSourceRef: doc.layoutSourceRef, assetManifestRef: doc.assetManifestRef, buildIdentityRef: write(repo, 'build.json', build), environment: 'host-simulator', runEvidenceRef: evidence, interactionEvidenceRef: evidence, performanceEvidenceRef: evidence, ...host };
-  const textReadback = { schemaVersion: '1.0', source: 'esp32-native', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
+  const textReadback = { schemaVersion: '1.0', source: 'esp32-native', runId: 'synthetic-v5', buildIdentityRef: runtime.buildIdentityRef, runEvidenceRef: evidence,
     entries: [{ targetPath: doc.layoutSpecRef.path, targetSha256: doc.layoutSpecRef.sha256, nodeId: 'title', runtimeNodeId: 'home.title', ...textAppearance,
       actualContent: '合成文字', visible: true,
       propertySources: Object.fromEntries(['fontFamily', 'fontSize', 'textFill', 'textOpacity', 'actualContent', 'visible'].map((name) => [name, { componentType: 'lv_label', propertyPath: name }])) }] };
   runtime.textReadbackRef = write(repo, 'text-readback.json', textReadback);
-  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4' };
+  const v4Text = { ...textReadback, visualStage: 'V4', workItemId: work.workItemId, candidateId: visual.candidateId, runId: 'synthetic-v4', formalIntegration: formalIntegrationFixture(repo, 'ui.c') };
   work.assetReviewRef = write(repo, 'v4-asset-review.json', { schemaVersion: '1.0', workItemId: work.workItemId, stack: work.stack,
-    visualStage: 'V4', candidateId: visual.candidateId, textRestorationRef: write(repo, 'v4-text.json', v4Text) });
+    visualStage: 'V4', candidateId: visual.candidateId, assets: [{ assetId: 'ui', assetType: 'native-component', output: 'ui.c' }], textRestorationRef: write(repo, 'v4-text.json', v4Text) });
   if (layer) runtime.interactions = ['open', 'close', 'focus-restore'].map((action) => ({ action, status: 'PASS', evidenceRef: evidence }));
   /** 同步上下文、V5 用户确认与外层证据，模拟绑定后的最终输入。 */
   function save() {
@@ -132,6 +133,10 @@ test('ESP32 V5 拒绝文字组件未显示或内容为空', (t) => {
     return validateSingleDomainTarget(f.repo, f.work, 'V5');
   }
   assert.equal(check(), true);
+  // V5 需重新采集正式组合，不能沿用 V4 的文字运行批次。
+  f.textReadback.runId = f.v4Text.runId;
+  assert.throws(check, /绑定当前构建和运行/);
+  f.textReadback.runId = 'synthetic-v5';
   f.textReadback.visualStage = 'V4';
   assert.throws(check, /绑定当前构建和运行/);
   delete f.textReadback.visualStage;

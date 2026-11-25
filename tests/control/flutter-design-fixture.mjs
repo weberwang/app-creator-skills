@@ -1,3 +1,4 @@
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -120,6 +121,7 @@ export function attachFlutterDesignFixture(repo, work, doc) {
   asset.textRestorationRef = writeDesignFixture(repo, `${base}/v4-text.json`, {
     format: 'flutter-text-restoration-v1', workItemId: work.workItemId, candidateId: work.visual.candidateId,
     designReconstructionRef: doc.designReconstructionRef, runId: 'synthetic-v4', entries: textEntries,
+    formalIntegration: formalIntegrationFixture(repo, asset.assets[0].output, asset.assets),
   });
   work.assetReviewRef = writeDesignFixture(repo, work.assetReviewRef?.path ?? `${base}/assets.json`, asset);
   review('V4', 'V4', 'imported-assets', { assetReviewRef: work.assetReviewRef });

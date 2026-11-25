@@ -65,7 +65,7 @@
       "$ref": "human-review.schema.json#/properties/qualityChecks"
     },
     "textRestorationRef": {
-      "description": "当前目标在 V4 与资源一起试装时的实际文字回读文件",
+      "description": "当前目标 V4 正式图文接入的同批原生回读，含正式入口以及本批图片的实际组件和产物身份",
       "type": "object",
       "additionalProperties": false,
       "required": ["path", "sha256"],

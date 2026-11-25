@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { hasFormalV4Text } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
 
 import { isPlannedVisualAsset } from "../../cocos-domain-contracts/scripts/visual-planned-asset.mjs";
 import { readFile } from "node:fs/promises";
@@ -973,13 +974,18 @@ export async function main(argv = process.argv.slice(2)) {
   try {
     const args = parseArgs(argv); const data = await loadManifest(args.manifest);
     if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V3 --check-files --project-root ."); return 2; }
+    // 独立素材校验没有当前工作项的原生组件证据，有文字时须交给工作流验收。
+    const stage = String(args.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3")).toUpperCase();
+    const contract = data.scene_reconstruction_contract;
+    const isV4 = [stage, data.visualStage, data.visual_stage].some((value) => String(value).toUpperCase() === "V4") || [data.visualStageState, data.visual_stage_state].some((value) => String(value).startsWith("v4-"));
+    const layoutContract = contract?.layout_decomposition ?? contract?.layoutDecomposition ?? contract?.layout_decomposition_contract ?? contract?.layoutDecompositionContract;
+    const layout = layoutContract?.layout_source && isV4 ? resolveSceneV2LayoutSource(contract, { projectRoot: args.projectRoot ?? resolve(args.manifest, "..", ".."), forceLayoutSourceFiles: true }).nodes : [];
+    if (hasFormalV4Text(data, stage, layout)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 验收");
     const errors = validateManifest(data, { stage: args.stage, checkFiles: args.checkFiles, forceLayoutSourceFiles: true, projectRoot: args.projectRoot ?? resolve(args.manifest, "..", ".."), workItemType: args.workItemType });
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));
     const uniqueErrors = [...new Set(errors)];
     if (uniqueErrors.length) { console.error("视觉资源清单无效："); for (const error of uniqueErrors) console.error(`- ${error}`); return 1; }
     console.log("视觉资源清单验证通过。");
-    // 独立清单命令缺少公共运行证据身份，正式文字验收由工作流绑定实际采集。
-    const stage = args.stage ?? data.visualStage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : null);
     const textNodes = data.scene_reconstruction_contract?.text_decomposition?.text_nodes;
     if (stage === "V5" && Array.isArray(textNodes) && textNodes.length) {
       console.log("正式 V5 文字验收须通过 app-workflow 绑定同批 runtime-layout 组件读数。");

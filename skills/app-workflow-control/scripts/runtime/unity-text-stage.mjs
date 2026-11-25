@@ -50,7 +50,24 @@ function requireTextCoverage(plan, split, visibleText) {
   }
 }
 
-/** 从 V3 计划核对 V4 试装和 V5 正式运行中的文字。 */
+/** uGUI 布局中的实际图像快照须与同一报告登记的本批图片消费者一致。 */
+function verifyCapturedImages(repo, plan, report) {
+  const images = report.formalIntegration.images;
+  const plannedSprites = plan.nodes.some((node) => node.renderKind === 'SPRITE' && node.expectedActive !== false);
+  if (report.textOnly === true && plannedSprites) throw new WorkflowError('Unity V4 布局含图片，须随正式文字采集完整组件快照');
+  const captured = images.map(({ outputRef, componentPath }) => ({ output: fileIdentityKey(repo, outputRef.path), componentPath }));
+  for (const row of Array.isArray(report.measurements) ? report.measurements : []) {
+    const assetPath = row?.componentSnapshot?.image?.assetPath;
+    if (!assetPath || row.componentSnapshot.active !== true) continue;
+    const identity = fileIdentityKey(repo, assetPath);
+    const placements = captured.filter((image) => image.output === identity || image.componentPath === row.objectPath);
+    if (placements.length && !placements.some((image) => image.output === identity && image.componentPath === row.objectPath)) {
+      throw new WorkflowError(`Unity V4 图片 ${assetPath} 缺少同批组件 ${row.objectPath} 的回读`);
+    }
+  }
+}
+
+/** 从 V3 计划核对 V4 正式接入和 V5 完整运行中的文字。 */
 export function validateUnityTextStage(repo, work, target, stage, native, evidence) {
   if (stage === 'V2') return;
   const review = readJson(repo, target.reviews?.V3Layout?.path, 'Unity V3 布局确认');
@@ -71,11 +88,12 @@ export function validateUnityTextStage(repo, work, target, stage, native, eviden
   if (!['V4', 'V5'].includes(stage) || !visibleText.length) return;
 
   const assetReviewRef = work.workItemType === 'SCENE' ? target.assetReviewRef ?? null : work.assetReviewRef;
-  const restoration = readV4TextRestoration(repo, work, target.candidateId, assetReviewRef);
+  const restoration = readV4TextRestoration(repo, work, target.candidateId, { stage, assetReviewRef, entryPaths: [plan.scenePath] });
   // uGUI 试装可只采集文字；UI Toolkit 采集器提供完整布局报告。
   if (restoration.report.textOnly === true && plan.uiSystem !== 'UGUI') {
     throw new WorkflowError('Unity UI Toolkit V4 文字试装需要实际布局组件报告');
   }
+  verifyCapturedImages(repo, plan, restoration.report);
   const options = { taskId: work.workItemId, layoutPlanSha256: ref.sha256, textOnly: restoration.report.textOnly === true };
   if (stage === 'V4') {
     readVerifiedUiLayoutMeasurement(repo, work, {

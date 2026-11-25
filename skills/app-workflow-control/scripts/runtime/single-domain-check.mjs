@@ -10,7 +10,7 @@ import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mj
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { validateFlutterDesign } from './flutter-design-contract.mjs';
 import { isFigmaApp, validateFigmaAppStage } from './figma-app-contract.mjs';
-import { validateWebTextStage, webTextReadbackOptions } from './web-text-stage.mjs';
+import { webTextReadbackOptions } from './web-text-stage.mjs';
 
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const WEB_PREFIX = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
@@ -84,12 +84,11 @@ async function validateWeb(repo, work, stage, doc) {
       ...options, authority, workItemId: work.workItemId, candidateVersion: work.visual.candidateId,
       ...webTextReadbackOptions(repo, work, manifest, {
         targetId: work.visual.objectId, sceneId: work.visual.hostId, stateId: doc.stateId,
-        candidateId: work.visual.candidateId, referenceTarget: doc.referenceTarget,
+        candidateId: work.visual.candidateId, referenceTarget: doc.referenceTarget, reviews: work.visual.reviews,
       }, stage),
     };
     errors = validator.validateManifest(manifest, { ...verifiedOptions, checkFiles: true, forceLayoutSourceFiles: true, workItemType: 'DISPLAY_LAYER' });
     errors.push(...await validator.checkManifestFiles(manifest, repo, verifiedOptions));
-    if (!errors.length) validateWebTextStage(repo, manifest, work.visual.reviews?.V3Layout, verifiedOptions.textReadbackIdentity);
   }
   if (errors.length) throw new WorkflowError(`显示层领域合同失败：${[...new Set(errors)].join('；')}`);
 }

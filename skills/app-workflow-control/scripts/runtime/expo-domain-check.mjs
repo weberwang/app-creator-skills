@@ -119,7 +119,7 @@ function checkConfirmedRef(repo, work, name, field, expected, identity) {
 }
 
 /** 验证构建和运行材料与平台、当前布局及素材的身份一致。 */
-function checkRuntime(repo, work, doc, profile, identity, textAppearance, slices) {
+function checkRuntime(repo, work, doc, profile, identity, textAppearance, slices, v4RunId) {
   const runtime = readJson(repo, identity(repo, doc.runtimeContextRef, 'Expo 运行上下文'), 'Expo 运行上下文');
   for (const [key, expected] of Object.entries({ schemaVersion: '1.0', workItemId: work.workItemId, objectId: work.visual.objectId, candidateId: work.visual.candidateId, platform: profile.platform })) {
     if (runtime[key] !== expected) throw new WorkflowError(`Expo 运行上下文 ${key} 未绑定当前对象或平台`);
@@ -141,7 +141,7 @@ function checkRuntime(repo, work, doc, profile, identity, textAppearance, slices
     if (!work.action?.effects?.includes('device') || !hasPreciseApproval(work) || runtime.deviceTarget !== work.action.target || runtime.approvalUserMessageRef !== work.action.approval?.userMessageRef) throw new WorkflowError('Expo 设备运行缺少当前目标的明确 device 授权');
   }
   checkConfirmedRef(repo, work, 'V5', 'runtimeContextRef', doc.runtimeContextRef, identity);
-  validateNativeTextReadback(repo, runtime, textAppearance, 'expo', identity);
+  validateNativeTextReadback(repo, runtime, textAppearance, 'expo', identity, v4RunId);
   if (slices.length || runtime.nineSliceMeasurements !== undefined) validateAppLayoutNineSlices(slices, runtime.nineSliceMeasurements, 'Expo V5');
   if (work.workItemType !== 'DISPLAY_LAYER') return;
   if (runtime.hostId !== work.visual.hostId || runtime.layerType !== work.visual.layerType) throw new WorkflowError('Expo 运行上下文未绑定显示层宿主或类型');
@@ -160,7 +160,7 @@ export function validateExpo(repo, work, stage, doc, identity, textAppearance) {
   checkConfirmedRef(repo, work, 'V2', 'platformProfileRef', doc.platformProfileRef, identity);
   if (work.workItemType === 'DISPLAY_LAYER') checkLayerReviews(repo, work, stage, identity);
   if (stage === 'V2') return;
-  const { slices } = readLayout(repo, work, stage, doc, profile, identity);
+  const { layout, slices } = readLayout(repo, work, stage, doc, profile, identity);
   for (const { slice } of slices) if (slice.implementation === 'capInsets' && profile.platform !== 'ios') throw new WorkflowError('Expo capInsets 仅在 iOS 使用，其他平台须绑定实际九宫格实现');
   if (!isFigmaApp(work)) checkConfirmedRef(repo, work, 'V3Layout', 'layoutSpecRef', doc.layoutSpecRef, identity);
   if (stage === 'V3') return;
@@ -170,6 +170,6 @@ export function validateExpo(repo, work, stage, doc, identity, textAppearance) {
     validateAppNineSliceAsset(repo, slice, 'Expo');
   }
   checkConfirmedRef(repo, work, 'V4', 'assetManifestRef', doc.assetManifestRef, identity);
-  validateV4NativeTextRestoration(repo, work, textAppearance);
-  if (stage === 'V5') checkRuntime(repo, work, doc, profile, identity, textAppearance, slices);
+  const v4RunId = validateV4NativeTextRestoration(repo, work, textAppearance, stage, layout.sourcePath);
+  if (stage === 'V5') checkRuntime(repo, work, doc, profile, identity, textAppearance, slices, v4RunId);
 }

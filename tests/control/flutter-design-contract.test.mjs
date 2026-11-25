@@ -10,6 +10,7 @@ import { createHash } from 'node:crypto';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import { validateSingleDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/single-domain-check.mjs';
 import { attachFigmaAppFixture } from './figma-app-fixture.mjs';
+import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 
 /** 所有用户消息与截图均为明确的合成材料，只验证合同规则。 */
 function fixture(t, stage = 'V5', targetBytes = '合成源图') {
@@ -41,13 +42,14 @@ function rebind(f) {
   if (f.asset) {
     const trial = JSON.parse(readFileSync(join(f.repo, f.asset.textRestorationRef.path), 'utf8'));
     trial.designReconstructionRef = f.doc.designReconstructionRef;
-    f.asset.textRestorationRef = write(f.repo, 'v4-text-rebound.json', trial);
     for (const [index, asset] of f.asset.assets.entries()) {
       const implementation = f.plan.implementations[index];
       asset.implementationEvidenceRef = f.doc.implementationEvidenceRefs[index];
       asset.componentEvidenceRef = asset.implementationEvidenceRef.path;
       asset.designItemIds = implementation.designItemIds; asset.consumerIds = implementation.consumers.map((item) => item.id);
     }
+    trial.formalIntegration = formalIntegrationFixture(f.repo, f.reports[0].report.sourceRefs[0].path, f.asset.assets);
+    f.asset.textRestorationRef = write(f.repo, 'v4-text-rebound.json', trial);
     f.work.assetReviewRef = write(f.repo, 'assets-rebound.json', f.asset);
   }
   for (const [name, ref] of Object.entries(f.work.visual.reviews)) {
@@ -377,6 +379,9 @@ test('表达式或动态布局可用真实形状的测量输出，无需为验�
   report.executionRef = write(f.repo, 'measurement-observations.json', raw);
   f.doc.implementationEvidenceRefs[0] = write(f.repo, 'measured-report.json', report);
   f.asset.assets[0].implementationEvidenceRef = f.doc.implementationEvidenceRefs[0]; f.asset.assets[0].componentEvidenceRef = f.doc.implementationEvidenceRefs[0].path;
+  const trial = JSON.parse(readFileSync(join(f.repo, f.asset.textRestorationRef.path), 'utf8'));
+  trial.formalIntegration = formalIntegrationFixture(f.repo, report.sourceRefs[0].path, f.asset.assets);
+  f.asset.textRestorationRef = write(f.repo, 'measured-v4-text.json', trial);
   f.work.assetReviewRef = write(f.repo, 'measured-assets.json', f.asset);
   const review = JSON.parse(readFileSync(join(f.repo, f.work.visual.reviews.V4.path), 'utf8'));
   review.assetReviewRef = f.work.assetReviewRef; f.work.visual.reviews.V4 = write(f.repo, 'measured-assets-review.json', review);
