@@ -44,6 +44,8 @@ V2 展示 V1 已确认的当前模块全部适用要素和必要状态，用于�
 
 ## 实现、验收与返工
 
+V4 验收完成前检查工作流生成的布局写入脚本已退出项目执行链路。V4 验收完成后，V5 和返工均按[布局脚本停用规则](../../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)维护正式布局源。
+
 V3 拆解 V2 确认的稿件，V4 准备资源、接口、共享组件与适用的风险验证。当前视觉单位及状态的图片与应显示文字按批接入正式目标源并保存，逐批核对同次采集的实际文字和图片消费者。V5 完整实现本轮功能，用 V1 的 `requirementId` 和 `command` 将每项验收关联到当前实施包的需求、验证单元与真实执行输出。通过后固定执行证据摘要，以便第 7 阶段复核来源及正式组合的跨模块状态与端到端路径。
 
 Unity、Cocos、Phaser、Three.js、Flutter、Expo 和 ESP32 的 V4 资源评审以 `textRestorationRef: {path, sha256}` 冻结同一份完整原生采集报告。该报告保留各栈规定的工作项、候选、状态、采集批次及文字读数，并记录 `formalIntegration: {entryRef: {path, sha256}, images: [{assetId, outputRef: {path, sha256}, componentPath}]}`。`entryRef` 指向已保存的当前正式场景、页面或组件源，Unity 与 V3 布局计划 `scenePath` 一致，Expo 和 ESP32 与当前正式布局 `layout.sourcePath` 一致，Flutter 与已登记 `implementationEvidence` 的正式源码引用一致，Cocos、Phaser 和 Three.js 使用正式场景、Prefab 或 TypeScript/JavaScript 场景或显示层入口。临时演示、证据目录和未保存状态不能充当正式目标源。`images` 逐项绑定资源评审的图片 `assetId` 和 `output`，并记录该目标中同次采集的实际消费者组件路径；纯原生实现填写空数组。V4 核对源文件和图片实际内容及摘要，V5 保留冻结的 V4 报告并独立采集正式运行证据，V4 之后正式源可继续演进。

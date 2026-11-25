@@ -68,6 +68,7 @@ V2 在现有设计稿和设计记录中明确玩家任务、信息顺序、动�
 - 场景／页面切换与弹出层遵循[统一加载与过渡显示](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：同一全局加载层按任务切换场景不透明背景与弹窗半透明蒙层，并发时场景优先；缓存命中且同步打开不闪现蒙层，后台预取静默。加载层覆盖 Toast、弹窗及安全区并阻断下层输入，纳入真实宿主的层序、进度、失败后备入口和焦点交接设计；弹窗缓存模板与图片等资源，关闭销毁实例并清理任务，重开创建新实例。
 
 - 已在编辑器设定的位置关系按[布局控制权](../app-domain-toolkit/references/editor-display-authoring.md#编辑器位置关系的控制权)维护；静态布局回到正式源修改，程序仅在明确功能需要及限定属性范围内控制位置，不得在启动或刷新时硬编码重置布局。
+- V4 验收完成后，按[布局脚本停用规则](../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)禁止执行工作流生成的布局写入脚本。后续布局调整在正式源中增量完成。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
 - 弹窗与 Toast 按[公共设计顺序](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在全局视觉设计稿冻结后，先确定所需弹窗公共方案、再设计 Toast。统一公共外壳、字体、色彩、间距、动效及适配规则，业务结构按需变体；复用公共组件，各自验证实际宿主组合。
 - UI 内部遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。世界物件和地面区域按其世界空间归属定位，世界空间 UI 的本体按实际对象或地面锚定，不把位置相关提示一律改为屏幕 HUD；其内部控件仍遵循适用的相对布局。
