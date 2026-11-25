@@ -116,6 +116,8 @@ V1 确认模块方案并按风险选择 2D、3D 的[实现分流](game-design-ex
 
 ## V3 拆解确认与生产方案
 
+对需要独立生产的正式静态单图，按[单图路线与 SVG 还原](svg-single-image-reconstruction.md)逐个唯一 component × required state 选择直接生图或 SVG 重绘转 PNG，记录依据、独立输出及实际状态；复用同一部件的 placements 共用该资源。需要代表性对照时先明确样本适用范围，沿用当前确认流程。
+
 图片拆解与布局的下列工件约束适用于相应图片目标及当前控制器实际要求；3D 世界的模型依据与替换交接按[生产交接](game-design-exploration.md#production-handoff)执行。若当前栈仍要求 V3 图片工件和人工确认，按真实合同提供可追溯依据；不能借模型路线跳过机器门、提前生成单体资产或伪造通过，缺少适用路线时按[工具边界](game-design-exploration.md#tooling-boundary)保留阻断。
 
 > 适用技术栈：cocos、phaser、threejs。
@@ -192,9 +194,11 @@ V3 阶段 B 的唯一生成入口还必须在 PNG 输出目录同步写入 `layo
 
 ## V4 正式资源生产与资源级验收
 
+按 V3 选定的单图路线生产。直接生图沿用下方批量生成和透明处理合同；SVG 重绘按[制作及转换规范](svg-single-image-reconstruction.md)逐个部件输出独立 PNG、保留 SVG 与转换记录，再参加同一批资源检查、图文正式接入和人工图像审阅。
+
 > 适用技术栈：cocos、phaser、threejs。
 
-1. 按冻结场景顺序和 V3 清单生产运行时文件；当前 V4 范围内相互独立的静态 component × required state 待生成图片统一按下述批量规则提交，不逐张创建或串行等待生成任务。有父图依赖的图片帧动画遵守自身制作与逐张确认合同。不静默覆盖已验收版本；同步登记来源、生成记录和适用的版权/许可信息。
+1. 按冻结场景顺序和 V3 清单生产运行时文件。当前 V4 范围内选择直接生图的独立静态图片按 component × required state 统一提交批量任务。有父图依赖的图片帧动画遵守自身制作与逐张确认合同。SVG 路线按同批登记的规格逐项导出。保留已验收版本，同步登记来源、实际制作记录和适用的版权/许可信息。
 
 > 适用技术栈：cocos、phaser、threejs。
 

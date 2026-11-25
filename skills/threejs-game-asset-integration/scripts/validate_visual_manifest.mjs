@@ -2,6 +2,7 @@
 
 import { hasFormalV4Text, isPlannedVisualAsset } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
 import { readFile } from "node:fs/promises";
+import { validateSvgRasterManifest, checkSvgRasterManifestFiles } from "../../app-domain-toolkit/scripts/visual/svg-raster-contract.mjs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -347,6 +348,7 @@ export function validateManifest(data, options = {}) {
   const visualValidationMode = resolveVisualValidationMode(data, data.scene_reconstruction_contract);
   validateVisualValidationPolicy(errors, "visual_validation", data, data.scene_reconstruction_contract);
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase();
+  errors.push(...validateSvgRasterManifest(data, requestedStage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3"), options));
   if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5");
   if (data.schema_version !== SCHEMA_VERSION) errors.push(`schema_version 必须为 ${SCHEMA_VERSION}`);
   const baseline = validateVisualBaseline(data.visual_baseline, errors);
@@ -801,7 +803,7 @@ async function checkBitmapEvidenceFiles(projectRoot, label, region, confirmation
 
 /** 检查全局基线与已验收资源声明的本地文件是否存在。 */
 export async function checkManifestFiles(data, projectRoot, options = {}) {
-  const errors = [];
+  const errors = await checkSvgRasterManifestFiles(data, projectRoot, options.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3"), options);
   if ((data?.visualStage !== undefined || data?.visual_stage !== undefined || data?.visualStageState !== undefined || data?.effect_image_reconstruction?.applicability === "effect-image") && data.visualStageModel !== "function-first-v1") errors.push("阶段记录必须声明 visualStageModel=function-first-v1");
   // 文件审计必须使用清单声明的阶段，与结构门保持一致。
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase(); if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5"); const lifecycle = data.effect_image_reconstruction?.lifecycle; const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (lifecycle === "v5-complete" ? "V5" : "V3");

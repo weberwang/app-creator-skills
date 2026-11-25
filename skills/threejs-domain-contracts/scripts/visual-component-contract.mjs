@@ -181,7 +181,7 @@ export function normalizeComponentExpectedAsset(value) {
     // 比较合同身份时按项目物理路径归一化；非法路径仍保留原值，交由校验器输出具体错误。
     source_file: normalizeProjectRelativePath(sourceFile) ?? sourceFile,
     runtime_file: normalizeProjectRelativePath(runtimeFile) ?? runtimeFile,
-    atlas_slice: normalizeAtlasSlice(value.atlas_slice ?? value.atlasSlice),
+    atlas_slice: normalizeAtlasSlice(value.atlas_slice ?? value.atlasSlice), ...(Object.hasOwn(value, "svg_source_file") ? { svg_source_file: normalizeProjectRelativePath(value.svg_source_file) ?? value.svg_source_file } : {}),
     ...(value.nine_slice !== undefined ? { nine_slice: validateNineSliceContract(value.nine_slice, "expected_assets.nine_slice") } : {}),
   };
 }

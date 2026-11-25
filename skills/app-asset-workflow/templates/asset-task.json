@@ -10,6 +10,8 @@
   "states": [],
   "interactionContext": null,
   "route": "native-or-bitmap-or-vector-or-3d",
+  "bitmapProductionMethod": null,
+  "routeReason": "",
   "consumer": "",
   "sourcePath": "",
   "runtimePath": "",

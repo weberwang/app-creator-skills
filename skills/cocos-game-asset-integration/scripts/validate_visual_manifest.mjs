@@ -3,6 +3,7 @@ import { hasFormalV4Text } from "../../app-domain-toolkit/scripts/visual/visual-
 
 import { isPlannedVisualAsset } from "../../cocos-domain-contracts/scripts/visual-planned-asset.mjs";
 import { readFile } from "node:fs/promises";
+import { validateSvgRasterManifest, checkSvgRasterManifestFiles } from "../../app-domain-toolkit/scripts/visual/svg-raster-contract.mjs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isDeepStrictEqual } from "node:util";
@@ -34,7 +35,6 @@ export { computeRegionDefinitionSha256 } from "./effect_image_annotation_core.mj
 export { atomicImageRequirementsEqual, auditProductionContract, deriveAtomicImageRequirements, manifestEvidenceIdentity, normalizeComponentExpectedAsset, normalizeProjectRelativePath, resolveOutputMetadata, resolveProductionContract, validateEvidenceIdentity, validateImageGenerationContract, validateProductionAuditShape, validateProductionMethodChangeRequest, validateProductionContract, validateVisualComponentContract, validateVisualProductionCoverage, validateV5ProductionGate } from "../../cocos-domain-contracts/scripts/visual-production-contract.mjs";
 export { validateSceneReconstructionGate, validateSceneReconstructionContract, validateStructuredFidelityCases } from "../../cocos-domain-contracts/scripts/scene-reconstruction-contract.mjs";
 export { calculateComponentDisplaySize, validateImageGenerationSizeContract, validateImageGenerationSizeManifest } from "../../cocos-domain-contracts/scripts/visual-generation-size-contract.mjs";
-
 export const ALLOWED_ROUTES = new Set(["ui-icon-font", "pixel-art", "frame-animation", "skeletal-animation", "scene-tilemap", "vfx-particle-shader", "decorative-full-bleed", "gameplay-environment", "ai-composite-raster"]);
 export const ALLOWED_STATUSES = new Set(["planned", "producing", "review", "accepted", "rejected", "replaced"]);
 const BASELINE_BOUND_STATUSES = new Set(["producing", "review", "accepted"]);
@@ -51,10 +51,8 @@ const PNG_CRC_TABLE = Array.from({ length: 256 }, (_, value) => {
   for (let bit = 0; bit < 8; bit += 1) crc = (crc & 1) ? 0xedb88320 ^ (crc >>> 1) : crc >>> 1;
   return crc >>> 0;
 });
-
 /** 表示清单无法解析或不满足最低结构约束。 */
 export class ManifestValidationError extends Error {}
-
 /** 判断值是否为去除空白后仍有内容的字符串。 */
 function nonEmptyString(value) { return typeof value === "string" && value.trim().length > 0; }
 
@@ -350,6 +348,7 @@ export function validateManifest(data, options = {}) {
   const visualValidationMode = resolveVisualValidationMode(data, data.scene_reconstruction_contract);
   validateVisualValidationPolicy(errors, "visual_validation", data, data.scene_reconstruction_contract);
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase();
+  errors.push(...validateSvgRasterManifest(data, requestedStage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3"), options));
   if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5");
   if (data.schema_version !== SCHEMA_VERSION) errors.push(`schema_version 必须为 ${SCHEMA_VERSION}`);
   const baseline = validateVisualBaseline(data.visual_baseline, errors);
@@ -813,7 +812,7 @@ async function checkBitmapEvidenceFiles(projectRoot, label, region, confirmation
 
 /** 检查全局基线与已验收资源声明的本地文件是否存在。 */
 export async function checkManifestFiles(data, projectRoot, options = {}) {
-  const errors = [];
+  const errors = await checkSvgRasterManifestFiles(data, projectRoot, options.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3"), options);
   if ((data?.visualStage !== undefined || data?.visual_stage !== undefined || data?.visualStageState !== undefined || data?.effect_image_reconstruction?.applicability === "effect-image") && data.visualStageModel !== "function-first-v1") errors.push("阶段记录必须声明 visualStageModel=function-first-v1");
   // 文件审计必须使用清单声明的阶段，与结构门保持一致。
   const requestedStage = options.stage === undefined ? null : String(options.stage).toUpperCase(); if (requestedStage && !["V3", "V4", "V5"].includes(requestedStage)) errors.push("--stage 只能是 V3、V4 或 V5"); const lifecycle = data.effect_image_reconstruction?.lifecycle; const stage = requestedStage ?? data.visualStage ?? data.visual_stage ?? (lifecycle === "v5-complete" ? "V5" : "V3");

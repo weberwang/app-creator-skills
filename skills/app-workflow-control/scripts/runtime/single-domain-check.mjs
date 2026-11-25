@@ -82,6 +82,11 @@ async function validateWeb(repo, work, stage, doc) {
     const authority = await loadDomainConfirmationAuthority(repo, work, manifest, doc);
     const verifiedOptions = {
       ...options, authority, workItemId: work.workItemId, candidateVersion: work.visual.candidateId,
+      svgPlanContext: {
+        layoutReviewRef: work.visual.reviews?.V3Layout, workItemId: work.workItemId, candidateId: work.visual.candidateId,
+        // 显示层只能继承其已声明复用链中的布局确认。
+        resolveLayoutOwner: (_ref, review) => resolveReuseOwner(repo, work, review.workItemId, 'V3Layout'),
+      },
       ...webTextReadbackOptions(repo, work, manifest, {
         targetId: work.visual.objectId, sceneId: work.visual.hostId, stateId: doc.stateId,
         candidateId: work.visual.candidateId, referenceTarget: doc.referenceTarget, reviews: work.visual.reviews,

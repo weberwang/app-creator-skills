@@ -98,8 +98,15 @@ async function runDomainChecks({ repo, work, target, stage }) {
   }
   const validator = await import(pathToFileURL(manifestPath).href);
   const authority = await loadDomainConfirmationAuthority(repo, work, document, document);
+  // 仅带复用声明的场景可沿目标级确认链继承布局，世界设计路线使用当前工作项确认。
+  const reuseLayout = work.visual?.reuse && work.visual.designRoute !== 'world-3d'
+    ? (await import('./visual-reuse-binding.mjs')).validateSceneReuseReview : undefined;
   const options = {
     stage, authority, workItemId: work.workItemId, candidateVersion: target.candidateId,
+    svgPlanContext: {
+      layoutReviewRef: target.reviews?.V3Layout, workItemId: work.workItemId, candidateId: target.candidateId,
+      resolveLayoutOwner: reuseLayout && ((ref, review) => reuseLayout(repo, work, target, 'V3Layout', ref, review)),
+    },
     ...webTextReadbackOptions(repo, work, document, target, stage),
   };
   const errors = validator.validateManifest(document, { ...options, checkFiles: true, forceLayoutSourceFiles: true, projectRoot: repo, workItemType: 'SCENE' });

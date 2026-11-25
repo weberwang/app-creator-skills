@@ -101,6 +101,8 @@ style recipe 至少约定：
 
 ### 选稿后的正式生图
 
+正式静态单图先按[单图路线与 SVG 还原](../../app-domain-toolkit/references/svg-single-image-reconstruction.md)在 V3 选择直接生图或 SVG 重绘后导出 PNG。本节生成提示词、实际附件、去背与记录要求适用于所选直接生图路线；SVG 路线记录其独立可编辑源、导出和成品身份。
+
 V3 为待生图部件绑定已确认的 V2 原图和部件编号，以原图像素记下部件边界。小部件或整图里难以辨认的细节须附同一原图的对应局部图，原图仍一起发送。提示词逐项保留当前部件可确认的构图、轮廓、比例、关键色、材质、光影和装饰，按任务明确允许变化的部分。全局视觉基线用于保持系列一致性。首次候选仍按探索规则生成。
 
 正式 AI 位图复用已有 `asset-task.json` 或原生生成记录，V4 以 `assetReview.assets[].generationRecord` 及 `generationRecordSha256` 绑定同一份实际记录的 JSON，`designItemIds` 引用当前拆解设计项。记录包含 `assetId`、`candidateId`、`referenceTarget`（已确认原图路径）、`region: {id, bounds: {x, y, width, height}, requiresDetail}`（`id` 对应一个设计项）、`generationInputs`（`reproduce` 或 `edit`）、实际发送的完整 `prompt`、`actualReferenceInputs`（按实际调用顺序的 `{path, sha256}`）、`runtimePath` 和由消费者规格推导的 `runtimeSize`。各栈的既有生成记录可直接补齐这些字段。核对实际附件顺序、内容指纹、当前目标与最终解码尺寸；缺原始发送信息的产物保持未验证。结构校验以真实调用记录为依据，画面的还原结果由用户按既有 V4/V5 流程对照确认。
