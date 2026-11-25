@@ -13,7 +13,7 @@ V2 从 V1 只接收确认过的功能要求，基于全局视觉方向独立设�
 
 第 4 阶段先[调研相关产品并找美术设定参考](references/professional-conventions.md#product-market-research)，再按[目标版本统一视觉](references/workflow.md#目标版本统一视觉)确认并冻结全局视觉方向和代表稿。第 5 阶段 V1 确认完整模块方案，V2 生成并确认覆盖全部适用流程、进度与状态的模块稿，V3 拆解该确认稿，V4 同批还原文字与其他资源并验收试装，V5 完整实现与正式运行验收。出稿或实现前仍无法明确模块设计时，先[请用户选择定向调研或人工调整](references/workflow.md#module-design-decision)。模块稿变更回 V2，全局方向变更回第 4 阶段。
 
-V4 验收完成后，禁止执行工作流生成的布局写入脚本。V5 和后续调整直接修改正式布局源，保留人工调整，遵循[布局脚本停用规则](../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)。
+每次只执行当前工作项所需的布局脚本，并显式限定本次目标。V4 验收完成后，禁止执行工作流生成的布局写入脚本。V5 和后续调整直接修改正式布局源，保留人工调整，遵循[布局脚本执行规则](../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)。
 
 App 按[多页面推进顺序](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)在第 4 阶段通过代表页建立并确认全局基线，各 `PAGE` 在 V2 生成并确认覆盖适用状态和进度的模块稿，依赖和所有权明确后推进 V3–V5。
 
