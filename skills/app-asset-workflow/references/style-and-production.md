@@ -101,7 +101,7 @@ style recipe 至少约定：
 
 ### 选稿后的正式生图
 
-正式静态单图按初始化冻结的[单图路线与 SVG 还原](../../app-domain-toolkit/references/svg-single-image-reconstruction.md)生产。默认 SVG 重绘后导出 PNG，初始化明确选定直接生图时执行本节的提示词、实际附件、去背与记录要求。SVG 路线记录独立可编辑源、导出和成品身份。
+正式静态单图按初始化冻结的[单图路线与 SVG 还原](../../app-domain-toolkit/references/svg-single-image-reconstruction.md)生产。两条路线使用同一份[视觉、尺寸及验收规范](../../app-domain-toolkit/references/svg-single-image-reconstruction.md#正式静态单图共同交付规范)。默认 SVG 重绘，源稿经用户人工确认后导出 PNG。初始化明确选定直接生图时执行本节的提示词、实际附件、去背与记录要求。SVG 路线记录独立可编辑源、源稿确认、导出和成品身份。
 
 V3 为待生图部件绑定已确认的 V2 原图和部件编号，以原图像素记下部件边界。小部件或整图里难以辨认的细节须附同一原图的对应局部图，原图仍一起发送。提示词逐项保留当前部件可确认的构图、轮廓、比例、关键色、材质、光影和装饰，按任务明确允许变化的部分。全局视觉基线用于保持系列一致性。首次候选仍按探索规则生成。
 

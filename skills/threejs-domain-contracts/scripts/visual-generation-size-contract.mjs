@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 图像生成 单图最小尺寸合同。
+ * 正式单图最小尺寸合同。
  *
  * 该模块只计算机器可确定的输出尺寸，不承载人工审阅字段；视觉方向
  * 只由 V3 唯一拆解确认冻结，V4/V5 继续执行机器证据门。尺寸按逻辑像素、最大运行缩放和
@@ -24,6 +24,16 @@ function field(value, ...names) {
   if (!isObject(value)) return undefined;
   for (const name of names) if (value[name] !== undefined) return value[name];
   return undefined;
+}
+
+/** 识别已声明 SVG 源的独立图片，其他手工位图沿原有合同处理。 */
+function isSvgSingleImage(contract, expectedAsset) {
+  const nested = contract?.production_contract ?? contract?.productionContract;
+  const method = field(contract, "production_method", "productionMethod") ?? field(nested, "production_method", "productionMethod");
+  const origin = field(contract, "production_origin", "productionOrigin") ?? field(nested, "production_origin", "productionOrigin");
+  const delivery = field(contract, "delivery_kind", "deliveryKind") ?? field(nested, "delivery_kind", "deliveryKind");
+  return method === "authored-raster" && origin === "independent-production" && delivery === "raster-image"
+    && isObject(expectedAsset) && Object.hasOwn(expectedAsset, "svg_source_file");
 }
 
 /** 合并区域、场景还原区域和实施单元的场景使用合同。 */
@@ -56,7 +66,8 @@ function sizeError(context, message, details = {}) {
   const actual = details.actual === undefined ? "?" : JSON.stringify(details.actual);
   const missing = details.missing ? ` 缺失=${details.missing}` : "";
   const returnStage = details.returnStage ?? (stage === "V2" || stage === "V3" ? "V2/PROPOSAL" : stage);
-  return `[${stage}] annotation_number=${annotation} region_id=${region} component_id=${component} state_id=${state} asset_id=${asset} expected_method=image-generation observed_method=${context.observedMethod ?? "image-generation"} 根因=${details.rootCause ?? "图像生成 单图尺寸合同问题"} expected=${expected} actual=${actual}${missing} ${message} 应退回阶段=${returnStage}`;
+  const svg = context.expectedMethod === "authored-raster";
+  return `[${stage}] annotation_number=${annotation} region_id=${region} component_id=${component} state_id=${state} asset_id=${asset} expected_method=${context.expectedMethod ?? "image-generation"} observed_method=${context.observedMethod ?? "image-generation"} 根因=${details.rootCause ?? (svg ? "SVG 单图尺寸合同问题" : "图像生成 单图尺寸合同问题")} expected=${expected} actual=${actual}${missing} ${message} 应退回阶段=${returnStage}`;
 }
 
 /** 判断正数有限数，拒绝 NaN、Infinity 和隐式字符串。 */
@@ -112,18 +123,23 @@ export function calculateComponentDisplaySize(region, componentId, context = {},
   return { errors, displaySize: { width, height }, inventory };
 }
 
-/** 校验单个 图像生成 expected asset 的精确最小尺寸和无留白政策。 */
+/** 校验正式单图的精确最小尺寸和无留白政策。 */
 export function validateImageGenerationSizeContract(asset, contract, context = {}, options = {}) {
-  const method = contract?.production_method ?? contract?.productionMethod;
-  const required = contract?.image_generation_required ?? contract?.imageGenerationRequired;
-  if (method !== "image-generation" && required !== true) return [];
-  const expectedAsset = options.expectedAsset ?? contract?.expected_assets?.[0] ?? contract?.expectedAssets?.[0] ?? {};
+  const nested = contract?.production_contract ?? contract?.productionContract;
+  const method = field(contract, "production_method", "productionMethod") ?? field(nested, "production_method", "productionMethod");
+  const required = field(contract, "image_generation_required", "imageGenerationRequired") ?? field(nested, "image_generation_required", "imageGenerationRequired");
+  const expectedAsset = options.expectedAsset ?? contract?.expected_assets?.[0] ?? contract?.expectedAssets?.[0]
+    ?? nested?.expected_assets?.[0] ?? nested?.expectedAssets?.[0] ?? {};
+  const svg = isSvgSingleImage(contract, expectedAsset);
+  if (method !== "image-generation" && required !== true && !svg) return [];
   const region = context.region ?? options.region ?? contract?.region;
   const usage = resolveSceneAssetUsage(region, options.unit, options);
   const componentId = expectedAsset.component_id ?? expectedAsset.componentId ?? context.component_id ?? context.componentId;
   const stateId = expectedAsset.state_id ?? expectedAsset.stateId ?? context.state_id ?? context.stateId;
   const assetId = expectedAsset.asset_id ?? expectedAsset.assetId ?? context.asset_id ?? context.assetId;
-  const local = { ...context, component_id: componentId, state_id: stateId, asset_id: assetId, observedMethod: "image-generation" };
+  const local = { ...context, component_id: componentId, state_id: stateId, asset_id: assetId,
+    expectedMethod: svg ? "authored-raster" : "image-generation", observedMethod: svg ? "authored-raster" : "image-generation" };
+  const label = svg ? "SVG 单图" : "图像生成";
   const errors = [];
 
   const displaySizeValue = field(usage, "target_display_size", "targetDisplaySize");
@@ -137,7 +153,7 @@ export function validateImageGenerationSizeContract(asset, contract, context = {
   const maxDpr = field(usage, "max_dpr", "maxDpr");
   if (!isImageProductionDpr(maxDpr)) errors.push(sizeError(local, imageProductionDprError("max_dpr", maxDpr), { missing: "scene_asset_usage.max_dpr", expected: IMAGE_PRODUCTION_DPR }));
   const paddingPolicy = field(usage, "padding_policy", "paddingPolicy");
-  if (paddingPolicy !== "none") errors.push(sizeError(local, "图像生成 individual 必须使用 padding_policy=none，禁止画布额外留白", { expected: "none", actual: paddingPolicy, missing: "scene_asset_usage.padding_policy" }));
+  if (paddingPolicy !== "none") errors.push(sizeError(local, `${label} individual 必须使用 padding_policy=none，禁止画布额外留白`, { expected: "none", actual: paddingPolicy, missing: "scene_asset_usage.padding_policy" }));
 
   const display = calculateComponentDisplaySize(region ?? options.region, componentId, local, options);
   errors.push(...display.errors);
@@ -189,10 +205,23 @@ export function validateImageGenerationSizeContract(asset, contract, context = {
     errors.push(sizeError(local, `expected_assets 必须精确使用机器计算的最小尺寸（按逻辑像素×最大缩放×图片生产基线 ${IMAGE_PRODUCTION_DPR} 向上取整）`, { expected: minimum, actual: expectedSize }));
   }
   const metadata = resolveOutputMetadata(asset ?? {});
+  // SVG 转换记录与产物会在文件门复算；缺少顶层尺寸时采用转换记录中的实际尺寸。
+  const conversion = svg && isObject(asset?.svg_rasterization) ? asset.svg_rasterization : {};
+  const actualWidth = metadata.width ?? conversion.width;
+  const actualHeight = metadata.height ?? conversion.height;
   // V3 校验冻结的计划尺寸。实际宽高提交后仍按同一尺寸规则核对。
-  const awaitingOutput = isPlannedVisualAsset(asset, context.stage) && metadata.width === undefined && metadata.height === undefined;
-  if (asset && !awaitingOutput && (metadata.width !== minimum.width || metadata.height !== minimum.height)) {
-    errors.push(sizeError(local, "图像生成 实际输出尺寸必须精确等于最小尺寸", { expected: minimum, actual: { width: metadata.width, height: metadata.height } }));
+  const awaitingOutput = isPlannedVisualAsset(asset, context.stage) && actualWidth === undefined && actualHeight === undefined;
+  if (asset && !awaitingOutput && (actualWidth !== minimum.width || actualHeight !== minimum.height)) {
+    errors.push(sizeError(local, `${label} 实际输出尺寸必须精确等于最小尺寸`, { expected: minimum, actual: { width: actualWidth, height: actualHeight } }));
+  }
+  if (svg && asset) {
+    // 不让某一层正确的尺寸掩盖其他显式声明的冲突。
+    for (const [name, record] of [["asset", asset], ["output", asset.output], ["output_metadata", asset.output_metadata], ["svg_rasterization", conversion]]) {
+      if (!isObject(record)) continue;
+      if ((record.width !== undefined && record.width !== minimum.width) || (record.height !== undefined && record.height !== minimum.height)) {
+        errors.push(sizeError(local, `SVG 单图 ${name} 实际输出尺寸与冻结规格不一致`, { expected: minimum, actual: { width: record.width, height: record.height } }));
+      }
+    }
   }
   if (options.actualAsset) {
     const actual = resolveOutputMetadata(options.actualAsset);
@@ -211,7 +240,7 @@ function sceneUsageForRegion(manifest, region, unit) {
   return { region: { ...region, ...(reconstructionRegion ?? {}) }, unit, sceneAssetUsage: unit?.scene_asset_usage ?? unit?.sceneAssetUsage };
 }
 
-/** 对完整 visual manifest 执行 V3 expected、V4 actual 的 图像生成 尺寸门。 */
+/** 对完整 visual manifest 执行 V3 计划和 V4/V5 成品的正式单图尺寸门。 */
 export function validateImageGenerationSizeManifest(manifest, options = {}) {
   const errors = [];
   const regions = Array.isArray(manifest?.coverage_audit?.regions) ? manifest.coverage_audit.regions : [];
@@ -225,7 +254,6 @@ export function validateImageGenerationSizeManifest(manifest, options = {}) {
       ?? regionContract?.production_method ?? regionContract?.productionMethod;
     const required = region.image_generation_required ?? region.imageGenerationRequired
       ?? regionContract?.image_generation_required ?? regionContract?.imageGenerationRequired;
-    if (method !== "image-generation" && required !== true) continue;
     const unit = units.find((item) => (item?.annotation_number ?? item?.annotationNumber) === (region.annotation_number ?? region.annotationNumber)
       && (item?.region_id ?? item?.regionId) === (region.id ?? region.region_id ?? region.regionId));
     const expectedAssets = Array.isArray(region.expected_assets)
@@ -237,6 +265,8 @@ export function validateImageGenerationSizeManifest(manifest, options = {}) {
           : (Array.isArray(regionContract?.expectedAssets)
             ? regionContract.expectedAssets
             : (Array.isArray(unit?.expected_assets) ? unit.expected_assets : (Array.isArray(unit?.expectedAssets) ? unit.expectedAssets : [])))));
+    // SVG 和直接生图复用同一消费者尺寸推导；其他素材不进入本单图门。
+    if (method !== "image-generation" && required !== true && !expectedAssets.some((item) => isSvgSingleImage(region, item))) continue;
     const resolved = sceneUsageForRegion(manifest, region, unit);
     for (const expected of expectedAssets) {
       const expectedAssetId = expected?.asset_id ?? expected?.assetId;

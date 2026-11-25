@@ -30,6 +30,16 @@
           "targetSha256"
         ]
       }
+    },
+    {
+      "if": {
+        "properties": {"purpose": {"const": "svg-source"}},
+        "required": ["purpose"]
+      },
+      "then": {
+        "properties": {"stage": {"const": "V4"}},
+        "required": ["workItemId", "candidateId", "targetRef", "targetSha256"]
+      }
     }
   ],
   "properties": {
@@ -59,6 +69,7 @@
         "layout",
         "representative-sample",
         "design-change",
+        "svg-source",
         "imported-assets",
         "runtime-acceptance"
       ]

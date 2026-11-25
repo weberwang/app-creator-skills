@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url';
 import sharp from '../../../app-skill-runtime/sharp.mjs';
 import { isSvgRasterDimension, SVG_RASTER_MAX_DIMENSION, SVG_RASTER_MAX_SOURCE_BYTES } from './svg-raster-limits.mjs';
 import { checkedPath } from '../verification/file-identities.mjs';
+import { readSvgSourceReview, SVG_RASTERIZATION_VERSION } from './svg-source-review.mjs';
 
 const ELEMENTS = new Set(['svg', 'g', 'defs', 'path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon',
   'linearGradient', 'radialGradient', 'stop', 'clipPath', 'mask', 'filter', 'feGaussianBlur', 'feOffset',
@@ -132,23 +133,29 @@ export async function main(argv = process.argv.slice(2)) {
       overwrite = true;
       continue;
     }
-    if (!['--source', '--output', '--width', '--height', '--alpha'].includes(name) || Object.hasOwn(args, name)
+    if (!['--source', '--output', '--width', '--height', '--alpha', '--source-review'].includes(name) || Object.hasOwn(args, name)
       || !argv[i + 1] || argv[i + 1].startsWith('--')) throw new Error('参数无效或重复');
     args[name] = argv[++i];
   }
-  if (Object.keys(args).length !== 5 || !/^[1-9]\d*$/.test(args['--width']) || !/^[1-9]\d*$/.test(args['--height'])
+  if (!args['--source-review']) throw new Error('转换正式图片前必须通过 --source-review 提供 SVG 源稿人工确认');
+  if (Object.keys(args).length !== 6 || !/^[1-9]\d*$/.test(args['--width']) || !/^[1-9]\d*$/.test(args['--height'])
     || extname(args['--source']).toLowerCase() !== '.svg' || extname(args['--output']).toLowerCase() !== '.png') throw new Error('源必须为 SVG，输出必须为 PNG 且尺寸为正整数');
-  const sourcePath = checkedPath(process.cwd(), args['--source'], 'SVG 源').absolute;
-  const outputPath = checkedPath(process.cwd(), args['--output'], 'PNG 输出').absolute;
-  const sourceStat = lstatSync(sourcePath);
+  const projectRoot = process.cwd();
+  const sourcePath = checkedPath(projectRoot, args['--source'], 'SVG 源');
+  const output = checkedPath(projectRoot, args['--output'], 'PNG 输出');
+  const outputPath = output.absolute;
+  const sourceStat = lstatSync(sourcePath.absolute);
   if (!sourceStat.isFile() || !sourceStat.size || sourceStat.size > SVG_RASTER_MAX_SOURCE_BYTES) {
     throw new Error('SVG 源必须是非空且不超过 4 MiB 的普通文件');
   }
-  const source = readFileSync(sourcePath);
+  const source = readFileSync(sourcePath.absolute);
+  const sourceSha256 = createHash('sha256').update(source).digest('hex');
+  // 只渲染用户已审阅的这份 SVG 字节，未确认时不创建正式 PNG 或输出目录。
+  const reviewRef = readSvgSourceReview(projectRoot, args['--source-review'], { sourcePath: sourcePath.relative, sourceSha256 });
   const width = Number(args['--width']); const height = Number(args['--height']); const alpha = args['--alpha'];
   const png = await rasterizeSvg(source, { width, height, alpha });
   mkdirSync(dirname(outputPath), { recursive: true });
-  checkedPath(process.cwd(), args['--output'], 'PNG 输出');
+  checkedPath(projectRoot, output.relative, 'PNG 输出');
   const temp = `${outputPath}.${randomUUID()}.tmp`;
   try {
     writeFileSync(temp, png, { flag: 'wx' });
@@ -163,9 +170,9 @@ export async function main(argv = process.argv.slice(2)) {
     }
   }
   finally { rmSync(temp, { force: true }); }
-  const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-  return { schema_version: 'svg-rasterization/1.0', source_file: args['--source'], source_sha256: sha256(source),
-    output_file: args['--output'], output_sha256: sha256(png), width, height, alpha, renderer: 'sharp', renderer_version: svgRasterizerVersion() };
+  return { schema_version: SVG_RASTERIZATION_VERSION, source_file: sourcePath.relative, source_sha256: sourceSha256, source_review_ref: reviewRef,
+    output_file: output.relative, output_sha256: createHash('sha256').update(png).digest('hex'), width, height, alpha,
+    renderer: 'sharp', renderer_version: svgRasterizerVersion() };
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {

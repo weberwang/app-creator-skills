@@ -3,6 +3,7 @@ import { lstat, readFile } from 'node:fs/promises';
 import { isDeepStrictEqual } from 'node:util';
 import { checkedPath, inspectFile } from '../verification/file-identities.mjs';
 import { isSvgRasterDimension, SVG_RASTER_MAX_DIMENSION, SVG_RASTER_MAX_SOURCE_BYTES } from './svg-raster-limits.mjs';
+import { isSvgSourceReviewRef, readSvgSourceReview, SVG_RASTERIZATION_VERSION } from './svg-source-review.mjs';
 
 /** 兼容既有生产合同的字段位置，SVG 源路径只使用 svg_source_file。 */
 function productionField(value, name) {
@@ -102,14 +103,15 @@ function collectConversions(manifest, stage) {
       || asset.generationRecord !== undefined || (explicitMethod && explicitMethod !== 'authored-raster')) {
       errors.push(`${label}的独立 PNG 源、运行输出或制作方式错绑`);
     }
-    if (record?.schema_version !== 'svg-rasterization/1.0' || record.renderer !== 'sharp' || typeof record.renderer_version !== 'string'
+    if (record?.schema_version !== SVG_RASTERIZATION_VERSION || record.renderer !== 'sharp' || typeof record.renderer_version !== 'string'
       || !record.renderer_version.trim() || record.source_file !== plan.svg || record.output_file !== plan.output
       || record.width !== plan.width || record.height !== plan.height || record.alpha !== plan.alpha
+      || !isSvgSourceReviewRef(record.source_review_ref)
       || ![record.source_sha256, record.output_sha256].every((sha) => typeof sha === 'string' && /^[a-f0-9]{64}$/.test(sha))) {
-      errors.push(`${label}缺少与冻结 SVG、PNG、尺寸和 Alpha 一致的 svg_rasterization`);
+      errors.push(`${label}缺少与已确认 SVG、PNG、尺寸和 Alpha 一致的 svg_rasterization 或 SVG 人工确认引用`);
       continue;
     }
-    converted.push({ label, plan, record });
+    converted.push({ id, label, plan, record });
   }
   if (stage !== 'V3') for (const id of plans.keys()) if (!observed.has(id)) errors.push(`[${stage}] SVG 单图 ${id}缺少正式 PNG 资源记录`);
   return { plans, converted, errors };
@@ -188,8 +190,17 @@ export async function checkSvgRasterManifestFiles(manifest, projectRoot, stage, 
       errors.push(`[${phase}] SVG 单图 ${id} ${error.message}`);
     }
   }
-  for (const { label, plan, record } of converted) {
+  for (const { id, label, plan, record } of converted) {
     try {
+      // 验收时重新核对用户确认，防止替换确认记录或将其他素材的授权挪用到本图。
+      if (typeof manifest.workItemId !== 'string' || !manifest.workItemId.trim()
+        || typeof manifest.candidateVersion !== 'string' || !manifest.candidateVersion.trim()) {
+        throw new Error('SVG 人工确认缺少当前工作项或候选身份');
+      }
+      readSvgSourceReview(projectRoot, record.source_review_ref.path, {
+        sourcePath: plan.svg, sourceSha256: record.source_sha256, reviewSha256: record.source_review_ref.sha256,
+        assetId: id, workItemId: manifest.workItemId, candidateId: manifest.candidateVersion,
+      });
       const { rasterizeSvg, svgRasterizerVersion } = await import('./svg-rasterization.mjs');
       if (record.renderer_version !== svgRasterizerVersion()) throw new Error('转换工具版本与当前复验版本不一致');
       const pngBudget = plan.width * plan.height * 5 + 1024 * 1024;
