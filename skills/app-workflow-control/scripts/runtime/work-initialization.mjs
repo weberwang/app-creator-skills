@@ -5,13 +5,14 @@ import { loadProfile, requireOneOf, requireText, validateWork } from './validati
 import { withWorkLock } from './work-lock.mjs';
 import { response } from './responses.mjs';
 import { bindProductionScope } from './production-scope.mjs';
+import { probeDesignCodex, withInitializedImageRoutes } from './image-route-policy.mjs';
 
 /** 创建不覆盖已有文件的最小 Work Item 与固定目录布局。 */
-export async function initializeWork({ repo, args }) {
+export async function initializeWork({ repo, args, workflowEntry = false, probeCodex = probeDesignCodex }) {
   requireText(args?.id, '--id');
   validateDesignOptions(args);
   const workPath = args['work-item'] ?? `.workflow-control/work-items/${args.id}.json`;
-  return withWorkLock(repo, workPath, () => initializeWorkLocked({ repo, args }));
+  return withWorkLock(repo, workPath, () => initializeWorkLocked({ repo, args, workflowEntry, probeCodex }));
 }
 
 /** 在创建锁和目录前拒绝不适用于当前对象的设计路线及用途。 */
@@ -45,7 +46,7 @@ function validateDesignOptions(args) {
 }
 
 /** 在已取得 Work Item 排他锁后执行初始化，避免同名并发创建竞争。 */
-async function initializeWorkLocked({ repo, args }) {
+async function initializeWorkLocked({ repo, args, workflowEntry, probeCodex }) {
   const id = args.id;
   const stack = args.stack;
   const type = args.type ?? 'FOUNDATION';
@@ -112,6 +113,8 @@ async function initializeWorkLocked({ repo, args }) {
   for (const key of ['production-scope', 'production-batch', 'production-dependencies']) if (args[key] !== undefined) requireText(args[key], `--${key}`);
   bindProductionScope(repo, work, { scopePath: args['production-scope'], batchId: args['production-batch'], dependenciesPath: args['production-dependencies'] });
   validateWork(work, { repo });
-  await atomicWriteJson(repo, workPath, work);
-  return response({ status: 'PASS', work, changed: true, metadata: { workItemPath: workPath, stackProfile: profile.displayName } });
+  return withInitializedImageRoutes(repo, work, args, { workflowEntry, workPath, probeCodex }, async (imageRoutes) => {
+    await atomicWriteJson(repo, workPath, work);
+    return response({ status: 'PASS', work, changed: true, metadata: { workItemPath: workPath, stackProfile: profile.displayName, ...(imageRoutes ? { imageRoutes } : {}) } });
+  });
 }

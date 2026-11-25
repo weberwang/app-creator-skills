@@ -30,6 +30,7 @@ import { captureWorldHudAssets, isWorldHudReturn } from './world3d-hud.mjs';
 import { freezeSampleResult } from './production-samples.mjs';
 import { functionCoverageOrigins } from './integration-system-sources.mjs';
 import { freezeModulePlan, assertModuleStage, assertFoundationDesignPack, assertFrozenModulePlan, freezeModuleRuntime, assertModuleRuntime } from './module-stages.mjs';
+import { readImageRoutePolicy } from './image-route-policy.mjs';
 
 /** 独立的设计提案沿其选稿流程，正式对象统一使用模块阶段门。 */
 function moduleStage(repo, work, options) {
@@ -47,6 +48,7 @@ function verifyFoundation(repo, work) {
 export function loadWork(repo, file) {
   const work = readJson(repo, file, 'Work Item');
   validateWork(work, { repo });
+  readImageRoutePolicy(repo, work);
   return bindWorkSource(work, repoPath(repo, file, 'Work Item 路径').relative);
 }
 
@@ -996,5 +998,6 @@ async function advanceVisualLocked({ repo, workItem, to }) {
 export function inspect({ repo, workItem, check = false }) {
   const work = loadWork(repo, workItem);
   const result = inspectWork(repo, work, { strict: check });
-  return response({ ...result, work, metadata: { mode: check ? 'check' : 'status', ...(result.activeBatch ? { activeBatch: result.activeBatch } : {}) } });
+  const imageRoutes = readImageRoutePolicy(repo, work);
+  return response({ ...result, work, metadata: { mode: check ? 'check' : 'status', ...(result.activeBatch ? { activeBatch: result.activeBatch } : {}), ...(imageRoutes ? { imageRoutes } : {}) } });
 }

@@ -139,6 +139,10 @@
     "implementationPackageRef": {
       "$ref": "#/$defs/refOrNull"
     },
+    "imageRoutesRef": {
+      "description": "项目初始化冻结的设计稿与正式静态单图路线",
+      "$ref": "#/$defs/visualFileIdentity"
+    },
     "evidenceRef": {
       "$ref": "#/$defs/refOrNull"
     },

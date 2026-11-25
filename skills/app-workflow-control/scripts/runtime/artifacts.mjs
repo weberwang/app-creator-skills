@@ -36,6 +36,7 @@ import { isWorld2D, validateWorld2DDesign, collectSceneDesignReferences } from '
 import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
 import { validateGeneratedImageReview } from './generated-image-review.mjs';
+import { assertFormalImageReviewRoute } from './formal-image-route.mjs';
 import { collectSystemCoverageReferences } from './system-coverage.mjs';
 import { assertSystemCoverageBindings } from './system-coverage-binding.mjs';
 import { collectIntegrationScopeReferences } from './integration-system-sources.mjs';
@@ -155,7 +156,7 @@ export function collectWorkReferencePaths(work, repo) {
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'foundationVisualRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'foundationVisualRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef', 'imageRoutesRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
@@ -380,6 +381,7 @@ export function assertAssetReview(repo, work, target = null) {
     requireNonEmptyFile(repo, asset.output, '正式图片资源');
     requireText(asset.sourceRef, 'Asset Review asset.sourceRef');
     requireOneOf(asset.sourceKind, ['ai-generated', 'hand-authored', 'licensed', 'existing'], 'Asset Review asset.sourceKind');
+    assertFormalImageReviewRoute(repo, work, asset);
     if (asset.sourceKind === 'ai-generated') {
       const recordPath = verifySingleVisualFile(repo, { path: asset.generationRecord, sha256: asset.generationRecordSha256 }, 'AI 图片生成记录');
       const approvedSources = target ? [target.referenceTarget] : readApprovedImageSources(repo, work);

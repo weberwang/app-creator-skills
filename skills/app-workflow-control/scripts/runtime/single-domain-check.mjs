@@ -67,6 +67,8 @@ async function validateWeb(repo, work, stage, doc) {
   if (work.workItemType !== 'DISPLAY_LAYER') throw new WorkflowError('游戏技术栈单目标领域合同仅适用于 DISPLAY_LAYER');
   const manifest = readJson(repo, identity(repo, doc.manifestRef, '显示层视觉清单'), '显示层视觉清单');
   if (manifest.visualStageModel !== 'function-first-v1' || manifest.visualStage !== stage || manifest.workItemId !== work.workItemId || manifest.candidateVersion !== work.visual.candidateId) throw new WorkflowError('显示层清单的阶段、工作项或候选错绑');
+  const { assertFormalImageManifestRoute } = await import('./formal-image-route.mjs');
+  assertFormalImageManifestRoute(repo, work, manifest, stage);
   const target = manifest.reference_target;
   const sha = String(target?.target_sha256 ?? '').replace(/^sha256:/, '');
   if (identity(repo, { path: target?.original_file, sha256: sha }, '清单视觉目标') !== identity(repo, doc.referenceTarget, '领域目标') || sha !== doc.referenceTarget.sha256) throw new WorkflowError('显示层清单未绑定当前视觉目标');

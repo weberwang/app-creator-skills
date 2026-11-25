@@ -66,7 +66,7 @@ test('同名记录初始化拒绝覆盖', (t) => {
   const root = fixture(t);
   installSkills({ projectRoot: root, stacks: ['flutter'] });
   const file = '.workflow-control/work-items/page.json';
-  const args = ['init', '--work-item', file, '--stack', 'flutter', '--id', 'page', '--type', 'PAGE', '--objective', '页面验证'];
+  const args = ['init', '--work-item', file, '--stack', 'flutter', '--id', 'page', '--type', 'PAGE', '--objective', '页面验证', '--design-image-method', 'prompt-handoff'];
   assert.equal(cli(root, ...args).status, 0);
   const before = readFileSync(join(root, file), 'utf8');
   assert.equal(JSON.parse(before).visualBaselineRequired, true);

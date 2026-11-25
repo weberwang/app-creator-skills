@@ -22,7 +22,9 @@ test('九栈初始化遵循真实视觉对象矩阵，失败不写工作项', as
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   for (const stack of stacks) for (const type of types) {
     const id = `${stack}-${type.toLowerCase()}`;
-    const args = { id, stack, type, objective: '验证对象类型', ...(type === 'DISPLAY_LAYER' ? { 'host-id': 'home', 'layer-type': 'modal' } : {}) };
+    const args = { id, stack, type, objective: '验证对象类型',
+      ...(type === 'PROJECT' && stack !== 'nodejs' ? { 'design-image-method': 'prompt-handoff' } : {}),
+      ...(type === 'DISPLAY_LAYER' ? { 'host-id': 'home', 'layer-type': 'modal' } : {}) };
     const path = `.workflow-control/work-items/${id}.json`;
     if (!supported(stack, type)) {
       await assert.rejects(initializeWork({ repo, args }), /领域合同.*(?:Flutter|SCENE|PAGE)/);

@@ -12,7 +12,7 @@ import { workflowMode } from './runtime/task-policy.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'stage', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'stage', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope', 'design-image-method', 'formal-image-method'],
   status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
@@ -32,7 +32,7 @@ export async function main(argv = process.argv.slice(2)) {
   if (args._.length) throw new WorkflowError(`不接受位置参数：${args._.join(' ')}`);
   const repo = resolve(args.repo ?? process.cwd());
   if (!existsSync(repo)) throw new WorkflowError(`项目目录不存在：${repo}`, 'NOT_FOUND');
-  if (command === 'init') return output(await initializeWork({ repo, args }));
+  if (command === 'init') return output(await initializeWork({ repo, args, workflowEntry: true }));
   if (command === 'lint') return output(await lintPackage(repo));
   if (command === 'run') return output(await runSafe({ repo, workItem: args['work-item'] }), true);
   requireText(args['work-item'], '--work-item');

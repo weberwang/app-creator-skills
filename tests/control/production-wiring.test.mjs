@@ -109,7 +109,7 @@ test('CLI 区分本批与最终范围，缺少明确参数值时不静默初始�
   put(repo, 'docs/flow.json', definition());
   const cli = resolve('skills/app-workflow-control/scripts/workflow-control.mjs');
   const common = [cli, 'init', '--repo', repo, '--stack', 'expo', '--project-id', 'fixture', '--objective', '验证生产CLI'];
-  const batch = spawnSync(process.execPath, [...common, '--id', 'page', '--type', 'PAGE', '--object-id', 'form', '--production-scope', 'docs/flow.json', '--production-batch', 'edit'], { encoding: 'utf8', windowsHide: true });
+  const batch = spawnSync(process.execPath, [...common, '--id', 'page', '--type', 'PAGE', '--object-id', 'form', '--production-scope', 'docs/flow.json', '--production-batch', 'edit', '--design-image-method', 'prompt-handoff'], { encoding: 'utf8', windowsHide: true });
   assert.equal(batch.status, 0, batch.stderr);
   assert.equal(JSON.parse(batch.stdout).metadata.workflowView.productionBatchId, 'edit');
   const final = spawnSync(process.execPath, [...common, '--id', 'final', '--type', 'INTEGRATION', '--integration-purpose', 'final', '--production-scope', 'docs/flow.json'], { encoding: 'utf8', windowsHide: true });

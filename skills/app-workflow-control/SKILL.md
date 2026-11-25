@@ -73,7 +73,7 @@ node skills/app-workflow-control/scripts/workflow-control.mjs visual-stage --rep
 node skills/app-workflow-control/scripts/workflow-control.mjs unit-check --repo <项目路径> --work-item <项目相对 JSON 路径> --result <项目相对结果 JSON 路径>
 ```
 
-`init` 只生成 Work Item，不覆盖已有记录。正式 PAGE／SCENE／DISPLAY_LAYER 绑定已确认的第 4 阶段全局视觉基线和 V1 模块方案；无视觉生产的局部工程任务使用非视觉工作项。
+`init` 创建 Work Item，并在首次适用的视觉初始化固定项目图片路线。设计稿默认使用预检通过的 Codex，预检失败时在初始化选择 `--design-image-method host-tool` 或 `prompt-handoff`。正式静态单图默认 SVG 转 PNG，明确选择直接生图时在初始化使用 `--formal-image-method direct-image-generation`。后续工作项通过 `imageRoutesRef` 继承，使用 `status` 查看冻结值。详见[图片路线初始化](../app-asset-workflow/references/image-generation.md)。正式 PAGE／SCENE／DISPLAY_LAYER 绑定已确认的第 4 阶段全局视觉基线和 V1 模块方案；无视觉生产的局部工程任务使用非视觉工作项。
 
 Flutter/Expo 的页面默认 `visual.designRoute: figma-app`；ESP32 可用 `--design-route figma-app`。仅设计提案用 `--design-intent proposal`，按委托范围交付。正式实现 V1 确认完整模块方案，V2 生成并确认模块设计，V5 完整实现与验收。Figma 工具按当前宿主实际能力使用。
 

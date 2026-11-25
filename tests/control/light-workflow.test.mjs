@@ -42,7 +42,8 @@ function call(repo, command, args = [], expectedExit = 0) {
 test('普通模式按工作项进入研发阶段，RELEASE 默认只准备', async (t) => {
   const repo = temporaryProject(t);
   for (const [id, type, phase] of [['normal', 'MODULE', 'scene-production'], ['project', 'PROJECT', 'commercial-initiation'], ['release', 'RELEASE', 'release']]) {
-    const result = await initializeWork({ repo, args: { id, type, stack: 'flutter', objective: '验证控制器任务分流' } });
+    const result = await initializeWork({ repo, args: { id, type, stack: 'flutter', objective: '验证控制器任务分流',
+      ...(type === 'PROJECT' ? { 'design-image-method': 'prompt-handoff' } : {}) } });
     const work = read(repo, result.metadata.workItemPath);
     assert.equal(work.workflowMode, 'standard');
     assert.equal(work.globalState, 'INTAKE');
@@ -55,7 +56,8 @@ test('七阶段入口支持明确的产品阶段并保留独立发布工作项',
   const repo = temporaryProject(t);
   assert.deepEqual(STAGES, ['commercial-initiation', 'requirements-scope', 'global-baseline', 'foundation-engineering', 'scene-production', 'cross-module-integration', 'global-integration-validation']);
   for (const [index, stage] of ['commercial-initiation', 'requirements-scope', 'global-baseline'].entries()) {
-    const result = call(repo, 'init', ['--id', `project-${index}`, '--type', 'PROJECT', '--stack', 'flutter', '--objective', '阶段入口', '--stage', stage]);
+    const result = call(repo, 'init', ['--id', `project-${index}`, '--type', 'PROJECT', '--stack', 'flutter', '--objective', '阶段入口', '--stage', stage,
+      ...(index === 0 ? ['--design-image-method', 'prompt-handoff'] : [])]);
     assert.equal(read(repo, result.metadata.workItemPath).stageId, stage);
   }
   const feature = await initializeWork({ repo, args: { id: 'feature', type: 'INTEGRATION', stack: 'flutter', objective: '跨模块' } });

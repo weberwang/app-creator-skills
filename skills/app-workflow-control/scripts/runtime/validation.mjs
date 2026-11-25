@@ -14,7 +14,7 @@ const WORK_FIELDS = new Set([
   'grillingRef', 'visual', 'visualBaselineRequired', 'evidenceRoot', 'action',
   'returnRecord', 'blockedRecord', 'invalidatedRefs', 'transitionHistory', 'category',
   'workflowMode', 'releaseIntent', 'planningRef', 'integrationPurpose', 'integrationScopeRef', 'integrationEvidenceRef',
-  'productionScopeRef', 'productionBatchId', 'productionDependencies',
+  'productionScopeRef', 'productionBatchId', 'productionDependencies', 'imageRoutesRef',
 ]);
 
 /** 确认值为非空字符串，错误中保留可定位字段名。 */
@@ -171,7 +171,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   validatePathList(work.forbiddenPaths, 'Work Item.forbiddenPaths');
   if (!work.gateStatus || typeof work.gateStatus !== 'object') throw new WorkflowError('Work Item.gateStatus 必须记录 F0–F4');
   for (const gate of GATES) requireOneOf(work.gateStatus[gate], ['PASS', 'FAIL', 'NOT_RUN'], `gateStatus.${gate}`);
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'foundationVisualRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'foundationVisualRef', 'imageRoutesRef']) {
     const ref = work[name];
     if (ref !== undefined && ref !== null) {
       if (typeof ref !== 'object' || Array.isArray(ref)) throw new WorkflowError(`Work Item.${name} 必须为含 path 的对象或 null`);
@@ -182,6 +182,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   if (typeof work.visualBaselineRequired !== 'boolean') throw new WorkflowError('Work Item.visualBaselineRequired 必须显式为布尔值');
   if (work.globalVisualBaselineRef && !/^[a-f0-9]{64}$/.test(work.globalVisualBaselineRef.sha256 ?? '')) throw new WorkflowError('Work Item.globalVisualBaselineRef 必须绑定 SHA-256');
   if (work.foundationVisualRef && !/^[a-f0-9]{64}$/.test(work.foundationVisualRef.sha256 ?? '')) throw new WorkflowError('Work Item.foundationVisualRef 必须绑定 SHA-256');
+  if (work.imageRoutesRef !== undefined && !/^[a-f0-9]{64}$/.test(work.imageRoutesRef?.sha256 ?? '')) throw new WorkflowError('Work Item.imageRoutesRef 必须绑定 SHA-256');
   if (work.planningRef && !/^[a-f0-9]{64}$/.test(work.planningRef.sha256 ?? '')) throw new WorkflowError('Work Item.planningRef 必须绑定冻结计划的 SHA-256');
   // 可见对象的视觉方向必须经确认，不能通过修改工作项标志跳过阶段门。
   if (work.visual && !work.visualBaselineRequired) throw new WorkflowError('视觉工作项必须启用 visualBaselineRequired');

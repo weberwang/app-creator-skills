@@ -90,6 +90,8 @@ async function runDomainChecks({ repo, work, target, stage }) {
   const domainPath = resolve(SKILLS_ROOT, `${work.stack}-domain-contracts/scripts/scene-reconstruction-contract.mjs`);
   const manifestPath = resolve(SKILLS_ROOT, `${prefix}-game-asset-integration/scripts/validate_visual_manifest.mjs`);
   if (!existsSync(domainPath) || !existsSync(manifestPath)) throw new WorkflowError(`当前安装缺少 ${work.stack} 场景领域校验器`);
+  const { assertFormalImageManifestRoute } = await import('./formal-image-route.mjs');
+  assertFormalImageManifestRoute(repo, work, document, stage);
   if (stage === 'V2') {
     const validator = await import(pathToFileURL(domainPath).href);
     const errors = validator.validateSceneReconstructionContract(document.scene_reconstruction_contract, document, { stage, projectRoot: repo });
