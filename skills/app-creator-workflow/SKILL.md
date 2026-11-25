@@ -37,7 +37,7 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 客户端错误反馈按[错误提示形式](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式)分流。第 4 阶段定[弹窗公共方案](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)和 Toast 的全局风格，模块 V2 设计其适用状态。实际 DISPLAY_LAYER 的模块及宿主组合分别验证。
 
-涉及场景／页面切换或弹出层时统一遵循[场景与弹出层统一加载](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：共用唯一加载服务和全局显示层，场景使用不透明全屏过渡、弹窗使用半透明蒙层，并发时场景样式优先；按请求身份与独立令牌管理取消、替代、失败和输入交接。弹窗首次触发才加载，仅缓存模板、图片及依赖资源，关闭销毁实例并停止任务，重开创建新实例读取当前业务数据；场景切换清理旧宿主弹出层、任务与独占资源，后台预取保持静默。
+涉及场景／页面切换或弹出层时统一遵循[场景与弹出层统一加载](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载)：共用唯一加载服务和全局显示层，场景使用不透明全屏过渡、弹窗使用半透明蒙层，并发时场景样式优先；按请求身份与独立令牌管理取消、替代、失败和输入交接。所有应用自有弹窗都必须动态加载。宿主显示树中的所有弹窗共用一个弹窗层父节点，禁止预置弹窗实例（包括隐藏或禁用的节点）。首次打开才加载资源，每次打开创建新实例并直接挂到该层，读取当前业务数据；关闭时停止任务，退场结束即从显示树移除并销毁实例，弹窗只缓存预制体；场景切换清理旧宿主弹出层、任务与独占资源，后台预取保持静默。
 
 ## 进入任务
 
