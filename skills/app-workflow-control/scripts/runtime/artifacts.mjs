@@ -412,7 +412,7 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
   }
   const record = readFrozenVisualBaseline(repo, work.globalVisualBaselineRef);
   if (record.schemaVersion !== VERSION || record.baselineId === undefined || record.projectId !== work.projectId || record.stack !== work.stack) throw new WorkflowError('视觉基线版本、项目或技术栈错绑');
-  validateVisualResearch(repo, record);
+  validateVisualResearch(repo, record, work.globalVisualBaselineRef);
   if (isWorld3D(work)) return validateWorld3DBaseline(repo, work, record);
   if (record.designRoute === 'world-3d') throw new WorkflowError('2D／UI 不得引用无图 3D 方向基线绕过图片候选');
   if (isFigmaApp(work)) {

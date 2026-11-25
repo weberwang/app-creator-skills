@@ -8,7 +8,9 @@
 
 图片、Figma 和三维世界基线都须用 `visualResearchRef: {path,sha256}` 绑定[调研清单](../templates/visual-research.json)。`projectId` 和 `stack` 与当前基线相同，`productResearch` 提供 `market`、`competitor`、`audience` 的来源和结论，`artReferences` 逐项记录来源、设计观察及当前适用依据。每项来源提供公开 `url` 或冻结的 `fileRef: {path,sha256}`。控制器在绑定基线的阶段迁移和基础视觉冻结清单校验时核对这些材料。当前项目和技术栈下仍适用的冻结清单可以直接复用。仅部分来源适用时，将这些来源纳入本次清单并说明适用依据。执行者负责核对公开链接内容和实际适用性。
 
-仅设计的 Figma 提案在选稿前用 `visual.visualResearchRef` 绑定同样的调研清单，也可以沿用已绑定的有效全局基线。进入 V2 及执行受保护的 Figma 写入前都要核对调研。
+已冻结的基线若缺少 `visualResearchRef`，可在同目录补充 `<基线文件名>.research-supplement.json`，例如 `goods-sorting-b.json` 对应 `goods-sorting-b.research-supplement.json`。补充记录使用 `schemaVersion: "1.0"`，以 `baselineRef: {path,sha256}` 绑定原基线，以 `visualResearchRef: {path,sha256}` 绑定调研清单，原基线保持冻结。控制器校验两条文件身份，并将补充记录、调研清单及其本地 `fileRef` 来源纳入只读输入写保护。调研清单如声明 `basisRef: {path,sha256}`，其规范化路径和摘要须与当前基线一致。基线自身已声明 `visualResearchRef` 时，以该引用为准。
+
+仅设计的 Figma 提案在选稿前用 `visual.visualResearchRef` 绑定同样的调研清单，也可以沿用已绑定的有效全局基线。提案尚未绑定基线时，控制器仍会校验调研清单所声明的 `basisRef` 的文件身份。进入 V2 及执行受保护的 Figma 写入前都要核对调研。
 
 基础工程 Work Item 完成原有工程验收。其 `foundationVisualRef: {path,sha256}` 指向 JSON，字段为 `schemaVersion: "1.0"`、`projectId`、`stack`、`foundationWorkItemPath` 及 `baselines`。各基线记录 `{route,ref:{path,sha256}}`。路线取 `image`、`figma-app` 或 `world-3d`，直接 Figma 条目保留已获授权的 `designSource`。各路线使用既有基线合同，记录用户对代表稿及全局方向的确认，并将清单的准确路径与摘要纳入基础工程的 `systemCoverage.modules[].designRefs`。正式模块绑定同一个 `foundationVisualRef` 和当前路线对应的 `globalVisualBaselineRef`。
 

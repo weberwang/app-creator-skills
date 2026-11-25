@@ -1,5 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/visual-research.schema.json",
   "title": "全局视觉产品调研与美术参考",
   "type": "object",
   "additionalProperties": false,
@@ -8,6 +9,7 @@
     "schemaVersion": { "const": "1.0" },
     "projectId": { "type": "string", "minLength": 1 },
     "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox", "flutter", "expo", "esp32", "nodejs"] },
+    "basisRef": { "$ref": "work-item.schema.json#/$defs/visualFileIdentity" },
     "productResearch": {
       "type": "object",
       "additionalProperties": false,
