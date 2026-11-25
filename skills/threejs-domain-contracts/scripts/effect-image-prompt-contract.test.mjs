@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+import { hasVerifiedHistoricalPromptApproval } from "../../app-domain-toolkit/scripts/visual/historical-prompt-approval.mjs";
 import assert from "node:assert/strict"; import { fixtureAlphaCapability, prepareTransparencyFixture } from "./transparent-route-test-fixtures.mjs";
 import test from "node:test";
 import {
@@ -245,6 +247,56 @@ function validate(record = validEffectRecord(), asset = validEffectAsset(), over
     ...overrides.options,
   });
 }
+
+/** 真实历史提示词只在控制器核验的单项身份完全一致时允许复用。 */
+test("历史提示词批准绑定目标、部件、源文件、正式文件和完整原文", () => {
+  const asset = validEffectAsset({ id: EFFECT_ASSET_ID });
+  const record = validEffectRecord();
+  const prompt = "Produce the independent object with a transparent background using both full references.";
+  Object.assign(record, { full_prompt: prompt, asset_prompt: prompt });
+  delete record.global_prompt_prefix;
+  delete record.negative_prompt;
+  delete record.global_visual_consistency_prompt;
+  delete record.state_prompt;
+  const approval = { assetId: EFFECT_ASSET_ID, regionId: effectRegion().region_id,
+    candidateVersion: "candidate-2026-08-22", referenceTarget: { path: TARGET_FILE, sha256: "b".repeat(64) },
+    sourceFile: asset.source_file, runtimeFile: asset.output_file, runtimeSha256: "c".repeat(64),
+    fullPromptSha256: createHash("sha256").update(prompt).digest("hex") };
+  const options = { ...effectImageValidationOptions(), referenceOriginalSha256: TARGET_SHA,
+    verifiedHistoricalPromptApprovals: new Map([[asset.id, approval]]) };
+  const context = effectImageValidationContext();
+  assert.equal(hasVerifiedHistoricalPromptApproval(asset, record, context, options), true);
+  assert.deepEqual(validateEffectImagePromptContract(asset, { applicability: "effect-image" }, record, context, options), []);
+  const strict = validateEffectImagePromptContract(asset, { applicability: "effect-image" }, record, context, { ...options, verifiedHistoricalPromptApprovals: undefined });
+  assert(strict.some((issue) => issue.includes("canonical")));
+  for (const bad of [
+    { assetId: "other" }, { regionId: "other" }, { candidateVersion: "other" },
+    { referenceTarget: { ...approval.referenceTarget, sha256: "a".repeat(64) } },
+    { sourceFile: "other.png" }, { runtimeFile: "other.png" }, { runtimeSha256: "a".repeat(64) },
+    { fullPromptSha256: "a".repeat(64) },
+  ]) {
+    const forged = new Map([[asset.id, { ...approval, ...bad }]]);
+    assert.equal(hasVerifiedHistoricalPromptApproval(asset, record, context, { ...options, verifiedHistoricalPromptApprovals: forged }), false);
+  }
+  const changedPrompt = { ...record, full_prompt: prompt + " changed" };
+  assert.equal(hasVerifiedHistoricalPromptApproval(asset, changedPrompt, context, options), false);
+  const differentActual = { ...record, actual_prompt: prompt + " altered" };
+  assert.equal(hasVerifiedHistoricalPromptApproval(asset, differentActual, context, options), false);
+  assert.equal(hasVerifiedHistoricalPromptApproval(asset, record, { ...context, stage: "V3" }, options), false);
+  const badOutput = { ...asset, output_file: "elsewhere.png" };
+  assert.equal(hasVerifiedHistoricalPromptApproval(badOutput, record, context, options), false);
+  const forbidden = { ...record, allow_redesign: true };
+  assert(validateEffectImagePromptContract(asset, { applicability: "effect-image" }, forbidden, context, options).some((issue) => issue.includes("不得允许")));
+  const contract = effectImageAssetContract();
+  const generated = { ...asset, generation_record: record };
+  const strictProduction = validateImageGenerationContract(generated, contract, context, { ...options, verifiedHistoricalPromptApprovals: undefined });
+  assert(strictProduction.some((issue) => issue.includes("必须请求真实 Alpha 并禁止烘焙棋盘格")));
+  const historicalProduction = validateImageGenerationContract(generated, contract, context, options);
+  assert(!historicalProduction.some((issue) => issue.includes("必须请求真实 Alpha 并禁止烘焙棋盘格")));
+  const badAlpha = { ...generated, generation_record: { ...record, source_background_mode: undefined } };
+  const badAlphaIssues = validateImageGenerationContract(badAlpha, contract, context, options);
+  assert(badAlphaIssues.some((issue) => issue.includes("source_background_mode")), badAlphaIssues.join("\n"));
+});
 
 test("合法 effect-image 忠实还原记录通过", () => {
   assert.deepEqual(validate(), []);

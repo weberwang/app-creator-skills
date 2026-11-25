@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
-import { validateGenerationPromptProjection } from '../../../app-domain-toolkit/scripts/visual/generation-prompt.mjs';
+import { prepareGenerationPrompt, validateGenerationPromptProjection } from '../../../app-domain-toolkit/scripts/visual/generation-prompt.mjs';
 import { fileIdentityKey, repoPath, WorkflowError } from './io.mjs';
 
 /** 读取实际位图尺寸，解码失败时不能依靠文件名或导入配置放行。 */
@@ -13,7 +14,7 @@ function bitmapSize(path, label) {
 }
 
 /** 仅对 V4 正式 AI 位图检查冻结目标、真实发送记录、区域和最终尺寸。 */
-export function validateGeneratedImageReview(repo, record, asset, { candidateId, approvedSources, verifyFile }) {
+export function validateGeneratedImageReview(repo, record, asset, { candidateId, approvedSources, verifyFile, historicalPromptSha256 }) {
   const label = `正式生图 ${asset.assetId}`;
   /** 把缺失事实留在本条资产的错误中，便于只返修受影响的素材。 */
   function insist(condition, message) {
@@ -32,9 +33,18 @@ export function validateGeneratedImageReview(repo, record, asset, { candidateId,
   const { x, y, width, height } = region.bounds ?? {};
   insist([x, y, width, height].every(Number.isSafeInteger) && x >= 0 && y >= 0 && width > 0 && height > 0, '部件边界须为有效的原图像素框');
   insist(['reproduce', 'edit'].includes(generationInputs?.mode), '必须声明已确认目标的还原或局部编辑模式');
-  const issues = validateGenerationPromptProjection(generationInputs, record.prompt);
-  insist(issues.length === 0, issues.join('；'));
+  if (historicalPromptSha256 === undefined) {
+    const issues = validateGenerationPromptProjection(generationInputs, record.prompt);
+    insist(issues.length === 0, issues.join('；'));
+  } else {
+    // 授权仅替代提示词模板比对，仍核对实际原文、附件角色和正式运行尺寸。
+    const { issues } = prepareGenerationPrompt(generationInputs);
+    insist(issues.length === 0, issues.join('；'));
+    insist(typeof record.prompt === 'string' && createHash('sha256').update(record.prompt).digest('hex') === historicalPromptSha256,
+      '提示词原文已偏离已批准的真实收据');
+  }
   const references = generationInputs.references;
+  insist(Array.isArray(references) && references.length > 0, '缺少已声明的实际生成附件角色');
   const originals = references.filter((ref) => ref.role === 'source-target');
   insist(originals.length === 1 && fileIdentityKey(repo, originals[0].ref) === sourceKey, 'source-target 必须唯一且绑定 V2 原图');
   const details = references.filter((ref) => ref.role === 'source-detail');

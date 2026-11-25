@@ -682,7 +682,7 @@ export async function validateV5VisualManifest(manifest, options = {}) {
   const fileGateError = productionFileGateError(manifest, options, "V5");
   if (fileGateError) return [fileGateError];
   const identity = manifestEvidenceIdentity(manifest);
-  const evidenceOptions = { requireEvidenceIdentity: options.requireEvidenceIdentity !== false, identity, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority };
+  const evidenceOptions = { ...options, requireEvidenceIdentity: options.requireEvidenceIdentity !== false, identity, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority };
   const errors = [
     ...validateSceneReconstructionGate(manifest, { ...options, stage: "V5" }),
     ...validateVisualProductionCoverage(manifest, { ...options, ...evidenceOptions, stage: "V5", requireManualConfirmation: true, targetSha: identity.target, candidateSha: identity.candidate }),
@@ -893,19 +893,19 @@ export function validateVisualImplementationPackageBinding(pkg, options = {}) {
   const authority = options.authority;
   const displayLayerScope = displayLayerScopeFromPackage(pkg);
   // current_stage 由实施包显式决定；远程场景合同门与本地用户拆解确认门必须同时通过。
-  if (stage === "V3" || stage === "V5") errors.push(...validateSceneReconstructionGate(manifest, { stage, displayLayerScope, projectRoot, layoutSourceDocuments: options.layoutSourceDocuments, forceLayoutSourceFiles: options.forceLayoutSourceFiles }));
+  if (stage === "V3" || stage === "V5") errors.push(...validateSceneReconstructionGate(manifest, { ...options, stage, displayLayerScope, projectRoot, layoutSourceDocuments: options.layoutSourceDocuments, forceLayoutSourceFiles: options.forceLayoutSourceFiles }));
   errors.push(...validateVisualDecompositionConfirmationBinding(pkg, manifest, { stage: "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
-  errors.push(...validateVisualProductionCoverage(manifest, { stage, requireManualConfirmation: true, checkFiles: options.checkFiles === true || stage === "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
+  errors.push(...validateVisualProductionCoverage(manifest, { ...options, stage, requireManualConfirmation: true, checkFiles: options.checkFiles === true || stage === "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
   errors.push(...validateVisualProductionUnits(pkg, manifest, { ...options, stage }));
   if (stage === "V4" || stage === "V5") {
     // V4 核验资源与部件事实；运行消费和同屏 Scene 组合仅在 V5 执行。
     errors.push(...validateProductionAuditShape(manifest, { stage }));
-    if (stage === "V5") errors.push(...auditProductionContract(manifest, { projectRoot, checkFiles: options.checkFiles === true }));
+    if (stage === "V5") errors.push(...auditProductionContract(manifest, { ...options, stage, projectRoot, checkFiles: options.checkFiles === true }));
   }
   if (stage === "V5") {
     const identity = manifestEvidenceIdentity(manifest);
     errors.push(...validateVisualPostApprovalReviewFields(manifest, { stage: "V5" }));
-    errors.push(...validateV5ProductionGate(manifest, { requireEvidenceIdentity: true, identity, projectRoot, requireSceneReconstruction: true, displayLayerScope }));
+    errors.push(...validateV5ProductionGate(manifest, { ...options, requireEvidenceIdentity: true, identity, projectRoot, requireSceneReconstruction: true, displayLayerScope }));
   }
   return errors;
 }
@@ -936,10 +936,10 @@ export function validateVisualEvidence(evidence, pkg, options = {}) {
   const authority = options.authority;
   const displayLayerScope = displayLayerScopeFromPackage(pkg);
   // Evidence/COMPLETE 必须消费当前工作项的完整合同；弹窗合同不再进入宿主场景验收。
-  errors.push(...validateSceneReconstructionGate(manifest, { stage: "V5", displayLayerScope, projectRoot: options.projectRoot, layoutSourceDocuments: options.layoutSourceDocuments, forceLayoutSourceFiles: options.forceLayoutSourceFiles }));
+  errors.push(...validateSceneReconstructionGate(manifest, { ...options, stage: "V5", displayLayerScope, projectRoot: options.projectRoot, layoutSourceDocuments: options.layoutSourceDocuments, forceLayoutSourceFiles: options.forceLayoutSourceFiles }));
   errors.push(...validateProductionAuditShape(manifest, { stage: "V5", authority, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot) }));
-  errors.push(...auditProductionContract(manifest, { projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
-  const evidenceOptions = { requireEvidenceIdentity: true, identity, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority };
+  errors.push(...auditProductionContract(manifest, { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
+  const evidenceOptions = { ...options, requireEvidenceIdentity: true, identity, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority };
   // Evidence Manifest 本身也属于 V3-V5 视觉证据，不能只扫描 manifest 而漏掉顶层 reviewer。
   errors.push(...validateVisualPostApprovalReviewFields(evidence, { stage: "V5" }));
   errors.push(...validateVisualPostApprovalReviewFields(manifest, { stage: "V5" }));

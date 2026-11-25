@@ -24,7 +24,7 @@ import { getVisualRegionDefinitionAliasConflicts, normalizeVisualRegionDefinitio
 import { validateSceneAssetUsageContract, validateSceneCombinationPreacceptance, validateSceneReconstructionGate, validateSceneReconstructionContract, validateStructuredFidelityCases } from "./scene-reconstruction-contract.mjs";
 import { validateImageGenerationSizeContract } from "./visual-generation-size-contract.mjs";
 import { validateVisualPostApprovalReviewFields } from "./visual-human-review-contract.mjs";
-import { isEffectImageGeneration, validateEffectImagePromptContract } from "./effect-image-prompt-contract.mjs"; import { validateTransparentBackgroundContract, validateTransparentExpectedAssetContract } from "./visual-transparent-background-contract.mjs"; import { validateImageNormalizationContract } from "./visual-image-normalization-contract.mjs";
+import { hasVerifiedHistoricalPromptApproval } from "../../app-domain-toolkit/scripts/visual/historical-prompt-approval.mjs"; import { isEffectImageGeneration, validateEffectImagePromptContract } from "./effect-image-prompt-contract.mjs"; import { validateTransparentBackgroundContract, validateTransparentExpectedAssetContract } from "./visual-transparent-background-contract.mjs"; import { validateImageNormalizationContract } from "./visual-image-normalization-contract.mjs";
 import { isPlainObject as isObject, isSha256, nonEmptyString, VISUAL_DELIVERY_KINDS as DELIVERY_KINDS, VISUAL_PRODUCTION_METHODS as PRODUCTION_METHODS, VISUAL_PRODUCTION_ORIGINS as PRODUCTION_ORIGINS, VISUAL_SUBSTITUTION_POLICIES as SUBSTITUTION_POLICIES } from "./visual-contract-core.mjs";
 import { resolveVisualValidationMode, validateVisualValidationPolicy } from "./visual-validation-policy.mjs";
 import { manifestEvidenceIdentity, productionContractError, safeProjectPath, validateEvidenceIdentity, validateImageGenerationRuntimeConsumption } from "./visual-runtime-evidence.mjs";
@@ -276,7 +276,13 @@ export function validateImageGenerationContract(asset, contract, context = {}, o
   if (!Array.isArray(runtimeOutputs) || runtimeOutputs.length === 0 || !runtimeOutputs.every(nonEmptyString)) error("缺少运行时实际消费输出 runtime_outputs", { missing: "runtime_outputs" });
   // V4 冻结资源输出；真实 Scene 消费证据由独立 V5 证据合同校验。
   errors.push(...validateImageGenerationRuntimeConsumption(asset, label, options));
-  if (context.region?.scene_asset_usage || context.region?.sceneAssetUsage || contract?.scene_asset_usage || contract?.sceneAssetUsage || options.sceneAssetUsage) errors.push(...validateImageGenerationSizeContract(asset, contract, context, { ...options, expectedAsset: expectedComponent ?? options.expectedAsset, contract })); errors.push(...validateTransparentBackgroundContract({ asset, contract, generation, expectedAsset: expectedComponent ?? options.expectedAsset ?? expectedOutput, metadata, options: { ...options, stage: label.stage } }).map((message) => productionContractError(label, message, { expectedMethod: "image-generation", observedMethod: observedProductionMethod(contract), rootCause: effectImage ? "执行问题" : undefined, returnStage: effectImage ? "V4/V5" : undefined }))); errors.push(...validateImageNormalizationContract({ asset, contract, generation, expectedAsset: expectedComponent ?? options.expectedAsset ?? expectedOutput, metadata, options }).map((message) => productionContractError(label, message, { expectedMethod: "image-generation", observedMethod: observedProductionMethod(contract), rootCause: effectImage ? "执行问题" : undefined, returnStage: effectImage ? "V4/V5" : undefined })));
+  if (context.region?.scene_asset_usage || context.region?.sceneAssetUsage || contract?.scene_asset_usage || contract?.sceneAssetUsage || options.sceneAssetUsage) errors.push(...validateImageGenerationSizeContract(asset, contract, context, { ...options, expectedAsset: expectedComponent ?? options.expectedAsset, contract }));
+  const transparencyErrors = validateTransparentBackgroundContract({ asset, contract, generation, expectedAsset: expectedComponent ?? options.expectedAsset ?? expectedOutput, metadata, options: { ...options, stage: label.stage } });
+  const verifiedHistory = effectImage && hasVerifiedHistoricalPromptApproval(asset, generation, context, options);
+  // 旧提示词只豁免具体文案判定；Alpha、背景去除及导入事实仍由原合同逐项核验。
+  const historicalPromptError = /^(?:透明 generation_record\.(?:full_prompt|actual_prompt|prompt_sent_text|sent_prompt|positive_prompt|prompt) 必须包含 #[0-9A-F]{6}、不透明纯色背景和棋盘格禁用要求|direct-alpha generation_record\.(?:full_prompt|actual_prompt|prompt_sent_text|sent_prompt|positive_prompt|prompt) 必须请求真实 Alpha 并禁止烘焙棋盘格)$/;
+  errors.push(...transparencyErrors.filter((message) => !verifiedHistory || !historicalPromptError.test(message)).map((message) => productionContractError(label, message, { expectedMethod: "image-generation", observedMethod: observedProductionMethod(contract), rootCause: effectImage ? "执行问题" : undefined, returnStage: effectImage ? "V4/V5" : undefined })));
+  errors.push(...validateImageNormalizationContract({ asset, contract, generation, expectedAsset: expectedComponent ?? options.expectedAsset ?? expectedOutput, metadata, options }).map((message) => productionContractError(label, message, { expectedMethod: "image-generation", observedMethod: observedProductionMethod(contract), rootCause: effectImage ? "执行问题" : undefined, returnStage: effectImage ? "V4/V5" : undefined })));
   return errors;
 }
 /** 校验效果图 coverage 的逐 annotation_number 生产合同。 */
@@ -338,7 +344,7 @@ export function validateVisualProductionCoverage(manifest, options = {}) {
           continue;
         }
         const regionId = region.id ?? region.region_id ?? region.regionId;
-        errors.push(...validateImageGenerationContract(componentAsset, { ...contract, expected_assets: [expectedComponent] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(regionId) ?? {}) } }, { expectedAsset: expectedComponent, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest?.reference_target?.original_file, visual_baseline: manifest?.visual_baseline, identity: manifestEvidenceIdentity(manifest), candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
+        errors.push(...validateImageGenerationContract(componentAsset, { ...contract, expected_assets: [expectedComponent] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(regionId) ?? {}) } }, { expectedAsset: expectedComponent, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest?.reference_target?.original_file, referenceOriginalSha256: manifest?.reference_target?.target_sha256, verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals, visual_baseline: manifest?.visual_baseline, identity: manifestEvidenceIdentity(manifest), candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
       }
     } else if (contract.generation_record_required === true) {
       for (const registeredAsset of contractAssets) if (!isPlannedVisualAsset(registeredAsset, stage) && !isObject(registeredAsset.generation_record)) errors.push(productionContractError(context, "合同要求 generation_record，但原子资产缺少生成记录", { missing: `assets.${registeredAsset.id}.generation_record` }));
@@ -426,12 +432,14 @@ function decodeRasterBytes(bytes) {
   }
   return null;
 }
-/** 校验 V5 production_contract_audit 与逐区域合同、输出和运行消费一致。 */
+/** 按 V4 或 V5 校验生产合同，正式运行消费只在 V5 检查。 */
 export function auditProductionContract(manifest, options = {}) {
-  const fileGateError = productionFileGateError(manifest, options, "V5");
+  const stage = String(options.stage ?? "V5").toUpperCase();
+  if (!["V4", "V5"].includes(stage)) return ["素材生产审计阶段只能为 V4 或 V5"];
+  const fileGateError = productionFileGateError(manifest, options, stage);
   if (fileGateError) return [fileGateError];
   const errors = [];
-  errors.push(...validateVisualConfirmationGate(manifest, { ...options, stage: "V5", requireManualConfirmation: true }));
+  errors.push(...validateVisualConfirmationGate(manifest, { ...options, stage, requireManualConfirmation: true }));
   const audit = manifest?.production_contract_audit;
   if (!isObject(audit)) return ["[V5] production_contract_audit 缺失"];
   const regions = Array.isArray(manifest?.coverage_audit?.regions) ? manifest.coverage_audit.regions.filter((item) => isObject(item) && normalizeVisualRegionDefinition(item).owner_type === "fixed-production-visual") : [];
@@ -456,7 +464,7 @@ export function auditProductionContract(manifest, options = {}) {
   for (const region of regions) {
     const key = `${region.annotation_number}\0${region.id}`;
     const unit = byRegion.get(key);
-    const context = contractContext(region, "V5", { observedMethod: unit?.observed_method ?? unit?.production_method ?? "missing" }); const fixedVisual = normalizeVisualRegionDefinition(region).owner_type === "fixed-production-visual";
+    const context = contractContext(region, stage, { observedMethod: unit?.observed_method ?? unit?.production_method ?? "missing" }); const fixedVisual = normalizeVisualRegionDefinition(region).owner_type === "fixed-production-visual";
     if (fixedVisual && (options.checkFiles !== true || !options.projectRoot)) errors.push(productionContractError(context, "V5 fixed-production-visual actual/runtime 必须通过 check-files/project-root PNG/JPEG 魔数核验", { missing: "checkFiles=true,projectRoot" }));
     if (!unit) { errors.push(productionContractError(context, "production_contract_audit 缺少逐区域记录", { missing: "production_contract_audit.units" })); continue; }
     const expected = resolveProductionContract(region);
@@ -464,7 +472,7 @@ export function auditProductionContract(manifest, options = {}) {
     errors.push(...validateVisualComponentContract(region, context, { requireImageAssets: true }));
     // 新版场景合同启用后，V5 还要验证资源放进目标 Scene 后的显示、材质和邻接关系；
     // 没有合同的旧夹具由上游场景合同门统一报“方案缺失”，不在工程审计重复造错。
-    if (manifest?.scene_reconstruction_contract) errors.push(...validateSceneAssetUsageContract({ ...region, ...(reconstructionRegions.get(region.id) ?? {}) }, unit, "V5"));
+    if (manifest?.scene_reconstruction_contract) errors.push(...validateSceneAssetUsageContract({ ...region, ...(reconstructionRegions.get(region.id) ?? {}) }, unit, stage));
     errors.push(...validateComponentAuditEvidence(region, unit, context, { manifestAssets: assets }));
     if (expected.image_generation_required === true) {
       const expectedComponents = Array.isArray(expected.expected_assets) ? expected.expected_assets.map(normalizeComponentExpectedAsset) : [];
@@ -472,7 +480,7 @@ export function auditProductionContract(manifest, options = {}) {
         const componentContext = { ...context, region, component_id: expectedComponent.component_id, state_id: expectedComponent.canonical_state_id || canonicalStateId(expectedComponent.state_id) };
         const componentAsset = assets.get(expectedComponent.asset_id);
         if (!componentAsset) errors.push(productionContractError(componentContext, "V5 图像生成 expected asset 缺少对应 manifest asset", { missing: `assets.${expectedComponent.asset_id}` }));
-        else errors.push(...validateImageGenerationContract(componentAsset, { ...expected, expected_assets: [expectedComponent] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(region.id) ?? {}) } }, { expectedAsset: expectedComponent, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest?.reference_target?.original_file, visual_baseline: manifest?.visual_baseline, identity, candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles, requireRuntimeConsumption: true }));
+        else errors.push(...validateImageGenerationContract(componentAsset, { ...expected, expected_assets: [expectedComponent] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(region.id) ?? {}) } }, { expectedAsset: expectedComponent, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest?.reference_target?.original_file, referenceOriginalSha256: manifest?.reference_target?.target_sha256, verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals, visual_baseline: manifest?.visual_baseline, identity, candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles, requireRuntimeConsumption: stage === "V5" }));
       }
     }
     const observed = unit.observed_method ?? unit.production_method;
@@ -533,7 +541,7 @@ export function auditProductionContract(manifest, options = {}) {
         }
       } else if (expected.delivery_kind === "raster-image" && declaredMime && !isRasterDelivery(expected.delivery_kind, declaredMime)) errors.push(productionContractError(context, `V5 actual_assets[${index}] MIME 不能交付 raster-image`));
     });
-    errors.push(...validateEvidenceIdentity(unit.runtime_consumption, context, identity, { projectRoot: options.checkFiles !== false ? options.projectRoot : null }));
+    if (stage === "V5") errors.push(...validateEvidenceIdentity(unit.runtime_consumption, context, identity, { projectRoot: options.checkFiles !== false ? options.projectRoot : null }));
     if (unit.substitution?.status === "substituted") {
       if (expected.substitution_policy === "forbid") errors.push(productionContractError(context, "substitution_policy=forbid 不允许任何 substituted 输出"));
       const requestId = unit.substitution.change_request_id ?? unit.substitution.changeRequestId;
@@ -654,7 +662,13 @@ export function validateV5ProductionGate(manifest, options = {}) {
     }
   });
   if (options.requireSceneReconstruction === true) {
-    errors.push(...validateSceneReconstructionGate(manifest, { stage: "V5", displayLayerScope: options.displayLayerScope, visual_validation: { mode: visualValidationMode } }));
+    // 总生产门复用正式运行文字证据，防止复核时丢失已验证的 V4 试装决定。
+    errors.push(...validateSceneReconstructionGate(manifest, {
+      stage: "V5", displayLayerScope: options.displayLayerScope, projectRoot: options.projectRoot, layoutSourceDocuments: options.layoutSourceDocuments,
+      forceLayoutSourceFiles: options.forceLayoutSourceFiles, requireNativeTextReadback: options.requireNativeTextReadback,
+      textReadbackProjectRoot: options.textReadbackProjectRoot, textReadbackIdentity: options.textReadbackIdentity,
+      textTrialRunId: options.textTrialRunId, approvedTextTrial: options.approvedTextTrial, visual_validation: { mode: visualValidationMode },
+    }));
   }
   const runtimeConsumption = gate.runtime_consumption;
   if (!isObject(runtimeConsumption) || !["passed", "consumed", "PASS"].includes(String(runtimeConsumption.status).toLowerCase())) error("V5 缺少带身份绑定的运行时实际消费 evidence", "runtime_consumption");
@@ -668,15 +682,15 @@ export async function validateV5VisualManifest(manifest, options = {}) {
   const fileGateError = productionFileGateError(manifest, options, "V5");
   if (fileGateError) return [fileGateError];
   const identity = manifestEvidenceIdentity(manifest);
-  const evidenceOptions = { requireEvidenceIdentity: options.requireEvidenceIdentity !== false, identity, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority };
+  const evidenceOptions = { ...options, requireEvidenceIdentity: options.requireEvidenceIdentity !== false, identity, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority };
   const errors = [
-    ...validateSceneReconstructionGate(manifest, { stage: "V5", displayLayerScope: options.displayLayerScope }),
-    ...validateVisualProductionCoverage(manifest, { stage: "V5", requireManualConfirmation: true, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }),
+    ...validateSceneReconstructionGate(manifest, { ...options, stage: "V5", displayLayerScope: options.displayLayerScope }),
+    ...validateVisualProductionCoverage(manifest, { ...options, stage: "V5", requireManualConfirmation: true, projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }),
     ...validateProductionAuditShape(manifest, { ...options, stage: "V5", authority: options.authority }),
     ...validateV5ProductionGate(manifest, { ...options, ...evidenceOptions, requireSceneReconstruction: true }),
   ];
   // 总门始终复核 V4 的方法/交付一致性；只有传入项目根目录时才额外检查实际文件、路径与位图结构。
-  errors.push(...await auditProductionContract(manifest, { projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }));
+  errors.push(...await auditProductionContract(manifest, { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: options.checkFiles === true, targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority: options.authority }));
   return [...new Set(errors)];
 }
 
@@ -810,7 +824,7 @@ export function validateVisualProductionUnits(pkg, manifest = null, options = {}
           if (!manifestAsset) errors.push(productionContractError(componentContext, "Implementation Package 图像生成 部件缺少 manifest asset", { missing: `assets.${expectedAsset.asset_id}` }));
           else {
             const regionId = region.id ?? region.region_id ?? region.regionId;
-            errors.push(...validateImageGenerationContract(manifestAsset, { ...unit, expected_assets: [expectedAsset] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(regionId) ?? {}) } }, { expectedAsset, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest.reference_target?.original_file, visual_baseline: manifest?.visual_baseline, identity: manifestEvidenceIdentity(manifest), candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
+            errors.push(...validateImageGenerationContract(manifestAsset, { ...unit, expected_assets: [expectedAsset] }, { ...componentContext, visual_baseline: manifest?.visual_baseline, region: { ...region, ...(reconstructionRegions.get(regionId) ?? {}) } }, { expectedAsset, recordIdRegistry: generationRecordIds, effectImage, referenceOriginalFile: manifest.reference_target?.original_file, referenceOriginalSha256: manifest.reference_target?.target_sha256, verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals, visual_baseline: manifest?.visual_baseline, identity: manifestEvidenceIdentity(manifest), candidateVersion: manifest?.candidateVersion, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
           }
         }
       }
@@ -879,19 +893,19 @@ export function validateVisualImplementationPackageBinding(pkg, options = {}) {
   const authority = options.authority;
   const displayLayerScope = displayLayerScopeFromPackage(pkg);
   // current_stage 由实施包显式决定；远程场景合同门与本地用户拆解确认门必须同时通过。
-  if (stage === "V3" || stage === "V5") errors.push(...validateSceneReconstructionGate(manifest, { stage, displayLayerScope }));
+  if (stage === "V3" || stage === "V5") errors.push(...validateSceneReconstructionGate(manifest, { ...options, stage, displayLayerScope }));
   errors.push(...validateVisualDecompositionConfirmationBinding(pkg, manifest, { stage: "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
-  errors.push(...validateVisualProductionCoverage(manifest, { stage, requireManualConfirmation: true, checkFiles: options.checkFiles === true || stage === "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
+  errors.push(...validateVisualProductionCoverage(manifest, { ...options, stage, requireManualConfirmation: true, checkFiles: options.checkFiles === true || stage === "V3", projectRoot, targetSha: manifest?.reference_target?.target_sha256, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: manifest?.candidate_identity?.sha256, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
   errors.push(...validateVisualProductionUnits(pkg, manifest, { ...options, stage }));
   if (stage === "V4" || stage === "V5") {
     // V4 核验资源与部件事实；运行消费和同屏 Scene 组合仅在 V5 执行。
     errors.push(...validateProductionAuditShape(manifest, { stage }));
-    if (stage === "V5") errors.push(...auditProductionContract(manifest, { projectRoot, checkFiles: options.checkFiles === true }));
+    if (stage === "V5") errors.push(...auditProductionContract(manifest, { ...options, stage, projectRoot, checkFiles: options.checkFiles === true }));
   }
   if (stage === "V5") {
     const identity = manifestEvidenceIdentity(manifest);
     errors.push(...validateVisualPostApprovalReviewFields(manifest, { stage: "V5" }));
-    errors.push(...validateV5ProductionGate(manifest, { requireEvidenceIdentity: true, identity, projectRoot, requireSceneReconstruction: true, displayLayerScope }));
+    errors.push(...validateV5ProductionGate(manifest, { ...options, requireEvidenceIdentity: true, identity, projectRoot, requireSceneReconstruction: true, displayLayerScope }));
   }
   return errors;
 }
@@ -921,10 +935,10 @@ export function validateVisualEvidence(evidence, pkg, options = {}) {
   const authority = options.authority;
   const displayLayerScope = displayLayerScopeFromPackage(pkg);
   // Evidence/COMPLETE 必须消费当前工作项的完整合同；弹窗合同不再进入宿主场景验收。
-  errors.push(...validateSceneReconstructionGate(manifest, { stage: "V5", displayLayerScope }));
+  errors.push(...validateSceneReconstructionGate(manifest, { ...options, stage: "V5", displayLayerScope }));
   errors.push(...validateProductionAuditShape(manifest, { stage: "V5", authority, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot) }));
-  errors.push(...auditProductionContract(manifest, { projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
-  const evidenceOptions = { requireEvidenceIdentity: true, identity, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority };
+  errors.push(...auditProductionContract(manifest, { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetSha: identity.target, targetFrozenAt: manifest?.reference_target?.frozen_at, candidateSha: identity.candidate, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority }));
+  const evidenceOptions = { ...options, requireEvidenceIdentity: true, identity, projectRoot: options.projectRoot, checkFiles: Boolean(options.projectRoot), targetFrozenAt: manifest?.reference_target?.frozen_at, workItemId: manifest?.workItemId, candidateVersion: manifest?.candidateVersion, authority };
   // Evidence Manifest 本身也属于 V3-V5 视觉证据，不能只扫描 manifest 而漏掉顶层 reviewer。
   errors.push(...validateVisualPostApprovalReviewFields(evidence, { stage: "V5" }));
   errors.push(...validateVisualPostApprovalReviewFields(manifest, { stage: "V5" }));

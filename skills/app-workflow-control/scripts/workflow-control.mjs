@@ -112,7 +112,7 @@ async function lintPackage(repo) {
   const schemaFiles = [
     'work-item.schema.json', 'implementation-package.schema.json', 'execution-result.schema.json',
     'evidence-manifest.schema.json', 'human-review.schema.json', 'grilling-record.schema.json',
-    'asset-review.schema.json', 'global-visual-baseline.schema.json', 'visual-research.schema.json', 'figma-app-design.schema.json', 'app-visual-source.schema.json', 'release-result.schema.json',
+    'asset-review.schema.json', 'visual-v4-acceptance.schema.json', 'global-visual-baseline.schema.json', 'visual-research.schema.json', 'figma-app-design.schema.json', 'app-visual-source.schema.json', 'release-result.schema.json',
     'release-preparation.schema.json', 'work-plan.schema.json', 'execution-report.schema.json',
     'production-scope.schema.json', 'production-coverage.schema.json', 'world3d-scene.schema.json', 'world2d-scene.schema.json',
     'system-coverage.schema.json', 'integration-system-coverage.schema.json',

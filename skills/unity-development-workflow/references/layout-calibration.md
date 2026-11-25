@@ -17,6 +17,8 @@ V3 在已有布局规格中按[还原依据与变更边界](../../app-ui-layout/
 
 `uwt_capture_game_view` 采用同一 Job 的请求与回查：首次返回 `PENDING` 只表示已登记请求，帧末真实图片与报告写入后才返回采集 `PASS`。仅在已有 Editor PlayMode、非 batch 且 Game View 可用时采集；不自动进入 PlayMode。退出 PlayMode、域重载或超时会取消当前请求。采集成功也不表示视觉验收通过。
 
+用于跨栈 V4 验收时，在同一个 `uwt_capture_game_view` Job 中填写 `layoutMeasurement`，使用现有布局测量请求及独立的布局报告输出路径。Unity 在同一帧末读取实际布局并写入布局报告，截图配套报告以 `layoutMeasurement` 记录布局摘要、批次和帧号。该采集证据用于对照用户在同一张截图上的实际确认。
+
 屏幕 UI 按[布局控制权与真实组件快照](./ui-layout-runtime.md)启用 `uwt_measure_layout` 的组件采集：位置、宽度和高度分别核验写入者，同批读取真实父框、独立位置参照、安全区、图片与原生布局配置。V5 在现有原生材料中记录实际报告路径及采集条件，按[原生布局检查](./ui-layout-runtime.md#校验与控制面)显式执行校验并保留结果；`uiLayoutMeasurementRef` 是 Unity 原生合同字段，不是公共 Evidence Manifest 的自动门禁。不维护另一份手写组件快照。
 
 ## 差异归因

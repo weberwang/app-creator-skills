@@ -37,7 +37,8 @@ import { validateWorldHud, collectWorldHudReferences } from './world3d-hud.mjs';
 import { validateSamplePlan, validateSampleResult, collectSampleReferences } from './production-samples.mjs';
 import { validateGeneratedImageReview } from './generated-image-review.mjs';
 import { assertFormalImageReviewRoute } from './formal-image-route.mjs';
-import { loadCocosHistoricalPromptApprovals } from './cocos-prompt-acceptance.mjs';
+import { assertVisualAcceptanceTarget } from './visual-acceptance-evidence.mjs';
+import { loadHistoricalPromptApprovals } from './visual-prompt-acceptance.mjs';
 import { collectSystemCoverageReferences } from './system-coverage.mjs';
 import { assertSystemCoverageBindings } from './system-coverage-binding.mjs';
 import { collectIntegrationScopeReferences } from './integration-system-sources.mjs';
@@ -361,13 +362,19 @@ export function assertAssetReview(repo, work, target = null) {
   requireText(record.candidateId, 'Asset Review.candidateId');
   validateQualityChecks(repo, record.qualityChecks, 'Asset Review.qualityChecks');
   if (!Array.isArray(record.assets) || !record.assets.length) throw new WorkflowError('Asset Review.assets 必须包含最终资源或原生组件');
-  const historical = target && record.promptAcceptanceRef
-    ? loadCocosHistoricalPromptApprovals(repo, work, target, readJson(repo, target.domainEvidenceRef.path, '当前领域清单'), work.visual.stage, record)
+  if (record.promptAcceptanceRef !== undefined || record.textAcceptanceRef !== undefined) assertVisualAcceptanceTarget(work, target);
+  const historical = record.promptAcceptanceRef !== undefined
+    ? loadHistoricalPromptApprovals(repo, work, target, work.stack === 'unity' ? null
+      : readJson(repo, target.domainEvidenceRef?.path, '当前领域清单'), work.visual.stage, record)
     : undefined;
   // Flutter 的资源与组件验收必须消费设计覆盖及当前逐属性观测，文件非空不足以证明还原。
   if (work.stack === 'flutter') validateFlutterAssetReview(repo, work, record);
   for (const asset of record.assets) {
     requireText(asset.assetId, 'Asset Review asset.assetId');
+    if (asset.visualReviewScope !== undefined && (asset.assetType !== 'image' || asset.sourceKind !== 'ai-generated'
+      || asset.visualReviewScope !== 'combined-runtime-trial' || !historical?.has(asset.assetId))) {
+      throw new WorkflowError(`${asset.assetId} 的整张试装确认方式须由历史生图决议逐图授权`);
+    }
     if (asset.assetType === 'model') {
       if (target || !isWorld3D(work)) throw new WorkflowError('模型资产评审只适用于 world-3d 世界资源，不能代替 HUD 或图片素材');
       validateWorld3DModel(repo, work, asset);
@@ -387,20 +394,16 @@ export function assertAssetReview(repo, work, target = null) {
     requireOneOf(asset.sourceKind, ['ai-generated', 'hand-authored', 'licensed', 'existing'], 'Asset Review asset.sourceKind');
     assertFormalImageReviewRoute(repo, work, asset);
     if (asset.sourceKind === 'ai-generated') {
-      const originalPrompt = historical?.get(asset.assetId);
-      if (originalPrompt) {
-        // 本次用户决议覆盖整张 Creator 试装画面，底层仍验证逐图来源与实际导入身份。
-        if (asset.sourceRef !== originalPrompt.sourceFile || asset.output !== originalPrompt.runtimeFile
-          || asset.visualReviewScope !== 'combined-creator-trial') throw new WorkflowError(`${asset.assetId} 未绑定已确认试装使用的生图产物`);
-        continue;
-      }
+      const approved = historical?.get(asset.assetId);
+      // Web 栈由各自领域门核对正式图片，Unity 继续使用共用资源门核对区域与尺寸。
+      if (approved && work.stack !== 'unity') continue;
       const recordPath = verifySingleVisualFile(repo, { path: asset.generationRecord, sha256: asset.generationRecordSha256 }, 'AI 图片生成记录');
       const approvedSources = target ? [target.referenceTarget] : readApprovedImageSources(repo, work);
       validateGeneratedImageReview(repo, readJson(repo, recordPath, 'AI 图片生成记录'), asset, {
-        candidateId: record.candidateId, approvedSources,
+        candidateId: record.candidateId, approvedSources, historicalPromptSha256: approved?.fullPromptSha256,
         verifyFile: (ref, label) => verifySingleVisualFile(repo, ref, label),
       });
-      validateAntiAiChecks(repo, asset.antiAiChecks, asset.assetId);
+      if (!approved) validateAntiAiChecks(repo, asset.antiAiChecks, asset.assetId);
     }
   }
   return record;

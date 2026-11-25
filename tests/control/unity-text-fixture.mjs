@@ -1,6 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { deriveUiLayoutPlan } from '../../skills/unity-development-workflow/scripts/layout-plan-derive.mjs';
 
+/** 生成与实际 Game View 原生输出同形的同帧采集凭据。 */
+export function unityGameViewCaptureFixture(save, screenshot, layoutRef, report, screenshotSize) {
+  return save(`${screenshot.path}.json`, { schemaVersion: '1.0', status: 'PASS', captureScope: 'EDITOR_GAME_VIEW_END_OF_FRAME',
+    taskId: report.taskId, candidateId: report.candidateId, scenePath: report.scenePath,
+    screenshot: { ...screenshot, sizeBytes: screenshotSize, frameCount: report.frameCount },
+    layoutMeasurement: { ...layoutRef, runId: report.runId, frameCount: report.frameCount } });
+}
+
 /** 生成绑定目标和状态的合成 Unity 布局计划，供公共阶段门测试使用。 */
 export function unityLayoutFixture(write, target, { prefix, sceneId = target.sceneId, displayLayerId, withText = false } = {}) {
   const source = JSON.parse(readFileSync(new URL('../../skills/unity-development-workflow/templates/ui-layout-plan.json', import.meta.url), 'utf8'));

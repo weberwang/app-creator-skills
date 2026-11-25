@@ -1,3 +1,4 @@
+import { hasVerifiedHistoricalPromptApproval } from "../../app-domain-toolkit/scripts/visual/historical-prompt-approval.mjs";
 /**
  * effect-image 图像生成的忠实重建提示词合同。
  *
@@ -330,20 +331,21 @@ export function validateEffectImagePromptContract(asset, contract, generation, c
   const identity = collectEffectImagePromptFacts(region, options.sceneReconstructionContract).identity;
   const add = (message) => errors.push(message);
   if (!isObject(generation)) return ["effect-image generation_record 必须是对象"];
+  const verifiedHistory = hasVerifiedHistoricalPromptApproval(asset, generation, context, options);
   try {
     const expectedAsset = options.expectedAsset ?? contract?.expected_assets?.find((item) => item.asset_id === (asset?.id ?? asset?.asset_id));
     const nineSlicePrompt = buildNineSliceProductionPrompt(expectedAsset?.nine_slice);
     const sentPrompt = ["full_prompt", "actual_prompt", "prompt_sent", "sent_prompt", "positive_prompt", "prompt"].map((key) => generation[key]).find(nonEmptyString);
-    if (nineSlicePrompt && !sentPrompt?.includes(nineSlicePrompt)) add("九宫格生成记录的实际提示词必须包含已冻结的小图尺寸和切片生产段");
+    if (!verifiedHistory && nineSlicePrompt && !sentPrompt?.includes(nineSlicePrompt)) add("九宫格生成记录的实际提示词必须包含已冻结的小图尺寸和切片生产段");
   } catch (error) { add(`九宫格生产提示词无效：${error.message}`); }
   for (const [field, expected] of [["reconstruction_mode", EFFECT_IMAGE_RECONSTRUCTION_MODE], ["reference_input_mode", EFFECT_IMAGE_REFERENCE_INPUT_MODE], ["pixel_reuse_policy", EFFECT_IMAGE_PIXEL_REUSE_POLICY]]) if (generation[field] !== expected) add(`effect-image generation_record.${field} 必须为 ${expected}`);
   if (!hasFullReferenceInput(generation.reference_inputs, targetFile)) add("effect-image generation_record.reference_inputs 必须包含完整冻结效果图 reference_target.original_file");
   if (generation.style_reference_inputs !== undefined && (!Array.isArray(generation.style_reference_inputs) || !generation.style_reference_inputs.every((item) => nonEmptyString(item) || isObject(item)))) add("effect-image style_reference_inputs 只能是补充参考列表");
   const prefix = generation.global_prompt_prefix;
-  if (prefix !== EFFECT_IMAGE_GLOBAL_PROMPT_PREFIX) add("effect-image global_prompt_prefix 必须使用 canonical 忠实重建提示词");
-  if (!expressesReferenceFaithfulReconstruction(prefix)) add("effect-image global_prompt_prefix 必须表达忠实还原/高保真重建");
+  if (!verifiedHistory && prefix !== EFFECT_IMAGE_GLOBAL_PROMPT_PREFIX) add("effect-image global_prompt_prefix 必须使用 canonical 忠实重建提示词");
+  if (!verifiedHistory && !expressesReferenceFaithfulReconstruction(prefix)) add("effect-image global_prompt_prefix 必须表达忠实还原/高保真重建");
   if (containsPositiveRedesignInstruction(prefix) || containsPositiveRedesignInstruction(generation.asset_prompt) || containsPositiveRedesignInstruction(generation.state_prompt) || containsPositiveRedesignInstruction(generation.full_prompt ?? generation.actual_prompt ?? generation.prompt ?? generation.positive_prompt)) add("effect-image 正向提示词包含未经批准的重新设计/改编命令");
-  if (generation.negative_prompt !== EFFECT_IMAGE_NEGATIVE_PROMPT) add("effect-image negative_prompt 必须使用 canonical 禁止项");
+  if (!verifiedHistory && generation.negative_prompt !== EFFECT_IMAGE_NEGATIVE_PROMPT) add("effect-image negative_prompt 必须使用 canonical 禁止项");
   for (const key of ["full_prompt", "actual_prompt", "prompt_sent", "sent_prompt", "positive_prompt", "prompt"]) {
     if (nonEmptyString(generation[key])) {
       const fullPrompt = generation[key];
@@ -368,22 +370,28 @@ export function validateEffectImagePromptContract(asset, contract, generation, c
         ["positive_prompt", generation.positive_prompt],
         ["prompt", generation.prompt],
       ].filter(([, value]) => nonEmptyString(value));
-      for (const [field, prompt] of promptEntries) if (!expressesSolidBackgroundProduction(prompt, backgroundColor)) add(`effect-image generation_record.${field} 必须包含 ${backgroundColor}、不透明纯色背景和棋盘格禁用要求`);
+      for (const [field, prompt] of promptEntries) if (!verifiedHistory && !expressesSolidBackgroundProduction(prompt, backgroundColor)) add(`effect-image generation_record.${field} 必须包含 ${backgroundColor}、不透明纯色背景和棋盘格禁用要求`);
     }
   }
-  if (generation.transparency_strategy === "direct-alpha" && !expressesDirectAlphaProduction(generation.full_prompt)) add("direct-alpha 实际提示词必须请求真实 Alpha 并禁止烘焙棋盘格");
-  errors.push(...validateEffectImageAssetPrompt(generation.asset_prompt, region, { sceneReconstructionContract: options.sceneReconstructionContract }));
+  if (!verifiedHistory && generation.transparency_strategy === "direct-alpha" && !expressesDirectAlphaProduction(generation.full_prompt)) add("direct-alpha 实际提示词必须请求真实 Alpha 并禁止烘焙棋盘格");
+  if (!verifiedHistory) errors.push(...validateEffectImageAssetPrompt(generation.asset_prompt, region, { sceneReconstructionContract: options.sceneReconstructionContract }));
   const paths = [...collectOutputPaths(asset), ...collectOutputPaths(generation)];
   if (targetFile && paths.some((path) => samePath(path, targetFile))) add("effect-image source_file/runtime_file/output 不得等于冻结效果图");
   // effect-image 的原子资产也必须继承根 visual_baseline 和全部全局锚点；局部冻结图不能替代全局真值。
   const globalBaseline = options.visual_baseline ?? context.visual_baseline ?? contract?.visual_baseline;
-  errors.push(...validateGlobalVisualGenerationRecord(generation, {
+  const globalErrors = validateGlobalVisualGenerationRecord(generation, {
     label: "effect-image generation_record",
     visual_baseline: globalBaseline,
-  }));
-  if (generation.global_visual_consistency_prompt !== CANONICAL_GLOBAL_VISUAL_CONSISTENCY_PROMPT) add("effect-image generation_record.global_visual_consistency_prompt 必须使用 canonical 全局视觉一致性提示词");
+  });
+  // 历史确认只豁免未曾发送的固定段，基线身份、参考附件和其他证据仍逐项检查。
+  const historicalGlobalMessages = new Set([
+    "effect-image generation_record.generation_record.global_visual_consistency_prompt 必须使用 canonical 全局一致性提示词",
+    "effect-image generation_record.generation_record.full_prompt 缺少全局视觉一致性 canonical 段",
+  ]);
+  errors.push(...globalErrors.filter((message) => !verifiedHistory || !historicalGlobalMessages.has(message)));
+  if (!verifiedHistory && generation.global_visual_consistency_prompt !== CANONICAL_GLOBAL_VISUAL_CONSISTENCY_PROMPT) add("effect-image generation_record.global_visual_consistency_prompt 必须使用 canonical 全局视觉一致性提示词");
   const fullPromptForGlobal = generation.full_prompt ?? generation.actual_full_prompt ?? generation.actual_prompt ?? generation.sent_prompt ?? generation.prompt_sent_text;
-  if (nonEmptyString(fullPromptForGlobal) && !fullPromptForGlobal.includes(CANONICAL_GLOBAL_VISUAL_CONSISTENCY_PROMPT)) add("effect-image 实际完整提示词缺少全局视觉一致性段");
+  if (!verifiedHistory && nonEmptyString(fullPromptForGlobal) && !fullPromptForGlobal.includes(CANONICAL_GLOBAL_VISUAL_CONSISTENCY_PROMPT)) add("effect-image 实际完整提示词缺少全局视觉一致性段");
   const operationValues = [generation.operation, generation.operations, generation.source_operation, generation.reference_operation, generation.reference_usage, generation.referenceUsage, generation.pixel_reuse_operation, generation.pixelReuseOperation, generation.postprocess, generation.post_processing, generation.postProcessing, generation.command_or_recipe, generation.actual_operation, generation.actualOperation, generation.output_operation, generation.outputOperation].flatMap((value) => Array.isArray(value) ? value : [value]).filter((value) => nonEmptyString(value) || isObject(value)).map((value) => typeof value === "string" ? value : JSON.stringify(value)).join(" ");
   if (generation.crop_reference === true || generation.reference_crop === true || /crop[-_ ]?reference|裁切参考|裁剪参考|抠图参考|抠取参考|直接复制参考(?:图)?像素|copy(?:ing)?\s+(?:the\s+)?reference(?:\s+image)?\s+pixels|reuse(?:d)?[-_ ]?(?:reference|ref)[-_ ]?pixels/i.test(operationValues)) add("effect-image 禁止裁切、抠图或复用参考图像素作为输出");
   if (generation.actual_reference_inputs !== undefined

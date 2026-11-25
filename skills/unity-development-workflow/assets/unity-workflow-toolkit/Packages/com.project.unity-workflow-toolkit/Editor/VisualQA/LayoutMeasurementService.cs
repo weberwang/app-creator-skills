@@ -24,6 +24,18 @@ namespace Project.UnityWorkflow.VisualQA
         /// <returns>含实测矩形与容差结论的报告；结构无效时不写入报告。</returns>
         public LayoutMeasurementReport Measure(LayoutMeasurementRequest request)
         {
+            return MeasureCore(request, true);
+        }
+
+        /// <summary>在同一帧采集布局，交由截图事务统一写入，避免留下半成品报告。</summary>
+        public LayoutMeasurementReport MeasureForCapture(LayoutMeasurementRequest request)
+        {
+            return MeasureCore(request, false);
+        }
+
+        /// <summary>执行实际布局采集，并根据调用方式决定是否独立落盘。</summary>
+        private LayoutMeasurementReport MeasureCore(LayoutMeasurementRequest request, bool writeReport)
+        {
             LayoutMeasurementReport invalid = ValidateRequest(request);
             if (invalid != null)
             {
@@ -93,7 +105,10 @@ namespace Project.UnityWorkflow.VisualQA
 
             try
             {
-                LayoutMeasurementReportWriter.WriteNew(request.outputPath, report);
+                if (writeReport)
+                {
+                    LayoutMeasurementReportWriter.WriteNew(request.outputPath, report);
+                }
             }
             catch (Exception)
             {

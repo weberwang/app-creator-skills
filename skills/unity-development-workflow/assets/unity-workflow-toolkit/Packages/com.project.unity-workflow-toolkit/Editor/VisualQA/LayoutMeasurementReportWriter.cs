@@ -36,18 +36,13 @@ namespace Project.UnityWorkflow.VisualQA
                 throw new InvalidOperationException("布局报告目标缺少父目录。");
             }
 
-            var settings = new JsonSerializerSettings
-            {
-                NullValueHandling = NullValueHandling.Include,
-                DefaultValueHandling = DefaultValueHandling.Include
-            };
-            string json = JsonConvert.SerializeObject(report, Formatting.Indented, settings) + "\n";
+            byte[] bytes = Serialize(report);
             string temporaryPath = Path.Combine(
                 targetDirectory,
                 $".{Path.GetFileName(targetPath)}.{Guid.NewGuid():N}.tmp");
             try
             {
-                File.WriteAllText(temporaryPath, json, new UTF8Encoding(false));
+                File.WriteAllBytes(temporaryPath, bytes);
                 // 新报告只允许原子移动到空路径，禁止覆盖已有审计证据。
                 File.Move(temporaryPath, targetPath);
             }
@@ -60,6 +55,19 @@ namespace Project.UnityWorkflow.VisualQA
             }
 
             return targetPath;
+        }
+
+        /// <summary>与独立布局报告采用完全相同的序列化设置，供同帧事务计算摘要。</summary>
+        public static byte[] Serialize(LayoutMeasurementReport report)
+        {
+            if (report == null) throw new ArgumentNullException(nameof(report));
+            var settings = new JsonSerializerSettings
+            {
+                NullValueHandling = NullValueHandling.Include,
+                DefaultValueHandling = DefaultValueHandling.Include
+            };
+            string json = JsonConvert.SerializeObject(report, Formatting.Indented, settings) + "\n";
+            return new UTF8Encoding(false).GetBytes(json);
         }
     }
 }

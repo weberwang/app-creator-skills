@@ -5,6 +5,7 @@ import { readVerifiedUiLayoutMeasurement, verifyUiLayoutMeasurement } from '../.
 import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
 import { readV4TextRestoration } from './v4-text-restoration.mjs';
+import { readApprovedUnityTextTrial, verifyApprovedUnityTextTrial } from './unity-text-acceptance.mjs';
 
 /** 阶段回退已经废弃的路线和测量不得在新记录中重新引用。 */
 function requireCurrentPath(repo, work, path, label) {
@@ -85,10 +86,17 @@ export function validateUnityTextStage(repo, work, target, stage, native, eviden
   if (split.sourceImage?.path !== target.referenceTarget.path) throw new WorkflowError('Unity 设计拆解未绑定 V2 确认目标');
   const visibleText = plan.nodes.filter((node) => node.renderKind === 'TEXT' && node.expectedActive !== false);
   requireTextCoverage(plan, split, visibleText);
-  if (!['V4', 'V5'].includes(stage) || !visibleText.length) return;
+  if (!['V4', 'V5'].includes(stage)) return;
 
   const assetReviewRef = work.workItemType === 'SCENE' ? target.assetReviewRef ?? null : work.assetReviewRef;
+  if (!visibleText.length) {
+    if (assetReviewRef?.path && readJson(repo, assetReviewRef.path, 'V4 资源评审').textAcceptanceRef !== undefined) {
+      throw new WorkflowError('Unity 文字试装决议缺少当前目标的文字节点');
+    }
+    return;
+  }
   const restoration = readV4TextRestoration(repo, work, target.candidateId, { stage, assetReviewRef, entryPaths: [plan.scenePath] });
+  const approved = readApprovedUnityTextTrial(repo, work, target, restoration);
   // uGUI 试装可只采集文字；UI Toolkit 采集器提供完整布局报告。
   if (restoration.report.textOnly === true && plan.uiSystem !== 'UGUI') {
     throw new WorkflowError('Unity UI Toolkit V4 文字试装需要实际布局组件报告');
@@ -124,4 +132,5 @@ export function validateUnityTextStage(repo, work, target, stage, native, eviden
   });
   // V5 必须重新读取正式组合，不能沿用 V4 的试装批次或复制文件。
   if (restoration.report.runId === finalReport.runId) throw new WorkflowError('Unity V5 文字运行不能复用 V4 试装采集批次');
+  if (approved) verifyApprovedUnityTextTrial(repo, plan, restoration.report, finalReport, refMeasurement.textEvidencePath);
 }

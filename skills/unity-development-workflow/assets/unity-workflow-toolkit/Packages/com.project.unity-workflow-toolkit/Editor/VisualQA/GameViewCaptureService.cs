@@ -20,6 +20,18 @@ namespace Project.UnityWorkflow.VisualQA
         public string candidateId = string.Empty;
         public string scenePath = string.Empty;
         public string outputPath = string.Empty;
+        /// <summary>需要同帧组件证据时，填写与截图身份一致的布局采集请求。</summary>
+        public LayoutMeasurementRequest layoutMeasurement;
+    }
+
+    /// <summary>绑定同一截图帧的已冻结 Unity 原生布局报告。</summary>
+    [Serializable]
+    public sealed class GameViewLayoutMeasurement
+    {
+        public string path = string.Empty;
+        public string sha256 = string.Empty;
+        public string runId = string.Empty;
+        public int frameCount;
     }
 
     /// <summary>描述采集完成后的 PNG 实际尺寸、字节数、帧号和 UTC 时间。</summary>
@@ -27,6 +39,8 @@ namespace Project.UnityWorkflow.VisualQA
     public sealed class GameViewScreenshot
     {
         public string path = string.Empty;
+        /// <summary>绑定实际写入的截图字节，允许重新读取时验证同一图像。</summary>
+        public string sha256;
         public int width;
         public int height;
         public long sizeBytes;
@@ -66,6 +80,8 @@ namespace Project.UnityWorkflow.VisualQA
         public string captureScope;
         public GameViewScreenshot screenshot;
         public GameViewUiCoverage uiCoverage;
+        public GameViewLayoutMeasurement layoutMeasurement;
+        public string layoutRequestSha256;
     }
 
     /// <summary>
@@ -295,11 +311,26 @@ namespace Project.UnityWorkflow.VisualQA
                     }
 
                     DateTime capturedAt = DateTime.UtcNow;
+                    byte[] layoutBytes = null;
+                    LayoutMeasurementReport layout = null;
+                    if (GameViewCaptureArtifacts.HasLayoutRequest(state.request.layoutMeasurement))
+                    {
+                        // 同步读取当前帧的组件快照，两个工件由同一个写入事务提交。
+                        layout = new LayoutMeasurementService().MeasureForCapture(state.request.layoutMeasurement);
+                        if ((layout.status != "PASS" && layout.status != "MEASURED") ||
+                            layout.frameCount != Time.frameCount || string.IsNullOrWhiteSpace(layout.runId))
+                        {
+                            FinishFailure(state, "FAIL", "LAYOUT_MEASUREMENT_FAILED", "同帧布局采集失败，未写入截图或布局证据。", runner);
+                            return;
+                        }
+                        layoutBytes = LayoutMeasurementReportWriter.Serialize(layout);
+                    }
                     var result = CreateResult("PASS", string.Empty, "Game View 实际帧与采集报告已写入。", state.request);
                     result.captureScope = "EDITOR_GAME_VIEW_END_OF_FRAME";
                     result.screenshot = new GameViewScreenshot
                     {
                         path = Normalize(state.request.outputPath),
+                        sha256 = GameViewCaptureArtifacts.HashBytes(pngBytes),
                         width = texture.width,
                         height = texture.height,
                         sizeBytes = pngBytes.LongLength,
@@ -308,7 +339,18 @@ namespace Project.UnityWorkflow.VisualQA
                     };
                     result.uiCoverage = InspectUiCoverage();
                     result.generatedAtUtc = FormatUtc(DateTime.UtcNow);
-                    GameViewCaptureArtifacts.WriteEvidencePair(state.request, state.reportPath, result, pngBytes);
+                    if (layout != null)
+                    {
+                        result.layoutMeasurement = new GameViewLayoutMeasurement
+                        {
+                            path = Normalize(state.request.layoutMeasurement.outputPath),
+                            sha256 = GameViewCaptureArtifacts.HashBytes(layoutBytes),
+                            runId = layout.runId,
+                            frameCount = layout.frameCount
+                        };
+                        result.layoutRequestSha256 = GameViewCaptureArtifacts.HashLayoutRequest(state.request.layoutMeasurement);
+                    }
+                    GameViewCaptureArtifacts.WriteEvidencePair(state.request, state.reportPath, result, pngBytes, layoutBytes);
                     FinishState(state, result, runner);
                 }
                 finally
@@ -416,6 +458,32 @@ namespace Project.UnityWorkflow.VisualQA
                 !Normalize(request.scenePath).EndsWith(".unity", StringComparison.OrdinalIgnoreCase))
             {
                 return CreateResult("FAIL", "INVALID_SCENE_PATH", "必须指定项目内的 .unity 场景路径。", request);
+            }
+
+            LayoutMeasurementRequest layout = request.layoutMeasurement;
+            if (GameViewCaptureArtifacts.HasLayoutRequest(layout))
+            {
+                if (!layout.includeComponentSnapshots || string.IsNullOrWhiteSpace(layout.layoutPlanPath) ||
+                    !string.Equals(layout.taskId, request.taskId, StringComparison.Ordinal) ||
+                    !string.Equals(layout.candidateId, request.candidateId, StringComparison.Ordinal) ||
+                    !string.Equals(Normalize(layout.scenePath), Normalize(request.scenePath), StringComparison.Ordinal))
+                {
+                    return CreateResult("FAIL", "LAYOUT_IDENTITY_MISMATCH", "同帧布局必须绑定同一任务、候选、场景和冻结计划，并启用组件快照。", request);
+                }
+                try
+                {
+                    string layoutPath = WorkflowPaths.ResolveProjectRelative(layout.outputPath);
+                    string pngPath = WorkflowPaths.ResolveProjectRelative(outputPath);
+                    string reportPath = WorkflowPaths.ResolveProjectRelative(outputPath + ".json");
+                    if (PathComparer.Equals(layoutPath, pngPath) || PathComparer.Equals(layoutPath, reportPath))
+                    {
+                        return CreateResult("FAIL", "LAYOUT_OUTPUT_CONFLICT", "布局报告不能与截图或截图报告使用同一文件。", request);
+                    }
+                }
+                catch (Exception)
+                {
+                    return CreateResult("FAIL", "INVALID_LAYOUT_PATH", "布局输出路径不符合项目相对路径约束。", request);
+                }
             }
 
             return null;
@@ -551,7 +619,9 @@ namespace Project.UnityWorkflow.VisualQA
             return string.Equals(left.taskId, right.taskId, StringComparison.Ordinal) &&
                    string.Equals(left.candidateId, right.candidateId, StringComparison.Ordinal) &&
                    string.Equals(Normalize(left.scenePath), Normalize(right.scenePath), StringComparison.Ordinal) &&
-                   string.Equals(Normalize(left.outputPath), Normalize(right.outputPath), StringComparison.Ordinal);
+                   string.Equals(Normalize(left.outputPath), Normalize(right.outputPath), StringComparison.Ordinal) &&
+                   string.Equals(GameViewCaptureArtifacts.HashLayoutRequest(left.layoutMeasurement),
+                       GameViewCaptureArtifacts.HashLayoutRequest(right.layoutMeasurement), StringComparison.Ordinal);
         }
 
         /// <summary>复制 Pipeline Job 请求，避免调用方改写在途身份。</summary>
@@ -562,14 +632,21 @@ namespace Project.UnityWorkflow.VisualQA
                 taskId = request.taskId,
                 candidateId = request.candidateId,
                 scenePath = Normalize(request.scenePath),
-                outputPath = Normalize(request.outputPath)
+                outputPath = Normalize(request.outputPath),
+                layoutMeasurement = !GameViewCaptureArtifacts.HasLayoutRequest(request.layoutMeasurement) ? null :
+                    JsonUtility.FromJson<LayoutMeasurementRequest>(JsonUtility.ToJson(request.layoutMeasurement))
             };
         }
 
         /// <summary>复制可变状态结果，避免调用方影响内部轮询状态。</summary>
         private static GameViewCaptureResult CopyResult(GameViewCaptureResult result)
         {
-            return JsonUtility.FromJson<GameViewCaptureResult>(JsonUtility.ToJson(result));
+            GameViewCaptureResult copy = JsonUtility.FromJson<GameViewCaptureResult>(JsonUtility.ToJson(result));
+            // Unity 的内联反序列化可能把缺失的引用恢复成空对象，显式还原可选字段。
+            if (result.layoutMeasurement == null || string.IsNullOrEmpty(result.layoutMeasurement.path)) copy.layoutMeasurement = null;
+            if (string.IsNullOrEmpty(result.layoutRequestSha256)) copy.layoutRequestSha256 = null;
+            if (copy.screenshot != null && string.IsNullOrEmpty(copy.screenshot.sha256)) copy.screenshot.sha256 = null;
+            return copy;
         }
 
         /// <summary>构造含任务身份和 UTC 查询时间的结果，未完成时不包含截图证据字段。</summary>

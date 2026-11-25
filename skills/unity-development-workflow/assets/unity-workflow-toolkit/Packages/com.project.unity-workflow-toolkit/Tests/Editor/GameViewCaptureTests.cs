@@ -2,6 +2,8 @@ using System;
 using System.Collections;
 using System.IO;
 using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
 using NUnit.Framework;
 using Project.UnityWorkflow.Core;
 using Project.UnityWorkflow.VisualQA;
@@ -55,6 +57,7 @@ namespace Project.UnityWorkflow.Tests.Editor
             ClearCachedRequest();
             DeleteFile(absoluteOutputPath);
             DeleteFile(absoluteReportPath);
+            DeleteFile(WorkflowPaths.ResolveProjectRelative("Artifacts/Visual/" + taskId + "/layout.json"));
             string directory = Path.GetDirectoryName(absoluteOutputPath);
             if (!string.IsNullOrEmpty(directory) && Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0)
             {
@@ -134,6 +137,9 @@ namespace Project.UnityWorkflow.Tests.Editor
             File.WriteAllText(absoluteReportPath, JsonUtility.ToJson(result, true));
             GameViewCaptureResult existing = GameViewCaptureService.CaptureOrPoll(request);
             Assert.That(existing.status, Is.EqualTo("PASS"), existing.errorCode + " " + existing.message);
+            GameViewCaptureRequest roundTrip = JsonUtility.FromJson<GameViewCaptureRequest>(JsonUtility.ToJson(request));
+            GameViewCaptureResult previousFormat = GameViewCaptureService.CaptureOrPoll(roundTrip);
+            Assert.That(previousFormat.status, Is.EqualTo("PASS"), previousFormat.errorCode + " " + previousFormat.message);
 
             SeedRestoredPassCache(request, result);
             if (truncatePng)
@@ -152,6 +158,86 @@ namespace Project.UnityWorkflow.Tests.Editor
             Assert.That(failed.status, Is.Not.EqualTo("PENDING"));
             Assert.That(repeated.status, Is.EqualTo("FAIL"), repeated.errorCode + " " + repeated.message);
             Assert.That(repeated.errorCode, Is.EqualTo(failed.errorCode));
+        }
+
+        /// <summary>验证缓存复核同帧布局摘要，并拒绝同路径不同范围的请求。</summary>
+        [Test]
+        public void ExistingCapture_RequiresUnchangedPairedLayoutAndRequest()
+        {
+            GameViewCaptureRequest request = CreateRequest();
+            string layoutPath = "Artifacts/Visual/" + taskId + "/layout.json";
+            request.layoutMeasurement = new LayoutMeasurementRequest
+            {
+                taskId = taskId, candidateId = request.candidateId, scenePath = scenePath,
+                outputPath = layoutPath, layoutPlanPath = "Assets/layout.json", includeComponentSnapshots = true,
+                evidenceRoot = "Artifacts/Visual/" + taskId, stateId = "ready",
+                targets = new System.Collections.Generic.List<LayoutMeasurementTarget> { new LayoutMeasurementTarget { id = "target" } }
+            };
+            var layout = new LayoutMeasurementReport
+            {
+                status = "PASS", measurementSource = "UNITY_EDITOR_LOADED_SCENE", includesComponentSnapshots = true,
+                taskId = taskId, candidateId = request.candidateId, scenePath = scenePath, outputPath = layoutPath,
+                runId = "batch-a", frameCount = 7
+            };
+            byte[] layoutBytes = Encoding.UTF8.GetBytes(JsonUtility.ToJson(layout));
+            byte[] pngBytes = CreatePngFixture();
+            string timestamp = DateTime.UtcNow.ToString("yyyy-MM-dd'T'HH:mm:ss.fff'Z'", System.Globalization.CultureInfo.InvariantCulture);
+            var result = new GameViewCaptureResult
+            {
+                status = "PASS", taskId = taskId, candidateId = request.candidateId, scenePath = scenePath,
+                requestedOutputPath = outputPath, generatedAtUtc = timestamp, captureScope = "EDITOR_GAME_VIEW_END_OF_FRAME",
+                screenshot = new GameViewScreenshot { path = outputPath, sha256 = Digest(pngBytes), width = 2, height = 2, sizeBytes = pngBytes.Length,
+                    capturedAtUtc = timestamp, frameCount = 7 },
+                uiCoverage = new GameViewUiCoverage { status = "NO_RUNTIME_UI_FOUND", scope = "FINAL_GAME_VIEW_FRAME",
+                    pixelAnalysis = "NOT_PERFORMED", note = "自动测试仅检查文件身份。" },
+                layoutRequestSha256 = Digest(Encoding.UTF8.GetBytes(JsonUtility.ToJson(request.layoutMeasurement))),
+                layoutMeasurement = new GameViewLayoutMeasurement { path = layoutPath, sha256 = Digest(layoutBytes), runId = "batch-a", frameCount = 7 }
+            };
+            Directory.CreateDirectory(Path.GetDirectoryName(absoluteOutputPath));
+            File.WriteAllBytes(absoluteOutputPath, pngBytes);
+            File.WriteAllText(absoluteReportPath, JsonUtility.ToJson(result, true));
+            File.WriteAllBytes(WorkflowPaths.ResolveProjectRelative(layoutPath), layoutBytes);
+            Assert.That(GameViewCaptureService.CaptureOrPoll(request).status, Is.EqualTo("PASS"));
+
+            request.layoutMeasurement.targets[0].id = "other";
+            Assert.That(GameViewCaptureService.CaptureOrPoll(request).status, Is.EqualTo("FAIL"));
+            request.layoutMeasurement.targets[0].id = "target";
+            // 同字节数的文件变化也不得复用已冻结截图。
+            byte[] changedPng = (byte[])pngBytes.Clone();
+            changedPng[changedPng.Length - 1] ^= 1;
+            File.WriteAllBytes(absoluteOutputPath, changedPng);
+            Assert.That(GameViewCaptureService.CaptureOrPoll(request).status, Is.EqualTo("FAIL"));
+            File.WriteAllBytes(absoluteOutputPath, pngBytes);
+            File.WriteAllText(WorkflowPaths.ResolveProjectRelative(layoutPath), "{}");
+            Assert.That(GameViewCaptureService.CaptureOrPoll(request).status, Is.EqualTo("FAIL"));
+        }
+
+        /// <summary>截图事务不得覆盖先前存在的布局文件，也不得留下半成品 PNG。</summary>
+        [Test]
+        public void PairedWrite_RejectsExistingLayoutWithoutOverwriting()
+        {
+            GameViewCaptureRequest request = CreateRequest();
+            string layoutPath = "Artifacts/Visual/" + taskId + "/layout.json";
+            request.layoutMeasurement = new LayoutMeasurementRequest { outputPath = layoutPath };
+            Directory.CreateDirectory(Path.GetDirectoryName(absoluteOutputPath));
+            string layoutFile = WorkflowPaths.ResolveProjectRelative(layoutPath);
+            File.WriteAllText(layoutFile, "原有报告");
+            Type writer = typeof(GameViewCaptureService).Assembly.GetType("Project.UnityWorkflow.VisualQA.GameViewCaptureArtifacts");
+            MethodInfo method = writer.GetMethod("WriteEvidencePair", BindingFlags.Public | BindingFlags.Static);
+            Assert.Throws<TargetInvocationException>(() => method.Invoke(null,
+                new object[] { request, outputPath + ".json", new GameViewCaptureResult(), CreatePngFixture(), Encoding.UTF8.GetBytes("新报告") }));
+            Assert.That(File.ReadAllText(layoutFile), Is.EqualTo("原有报告"));
+            Assert.That(File.Exists(absoluteOutputPath), Is.False);
+            Assert.That(File.Exists(absoluteReportPath), Is.False);
+        }
+
+        /// <summary>为合成报告计算真实内容身份。</summary>
+        private static string Digest(byte[] bytes)
+        {
+            using (SHA256 algorithm = SHA256.Create())
+            {
+                return BitConverter.ToString(algorithm.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
+            }
         }
 
         /// <summary>在已存在的可用 Game View 中验证同一 Job 的 PENDING 轮询与真实帧末 PASS。</summary>

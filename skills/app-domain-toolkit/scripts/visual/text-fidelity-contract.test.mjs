@@ -91,7 +91,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     return { contract, node, runtime: node.runtime_verification, validate };
   }
 
-  if (stack === 'cocos') test('Cocos V5 清单的重复复核保留已批准试装与独立运行读数', (t) => {
+  test(`${stack} V5 清单的重复复核保留已批准试装与独立运行读数`, (t) => {
     const { contract, node, runtime } = scenario();
     const projectRoot = mkdtempSync(join(tmpdir(), 'cocos-approved-v5-'));
     t.after(() => rmSync(projectRoot, { recursive: true, force: true }));
@@ -99,7 +99,7 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     node.font_resolution = { strategy: 'project-font', family: 'Game Sans' };
     Object.assign(runtime, { content_case_id: 'default', actual_locale: 'zh-CN', actual_inputs: {}, actual_content_source: 'fixture' });
     const approvedTextTrial = new Map([[node.text_node_id, { cases: [structuredClone(runtime)] }]]);
-    const identity = { stack: 'cocos', workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a',
+    const identity = { stack, workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a',
       referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
     const report = { ...identity, schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', visualStage: 'V5',
       runId: 'formal-run', nodes: [{ textNodeId: node.text_node_id, layoutNodeId: node.layout_node_id, componentPath: 'Canvas/Title',

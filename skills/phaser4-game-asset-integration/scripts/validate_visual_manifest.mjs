@@ -398,10 +398,10 @@ export function validateManifest(data, options = {}) {
     // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
     // 正式 Scene 和运行时消费由 V5 检查，V4 文字试装在上方单独核对。
-    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
+    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId, approvedTextTrial: options.approvedTextTrial } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
-    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage, requireManualConfirmation: false }));
+    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage, requireManualConfirmation: false, verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals }));
     errors.push(...validateImageGenerationSizeManifest(data, { stage }));
     const requireAudit = stage === "V4" || stage === "V5" || reconstruction.lifecycle === "v5-complete";
     const requireRuntime = stage === "V5" || reconstruction.lifecycle === "v5-complete";
@@ -409,7 +409,7 @@ export function validateManifest(data, options = {}) {
       // 显式传入 V5，让生产审计同时校验每个区域的运行时消费身份。
       errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
       const structuralGate = { ...data, coverage_audit: isObject(data.coverage_audit) ? { ...data.coverage_audit, regions: [] } : data.coverage_audit };
-      errors.push(...validateV5ProductionGate(structuralGate, { requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
+      errors.push(...validateV5ProductionGate(structuralGate, { ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId, approvedTextTrial: options.approvedTextTrial } : {}), requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
     } else if (requireAudit) {
       errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
     } else if (isObject(data.production_contract_audit)) errors.push(...validateProductionAuditShape(data));
@@ -469,6 +469,8 @@ export function validateManifest(data, options = {}) {
         errors.push(...validateImageGenerationContract(asset, assetContract, { ...assetContext, region: promptRegion }, {
           effectImage: strictProductionContract,
           referenceOriginalFile: data.reference_target?.original_file,
+          referenceOriginalSha256: data.reference_target?.target_sha256,
+          verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals,
           referenceTargetSha: data.reference_target?.target_sha256,
           visual_baseline: baseline,
           identity: manifestEvidenceIdentity(data),
@@ -956,7 +958,16 @@ function requiresBitmapFileGate(data) {
 export async function main(argv = process.argv.slice(2)) {
   try {
     const args = parseArgs(argv); const data = await loadManifest(args.manifest);
-    if (hasFormalV4Text(data, args.stage)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 验收");
+    // 绑定入口使用当前工作项与候选的完整校验链。
+    if (data.workflow_binding !== undefined) {
+      if (!args.checkFiles) throw new ManifestValidationError("绑定工作项的素材清单必须运行 --check-files");
+      const { validateBoundVisualManifest } = await import("../../app-workflow-control/scripts/runtime/domain-target-check.mjs");
+      await validateBoundVisualManifest(resolve(args.projectRoot ?? "."), args.manifest, data.workflow_binding, args.stage ?? data.visualStage ?? data.visual_stage, "phaser");
+      console.log("视觉资源清单验证通过。");
+      return 0;
+    }
+    const stage = String(args.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3")).toUpperCase();
+    if (hasFormalV4Text(data, stage)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 或绑定 workflow_binding 验收");
     if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V3 --check-files --project-root ."); return 2; }
     const errors = validateManifest(data, { stage: args.stage, checkFiles: args.checkFiles, projectRoot: args.projectRoot, workItemType: args.workItemType });
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));
@@ -964,7 +975,6 @@ export async function main(argv = process.argv.slice(2)) {
     if (uniqueErrors.length) { console.error("视觉资源清单无效："); for (const error of uniqueErrors) console.error(`- ${error}`); return 1; }
     console.log("视觉资源清单验证通过。");
     // 独立清单命令缺少公共运行证据身份，正式文字验收由工作流绑定实际采集。
-    const stage = args.stage ?? data.visualStage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : null);
     const textNodes = data.scene_reconstruction_contract?.text_decomposition?.text_nodes;
     if (stage === "V5" && Array.isArray(textNodes) && textNodes.length) {
       console.log("正式 V5 文字验收须通过 app-workflow 绑定同批 runtime-layout 组件读数。");

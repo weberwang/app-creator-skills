@@ -145,7 +145,7 @@ layoutBinding:
 
 需要保持面板边角的资源在 V3 先判断九宫格是否适用；适用时冻结源图像素尺寸、Unity `Sprite.border` 四边值（`left, bottom, right, top`）、目标最小尺寸与内容内边距。文字、图标、交互和装饰仍按实际布局职责作为独立节点，不合并进面板图。导入与呈现按[九宫格 UI 合同](./nine-slice-ui.md)检查。
 
-V4 只做资源导入与资源级验证，可提供临时组合预览。V5 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。Toolkit 的 `uwt_measure_layout` 读取目标视口下的节点矩形、边距/间距及差值；`uwt_capture_game_view` 只采集 Unity Editor Game View。使用和差异归因规则见[布局校准合同](./layout-calibration.md)。几何测量与图像采集不自动改布局、不分析截图，也不代替用户对显示效果的检查确认。
+V4 做资源导入与资源级验证，可提供临时组合预览。声明跨栈 V4 验收决议时，使用保存后的正式目标采集同帧图文证据。V5 在正式 Prefab、Scene 或 UXML/USS 组合上，用现有 Inspector、Rect 工具、UI Builder 与 Undo 校准实际几何。`uwt_measure_layout` 读取目标视口下的节点矩形、边距、间距及差值。`uwt_capture_game_view` 采集 Unity Editor Game View，并可在同帧记录布局实测。几何测量与图像采集不自动改布局或分析截图，显示效果由用户检查确认。见[布局校准合同](./layout-calibration.md)。
 
 位置与尺寸按[真实组件快照](./ui-layout-runtime.md)分别确定唯一写入者；V3/V4 可以先记录计划，V5 必须回读实际组件、参照与活动状态，不能将计划值复制为运行结果。
 

@@ -42,9 +42,9 @@ function frozenJson(repo, work, ref, label) {
 }
 
 /** 要求图像消费者与文字回读来自同一次采集，并绑定保存后的正式目标源。 */
-function validateFormalIntegration(repo, work, review, report, { stage, entryPaths }) {
+export function validateV4FormalIntegration(repo, work, review, report, { stage, entryPaths }) {
   const { entryRef, images } = report.formalIntegration ?? {};
-  if (!entryRef || !Array.isArray(images)) throw new WorkflowError('V4 文字回读缺少 formalIntegration 同批正式图文接入证据');
+  if (!entryRef || !Array.isArray(images)) throw new WorkflowError('V4 回读缺少 formalIntegration 同批正式图文接入证据');
   const entryLabel = 'V4 正式接入入口';
   const entry = frozenPath(repo, work, entryRef, entryLabel);
   const evidenceRoots = ['.workflow-control', 'evidence', 'output/intermediate', 'output/candidates', work.evidenceRoot].filter(Boolean);
@@ -89,6 +89,6 @@ export function readV4TextRestoration(repo, work, candidateId, { stage, assetRev
     throw new WorkflowError('V4 文字还原的资源评审未绑定当前工作项、技术栈及候选');
   }
   const report = frozenJson(repo, work, ref, 'V4 资源评审 textRestorationRef 正式文字回读');
-  validateFormalIntegration(repo, work, review, report, { stage, entryPaths });
-  return { ref, report };
+  validateV4FormalIntegration(repo, work, review, report, { stage, entryPaths });
+  return { ref, report, review };
 }

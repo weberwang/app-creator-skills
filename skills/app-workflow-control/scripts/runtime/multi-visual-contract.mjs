@@ -94,6 +94,19 @@ function validateReview(repo, work, target, name, validateReuseReview) {
 // 制作样本复用同一确认链核验，避免在批量前另写一套更弱的人工判断规则。
 export { validateReview as validateSceneReviewRecord, validateCoverage as validateSceneCoverageRecord };
 
+/** 共用控制器和独立清单的逐目标确认链与素材评审。 */
+export function validateSceneTargetReviews(repo, work, target, stage, { validateAssetReview, validateReuseReview }) {
+  for (const name of REVIEW_STAGES[stage]) {
+    const review = validateReview(repo, work, target, name, validateReuseReview);
+    if (name === 'V4') {
+      if (typeof validateAssetReview !== 'function') throw new WorkflowError('V4 必须执行目标素材评审');
+      verifyFileIdentity(repo, target.assetReviewRef, `${target.targetId} 素材评审记录`);
+      const asset = validateAssetReview(repo, work, target);
+      if (!asset || asset.userMessageRef !== review.userMessageRef) throw new WorkflowError(`${target.targetId} V4 确认与目标素材评审消息不一致`);
+    }
+  }
+}
+
 /** 逐目标核对工作项身份、已冻结图像及各阶段确认；栈专用合同由调用方注入校验。 */
 export function validateMultiVisualStage(repo, work, stage, { validateDomainTarget, validateAssetReview, validateReuseReview, validateReuseCoverage, manifest, visualCategories } = {}) {
   if (work?.workItemType !== 'SCENE' || !work.visual) throw new WorkflowError('多目标视觉合同仅适用于 SCENE 工作项');
@@ -116,15 +129,7 @@ export function validateMultiVisualStage(repo, work, stage, { validateDomainTarg
     const domainResult = validateDomainTarget(repo, work, target, stage);
     if (domainResult && typeof domainResult.then === 'function') throw new WorkflowError('领域校验不能以未等待的异步结果通过');
     if (domainResult === false || (Array.isArray(domainResult) && domainResult.length > 0) || domainResult?.status === 'FAIL' || domainResult?.status === 'BLOCKED') throw new WorkflowError(`${target.targetId} 领域合同校验失败：${Array.isArray(domainResult) ? domainResult.join('；') : '未通过'}`);
-    for (const name of REVIEW_STAGES[stage]) {
-      const review = validateReview(repo, work, target, name, validateReuseReview);
-      if (name === 'V4') {
-        if (typeof validateAssetReview !== 'function') throw new WorkflowError('V4 必须执行目标素材评审');
-        verifyFileIdentity(repo, target.assetReviewRef, `${target.targetId} 素材评审记录`);
-        const asset = validateAssetReview(repo, work, target);
-        if (!asset || asset.userMessageRef !== review.userMessageRef) throw new WorkflowError(`${target.targetId} V4 确认与目标素材评审消息不一致`);
-      }
-    }
+    validateSceneTargetReviews(repo, work, target, stage, { validateAssetReview, validateReuseReview });
   }
   validateCoverage(repo, work, targets, validateReuseCoverage);
   if (stage === 'V5') validateRuntimeEvidence(repo, work, targets, manifest, visualCategories);

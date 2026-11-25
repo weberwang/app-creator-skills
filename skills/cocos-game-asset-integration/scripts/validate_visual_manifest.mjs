@@ -977,8 +977,8 @@ export async function main(argv = process.argv.slice(2)) {
     // 工作项绑定提供原生读回及确认链；普通独立清单仍走原有严格校验。
     if (data.workflow_binding !== undefined) {
       if (!args.checkFiles) throw new ManifestValidationError("绑定工作项的素材清单必须运行 --check-files");
-      const { validateBoundCocosManifest } = await import("../../app-workflow-control/scripts/runtime/domain-target-check.mjs");
-      await validateBoundCocosManifest(resolve(args.projectRoot ?? "."), args.manifest, data.workflow_binding, args.stage ?? data.visualStage ?? data.visual_stage);
+      const { validateBoundVisualManifest } = await import("../../app-workflow-control/scripts/runtime/domain-target-check.mjs");
+      await validateBoundVisualManifest(resolve(args.projectRoot ?? "."), args.manifest, data.workflow_binding, args.stage ?? data.visualStage ?? data.visual_stage, "cocos");
       console.log("视觉资源清单验证通过。");
       return 0;
     }

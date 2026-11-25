@@ -74,6 +74,14 @@
         "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
       }
     },
+    "promptAcceptanceRef": {
+      "description": "已获用户授权的历史生图验收决议",
+      "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+    },
+    "textAcceptanceRef": {
+      "description": "已获用户授权的文字试装验收决议",
+      "$ref": "work-item.schema.json#/$defs/visualFileIdentity"
+    },
     "assets": {
       "type": "array",
       "minItems": 1,
@@ -99,6 +107,9 @@
           "output": {
             "type": "string",
             "minLength": 1
+          },
+          "visualReviewScope": {
+            "enum": ["combined-runtime-trial"]
           },
           "sourceRef": {
             "type": "string"
@@ -188,11 +199,22 @@
         "additionalProperties": false,
         "allOf": [
           {
+            "if": {"required": ["visualReviewScope"]},
+            "then": {
+              "required": ["sourceKind"],
+              "properties": {"assetType": {"const": "image"}, "sourceKind": {"const": "ai-generated"}}
+            }
+          },
+          {
             "if": {
               "required": ["sourceKind"],
               "properties": {"assetType": {"const": "image"}, "sourceKind": {"const": "ai-generated"}}
             },
-            "then": {"required": ["sourceRef", "designItemIds", "generationRecord", "generationRecordSha256", "antiAiChecks"]}
+            "then": {
+              "required": ["sourceRef", "designItemIds", "generationRecord", "generationRecordSha256"],
+              "if": {"not": {"required": ["visualReviewScope"]}},
+              "then": {"required": ["antiAiChecks"]}
+            }
           },
           {
             "if": {
@@ -245,6 +267,14 @@
     }
   },
   "allOf": [
+    {
+      "if": {"properties": {"assets": {"contains": {"required": ["visualReviewScope"]}}}},
+      "then": {"required": ["promptAcceptanceRef"]}
+    },
+    {
+      "if": {"anyOf": [{"required": ["promptAcceptanceRef"]}, {"required": ["textAcceptanceRef"]}]},
+      "then": {"properties": {"technicalStatus": {"const": "PASS"}, "humanStatus": {"const": "PASS"}}}
+    },
     {
       "if": {
         "properties": {

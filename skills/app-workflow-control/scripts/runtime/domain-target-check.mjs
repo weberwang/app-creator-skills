@@ -7,6 +7,9 @@ import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from 
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { webTextReadbackOptions } from './web-text-stage.mjs';
+import { loadHistoricalPromptApprovals } from './visual-prompt-acceptance.mjs';
+import { validateSceneTargetReviews } from './multi-visual-contract.mjs';
+import { readTargetRuntimeLayoutRef } from './runtime-layout-evidence.mjs';
 
 const STACKS = Object.freeze({ cocos: 'cocos', phaser: 'phaser4', threejs: 'threejs' });
 const SKILLS_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
@@ -80,6 +83,15 @@ async function runDomainChecks({ repo, work, target, stage }) {
     const errors = validator.validateVisibleWorkItemContract(native);
     if (evidence) errors.push(...validator.validateVisibleEvidenceContract(evidence, native, repo));
     if (errors.length) throw new WorkflowError(`Unity 领域合同失败：${errors.join('；')}`);
+    const promptApprovals = loadHistoricalPromptApprovals(repo, work, target, null, stage);
+    if (stage === 'V5' && promptApprovals) {
+      // 正式运行不得由两个各自通过、却来自不同批次的布局文件拼接证明。
+      const nativeLayoutPath = evidence.uiLayoutMeasurementRef?.path;
+      const runtime = readTargetRuntimeLayoutRef(repo, work, target.targetId);
+      if (!nativeLayoutPath || !runtime || fileIdentityKey(repo, nativeLayoutPath) !== fileIdentityKey(repo, runtime.path)) {
+        throw new WorkflowError('Unity V5 图片的原生布局与当前目标运行证据须来自同一次采集');
+      }
+    }
     const { validateUnityTextStage } = await import('./unity-text-stage.mjs');
     validateUnityTextStage(repo, work, target, stage, native, evidence);
     return;
@@ -100,9 +112,7 @@ async function runDomainChecks({ repo, work, target, stage }) {
   }
   const validator = await import(pathToFileURL(manifestPath).href);
   const authority = await loadDomainConfirmationAuthority(repo, work, document, document);
-  const promptApprovals = work.stack === 'cocos' && target.assetReviewRef
-    ? (await import('./cocos-prompt-acceptance.mjs')).loadCocosHistoricalPromptApprovals(repo, work, target, document, stage)
-    : undefined;
+  const promptApprovals = loadHistoricalPromptApprovals(repo, work, target, document, stage);
   // 仅带复用声明的场景可沿目标级确认链继承布局，世界设计路线使用当前工作项确认。
   const reuseLayout = work.visual?.reuse && work.visual.designRoute !== 'world-3d'
     ? (await import('./visual-reuse-binding.mjs')).validateSceneReuseReview : undefined;
@@ -131,18 +141,26 @@ export function validateDomainTarget(repo, work, target, stage) {
   return true;
 }
 
-/** 独立素材命令使用同一真实工作项、确认链和领域校验，禁止绑定另一份文件放行。 */
-export async function validateBoundCocosManifest(repo, manifestFile, binding, stage) {
-  if (binding?.schemaVersion !== '1.0' || !['V4', 'V5'].includes(stage)) throw new WorkflowError('Cocos 清单工作项绑定或阶段无效');
+/** 三栈素材命令按本栈使用同一工作项和领域门，禁止绑定另一份清单放行。 */
+export async function validateBoundVisualManifest(repo, manifestFile, binding, stage, expectedStack) {
+  if (binding?.schemaVersion !== '1.0' || !['V4', 'V5'].includes(stage) || !Object.hasOwn(STACKS, expectedStack)) {
+    throw new WorkflowError('视觉清单工作项绑定或阶段无效');
+  }
   const { loadWork } = await import('./workflow.mjs');
   const work = loadWork(repo, binding.workItemPath);
   const target = work.visual?.targets?.find((item) => item.targetId === binding.targetId);
-  if (!target || work.stack !== 'cocos' || work.workItemType !== 'SCENE' || work.visual.stage !== stage) {
-    throw new WorkflowError('Cocos 清单未绑定同阶段工作项和场景目标');
+  if (!target || work.stack !== expectedStack || work.workItemType !== 'SCENE' || work.visual.stage !== stage) {
+    throw new WorkflowError('视觉清单未绑定同技术栈、同阶段工作项和场景目标');
   }
   const projectFile = relative(repo, resolve(manifestFile)).replaceAll('\\', '/');
   const file = validateTargetFile(repo, target.domainEvidenceRef, null, '当前领域清单');
-  if (fileIdentityKey(repo, projectFile) !== fileIdentityKey(repo, file)) throw new WorkflowError('Cocos 清单命令必须读取已绑定领域文件');
+  if (fileIdentityKey(repo, projectFile) !== fileIdentityKey(repo, file)) throw new WorkflowError('视觉清单命令必须读取已绑定领域文件');
+  const { assertAssetReview } = await import('./artifacts.mjs');
+  const assetReview = assertAssetReview(repo, work, target);
+  const validateReuseReview = work.visual.reuse && work.visual.designRoute !== 'world-3d'
+    ? (await import('./visual-reuse-binding.mjs')).validateSceneReuseReview : undefined;
+  // 独立素材命令复用当前目标通过 V4 所需的确认链，V5 再由领域门读取正式运行证据。
+  validateSceneTargetReviews(repo, work, target, 'V4', { validateAssetReview: () => assetReview, validateReuseReview });
   return validateDomainTarget(repo, work, target, stage);
 }
 

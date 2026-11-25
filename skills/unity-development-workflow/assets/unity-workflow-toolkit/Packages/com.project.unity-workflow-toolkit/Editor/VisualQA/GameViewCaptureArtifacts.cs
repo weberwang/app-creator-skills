@@ -1,6 +1,7 @@
 using System;
 using System.Globalization;
 using System.IO;
+using System.Security.Cryptography;
 using System.Text;
 using Project.UnityWorkflow.Core;
 using UnityEngine;
@@ -21,10 +22,13 @@ namespace Project.UnityWorkflow.VisualQA
             GameViewCaptureRequest request,
             string reportPath,
             GameViewCaptureResult result,
-            byte[] pngBytes)
+            byte[] pngBytes,
+            byte[] layoutBytes = null)
         {
             string absolutePngPath = WorkflowPaths.ResolveProjectRelative(request.outputPath);
             string absoluteReportPath = WorkflowPaths.ResolveProjectRelative(reportPath);
+            string absoluteLayoutPath = !HasLayoutRequest(request.layoutMeasurement) ? null :
+                WorkflowPaths.ResolveProjectRelative(request.layoutMeasurement.outputPath);
             string directory = Path.GetDirectoryName(absolutePngPath);
             if (string.IsNullOrEmpty(directory))
             {
@@ -35,19 +39,38 @@ namespace Project.UnityWorkflow.VisualQA
             Directory.CreateDirectory(directory);
             absolutePngPath = WorkflowPaths.ResolveProjectRelative(request.outputPath);
             absoluteReportPath = WorkflowPaths.ResolveProjectRelative(reportPath);
-            if (File.Exists(absolutePngPath) || File.Exists(absoluteReportPath))
+            if (absoluteLayoutPath != null)
+            {
+                string layoutDirectory = Path.GetDirectoryName(absoluteLayoutPath);
+                if (string.IsNullOrEmpty(layoutDirectory)) throw new InvalidOperationException("布局报告缺少父目录。");
+                Directory.CreateDirectory(layoutDirectory);
+                absoluteLayoutPath = WorkflowPaths.ResolveProjectRelative(request.layoutMeasurement.outputPath);
+            }
+            if (File.Exists(absolutePngPath) || File.Exists(absoluteReportPath) ||
+                (absoluteLayoutPath != null && File.Exists(absoluteLayoutPath)))
             {
                 throw new IOException("Game View 证据目标已被其他请求占用。");
             }
 
             string temporaryPng = Path.Combine(directory, "." + Path.GetFileName(absolutePngPath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
             string temporaryReport = Path.Combine(directory, "." + Path.GetFileName(absoluteReportPath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
+            string temporaryLayout = absoluteLayoutPath == null ? null : Path.Combine(Path.GetDirectoryName(absoluteLayoutPath),
+                "." + Path.GetFileName(absoluteLayoutPath) + "." + Guid.NewGuid().ToString("N") + ".tmp");
             bool pngPlaced = false;
             bool reportPlaced = false;
+            bool layoutPlaced = false;
             try
             {
                 File.WriteAllBytes(temporaryPng, pngBytes);
-                File.WriteAllText(temporaryReport, JsonUtility.ToJson(result, true) + "\n", new UTF8Encoding(false));
+                // JSON.NET 显式保留 null，避免 Unity 内联序列化将可选引用展开成空对象。
+                File.WriteAllText(temporaryReport, Newtonsoft.Json.JsonConvert.SerializeObject(result, Newtonsoft.Json.Formatting.Indented) + "\n", new UTF8Encoding(false));
+                if (temporaryLayout != null)
+                {
+                    if (layoutBytes == null || layoutBytes.Length == 0) throw new InvalidOperationException("同帧布局报告为空。");
+                    File.WriteAllBytes(temporaryLayout, layoutBytes);
+                    File.Move(temporaryLayout, absoluteLayoutPath);
+                    layoutPlaced = true;
+                }
                 File.Move(temporaryPng, absolutePngPath);
                 pngPlaced = true;
                 File.Move(temporaryReport, absoluteReportPath);
@@ -64,6 +87,10 @@ namespace Project.UnityWorkflow.VisualQA
                 {
                     File.Delete(absolutePngPath);
                 }
+                if (layoutPlaced && File.Exists(absoluteLayoutPath))
+                {
+                    File.Delete(absoluteLayoutPath);
+                }
 
                 throw;
             }
@@ -77,6 +104,10 @@ namespace Project.UnityWorkflow.VisualQA
                 if (File.Exists(temporaryReport))
                 {
                     File.Delete(temporaryReport);
+                }
+                if (temporaryLayout != null && File.Exists(temporaryLayout))
+                {
+                    File.Delete(temporaryLayout);
                 }
 
                 if (!directoryAlreadyExisted && Directory.Exists(directory) && Directory.GetFileSystemEntries(directory).Length == 0)
@@ -125,6 +156,16 @@ namespace Project.UnityWorkflow.VisualQA
                 {
                     return Failure("EXISTING_ARTIFACT_INVALID", "既有 PNG 或采集报告损坏、不匹配，已拒绝复用。", request);
                 }
+                if ((!string.IsNullOrEmpty(saved.screenshot.sha256) &&
+                     !string.Equals(saved.screenshot.sha256, HashBytes(pngBytes), StringComparison.Ordinal)) ||
+                    (HasLayoutRequest(request.layoutMeasurement) && string.IsNullOrEmpty(saved.screenshot.sha256)))
+                {
+                    return Failure("EXISTING_ARTIFACT_INVALID", "既有截图字节摘要与采集记录不一致，已拒绝复用。", request);
+                }
+                if (!HasValidLayoutEvidence(request, saved))
+                {
+                    return Failure("EXISTING_LAYOUT_INVALID", "同帧布局报告缺失、内容变化或请求身份不一致，已拒绝复用。", request);
+                }
 
                 Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGBA32, false);
                 try
@@ -140,12 +181,70 @@ namespace Project.UnityWorkflow.VisualQA
                     DestroyTexture(decoded);
                 }
 
+                // 旧截图报告没有可选字段，Unity 可能将空引用还原为空实例。
+                if (!HasLayoutRequest(request.layoutMeasurement))
+                {
+                    saved.layoutMeasurement = null;
+                    saved.layoutRequestSha256 = null;
+                }
+                if (string.IsNullOrEmpty(saved.screenshot.sha256)) saved.screenshot.sha256 = null;
                 return saved;
             }
             catch (Exception)
             {
                 return Failure("EXISTING_ARTIFACT_INVALID", "既有 PNG 或采集报告无法读取或解码，已拒绝复用。", request);
             }
+        }
+
+        /// <summary>使用实际字节生成与工作流一致的小写 SHA-256。</summary>
+        public static string HashBytes(byte[] bytes)
+        {
+            using (SHA256 hash = SHA256.Create())
+            {
+                return BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-", string.Empty).ToLowerInvariant();
+            }
+        }
+
+        /// <summary>冻结全部嵌套布局参数，防止轮询时以同路径替换测量范围。</summary>
+        public static string HashLayoutRequest(LayoutMeasurementRequest request)
+        {
+            return !HasLayoutRequest(request) ? null : HashBytes(Encoding.UTF8.GetBytes(JsonUtility.ToJson(request)));
+        }
+
+        /// <summary>Unity 内联反序列化可能为缺失字段构造空对象，按完整空值识别未请求布局。</summary>
+        public static bool HasLayoutRequest(LayoutMeasurementRequest request)
+        {
+            return request != null && (!string.IsNullOrEmpty(request.outputPath) || !string.IsNullOrEmpty(request.taskId) ||
+                !string.IsNullOrEmpty(request.candidateId) || !string.IsNullOrEmpty(request.scenePath) ||
+                !string.IsNullOrEmpty(request.layoutPlanPath) || !string.IsNullOrEmpty(request.uiSystem) ||
+                !string.IsNullOrEmpty(request.coordinateSpace) || !string.IsNullOrEmpty(request.gapAxis) ||
+                !string.IsNullOrEmpty(request.stateId) || !string.IsNullOrEmpty(request.evidenceRoot) ||
+                request.includeComponentSnapshots || request.textOnly ||
+                (request.targets != null && request.targets.Count > 0));
+        }
+
+        /// <summary>重读原生布局报告，核对请求、帧号、任务与真实摘要。</summary>
+        private static bool HasValidLayoutEvidence(GameViewCaptureRequest request, GameViewCaptureResult result)
+        {
+            if (!HasLayoutRequest(request.layoutMeasurement))
+            {
+                return (result.layoutMeasurement == null || string.IsNullOrEmpty(result.layoutMeasurement.path)) &&
+                       string.IsNullOrEmpty(result.layoutRequestSha256);
+            }
+            GameViewLayoutMeasurement reference = result.layoutMeasurement;
+            if (reference == null || !string.Equals(result.layoutRequestSha256, HashLayoutRequest(request.layoutMeasurement), StringComparison.Ordinal) ||
+                !string.Equals(reference.path, Normalize(request.layoutMeasurement.outputPath), StringComparison.Ordinal) ||
+                reference.frameCount != result.screenshot.frameCount || string.IsNullOrWhiteSpace(reference.runId)) return false;
+            string path = WorkflowPaths.ResolveProjectRelative(reference.path);
+            if (!File.Exists(path)) return false;
+            byte[] bytes = File.ReadAllBytes(path);
+            if (bytes.Length == 0 || !string.Equals(reference.sha256, HashBytes(bytes), StringComparison.Ordinal)) return false;
+            var report = JsonUtility.FromJson<LayoutMeasurementReport>(Encoding.UTF8.GetString(bytes));
+            return report != null && (report.status == "PASS" || report.status == "MEASURED") &&
+                   report.measurementSource == "UNITY_EDITOR_LOADED_SCENE" && report.includesComponentSnapshots &&
+                   report.runId == reference.runId && report.frameCount == reference.frameCount &&
+                   report.taskId == request.taskId && report.candidateId == request.candidateId &&
+                   report.scenePath == Normalize(request.scenePath) && report.outputPath == reference.path;
         }
 
         /// <summary>确认 PNG 文件签名完整，拒绝空文件和误命名的其他图像格式。</summary>

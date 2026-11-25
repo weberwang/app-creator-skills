@@ -1,0 +1,233 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://app-creator-skills.local/app-workflow-control/visual-v4-acceptance.schema.json",
+  "title": "V4 历史生图与文字试装验收记录",
+  "description": "记录用户授权及经确认的运行证据身份，文件内容和用户身份由控制器核对。",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "stack", "workItemId", "targetId", "candidateId", "reviewRef", "userMessageRef"],
+  "properties": {
+    "schemaVersion": { "enum": ["1.0", "visual-prompt-acceptance/1.0", "visual-text-acceptance/1.0"] },
+    "stack": { "enum": ["unity", "cocos", "phaser", "threejs", "roblox", "flutter", "expo", "esp32"] },
+    "workItemId": { "$ref": "#/$defs/text" },
+    "targetId": { "$ref": "#/$defs/text" },
+    "sceneId": { "$ref": "#/$defs/text" },
+    "stateId": { "$ref": "#/$defs/text" },
+    "candidateId": { "$ref": "#/$defs/text" },
+    "referenceTarget": { "$ref": "#/$defs/fileRef" },
+    "reviewRef": { "$ref": "#/$defs/fileRef" },
+    "acceptedScreenshot": { "$ref": "#/$defs/fileRef" },
+    "userMessageRef": { "$ref": "#/$defs/text" },
+    "ruleApprovalRef": { "$ref": "#/$defs/fileRef" },
+    "runtimeReadbackRef": { "$ref": "#/$defs/fileRef" },
+    "textRestorationRef": { "$ref": "#/$defs/fileRef" },
+    "gameViewCaptureRef": { "$ref": "#/$defs/fileRef" },
+    "scope": { "enum": ["verify-v4-original-prompts", "accept-v4-text-trial", "verify-v4-original-prompts-and-approved-trial"] },
+    "decision": { "const": "APPROVED" },
+    "assets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["assetId", "source", "runtime", "receiptRefs"],
+        "properties": {
+          "assetId": { "$ref": "#/$defs/text" },
+          "source": { "$ref": "#/$defs/fileRef" },
+          "runtime": { "$ref": "#/$defs/fileRef" },
+          "receiptRefs": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "$ref": "#/$defs/fileRef" } }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "schemaVersion": { "const": "1.0" } } },
+      "then": { "required": ["scope", "decision"] },
+      "else": { "required": ["sceneId", "stateId", "referenceTarget", "acceptedScreenshot", "ruleApprovalRef"] }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "visual-prompt-acceptance/1.0" } } },
+      "then": { "required": ["runtimeReadbackRef", "assets"] }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "visual-text-acceptance/1.0" } } },
+      "then": { "required": ["textRestorationRef"] }
+    },
+    {
+      "if": { "properties": { "schemaVersion": { "const": "visual-text-acceptance/1.0" }, "stack": { "const": "unity" } } },
+      "then": { "required": ["gameViewCaptureRef"] }
+    }
+  ],
+  "$defs": {
+    "text": { "type": "string", "minLength": 1 },
+    "fileRef": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": { "$ref": "#/$defs/text" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+      }
+    },
+    "workflowBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schemaVersion", "workItemPath", "targetId"],
+      "properties": {
+        "schemaVersion": { "const": "1.0" },
+        "workItemPath": { "$ref": "#/$defs/text" },
+        "targetId": { "$ref": "#/$defs/text" }
+      }
+    },
+    "imageReadback": {
+      "type": "object",
+      "required": ["schemaVersion", "stack", "workItemId", "targetId", "sceneId", "stateId", "candidateId", "referenceTarget", "visualStage", "measurementSource", "screenshotRef", "formalIntegrationRef", "assets"],
+      "properties": {
+        "schemaVersion": { "const": "visual-image-readback/1.0" },
+        "stack": { "enum": ["unity", "phaser", "threejs"] },
+        "workItemId": { "$ref": "#/$defs/text" },
+        "targetId": { "$ref": "#/$defs/text" },
+        "sceneId": { "$ref": "#/$defs/text" },
+        "stateId": { "$ref": "#/$defs/text" },
+        "candidateId": { "$ref": "#/$defs/text" },
+        "referenceTarget": { "$ref": "#/$defs/fileRef" },
+        "visualStage": { "const": "V4" },
+        "measurementSource": { "const": "runtime-component" },
+        "screenshotRef": { "$ref": "#/$defs/fileRef" },
+        "formalIntegrationRef": { "$ref": "#/$defs/fileRef" },
+        "assets": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["assetId", "source", "runtime", "componentPath"],
+            "properties": {
+              "assetId": { "$ref": "#/$defs/text" },
+              "source": { "$ref": "#/$defs/fileRef" },
+              "runtime": { "$ref": "#/$defs/fileRef" },
+              "componentPath": { "$ref": "#/$defs/text" }
+            }
+          }
+        }
+      }
+    },
+    "imageIntegration": {
+      "type": "object",
+      "required": ["schemaVersion", "stack", "workItemId", "targetId", "sceneId", "stateId", "candidateId", "referenceTarget", "visualStage", "measurementSource", "screenshotRef", "formalIntegration"],
+      "properties": {
+        "schemaVersion": { "const": "visual-image-integration/1.0" },
+        "stack": { "enum": ["unity", "phaser", "threejs"] },
+        "workItemId": { "$ref": "#/$defs/text" },
+        "targetId": { "$ref": "#/$defs/text" },
+        "sceneId": { "$ref": "#/$defs/text" },
+        "stateId": { "$ref": "#/$defs/text" },
+        "candidateId": { "$ref": "#/$defs/text" },
+        "referenceTarget": { "$ref": "#/$defs/fileRef" },
+        "visualStage": { "const": "V4" },
+        "measurementSource": { "const": "runtime-component" },
+        "screenshotRef": { "$ref": "#/$defs/fileRef" },
+        "runId": { "$ref": "#/$defs/text" },
+        "nativeLayoutRef": { "$ref": "#/$defs/fileRef" },
+        "gameViewCaptureRef": { "$ref": "#/$defs/fileRef" },
+        "formalIntegration": {
+          "type": "object",
+          "required": ["entryRef", "rootComponentPath", "images"],
+          "properties": {
+            "entryRef": { "$ref": "#/$defs/fileRef" },
+            "rootComponentPath": { "$ref": "#/$defs/text" },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["assetId", "outputRef", "componentPath"],
+                "properties": {
+                  "assetId": { "$ref": "#/$defs/text" },
+                  "outputRef": { "$ref": "#/$defs/fileRef" },
+                  "componentPath": { "$ref": "#/$defs/text" },
+                  "importMetadataRef": { "$ref": "#/$defs/fileRef" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": { "properties": { "stack": { "const": "unity" } }, "required": ["stack"] },
+          "then": { "required": ["runId", "nativeLayoutRef", "gameViewCaptureRef"] }
+        }
+      ]
+    },
+    "textReadback": {
+      "type": "object",
+      "required": ["schemaVersion", "stack", "workItemId", "targetId", "sceneId", "stateId", "candidateId", "referenceTarget", "visualStage", "measurementSource", "screenshotRef", "runId", "formalIntegration", "fontResources", "nodes"],
+      "properties": {
+        "schemaVersion": { "const": "visual-text-readback/1.0" },
+        "stack": { "enum": ["phaser", "threejs"] },
+        "workItemId": { "$ref": "#/$defs/text" },
+        "targetId": { "$ref": "#/$defs/text" },
+        "sceneId": { "$ref": "#/$defs/text" },
+        "stateId": { "$ref": "#/$defs/text" },
+        "candidateId": { "$ref": "#/$defs/text" },
+        "referenceTarget": { "$ref": "#/$defs/fileRef" },
+        "visualStage": { "const": "V4" },
+        "measurementSource": { "const": "runtime-component" },
+        "screenshotRef": { "$ref": "#/$defs/fileRef" },
+        "runId": { "$ref": "#/$defs/text" },
+        "formalIntegration": {
+          "type": "object",
+          "required": ["entryRef", "images"],
+          "properties": {
+            "entryRef": { "$ref": "#/$defs/fileRef" },
+            "images": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["assetId", "outputRef", "componentPath"],
+                "properties": {
+                  "assetId": { "$ref": "#/$defs/text" },
+                  "outputRef": { "$ref": "#/$defs/fileRef" },
+                  "componentPath": { "$ref": "#/$defs/text" }
+                }
+              }
+            }
+          }
+        },
+        "fontResources": { "type": "array", "items": { "$ref": "#/$defs/fileRef" } },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["textNodeId", "layoutNodeId", "componentPath", "cases"],
+            "properties": {
+              "textNodeId": { "$ref": "#/$defs/text" },
+              "layoutNodeId": { "$ref": "#/$defs/text" },
+              "componentPath": { "$ref": "#/$defs/text" },
+              "cases": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/textCase" } }
+            }
+          }
+        }
+      }
+    },
+    "textCase": {
+      "type": "object",
+      "required": [
+        "renderer", "font_loaded", "fallback_detected", "actual_visible", "actual_bounds", "glyph_bounds", "baseline",
+        "actual_geometry_unit", "actual_coordinate_space", "actual_test_id", "actual_content", "actual_font_resources",
+        "content_case_id", "actual_locale", "actual_inputs", "actual_content_source", "actual_typography"
+      ],
+      "properties": {
+        "renderer": { "$ref": "#/$defs/text" },
+        "font_loaded": { "type": "boolean" },
+        "fallback_detected": { "type": "boolean" },
+        "actual_visible": { "type": "boolean" },
+        "actual_test_id": { "$ref": "#/$defs/text" },
+        "actual_content": { "type": "string" },
+        "actual_font_resources": { "type": "array", "items": { "$ref": "#/$defs/text" } },
+        "content_case_id": { "$ref": "#/$defs/text" },
+        "actual_locale": { "$ref": "#/$defs/text" },
+        "actual_typography": { "type": "object" }
+      }
+    }
+  }
+}

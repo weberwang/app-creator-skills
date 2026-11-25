@@ -1,9 +1,9 @@
 import { formalIntegrationFixture } from './v4-formal-integration-fixture.mjs';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import test from 'node:test';
 import { validateWebTextStage, webTextReadbackOptions } from '../../skills/app-workflow-control/scripts/runtime/web-text-stage.mjs';
 
@@ -120,7 +120,7 @@ test('Cocos 文字决议必须绑定已确认截图、资源评审及同批原�
   }
   const screenshot = freeze('screen.png', '实际截图');
   const referenceTarget = freeze('target.png', '参考图');
-  const work = { workItemType: 'SCENE', workItemId: 'work', stack: 'cocos' };
+  const work = { workItemType: 'SCENE', workItemId: 'work', stack: 'cocos', visual: { objectId: 'scene' } };
   const target = { targetId: 'view', candidateId: 'candidate', sceneId: 'scene', stateId: 'ready', referenceTarget };
   const review = { schemaVersion: '1.0', workItemId: 'work', objectId: 'scene', targetId: 'view', candidateId: 'candidate', stage: 'V4',
     purpose: 'imported-assets', decision: 'APPROVED', userMessageRef: 'chat:1/message:2', referenceTarget,
@@ -153,15 +153,15 @@ test('Cocos 文字决议必须绑定已确认截图、资源评审及同批原�
     formalIntegration,
     nodes: [{ textNodeId: 'price', layoutNodeId: 'label', componentPath: 'Canvas/Price', measurement, cases: [measurement] }] };
   const reportRef = freeze('report.json', report);
-  const ruleApprovalRef = freeze('rule.json', { schemaVersion: '1.0', workItemId: 'work', candidateId: 'candidate',
-    scope: 'verify-cocos-v4-original-prompts-and-approved-trial', decision: 'APPROVED',
+  const ruleApprovalRef = freeze('rule.json', { schemaVersion: '1.0', stack: 'cocos', targetId: 'view', workItemId: 'work', candidateId: 'candidate',
+    scope: 'verify-v4-original-prompts-and-approved-trial', decision: 'APPROVED',
     reviewRef: target.reviews.V4, userMessageRef: 'chat:1/message:rules' });
-  const acceptance = { schemaVersion: 'cocos-text-acceptance/1.0', workItemId: 'work', sceneId: 'scene', stateId: 'ready', candidateId: 'candidate',
+  const acceptance = { schemaVersion: 'visual-text-acceptance/1.0', stack: 'cocos', targetId: 'view', workItemId: 'work', sceneId: 'scene', stateId: 'ready', candidateId: 'candidate',
     referenceTarget, userMessageRef: review.userMessageRef, reviewRef: target.reviews.V4, textRestorationRef: reportRef, acceptedScreenshot: screenshot,
     ruleApprovalRef };
   const decisionRef = freeze('decision.json', acceptance);
   const asset = { schemaVersion: '1.0', visualStage: 'V4', workItemId: 'work', stack: 'cocos', candidateId: 'candidate',
-    userMessageRef: review.userMessageRef, assets: [{ assetId: 'scene', assetType: 'native-component', output: 'assets/scene.scene' }], textRestorationRef: reportRef, textAcceptanceRef: decisionRef };
+    userMessageRef: review.userMessageRef, technicalStatus: 'PASS', humanStatus: 'PASS', assets: [{ assetId: 'scene', assetType: 'native-component', output: 'assets/scene.scene' }], textRestorationRef: reportRef, textAcceptanceRef: decisionRef };
   target.assetReviewRef = freeze('asset.json', asset);
   const options = () => webTextReadbackOptions(repo, work, scene, target, 'V4');
   assert.equal(options().approvedTextTrial.get('price').cases[0].actual_content, '10');
@@ -181,10 +181,112 @@ test('Cocos 文字决议必须绑定已确认截图、资源评审及同批原�
   work.invalidatedRefs = [target.reviews.V4];
   assert.throws(options, /已作废/);
   delete work.invalidatedRefs;
-  report.nodes[0].cases[0].font_loaded = false;
+  report.nodes[0].cases[0].actual_bounds = { x: 33 };
   acceptance.textRestorationRef = freeze('report.json', report);
   asset.textRestorationRef = acceptance.textRestorationRef;
   asset.textAcceptanceRef = freeze('decision.json', acceptance);
   target.assetReviewRef = freeze('asset.json', asset);
   assert.throws(options, /未绑定原始读数/);
 });
+
+for (const stack of ['phaser', 'threejs']) {
+  test(`${stack} 文字试装决议绑定原始采集并在 V5 独立复验`, (t) => {
+    const repo = mkdtempSync(join(tmpdir(), 'approved-web-text-'));
+    t.after(() => rmSync(repo, { recursive: true, force: true }));
+    /** 按真实文件内容冻结测试证据，支持工作项证据子目录。 */
+    function freeze(path, value) {
+      const bytes = typeof value === 'string' ? value : JSON.stringify(value);
+      mkdirSync(dirname(join(repo, path)), { recursive: true });
+      writeFileSync(join(repo, path), bytes);
+      return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
+    }
+    const screenshot = freeze('screen.png', '实际截图');
+    const referenceTarget = freeze('target.png', '参考图');
+    const work = { workItemType: 'SCENE', workItemId: 'work', stack, evidenceRoot: 'evidence/run', visual: { objectId: 'scene' } };
+    const target = { targetId: 'view', candidateId: 'candidate', sceneId: 'scene', stateId: 'ready', referenceTarget };
+    const identity = { stack, workItemId: work.workItemId, targetId: target.targetId, sceneId: target.sceneId,
+      stateId: target.stateId, candidateId: target.candidateId, referenceTarget };
+    const review = { schemaVersion: '1.0', ...identity, objectId: 'scene', stage: 'V4', purpose: 'imported-assets',
+      decision: 'APPROVED', userMessageRef: 'chat:1/message:2', targetRef: screenshot.path, targetSha256: screenshot.sha256 };
+    target.reviews = { V4: freeze('review.json', review) };
+    const contentSource = { key: 'price' };
+    const contentCases = [{ case_id: 'price', locale: 'zh-CN', inputs: { value: 10 }, expected_content: '10', content_source: contentSource }];
+    const scene = { scene_reconstruction_contract: { text_decomposition: { text_nodes: [
+      { text_node_id: 'price', layout_node_id: 'label', planned_test_id: 'test-price', content_cases: contentCases, required_resources: [] },
+    ] } } };
+    const entryPath = 'assets/scene.js';
+    freezeTarget(freeze, target, scene, 'Canvas', entryPath);
+    const measurement = { actual_content: '10', actual_visible: true, font_loaded: true, fallback_detected: false,
+      renderer: 'native-text', actual_geometry_unit: 'logical-px', actual_coordinate_space: 'viewport-logical', actual_test_id: 'test-price',
+      actual_font_resources: [], actual_typography: { font_family: 'sans', font_size: 20 },
+      actual_bounds: { x: 1 }, glyph_bounds: { x: 2 }, baseline: { y: 3 },
+      actual_locale: 'zh-CN', actual_inputs: { value: 10 }, actual_content_source: contentSource, content_case_id: 'price' };
+    const nodes = [{ textNodeId: 'price', layoutNodeId: 'label', componentPath: 'Canvas/Price', measurement, cases: [measurement] }];
+    const formalIntegration = { ...formalIntegrationFixture(repo, entryPath), rootComponentPath: 'Canvas' };
+    const raw = { schemaVersion: 'visual-text-readback/1.0', ...identity, visualStage: 'V4', measurementSource: 'runtime-component',
+      runId: 'v4-run', screenshotRef: screenshot, formalIntegration, fontResources: [], nodes };
+    const report = { schemaVersion: 'web-native-text-readback/1.0', ...identity, visualStage: 'V4', measurementSource: 'runtime-component',
+      runId: 'v4-run', acceptedScreenshot: screenshot, rawReadback: freeze('raw.json', raw), formalIntegration, fontResources: [], nodes };
+    let reportRef = freeze('report.json', report);
+    const consent = { schemaVersion: '1.0', stack, targetId: target.targetId, workItemId: work.workItemId, candidateId: target.candidateId,
+      scope: 'verify-v4-original-prompts-and-approved-trial', decision: 'APPROVED', reviewRef: target.reviews.V4, userMessageRef: 'chat:1/message:rules' };
+    const acceptance = { schemaVersion: 'visual-text-acceptance/1.0', ...identity, userMessageRef: review.userMessageRef,
+      reviewRef: target.reviews.V4, textRestorationRef: reportRef, acceptedScreenshot: screenshot, ruleApprovalRef: freeze('rule.json', consent) };
+    const asset = { schemaVersion: '1.0', visualStage: 'V4', stack, workItemId: work.workItemId, candidateId: target.candidateId,
+      userMessageRef: review.userMessageRef, technicalStatus: 'PASS', humanStatus: 'PASS', assets: [{ assetId: 'scene', assetType: 'native-component', output: entryPath }], textRestorationRef: reportRef };
+    /** 重算决议和资源评审摘要，以测试字段身份而非仅测试文件篡改。 */
+    function bind() {
+      asset.textRestorationRef = reportRef;
+      acceptance.textRestorationRef = reportRef;
+      asset.textAcceptanceRef = freeze('decision.json', acceptance);
+      target.assetReviewRef = freeze('assets.json', asset);
+    }
+    bind();
+    const v4 = () => webTextReadbackOptions(repo, work, scene, target, 'V4');
+    const v5 = () => webTextReadbackOptions(repo, work, scene, target, 'V5');
+    assert.equal(v4().approvedTextTrial.get('price').cases[0].actual_content, '10');
+    consent.scope = 'accept-v4-text-trial';
+    acceptance.ruleApprovalRef = freeze('rule.json', consent);
+    bind();
+    assert.equal(v4().approvedTextTrial.get('price').cases[0].actual_content, '10');
+    consent.scope = 'verify-v4-original-prompts';
+    acceptance.ruleApprovalRef = freeze('rule.json', consent);
+    bind();
+    assert.throws(v4, /授权|范围/);
+    consent.scope = 'accept-v4-text-trial';
+    acceptance.ruleApprovalRef = freeze('rule.json', consent);
+    acceptance.stack = stack === 'phaser' ? 'threejs' : 'phaser';
+    bind();
+    assert.throws(v4, /绑定|不一致/);
+    acceptance.stack = stack;
+    consent.userMessageRef = review.userMessageRef;
+    acceptance.ruleApprovalRef = freeze('rule.json', consent);
+    bind();
+    assert.throws(v4, /授权|确认/);
+    consent.userMessageRef = 'chat:1/message:rules';
+    acceptance.ruleApprovalRef = freeze('rule.json', consent);
+    raw.nodes = structuredClone(nodes);
+    raw.nodes[0].cases[0].actual_content = '被修改';
+    report.rawReadback = freeze('raw.json', raw);
+    reportRef = freeze('report.json', report);
+    bind();
+    assert.throws(v4, /读数|绑定/);
+    raw.nodes = nodes;
+    report.rawReadback = freeze('raw.json', raw);
+    reportRef = freeze('report.json', report);
+    bind();
+    const current = { ...report, visualStage: 'V5', runId: 'v5-run' };
+    const currentRef = freeze('evidence/run/current.json', current);
+    work.evidenceRef = freeze('evidence.json', { workItemId: work.workItemId, stack, visualStage: 'V5',
+      items: [{ category: 'runtime-layout', status: 'PASS', targetId: target.targetId, path: currentRef.path }] });
+    assert.equal(v5().approvedTextTrial.get('price').cases[0].actual_content, '10');
+    current.runId = report.runId;
+    freeze(currentRef.path, current);
+    assert.throws(v5, /独立|复用/);
+    current.runId = 'v5-run';
+    current.nodes = structuredClone(nodes);
+    current.nodes[0].cases[0].actual_content = '错误';
+    freeze(currentRef.path, current);
+    assert.throws(v5, /复验|读数/);
+  });
+}

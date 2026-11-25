@@ -40,6 +40,15 @@
           "pattern": "^Artifacts/Visual/.+\\.png$"
         }
       ]
+    },
+    "layoutMeasurement": {
+      "allOf": [
+        { "$ref": "./layout-measurement.schema.json" },
+        {
+          "required": ["candidateId", "layoutPlanPath", "includeComponentSnapshots", "stateId", "evidenceRoot"],
+          "properties": { "includeComponentSnapshots": { "const": true } }
+        }
+      ]
     }
   },
   "$defs": {
@@ -63,6 +72,12 @@
             {
               "pattern": "^Artifacts/Visual/.+\\.png$"
             }
+          ]
+        },
+        "sha256": {
+          "anyOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
           ]
         },
         "width": {
@@ -148,6 +163,17 @@
       },
       "description": "只记录 Game View 最终帧范围及可识别的活动 UI 系统，不据此宣称像素级可见性验收通过。"
     },
+    "layoutMeasurement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256", "runId", "frameCount"],
+      "properties": {
+        "path": { "$ref": "./common.schema.json#/$defs/projectRelativePath" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "runId": { "type": "string", "minLength": 1 },
+        "frameCount": { "type": "integer", "minimum": 0 }
+      }
+    },
     "captureReport": {
       "type": "object",
       "additionalProperties": false,
@@ -227,9 +253,32 @@
               "type": "null"
             }
           ]
+        },
+        "layoutMeasurement": {
+          "anyOf": [
+            { "$ref": "#/$defs/layoutMeasurement" },
+            { "type": "null" }
+          ]
+        },
+        "layoutRequestSha256": {
+          "anyOf": [
+            { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            { "type": "null" }
+          ]
         }
       },
       "allOf": [
+        {
+          "if": { "properties": { "layoutMeasurement": { "type": "object" } }, "required": ["layoutMeasurement"] },
+          "then": {
+            "required": ["layoutRequestSha256", "screenshot"],
+            "properties": {
+              "status": { "const": "PASS" },
+              "layoutRequestSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+              "screenshot": { "required": ["sha256"], "properties": { "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" } } }
+            }
+          }
+        },
         {
           "if": {
             "properties": {

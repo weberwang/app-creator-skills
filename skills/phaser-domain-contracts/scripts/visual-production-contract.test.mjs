@@ -263,6 +263,45 @@ test("V4 资源门不要求正式运行消费，V5 才要求逐部件 runtime_co
   assert(validateComponentAuditEvidence(region, auditUnit, { stage: "V5", annotation_number: 1, region_id: region.id }).some((item) => item.includes("runtime_consumption.component_usages")));
 });
 
+/** 资源审计的阶段参数不能把正式场景消费提前到 V4，也不能弱化实际位图检查。 */
+test("V4 生产审计验证原生位图，V5 和默认阶段仍要求运行消费", async () => {
+  const root = await mkdtemp(join(tmpdir(), "v4-production-audit-"));
+  const region = componentContract("audit-component", "audit-asset");
+  const expected = region.expected_assets[0];
+  Object.assign(expected, { mime_type: "image/png", width: 64, height: 64, alpha: true });
+  const actual = { ...expected, file: expected.runtime_file };
+  const runtimePath = join(root, expected.runtime_file);
+  await mkdir(join(root, "public"), { recursive: true });
+  await writeFile(runtimePath, encodePngRgba(64, 64, Buffer.alloc(64 * 64 * 4)));
+  const manifest = {
+    workItemId: "audit-work", candidateVersion: "candidate-1", coverage_audit: { regions: [region] },
+    assets: [{ id: expected.asset_id, source_file: expected.source_file, runtime_outputs: [expected.runtime_file],
+      mime_type: "image/png", width: 64, height: 64, alpha: true }],
+    production_contract_audit: { status: "passed", candidate_version: "candidate-1", audited_at: "2026-08-15T00:00:00Z",
+      units: [{ annotation_number: region.annotation_number, region_id: region.id, observed_method: region.production_method,
+        observed_delivery_kind: region.delivery_kind, status: "passed", expected_assets: region.expected_assets,
+        atomic_image_requirements: region.atomic_image_requirements, actual_assets: [actual] }] },
+  };
+  const v4 = auditProductionContract(manifest, { stage: "V4", checkFiles: true, projectRoot: root });
+  // 此夹具不建立人工确认台账，确认门维持原样且单独测试。
+  assert.deepEqual(v4.filter((issue) => !issue.includes("expected_method=manual-confirmation")), []);
+  const v5 = auditProductionContract(manifest, { stage: "V5", checkFiles: true, projectRoot: root });
+  const defaultStage = auditProductionContract(manifest, { checkFiles: true, projectRoot: root });
+  // Evidence 固定属于 V5，调用者不能通过 V4 参数撤销运行消费检查。
+  const evidenceOptions = { manifest, checkFiles: true, projectRoot: root };
+  const evidenceWork = { visualProductionUnits: [] };
+  const evidenceV4 = validateVisualEvidence({}, evidenceWork, { ...evidenceOptions, stage: "V4" });
+  assert(evidenceV4.some((issue) => issue.includes(region.id) && issue.includes("runtime_consumption")), evidenceV4.join("\n"));
+  assert.deepEqual(evidenceV4, validateVisualEvidence({}, evidenceWork, { ...evidenceOptions, stage: "V5" }));
+  assert.match(auditProductionContract(manifest, { stage: "V3" }).join("\n"), /只能为 V4 或 V5/);
+  assert(v5.some((issue) => issue.includes("runtime_consumption")), v5.join("\n"));
+  assert(defaultStage.some((issue) => issue.includes("runtime_consumption")), defaultStage.join("\n"));
+  const wrongSize = structuredClone(manifest);
+  wrongSize.production_contract_audit.units[0].actual_assets[0].width = 63;
+  const bad = auditProductionContract(wrongSize, { stage: "V4", checkFiles: true, projectRoot: root });
+  assert(bad.some((issue) => issue.includes("width")), bad.join("\n"));
+});
+
 test("文件门只对 V4 资源和 V5 正式验收开启，已移除阶段不作为运行门", () => {
   const manifest = { effect_image_reconstruction: { applicability: "effect-image" } };
   assert.equal(requiresVisualFileGate(manifest, "V4"), true);

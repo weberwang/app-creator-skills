@@ -9,14 +9,15 @@ import { pathToFileURL } from 'node:url';
 import test from 'node:test';
 import Ajv2020 from '../../skills/app-skill-runtime/ajv2020.mjs';
 import addFormats from '../../skills/app-skill-runtime/ajv-formats.mjs';
-import { validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
+import { validateBoundVisualManifest, validateDomainTarget } from '../../skills/app-workflow-control/scripts/runtime/domain-target-check.mjs';
 import { validateMultiVisualStage } from '../../skills/app-workflow-control/scripts/runtime/multi-visual-contract.mjs';
-import { unityLayoutFixture, unityLayoutMeasurement } from './unity-text-fixture.mjs';
+import { unityGameViewCaptureFixture, unityLayoutFixture, unityLayoutMeasurement } from './unity-text-fixture.mjs';
 import { assertAssetReview } from '../../skills/app-workflow-control/scripts/runtime/artifacts.mjs';
 import { minimalPng, validManifest } from '../../skills/cocos-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 import { fixtureLayoutDocument } from '../../skills/cocos-domain-contracts/scripts/v2-layout-source-test-fixtures.mjs';
 import { validManifest as phaserManifest, minimalPng as phaserPng } from '../../skills/phaser4-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
 import { validManifest as threeManifest, minimalPng as threePng } from '../../skills/threejs-game-asset-integration/scripts/visual-manifest-test-fixtures.mjs';
+import { createFixture, putJson, readWork } from './controller-fixture.mjs';
 
 /** 将测试工件写入独立临时项目，避免污染真实工作区。 */
 function put(repo, path, value) {
@@ -24,6 +25,32 @@ function put(repo, path, value) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, Buffer.isBuffer(value) ? value : JSON.stringify(value));
 }
+
+test('独立领域清单入口拒绝跨栈、错阶段及未绑定清单', async (t) => {
+  const { repo, workPath } = await createFixture({ id: 'bound-manifest', stack: 'phaser', type: 'SCENE' });
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  const manifest = Buffer.from(JSON.stringify({ visualStage: 'V4' }));
+  put(repo, 'visual/manifest.json', manifest);
+  put(repo, 'visual/other.json', manifest);
+  const work = await readWork(repo, workPath);
+  work.visual.stage = 'V4';
+  work.visual.targets = [{ targetId: 'view', candidateId: 'candidate', domainEvidenceRef: { path: 'visual/manifest.json', sha256: createHash('sha256').update(manifest).digest('hex') } }];
+  await putJson(repo, workPath, work);
+  const binding = { schemaVersion: '1.0', workItemPath: workPath, targetId: 'view' };
+  const check = (path, stage, stack) => validateBoundVisualManifest(repo, join(repo, path), binding, stage, stack);
+  await assert.rejects(check('visual/manifest.json', 'V4', 'cocos'), /技术栈|阶段|绑定/);
+  await assert.rejects(check('visual/manifest.json', 'V5', 'phaser'), /阶段|绑定/);
+  await assert.rejects(check('visual/other.json', 'V4', 'phaser'), /绑定|领域文件/);
+  await assert.rejects(check('visual/manifest.json', 'V3', 'phaser'), /阶段|绑定/);
+  await assert.rejects(check('visual/manifest.json', 'V4', 'phaser'), /assetReviewRef|资源评审|素材评审/);
+  const failedReview = { schemaVersion: '1.0', visualStage: 'V4', workItemId: work.workItemId, stack: 'phaser',
+    candidateId: 'candidate', technicalStatus: 'FAIL', humanStatus: 'PASS' };
+  const bytes = Buffer.from(JSON.stringify(failedReview));
+  put(repo, 'visual/assets.json', bytes);
+  work.visual.targets[0].assetReviewRef = { path: 'visual/assets.json', sha256: createHash('sha256').update(bytes).digest('hex') };
+  await putJson(repo, workPath, work);
+  await assert.rejects(check('visual/manifest.json', 'V4', 'phaser'), /technicalStatus|技术.*通过/);
+});
 
 /** 使用正式 Cocos 测试夹具建立同一目标与实际 PNG 文件。 */
 function webFixture(t) {
@@ -84,7 +111,7 @@ test('未安装当前栈领域脚本时明确阻断而非跳过', (t) => {
   const { repo, work, target } = webFixture(t);
   const runtime = join(repo, 'isolated', 'skills', 'app-workflow-control', 'scripts', 'runtime');
   mkdirSync(runtime, { recursive: true });
-  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs', 'v4-text-restoration.mjs', 'cocos-prompt-acceptance.mjs', 'multi-visual-contract.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
+  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs', 'v4-text-restoration.mjs', 'visual-acceptance-evidence.mjs', 'visual-text-acceptance.mjs', 'visual-prompt-acceptance.mjs', 'unity-image-acceptance.mjs', 'unity-trial-capture-evidence.mjs', 'multi-visual-contract.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
   const moduleUrl = pathToFileURL(join(runtime, 'domain-target-check.mjs')).href;
   const script = `import {validateDomainTarget} from ${JSON.stringify(moduleUrl)}; const [repo,work,target]=JSON.parse(process.argv[1]); try {validateDomainTarget(repo,work,target,'V2'); process.exitCode=1;} catch(e) {process.stdout.write(e.message);}`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, JSON.stringify([repo, work, target])], { encoding: 'utf8', windowsHide: true });
@@ -317,6 +344,30 @@ test('Unity V4 从资源评审核对文字试装，V5 使用新的正式运行�
   measurement.componentSnapshot.textStyle.find((item) => item.name === 'content').actualValue = '';
   updateReport();
   assert.throws(() => validateDomainTarget(repo, work, target, 'V5'), /content.*不一致/);
+
+  // 原生领域入口也必须实际消费共用决议，不能只在独立辅助校验里通过。
+  measurement.componentSnapshot.textStyle.find((item) => item.name === 'content').actualValue = '确认';
+  work.visual = { objectId: target.sceneId, stage: 'V5' };
+  const trialImage = Buffer.from('已确认试装');
+  const acceptedScreenshot = save('visual/trial.png', trialImage);
+  const userMessageRef = 'chat:thread/message:review';
+  target.reviews.V4 = save('docs/v4-review.json', { schemaVersion: '1.0', workItemId: work.workItemId,
+    objectId: target.sceneId, targetId: target.targetId, candidateId: target.candidateId, stage: 'V4',
+    purpose: 'imported-assets', decision: 'APPROVED', referenceTarget, userMessageRef,
+    targetRef: acceptedScreenshot.path, targetSha256: acceptedScreenshot.sha256 });
+  const approvalIdentity = { stack: work.stack, workItemId: work.workItemId, targetId: target.targetId,
+    candidateId: target.candidateId, reviewRef: target.reviews.V4 };
+  const ruleApprovalRef = save('docs/trial-rule.json', { schemaVersion: '1.0', ...approvalIdentity,
+    scope: 'accept-v4-text-trial', decision: 'APPROVED', userMessageRef: 'chat:thread/message:rule' });
+  assetReview.technicalStatus = assetReview.humanStatus = 'PASS';
+  assetReview.userMessageRef = userMessageRef;
+  assetReview.textRestorationRef = save(report.outputPath, report);
+  const gameViewCaptureRef = unityGameViewCaptureFixture(save, acceptedScreenshot, assetReview.textRestorationRef, report, trialImage.length);
+  assetReview.textAcceptanceRef = save('docs/trial-acceptance.json', { schemaVersion: 'visual-text-acceptance/1.0',
+    ...approvalIdentity, referenceTarget, sceneId: target.sceneId, stateId: target.stateId, acceptedScreenshot,
+    userMessageRef, ruleApprovalRef, gameViewCaptureRef, textRestorationRef: assetReview.textRestorationRef });
+  target.assetReviewRef = save('docs/assets.json', assetReview);
+  assert.equal(validateDomainTarget(repo, work, target, 'V5'), true);
 });
 
 /** 使用真实领域和公共合同校验器，构造两目标的合成合同数据。 */
