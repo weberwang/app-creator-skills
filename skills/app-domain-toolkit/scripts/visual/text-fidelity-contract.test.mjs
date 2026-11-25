@@ -6,6 +6,26 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 import Ajv2020 from "ajv/dist/2020.js";
+import { validateTextFidelity } from './text-fidelity-contract.mjs';
+
+test('已确认试装逐项对比实际用例，不能借此放行缺失或改变的测量', () => {
+  const actual = { renderer: 'bitmap-text', font_loaded: true, fallback_detected: false, actual_visible: true,
+    actual_bounds: { x: 1 }, glyph_bounds: { x: 2 }, baseline: { y: 3 }, actual_geometry_unit: 'logical-px',
+    actual_coordinate_space: 'viewport-logical', actual_test_id: 'label-test', actual_content: '10',
+    actual_font_resources: ['font.fnt'], content_case_id: 'ten', actual_locale: 'zh-CN', actual_inputs: { value: 10 },
+    actual_content_source: { key: 'coins' }, actual_typography: { font_family: 'font' } };
+  const node = { text_node_id: 'label', dynamic: true, content_cases: [{ case_id: 'ten', expected_content: '10', locale: 'zh-CN',
+    inputs: { value: 10 }, content_source: { key: 'coins' } }] };
+  const run = () => validateTextFidelity({ node, raw: actual, read: (key) => actual[key], route: 'bitmap-text',
+    approvedTextTrial: new Map([['label', { cases: [structuredClone(actual)] }]]) });
+  assert.deepEqual(run(), []);
+  const approved = new Map([['label', { cases: [structuredClone(actual)] }]]);
+  actual.glyph_bounds.x = 20;
+  const errors = validateTextFidelity({ node, raw: actual, read: (key) => actual[key], route: 'bitmap-text', approvedTextTrial: approved });
+  assert.match(errors.join('\n'), /glyph_bounds/);
+  delete actual.actual_typography;
+  assert.match(validateTextFidelity({ node, raw: actual, read: (key) => actual[key], route: 'bitmap-text', approvedTextTrial: approved }).join('\n'), /actual_typography/);
+});
 
 for (const stack of ["cocos", "phaser", "threejs"]) {
   const root = new URL(`../../../${stack}-domain-contracts/`, import.meta.url);
@@ -70,6 +90,31 @@ for (const stack of ["cocos", "phaser", "threejs"]) {
     const validate = (options = {}) => validateSceneReconstructionContract(contract, { ...effectImageManifest(contract), visualStage: "V5" }, sourceOptions({ stage: "V5", ...options }));
     return { contract, node, runtime: node.runtime_verification, validate };
   }
+
+  if (stack === 'cocos') test('Cocos V5 清单的重复复核保留已批准试装与独立运行读数', (t) => {
+    const { contract, node, runtime } = scenario();
+    const projectRoot = mkdtempSync(join(tmpdir(), 'cocos-approved-v5-'));
+    t.after(() => rmSync(projectRoot, { recursive: true, force: true }));
+    node.typography_target.font_identity = { status: 'unresolved', confidence: 'unknown', observable_facts: { text: '可见' } };
+    node.font_resolution = { strategy: 'project-font', family: 'Game Sans' };
+    Object.assign(runtime, { content_case_id: 'default', actual_locale: 'zh-CN', actual_inputs: {}, actual_content_source: 'fixture' });
+    const approvedTextTrial = new Map([[node.text_node_id, { cases: [structuredClone(runtime)] }]]);
+    const identity = { stack: 'cocos', workItemId: 'work-a', sceneId: 'main', stateId: 'default', candidateId: 'candidate-a',
+      referenceTarget: { path: 'target.png', sha256: 'a'.repeat(64) } };
+    const report = { ...identity, schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', visualStage: 'V5',
+      runId: 'formal-run', nodes: [{ textNodeId: node.text_node_id, layoutNodeId: node.layout_node_id, componentPath: 'Canvas/Title',
+        measurement: structuredClone(runtime) }] };
+    const bytes = JSON.stringify(report);
+    writeFileSync(join(projectRoot, 'runtime-text.json'), bytes);
+    identity.runtimeEvidenceRef = { path: 'runtime-text.json', sha256: createHash('sha256').update(bytes).digest('hex') };
+    runtime.evidence = [identity.runtimeEvidenceRef];
+    const manifest = { ...effectImageManifest(contract), schema_version: '1.5', assets: [], visualStage: 'V5',
+      visualStageState: 'v5-runtime-integration-candidate', visual_production_gate: {} };
+    const options = sourceOptions({ projectRoot, stage: 'V5', requireNativeTextReadback: true,
+      textReadbackIdentity: identity, textTrialRunId: 'v4-trial', approvedTextTrial });
+    assert.doesNotMatch(validateManifest(manifest, options).join('\n'), /字体目标仍待人工确认|原生文字运行证据无效|文字试装对比不一致/);
+    assert.match(validateManifest(manifest, { ...options, approvedTextTrial: undefined }).join('\n'), /字体目标仍待人工确认/);
+  });
 
   /** 检查机器合同应拒绝给定变异，且保留具体错误定位。 */
   function rejects(value, message) {

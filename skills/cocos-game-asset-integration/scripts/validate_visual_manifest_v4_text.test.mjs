@@ -41,16 +41,16 @@ test('V4 正式图片存在而文字未接入时独立清单不应报告通过',
   for (const args of [[], ['--stage', 'V4']]) {
     const result = await run(args);
     assert.equal(result.code, 1);
-    assert.match(result.message, /app-workflow/);
+    assert.match(result.message, /workflow_binding/);
   }
   delete contract.text_decomposition;
   contract.textDecomposition = { textNodes: [{ textNodeId: 'title' }] };
   delete manifest.visualStage;
   manifest.visual_stage = 'V4';
-  assert.match((await run()).message, /app-workflow/);
+  assert.match((await run()).message, /workflow_binding/);
   delete contract.textDecomposition;
   contract.coverage_regions = [{ region_id: 'title', render_kind: 'text' }];
-  assert.match((await run()).message, /app-workflow/);
+  assert.match((await run()).message, /workflow_binding/);
 });
 
 test('V4 无文字的独立清单仍可完成素材检查', async (t) => {
@@ -58,13 +58,17 @@ test('V4 无文字的独立清单仍可完成素材检查', async (t) => {
   assert.equal((await run(['--stage', 'V4'])).code, 0);
 });
 
-test('V4 声明不可用 V3 参数降级', async (t) => {
+test('V4 声明不可用 V3 参数降级，绑定清单进入工作流检查', async (t) => {
   const { manifest, run } = await fixture(t);
   manifest.scene_reconstruction_contract.text_decomposition = { applicability: 'has-text', text_nodes: [{ text_node_id: 'title' }] };
   const downgrade = await run(['--stage', 'V3']);
   assert.equal(downgrade.code, 1);
-  assert.match(downgrade.message, /app-workflow|visualStage=V4.*V3|阶段.*不一致/);
-
+  assert.match(downgrade.message, /workflow_binding|visualStage=V4.*V3|阶段.*不一致/);
+  manifest.workflow_binding = { schemaVersion: '1.0', workItemPath: 'missing-work.json', targetId: 'scene' };
+  const bound = await run();
+  assert.equal(bound.code, 1);
+  assert.match(bound.message, /missing-work\.json|工作项/);
+  assert.doesNotMatch(bound.message, /V4 文字正式接入须通过/);
 });
 
 test('V3 无文字的独立清单可继续检查', async (t) => {
@@ -83,5 +87,5 @@ test('V4 加载实际布局源中的文字节点后要求工作流验收', async
   manifest.scene_reconstruction_contract = contract;
   const result = await run();
   assert.equal(result.code, 1);
-  assert.match(result.message, /app-workflow/);
+  assert.match(result.message, /workflow_binding/);
 });

@@ -275,9 +275,26 @@ function expectedContent(node, read, errors) {
 }
 
 /** 检查 V5 三栈共用目标与实际事实；返回错误供调用者附加场景上下文。 */
-export function validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline }) {
+export function validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline, approvedTextTrial }) {
   const errors = [];
   if (read("actual_visible") !== true) errors.push("actual_visible 必须为 true，确认稿文字须在当前运行状态实际可见");
+  if (approvedTextTrial) {
+    const accepted = approvedTextTrial.get(node.text_node_id ?? node.textNodeId ?? node.id);
+    const cases = accepted?.cases ?? [];
+    const matching = cases.filter((item) => item.content_case_id === read('content_case_id'));
+    if (matching.length !== 1) return [...errors, '当前文字用例缺少唯一的已确认试装读数'];
+    const baseline = matching[0];
+    // 已确认的试装仅作为比对目标，当前运行事实仍由原生证据门独立验证。
+    const fields = ['renderer', 'font_loaded', 'fallback_detected', 'actual_visible', 'actual_bounds', 'glyph_bounds', 'baseline',
+      'actual_geometry_unit', 'actual_coordinate_space', 'actual_test_id', 'actual_content', 'actual_font_resources',
+      'content_case_id', 'actual_locale', 'actual_inputs', 'actual_content_source', 'actual_typography'];
+    for (const name of fields) {
+      if (baseline[name] === undefined || !equal(read(name), baseline[name])) errors.push(`文字试装对比不一致：${name}`);
+    }
+    const expected = expectedContent(node, read, errors);
+    if (read('actual_content') !== expected) errors.push('actual_content 必须与冻结用例预期内容一致');
+    return errors;
+  }
   const typography = node.typography_target ?? {};
   if (typography.font_identity?.status === "unresolved") errors.push("font_identity 字体目标仍待人工确认");
   const pending = pendingTextAttributes(typography);

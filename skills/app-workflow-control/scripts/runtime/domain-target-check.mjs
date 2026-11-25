@@ -1,9 +1,9 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
+import { fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { loadDomainConfirmationAuthority } from './visual-confirmation-domain.mjs';
 import { validatePublicArtExperience } from './art-experience.mjs';
 import { webTextReadbackOptions } from './web-text-stage.mjs';
@@ -100,6 +100,9 @@ async function runDomainChecks({ repo, work, target, stage }) {
   }
   const validator = await import(pathToFileURL(manifestPath).href);
   const authority = await loadDomainConfirmationAuthority(repo, work, document, document);
+  const promptApprovals = work.stack === 'cocos' && target.assetReviewRef
+    ? (await import('./cocos-prompt-acceptance.mjs')).loadCocosHistoricalPromptApprovals(repo, work, target, document, stage)
+    : undefined;
   // 仅带复用声明的场景可沿目标级确认链继承布局，世界设计路线使用当前工作项确认。
   const reuseLayout = work.visual?.reuse && work.visual.designRoute !== 'world-3d'
     ? (await import('./visual-reuse-binding.mjs')).validateSceneReuseReview : undefined;
@@ -110,6 +113,7 @@ async function runDomainChecks({ repo, work, target, stage }) {
       resolveLayoutOwner: reuseLayout && ((ref, review) => reuseLayout(repo, work, target, 'V3Layout', ref, review)),
     },
     ...webTextReadbackOptions(repo, work, document, target, stage),
+    ...(promptApprovals ? { verifiedHistoricalPromptApprovals: promptApprovals } : {}),
   };
   const errors = validator.validateManifest(document, { ...options, checkFiles: true, forceLayoutSourceFiles: true, projectRoot: repo, workItemType: 'SCENE' });
   errors.push(...await validator.checkManifestFiles(document, repo, options));
@@ -125,6 +129,21 @@ export function validateDomainTarget(repo, work, target, stage) {
   if (execution.error) throw new WorkflowError(`目标领域校验未完成：${execution.error.message}`);
   if (execution.status !== 0) throw new WorkflowError(`目标领域校验未通过：${(execution.stderr || execution.stdout || `退出码 ${execution.status}`).trim()}`);
   return true;
+}
+
+/** 独立素材命令使用同一真实工作项、确认链和领域校验，禁止绑定另一份文件放行。 */
+export async function validateBoundCocosManifest(repo, manifestFile, binding, stage) {
+  if (binding?.schemaVersion !== '1.0' || !['V4', 'V5'].includes(stage)) throw new WorkflowError('Cocos 清单工作项绑定或阶段无效');
+  const { loadWork } = await import('./workflow.mjs');
+  const work = loadWork(repo, binding.workItemPath);
+  const target = work.visual?.targets?.find((item) => item.targetId === binding.targetId);
+  if (!target || work.stack !== 'cocos' || work.workItemType !== 'SCENE' || work.visual.stage !== stage) {
+    throw new WorkflowError('Cocos 清单未绑定同阶段工作项和场景目标');
+  }
+  const projectFile = relative(repo, resolve(manifestFile)).replaceAll('\\', '/');
+  const file = validateTargetFile(repo, target.domainEvidenceRef, null, '当前领域清单');
+  if (fileIdentityKey(repo, projectFile) !== fileIdentityKey(repo, file)) throw new WorkflowError('Cocos 清单命令必须读取已绑定领域文件');
+  return validateDomainTarget(repo, work, target, stage);
 }
 
 /** 专用子进程只读取校验输入和项目文件，不执行编辑器、服务或外部动作。 */

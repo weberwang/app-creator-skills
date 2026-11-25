@@ -402,7 +402,7 @@ function validateRuntimeVerification(node, contract, stage, errors, route, regio
     }
   }
   // 目标与候选只取冻结节点和实际测量；报告不能通过副本或通用容差替换事实。
-  for (const message of validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline })) {
+  for (const message of validateTextFidelity({ node, raw, read, route, region, toleranceDefinitions, actualBounds, actualGlyphBounds, actualBaseline, approvedTextTrial: options.requireNativeTextReadback === true ? options.approvedTextTrial : null })) {
     pushRuntimeError(errors, stage, contract, node, message);
   }
 }

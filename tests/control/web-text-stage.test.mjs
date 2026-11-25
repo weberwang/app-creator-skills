@@ -108,3 +108,83 @@ test('Web V5 文字使用 V3 冻结目标，实际读数不能重定义预期样
   assert.throws(() => validateWebTextStage(repo, current, { path: 'review.json' }, target), /timer.*缺少/);
   assert.doesNotThrow(() => validateWebTextStage(repo, current, undefined, target));
 });
+
+test('Cocos 文字决议必须绑定已确认截图、资源评审及同批原生试装', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'approved-text-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  /** 固定测试文件的真实路径和摘要。 */
+  function freeze(path, value) {
+    const bytes = typeof value === 'string' ? value : JSON.stringify(value);
+    writeFileSync(join(repo, path), bytes);
+    return { path, sha256: createHash('sha256').update(bytes).digest('hex') };
+  }
+  const screenshot = freeze('screen.png', '实际截图');
+  const referenceTarget = freeze('target.png', '参考图');
+  const work = { workItemType: 'SCENE', workItemId: 'work', stack: 'cocos' };
+  const target = { targetId: 'view', candidateId: 'candidate', sceneId: 'scene', stateId: 'ready', referenceTarget };
+  const review = { schemaVersion: '1.0', workItemId: 'work', objectId: 'scene', targetId: 'view', candidateId: 'candidate', stage: 'V4',
+    purpose: 'imported-assets', decision: 'APPROVED', userMessageRef: 'chat:1/message:2', referenceTarget,
+    targetRef: screenshot.path, targetSha256: screenshot.sha256 };
+  target.reviews = { V4: freeze('review.json', review) };
+  const contentSource = { key: 'price' };
+  const contentCases = [{ case_id: 'price', locale: 'zh-CN', inputs: { value: 10 }, expected_content: '10', content_source: contentSource }];
+  const scene = { scene_reconstruction_contract: { text_decomposition: { text_nodes: [{ text_node_id: 'price', layout_node_id: 'label', planned_test_id: 'test-price', content_cases: contentCases }] } } };
+  freezeTarget(freeze, target, scene, 'Canvas');
+  const fontResources = [freeze('font.fnt', '字体'), freeze('font.png', '图集')];
+  scene.scene_reconstruction_contract.text_decomposition.text_nodes[0].required_resources = fontResources.map(({ path }) => ({ path }));
+  const style = { fontFamily: 'Noto Sans SC SemiBold', renderedFontSize: 20, fontSizeUnit: 'logical-px', lineHeight: 24, letterSpacing: 0,
+    fill: '#ffffffff', wrap: false, lineCount: 1, isBold: false, isItalic: false, outlineEnabled: false, shadowEnabled: false, horizontalAlign: 1, verticalAlign: 1 };
+  const actualStyle = { font_family: style.fontFamily, font_size: 20, font_size_unit: 'logical-px', font_weight: 'semibold', font_style: 'normal',
+    line_height: 24, letter_spacing: 0, alignment: { horizontal: 'center', vertical: 'center' }, fill: style.fill, stroke: 'none', shadow: 'none', wrap: false, line_count: 1 };
+  const measurement = { actual_content: '10', actual_visible: true, font_loaded: true, fallback_detected: false,
+    renderer: 'bitmap-text', actual_geometry_unit: 'logical-px', actual_coordinate_space: 'viewport-logical', actual_test_id: 'test-price',
+    actual_font_resources: fontResources.map((ref) => ref.path), actual_typography: actualStyle,
+    actual_bounds: { x: 1 }, glyph_bounds: { x: 2 }, baseline: { y: 3 },
+    actual_locale: 'zh-CN', actual_inputs: { value: 10 }, actual_content_source: contentSource, content_case_id: 'price' };
+  const formalIntegration = { ...formalIntegrationFixture(repo, 'assets/scene.scene'), rootComponentPath: 'Canvas' };
+  const raw = { schemaVersion: 'cocos-native-text-trial/1.0', measurementSource: 'runtime-component', runId: 'run', formalIntegration,
+    workItemId: 'work', sceneId: 'scene', stateId: 'ready', candidateId: 'candidate', referenceTarget, font: fontResources[0], fontTexture: fontResources[1],
+    labels: { screenshot, results: [{ textNodeId: 'price', measurements: [{ caseId: 'price', content: '10', locale: 'zh-CN', inputs: { value: 10 },
+      fixtureContentSource: contentSource, actualBounds: measurement.actual_bounds, glyphBounds: measurement.glyph_bounds, baseline: measurement.baseline,
+      fontLoaded: true, fallbackDetected: false, visible: true, actualTypography: style }] }] } };
+  const report = { schemaVersion: 'web-native-text-readback/1.0', measurementSource: 'runtime-component', visualStage: 'V4', runId: 'run',
+    workItemId: 'work', stack: 'cocos', sceneId: 'scene', stateId: 'ready', candidateId: 'candidate', referenceTarget,
+    acceptedScreenshot: screenshot, rawReadback: freeze('raw.json', raw), fontResources,
+    formalIntegration,
+    nodes: [{ textNodeId: 'price', layoutNodeId: 'label', componentPath: 'Canvas/Price', measurement, cases: [measurement] }] };
+  const reportRef = freeze('report.json', report);
+  const ruleApprovalRef = freeze('rule.json', { schemaVersion: '1.0', workItemId: 'work', candidateId: 'candidate',
+    scope: 'verify-cocos-v4-original-prompts-and-approved-trial', decision: 'APPROVED',
+    reviewRef: target.reviews.V4, userMessageRef: 'chat:1/message:rules' });
+  const acceptance = { schemaVersion: 'cocos-text-acceptance/1.0', workItemId: 'work', sceneId: 'scene', stateId: 'ready', candidateId: 'candidate',
+    referenceTarget, userMessageRef: review.userMessageRef, reviewRef: target.reviews.V4, textRestorationRef: reportRef, acceptedScreenshot: screenshot,
+    ruleApprovalRef };
+  const decisionRef = freeze('decision.json', acceptance);
+  const asset = { schemaVersion: '1.0', visualStage: 'V4', workItemId: 'work', stack: 'cocos', candidateId: 'candidate',
+    userMessageRef: review.userMessageRef, assets: [{ assetId: 'scene', assetType: 'native-component', output: 'assets/scene.scene' }], textRestorationRef: reportRef, textAcceptanceRef: decisionRef };
+  target.assetReviewRef = freeze('asset.json', asset);
+  const options = () => webTextReadbackOptions(repo, work, scene, target, 'V4');
+  assert.equal(options().approvedTextTrial.get('price').cases[0].actual_content, '10');
+  delete acceptance.ruleApprovalRef;
+  asset.textAcceptanceRef = freeze('decision.json', acceptance);
+  target.assetReviewRef = freeze('asset.json', asset);
+  assert.throws(options, /用户规则调整授权/);
+  acceptance.ruleApprovalRef = ruleApprovalRef;
+  const other = freeze('other.png', '另一张截图');
+  acceptance.acceptedScreenshot = other;
+  asset.textAcceptanceRef = freeze('decision.json', acceptance);
+  target.assetReviewRef = freeze('asset.json', asset);
+  assert.throws(options, /截图/);
+  acceptance.acceptedScreenshot = screenshot;
+  asset.textAcceptanceRef = freeze('decision.json', acceptance);
+  target.assetReviewRef = freeze('asset.json', asset);
+  work.invalidatedRefs = [target.reviews.V4];
+  assert.throws(options, /已作废/);
+  delete work.invalidatedRefs;
+  report.nodes[0].cases[0].font_loaded = false;
+  acceptance.textRestorationRef = freeze('report.json', report);
+  asset.textRestorationRef = acceptance.textRestorationRef;
+  asset.textAcceptanceRef = freeze('decision.json', acceptance);
+  target.assetReviewRef = freeze('asset.json', asset);
+  assert.throws(options, /未绑定原始读数/);
+});

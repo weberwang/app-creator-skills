@@ -1,7 +1,6 @@
 #!/usr/bin/env node
-import { hasFormalV4Text } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
-
 import { isPlannedVisualAsset } from "../../cocos-domain-contracts/scripts/visual-planned-asset.mjs";
+import { hasFormalV4Text } from "../../app-domain-toolkit/scripts/visual/visual-production-stage.mjs";
 import { readFile } from "node:fs/promises";
 import { validateSvgRasterManifest, checkSvgRasterManifestFiles } from "../../app-domain-toolkit/scripts/visual/svg-raster-contract.mjs";
 import { basename, dirname, isAbsolute, relative, resolve } from "node:path";
@@ -336,7 +335,6 @@ function validateAcceptedAsset(asset, label, errors) {
   if (!Array.isArray(asset.runtime_outputs) || asset.runtime_outputs.length === 0 || !asset.runtime_outputs.every(nonEmptyString)) errors.push(`${label} accepted 的 runtime_outputs 必须是非空路径列表`);
   validatePathList(asset.consistency_evidence, `${label} accepted 的 consistency_evidence`, errors);
 }
-
 /** 返回清单中的全部结构与业务校验错误。 */
 export function validateManifest(data, options = {}) {
   const errors = [];
@@ -375,6 +373,11 @@ export function validateManifest(data, options = {}) {
   if (!Array.isArray(data.assets)) { errors.push("assets 必须是数组"); return errors; }
   // 已解析的结构输入不代表运行证据已落盘；正式文件入口另行强制读取。
   const layoutSourceOptions = { layoutSourceDocuments: options.layoutSourceDocuments, forceLayoutSourceFiles: options.forceLayoutSourceFiles, projectRoot: options.layoutSourceDocuments instanceof Map && options.forceLayoutSourceFiles !== true ? undefined : options.projectRoot };
+  // 正式文字的两处场景门必须消费同一批采集与已核验的试装决定。
+  const textReadbackOptions = options.requireNativeTextReadback ? {
+    textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity,
+    textTrialRunId: options.textTrialRunId, approvedTextTrial: options.approvedTextTrial,
+  } : {};
   const assetIds = new Set(data.assets.filter(isObject).map((item) => item.id).filter(nonEmptyString));
   const assetById = new Map(data.assets.filter(isObject).filter((item) => nonEmptyString(item.id)).map((item) => [item.id, item]));
   const fixedMappings = reconstruction?.applicability === "effect-image" ? validateCoverageAudit(data.coverage_audit, target, assetIds, errors, assetById, baseline) : new Map(); const layoutBindings = reconstruction?.applicability === "effect-image" && requestedStage !== "V4" ? validateEffectImageLayoutBindings(data, errors, { ...options, stage: requestedStage, visual_validation: { mode: visualValidationMode } }) : null;
@@ -407,10 +410,10 @@ export function validateManifest(data, options = {}) {
     // V3 拆解图确认之后，清单上的所有后续证据都只能是确定性机器验证；旧复核字段 fail closed。
     errors.push(...validateVisualPostApprovalReviewFields(data, { stage }));
     // 正式 Scene 和运行时消费由 V5 检查，V4 文字试装在上方单独核对。
-    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...layoutSourceOptions, ...(options.requireNativeTextReadback ? { textReadbackProjectRoot: options.projectRoot, requireNativeTextReadback: true, textReadbackIdentity: options.textReadbackIdentity, textTrialRunId: options.textTrialRunId } : {}), stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
+    if (stage !== "V4") errors.push(...validateSceneReconstructionGate(data, { ...layoutSourceOptions, ...textReadbackOptions, stage, displayLayerScope, requireFinalLayout: stage === "V5" || reconstruction.lifecycle === "v5-complete" || (stage === "V3" && [data.visualStageState, data.visual_stage_state].includes("v3-production-planning-complete")), visual_validation: { mode: visualValidationMode } }));
     const fileGateError = productionFileGateError(data, options, stage);
     if (fileGateError) errors.push(fileGateError);
-    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage, requireManualConfirmation: false }));
+    errors.push(...validateVisualProductionCoverage(fixedVisualAuditManifest(data), { stage, requireManualConfirmation: false, verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals }));
     errors.push(...validateImageGenerationSizeManifest(data, { stage }));
     const requireAudit = stage === "V4" || stage === "V5" || reconstruction.lifecycle === "v5-complete";
     const requireRuntime = stage === "V5" || reconstruction.lifecycle === "v5-complete";
@@ -418,7 +421,7 @@ export function validateManifest(data, options = {}) {
       // 显式传入 V5，让生产审计同时校验每个区域的运行时消费身份。
       errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, stage: "V5", projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
       const structuralGate = { ...data, coverage_audit: isObject(data.coverage_audit) ? { ...data.coverage_audit, regions: [] } : data.coverage_audit };
-      errors.push(...validateV5ProductionGate(structuralGate, { ...layoutSourceOptions, requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
+      errors.push(...validateV5ProductionGate(structuralGate, { ...layoutSourceOptions, ...textReadbackOptions, requireEvidenceIdentity: true, requireSceneReconstruction: true, displayLayerScope }));
     } else if (requireAudit) {
       errors.push(...validateProductionAuditShape(fixedVisualAuditManifest(data), { ...options, projectRoot: options.projectRoot, checkFiles: options.checkFiles }));
     } else if (isObject(data.production_contract_audit)) errors.push(...validateProductionAuditShape(data));
@@ -479,10 +482,12 @@ export function validateManifest(data, options = {}) {
         errors.push(...validateImageGenerationContract(asset, assetContract, { ...assetContext, region: promptRegion }, {
           effectImage: strictProductionContract,
           referenceOriginalFile: data.reference_target?.original_file,
+          referenceOriginalSha256: data.reference_target?.target_sha256,
           referenceTargetSha: data.reference_target?.target_sha256,
           visual_baseline: baseline,
           identity: manifestEvidenceIdentity(data),
           candidateVersion: data.candidateVersion,
+          verifiedHistoricalPromptApprovals: options.verifiedHistoricalPromptApprovals,
         }));
       }
     }
@@ -809,7 +814,6 @@ async function checkBitmapEvidenceFiles(projectRoot, label, region, confirmation
     if (!Number.isNaN(proposalCreatedAt) && !Number.isNaN(decidedAt) && decidedAt < proposalCreatedAt) errors.push(`${label}.decision.decided_at 不得早于提案 created_at`);
   }
 }
-
 /** 检查全局基线与已验收资源声明的本地文件是否存在。 */
 export async function checkManifestFiles(data, projectRoot, options = {}) {
   const errors = await checkSvgRasterManifestFiles(data, projectRoot, options.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3"), options);
@@ -946,7 +950,6 @@ export async function loadManifest(path) {
   try { const data = JSON.parse(await readFile(path, "utf8")); if (!isObject(data)) throw new ManifestValidationError("清单根节点必须是对象"); return data; }
   catch (error) { if (error instanceof ManifestValidationError) throw error; throw new ManifestValidationError(`无法读取清单 ${path}：${error.message}`); }
 }
-
 /** 解析清单路径、项目根目录、工作项类型和文件检查开关。 */
 function parseArgs(argv) {
   const args = { checkFiles: false };
@@ -962,31 +965,38 @@ function parseArgs(argv) {
   if (!args.manifest) throw new ManifestValidationError("缺少 visual-assets.json 路径");
   return args;
 }
-
 /** 判断清单是否包含必须先完成文件证据门的效果图拆解区域。 */
 function requiresBitmapFileGate(data) {
   return Array.isArray(data?.coverage_audit?.regions) && data.coverage_audit.regions.some((region) => isObject(region) && region.owner_type === "fixed-production-visual" && region.production_origin === "bitmap-decomposition");
 }
-
 /** 执行清单验证并以退出码表达结果。 */
 export async function main(argv = process.argv.slice(2)) {
   try {
     const args = parseArgs(argv); const data = await loadManifest(args.manifest);
     if (!args.checkFiles && requiresBitmapFileGate(data)) { console.error("检测到 bitmap-decomposition：未运行文件证据校验，不予放行。必须使用 --stage V3 --check-files --project-root ."); return 2; }
+    // 工作项绑定提供原生读回及确认链；普通独立清单仍走原有严格校验。
+    if (data.workflow_binding !== undefined) {
+      if (!args.checkFiles) throw new ManifestValidationError("绑定工作项的素材清单必须运行 --check-files");
+      const { validateBoundCocosManifest } = await import("../../app-workflow-control/scripts/runtime/domain-target-check.mjs");
+      await validateBoundCocosManifest(resolve(args.projectRoot ?? "."), args.manifest, data.workflow_binding, args.stage ?? data.visualStage ?? data.visual_stage);
+      console.log("视觉资源清单验证通过。");
+      return 0;
+    }
     // 独立素材校验没有当前工作项的原生组件证据，有文字时须交给工作流验收。
     const stage = String(args.stage ?? data.visualStage ?? data.visual_stage ?? (data.effect_image_reconstruction?.lifecycle === "v5-complete" ? "V5" : "V3")).toUpperCase();
     const contract = data.scene_reconstruction_contract;
+    const text = contract?.text_decomposition ?? contract?.textDecomposition;
+    const nodes = text?.text_nodes ?? text?.textNodes;
     const isV4 = [stage, data.visualStage, data.visual_stage].some((value) => String(value).toUpperCase() === "V4") || [data.visualStageState, data.visual_stage_state].some((value) => String(value).startsWith("v4-"));
     const layoutContract = contract?.layout_decomposition ?? contract?.layoutDecomposition ?? contract?.layout_decomposition_contract ?? contract?.layoutDecompositionContract;
     const layout = layoutContract?.layout_source && isV4 ? resolveSceneV2LayoutSource(contract, { projectRoot: args.projectRoot ?? resolve(args.manifest, "..", ".."), forceLayoutSourceFiles: true }).nodes : [];
-    if (hasFormalV4Text(data, stage, layout)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 验收");
+    if (hasFormalV4Text(data, stage, layout)) throw new ManifestValidationError("V4 文字正式接入须通过 app-workflow 或绑定 workflow_binding 验收");
     const errors = validateManifest(data, { stage: args.stage, checkFiles: args.checkFiles, forceLayoutSourceFiles: true, projectRoot: args.projectRoot ?? resolve(args.manifest, "..", ".."), workItemType: args.workItemType });
     if (args.checkFiles) errors.push(...await checkManifestFiles(data, args.projectRoot ?? resolve(args.manifest, "..", ".."), { stage: args.stage }));
     const uniqueErrors = [...new Set(errors)];
     if (uniqueErrors.length) { console.error("视觉资源清单无效："); for (const error of uniqueErrors) console.error(`- ${error}`); return 1; }
     console.log("视觉资源清单验证通过。");
-    const textNodes = data.scene_reconstruction_contract?.text_decomposition?.text_nodes;
-    if (stage === "V5" && Array.isArray(textNodes) && textNodes.length) {
+    if (stage === "V5" && Array.isArray(nodes) && nodes.length) {
       console.log("正式 V5 文字验收须通过 app-workflow 绑定同批 runtime-layout 组件读数。");
     }
     return 0;

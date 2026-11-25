@@ -84,7 +84,7 @@ test('未安装当前栈领域脚本时明确阻断而非跳过', (t) => {
   const { repo, work, target } = webFixture(t);
   const runtime = join(repo, 'isolated', 'skills', 'app-workflow-control', 'scripts', 'runtime');
   mkdirSync(runtime, { recursive: true });
-  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs', 'v4-text-restoration.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
+  for (const name of ['domain-target-check.mjs', 'visual-confirmation-domain.mjs', 'io.mjs', 'art-experience.mjs', 'timestamp-contract.mjs', 'runtime-layout-evidence.mjs', 'web-text-stage.mjs', 'v4-text-restoration.mjs', 'cocos-prompt-acceptance.mjs', 'multi-visual-contract.mjs']) copyFileSync(resolve('skills/app-workflow-control/scripts/runtime', name), join(runtime, name));
   const moduleUrl = pathToFileURL(join(runtime, 'domain-target-check.mjs')).href;
   const script = `import {validateDomainTarget} from ${JSON.stringify(moduleUrl)}; const [repo,work,target]=JSON.parse(process.argv[1]); try {validateDomainTarget(repo,work,target,'V2'); process.exitCode=1;} catch(e) {process.stdout.write(e.message);}`;
   const result = spawnSync(process.execPath, ['--input-type=module', '-e', script, JSON.stringify([repo, work, target])], { encoding: 'utf8', windowsHide: true });
