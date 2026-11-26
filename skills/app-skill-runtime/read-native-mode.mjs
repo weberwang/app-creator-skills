@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/** 按已选技术栈与能力读取单个原生模式及直接公共依赖，不执行专业工具。 */
+/** 按已选技术栈与能力读取单个原生模式及适用公共资料，不执行专业工具。 */
 import { existsSync, lstatSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -94,8 +94,8 @@ function selectRoute({ stack, capability, sourceSkill, skillsRoot }) {
   return { profile, manifest, manifestFile, route, manual };
 }
 
-/** 读取单个模式与直接公共资料，其他章节和资源仅提供路径供实际任务按需选择。 */
-export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DEFAULT_SKILLS_ROOT }) {
+/** 读取单个模式、指定片段与必读资料，其余公共参考按实际任务选择。 */
+export function loadNativeMode({ stack, capability, sourceSkill, references = [], skillsRoot = DEFAULT_SKILLS_ROOT }) {
   const root = resolve(skillsRoot);
   const { profile, manifest, manifestFile, route, manual } = selectRoute({ stack, capability, sourceSkill, skillsRoot: root });
   const content = extractNativeSection(manual.content, route.sourceSkill);
@@ -105,6 +105,7 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
   const publicRoots = new Set([...COMMON_ROOTS, ...profile.capabilitySkills]);
   const requests = new Map();
   const resources = new Map();
+  const selectableReferences = new Set();
 
   /** 按文件合并全文或片段请求，全文已选时不重复输出同一文档的子章节。 */
   const requestPublic = (path, fragment = '') => {
@@ -114,7 +115,7 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
     else if (!fragments.has('')) fragments.add(fragment);
   };
 
-  /** 登记原生资料引用；只把直接公共参考纳入正文，不递归加载引用树。 */
+  /** 登记原生资料引用，只自动展开明确指向片段的直接公共参考。 */
   const collectReferences = (document, loadPublic) => {
     for (const reference of referencesIn(document.content)) {
       const located = locateReference(root, reference, document, route.sourceSkill);
@@ -128,7 +129,12 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
       }
       const available = existsSync(located.absolute);
       const publicReference = publicRoots.has(folder) && located.path.includes('/references/') && located.path.endsWith('.md');
-      if (loadPublic && publicReference && !reference.inline) requestPublic(located.path, located.fragment);
+      if (loadPublic && publicReference && !reference.inline) {
+        // 按需延迟读取正文，但仍在发现时拒绝目录冒充必需的公共规范文件。
+        if (!available || !lstatSync(located.absolute).isFile()) throw new Error(`所选模式引用的资料不存在：${located.path}`);
+        selectableReferences.add(located.path);
+        if (located.fragment) requestPublic(located.path, located.fragment);
+      }
       if (!reference.inline && !available) throw new Error(`所选模式引用的资料不存在：${located.path}`);
       resources.set(key, { path: located.path, fragment: located.fragment, kind: located.path.endsWith('/native-contracts.md') ? 'native-mode' : publicReference ? 'public-reference' : 'resource', available });
     }
@@ -139,6 +145,7 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
     if (!Array.isArray(workflow.stacks) || !workflow.stacks.includes(stack)) continue;
     const target = safePath(root, relative(root, resolve(dirname(manifestFile.absolute), workflow.path)));
     if (!publicRoots.has(target.path.split('/')[0]) || !target.path.includes('/references/') || !target.path.endsWith('.md')) throw new Error(`公共工作流路径无效：${workflow.path}`);
+    selectableReferences.add(target.path);
     // 分类参考按当前工作按需读取，避免载入一个动画模式时展开全部角色、特效和 UI 手册。
     if (workflow.onDemand === true) {
       if (!existsSync(target.absolute) || !lstatSync(target.absolute).isFile()) throw new Error(`按需公共参考不存在：${target.path}`);
@@ -147,6 +154,20 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
     }
     const file = readRequired(root, target.path);
     requestPublic(file.path);
+  }
+  if (!Array.isArray(references)) throw new Error('公共参考选择必须为数组');
+  for (const reference of references) {
+    if (typeof reference !== 'string' || !reference || reference.startsWith('-')) throw new Error('公共参考路径无效');
+    const separator = reference.indexOf('#');
+    const path = separator < 0 ? reference : reference.slice(0, separator);
+    const section = separator < 0 ? '' : reference.slice(separator + 1);
+    if (!path || (separator >= 0 && !section)) throw new Error(`公共参考路径或章节无效：${reference}`);
+    const target = safePath(root, path);
+    // 只能选择当前模式直接声明的公共参考，防止把其他技能当成隐式依赖读入。
+    if (target.path !== path || !selectableReferences.has(target.path)) throw new Error(`当前模式未声明公共参考：${reference}`);
+    // 全文请求会合并片段请求，合并前先校验显式章节，避免错误锚点被掩盖。
+    if (section) extractMarkdownSection(readRequired(root, target.path).content, section);
+    requestPublic(target.path, section);
   }
   const shared = [];
   for (const [path, fragments] of requests) {
@@ -170,14 +191,15 @@ export function loadNativeMode({ stack, capability, sourceSkill, skillsRoot = DE
 
 /** 将结构化结果展示为可直接阅读的规范；路径明确相对技能安装根。 */
 export function formatNativeMode(result) {
-  const lines = [`# ${result.stack} · ${result.capability} · ${result.sourceSkill}`, '', '以下路径相对技能安装根；只展开当前模式及直接公共依赖，附属资源按任务需要读取。', `公共能力入口：\`${result.capabilityPath}\``, ''];
+  const lines = [`# ${result.stack} · ${result.capability} · ${result.sourceSkill}`, '', '以下路径相对技能安装根；展开当前模式、直接引用的章节和必读公共工作流，其余参考按任务选择。', `公共能力入口：\`${result.capabilityPath}\``, ''];
   if (result.resourceRoot) lines.push(`原生资源目录：\`${result.resourceRoot}/\``, '');
   for (const document of result.documents) {
     lines.push(`## ${document.kind === 'native' ? '原生模式' : '直接公共依赖'}：${document.path}${document.section ? `#${document.section}` : ''}`, '', document.content.trim(), '');
   }
-  if (result.resources.length) {
+  const remainingResources = result.resources.filter((resource) => !result.documents.some((document) => document.path === resource.path && (!document.section || document.section === resource.fragment)));
+  if (remainingResources.length) {
     lines.push('## 按需引用与资源', '');
-    for (const resource of result.resources) lines.push(`- \`${resource.path}${resource.fragment ? `#${resource.fragment}` : ''}\`（${resource.available ? '存在' : resource.kind === 'outside-selected-stack' ? '其他技术栈，未加载' : '项目引用或未提供的行内示例'}）`);
+    for (const resource of remainingResources) lines.push(`- \`${resource.path}${resource.fragment ? `#${resource.fragment}` : ''}\`（${resource.available ? '存在' : resource.kind === 'outside-selected-stack' ? '其他技术栈，未加载' : '项目引用或未提供的行内示例'}）`);
   }
   return `${lines.join('\n').trimEnd()}\n`;
 }
@@ -187,21 +209,28 @@ export function parseNativeModeArgs(argv) {
   const positional = [];
   let json = false;
   let help = false;
-  for (const argument of argv) {
+  const references = [];
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
     if (argument === '--json') json = true;
     else if (argument === '--help' || argument === '-h') help = true;
+    else if (argument === '--reference') {
+      const reference = argv[++index];
+      if (!reference || reference.startsWith('-')) throw new Error('--reference 需要公共参考路径');
+      references.push(reference);
+    }
     else if (argument.startsWith('-')) throw new Error(`未知参数：${argument}`);
     else positional.push(argument);
   }
-  if (!help && (positional.length < 2 || positional.length > 3)) throw new Error('用法：read-native-mode.mjs <技术栈> <能力> [来源模式] [--json]');
-  return { stack: positional[0], capability: positional[1], sourceSkill: positional[2], json, help };
+  if (!help && (positional.length < 2 || positional.length > 3)) throw new Error('用法：read-native-mode.mjs <技术栈> <能力> [来源模式] [--reference <路径[#章节]>] [--json]');
+  return { stack: positional[0], capability: positional[1], sourceSkill: positional[2], references, json, help };
 }
 
 /** CLI仅输出资料，不运行项目、生成文件或执行所列脚本。 */
 export function runNativeModeCli(argv = process.argv.slice(2)) {
   const options = parseNativeModeArgs(argv);
   if (options.help) {
-    process.stdout.write('用法：node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <公共能力> [来源模式] [--json]\n例如：flutter app-feedback；unity app-animation unity-game-3d-animation\n多模式时必须明确来源模式；仅展开直接公共依赖，不执行工具。\n');
+    process.stdout.write('用法：node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <公共能力> [来源模式] [--reference <路径[#章节]>] [--json]\n例如：flutter app-feedback；unity app-animation unity-game-3d-animation\n多模式时必须明确来源模式；--reference 可多次指定当前模式直接引用或清单声明的公共资料。\n');
     return;
   }
   const result = loadNativeMode(options);

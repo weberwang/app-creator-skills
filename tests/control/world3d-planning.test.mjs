@@ -41,7 +41,7 @@ test('正式世界源可以作为 V5 唯一写者的计划交付', async (t) => 
   const raw = `${work.evidenceRoot}/scene-registration.txt`;
   await put(context.repo, raw, '合成的场景保存与只读登记复核结果，不代表实际运行');
   const reportPath = `${work.evidenceRoot}/scene-report.json`;
-  const report = { files: ['Assets/Scenes/world.unity'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: raw }], evidence: [{ category: 'tests', path: raw }] };
+  const report = { files: ['Assets/Scenes/world.unity'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: raw }], evidence: [{ category: 'tests', path: raw }] };
   await putJson(context.repo, reportPath, report);
   const recorded = await recordWorkResult({ repo: context.repo, workItem: context.workPath, unitId: 'assemble-world', reportPath });
   assert.equal(recorded.status, 'PASS');
@@ -59,7 +59,7 @@ test('正式源可作交付但不能冒充命令输出或验收证据', async (t
   const reportPath = `${work.evidenceRoot}/scene-report.json`;
   for (const role of ['command', 'evidence']) {
     await putJson(context.repo, reportPath, { files: ['Assets/Scenes/world.unity'],
-      commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: role === 'command' ? 'Assets/Scenes/world.unity' : raw }],
+      commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: role === 'command' ? 'Assets/Scenes/world.unity' : raw }],
       evidence: [{ category: 'tests', path: role === 'evidence' ? 'Assets/Scenes/world.unity' : raw }],
     });
     await assert.rejects(recordWorkResult({ repo: context.repo, workItem: context.workPath, unitId: 'assemble-world', reportPath }), /命令输出|工作流记录|evidence/);

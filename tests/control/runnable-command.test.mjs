@@ -25,9 +25,9 @@ test('实际多行命令、重定向和HTML字面量可用，解释性占位不�
   }
 });
 
-test('计划、实施包、报告和结果Schema均拒绝命令占位', async () => {
+test('计划、实施包和结果 Schema 均拒绝命令占位', async () => {
   const ajv = new Ajv2020({ strict: false });
-  for (const name of ['work-plan', 'implementation-package', 'execution-report', 'execution-result']) {
+  for (const name of ['work-plan', 'implementation-package', 'execution-result']) {
     const schema = JSON.parse(await readFile(new URL(`../../skills/app-workflow-control/schemas/${name}.schema.json`, import.meta.url)));
     const command = schema.properties.executionUnits?.items.properties.acceptanceCommands.items ?? schema.properties.commandOutputs.items.properties.command;
     const validate = ajv.compile(command);

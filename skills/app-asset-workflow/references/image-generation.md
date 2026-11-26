@@ -37,10 +37,10 @@ $arguments = @{
 & $imagegenScript @arguments
 ```
 
-脚本显式使用当前 Windows 用户的 Codex 登录，仅在子进程移除 API Key 和替代端点环境变量。提示词按 UTF-8 发送，随后关闭输入。每次使用用户配置目录之外的独立任务工作区和临时目录，统一设置子进程的 `TEMP`、`TMP`、`TMPDIR`，在 Windows 工作区沙箱下运行。脚本回收本次生成的 PNG，验证格式和像素尺寸，再由调用端将原图复制到 `-OutputPath`，拒绝覆盖现有文件。最终一行 JSON 提供正式 PNG 路径、尺寸、SHA-256、发送给 Codex 的提示词和提交的参考附件摘要。
+脚本显式使用当前 Windows 用户的 Codex 登录，仅在子进程移除 API Key 和替代端点环境变量。提示词按 UTF-8 发送，随后关闭输入。每次使用用户配置目录之外的独立任务工作区和临时目录，统一设置子进程的 `TEMP`、`TMP`、`TMPDIR`，在 Windows 工作区沙箱下运行。脚本回收本次生成的 PNG，验证格式和像素尺寸，再由调用端将原图复制到 `-OutputPath`。图片和同目录的 `<PNG 文件名>.request.json` 请求记录均拒绝覆盖。记录包含实际发送给 Codex 的完整请求、按顺序提交的参考附件原路径及摘要、图像身份、会话和生成器版本。最终一行 JSON 只提供图像身份、会话、请求记录路径及其 SHA-256。请求记录仅证明提交给 Codex 的内容。
 
 CLI 返回的提交记录用于追踪请求。合同需要核对生图工具实际收到的提示词或参考附件时，使用能读出这两项的宿主工具结果，或 Codex App Server 的生图完成事件，再按对应合同登记。此命令按当前会话 ID 在 Codex 内置工具的缓存目录定位原图。候选无图、图数异常或超时都应报告失败，按合同提供真实原图后再推进。 [Codex 非交互模式](https://learn.chatgpt.com/docs/non-interactive-mode) · [App Server 生图事件](https://github.com/openai/codex/blob/rust-v0.169.0/codex-rs/app-server-protocol/schema/typescript/ImageGenerationItem.ts)
 
 ## 任务结束与资源释放
 
-每张图使用一次非持久会话，无常驻服务。子进程完成后释放进程和 I/O 句柄，超时或中止时结束本次进程树。完成或失败都清理本次任务目录。正式原图写入后，按当前会话身份清理本次已交付的 Codex 缓存副本。尚未成功归档的共享缓存原图可按会话 ID 恢复。当前宿主执行也应在交付后关闭本次独占的工具会话或句柄，保留正式图稿和工作流要求的来源证据。已经发起的生图按订阅规则计入使用量。 [Codex 生图用量](https://learn.chatgpt.com/docs/image-generation#generate-or-edit-an-image)
+每张图使用一次非持久会话，无常驻服务。子进程完成后释放进程和 I/O 句柄，超时或中止时结束本次进程树。完成或失败都清理本次任务目录。请求记录与正式原图均写入后，按当前会话身份清理本次已交付的 Codex 缓存副本。请求记录写入后若原图交付失败，脚本报告记录路径和会话 ID 并保留缓存原图，可据此恢复原图并核对记录中的 SHA-256。其他尚未成功归档的共享缓存原图也可按会话 ID 恢复。当前宿主执行也应在交付后关闭本次独占的工具会话或句柄，保留正式图稿和工作流要求的来源证据。已经发起的生图按订阅规则计入使用量。 [Codex 生图用量](https://learn.chatgpt.com/docs/image-generation#generate-or-edit-an-image)

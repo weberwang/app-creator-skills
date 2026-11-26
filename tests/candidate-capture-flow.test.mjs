@@ -75,8 +75,8 @@ async function report(context, checkExitCode) {
   const data = {
     files: ['lib/app.dart'],
     commandOutputs: [
-      { command: commands[0], exitCode: 0, outputFile: snapshotPath },
-      { command: commands[1], exitCode: checkExitCode, outputFile: checkPath },
+      { commandIndex: 1, exitCode: 0, outputFile: snapshotPath },
+      { commandIndex: 2, exitCode: checkExitCode, outputFile: checkPath },
     ],
     evidence: [],
   };

@@ -131,6 +131,8 @@ App 包含多个页面时按业务切片分批实现。每个实际页面保留�
 
 ## 按需绑定机器范围
 
+已绑定生产范围的工作项完成时，控制器通过 `metadata.workflowView.completionKind` 返回 `production-batch-complete`（本批完成）或 `production-scope-complete`（最终范围集成），并附范围引用和适用的批次 ID。该标记沿用实际阶段门及证据，人工视觉和实际发布结论另按各自证据记录。
+
 涉及跨批解锁、多区域共享状态或长路径依赖时，实施前在已有需求或工作项中明确是否使用生产范围绑定；不绑定时说明由哪些现有规则、用例和 QA 记录维护覆盖，不另写评估报告。同场景或同页面跨批未绑定总范围时，最终范围在 `productionSources` 显式登记需要保留的同对象、同类型已完成前批，最新对象与各前批的需求分别进入 `systemCoverageMappings` 并关联当前最终用例和命令；历史 PASS 不代替当前运行，控制器也不能推断未登记的前批或原始需求是否完整。多状态、多步骤范围需要由控制器核对时，使用[生产范围模板](../../app-workflow-control/templates/production-scope.json)建立项目内结构化总范围，绑定同一项目和技术栈；按照模板记录实际对象、必要状态、步骤、状态转移和生产批次。实际需要时通过 `regions` 声明区域，并在所属对象状态的 `regionIds` 中引用，不为 App 强制创建区域。`objects` 中 `SCENE.targetIds` 表达整个范围需要覆盖的场景目标身份：图片路线由 `visual.targets` 记录截至本批纳入的累计图片目标；无图 `world-3d` 由当前场景领域合同的 `scopeIds` 对应该总范围内的空间身份，不使用世界根级 `visual.targets`。`world-2d` 另以 `visual.sceneDesignRef` 关联含独立 `scopeIds` 的二维空间合同及其布局、运行和空间确认；它们不能由图片覆盖替代。最终集成时按实际路线分别核对总范围；首批不要求提前完成未来目标。3D 常驻 HUD 的 `visual.hud.scopeIds`／`visual.hud.targets` 属于同一宿主内的独立 HUD 合同，不与世界 `scopeIds` 互换。PAGE／DISPLAY_LAYER 沿用各栈单目标合同。每个必要步骤或转移引用对应实际行为的 `caseId`；批次只列本批承担的对象、步骤和转移。没有该机制时不要制造占位状态或步骤。
 
 初始化生产工作项时以 `--production-scope <项目相对范围 JSON>` 和 `--production-batch <批次 ID>` 绑定范围文件及本批身份；最终 `INTEGRATION --integration-purpose final` 使用相同 `--production-scope` 而不指定批次。实际批次存在 `dependsOn` 时，通过 `--production-dependencies <项目相对 JSON>` 提供前置数组，每项写 `{batchId, workItemRef:{path}}`；没有前置批次无需提供。初始化可先声明项目内计划创建的前置工作项路径，不为此生成占位文件。执行 `plan` 冻结前，所引用的前置须真实存在、已完成且项目、技术栈、总范围和批次身份一致；控制器自动冻结该实际完成版本的 SHA-256，不以未完成版本当作有效前置。

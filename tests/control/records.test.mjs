@@ -89,12 +89,47 @@ async function writeReport(fixture, work, unitId, { exitCode = 0, evidence = [],
   await put(fixture.repo, outputFile, 'node --version\nv22\n');
   const report = {
     files: [plannedUnit.paths[0].includes('.') ? plannedUnit.paths[0] : `${plannedUnit.paths[0]}/actual.dart`],
-    commandOutputs: [{ command: plannedUnit.acceptanceCommands[0], exitCode, outputFile }],
+    commandOutputs: [{ commandIndex: 1, exitCode, outputFile }],
     evidence,
   };
   await putJson(fixture.repo, reportPath, report);
   return { reportPath, report, outputFile, unit: plannedUnit };
 }
+
+test('报告按命令序号绑定冻结计划，拒绝缺失、重复、越界及不符的采集记录', async (t) => {
+  const fixture = await createFixture({ id: 'indexed-commands' });
+  t.after(() => rm(fixture.repo, { recursive: true, force: true }));
+  const commands = ['node --version', 'node --check app.js'];
+  const { work, pack } = await start(fixture, [unit('one', { acceptanceCommands: commands })]);
+  await put(fixture.repo, 'lib/one.dart');
+  const textOutput = `${work.evidenceRoot}/first.log`;
+  const captureOutput = `${work.evidenceRoot}/second.json`;
+  await put(fixture.repo, textOutput, '真实输出\n');
+  await putJson(fixture.repo, captureOutput, { schemaVersion: 'command-capture-v1', command: commands[1], exitCode: 0, stdout: '', stderr: '' });
+  const first = { commandIndex: 1, exitCode: 0, outputFile: textOutput };
+  const second = { commandIndex: 2, outputFile: captureOutput };
+  const reportPath = 'docs/indexed-report.json';
+  const record = () => recordWorkResult({ repo: fixture.repo, workItem: fixture.workPath, unitId: 'one', reportPath });
+  for (const outputs of [[first], [first, { ...second, commandIndex: 1 }], [first, { ...second, commandIndex: 3 }]]) {
+    await putJson(fixture.repo, reportPath, { files: ['lib/one.dart'], commandOutputs: outputs, evidence: [] });
+    await assert.rejects(record(), /一一对应|序号/);
+  }
+  await putJson(fixture.repo, reportPath, { files: ['lib/one.dart'], commandOutputs: [{ commandIndex: 1, outputFile: textOutput }, second], evidence: [] });
+  await assert.rejects(record(), /必须提供 exitCode/);
+  await put(fixture.repo, 'docs/outside-capture.txt', '不应读取的文件');
+  await putJson(fixture.repo, reportPath, { files: ['lib/one.dart'], commandOutputs: [first, { commandIndex: 2, outputFile: 'docs/outside-capture.txt' }], evidence: [] });
+  await assert.rejects(record(), /evidenceRoot/);
+  await putJson(fixture.repo, captureOutput, { schemaVersion: 'command-capture-v1', command: commands[0], exitCode: 0, stdout: '', stderr: '' });
+  await putJson(fixture.repo, reportPath, { files: ['lib/one.dart'], commandOutputs: [second, first], evidence: [] });
+  await assert.rejects(record(), /采集记录/);
+  await putJson(fixture.repo, captureOutput, { schemaVersion: 'command-capture-v1', command: commands[1], exitCode: 0, stdout: '', stderr: '' });
+  await record();
+  const result = await readJson(fixture.repo, pack.executionUnits[0].resultPath);
+  assert.deepEqual(result.commandOutputs, [
+    { command: commands[0], exitCode: 0, outputFile: textOutput },
+    { command: commands[1], exitCode: 0, outputFile: captureOutput },
+  ]);
+});
 
 test('从 Work Item 推导包身份、阶段、序号与结果路径，并收窄允许范围', async (t) => {
   const fixture = await createFixture({ id: 'page-records', type: 'PAGE', state: 'PROPOSAL' });

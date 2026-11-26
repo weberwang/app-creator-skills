@@ -18,7 +18,7 @@
 - 新增能力或选择技术方案时，先按[技术方案选型顺序](professional-conventions.md#solution-selection)核实官方与社区能力，再确定实现路线；沿用已有计划记录来源、版本、适用性和自研缺口，不另建选型状态机。
 - 每项任务使用当前项目中的一个 Work Item；机器字段以 [Work Item Schema](../../app-workflow-control/schemas/work-item.schema.json) 和 [模板](../../app-workflow-control/templates/work-item.json) 为准。Work Item 绑定目标、技术栈、工作类型、阶段、允许/禁止路径、工程门状态、证据根和可选视觉/拷问引用。小型事实查询、文案或注释修正不必为了形式创建 Work Item。
 - 实施前以 [Implementation Package Schema](../../app-workflow-control/schemas/implementation-package.schema.json) 冻结实施单元顺序、并行组与依赖、所有者、写入路径、结果文件路径和实际验收命令。并行组与依赖组的激活规则以[控制器实施执行参考](../../app-workflow-control/references/implementation-execution.md)为准。实施单元路径必须在 Work Item 允许范围内，并避开禁止范围；不要从 profile 的建议目录扩大工作项授权。
-- 执行者实际运行单元中声明的命令，将逐条命令、退出码和输出路径记录到 [Execution Result](../../app-workflow-control/schemas/execution-result.schema.json)。正常非空原始日志可直接引用；静默命令使用标准采集 JSON 保存真实 `command`、`exitCode`、`stdout`、`stderr`，后两项允许为空，不能补写虚构成功文本。独立 [命令采集入口](../../app-workflow-control/scripts/capture-command.mjs) 会显式运行当前批次的冻结命令；`plan`、`record`、`unit-check` 均不代跑命令。`unit-check` 核对范围、命令绑定、结果和依赖，同一并行组结果齐备后才激活下一批。
+- 执行者实际运行单元中声明的命令，在报告中引用冻结命令的 1 起始序号及输出路径。结构化采集提供真实退出码，普通文本日志需在报告中填写退出码。控制器按计划补全命令并写入 [Execution Result](../../app-workflow-control/schemas/execution-result.schema.json)。正常非空原始日志可直接引用；静默命令使用标准采集 JSON 保存真实 `command`、`exitCode`、`stdout`、`stderr`，后两项允许为空，不能补写虚构成功文本。独立 [命令采集入口](../../app-workflow-control/scripts/capture-command.mjs) 会显式运行当前批次的冻结命令；`plan`、`record`、`unit-check` 均不代跑命令。`unit-check` 核对范围、命令绑定、结果和依赖，同一并行组结果齐备后才激活下一批。
 - 结果的 `files` 列仍存在的实际交付，删除通过可选 `deletedFiles` 单独申报，两者至少一类非空。删除必须属于单元所有权、具有实施前冻结的真实文件基线，且登记时确已不存在；有效结果后重新创建该路径将使结果失效。控制记录与证据保护规则不因清理而放宽。
 - [Evidence Manifest](../../app-workflow-control/schemas/evidence-manifest.schema.json) 逐项引用真实文件与 `PASS`/`FAIL`/`NOT_RUN`，须绑定当前 Work Item、技术栈、实施包和适用视觉阶段。机器控制器检查文件和业务关系，不证明它实际执行过命令，不自动判断运行画面、音质、手感或素材质量。
 
@@ -58,7 +58,7 @@ node .agents/skills/app-workflow-control/scripts/workflow-control.mjs lint --rep
 
 `status` 与 `check` 只读；`run` 不执行专业工作、测试或发布。`transition --to RETURN` 还必须带 `--reason` 与 `--affected-scope`，恢复时使用控制器要求的 `--return-resolution`；不要手写 Work Item 状态绕过门禁。项目内文件引用使用 `/` 分隔的相对路径。
 
-`init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 从真实成功命令、合法输出记录及交付/删除清单生成单元结果并合并真实证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
+`init --mode light` 仅用于一个本地 FOUNDATION/MODULE 执行单元，直接进入 REVIEW，仍须真实 F0–F3 与原生工程证据。`plan` 根据实际输入生成并绑定实施包/空清单，可转录有理由的 F0/F1/F2 自评；`record` 按冻结命令序号、合法输出记录及交付/删除清单生成真实单元结果并合并证据。两者不运行命令、不自动通过 F3/F4、不替代 `unit-check`。计划与报告字段见控制器的 `work-plan`、`execution-report` schemas/templates；冻结后不能覆盖记录，失败保持原报告供修复。
 
 涉及显示设计或可见表现的新增与修改，先在模块任务定义范围，再确认当前 V1 模块方案，随后在 V2 用 `reuse-visual` 引用同项目/栈/对象已完成来源的基线及允许的 V2/V3 确认；其原始用户消息和文件不改写。复用只覆盖仍有效的事实，变化部分不能冒用旧确认；V4 导入、V5 实际运行及最终人工验收仍由当前工作项完成。发布准备使用 `init --type RELEASE` 的默认 `prepare`，实际发布才显式 `--release-intent publish`；两者的完成证据分别为 `release-preparation` 与 `release-result`。
 

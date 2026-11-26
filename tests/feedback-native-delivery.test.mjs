@@ -32,10 +32,13 @@ for (const stack of STACKS) {
     assert.equal(native.length, 1);
     assert.equal(native[0].path, `app-stack-${stack}/references/native-contracts.md`);
 
-    // Unity 还直接读取同文件的竞争与生命周期片段，只选分流片段或包含它的全文。
-    const references = result.documents.filter((document) => document.path === REFERENCE && (!document.section || document.section === SECTION));
+    // Expo 引用完整参考，按本次任务选择分流片段；其他栈直接引用该章节。
+    const selected = stack === 'expo'
+      ? loadNativeMode({ skillsRoot, stack, capability: 'app-feedback', references: [`${REFERENCE}#${SECTION}`] })
+      : result;
+    const references = selected.documents.filter((document) => document.path === REFERENCE && (!document.section || document.section === SECTION));
     const expected = extractMarkdownSection(readFileSync(join(SOURCE_ROOT, 'skills', REFERENCE), 'utf8'), SECTION);
-    assert.equal(references.length, 1, '原生入口必须直接加载公共分流正文，不能只列按需路径');
+    assert.equal(references.length, 1, '原生入口应可加载实际选择的公共分流正文');
     assert.equal(extractMarkdownSection(references[0].content, SECTION), expected);
     for (const other of STACKS.filter((name) => name !== stack)) {
       assert.ok(!result.documents.some((document) => document.path.startsWith(`app-stack-${other}/`)), '不能串读其他栈手册');

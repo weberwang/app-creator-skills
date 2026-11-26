@@ -123,7 +123,7 @@ test('修改 V5 实现后通过返修重新登记执行，沿用已冻结的模�
   const evidence = await Promise.all(previousManifest.items.map(async ({ category }) => ({
     category, path: await put(repo, `${work.evidenceRoot}/validated-${category}.txt`, '本轮回归证据'),
   })));
-  const reportPath = await putJson(repo, 'docs/v5-repair-report.json', { files: ['lib/sample.dart'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile }], evidence });
+  const reportPath = await putJson(repo, 'docs/v5-repair-report.json', { files: ['lib/sample.dart'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile }], evidence });
   await recordWorkResult({ repo, workItem: workPath, unitId: 'regression', reportPath });
   await completeUnit({ repo, workItem: workPath, resultPath: pack.executionUnits[0].resultPath });
   work = await readWork(repo, workPath);

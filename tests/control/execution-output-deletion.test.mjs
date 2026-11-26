@@ -75,7 +75,7 @@ test('真实静默命令可采集，失败退出码及伪造采集被拒绝', as
   const failed = `${active.evidenceRoot}/failed.json`;
   assert.equal(capture(2, failed).status, 3);
   await put(repo, 'lib/one.dart', 'change');
-  const report = { files: ['lib/one.dart'], commandOutputs: [{ command: commands[0], exitCode: 0, outputFile: output }, { command: commands[1], exitCode: 0, outputFile: failed }], evidence: [] };
+  const report = { files: ['lib/one.dart'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: output }, { commandIndex: 2, exitCode: 0, outputFile: failed }], evidence: [] };
   await put(repo, failed, '   \n');
   await put(repo, 'docs/report.json', JSON.stringify(report));
   await assert.rejects(recordWorkResult({ repo, workItem: workPath, unitId: 'one', reportPath: 'docs/report.json' }), /输出为空/);
@@ -103,7 +103,7 @@ test('真实静默成功采集可登记并通过单元检查', async (t) => {
   const cli = spawnSync(process.execPath, [resolve('skills/app-workflow-control/scripts/capture-command.mjs'), '--repo', repo, '--work-item', workPath, '--unit', 'one', '--index', '1', '--output', output], { encoding: 'utf8', windowsHide: true });
   assert.equal(cli.status, 0, cli.stderr);
   await put(repo, 'lib/one.dart', '变更');
-  await put(repo, 'docs/report.json', JSON.stringify({ files: ['lib/one.dart'], commandOutputs: [{ command, exitCode: 0, outputFile: output }], evidence: [] }));
+  await put(repo, 'docs/report.json', JSON.stringify({ files: ['lib/one.dart'], commandOutputs: [{ commandIndex: 1, outputFile: output }], evidence: [] }));
   const result = await recordWorkResult({ repo, workItem: workPath, unitId: 'one', reportPath: 'docs/report.json' });
   assert.equal((await completeUnit({ repo, workItem: workPath, resultPath: result.metadata.resultPath })).status, 'PASS');
 });
@@ -128,7 +128,7 @@ test('后续批次在激活时冻结前一批新增的文件', async (t) => {
   const output = `${active.evidenceRoot}/command.log`;
   await put(repo, output, '真实命令日志');
   await put(repo, 'lib/new.dart', '由前一批创建');
-  const common = { commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [] };
+  const common = { commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: output }], evidence: [] };
   await put(repo, 'docs/first.json', JSON.stringify({ ...common, files: ['lib/new.dart'] }));
   const first = await recordWorkResult({ repo, workItem: workPath, unitId: 'first', reportPath: 'docs/first.json' });
   await completeUnit({ repo, workItem: workPath, resultPath: first.metadata.resultPath });
@@ -158,7 +158,7 @@ async function deletionFixture(t, paths = ['lib']) {
   const active = await loadWork(repo, workPath);
   const output = `${active.evidenceRoot}/command.log`;
   await put(repo, output, '真实命令日志');
-  const report = { files: [], deletedFiles: ['lib/old.dart'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [] };
+  const report = { files: [], deletedFiles: ['lib/old.dart'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: output }], evidence: [] };
   return { repo, workPath, active, report };
 }
 
@@ -223,6 +223,6 @@ test('并行批次后建的跨单元硬链接不能冒充删除', async (t) => {
   await unlink(resolve(repo, 'lib/one/old.dart'));
   const output = `${active.evidenceRoot}/command.log`;
   await put(repo, output, '真实日志');
-  await put(repo, 'docs/report.json', JSON.stringify({ files: [], deletedFiles: ['lib/one/old.dart'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [] }));
+  await put(repo, 'docs/report.json', JSON.stringify({ files: [], deletedFiles: ['lib/one/old.dart'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: output }], evidence: [] }));
   await assert.rejects(recordWorkResult({ repo, workItem: workPath, unitId: 'one', reportPath: 'docs/report.json' }), /并行单元存在硬链接别名/);
 });

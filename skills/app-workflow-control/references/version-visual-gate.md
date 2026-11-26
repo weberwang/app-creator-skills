@@ -2,6 +2,24 @@
 
 所有正式 `PAGE`、`SCENE`、`DISPLAY_LAYER` 都执行此合同。局部工作可复用有效基线和设计文件。绑定[生产总范围](../schemas/production-scope.schema.json)时，用 `versionVisual.workItemPaths` 登记第 7 阶段必须纳入的正式来源。各模块按自身批次推进。
 
+## 视觉路由与初始化
+
+游戏场景、App 页面和独立显示层各自建立 Work Item。第 4 阶段冻结全局方向，第 5 阶段按 V1–V5 完成对象闭环。多个 `PAGE` 按[多页面推进顺序](../../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)选代表页、复用共享部分并按依赖独立推进。实施包批次门禁约束包内单元。
+
+游戏 3D 世界可显式选择[无图场景路线](world3d-scenes.md)：`init --design-route world-3d`，仅用于五游戏栈 SCENE。它以 V1 必需的白模、空间规格、单次审查、人工空间／方向确认、模型规格、导入与运行记录替代图片目标和 V3 两图硬门；不改变 2D、UI 或 Figma 默认流程。以下游戏三候选及多图条款针对原图片路线，不强加到 world-3d；原工程门和用户最终显示确认保持。世界模型不伪装成原生 UI。
+
+游戏 `SCENE` 默认使用 `world-2d`，纯界面场景使用 `init --design-route game-ui`。二维世界可用 `visual.sceneDesignRef:{path,sha256}` 引用[二维空间合同](../schemas/world2d-scene.schema.json)，三维世界沿用其场景合同。V1 确认模块空间、状态、进度与验收方案，按风险选择原型、运行验证及必要的空间确认；V2 制作并确认模块稿，V5 验证实际运行。
+
+`world-3d` 中真实存在的常驻 HUD 使用同一工作项的 `visual.hud`，按[HUD 交接](world3d-scenes.md#persistent-hud)继续原 UI 图片、拆解布局、资源与运行确认链；没有 HUD 不生图。代表样本及批量范围按需使用[样本依赖声明](implementation-execution.md#sample-dependencies)，在原执行批次中检查覆盖、依据版本和有效样本，不新增审批或自动确认。
+
+`init` 创建 Work Item，并在首次适用的视觉初始化固定项目图片路线。设计稿默认使用预检通过的 Codex，预检失败时在初始化选择 `--design-image-method host-tool` 或 `prompt-handoff`。正式静态单图默认 SVG 转 PNG，明确选择直接生图时在初始化使用 `--formal-image-method direct-image-generation`。后续工作项通过 `imageRoutesRef` 继承，使用 `status` 查看冻结值。详见[图片路线初始化](../../app-asset-workflow/references/image-generation.md)。正式 PAGE／SCENE／DISPLAY_LAYER 绑定已确认的第 4 阶段全局视觉基线和 V1 模块方案；无视觉生产的局部工程任务使用非视觉工作项。
+
+Flutter/Expo 的页面默认 `visual.designRoute: figma-app`；ESP32 可用 `--design-route figma-app`。仅设计提案用 `--design-intent proposal`，按委托范围交付。正式实现 V1 确认完整模块方案，V2 生成并确认模块设计，V5 完整实现与验收。Figma 工具按当前宿主实际能力使用。
+
+App 初始化默认 `visual.designSource.kind:imagegen`，V2 根据第 4 阶段全局基线生成并确认[效果图来源](../templates/app-visual-source.json)、可解码图片及摘要、任务书和真实选稿。用户明确要求直接 Figma 时，初始化使用 `--design-source figma-direct --design-source-message <真实消息引用> --design-source-scope <实际范围>`；其他生图工具按实际来源记录。源图确认与忠实重建授权绑定同一 `visualSourceRef`，V3 拆解该确认版本，V4/V5 独立验收。
+
+无图 3D 世界使用 `init --design-route world-3d --type SCENE`，不支持仅设计提案冒充运行，也不自动迁移已有图片工作项。完整字段见[场景 Schema](../schemas/world3d-scene.schema.json)，阶段资料由现有记录维护，不由 `run` 生成批准。
+
 ## 第 4 阶段冻结全局视觉
 
 定义方向和制作代表稿前，执行[产品调研与美术设定参考](../../app-creator-workflow/references/professional-conventions.md#product-market-research)，将查证或有效复用的产品参考转成当前视觉 brief 的设计依据。
@@ -59,3 +77,18 @@ Unity、Cocos、Phaser、Three.js、Flutter、Expo 和 ESP32 的 V4 资源评审
 V3 在原拆解记录落实[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，将需要动画的对象与冻结的状态、事件和正式消费者对应。二维采用帧动画，每个动作从[生图和视频抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)中二选一。V4 按确认的来源制作，采样和正式播放最高 24 FPS。
 
 业务规则有实质歧义时做 grilling，更新 V1 后回到 V2。模块稿变更走 `RETURN` 的 `visual:V2` 并重新确认。全局方向变更先更新第 4 阶段，再复核受影响的模块。
+
+## 视觉工作项字段
+
+提交阶段变更使用 `visual-stage --work-item <工作项路径> --to <阶段>`。复用使用 `reuse-visual --work-item <新工作项路径> --source-work-item <来源路径> --impact <implementation|layout|assets|target> --reason <事实说明>`；累计生产的图片场景按[多目标记录](multi-target-visual.md)指定 `--target-ids`。
+
+- `visual.functionDependencies` → 按行为范围引用同项目同栈的非视觉功能工作项及其实际通过的证据；详见[功能范围与跨对象依赖](function-dependencies.md)。V1 记录依赖方案，V5 验证真实功能来源及模块组合，已实现的共享功能可明确复用。
+- PAGE 和 DISPLAY_LAYER 的 `visual.domainEvidenceRef` → 当前 V2–V5 阶段的实际领域输入；具体合同及技术栈适用性见[单目标领域合同](single-target-domain.md)。
+- `globalVisualBaselineRef` → 用 `{path,sha256}` 冻结方向及真实选择。非游戏 App 使用 [figma-app-baseline 模板](../templates/figma-app-baseline.json)，默认一张代表页效果图，用户确认后重建可编辑 Figma；用户明确要求比较时按其数量制作实质不同的方向，并允许明确组合及有效局部复用，每项绑定冻结原图、来源与真实选稿依据；选中目标再关联重建节点。游戏图片路线使用原 [global-visual-baseline 模板](../templates/global-visual-baseline.json)，保持三候选及五项人工判断；world-3d 使用[无图方向模板](../templates/world3d-visual-baseline.json)。选择绑定真实用户消息，结构或工具成功不能生成视觉 PASS。
+- `visual.targets` → 二维世界及游戏 UI 的完整图片目标与累计覆盖，继续原领域合同；world-3d 改用其场景合同。PAGE／DISPLAY_LAYER 使用 `visual.reviews`；Figma 领域封套以 `figmaDesignRef` 冻结 fileKey、nodeId、状态、视口、结构与预览，V3 的 `figmaHandoffRef` 将节点属性实际对照原生规格。同稿状态可用 V2 `approvedTargetRefs` 精确覆盖已确认源图。同一工作项的多稿须全部完成[拆解确认](version-visual-gate.md#实现验收与返工)才可进入 V4，Figma 多稿可共用同一交接。V4/V5 仍验当前原生资源和运行材料，样本不提升为整页通过。摘要不证明用户身份或视觉质量。
+- 目标清单、确认链、各栈领域证据和逐视图运行记录的具体字段见[场景多目标记录](multi-target-visual.md)。
+- `assetReviewRef` → PAGE/DISPLAY_LAYER 的 V4 已导入素材、技术报告和同一候选的人工结果；图片 SCENE 在各视觉目标下分别绑定素材评审，world-3d 在工作项根绑定模型评审。素材评审及图片场景 `integrationEvidenceRef` 均记录 `{path,sha256}`，重验文件内容；确认身份仍以真实用户消息为准。AI 位图记录生成来源及去 AI 味审阅；控制器只检查记录和文件，不自动判断图像是否有 AI 味。原生 UI 可以记录真实组件源码与组件检查。V4 将当前视觉单位和状态的文字及图片同批接入正式目标源并保存，资源评审以 `textRestorationRef: {path, sha256}` 冻结同次原生读数及正式接入身份，字段见[阶段门禁](version-visual-gate.md#实现验收与返工)。
+
+原图片及 Figma 路线在当前 V1 方案确认后，可用 `reuse-visual` 校验来源并引用未变化的基线和 V2/V3 确认；同项目、技术栈、对象、候选及显示层宿主必须匹配。新增或变化的模块设计在 V2 补齐并确认，V3 引用同一确认版本，当前 V4/V5 和工程证据独立产生。完整规则见[统一流程](../../app-creator-workflow/references/workflow.md#视觉确认的增量复用)。
+
+Unity 可见对象 V5 另读取[公共美术验收](art-experience-acceptance.md)，通过公共 Manifest 条目逐目标引用真实记录；其他栈不新增强制任务。

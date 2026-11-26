@@ -89,7 +89,7 @@ async function completeFirst(context, { deleted = false } = {}) {
   put(repo, `${root}/coverage.json`, coverage);
   const reportPath = `${root}/report.json`;
   put(repo, reportPath, {
-    files: deleted ? [] : ['src/flow.ts'], ...(deleted ? { deletedFiles: ['src/flow.ts'] } : {}), commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: raw.path }],
+    files: deleted ? [] : ['src/flow.ts'], ...(deleted ? { deletedFiles: ['src/flow.ts'] } : {}), commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: raw.path }],
     evidence: [
       { category: 'typecheck', path: raw.path }, { category: 'tests', path: raw.path },
       { category: 'production-coverage', path: `${root}/coverage.json` }, { category: 'production-output', path: raw.path },
@@ -177,7 +177,7 @@ test('后批更名并替换业务交付时，历史依赖仍有效而当前检�
   const captured = spawnSync(process.execPath, [resolve('skills/app-workflow-control/scripts/capture-command.mjs'), '--repo', repo, '--work-item', second.workPath, '--unit', 'save', '--index', '1', '--output', output], { encoding: 'utf8', windowsHide: true });
   assert.equal(captured.status, 0, captured.stderr);
   const report = `${second.work.evidenceRoot}/report.json`;
-  put(repo, report, { files: ['src/flow-next.ts'], deletedFiles: ['src/flow.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [] });
+  put(repo, report, { files: ['src/flow-next.ts'], deletedFiles: ['src/flow.ts'], commandOutputs: [{ commandIndex: 1, outputFile: output }], evidence: [] });
   const recorded = await recordWorkResult({ repo, workItem: second.workPath, unitId: 'save', reportPath: report });
   assert.equal((await completeUnit({ repo, workItem: second.workPath, resultPath: recorded.metadata.resultPath })).status, 'PASS');
   put(repo, `${finished.evidenceRoot}/raw.txt`, '历史输出遭到改写');

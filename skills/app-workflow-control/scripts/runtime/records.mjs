@@ -16,6 +16,7 @@ import { freezeProductionDependencies } from './production-scope.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
 import { assertNoSampleControlAliases, collectSampleControlReferences } from './production-samples.mjs';
 import { assertRunnableCommand } from './runnable-command.mjs';
+import { readCommandCapture } from './command-capture.mjs';
 import { validateSystemCoverage, collectSystemCoverageReferences } from './system-coverage.mjs';
 import { readCoveragePlan } from './system-coverage-binding.mjs';
 import { collectWorld3DMutableSourcePaths } from './world3d-file-snapshots.mjs';
@@ -23,7 +24,7 @@ import { collectWorld3DMutableSourcePaths } from './world3d-file-snapshots.mjs';
 const PLAN_FIELDS = new Set(['executionUnits', 'gateAssessments', 'systemCoverage']);
 const PLAN_UNIT_FIELDS = new Set(['unitId', 'owner', 'paths', 'acceptanceCommands', 'type', 'parallelGroup', 'dependsOn', 'sampleRole', 'sampleScopeIds', 'sampleBasisRef', 'sampleDecisionRequired']);
 const REPORT_FIELDS = new Set(['files', 'deletedFiles', 'commandOutputs', 'evidence', 'hostId', 'layerType', 'sampleEvidenceRef']);
-const REPORT_COMMAND_FIELDS = new Set(['command', 'exitCode', 'outputFile']);
+const REPORT_COMMAND_FIELDS = new Set(['commandIndex', 'exitCode', 'outputFile']);
 const REPORT_EVIDENCE_FIELDS = new Set(['category', 'path', 'targetId']);
 const GATE_ASSESSMENT_FIELDS = new Set(['status', 'reason']);
 const GATE_KEYS = ['F0', 'F1', 'F2'];
@@ -267,7 +268,7 @@ async function recordWorkResultLocked({ repo, workItem, unitId, reportPath }) {
     files: [...report.files],
     ...(report.deletedFiles === undefined ? {} : { deletedFiles: [...report.deletedFiles] }),
     ...(report.sampleEvidenceRef === undefined ? {} : { sampleEvidenceRef: { ...report.sampleEvidenceRef } }),
-    commandOutputs: report.commandOutputs.map((entry) => ({ ...entry })),
+    commandOutputs: resolveReportCommands(repo, work, unit, report.commandOutputs),
   };
   // 正式校验器核对文件所有权、命令顺序、退出码和非空输出；这里不执行命令。
   validateUnitResult(repo, work, pack, unit, result);
@@ -401,8 +402,8 @@ function validateReportShape(report) {
   if (!Array.isArray(report.commandOutputs)) throw new WorkflowError('Execution Report.commandOutputs 必须为数组');
   for (const [index, entry] of report.commandOutputs.entries()) {
     assertObjectFields(entry, REPORT_COMMAND_FIELDS, `commandOutputs[${index}]`);
-    assertRunnableCommand(entry.command, `commandOutputs[${index}].command`);
-    if (!Number.isSafeInteger(entry.exitCode)) throw new WorkflowError(`commandOutputs[${index}].exitCode 必须为整数`);
+    if (!Number.isSafeInteger(entry.commandIndex) || entry.commandIndex < 1) throw new WorkflowError(`commandOutputs[${index}].commandIndex 必须为从 1 开始的整数`);
+    if (entry.exitCode !== undefined && !Number.isSafeInteger(entry.exitCode)) throw new WorkflowError(`commandOutputs[${index}].exitCode 必须为整数`);
     requireSafeText(entry.outputFile, `commandOutputs[${index}].outputFile`);
   }
   if (!Array.isArray(report.evidence)) throw new WorkflowError('Execution Report.evidence 必须为数组');
@@ -412,6 +413,29 @@ function validateReportShape(report) {
     requireSafeText(entry.path, `evidence[${index}].path`);
     if (entry.targetId !== undefined) requireSafeText(entry.targetId, `evidence[${index}].targetId`);
   }
+}
+
+/** 按冻结计划还原命令与顺序，结构化采集的退出码可直接读取。 */
+function resolveReportCommands(repo, work, unit, outputs) {
+  if (outputs.length !== unit.acceptanceCommands.length) throw new WorkflowError('验收命令实际输出必须与声明命令一一对应');
+  const resolved = new Array(unit.acceptanceCommands.length);
+  for (const entry of outputs) {
+    const index = entry.commandIndex - 1;
+    if (index >= resolved.length || resolved[index]) throw new WorkflowError(`命令序号超出范围或重复：${entry.commandIndex}`);
+    let exitCode = entry.exitCode;
+    if (exitCode === undefined) {
+      const path = repoPath(repo, entry.outputFile, '命令采集路径').relative;
+      if (!pathMatch(path, `${repoPath(repo, work.evidenceRoot).relative}/**`)) throw new WorkflowError('验收命令输出文件必须保存在当前 evidenceRoot');
+      requireNonEmptyRegularFile(repo, entry.outputFile, '命令采集文件');
+      const capture = readCommandCapture(repo, path);
+      if (capture?.schemaVersion !== 'command-capture-v1' || !Number.isSafeInteger(capture.exitCode)) {
+        throw new WorkflowError(`命令 ${entry.commandIndex} 的普通日志必须提供 exitCode`);
+      }
+      exitCode = capture.exitCode;
+    }
+    resolved[index] = { command: unit.acceptanceCommands[index], exitCode, outputFile: entry.outputFile };
+  }
+  return resolved;
 }
 
 /** 用户记录的样本引用只允许规范路径与实际内容摘要。 */

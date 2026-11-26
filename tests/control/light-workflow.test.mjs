@@ -142,7 +142,7 @@ test('轻量任务通过plan与record生成关联记录，实际命令结果仍�
   const reportPath = '.workflow-control/input/local-fix-report.json';
   put(repo, reportPath, {
     files: ['lib/fix.dart'],
-    commandOutputs: [{ command, exitCode: executed.status, outputFile: logPath }],
+    commandOutputs: [{ commandIndex: 1, exitCode: executed.status, outputFile: logPath }],
     evidence: [{ category: 'analyze', path: logPath }, { category: 'tests', path: logPath }],
   });
   call(repo, 'record', ['--work-item', workPath, '--unit', 'fix', '--report', reportPath]);

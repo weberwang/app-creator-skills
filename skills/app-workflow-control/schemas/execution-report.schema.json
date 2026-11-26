@@ -19,9 +19,9 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["command", "exitCode", "outputFile"],
+        "required": ["commandIndex", "outputFile"],
         "properties": {
-          "command": {"type":"string","minLength":1,"pattern":"^(?!\\s*(?:<[^>\\r\\n]+>|[Tt][Oo][Dd][Oo]|[Tt][Bb][Dd]|待填写|待执行|待运行|待补充|占位命令)\\s*$)(?![\\s\\S]*<(?:执行|运行|填写|替换|实际|真实|必须|检查|命令|command|cmd|check|test|path|file)[^>\\r\\n]*>)[\\s\\S]*\\S[\\s\\S]*$"},
+          "commandIndex": {"type": "integer", "minimum": 1},
           "exitCode": {"type": "integer"},
           "outputFile": {"type": "string", "minLength": 1}
         }

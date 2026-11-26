@@ -3,7 +3,7 @@
   "deletedFiles": [],
   "commandOutputs": [
     {
-      "command": "",
+      "commandIndex": 1,
       "exitCode": -1,
       "outputFile": ".workflow-control/evidence/replace-with-work-id/command-output.txt"
     }

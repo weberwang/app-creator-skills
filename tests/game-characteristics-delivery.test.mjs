@@ -118,19 +118,19 @@ for (const stack of STACKS) {
     const routeRows = [...routes.matchAll(/^\| (3D 世界场景|2D 世界场景|UI[^|]*) \|(.+)$/gm)];
     assert.equal(routeRows.length, 3, '3D、2D 与 UI 均须有独立的可安装分流');
     // 只检查各路线的关键区别，其他工作流约束继续由原有章节和合同承载。
-    assert.match(routeRows[0][2], /V1[\s\S]*风险[\s\S]*白模[\s\S]*V2[\s\S]*确认/);
-    assert.match(routeRows[1][2], /平面布局[\s\S]*不强制制作三维白模/);
+    assert.match(routeRows[0][2], /V1.*搭建或复用有效白模.*按风险选择运行验证.*V2.*确认/);
+    assert.match(routeRows[1][2], /平面布局.*正式工程.*不制作白模/);
     assert.match(routeRows[2][2], /不增加世界场景白模步骤/);
     const handoff = extractMarkdownSection(exploration, 'production-handoff');
     // 分开核对正式方向、首件验证和整批验收，首件只约束高风险批次。
-    assert.match(handoff, /V1 确认模块方案[\s\S]*V2 基于全局方向生成并等待用户确认模块设计稿/);
+    assert.match(handoff, /V1 确认模块方案.*V2 基于全局方向确认本批空间和状态设计/);
     const firstArticle = handoff.match(/^\| 首件验证 \|(.+)$/m)?.[1] ?? '';
     assert.match(firstArticle, /高风险批次.*目标镜头.*通过后再补齐依赖批次/);
     assert.match(handoff, /三维低风险批次正常生产和导入/);
     const batch = handoff.match(/^\| 分批制作与导入 \|(.+)$/m)?.[1] ?? '';
     assert.match(batch, /V4 完成时[\s\S]*本批模型[\s\S]*证据/);
     const tooling = extractMarkdownSection(exploration, 'tooling-boundary');
-    assert.match(tooling, /不能将 3D 伪装成 Figma App/);
+    assert.match(tooling, /world-3d 无图场景合同.*仅游戏世界 SCENE 可选择.*人工空间／方向确认.*替代图片目标/);
     assert.match(tooling, /缺少适用表达[\s\S]*受阻阶段/);
     // 声明的按需参考丢失必须报错，不能悄悄退回源仓库或当作可选检查跳过。
     for (const rule of RULES) {

@@ -94,19 +94,21 @@ for (const [stack, details] of Object.entries(STACKS)) {
     const execution = result.documents.find((document) => document.path === 'app-domain-toolkit/references/frame-animation-execution.md');
     assert.ok(execution, '缺少帧动画共享执行规则');
     const gameDelivery = extractMarkdownSection(execution.content, '游戏时间轴与交付追溯');
-    assert.match(gameDelivery, /V3 动作方案.*V4 视频与素材.*V5 正式游戏验收/s);
+    assert.match(gameDelivery, /V3 动作方案.*V4 制作与验收素材.*生图.*视频抽帧.*V5 正式游戏验收/s);
     // 检查正常入口对冲突澄清、视频交接和正式验收记录的要求。
     const animationSkill = read(skillsRoot, result.capabilityPath);
     const animationInputs = extractMarkdownSection(animationSkill, '输入');
     assert.match(animationInputs, /冲突.*版本.*受影响动作.*用户确认.*消息引用/s);
     assert.match(gameDelivery, /同一次方案确认.*关键时点.*玩法分支.*待决项/s);
-    assert.match(execution.content, /视频提供方.*参考输入.*待提供/s);
+    const video = extractMarkdownSection(execution.content, 'video-mcp-generation');
+    assert.match(video, /视频生成的 MCP 工具.*已确认设计及动作时间轴.*实际工具、输入、生成任务和输出文件身份/s);
+    assert.match(video, /实际产物未返回时，记录受影响动画和缺口.*占位预览不能作为源视频/s);
     assert.match(gameDelivery, /V5 正式游戏验收.*复现输入.*预期与实际.*运行证据.*视觉结论.*动作版本.*未验证/s);
     const nativeGuide = result.documents.find((document) => document.kind === 'native').content;
-    assert.match(nativeGuide, /V3[^\n]*动作[^\n]*V4[^\n]*(?:素材|真实视频)[^\n]*V5[^\n]*(?:接入|消费)/);
+    assert.match(nativeGuide, /V3[^\n]*生图补帧或视频抽帧[^\n]*V4[^\n]*生产并验收序列[^\n]*V5[^\n]*(?:接入|消费)[^\n]*验证运行态/);
     if (stack === 'threejs') {
       assert.match(workflow, /V3[^\n]*动作方案[^\n]*V4[^\n]*素材/);
-      assert.match(workflow, /全局视觉阶段为 V1、V2、V3、V4、V5/);
+      assert.match(workflow, /沿用全局 `visualStage`/);
     } else {
       assert.match(workflow, /V3[^\n]*设计决定[^\n]*V4[^\n]*素材[^\n]*V5[^\n]*触发/);
       assert.match(intent, /V4[^\n]*真实候选[^\n]*V5[^\n]*触发/);

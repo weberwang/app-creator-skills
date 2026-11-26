@@ -78,6 +78,14 @@ Unity、Cocos、Phaser、Three.js 的 Android/iOS 按[移动 SDK 复用](../../a
 
 各栈所有 SDK 均按[隐私流程与 SDK 解耦](../../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)独立于隐私交互和同意状态实现。默认不创建隐私弹窗、隐私中心、同意管理等业务工作项或实现；仅用户明确要求或已确认需求包含时才编排，不擅自移除已有业务。SDK 接入复用现有授权来源与解耦策略接口；无有效授权时只限制需要授权的能力，不自动补建隐私业务。集成与发布核对实际授权约束，业务交互验证仅覆盖确认范围；具体要求见该规范的“工作流接入”。无关 SDK 的初始化不能成为隐私选择前置，需要授权的 SDK 行为也不能因独立启动而提前执行。现有项目仅覆盖受影响用途与能力，不新增审批或另一套流程状态。
 
+<a id="client-initialization"></a>
+
+## 客户端初始化与启动
+
+新建含界面的项目时，先询问支持的界面语言。默认选项为简体中文 `zh-CN`，可追加英语 `en`、日语 `ja`、俄语 `ru`、西班牙语 `es`。等待用户确认，将语言清单和默认显示语言写入项目配置，用于各栈实现、字体及验证；默认语言必须在清单内。等待期间继续独立工作。既有项目和已有明确决定的初始化沿用确认范围。
+
+自有 Android、iOS/iPadOS 客户端新建基础工程或变更启动链路时，按[系统启动屏](../../app-domain-toolkit/references/system-launch-screen.md)核对平台配置、本地资源和首屏衔接。Roblox 使用宿主的加载和传送路线。
+
 ## 按任务选择编排
 
 实际工具及接入先按[能力核实](../../app-domain-toolkit/references/tool-capability-verification.md)确认当前工程、操作入口与真实完成结果；仅有 Skill、插件安装或任务受理不代表操作成功。需要运行时按[运行验证与试玩执行](../../app-quality-review/references/runtime-validation.md)复用实例、执行本批路径、采集实际结果并清理本任务资源。V1、V5 与最终组合分别按实际范围验证，不扩大普通小任务或无界面服务的检查范围。
@@ -92,11 +100,19 @@ Unity、Cocos、Phaser、Three.js 的 Android/iOS 按[移动 SDK 复用](../../a
 
 `plan --spec <相对计划路径>` 从实际计划生成身份、顺序、结果路径、实施包与空 Evidence Manifest，并将允许路径收窄为当前单元范围。计划可携带有非空理由的 F0/F1/F2 显式自评；省略时保持原状，不允许注入 F3/F4 或批准。冻结后不能覆盖计划，RETURN 后为变化范围提交新的计划文件。
 
-`record --unit <单元ID> --report <相对报告路径>` 只记录当前实施批次的真实文件、命令、退出码、非空输出及证据路径，失败命令不会生成 PASS。随后使用现有 `unit-check` 校验单元；实施者确认真实工程结论后再登记 F3。记录工具不执行报告里的命令，不生成测试输出、质量结论或用户确认。
+`record --unit <单元ID> --report <相对报告路径>` 只记录当前实施批次的真实文件、冻结命令序号、非空输出及证据路径。结构化采集给出实际退出码，普通文本日志需在报告中提供退出码；记录工具从冻结计划取出命令，失败命令不会生成 PASS。随后使用现有 `unit-check` 校验单元；实施者确认真实工程结论后再登记 F3。记录工具不执行报告里的命令，不生成测试输出、质量结论或用户确认。
 
 `run` 停在 REVIEW 或 IMPLEMENTING 是控制器的执行边界，不是要求用户再次批准普通本地工作。当前任务授权已充分时，由代理继续实施和显式迁移；未决取舍或受保护操作才进入对应用户确认。
 
 受保护动作可在规划时登记，先完成不依赖授权的本地准备；实际执行前按[控制器的 `check-action`](../../app-workflow-control/SKILL.md#cli)逐效果核对动作、目标、明确批准与 F4。该只读检查不执行动作，也不替代用户的明确授权。
+
+<a id="stack-specific-references"></a>
+
+## 技术栈专项参考
+
+Cocos、Phaser、Three.js 按任务选读[服务查重与复用](../../app-domain-toolkit/references/reference-orchestration-local-service-validation.md)、[专业编排与交付](../../app-domain-toolkit/references/reference-orchestration-technical-orchestration.md)、[游戏实施](../../app-domain-toolkit/references/reference-orchestration-game-implementation.md)、[模块拆分](../../app-domain-toolkit/references/reference-orchestration-module-decomposition.md)和[依赖能力检查](../../app-domain-toolkit/references/reference-orchestration-dependency-capability-profiles.md)。确需归档或专业复核时，选用适用的[交付保留](../../app-domain-toolkit/references/reference-orchestration-delivery-artifacts.md)、[视觉质量](../../app-domain-toolkit/references/reference-orchestration-visual-quality-gate.md)、[复核分工](../../app-domain-toolkit/references/reference-orchestration-review-funnel.md)和[游戏生产里程碑](../../app-domain-toolkit/references/reference-orchestration-quality-gates.md)。
+
+明确要求工作区隔离时，按当前项目约束及[隔离规则](../../app-domain-toolkit/references/reference-orchestration-worktree-integration.md)执行。明确要求 Git 提交时，按[工作流记录与提交范围](#工作流记录与提交范围)挑选文件；Cocos、Phaser、Three.js 按[最小提交](../../app-domain-toolkit/references/git-minimal-submission.md)及本栈补充，其他栈按各自规范。
 
 ## 输出文件规划与交付
 
@@ -138,6 +154,8 @@ Expo 项目额外核对 `.easignore` 的源码上传范围；已有该文件时�
 
 ## 功能切片与跨对象依赖
 
+游戏立项和模块规划按[场景方案探索](../../app-domain-toolkit/references/game-design-exploration.md#explore)准备草案。本批空间进入白模、正式搭建及资产制作前，按[迭代与确认顺序](../../app-domain-toolkit/references/game-design-exploration.md#sequence)核对各阶段需要的人工决定。
+
 游戏世界 `SCENE` 在 V1 开始按[场景与关卡设计任务](../../app-domain-toolkit/references/game-design-exploration.md#v1-scene-design-task)尝试执行设计，核对已有方案与本批范围。新增场景或空间、路线、镜头、关键玩法实质变化时，在当前任务形成或修订草案、尺度、接口与内容需求。有效方案经版本和范围核对后复用，待决问题留在现有产品或任务记录。所有 3D 世界场景在 V1 搭建或复用有效白模，运行验证按风险选择。2D 使用正式工程、功能用例与适用平面布局，纯界面沿原流程。第 4 阶段确认全局方向，V1 确认完整模块方案，V2 生成并确认模块设计，V5 验证完整功能。空间、正式视觉与运行显示按各自范围确认。
 
 游戏创意与核心循环方案形成后，在需求与全局基线阶段按[玩家视角方案审查](../../app-domain-toolkit/references/game-characteristics.md#player-review)检查开始动机、目标理解、行动价值、成败与重试、持续游玩和时间负担。相关机制实现和正式视觉制作前处理方案中已发现的问题，将仍需运行或真实参与者观察的假设交接到 V1 和试玩计划，记录沿用现有 GDD、F1/F2 及 QA 材料。
@@ -168,7 +186,7 @@ V1 明确本批规则、操作、空间与镜头风险。所有真实 `world-3d`
 
 SCENE 是真实游戏场景及常驻 HUD；PAGE 是 Flutter、Expo 应用页面、ESP32 设备页面，以及实际存在的公共导航框架及其语义状态。框架可以是工作项层面的显示对象，不要求为其虚构新的应用路由。DISPLAY_LAYER 是 modal、popup、drawer、toast 等瞬态层，具有独立 objectId、单一 hostId 和关闭/恢复行为；同一实现跨多个宿主时复用代码和资源，按实际宿主上下文分别验证，不能把一个宿主的结果当作全部宿主通过。宿主只提供运行上下文，不要求宿主 V5 完成、不能替瞬态层完成验收；同一个实施包不能混装三种对象类型。
 
-第 4 阶段按[共同设计依据](../../app-asset-workflow/references/interface-intent.md#design-basis)制作代表稿及全局规范，保存来源、版本、摘要与用户确认并冻结方向。第 5 阶段 V1 确认完整模块方案，V2 基于该方向生成、确认覆盖模块全部适用流程、状态及进度的设计稿，V3 使用该确认的同一设计版本。Flutter、Expo 可按[Figma App 路线](../../app-ui-layout/references/figma-app-design.md)完成模块设计；游戏按其图片或空间路线设计。工作流初始化时冻结设计稿图片生成方式和正式单图路线，后续按[生图执行分支](../../app-asset-workflow/references/image-generation.md)及[正式单图规范](../../app-domain-toolkit/references/svg-single-image-reconstruction.md)执行。设计稿默认使用通过预检的本机 Codex，未通过时初始化等待用户选择宿主工具或提示词回传；正式单图默认 SVG 重绘并导出 PNG。必要图稿或确认待完成时记录受阻。
+第 4 阶段按[共同设计依据](../../app-asset-workflow/references/interface-intent.md#design-basis)制作代表稿及全局规范，保存来源、版本、摘要与用户确认并冻结方向。第 5 阶段 V1 确认完整模块方案，V2 基于该方向生成、确认覆盖模块全部适用流程、状态及进度的设计稿，V3 使用该确认的同一设计版本。Flutter、Expo 默认按[Figma App 路线](../../app-ui-layout/references/figma-app-design.md)完成模块设计；游戏按其图片或空间路线设计。工作流初始化时冻结设计稿图片生成方式和正式单图路线，后续按[生图执行分支](../../app-asset-workflow/references/image-generation.md)及[正式单图规范](../../app-domain-toolkit/references/svg-single-image-reconstruction.md)执行。设计稿默认使用通过预检的本机 Codex，未通过时初始化等待用户选择宿主工具或提示词回传；正式单图默认 SVG 重绘并导出 PNG。必要图稿或确认待完成时记录受阻。
 
 当前视觉设计稿完成后按[单次用户视角审查](../../app-asset-workflow/references/art-review.md#当前设计稿的单次用户视角审查)核对可编辑结构和已知需求；设计截图与运行截图默认由用户人工检查，未经明确授权不得自动分析截图或代写视觉 PASS。适用的去字与设计质量项归入同一轮，不自动循环评议，不将代理评议登记为人工通过。
 

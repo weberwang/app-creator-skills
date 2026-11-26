@@ -227,7 +227,7 @@ test('计划和执行报告 Schema 保留样本声明并拒绝缺失必要字段
   assert.equal(plan(source), true);
   delete source.executionUnits[0].sampleDecisionRequired;
   assert.equal(plan(source), false);
-  const input = { files: ['src/a.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: 'evidence/out.log' }], evidence: [], sampleEvidenceRef: { path: 'evidence/sample.json', sha256: 'b'.repeat(64) } };
+  const input = { files: ['src/a.ts'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: 'evidence/out.log' }], evidence: [], sampleEvidenceRef: { path: 'evidence/sample.json', sha256: 'b'.repeat(64) } };
   assert.equal(report(input), true);
   input.sampleEvidenceRef.sha256 = 'wrong';
   assert.equal(report(input), false);
@@ -422,7 +422,7 @@ test('公开计划、记录与单元检查先冻结样本，再开放覆盖相�
   await put(repo, output, '合成命令输出');
   const forged = `${work.evidenceRoot}/review-alias.log`;
   linkSync(join(repo, ...data.humanDecisionRef.path.split('/')), join(repo, ...forged.split('/')));
-  const report = { files: ['src/game/sample-consumer.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: output }], evidence: [{ category: 'tests', path: forged }], sampleEvidenceRef: data.result.sampleEvidenceRef };
+  const report = { files: ['src/game/sample-consumer.ts'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: output }], evidence: [{ category: 'tests', path: forged }], sampleEvidenceRef: data.result.sampleEvidenceRef };
   await putJson(repo, 'spec/sample-report.json', report);
   await assert.rejects(recordWorkResult({ repo, workItem: workPath, unitId: 'sample', reportPath: 'spec/sample-report.json' }), /控制记录/);
   assert.equal(existsSync(join(repo, ...f.unit.resultPath.split('/'))), false);
@@ -439,7 +439,7 @@ test('公开计划、记录与单元检查先冻结样本，再开放覆盖相�
   await put(repo, 'src/game/batch-production.ts', '// 合成批量结果');
   const batchOutput = `${work.evidenceRoot}/batch-command.log`;
   await put(repo, batchOutput, '合成批量命令输出');
-  await putJson(repo, 'spec/batch-report.json', { files: ['src/game/batch-production.ts'], commandOutputs: [{ command: 'node --version', exitCode: 0, outputFile: batchOutput }], evidence: [] });
+  await putJson(repo, 'spec/batch-report.json', { files: ['src/game/batch-production.ts'], commandOutputs: [{ commandIndex: 1, exitCode: 0, outputFile: batchOutput }], evidence: [] });
   await assert.rejects(recordWorkResult({ repo, workItem: workPath, unitId: 'batch', reportPath: 'spec/batch-report.json' }), /变化|样本|Execution State/);
   writeFileSync(join(repo, ...data.sourceRef.path.split('/')), bytes);
   await recordWorkResult({ repo, workItem: workPath, unitId: 'batch', reportPath: 'spec/batch-report.json' });

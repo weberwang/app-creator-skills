@@ -5,7 +5,7 @@ description: 规划、开发或维护 Node.js 服务器项目时使用，覆盖 
 
 # Node.js 服务器技术栈
 
-先读 [app-creator-workflow](../app-creator-workflow/SKILL.md) 与 [app-workflow-control](../app-workflow-control/SKILL.md)，复用公共工作项、F0–F4、执行与证据记录。本栈处理实际运行在 Node.js 上的 HTTP/API 服务、后台任务和消息消费者。`package.json` 本身不能证明是服务器；检查实际入口、服务端依赖、脚本及部署方式。
+本栈处理实际运行在 Node.js 上的 HTTP/API 服务、后台任务和消息消费者。用实际入口、服务端依赖、脚本及部署方式确认技术栈。先按[任务编排](../app-creator-workflow/references/workflow.md#按任务选择编排)选择入口；需要 Work Item 时再读[控制器的状态和边界](../app-workflow-control/SKILL.md#状态和边界)及本次实际使用的命令。
 
 服务功能使用 `MODULE`，工程基础使用 `FOUNDATION`，跨模块和整体分别使用 `INTEGRATION` 的 feature 和 final 用途。独立委托的发布使用 `RELEASE`。带管理界面的产品按前后端分别选栈，通过接口合同衔接；本栈的服务端范围使用非视觉合同。
 
@@ -18,7 +18,7 @@ description: 规划、开发或维护 Node.js 服务器项目时使用，覆盖 
 - 测试、隔离和公共控制器：读[验证规范](references/verification.md)及[最终集成证据](references/integration-evidence.md)。
 - 启停、配置、日志、可观测性和交付：读[运行与交付](references/operations.md)。
 
-从公共能力进入时使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs nodejs <公共能力>`，只展开[原生手册](references/native-contracts.md)中所选模式。维护本仓库时将 `.agents/skills/` 换为 `skills/`。
+从公共能力进入时使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs nodejs <公共能力>` 读取[原生手册](references/native-contracts.md)的所选模式及适用公共参考。按工具列出的路径读取其余资料。维护本仓库时将 `.agents/skills/` 换为 `skills/`。
 
 优先复用项目已选框架、包管理器、数据库与模块组织；新项目优先评估 TypeScript 严格模式和适用的成熟框架，按需求决定，不默认安装整套平台或强制迁移既有语言。采用项目与部署目标支持的受维护 Node.js 版本，实施前核实实际 API。
 
