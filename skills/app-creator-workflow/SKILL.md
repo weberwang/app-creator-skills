@@ -65,7 +65,7 @@ App 默认按[Figma 设计与还原](../app-ui-layout/references/figma-app-desig
 
 各栈项目采用可视化编辑器时，按[编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)把可配置功能保存在正式可编辑源中。功能函数实现后，编辑器支持的事件必须[在正式资产中绑定并由真实事件触发](../app-domain-toolkit/references/editor-display-authoring.md#editor-event-binding)。业务代码读取正式配置并负责运行时行为，启动时不重建已配置节点或覆盖布局。新增显示内容和普通增量同样适用。
 
-各技术栈新增或修改可见表现时，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)在模块任务确定范围，补齐位置、父子关系、尺寸、层序及输入约定，再推进 V1–V5。按真实范围复用原组件、资源与程序表现。
+各技术栈新增或修改可见表现时，按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)在模块任务确定范围，补齐位置、父子关系、尺寸、层序及输入约定，再推进 V1–V5。UI、Sprite 及其他二维显示元素统一采用[默认中心锚点](../app-domain-toolkit/references/reference-domain-display-ownership.md#ui-与二维显示元素的默认锚点)。按真实范围复用原组件、资源与程序表现。
 
 1. 先读项目约束、已有控制记录、技术版本与已有进程；不得擅自创建分支或 worktree。发现可复用的引擎、浏览器或开发服务后复用，不能为了验证另启实例。若项目还有旧栈总控或编排技能，明确本次只使用公共总控，不运行两套状态机，也不静默把旧批准转换为新记录。
 2. 按项目事实选择一个技术栈，并读取其能力与原生模式索引。按当前任务进入唯一公共能力，再通过 `native-adapters.json` 选择本栈模式；使用 `node .agents/skills/app-skill-runtime/read-native-mode.mjs <技术栈> <能力名> [sourceSkill]` 读取对应原生章节、直接公共依赖与资源路径，多模式必须指定来源。索引摘要不能代替专业规范，未展开的脚本、模板和校验器仍按任务读取。用户指定优先；同时含多个栈时按模块拆工作项，明确边界与接口，不将多个栈塞进同一实施包。目标只是文案、注释或事实查询时不建立完整项目流程。

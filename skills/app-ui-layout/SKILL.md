@@ -71,7 +71,7 @@ V2 在现有设计稿和设计记录中明确玩家任务、信息顺序、动�
 - 布局脚本每次只对当前工作项的指定目标执行。V4 验收完成后，按[布局脚本执行规则](../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)停止执行工作流生成的布局写入脚本，后续布局调整在正式源中增量完成。
 - 新增元素按[增量显示约束](../app-domain-toolkit/references/reference-domain-display-ownership.md#新增显示元素的增量约束)进入现有布局树与合同，补齐父级、位置参照、尺寸和适配关系；已有页面、复用组件与动态实例均不得只追加运行坐标而遗漏约束及受影响阶段的验证。
 - 弹窗与 Toast 按[公共设计顺序](../app-domain-toolkit/references/reference-domain-display-ownership.md#弹窗公共设计方案)在全局视觉设计稿冻结后，先确定所需弹窗公共方案、再设计 Toast。统一公共外壳、字体、色彩、间距、动效及适配规则，业务结构按需变体；复用公共组件，各自验证实际宿主组合。
-- UI 内部遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。世界物件和地面区域按其世界空间归属定位，世界空间 UI 的本体按实际对象或地面锚定，不把位置相关提示一律改为屏幕 HUD；其内部控件仍遵循适用的相对布局。
+- 所有 UI 元素采用[默认中心锚点](../app-domain-toolkit/references/reference-domain-display-ownership.md#ui-与二维显示元素的默认锚点)。UI 内部遵循[相对布局与定位](references/relative-layout.md)；弹窗、浮窗和 Toast 仅本体允许独立定位，内部 UI 仍必须相对布局。世界物件和地面区域按其世界空间归属定位，世界空间 UI 的本体按实际对象或地面锚定，不把位置相关提示一律改为屏幕 HUD；其内部控件仍遵循适用的相对布局。
 - 游戏普通屏幕 UI 必须落实[双轴停靠或原生容器排布](references/relative-layout.md#游戏-ui-的停靠与原生机制)；原生能表达时使用原生机制，位置与尺寸分别确定控制者，并核对正式源与运行属性。
 - 九宫格必须以紧凑小图（源帧宽高不大于目标显示框与最小显示尺寸）通过切片拉伸放大，禁止为满足显示尺寸生产大图再缩小（包括禁止源帧大于显示框、拉高 PPU 或缩放节点／祖先）；九宫格图片的像素倍率／切片缩放必须严格固定为数字 `1`，不得通过配置、预算或额外缩放覆盖；按[图片尺寸](references/relative-layout.md#图片尺寸)核对真实组件，固定角边保持 1 倍，仅以切片规则改变显示框。
 - Unity/Creator/Web UI、Flutter Widget 与 Expo React Native 的布局系统并不相同；只使用当前栈匹配的原生适配模式。

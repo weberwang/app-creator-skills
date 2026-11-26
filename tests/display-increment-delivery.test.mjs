@@ -53,5 +53,15 @@ for (const stack of STACKS) {
     for (const capability of CAPABILITIES.filter((name) => profile.capabilitySkills.includes(name))) {
       requireLink(root, `${capability}/SKILL.md`, PROTOCOL);
     }
+
+    // 从主工作流和实际安装的能力入口验证同一条规则，避免只在源码中写入默认值。
+    const anchorSources = ['app-creator-workflow/SKILL.md'];
+    for (const capability of ['app-ui-layout', 'app-gameplay-development']) {
+      if (profile.capabilitySkills.includes(capability)) anchorSources.push(`${capability}/SKILL.md`);
+    }
+    for (const source of anchorSources) {
+      const anchorRule = requireLink(root, source, RULE, 'ui-与二维显示元素的默认锚点');
+      assert.match(anchorRule, /所有 UI、Sprite 及其他二维显示元素默认使用自身矩形的中心 `\(0\.5, 0\.5\)`/);
+    }
   });
 }

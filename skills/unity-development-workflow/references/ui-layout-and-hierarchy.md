@@ -32,7 +32,9 @@ HUD、按钮、弹窗和奖励反馈先按[游戏内文案](./game-copy.md)确�
 
 场景内容区域由 V1 的场景尺寸与相机合同确定，并换算到 Canvas/Panel 坐标；它不是 Unity 场景中所有物体 bounds 的并集，也不能直接用扩展后的屏幕或装饰边带替代。场景内容区域与屏幕重合时可以共用边界，存在边带或裁切时必须保留区别。关键 UI 的可停靠范围取场景内容区域与实时屏幕安全区的交集；空间不足时重排或滚动，不把控件移入装饰边带。
 
-弹窗底板本身相对屏幕定位并约束在安全区内，内部 UI 再相对底板布局；全屏遮罩仍独立覆盖屏幕。简单底板优先兼任功能与布局根：uGUI 可在同一对象上使用 RectTransform、Image 与交互组件，UI Toolkit 可由带背景样式的 VisualElement 承载子项。无底板时使用屏幕参照容器，不为布局凭空增加可见底板。
+UI 和 Sprite 遵循[默认中心锚点](../../app-domain-toolkit/references/reference-domain-display-ownership.md#ui-与二维显示元素的默认锚点)。uGUI 的 RectTransform 默认使用中心 Pivot，未指定停靠或拉伸时，Anchor Min 和 Anchor Max 也设为中心 `(0.5, 0.5)`。UI Toolkit 元素默认以自身中心为变换枢轴。Sprite 资源默认在导入或切片配置中使用中心 Pivot。
+
+弹窗面板默认居中并约束在安全区内。内部 UI 相对底板布局，全屏遮罩沿全屏弹窗层四边拉伸。简单底板优先兼任功能与布局根：uGUI 可在同一对象上使用 RectTransform、Image 与交互组件，UI Toolkit 可由带背景样式的 VisualElement 承载子项。无底板时使用屏幕参照容器，不为布局凭空增加可见底板。
 
 uGUI 用场景区域或底板的 RectTransform 承担停靠参照，UI Toolkit 用对应节点的布局矩形与 Flex/定位规则实现。`parentElementId` 记录实际直接父节点；`layoutBinding.positionReferenceId` 单独记录定位参照，省略时使用实际父级。参照可为同场景、状态与坐标空间的兄弟、祖先或稳定根，不能引用任意跨分支叶子、全屏装饰背景或自身；父子边与参照边合并后不得成环。`constraints` 补充设计理由，`resizePolicy` 声明重算策略，不以自由文本替代机器引用。安全区组件仍只应用一次，区域换算不得再次收缩父容器。
 
