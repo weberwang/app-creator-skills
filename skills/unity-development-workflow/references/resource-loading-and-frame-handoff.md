@@ -18,6 +18,8 @@
 
 ## 序列帧合同
 
+从已确认的原始序列制作紧凑图集时，可用 [V4 帧动画调试器](../../app-domain-toolkit/references/frame-atlas-editor.md)导出 Unity 预设，再用随包的编辑器导入器生成下述原生资产。导入后仍按本节记录和读回实际身份。
+
 视觉资产生产者交付[序列帧合同模板](../templates/frame-animation-handoff.json)，按实际动作独立声明 FPS、时长、循环、帧序与停留时间，不要求动作等长。每个实际关键帧记录时间、正式路径、GUID、字符串 localId、归一化 Pivot 和 PPU。同图集多个 Sprite 共用 GUID，必须同时使用 localId，不能只凭文件名或 GUID 判断帧身份。
 
 模板中的路径、GUID 和 localId 均为格式示例，必须替换为当前正式资源的实际身份，不可作为验收事实。

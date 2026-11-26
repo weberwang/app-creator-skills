@@ -483,6 +483,34 @@ test("24x16 来源缩放到 12x12 cell 时，frame 尺寸保持输出尺寸并�
   }, { sourceWidth: 24, sourceHeight: 16, cellWidth: 12, cellHeight: 12 });
 });
 
+test("编辑后的图集和配置通过真实 V4 资产文件门，替换图集后被拒绝", async () => {
+  await withFixture(async (fixture) => {
+    const { buildWorkflowBundle, loadWorkflow } = await import("../../app-domain-toolkit/scripts/animation/atlas-editor/workflow.mjs");
+    const workflow = await loadWorkflow({
+      projectRoot: fixture.root, report: fixture.contract.quality_report.file, sheet: fixture.contract.spritesheet.file,
+    });
+    const project = structuredClone(workflow.project);
+    project.frames.reverse();
+    project.frames[0].offset = { x: -3, y: 2 };
+    const bundle = await buildWorkflowBundle(workflow, project);
+    assert.deepEqual(bundle.manifest.frames.map(({ id }) => id), ["frame-1", "frame-0"]);
+    const directory = "assets/animations/edited";
+    const projectFile = `${directory}/project.json`;
+    const runtimeFile = `${directory}/animation.json`;
+    const projectBytes = Buffer.from(JSON.stringify(project));
+    const runtimeBytes = Buffer.from(JSON.stringify(bundle.manifest));
+    const projectBinding = await writeFixtureFile(fixture.root, projectFile, projectBytes);
+    const runtimeBinding = await writeFixtureFile(fixture.root, runtimeFile, runtimeBytes);
+    for (const page of bundle.files) await writeFixtureFile(fixture.root, `${directory}/${page.file}`, page.bytes);
+    fixture.contract.edited_atlas = { project: projectBinding, runtime: runtimeBinding };
+    fixture.asset.runtime_outputs = [runtimeFile, ...bundle.files.map((page) => `${directory}/${page.file}`)];
+    assert.deepEqual(validateManifest(fixture.manifest), []);
+    assert.deepEqual(await checkManifestFiles(fixture.manifest, fixture.root), []);
+    await writeFile(join(fixture.root, fixture.asset.runtime_outputs[1]), Buffer.from("tampered"));
+    assert.ok((await checkManifestFiles(fixture.manifest, fixture.root)).some((message) => /edited_atlas.*图集页/u.test(message)));
+  }, { useActualPacker: true });
+});
+
 test("真实 imagesToAtlas 的 JPEG 来源输出可进入 accepted 文件门", async () => {
   await withFixture(async (fixture) => {
     const finalImage = await readFile(join(fixture.root, fixture.sourceFrames[0].image.file));

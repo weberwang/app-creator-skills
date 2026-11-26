@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>帧动画调试台</title>
+  <link rel="stylesheet" href="/web/style.css">
+</head>
+<body>
+  <header>
+    <div>
+      <span class="eyebrow">动画资源 / V4</span>
+      <h1>帧动画调试台</h1>
+    </div>
+    <div class="actions">
+      <label class="button">导入 PNG<input id="images" class="file-input" type="file" accept="image/png" multiple></label>
+      <label class="button">打开工程<input id="projectFile" class="file-input" type="file" accept="application/json"></label>
+      <button id="saveProject">保存工程</button>
+      <button id="export" class="primary">导出图集</button>
+    </div>
+  </header>
+  <main>
+    <section class="stage panel">
+      <div class="sectionhead">
+        <div>
+          <span class="eyebrow">预览</span>
+          <h2 id="projectName">等待导入帧</h2>
+        </div>
+        <div class="inline">
+          <label>缩放 <input id="zoom" type="range" min="0.25" max="4" step="0.25" value="1"></label>
+          <label><input id="onion" type="checkbox"> 前后帧叠影</label>
+        </div>
+      </div>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="preview" width="640" height="480" aria-label="动画预览画布"></canvas>
+        <p id="empty">导入 PNG 序列，或从工作流打开动画</p>
+      </div>
+      <div class="transport">
+        <button id="first">重播</button>
+        <button id="prev">上一帧</button>
+        <button id="play" class="primary">播放</button>
+        <button id="next">下一帧</button>
+        <span id="position">0 / 0</span>
+        <input id="seek" type="range" min="0" max="0" value="0" aria-label="定位到帧" disabled>
+        <label>预览速度
+          <select id="speed">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+          </select>
+        </label>
+      </div>
+    </section>
+    <aside class="panel inspector">
+      <span class="eyebrow">当前帧</span>
+      <h2 id="frameName">未选择</h2>
+      <p class="hint">拖动画布中的图片，或用方向键逐像素移动。</p>
+      <div class="formgrid">
+        <label>水平偏移 <input id="offsetX" type="number" step="any"></label>
+        <label>垂直偏移 <input id="offsetY" type="number" step="any"></label>
+        <label>帧时长（毫秒）<input id="duration" type="number" min="1" step="any"></label>
+      </div>
+      <div class="inline">
+        <button id="reset">重置当前帧</button>
+        <button id="undo">撤销</button>
+      </div>
+      <hr>
+      <span class="eyebrow">图集设置</span>
+      <div class="formgrid">
+        <label>目标引擎
+          <select id="target">
+            <option value="cocos">Cocos Creator 3.x</option>
+            <option value="phaser">Phaser 4</option>
+            <option value="threejs">Three.js</option>
+            <option value="unity">Unity</option>
+          </select>
+        </label>
+        <label>图集最大边长<input id="maxSize" type="number" min="16" max="8192" step="1" value="2048"></label>
+        <label>留边（像素）<input id="padding" type="number" min="0" max="16" step="1" value="2"></label>
+        <label>正式 FPS<input id="fps" type="number" min="0.01" max="24" step="any" value="12"></label>
+        <label>锚点 X<input id="anchorX" type="number" step="any"></label>
+        <label>锚点 Y<input id="anchorY" type="number" step="any"></label>
+      </div>
+      <div class="checks">
+        <label><input id="loop" type="checkbox" checked> 循环播放</label>
+      </div>
+      <p id="packingHelp" class="hint"></p>
+    </aside>
+    <section class="timeline panel">
+      <div class="sectionhead">
+        <h2>帧序列</h2>
+        <div class="inline">
+          <span id="summary" class="hint">尚无帧</span>
+          <button id="moveEarlier" disabled>前移选中帧</button>
+          <button id="moveLater" disabled>后移选中帧</button>
+        </div>
+      </div>
+      <p class="timeline-hint hint">拖动缩略图调整顺序，也可选中后使用前移、后移按钮。</p>
+      <div id="frames" class="frames"></div>
+    </section>
+    <section class="panel output">
+      <div class="sectionhead">
+        <h2>图集回读</h2>
+        <label class="button">打开导出文件<input id="readbackFiles" class="file-input" type="file" multiple accept="application/json,image/png"></label>
+      </div>
+      <p class="hint">同时选择 animation.json 与全部图集 PNG。导出后会自动回读本次生成的文件。</p>
+      <div id="readbackStatus" role="status">等待导出或打开文件</div>
+      <div class="inline">
+        <button id="readPrev">上一帧</button>
+        <button id="readPlay">播放</button>
+        <button id="readNext">下一帧</button>
+        <span id="readPosition"></span>
+      </div>
+      <div class="readback">
+        <canvas id="readCanvas" width="320" height="240" aria-label="导出动画预览"></canvas>
+        <div id="atlasPages" class="atlas-pages"></div>
+      </div>
+    </section>
+  </main>
+  <div id="message" role="status" aria-live="polite"></div>
+  <script type="module" src="/web/editor.mjs"></script>
+</body>
+</html>

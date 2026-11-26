@@ -46,6 +46,8 @@ export const FRAME_ANIMATION_WORKFLOW_ARTIFACTS = Object.freeze([
   "spritesheet",
 ]);
 
+import { checkEditedAtlasFiles, sourceEvidenceAsset, validateEditedAtlasDeclaration } from "../../app-domain-toolkit/scripts/animation/atlas-editor/contract.mjs";
+
 /** 校验 accepted 资源的视频抽帧合同；不访问文件系统。 */
 function validateVideoFrameAnimationWorkflowContract(value, options = {}) {
   const label = options.label ?? "asset.frame_animation";
@@ -82,10 +84,10 @@ function validateVideoFrameAnimationWorkflowContract(value, options = {}) {
 
 /** 按 schema 路由 accepted 合同，保持现有入口供全局清单继续调用。 */
 export function validateFrameAnimationWorkflowContract(value, options = {}) {
-  if (value?.schema === IMAGE_FRAME_ANIMATION_WORKFLOW_SCHEMA) {
-    return validateImageFrameAnimationWorkflowContract(value, options);
-  }
-  return validateVideoFrameAnimationWorkflowContract(value, options);
+  const errors = value?.schema === IMAGE_FRAME_ANIMATION_WORKFLOW_SCHEMA
+    ? validateImageFrameAnimationWorkflowContract(value, options)
+    : validateVideoFrameAnimationWorkflowContract(value, options);
+  return [...errors, ...validateEditedAtlasDeclaration(value, options.label ?? "asset.frame_animation", validateArtifactBinding)];
 }
 
 /** 视频提示词允许纯文本或 JSON；JSON 扩展名必须包含有效 JSON。 */
@@ -223,10 +225,13 @@ async function checkVideoFrameAnimationWorkflowFiles(asset, context = {}) {
 
 /** 按 accepted schema 路由文件证据检查，不要求图片路线构造视频字段。 */
 export async function checkFrameAnimationWorkflowFiles(asset, context = {}) {
-  if (asset?.frame_animation?.schema === IMAGE_FRAME_ANIMATION_WORKFLOW_SCHEMA) {
-    return checkImageFrameAnimationWorkflowFiles(asset, context);
-  }
-  return checkVideoFrameAnimationWorkflowFiles(asset, context);
+  const errors = validateFrameAnimationWorkflowContract(asset?.frame_animation, context);
+  if (errors.length > 0) return errors;
+  const source = sourceEvidenceAsset(asset);
+  const sourceErrors = asset.frame_animation.schema === IMAGE_FRAME_ANIMATION_WORKFLOW_SCHEMA
+    ? await checkImageFrameAnimationWorkflowFiles(source, context)
+    : await checkVideoFrameAnimationWorkflowFiles(source, context);
+  return sourceErrors.length > 0 ? sourceErrors : checkEditedAtlasFiles(asset, context, "cocos");
 }
 
 /** 为现有调用方提供简短别名。 */
