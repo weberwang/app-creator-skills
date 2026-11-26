@@ -16,8 +16,8 @@ export const GLOBAL_VISUAL_BASELINE_DECISION_SCHEMA = 'threejs-global-visual-bas
 export const GLOBAL_VISUAL_BASELINE_FROZEN_STATE = 'global-static-baseline-frozen';
 /** 冻结正文的固定仓库路径，用于复核人工选择后的基线来源。 */
 export const GLOBAL_VISUAL_BASELINE_DOCUMENT = 'docs/visual-baseline.md';
-/** 选择证据只接受三张候选图，避免“多图任选”或少于三张的隐性流程。 */
-export const GLOBAL_VISUAL_BASELINE_CANDIDATE_COUNT = 3;
+/** 冻结至少需要一张有真实生成记录的候选图。 */
+export const MIN_GLOBAL_VISUAL_BASELINE_CANDIDATES = 1;
 
 const IMAGE_PATH = /\.(?:png|jpe?g)$/i;
 const OPTIONAL_SNAPSHOT_FIELDS = new Set([
@@ -129,7 +129,7 @@ function validateFileRefShape(value, label, errors, fields = FILE_REF_FIELDS) {
 export function validateGlobalVisualBaselineSelectionReferenceShape(reference) {
   const errors = [];
   if (!isRecord(reference)) {
-    errors.push('globalVisualBaselineSelectionRef 必须是仓库内来源路径对象；必须完成 3 张候选图 + 人工确认');
+    errors.push('globalVisualBaselineSelectionRef 必须是仓库内来源路径对象；必须完成候选图和人工确认');
     return errors;
   }
   const missing = ['path'].filter((field) => reference[field] === undefined);
@@ -175,8 +175,8 @@ export function validateGlobalVisualBaselineSelection(value, options = {}) {
   const candidateIds = [];
   const candidateImageRefs = [];
   const candidateGenerationRefs = [];
-  if (!Array.isArray(candidates) || candidates.length !== GLOBAL_VISUAL_BASELINE_CANDIDATE_COUNT) {
-    errors.push(`${label}.candidates 必须恰好包含 3 张候选效果图；当前流程需要 3 张候选图 + 人工确认`);
+  if (!Array.isArray(candidates) || candidates.length < MIN_GLOBAL_VISUAL_BASELINE_CANDIDATES) {
+    errors.push(`${label}.candidates 必须至少包含一张候选效果图，并完成真实人工确认`);
   } else {
     for (const [index, candidate] of candidates.entries()) {
       const candidateLabel = `${label}.candidates[${index}]`;
@@ -191,8 +191,8 @@ export function validateGlobalVisualBaselineSelection(value, options = {}) {
       if (isRecord(candidate.generationRecord)) candidateGenerationRefs.push(normalizePath(candidate.generationRecord.path));
     }
     if (candidateIds.length !== new Set(candidateIds).size) errors.push(`${label}.candidates.candidateId 必须唯一`);
-    if (candidateImageRefs.length !== new Set(candidateImageRefs).size) errors.push(`${label}.candidates.image 必须分别绑定三张不同的候选效果图`);
-    if (candidateGenerationRefs.length !== new Set(candidateGenerationRefs).size) errors.push(`${label}.candidates.generationRecord 必须分别绑定三份不同的生成记录`);
+    if (candidateImageRefs.length !== new Set(candidateImageRefs).size) errors.push(`${label}.candidates.image 必须分别绑定不同的候选效果图`);
+    if (candidateGenerationRefs.length !== new Set(candidateGenerationRefs).size) errors.push(`${label}.candidates.generationRecord 必须分别绑定不同的生成记录`);
   }
 
   const human = value.humanSelection;
@@ -200,11 +200,11 @@ export function validateGlobalVisualBaselineSelection(value, options = {}) {
   if (humanValid) {
     if (human.reviewMode !== 'SINGLE_HUMAN' || human.status !== 'CONFIRMED') errors.push(`${label}.humanSelection 必须是唯一的 SINGLE_HUMAN、CONFIRMED 选择；禁止 AUTO/pending`);
     if (!isNonEmptyString(human.selectedCandidateId)) errors.push(`${label}.humanSelection.selectedCandidateId 必须为非空字符串`);
-    if (!Array.isArray(human.presentedCandidateIds) || JSON.stringify(human.presentedCandidateIds) !== JSON.stringify(candidateIds)) errors.push(`${label}.humanSelection.presentedCandidateIds 必须按原顺序完整呈现三张候选图`);
+    if (!Array.isArray(human.presentedCandidateIds) || JSON.stringify(human.presentedCandidateIds) !== JSON.stringify(candidateIds)) errors.push(`${label}.humanSelection.presentedCandidateIds 必须按原顺序完整呈现候选图`);
     if (!isNonEmptyString(human.decisionFile) || !isRepositoryRelativePath(human.decisionFile)) errors.push(`${label}.humanSelection 必须绑定仓库内人工决定记录文件`);
     if (!isDateTime(human.confirmedAt)) errors.push(`${label}.humanSelection.confirmedAt 必须为有效确认时间`);
     if (!isNonEmptyString(human.userOriginalText)) errors.push(`${label}.humanSelection.userOriginalText 必须保留人工原文`);
-    if (candidateIds.length && !candidateIds.includes(human.selectedCandidateId)) errors.push(`${label}.humanSelection.selectedCandidateId 必须属于三张候选图`);
+    if (candidateIds.length && !candidateIds.includes(human.selectedCandidateId)) errors.push(`${label}.humanSelection.selectedCandidateId 必须属于候选图`);
     // 机器只核对人工传入的五维结论和候选绑定，不读取或推断图像审美质量。
     errors.push(...validateGlobalVisualCandidateAssessments(
       human.candidateAssessments,
@@ -226,7 +226,7 @@ export function validateGlobalVisualBaselineSelection(value, options = {}) {
     if (!isNonEmptyString(baseline.selectedCandidateId)) errors.push(`${label}.baseline.selectedCandidateId 必须为非空字符串`);
     if (humanValid && baseline.selectedCandidateId !== human.selectedCandidateId) errors.push(`${label}.baseline.selectedCandidateId 必须绑定人工选中的候选`);
     if (isRecord(baseline.primaryAnchor) && isRecord(baseline.selectedCandidate) && normalizePath(baseline.primaryAnchor.path) !== normalizePath(baseline.selectedCandidate.path)) errors.push(`${label}.baseline.primaryAnchor 必须绑定 selectedCandidate`);
-    if (candidateIds.length && baseline.selectedCandidateId && !candidateIds.includes(baseline.selectedCandidateId)) errors.push(`${label}.baseline.selectedCandidateId 必须属于三张候选图`);
+    if (candidateIds.length && baseline.selectedCandidateId && !candidateIds.includes(baseline.selectedCandidateId)) errors.push(`${label}.baseline.selectedCandidateId 必须属于候选图`);
     if (Array.isArray(candidates) && isNonEmptyString(baseline.selectedCandidateId)) {
       const selected = candidates.find((candidate) => candidate?.candidateId === baseline.selectedCandidateId);
       if (selected && normalizePath(baseline.selectedCandidate?.path) !== normalizePath(selected.image?.path)) errors.push(`${label}.baseline.selectedCandidate 未绑定所选候选图片`);
@@ -343,7 +343,7 @@ function validateCandidateGenerationRecord(candidate, root, candidateIndex, repo
     origin: 'generated',
     outputPath: candidate?.image?.path,
   };
-  for (const [field, value] of Object.entries(expected)) if (record[field] !== value) errors.push(`${label}.generationRecord.content.${field} 未绑定当前三候选生成合同`);
+  for (const [field, value] of Object.entries(expected)) if (record[field] !== value) errors.push(`${label}.generationRecord.content.${field} 未绑定当前候选生成合同`);
   if (!isDateTime(record.generatedAt)) errors.push(`${label}.generationRecord.content.generatedAt 必须为有效时间`);
   if (isDateTime(record.generatedAt) && isDateTime(root.humanSelection?.confirmedAt) && Date.parse(record.generatedAt) > Date.parse(root.humanSelection.confirmedAt)) errors.push(`${label}.generationRecord.content.generatedAt 不得晚于人工确认时间`);
   if (isDateTime(record.generatedAt) && isDateTime(root.frozenAt) && Date.parse(record.generatedAt) > Date.parse(root.frozenAt)) errors.push(`${label}.generationRecord.content.generatedAt 不得晚于全局基线冻结时间`);
@@ -387,12 +387,12 @@ function validateHumanDecisionFile(root, repo, io, errors) {
   }
 }
 
-/** 复核 brief、三张候选图、人工决定与冻结正文的来源内容。 */
+/** 复核 brief、候选图、人工决定与冻结正文的来源内容。 */
 function validateGlobalVisualBaselineSelectionFiles(root, options) {
   const errors = [];
   const repo = options.projectRoot ?? options.repo;
   if (!isNonEmptyString(repo)) {
-    errors.push('全局视觉基线选择证据文件门缺少 projectRoot；必须完成 3 张候选图 + 人工确认');
+    errors.push('全局视觉基线选择证据文件门缺少 projectRoot；必须完成候选图和人工确认');
     return errors;
   }
   const io = resolveIo(options);
@@ -440,7 +440,7 @@ export function loadGlobalVisualBaselineSelectionReference(reference, options = 
   const shapeErrors = validateGlobalVisualBaselineSelectionReferenceShape(reference);
   if (shapeErrors.length) return fail(shapeErrors);
   const repo = settings.projectRoot ?? settings.repo;
-  if (!isNonEmptyString(repo)) return fail(['全局视觉基线选择证据文件门缺少 projectRoot；必须完成 3 张候选图 + 人工确认']);
+  if (!isNonEmptyString(repo)) return fail(['全局视觉基线选择证据文件门缺少 projectRoot；必须完成候选图和人工确认']);
   const io = resolveIo(settings);
   const errors = [];
   const target = validateSourceFile(reference, repo, io, 'globalVisualBaselineSelectionRef', errors);
@@ -459,16 +459,16 @@ export function loadGlobalVisualBaselineSelectionReference(reference, options = 
   return { value, file: reference.path };
 }
 
-/** 复核冻结 Work Item 的三候选人工选择证据，否则规划和执行门都必须失败。 */
+/** 复核冻结 Work Item 的候选人工选择证据，否则规划和执行门都必须失败。 */
 export function assertGlobalVisualBaselineSelection(work, repo, io) {
   if (work?.globalStaticBaselineState !== GLOBAL_VISUAL_BASELINE_FROZEN_STATE) {
-    throw new Error(`全局视觉基线尚未冻结；必须先完成 3 张候选图 + 人工确认，再写入 ${GLOBAL_VISUAL_BASELINE_FROZEN_STATE}`);
+    throw new Error(`全局视觉基线尚未冻结；必须先完成候选图和人工确认，再写入 ${GLOBAL_VISUAL_BASELINE_FROZEN_STATE}`);
   }
   const reference = work?.globalVisualBaselineSelectionRef;
   const shapeErrors = validateGlobalVisualBaselineSelectionReferenceShape(reference);
-  if (shapeErrors.length) throw new Error(`全局视觉基线选择证据门拒绝：${shapeErrors[0]}；必须完成 3 张候选图 + 人工确认`);
+  if (shapeErrors.length) throw new Error(`全局视觉基线选择证据门拒绝：${shapeErrors[0]}；必须完成候选图和人工确认`);
   const loaded = loadGlobalVisualBaselineSelectionReference(reference, { projectRoot: repo, io, throwOnError: true });
-  if (!loaded) throw new Error('全局视觉基线选择证据门拒绝：三张候选图、唯一人工确认或冻结来源文件无效；必须完成 3 张候选图 + 人工确认后才能正式冻结');
-  if (loaded.value.baseline?.status !== GLOBAL_VISUAL_BASELINE_FROZEN_STATE) throw new Error('全局视觉基线选择证据门拒绝：冻结身份状态无效；必须完成 3 张候选图 + 人工确认');
+  if (!loaded) throw new Error('全局视觉基线选择证据门拒绝：候选图、唯一人工确认或冻结来源文件无效；必须完成候选图和人工确认后才能正式冻结');
+  if (loaded.value.baseline?.status !== GLOBAL_VISUAL_BASELINE_FROZEN_STATE) throw new Error('全局视觉基线选择证据门拒绝：冻结身份状态无效；必须完成候选图和人工确认');
   return loaded.value;
 }

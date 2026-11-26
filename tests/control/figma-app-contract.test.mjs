@@ -500,11 +500,27 @@ test('Figma V2 正式模块先核对基础视觉，设计提案按精确批准�
   }
 });
 
-test('游戏基线仍须三候选，Node服务不被要求Figma', (t) => {
+test('游戏基线支持单稿与按需多稿，仍要求人工选择和质量证据', (t) => {
   const f = fixture(t); const record = baseline(f); record.stack = 'cocos'; delete record.designRoute;
   record.visualResearchRef = visualResearchFixture(f.repo, f.work.projectId, 'cocos');
-  f.work.stack = 'cocos'; f.work.workItemType = 'DISPLAY_LAYER'; f.work.globalVisualBaselineRef = write(f.repo, 'game-baseline.json', record);
-  assert.throws(() => validateGlobalBaseline(f.repo, f.work, { required: true }), /三张/);
+  f.work.stack = 'cocos'; f.work.workItemType = 'DISPLAY_LAYER';
+  let version = 0;
+  // 每次写入新引用，确保冻结校验覆盖本次测试的实际内容。
+  const validate = (value) => {
+    f.work.globalVisualBaselineRef = write(f.repo, `game-baseline-${++version}.json`, value);
+    return validateGlobalBaseline(f.repo, f.work, { required: true });
+  };
+  assert.doesNotThrow(() => validate(record));
+  assert.throws(() => validate({ ...record, candidates: [] }), /确认图必须绑定已选择的候选/);
+  assert.throws(() => validate({ ...record, selectionReviewRef: null }), /人工|确认/);
+  const failed = structuredClone(record);
+  failed.candidates[0].qualityChecks[0].status = 'NOT_RUN';
+  assert.throws(() => validate(failed), /尚未 PASS/);
+  const many = baseline(f, 4);
+  record.candidates = many.candidates;
+  assert.doesNotThrow(() => validate(record));
+  record.candidates[2].candidateId = record.candidates[1].candidateId;
+  assert.throws(() => validate(record), /唯一身份/);
   assert.equal(validateFigmaAppStage(f.repo, { stack: 'nodejs', workItemType: 'MODULE' }, 'V2', {}), null);
 });
 
@@ -517,7 +533,7 @@ test('Schema接受可编辑Figma快照并拒绝缺节点身份，模板不预写
   assert.equal(template.candidates.length, 1); assert.ok(template.candidates.every((candidate) => candidate.qualityChecks.every((item) => item.status === 'NOT_RUN')));
 });
 
-test('基线Schema默认一个方案，明确指定数量才接受多方案，游戏仍要求三个', (t) => {
+test('基线Schema支持游戏推荐稿和多稿，Figma 多方案仍需指定数量', (t) => {
   const f = fixture(t); const base = new URL('../../skills/app-workflow-control/schemas/', import.meta.url);
   const ajv = new Ajv2020({ strict: false, validateFormats: false });
   for (const name of ['work-item.schema.json', 'human-review.schema.json']) ajv.addSchema(JSON.parse(readFileSync(new URL(name, base), 'utf8')), name);
@@ -527,8 +543,10 @@ test('基线Schema默认一个方案，明确指定数量才接受多方案，�
   multiple.exploration = { kind: 'initial', requestedCount: 2, userMessageRef: 'test-only://requested-two' };
   assert.equal(validate(multiple), true, JSON.stringify(validate.errors));
   const game = baseline(f); game.stack = 'cocos'; delete game.designRoute;
+  assert.equal(validate(game), true, JSON.stringify(validate.errors));
+  game.candidates = [];
   assert.equal(validate(game), false);
-  game.candidates = baseline(f, 3).candidates;
+  game.candidates = baseline(f, 4).candidates;
   assert.equal(validate(game), true, JSON.stringify(validate.errors));
 });
 

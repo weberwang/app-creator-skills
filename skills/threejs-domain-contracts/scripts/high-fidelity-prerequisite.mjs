@@ -123,12 +123,12 @@ function foundationGateMode(work, pkg) {
   return hasPackageVisualDependency(pkg) ? 'global-baseline' : 'none';
 }
 
-/** 校验视觉依赖基础实施包的三候选人工确认基线；保留来源文件与人工决策内容检查。 */
+/** 校验视觉依赖基础实施包的候选人工确认基线；保留来源文件与人工决策内容检查。 */
 function assertFoundationBaselineFrozen(work, repo, io) {
   if (work?.globalStaticBaselineState !== 'global-static-baseline-frozen') {
-    throw prerequisiteError(null, '具有视觉依赖的基础包只能在完成 3 张候选图 + 人工确认并写入 globalStaticBaselineState=global-static-baseline-frozen 后创建或执行；当前全局静态 visual_baseline 尚未冻结');
+    throw prerequisiteError(null, '具有视觉依赖的基础包只能在完成 候选图和人工确认并写入 globalStaticBaselineState=global-static-baseline-frozen 后创建或执行；当前全局静态 visual_baseline 尚未冻结');
   }
-  if (!repo || !io) throw prerequisiteError(null, '具有视觉依赖的基础包缺少三张候选图、人工确认及冻结文件的读取能力');
+  if (!repo || !io) throw prerequisiteError(null, '具有视觉依赖的基础包缺少候选图、人工确认及冻结文件的读取能力');
   try {
     assertGlobalVisualBaselineSelection(work, repo, io);
   } catch (error) {

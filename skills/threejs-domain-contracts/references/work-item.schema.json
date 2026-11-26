@@ -36,8 +36,8 @@
     "visualStageState": {
       "enum": ["not-started", "in-progress", "pending", "failed", "stale", "invalid", "global-static-baseline-frozen", "v3-production-planning-complete", "v4-formal-acceptance-complete", "v5-runtime-integration-candidate"]
     },
-    "globalStaticBaselineState": {"const": "global-static-baseline-frozen", "description": "全局静态 visual_baseline 的冻结声明；只有三张候选效果图经过唯一人工选择确认后才能写入。该字段不等同于逐场景 V3。"},
-    "globalVisualBaselineSelectionRef": {"$ref": "#/$defs/globalVisualBaselineSelectionReference", "description": "不可变全局基线选择证据引用；通过 path+sha256 跨 Work Item 复用，根证据内部绑定生产者及其三张 generated 候选图、唯一 SINGLE_HUMAN/CONFIRMED 选择、冻结正文和真实 SHA。"},
+    "globalStaticBaselineState": {"const": "global-static-baseline-frozen", "description": "全局静态 visual_baseline 的冻结声明；只有候选效果图经过唯一人工选择确认后才能写入。该字段不等同于逐场景 V3。"},
+    "globalVisualBaselineSelectionRef": {"$ref": "#/$defs/globalVisualBaselineSelectionReference", "description": "不可变全局基线选择证据引用；通过 path+sha256 跨 Work Item 复用，根证据内部绑定生产者及其各张 generated 候选图、唯一 SINGLE_HUMAN/CONFIRMED 选择、冻结正文和真实 SHA。"},
     "visualStageEvidenceRefs": {
       "type": "object",
       "properties": {

@@ -1,5 +1,5 @@
 {
-  "purpose": "制作资料，不替代控制器基线与人工确认记录；candidateDirections 按需逐方向描述轮廓、比例、材质纹理、明暗阴影边缘、功能色、UI图标及制作路线，选定后其余字段描述选中方向",
+  "purpose": "制作资料，配合控制器基线与人工确认记录使用。游戏的顶层字段记录共用美术方向，conceptArt 和 ui 分别记录配色、渲染和阶段 4 提示词示例。candidateDirections 先记录推荐方向，按需记录有实质差异的对照，选定后其余字段描述选中方向。",
   "visualSignature": [],
   "audienceAndTask": "",
   "directionBasisAndTradeoffs": [],
@@ -13,6 +13,16 @@
   "seriesInvariants": [],
   "referenceUses": [],
   "nativeVsBitmap": "",
+  "conceptArt": {
+    "palette": "",
+    "rendering": "",
+    "promptExample": ""
+  },
+  "ui": {
+    "palette": "",
+    "rendering": "",
+    "promptExample": ""
+  },
   "candidateDirections": [],
   "representativeAssetId": "",
   "outOfScope": []

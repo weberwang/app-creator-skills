@@ -16,7 +16,7 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-选择根证据的顶层 `workItemId` 永久表示创建三候选和人工决定的生产者 Work Item。三张候选的 generation record、唯一人工决定文件和根证据必须继续绑定同一生产者，不能因为场景 Work Item 消费该基线而改写这些文件的所有者。消费者只保存 `globalVisualBaselineSelectionRef` 的不可变 `path`；引用中的可选 `workItemId` 也只能复述生产者身份，不能填写或要求等于当前消费者 Work Item。这样同一冻结根证据可以被多个场景、显示层或基础模块 Work Item 复用，同时仍由文件门校验生产者链和每个实际文件。
+选择根证据的顶层 `workItemId` 永久表示创建候选图和人工决定的生产者 Work Item。各候选的 generation record、唯一人工决定文件和根证据必须继续绑定同一生产者，不能因为场景 Work Item 消费该基线而改写这些文件的所有者。消费者只保存 `globalVisualBaselineSelectionRef` 的不可变 `path`；引用中的可选 `workItemId` 也只能复述生产者身份，不能填写或要求等于当前消费者 Work Item。这样同一冻结根证据可以被多个场景、显示层或基础模块 Work Item 复用，同时仍由文件门校验生产者链和每个实际文件。
 
 ## 基线身份与风格指纹
 
@@ -48,7 +48,9 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 基线 ID 表达视觉系统身份，版本表达已批准规则集合，风格指纹只计算 `docs/visual-baseline.md` 完整文件字节。不得把摘要或 V3/V4/V5 留痕写回被哈希正文；阶段证据追加到 `visual-design.md`。规则实际变化时更新版本并重验受影响部分；摘要变化不影响验收。`--check-files` 重新计算冻结正文 SHA-256。
 
-## 三候选生成与人工冻结门
+<a id="game-visual-freeze"></a>
+
+## 推荐稿与人工冻结门
 
 > 本节图片目标、候选图及拆解布局条款适用于图片／UI；世界模型按[内容分流](game-design-exploration.md#implementation-routes)交接，常驻 HUD 仍用原 UI 合同。
 
@@ -60,27 +62,27 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-使用相同 brief、目标视口、任务内容、代表状态、示例数值和可比制作预算生成恰好三张候选效果图，并将三张图同屏交给人工比较。共用空间／内容参考只锁定已确认事实，不要求三张共用同一种美术造型或美术参考；方向专用参考注明用途。每个方向先按[候选定义](../../app-asset-workflow/references/style-and-production.md#三候选选择)独立约定轮廓、角色与物件比例、材质纹理、明暗阴影边缘、功能色、UI 图标及可实现制作路线，再编写完整独立的提示词；不能大段共享“圆润、可爱、低模”等造型词后只换配色、光照或方向名。候选必须关联实际图片和 generated generation record 文件，不要求摘要。`global-visual-baseline-selection/1.1` 证据还必须绑定生产者 Work Item、brief、generation batch、唯一候选 ID、唯一 `SINGLE_HUMAN`/`CONFIRMED` 选择、selectedCandidateId、决定记录文件、确认时间和用户原文。候选生成记录仍使用 `global-visual-baseline-candidate-generation/1.0`；决定文件使用 `global-visual-baseline-selection-decision/1.1`。
+先按[阶段 4 游戏美术方向](../../app-asset-workflow/references/game-art-direction.md)出一张推荐稿，用户表达分歧或要求比较时才加对照。对照沿用同一 brief、目标视口、任务内容、代表状态、示例数值和可比制作预算，同屏交用户查看。共用空间和内容参考约束已确认事实，方向专用参考注明用途。比较整体方向时，各图按[候选定义](../../app-asset-workflow/references/style-and-production.md#game-visual-selection)完整描述轮廓比例、材质纹理、明暗边缘、功能色、UI 图标和可实现制作路线。针对单一分歧的对照聚焦对应变化。候选必须关联实际图片和 generated generation record 文件，不要求摘要。`global-visual-baseline-selection/1.1` 证据还必须绑定生产者 Work Item、brief、generation batch、唯一候选 ID、唯一 `SINGLE_HUMAN`/`CONFIRMED` 选择、selectedCandidateId、决定记录文件、确认时间和用户原文。候选生成记录仍使用 `global-visual-baseline-candidate-generation/1.0`；决定文件使用 `global-visual-baseline-selection-decision/1.1`。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-三候选使用相同的玩家可见表达与示例数值，实际提示词按“效果图文案约束”（见本栈配套资料）分离内部 brief 与可见文字，落实场景线索、语义承载与真实状态。不得将核心循环、玩法介绍、白模调试标签或验收说明当作界面文字绘制。下述人工比较同时询问“弱化配色、隐藏候选名称后，是否仍能辨认各方向”；不要求另做一套图或新增批准，不因提示词不同宣布风格差异成立。玩法可读与风格差异未获实际人工判断时如实待定。
+各对照稿使用相同的玩家可见表达与示例数值，实际提示词按“效果图文案约束”（见本栈配套资料）分离内部 brief 与可见文字，落实场景线索、语义承载与真实状态。不得将核心循环、玩法介绍、白模调试标签或验收说明当作界面文字绘制。比较完整美术方向时，可请用户判断弱化配色、隐藏名称后能否从画面辨认方向。玩法可读性与风格差异按实际人工判断记录。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-人工选择同时完成逐候选五项检查：主题贴合 `themeFit`、受众适配 `audienceFit`、玩法可读 `readability`、静态观看舒适 `comfort`、美术完成度 `craft`。`humanSelection.candidateAssessments` 与决定文件保存同一份按 candidateId 绑定的实际人工结果；每项填写 `status=passed|failed|unverified` 与具体 `reason`。所选候选五项必须均为 passed，不能用平均分或用户偏好抵消失败。三张都不合格时保留失败材料、修正生成方案并重新生产三候选，保持 draft/pending；没有合格且经人工选择的候选不能冻结。代理只提供图片和检查要点，不自动分析图像或替用户填写通过；未收到实际评价时保持未验证。
+人工选择同时完成逐候选五项检查：主题贴合 `themeFit`、受众适配 `audienceFit`、玩法可读 `readability`、静态观看舒适 `comfort`、美术完成度 `craft`。`humanSelection.candidateAssessments` 与决定文件保存同一份按 candidateId 绑定的实际人工结果；每项填写 `status=passed|failed|unverified` 与具体 `reason`。所选候选五项必须均为 passed，不能用平均分或用户偏好抵消失败。当前稿不合格时保留失败材料、按反馈定向修订并提交人工确认，保持 draft/pending；没有合格且经人工选择的候选不能冻结。代理只提供图片和检查要点，不自动分析图像或替用户填写通过；未收到实际评价时保持未验证。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-人工确认完成前，`visual_baseline.status` 和 Work Item `globalStaticBaselineState` 只能保持 draft/pending，不能写入 `global-static-baseline-frozen`。确认后冻结身份必须同时绑定 baseline ID/version、`docs/visual-baseline.md`、冻结正文实际文件、primary anchor 和 selected candidate；候选、决定、brief、正文或锚点实际内容变化时按影响验证，摘要变化不使引用失效或重开三候选流程。该全局人工选择是独立硬门，不能替代每个场景 V3 的拆解图确认。
+人工确认完成前，`visual_baseline.status` 和 Work Item `globalStaticBaselineState` 只能保持 draft/pending，不能写入 `global-static-baseline-frozen`。确认后冻结身份必须同时绑定 baseline ID/version、`docs/visual-baseline.md`、冻结正文实际文件、primary anchor 和 selected candidate；候选、决定、brief、正文或锚点实际内容变化时按影响验证，单纯摘要变化不使引用失效或重新选稿。该全局人工选择是独立硬门，不能替代每个场景 V3 的拆解图确认。
 
 > 适用技术栈：cocos、phaser、threejs。
 
 | 阶段 | 必须产物 | 允许状态 | 禁止旁路 |
 | --- | --- | --- | --- |
 | brief | 结构化 brief JSON、项目主题/受众/体验、三层刺激预算、generation batch；摘要仅可选追踪 | draft/in-progress | 空白方向、普通文本冒充结构化 brief、直接冻结 |
-| 候选生成 | 恰好 3 张 `origin=generated` PNG/JPEG 效果图及各自 generation record、可选图片/记录 SHA（文件门检查真实魔数） | generated | 2/4 张、provided、重复 ID、扩展名伪装 |
-| 人工选择 | 同屏呈现三张、五项逐候选人工结果、唯一 `SINGLE_HUMAN`/`CONFIRMED` 决定文件、selectedCandidateId、用户原文 | pending → confirmed | AUTO、pending、代写评价、选中失败或未验证候选 |
+| 候选生成 | 至少一张 `origin=generated` PNG/JPEG 效果图及各自 generation record、可选图片/记录 SHA（文件门检查真实魔数） | generated | 空候选、provided、重复 ID、扩展名伪装 |
+| 人工选择 | 提交推荐稿、按需同屏对照、五项逐候选人工结果、唯一 `SINGLE_HUMAN`/`CONFIRMED` 决定文件、selectedCandidateId、用户原文 | pending → confirmed | AUTO、pending、代写评价、选中失败或未验证候选 |
 | 正式冻结 | `globalVisualBaselineSelectionRef`、冻结正文、真实风格指纹、primary anchor/selected candidate | global-static-baseline-frozen | 只写状态字段 |
 
 ## 全局视觉冻结表
@@ -93,7 +95,7 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-第 4 阶段依据已确认范围建立或复用视觉 brief，经适用的三候选人工选择后，冻结全局规则和代表稿。模块 V1 确认完整方案，V2 生成并确认覆盖适用状态和进度的模块稿，V3 从同一稿件拆解。设计依据列出规则、变量、范围及实际证据。
+第 4 阶段依据已确认范围建立或复用视觉 brief，经适用的推荐稿人工确认及按需对照后，冻结全局规则和代表稿。模块 V1 确认完整方案，V2 生成并确认覆盖适用状态和进度的模块稿，V3 从同一稿件拆解。设计依据列出规则、变量、范围及实际证据。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -260,7 +262,7 @@ V5 为每个生产包提交多资源联系表，并至少生成一张同屏组�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-全局三候选人工选择并正式冻结后，所有场景主图、reference target、宿主场景 contextual effect image 和原子生成式位图资产都必须引用同一份 `visual_baseline`。冻结基线必须是 `global-static-baseline-frozen`，并固定 `id`、`version`、`document=docs/visual-baseline.md` 与完整 `anchor_evidence`。项目具体美术风格只写入该正文和锚点证据，通用提示词不硬编码项目风格；候选阶段的生成记录使用 `global-visual-baseline-candidate-generation/1.0`，不冒充已经冻结的全局基线。
+全局视觉经人工选择并正式冻结后，所有场景主图、reference target、宿主场景 contextual effect image 和原子生成式位图资产都必须引用同一份 `visual_baseline`。冻结基线必须是 `global-static-baseline-frozen`，并固定 `id`、`version`、`document=docs/visual-baseline.md` 与完整 `anchor_evidence`。项目具体美术风格只写入该正文和锚点证据，通用提示词不硬编码项目风格；候选阶段的生成记录使用 `global-visual-baseline-candidate-generation/1.0`，不冒充已经冻结的全局基线。
 
 > 适用技术栈：cocos、phaser、threejs。
 

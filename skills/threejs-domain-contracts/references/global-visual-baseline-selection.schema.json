@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "threejs-global-visual-baseline-selection.schema.json",
-  "title": "全局视觉基线三候选人工选择证据（生产者冻结根）",
-  "description": "该文件由生产者 Work Item 创建并在冻结后保持不可变；brief.path 指向符合 threejs-game-art-brief/1.0 的 JSON。冻结要求三候选均有逐项人工质量评估且所选项全部通过；消费者不得改写根证据所有者。",
+  "title": "全局视觉基线候选人工选择证据（生产者冻结根）",
+  "description": "该文件由生产者 Work Item 创建并在冻结后保持不可变；brief.path 指向符合 threejs-game-art-brief/1.0 的 JSON。冻结要求所有候选均有逐项人工质量评估且所选项全部通过；消费者不得改写根证据所有者。",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion","workItemId","selectionId","brief","generationBatchId","candidates","humanSelection","baseline","frozenAt"],
@@ -15,8 +15,7 @@
     "conditionsFingerprint": {"description":"仅作为可选摘要记录，不参与验收或放行。"},
     "candidates": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 1,
       "uniqueItems": true,
       "items": {"$ref": "#/$defs/candidate"}
     },
@@ -95,9 +94,8 @@
     },
     "candidateAssessments": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
-      "description": "必须与三张候选按 candidateId 唯一完整绑定；逐项唯一性和所选项全通过由机器合同校验。",
+      "minItems": 1,
+      "description": "必须与各张候选按 candidateId 唯一完整绑定；逐项唯一性和所选项全通过由机器合同校验。",
       "items": {"$ref": "#/$defs/candidateAssessment"}
     },
     "humanSelection": {
@@ -108,7 +106,7 @@
         "reviewMode": {"const": "SINGLE_HUMAN"},
         "status": {"const": "CONFIRMED"},
         "selectedCandidateId": {"type": "string", "minLength": 1},
-        "presentedCandidateIds": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "presentedCandidateIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "candidateAssessments": {"$ref": "#/$defs/candidateAssessments"},
         "decisionFile": {"type": "string", "minLength": 1},
         "decisionSha256": {"description":"仅作为可选摘要记录，不参与验收或放行。"},
@@ -129,7 +127,7 @@
         "briefSha256": {"description": "仅作为可选摘要记录，不参与验收或放行。"},
         "conditionsFingerprint": {"description": "仅作为可选摘要记录，不参与验收或放行。"},
         "decisionSha256": {"description": "仅作为可选摘要记录，不参与验收或放行。"},
-        "presentedCandidateIds": {"type": "array", "minItems": 3, "maxItems": 3, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+        "presentedCandidateIds": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
         "reviewMode": {"const": "SINGLE_HUMAN"},
         "status": {"const": "CONFIRMED"},
         "selectedCandidateId": {"type": "string", "minLength": 1},

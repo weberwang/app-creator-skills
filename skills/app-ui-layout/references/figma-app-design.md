@@ -76,7 +76,7 @@ Flutter、Expo 由控制器默认设置 figma-app 设计路线。ESP32 可使用
 
 `captureRef` 是真实 MCP 结构采集的原始结果或可追溯规范化导出，记录实际 toolName、capturedAt、fileKey、nodeId、stateId、viewport、nodes、variables、assets；控制器逐项核对快照与原始结构。`briefRef` 关联任务书。图片路线的快照通过 `reconstruction` 绑定已确认的 `sourceTargetRef`、忠实还原 `authorizationRef`、真实 method 与 toolName；`previewRef` 单独冻结重建导出，不能与原图共用同一文件身份。独立导出可以恰好同字节，不能仅凭摘要相同否定合法还原，也不能将原图文件冒充新预览。
 
-全局基线使用 `designRoute:"figma-app"`、`exploration.kind`（initial／redesign／increment）和 candidates。初始／改版默认一张，用户明确要求比较时记录 requestedCount 和真实 userMessageRef；局部增量复用有效来源。图片候选以 `visualSourceRef` 冻结实际图及生成／提供来源，默认 generated 的 `generationMethod:imagegen`；用户指定其他生成方式时用 custom 并绑定 `sourceMessageRef/sourceScope`，用户提供图片同样保留来源消息。选稿后只需重建选中目标，不要求未选图先有 Figma。显式 `sourceRoute` 记录其他设计路线的真实指令及范围，不能用它绕过原图默认门。游戏仍保留原三候选。
+全局基线使用 `designRoute:"figma-app"`、`exploration.kind`（initial／redesign／increment）和 candidates。初始／改版默认一张，用户明确要求比较时记录 requestedCount 和真实 userMessageRef；局部增量复用有效来源。图片候选以 `visualSourceRef` 冻结实际图及生成／提供来源，默认 generated 的 `generationMethod:imagegen`；用户指定其他生成方式时用 custom 并绑定 `sourceMessageRef/sourceScope`，用户提供图片同样保留来源消息。选稿后只需重建选中目标，不要求未选图先有 Figma。显式 `sourceRoute` 记录其他设计路线的真实指令及范围，不能用它绕过原图默认门。游戏图片路线按[阶段 4 游戏美术方向](../../app-asset-workflow/references/game-art-direction.md)确认推荐稿与按需对照。
 
 第 4 阶段记录全局代表稿的来源及真实确认。V2 对模块稿分别绑定原图、来源、用户确认和重建授权，并记录实际可编辑设计版本。多状态原图以 `approvedTargetRefs` 和 `approvedVisualSourceRefs` 记录实际确认范围。V3 `figmaHandoffRef` 从 V2 确认稿提取 figmaDesignRef、layoutSpecRef、nativePlanRef 及节点／状态／视口映射，显示层另绑定 hostId 和 layerType。
 

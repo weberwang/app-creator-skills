@@ -3,73 +3,14 @@
   "baselineId": "replace-with-baseline-id",
   "projectId": "replace-with-project-id",
   "stack": "unity",
-  "visualResearchRef": { "path": "docs/visual-research.json", "sha256": "0000000000000000000000000000000000000000000000000000000000000000" },
+  "visualResearchRef": {
+    "path": "docs/visual-research.json",
+    "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
   "candidates": [
     {
       "candidateId": "candidate-a",
       "path": "art/candidates/a.png",
-      "qualityChecks": [
-        {
-          "dimension": "themeFit",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "audienceFit",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "taskReadability",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "viewingComfort",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "artCompletion",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        }
-      ]
-    },
-    {
-      "candidateId": "candidate-b",
-      "path": "art/candidates/b.png",
-      "qualityChecks": [
-        {
-          "dimension": "themeFit",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "audienceFit",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "taskReadability",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "viewingComfort",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        },
-        {
-          "dimension": "artCompletion",
-          "status": "NOT_RUN",
-          "evidenceRef": ""
-        }
-      ]
-    },
-    {
-      "candidateId": "candidate-c",
-      "path": "art/candidates/c.png",
       "qualityChecks": [
         {
           "dimension": "themeFit",

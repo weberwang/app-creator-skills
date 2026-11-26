@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { validateDisplayLayerPlanning } from '../skills/app-domain-toolkit/scripts/visual/display-layer-planning-contract.mjs';
 import { requiresVisualFileGate } from '../skills/app-domain-toolkit/scripts/visual/visual-file-gate.mjs';
@@ -40,5 +41,20 @@ test('三栈项目模板先验证功能并声明完整 V1–V5', async () => {
     assert.match(assets, /V1→V2→V3→V4→V5/);
     const manifest = JSON.parse(templates.OPTIONAL_TEMPLATES.assets['visual-assets.json']);
     assert.deepEqual(Object.keys(manifest.visualStageEvidenceRefs).sort(), ['V3', 'V4', 'V5']);
+  }
+});
+
+test('游戏项目初始化只预留一张推荐稿，选择证据草稿版本与领域合同一致', async () => {
+  // 读取实际输出的草稿，防止项目模板继续预填旧的固定候选批次。
+  const owners = { cocos: 'cocos-game-orchestrator', phaser: 'phaser4-game-orchestrator', threejs: 'app-stack-threejs' };
+  for (const [stack, owner] of Object.entries(owners)) {
+    const { OPTIONAL_TEMPLATES } = await import(`../skills/${owner}/scripts/project_doc_templates.mjs`);
+    const draft = JSON.parse(OPTIONAL_TEMPLATES.assets['global-visual-baseline-selection.json']);
+    const schema = JSON.parse(readFileSync(new URL(`../skills/${stack}-domain-contracts/references/global-visual-baseline-selection.schema.json`, import.meta.url), 'utf8'));
+    assert.equal(draft.schemaVersion, schema.properties.schemaVersion.const, stack);
+    assert.equal(draft.candidates.length, 1, stack);
+    assert.deepEqual(draft.humanSelection.presentedCandidateIds, [], stack);
+    assert.deepEqual(draft.humanSelection.candidateAssessments, [], stack);
+    assert.equal(draft.humanSelection.status, 'PENDING', stack);
   }
 });

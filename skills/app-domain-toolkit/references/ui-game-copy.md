@@ -28,7 +28,7 @@
 
 > 适用技术栈：cocos、phaser、threejs、unity。
 
-适用路线的全局候选、场景主效果图和弹窗宿主上下文图在生成前都读取同一份玩家可见表达，并按[生图文案约束](../../app-asset-workflow/references/style-and-production.md#生图文案约束)将当前状态的可见内容及绘制限制写入实际发送的提示词。所有候选使用相同内容与示例数值，按[视觉语言定义](../../app-asset-workflow/references/style-and-production.md#三候选选择)各自完整描述形体、比例、材质、明暗边缘、功能色、UI 图标及制作路线，不因共用内容而锁死同一种造型。候选数量沿用当前路线，不由本节新增。
+适用路线的全局候选、场景主效果图和弹窗宿主上下文图在生成前都读取同一份玩家可见表达，并按[生图文案约束](../../app-asset-workflow/references/style-and-production.md#生图文案约束)将当前状态的可见内容及绘制限制写入实际发送的提示词。所有候选使用相同内容与示例数值，按[视觉语言定义](../../app-asset-workflow/references/style-and-production.md#game-visual-selection)各自完整描述形体、比例、材质、明暗边缘、功能色、UI 图标及制作路线，不因共用内容而锁死同一种造型。候选数量沿用当前路线，不由本节新增。
 
 > 适用技术栈：cocos、phaser、threejs。
 

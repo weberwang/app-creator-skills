@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import Ajv2020 from '../../../app-skill-runtime/ajv2020.mjs';
 import addFormats from '../../../app-skill-runtime/ajv-formats.mjs';
 import { validateVisibleEvidenceContract, validateVisibleImplementationPackage, validateVisibleWorkItemContract } from './visible-contract.mjs';
 import { stageConfirmationBlockers, validateStageReviewsShape } from './stage-confirmation.mjs';
 import { validateVisualBaseline } from './visual-baseline-contract.mjs';
+import { ART_QUALITY_ITEMS } from './art-experience-contract.mjs';
 import { deriveReturnState, deriveReturnVisualStage, invalidateStageReviews } from './return-disposition.mjs';
 
 /** 构造不携带视觉目标的功能工作项，专门验证阶段边界。 */
@@ -38,6 +41,53 @@ test('V4 资源证据不冒充 V5 运行验收，V5 不能缺少运行和人工�
   const errors = validateVisibleEvidenceContract({ ...evidence, visualStage: 'V5' }, makeWork('V5'), process.cwd());
   assert.match(errors.join('\n'), /V5|artExperienceAcceptanceRef|responsiveEvidence/);
   assert.match(validateVisibleEvidenceContract(evidence, makeWork('V5'), process.cwd()).join('\n'), /阶段/);
+});
+
+test('Unity 图片基线可由单张推荐稿冻结，仍须具备五项结果和真实人工引用', (t) => {
+  const repo = mkdtempSync(join(tmpdir(), 'unity-baseline-selection-'));
+  t.after(() => rmSync(repo, { recursive: true, force: true }));
+  /** 仅向本测试的新建目录写入证据样例。 */
+  const save = (name, data) => writeFileSync(join(repo, name), JSON.stringify(data));
+  const budget = {
+    brightnessContrast: '保持背景平缓', screenCoverage: '只显示局部反馈', duration: '按状态持续',
+    triggerFrequency: '动作触发', maxConcurrent: 1, recovery: '恢复普通色调', blendPolicy: '限制叠加',
+  };
+  save('brief.json', {
+    schemaVersion: '1.0', projectId: 'project-1', theme: '纸艺冒险', coreLoop: '寻找道路并拾取道具',
+    viewingContext: '横屏', audience: { facts: ['通过图标寻找道具'], assumptions: [] },
+    experienceGoals: ['轻松探索'], visualHierarchy: ['角色和可操作对象优先'],
+    intensityBudget: { normal: budget, operation: budget, peak: budget, measurementMethod: '按代表状态人工查看' },
+  });
+  const conditions = { viewport: '1920x1080', state: '探索' };
+  const candidate = {
+    candidateId: 'recommended', source: 'generated', imagePath: 'recommended.png', generationRecordPath: 'generation.json',
+    qualityResults: Object.fromEntries(ART_QUALITY_ITEMS.map((item) => [item, { status: 'PASS', reason: '隔离测试的人工质量样例' }])),
+  };
+  writeFileSync(join(repo, candidate.imagePath), Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/lxoAAAAASUVORK5CYII=', 'base64'));
+  save(candidate.generationRecordPath, { workItemId: 'producer', candidateId: candidate.candidateId, imagePath: candidate.imagePath, prompt: '以剪纸表现森林', conditions });
+  save('frozen.json', { baselineId: 'baseline-1', selectedCandidateId: candidate.candidateId });
+  // 合成人工记录只用于测试机器绑定，不能作为实际视觉验收。
+  const selection = { candidateId: candidate.candidateId, confirmedBy: 'reviewer', confirmedAt: '2026-10-28T00:00:00Z', userMessageRef: 'fixture-review' };
+  const root = {
+    schemaVersion: '1.0', baselineId: 'baseline-1', producerWorkItemId: 'producer', briefPath: 'brief.json',
+    conditions, candidates: [candidate], selection, frozenBaselinePath: 'frozen.json',
+  };
+  const work = { ...makeWork('V2'), globalVisualBaselineSelectionRef: { path: 'selection.json' } };
+  const schema = JSON.parse(readFileSync(new URL('../../schemas/global-visual-baseline.schema.json', import.meta.url), 'utf8'));
+  const ajv = new Ajv2020({ strict: false });
+  addFormats(ajv);
+  const validate = ajv.compile(schema);
+  save('selection.json', root);
+  assert.equal(validate(root), true, JSON.stringify(validate.errors));
+  assert.deepEqual(validateVisualBaseline(work, {}, repo), []);
+  save('selection.json', { ...root, candidates: [] });
+  assert.equal(validate({ ...root, candidates: [] }), false);
+  assert.match(validateVisualBaseline(work, {}, repo).join('\n'), /至少需要一张/);
+  save('selection.json', { ...root, selection: { ...selection, userMessageRef: '' } });
+  assert.match(validateVisualBaseline(work, {}, repo).join('\n'), /真实人工选择/);
+  candidate.qualityResults.themeFit.status = 'NOT_RUN';
+  save('selection.json', root);
+  assert.match(validateVisualBaseline(work, {}, repo).join('\n'), /五项人工质量必须全部 PASS/);
 });
 
 test('视觉阶段身份在场景与显示层的 V1–V5 证据中均独立校验', () => {

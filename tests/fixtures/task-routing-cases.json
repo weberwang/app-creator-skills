@@ -1,0 +1,98 @@
+[
+  {
+    "id": "unity-pause-input",
+    "kind": "near-miss",
+    "stacks": ["unity"],
+    "evidence": "目标是当前 Unity 项目。Assets/ 和 ProjectSettings/ProjectVersion.txt 已核对。暂停恢复由一个输入组件处理。",
+    "prompt": "暂停时松开跳跃，恢复后还是自己跳了一下。只修这个组件的残留输入，表现保持现在这样。",
+    "expected": {"stack": "unity", "mode": "light", "primary": "app-gameplay-development", "required": [], "excluded": ["app-feedback"]}
+  },
+  {
+    "id": "cocos-jump-tuning",
+    "kind": "direct",
+    "stacks": ["cocos"],
+    "evidence": "Creator 工程的 gameplay 场景包含角色和固定步长物理配置。",
+    "prompt": "给这个关卡加可变高度跳跃，长按要跳两格，短按能钻过矮门。先把跳高和到顶时间定下来，再接入正式角色并验证。",
+    "expected": {"stack": "cocos", "mode": "standard", "primary": "app-gameplay-development", "required": [], "excluded": ["app-game-balance"]}
+  },
+  {
+    "id": "threejs-follow-camera",
+    "kind": "direct",
+    "stacks": ["threejs"],
+    "evidence": "目标模块的锁文件包含 three，游戏入口创建 Three.js 渲染器。",
+    "prompt": "给场景加一个跟随角色的动态镜头，沿用现有场景。过门瞬移时直接到目标位置，普通转身时平滑过渡。",
+    "expected": {"stack": "threejs", "mode": "standard", "primary": "app-gameplay-development", "required": [], "excluded": ["app-feedback"]}
+  },
+  {
+    "id": "roblox-save-recovery",
+    "kind": "direct",
+    "stacks": ["roblox"],
+    "evidence": "目标是已有关联的 Roblox Place。权威玩家状态与持久化是两个模块，存在隔离测试数据。",
+    "prompt": "实现继续游戏和存档失败后的恢复。写到一半掉线，下次进入仍能加载上一次有效进度。用隔离数据演练失败和恢复。",
+    "expected": {"stack": "roblox", "mode": "standard", "primary": "app-gameplay-development", "required": [], "excluded": ["app-feedback"]}
+  },
+  {
+    "id": "unity-hit-feedback-audio",
+    "kind": "combo",
+    "stacks": ["unity"],
+    "evidence": "目标是已识别的 Unity 项目，伤害计算和命中事件已经正确。",
+    "prompt": "保留伤害规则，给命中加一闪和偏重的音效。现在没有合适的声音，做一个并接到同一次命中上。",
+    "expected": {"stack": "unity", "mode": "standard", "primary": "app-feedback", "required": ["app-audio"], "excluded": ["app-gameplay-development"]}
+  },
+  {
+    "id": "flutter-feedback-duplicate",
+    "kind": "near-miss",
+    "stacks": ["flutter"],
+    "evidence": "目标是有 Flutter 应用入口和 FVM 配置的客户端。返回栈及页面动画正确，重复触发局限在一个反馈事件处理器。",
+    "prompt": "点返回时那条操作提示短音会响两次，只修提示事件的重复消费，返回逻辑和画面都保持现状。",
+    "expected": {"stack": "flutter", "mode": "light", "primary": "app-feedback", "required": [], "excluded": ["app-audio", "app-gameplay-development"]}
+  },
+  {
+    "id": "expo-native-layout",
+    "kind": "direct",
+    "stacks": ["expo"],
+    "evidence": "移动端包声明 expo，并有 Expo 配置和实际应用入口。",
+    "prompt": "给设置页增加可编辑的表单，在软键盘弹出和字体放大时，保存按钮仍能触达。用当前界面组件做。",
+    "expected": {"stack": "expo", "mode": "standard", "primary": "app-ui-layout", "required": [], "excluded": ["app-gameplay-development"]}
+  },
+  {
+    "id": "nodejs-in-expo-monorepo",
+    "kind": "near-miss",
+    "stacks": ["expo", "nodejs"],
+    "evidence": "同仓 mobile/ 是 Expo 客户端，api/ 的 package.json 用 node 启动服务端入口。问题只出现在 api/ 的启动脚本。",
+    "prompt": "本地 API 启动脚本把工作目录算错，配置拿不到。只修 api 的启动路径，移动端不用改。",
+    "expected": {"stack": "nodejs", "mode": "light", "primary": "app-project-foundation", "required": [], "excluded": ["app-ui-layout", "app-gameplay-development"]}
+  },
+  {
+    "id": "esp32-brightness-layout",
+    "kind": "direct",
+    "stacks": ["esp32"],
+    "evidence": "ESP-IDF 项目已具备设备 LCD GUI，背光服务和触控处理已经可用。",
+    "prompt": "在设备自带屏幕上做一页亮度设置，沿用现有背光服务。本次只做页面布局和操作状态。",
+    "expected": {"stack": "esp32", "mode": "standard", "primary": "app-ui-layout", "required": [], "excluded": ["app-gameplay-development"]}
+  },
+  {
+    "id": "phaser-in-shared-web-repo",
+    "kind": "near-miss",
+    "stacks": ["phaser", "threejs"],
+    "evidence": "web/game/ 入口创建 Phaser.Game。web/viewer/ 用 Three.js 预览模型。故障只发生在前者的 2D 关卡。",
+    "prompt": "有时角色会穿过移动平台。先给 2D 关卡做可复现的碰撞案例，再修判定并验收。模型预览保持现状。",
+    "expected": {"stack": "phaser", "mode": "standard", "primary": "app-gameplay-development", "required": [], "excluded": ["app-feedback"]}
+  },
+  {
+    "id": "threejs-entry-stutter",
+    "kind": "near-miss",
+    "stacks": ["threejs"],
+    "evidence": "目标是使用 Three.js 渲染器的游戏，场景进出会加载多个资源组。",
+    "prompt": "第一次进关卡卡一下，返回再进就好了。用可比较的冷、热路径数据查瓶颈并修复，给出修改前后的证据。",
+    "expected": {"stack": "threejs", "mode": "standard", "primary": "app-quality-review", "required": [], "excluded": ["app-image-optimization"]}
+  },
+  {
+    "id": "direct-question",
+    "kind": "none",
+    "stacks": ["unity"],
+    "evidence": "对话发生在一个安装了 Unity 技能的工程中。",
+    "prompt": "一句话解释场景和预制体的区别，我只想了解概念，不用改项目。",
+    "expected": {"stack": null, "mode": "direct", "primary": null, "required": [], "excluded": ["app-gameplay-development", "app-project-foundation"]}
+  }
+]

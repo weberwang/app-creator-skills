@@ -196,6 +196,8 @@ npm test
 npm run test:flutter-layout
 ```
 
+维护技术栈或任务路由时，参照[工作流路由评估](tests/task-routing-evals.md)复验安装后的引用与代理选择。
+
 Windows 并发测试若出现 `Unable to deserialize cloned data due to invalid or unsupported version`，保留失败日志并核对实际 `process.execPath` 与版本；本机曾在 Node 24.14.1 遇到该问题，上游有[相同报告](https://github.com/nodejs/node/issues/64061)及[修复追踪](https://github.com/nodejs/node/issues/65934)。可用已带修复的 Node 补丁版本重新执行原测试命令与并发数，本次使用已有 Node 24.22.1；父进程和子进程须使用同一版本，`npm.cmd` 可能选择自身目录旁的旧 Node。使用所选 Node 的绝对路径运行实际 `npm-cli.js` 并在本次进程 PATH 前置其目录即可，不要求改系统配置；独立文件复验不能代替完整测试，不删测、吞错或自动重试到通过。
 
 发布轻量安装包前使用 `npm run build:npx` 和 `npm run pack:npx`；根包保持私有，用于完整源码维护。

@@ -18,11 +18,11 @@
 
 > 适用技术栈：cocos、phaser、threejs。
 
-视觉阶段以当前技术栈领域合同的枚举和有语义的 `visualStageState` 为准。第 4 阶段须建立或复用全局基线 brief、生成恰好三张同条件候选效果图、同屏交给人工并确认其中一张；`globalVisualBaselineSelectionRef` 通过后才可写入 `global-static-baseline-frozen`。V1 确认模块方案，V2 根据全局基线制作并确认模块全部适用流程、状态和进度的设计稿，V3 使用同一确认稿。该引用通过不可变 `path` 跨 Work Item 复用，根证据顶层 `workItemId` 始终是生产者身份，不是当前消费者；该状态只冻结颜色、字体、栅格等静态规则；它不等于 `v3-production-planning-complete`，三候选人工选择也不能替代逐场景 V3 拆解图确认。V3 方案冻结必须由拆解图、技术 JSON、coverage、生产计划和拆解确认证据派生。
+视觉阶段以当前技术栈领域合同的枚举和有语义的 `visualStageState` 为准。第 4 阶段须建立或复用全局基线 brief，先生成一张推荐稿，按需提供同条件对照，由用户确认最终实际稿；`globalVisualBaselineSelectionRef` 通过后才可写入 `global-static-baseline-frozen`。V1 确认模块方案，V2 根据全局基线制作并确认模块全部适用流程、状态和进度的设计稿，V3 使用同一确认稿。该引用通过不可变 `path` 跨 Work Item 复用，根证据顶层 `workItemId` 始终是生产者身份，不是当前消费者；该状态只冻结颜色、字体、栅格等静态规则；它不等于 `v3-production-planning-complete`，全局人工选择也不能替代逐场景 V3 拆解图确认。V3 方案冻结必须由拆解图、技术 JSON、coverage、生产计划和拆解确认证据派生。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-正式消费已确认的视觉资产、替换旧视觉实现或声明视觉完成时，必须由共享视觉前置校验器复核当前场景 Work Item 的 V3 拆解与目标布局、V4 正式资源验收；声明视觉完成时另需 V5 运行候选。仅含 `SHARED`/`MODULE` 的 foundation-only 包按是否声明视觉依赖分流：纯工程包不消费视觉产物或正式可见资产，只需当前任务范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明视觉合同或资产生产依赖的基础包仍必须通过机器复核的 `globalVisualBaselineSelectionRef`（三张 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文实际文件）和 `globalStaticBaselineState=global-static-baseline-frozen`。一旦声明正式视觉资源消费等视觉行为，即使单元类型仍为 `SHARED`/`MODULE`，也回到正式 V3/V4 视觉门。包含 `SCENE`、`DISPLAY_LAYER` 或 `INTEGRATION` 的包以 V3 `v3-production-planning-complete` 作为规划边界、V4 正式资源验收作为正式视觉资源装配前置。全局选择根证据的生产者 Work Item 可被多个消费者引用，但场景 V3/V4/V5 证据仍必须绑定当前场景 Work Item；阶段名、`stageId` 文本、根 PASS/布尔值、说明文字和 批准记录文字都不是证据；所有证据必须使用 Work Item、Unit Result、候选标识和实际文件引用。必要业务字段或路径缺失/格式错误先 `repair`，上游事实未变的机器验证失败按 `revalidate` 只重跑当前门；只有上游事实失效、任务范围真实变化或硬门将被绕过时，才按最小范围更新并 `return` 到最早受影响阶段。普通候选身份变化不触发 `RETURN`，不使 V3 拆解确认失效；下游按受影响范围失效，不默认整 Work Item 重做。
+正式消费已确认的视觉资产、替换旧视觉实现或声明视觉完成时，必须由共享视觉前置校验器复核当前场景 Work Item 的 V3 拆解与目标布局、V4 正式资源验收；声明视觉完成时另需 V5 运行候选。仅含 `SHARED`/`MODULE` 的 foundation-only 包按是否声明视觉依赖分流：纯工程包不消费视觉产物或正式可见资产，只需当前任务范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明视觉合同或资产生产依赖的基础包仍必须通过机器复核的 `globalVisualBaselineSelectionRef`（实际 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文实际文件）和 `globalStaticBaselineState=global-static-baseline-frozen`。一旦声明正式视觉资源消费等视觉行为，即使单元类型仍为 `SHARED`/`MODULE`，也回到正式 V3/V4 视觉门。包含 `SCENE`、`DISPLAY_LAYER` 或 `INTEGRATION` 的包以 V3 `v3-production-planning-complete` 作为规划边界、V4 正式资源验收作为正式视觉资源装配前置。全局选择根证据的生产者 Work Item 可被多个消费者引用，但场景 V3/V4/V5 证据仍必须绑定当前场景 Work Item；阶段名、`stageId` 文本、根 PASS/布尔值、说明文字和 批准记录文字都不是证据；所有证据必须使用 Work Item、Unit Result、候选标识和实际文件引用。必要业务字段或路径缺失/格式错误先 `repair`，上游事实未变的机器验证失败按 `revalidate` 只重跑当前门；只有上游事实失效、任务范围真实变化或硬门将被绕过时，才按最小范围更新并 `return` 到最早受影响阶段。普通候选身份变化不触发 `RETURN`，不使 V3 拆解确认失效；下游按受影响范围失效，不默认整 Work Item 重做。
 
 ## 实施顺序状态硬门
 
@@ -76,7 +76,7 @@ V4 资源验收通过后，V5 直接激活正式实施包并读取当前 V3 拆�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-具有视觉依赖的 foundation-only 包必须同时通过 `globalVisualBaselineSelectionRef` 的三候选/唯一人工确认/实际文件门和 `globalStaticBaselineState=global-static-baseline-frozen`，缺失任一项时 fail closed；纯工程包只需当前任务范围、工程基线、冻结实施包和工程证据，不等待全局选图；一旦基础包声明正式视觉资源消费等视觉行为，即回到正式 V3/V4 门。混入 SCENE/DISPLAY_LAYER/INTEGRATION 的包以 V3 `v3-production-planning-complete` 和 V4 正式资源验收作为正式视觉资源装配前置。全局选择是独立硬门，不能替代逐场景 V3。参考模式的 `effect-image` 仍在同一 Work Item 内完成 V2→V3→V4→V5。
+具有视觉依赖的 foundation-only 包必须同时通过 `globalVisualBaselineSelectionRef` 的实际候选、唯一人工确认及来源文件校验和 `globalStaticBaselineState=global-static-baseline-frozen`，缺失任一项时 fail closed；纯工程包只需当前任务范围、工程基线、冻结实施包和工程证据，不等待全局选图；一旦基础包声明正式视觉资源消费等视觉行为，即回到正式 V3/V4 门。混入 SCENE/DISPLAY_LAYER/INTEGRATION 的包以 V3 `v3-production-planning-complete` 和 V4 正式资源验收作为正式视觉资源装配前置。全局选择是独立硬门，不能替代逐场景 V3。参考模式的 `effect-image` 仍在同一 Work Item 内完成 V2→V3→V4→V5。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -104,8 +104,8 @@ SCENE 与 DISPLAY_LAYER 分别绑定各自 Work Item 的 V3 证据，使用独�
 
 > 适用技术栈：cocos、phaser、threejs。
 
-全局基线冻结前必须先建立视觉 brief，生成恰好三张同条件候选效果图，同屏交给人工并由唯一 `SINGLE_HUMAN`/`CONFIRMED` 记录选择其中一张；候选图片路径只允许 PNG/JPEG，文件门还会检查真实图片魔数，不能用同后缀文本伪装。`globalVisualBaselineSelectionRef` 必须绑定独立的选择根证据、三张 generated 图片及生成记录、决定文件和冻结正文实际文件。完整字段见 本栈 `global-visual-baseline-selection.schema.json`，机器文件门由 `global-visual-baseline-contract.mjs` 核对实际文件与业务内容。只有该引用完整通过文件门后才能写入 `global-static-baseline-frozen`；全局选择是独立硬门，不能替代逐场景 V3 拆解图确认。
+全局基线冻结前先建立视觉 brief，生成一张推荐稿，需要比较时同屏展示同条件对照，并由唯一 `SINGLE_HUMAN`/`CONFIRMED` 记录选择其中一张；候选图片路径只允许 PNG/JPEG，文件门还会检查真实图片魔数，不能用同后缀文本伪装。`globalVisualBaselineSelectionRef` 必须绑定独立的选择根证据、已提交的 generated 图片及生成记录、决定文件和冻结正文实际文件。完整字段见 本栈 `global-visual-baseline-selection.schema.json`，机器文件门由 `global-visual-baseline-contract.mjs` 核对实际文件与业务内容。只有该引用完整通过文件门后才能写入 `global-static-baseline-frozen`；全局选择是独立硬门，不能替代逐场景 V3 拆解图确认。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-选择根证据顶层 `workItemId` 是生成并冻结三候选及人工决定的生产者身份；消费者 Work Item 只通过引用的 `path` 复用该根证据，不得将消费者身份写回根、候选生成记录或人工决定。
+选择根证据顶层 `workItemId` 是生成并冻结候选与人工决定的生产者身份；消费者 Work Item 只通过引用的 `path` 复用该根证据，不得将消费者身份写回根、候选生成记录或人工决定。

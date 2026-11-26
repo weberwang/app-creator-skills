@@ -96,14 +96,14 @@ export function validateGameArtBrief(value, options = {}) {
   return [...new Set(errors)];
 }
 
-/** 校验候选评估完整绑定三张候选，并保证最终所选候选的五项均由人工判为通过。 */
+/** 校验候选评估完整绑定各张候选，并保证最终所选候选的五项均由人工判为通过。 */
 export function validateGlobalVisualCandidateAssessments(assessments, candidateIds, selectedCandidateId, label = '候选人工评估') {
   const errors = [];
   if (!Array.isArray(assessments)) {
-    errors.push(`${label} 必须完整包含三张候选图的人工评估`);
+    errors.push(`${label} 必须完整包含候选图的人工评估`);
     return errors;
   }
-  if (!Array.isArray(candidateIds) || assessments.length !== candidateIds.length) errors.push(`${label} 必须与三张候选按 candidateId 一一绑定`);
+  if (!Array.isArray(candidateIds) || assessments.length !== candidateIds.length) errors.push(`${label} 必须与各张候选按 candidateId 一一绑定`);
 
   const assessmentIds = [];
   const byCandidateId = new Map();

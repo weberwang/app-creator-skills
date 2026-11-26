@@ -10,7 +10,7 @@ Unity 另须说明已有规范。Visual Bible 的 `artBrief` 遵守 [`game-art-b
 
 `intensityBudget` 必须为 `normal`、`operation`、`peak` 三个层级分别填写 `brightnessContrast`（亮度与对比边界）、`screenCoverage`（占屏范围）、`duration`（持续时长或结束条件）、`triggerFrequency`（触发频率与去重策略）、`maxConcurrent`（允许并发的非负整数上限）、`recovery`（结束、打断或暂停后的恢复方式）和 `blendPolicy`（并发混合、合并、抑制或优先级）。同一预算对象的 `measurementMethod` 说明测量方法、观察条件和记录方式。各值由项目和实际情境确定，不预设通用医学或刺激阈值。
 
-全局视觉基线首次建立时，按[视觉工作流](./visual-workflow.md)生成恰好三张同条件候选，每张保留五项人工质量结果；唯一选中的候选五项全部通过后冻结。已有有效三候选选择证据可跨工作项复用，不重复选图；逐场景目标图不能替代全局选择证据。
+全局视觉基线首次建立时，按[视觉工作流](./visual-workflow.md)先制作一张推荐稿，按需补同条件对照，每张保留五项人工质量结果。选中稿五项全部通过后冻结。有效人工选稿证据可跨工作项复用，不重复选图；逐场景目标图不能替代全局选择证据。
 
 ## 五项逐项通过
 

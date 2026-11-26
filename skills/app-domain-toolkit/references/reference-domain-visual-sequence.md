@@ -15,7 +15,7 @@
 ```text
 第 4 阶段：SHARED 项目骨架 + MODULE 场景无关基础模块
   → 依据已确认产品和状态规格建立全局视觉基线 brief
-  → 生成三张同条件候选效果图并同屏交给人工
+  → 生成一张推荐稿，有分歧时再同屏展示同条件对照
   → 人工选择确认一张，写入唯一 SINGLE_HUMAN/CONFIRMED 决定
   → 正式冻结全局静态 visual_baseline（global-static-baseline-frozen）
   → 生成并冻结目标版本全部适用场景、流程和状态的整套视觉目标，覆盖相关弹窗及宿主上下文

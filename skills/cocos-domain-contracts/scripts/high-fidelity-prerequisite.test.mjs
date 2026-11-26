@@ -63,7 +63,7 @@ function writeGlobalBaselineSelectionEvidence(fixture, overrides = {}) {
   const brief = { briefId: 'GLOBAL-BRIEF-1', path: 'docs/global-baseline-brief.json', sha256: hashFile(baselineFiles.brief) };
   const generationBatchId = 'GLOBAL-BATCH-1';
   const conditionsFingerprint = `sha256:${'c'.repeat(64)}`;
-  const candidates = baselineFiles.candidates.map((path, index) => {
+  const candidates = baselineFiles.candidates.slice(0, overrides.candidateCount ?? 3).map((path, index) => {
     const candidateId = `GLOBAL-CANDIDATE-${String.fromCharCode(65 + index)}`;
     const image = { path: path.slice(fixture.repo.length + 1).replaceAll('\\', '/'), sha256: hashFile(path) };
     const generationRecord = {
@@ -297,7 +297,7 @@ test('全局基线根证据或候选生成记录生产者不一致时拒绝', ()
   refreshGlobalBaselineSelectionReference(rootMismatchFixture, rootMismatchFiles.selection);
   assert.throws(
     () => assertGlobalVisualBaselineSelection(rootMismatchFixture.work, rootMismatchFixture.repo, rootMismatchFixture.io),
-    /未绑定当前三候选生成合同|未绑定唯一人工确认|生产者 Work Item 一致/,
+    /未绑定当前候选生成合同|未绑定唯一人工确认|生产者 Work Item 一致/,
   );
   rmSync(rootMismatchFixture.repo, { recursive: true, force: true });
 
@@ -310,7 +310,7 @@ test('全局基线根证据或候选生成记录生产者不一致时拒绝', ()
   refreshGlobalBaselineSelectionReference(candidateMismatchFixture, candidateMismatchFiles.selection);
   assert.throws(
     () => assertGlobalVisualBaselineSelection(candidateMismatchFixture.work, candidateMismatchFixture.repo, candidateMismatchFixture.io),
-    /未绑定当前三候选生成合同/,
+    /未绑定当前候选生成合同/,
   );
   rmSync(candidateMismatchFixture.repo, { recursive: true, force: true });
 });
@@ -336,16 +336,15 @@ test('混入 SCENE 的实施包仍受 V3/V4 正式门约束', () => {
   rmSync(fixture.repo, { recursive: true, force: true });
 });
 
-test('全局基线候选不是恰好三张时拒绝 foundation-only 门', () => {
-  for (const count of [2, 4]) {
-    const fixture = makeFixture();
-    const baseline = writeGlobalBaselineSelectionEvidence(fixture).selection;
-    baseline.candidates = count === 2 ? baseline.candidates.slice(0, 2) : [...baseline.candidates, { ...baseline.candidates[0], candidateId: 'GLOBAL-CANDIDATE-D' }];
-    refreshGlobalBaselineSelectionReference(fixture, baseline);
-    const packageValue = makeVisualFoundationPackage({ executionUnits: [{ unitType: 'SHARED' }] });
-    assert.throws(() => assertFormalImplementationAfterV3(fixture.work, packageValue, fixture.repo, fixture.io), /恰好包含 3 张|3 张候选图/);
-    rmSync(fixture.repo, { recursive: true, force: true });
-  }
+test('单张推荐图可冻结，零张候选被拒绝', () => {
+  const fixture = makeFixture();
+  const files = writeGlobalBaselineSelectionEvidence(fixture, { candidateCount: 1 });
+  const packageValue = makeVisualFoundationPackage({ executionUnits: [{ unitType: 'SHARED' }] });
+  assert.doesNotThrow(() => assertFormalImplementationAfterV3(fixture.work, packageValue, fixture.repo, fixture.io));
+  files.selection.candidates = [];
+  refreshGlobalBaselineSelectionReference(fixture, files.selection);
+  assert.throws(() => assertFormalImplementationAfterV3(fixture.work, packageValue, fixture.repo, fixture.io), /至少包含一张|人工确认/);
+  rmSync(fixture.repo, { recursive: true, force: true });
 });
 
 test('全局基线候选 ID、图片或生成记录重复时拒绝', () => {

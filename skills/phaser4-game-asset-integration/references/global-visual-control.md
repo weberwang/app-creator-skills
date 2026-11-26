@@ -10,9 +10,9 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-global-visual-control.md#基线身份与风格指纹)。
 
-## 三候选生成与人工冻结门
+## 候选生成与人工冻结门
 
-> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-global-visual-control.md#三候选生成与人工冻结门)。
+> 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-asset-global-visual-control.md#game-visual-freeze)。
 
 ## 全局视觉冻结表
 

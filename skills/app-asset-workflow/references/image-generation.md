@@ -1,6 +1,6 @@
 # 生图执行与原图交付
 
-适用于第 4 阶段全局代表稿、V2 模块稿及这些图稿的修订。先按[生成前约束](style-and-production.md#生成前约束)形成实际提示词，逐张写明用途、可见内容、状态、画幅、参考图编号及各自用途。游戏图片路线的三候选继续按[全局视觉规则](../../app-domain-toolkit/references/reference-asset-global-visual-control.md#三候选生成与人工冻结门)生成和人工选择。
+适用于第 4 阶段全局代表稿、V2 模块稿及这些图稿的修订。先按[生成前约束](style-and-production.md#生成前约束)形成实际提示词，逐张写明用途、可见内容、状态、画幅、参考图编号及各自用途。游戏图片路线使用[原画与 UI 提示词模板](game-art-direction.md#原画生图模板)，按[全局视觉规则](../../app-domain-toolkit/references/reference-asset-global-visual-control.md#game-visual-freeze)先出推荐稿、按需对照并人工选择。
 
 图片路线以项目和技术栈为作用域，在首次适用的 `app-workflow init` 时冻结。视觉项目的 PROJECT、首次创建的独立图片工作项，或明确携带路线选项的 FOUNDATION 可建立记录。选择保存在 `.workflow-control/image-routes/<项目和技术栈标识>.json`，相关工作项通过 `imageRoutesRef: {path, sha256}` 绑定，其中 `designImageMethod` 是设计稿生成方式，`formalImageMethod` 是正式单图路线。后续工作项继承该记录，不再接受路线选项或重复预检。纯 3D、直接设计和非视觉工作项没有图片任务时可不触发图片路线初始化。
 

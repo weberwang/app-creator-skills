@@ -9,9 +9,9 @@
     "visualStageModel": {"const": "function-first-v1"},
     "visualStage": {"enum": ["V1", "V2", "V3", "V4", "V5"]},
     "visualStageState": {"enum": ["not-started", "in-progress", "pending", "failed", "stale", "invalid", "global-static-baseline-frozen", "v3-production-planning-complete", "v4-formal-acceptance-complete", "v5-runtime-integration-candidate"]},
-    "globalStaticBaselineState": {"const": "global-static-baseline-frozen", "description": "全局静态 visual_baseline 只有在三张候选效果图经唯一人工选择确认后才能冻结；它不代表任一授权场景已完成 V3 拆解方案。"},
+    "globalStaticBaselineState": {"const": "global-static-baseline-frozen", "description": "全局静态 visual_baseline 只有在候选效果图经唯一人工选择确认后才能冻结；它不代表任一授权场景已完成 V3 拆解方案。"},
     "visual_validation": {"$ref": "#/$defs/visualValidationPolicy", "description": "视觉验收模式；缺省为 usability，exact 必须显式声明。"},
-    "globalVisualBaselineSelectionRef": {"$ref": "#/$defs/globalVisualBaselineSelectionReference", "description": "不可变三候选人工选择证据引用；通过 path+sha256 跨 Work Item 复用，冻结状态缺失该引用时必须拒绝。"},
+    "globalVisualBaselineSelectionRef": {"$ref": "#/$defs/globalVisualBaselineSelectionReference", "description": "不可变候选人工选择证据引用；通过 path+sha256 跨 Work Item 复用，冻结状态缺失该引用时必须拒绝。"},
     "visualStageEvidenceRefs": {
       "type": "object",
       "additionalProperties": false,

@@ -192,7 +192,7 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-effect-image 生成必须在生成前绑定已完成三候选人工选择且由 `globalVisualBaselineSelectionRef` 支持的当前 `visual_baseline`，而不是只绑定局部冻结效果图。基线只能处于 `global-static-baseline-frozen`，身份必须包含 `id`、`version`、`document=docs/visual-baseline.md` 和全部 `anchor_evidence`。原子资产的 `reference_inputs` 仍必须包含完整冻结效果图；`style_reference_inputs` 逐项继承全部全局锚点并记录实际文件，SHA 仅作可选追踪，不能用锚点替代完整冻结图。
+effect-image 生成必须在生成前绑定已完成人工选稿且由 `globalVisualBaselineSelectionRef` 支持的当前 `visual_baseline`，而不是只绑定局部冻结效果图。基线只能处于 `global-static-baseline-frozen`，身份必须包含 `id`、`version`、`document=docs/visual-baseline.md` 和全部 `anchor_evidence`。原子资产的 `reference_inputs` 仍必须包含完整冻结效果图；`style_reference_inputs` 逐项继承全部全局锚点并记录实际文件，SHA 仅作可选追踪，不能用锚点替代完整冻结图。
 
 > 适用技术栈：cocos、phaser、threejs。
 

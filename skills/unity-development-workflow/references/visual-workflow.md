@@ -1,6 +1,6 @@
 # Unity 视觉工作流
 
-3D／2D 世界与 UI 先按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分：每个 3D 世界场景在 V1 搭建或复用有效白模，按风险选择运行验证；2D 使用平面布局、正式工程及功能用例，不制作白模。HUD、菜单及 App 按原界面流程推进。整体场景联合单次审查及人工空间／方向确认后，再安排模型规格并按风险确定首件验证。公共控制器可显式选择[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，无需图片目标或 V3 双图确认。下文相关图片目标、三候选及 V3 双图条款适用于图片／UI 路线；Unity 旧原生图片工具若不支持无图合同，保留其适用限制，不伪造图片或证据。
+3D／2D 世界与 UI 先按[实现分流](../../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)区分：每个 3D 世界场景在 V1 搭建或复用有效白模，按风险选择运行验证；2D 使用平面布局、正式工程及功能用例，不制作白模。HUD、菜单及 App 按原界面流程推进。整体场景联合单次审查及人工空间／方向确认后，再安排模型规格并按风险确定首件验证。公共控制器可显式选择[无图 3D 场景合同](../../app-workflow-control/references/world3d-scenes.md)，无需图片目标或 V3 双图确认。下文图片目标、全局选稿及 V3 双图条款适用于图片／UI 路线；Unity 旧原生图片工具若不支持无图合同，保留其适用限制，不伪造图片或证据。
 
 第 4 阶段制作并冻结全局视觉方向及代表稿；V1 确认模块完整方案，V2 生成并确认全状态、全进度模块稿，V3 拆解，V4 准备资源，V5 完整实现并验收。A0–A6 表示动作风险，F0–F4 表示质量门。
 
@@ -12,9 +12,9 @@
 
 生成方向候选前，必须按[通用分析的统一执行要求](../../app-creator-workflow/references/professional-conventions.md#product-market-research)核对市场、竞品、受众与参考四项分析及其与当前视觉 brief 的对应关系；有效结论核实后复用，缺失或变化部分由产品策划与视觉制作按职责补齐后再生成。
 
-图片／UI 路线首次建立全局视觉基线时，恰好生成三张 `generated` 候选，保持同任务、视口、状态、目标内容、示例数值和可比预算；不锁定同一种美术造型或共用风格前缀。按[候选视觉语言](../../app-asset-workflow/references/style-and-production.md#三候选选择)分别定义形体轮廓、比例、材质纹理、明暗阴影边缘、功能色、UI 图标与制作路线，各张提示词独立完整；人工比较弱化配色并隐藏名称后能否区分，不能仅换颜色、光照或名称。每张候选都记录五项美术质量结果：主题贴合、受众适配、玩法可读、观看舒适、美术完成度；选择必须是用户对已展示候选作出的唯一人工选择，且所选候选五项均为 `PASS`。每张候选的 root generation 记录中，`workItemId` 必须与根证据的 `producerWorkItemId` 匹配。将选择证据写入 `Work.globalVisualBaselineSelectionRef`，对象形如 `{path: "..."}`，路径和内容遵循[视觉基线合同](../../unity-domain-contracts/scripts/runtime/visual-baseline-contract.mjs)。有效选择证据可被其他适用 Work 复用，不要求重复生成或重新选择。
+图片／UI 路线按[阶段 4 游戏美术方向](../../app-asset-workflow/references/game-art-direction.md)定义三层规则、先交一张 `generated` 推荐稿。按[候选视觉语言](../../app-asset-workflow/references/style-and-production.md#game-visual-selection)为实际分歧补同任务、视口、状态、内容、示例值和可比预算的对照。每张候选都记录五项美术质量结果：主题贴合、受众适配、玩法可读、观看舒适、美术完成度；选择必须是用户对已展示候选作出的唯一人工选择，且所选候选五项均为 `PASS`。每张候选的 root generation 记录中，`workItemId` 必须与根证据的 `producerWorkItemId` 匹配。将选择证据写入 `Work.globalVisualBaselineSelectionRef`，对象形如 `{path: "..."}`，路径和内容遵循[视觉基线合同](../../unity-domain-contracts/scripts/runtime/visual-baseline-contract.mjs)。有效选择证据可被其他适用 Work 复用，不要求重复生成或重新选择。
 
-图片／UI 路线的全局三候选规则用于建立或替换全局基线，不代替场景 V2 的真实目标图，也不要求每个 Work 都重新生成三张。纯工程 `FOUNDATION` 没有视觉依赖时无需等待选图；只有实施包声明 `visualBaselineRequired=true` 时才要求引用有效的全局选择。
+图片／UI 路线在阶段 4 建立或替换全局基线，场景 V2 沿用该方向制作真实目标图。纯工程 `FOUNDATION` 没有视觉依赖时无需等待选图；只有实施包声明 `visualBaselineRequired=true` 时才要求引用有效的全局选择。
 
 ## 场景视觉目标与 Visual Bible
 

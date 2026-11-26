@@ -34,7 +34,7 @@
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-domain-visual-admission.md#弹窗工作项与场景解耦)。
 
-全局 brief 使用结构化项目美术 JSON，明确主题、受众、核心循环、体验目标、观看情境、视觉层级与三层刺激预算。选择根/决定合同为 1.1，三候选各记录五项实际人工质量结果，所选候选全部通过才可冻结；三张均失败时保持待定并返工，不以“相对最好”放行。字段与文件门见[Schema](./schemas.md#视觉阶段-schema)。场景目标、资源组合和持续游玩沿用[游戏美术体验与质量契约](../../cocos-game-asset-integration/references/art-quality-contract.md)与现有确认节点；V4 运行候选内的 `artExperienceAcceptance` 缺失或非通过时不得完成，机器事实出口不能替代用户视觉验收。
+全局 brief 使用结构化项目美术 JSON，明确主题、受众、核心循环、体验目标、观看情境、视觉层级与三层刺激预算。选择根/决定合同为 1.1，候选各记录五项实际人工质量结果，所选候选全部通过才可冻结；候选均失败时保持待定并返工，不以“相对最好”放行。字段与文件门见[Schema](./schemas.md#视觉阶段-schema)。场景目标、资源组合和持续游玩沿用[游戏美术体验与质量契约](../../cocos-game-asset-integration/references/art-quality-contract.md)与现有确认节点；V4 运行候选内的 `artExperienceAcceptance` 缺失或非通过时不得完成，机器事实出口不能替代用户视觉验收。
 
 > 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/reference-domain-visual-sequence.md#弹窗工作项与场景解耦)。
 

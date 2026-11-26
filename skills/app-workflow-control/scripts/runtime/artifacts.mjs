@@ -437,8 +437,9 @@ export function validateGlobalBaseline(repo, work, { required = false } = {}) {
     validateHumanReview(repo, record.selectionReviewRef, { objectId: record.baselineId, stage: 'BASELINE', purpose: 'visual-baseline', candidateId: record.selectedCandidateId, requireTarget: true, allowUnreviewedQuality: true });
     return;
   }
-  if (!Array.isArray(record.candidates) || record.candidates.length !== 3) throw new WorkflowError('首次全局视觉基线必须有三张候选');
-  if (new Set(record.candidates.map((candidate) => candidate.candidateId)).size !== 3) throw new WorkflowError('三张视觉候选必须各自有唯一身份');
+  // 推荐稿可单独确认，多稿比较时仍逐张核对证据与唯一身份。
+  if (!Array.isArray(record.candidates) || record.candidates.length === 0) throw new WorkflowError('全局视觉基线至少需要一张候选');
+  if (new Set(record.candidates.map((candidate) => candidate.candidateId)).size !== record.candidates.length) throw new WorkflowError('视觉候选必须各自有唯一身份');
   for (const candidate of record.candidates) {
     requireText(candidate.candidateId, '候选ID');
     requireNonEmptyFile(repo, candidate.path, '视觉候选');

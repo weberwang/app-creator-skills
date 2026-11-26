@@ -155,7 +155,7 @@ export function selectedFigmaCandidate(record) {
   return record.combination?.candidateId === record.selectedCandidateId ? record.combination : record.candidates?.find((item) => item.candidateId === record.selectedCandidateId);
 }
 
-/** 非游戏默认单一精修方案，多方案必须有用户明确要求；游戏保留三候选。 */
+/** 非游戏默认单一精修方案，多方案必须有用户明确要求。 */
 function validateFigmaDirectBaseline(repo, work, record, visited = new Set()) {
   insist(record.designRoute === 'figma-app', '非游戏 App 基线必须声明 Figma 路线');
   const versionKey = createHash('sha256').update(JSON.stringify(record)).digest('hex');

@@ -1,4 +1,4 @@
-/** 三候选全局视觉基线的文件门；机器核对来源与人工决定，不判断画面好坏。 */
+/** 核对全局视觉基线的来源文件和真实人工决定。 */
 import { readArtEvidenceFile, validateArtBrief, validateArtQualityResults, ART_QUALITY_ITEMS } from './art-experience-contract.mjs';
 import { isValidIsoTimestamp } from './timestamp-contract.mjs';
 import { isDeepStrictEqual } from 'node:util';
@@ -14,7 +14,7 @@ export function validateVisualBaseline(work, pkg, repo) {
   const required = visible && visualReady || pkg?.visualBaselineRequired === true
     || work.stageId === 'global-baseline' && work.domain === 'visual' && ['VALIDATING', 'PASSED', 'COMPLETE'].includes(work.globalState);
   const ref = work.globalVisualBaselineSelectionRef;
-  if (!ref) return required ? ['缺少 globalVisualBaselineSelectionRef 三候选人工选择证据'] : errors;
+  if (!ref) return required ? ['缺少 globalVisualBaselineSelectionRef 候选人工选择证据'] : errors;
   try {
     if (typeof ref !== 'object' || Object.keys(ref).some((key) => key !== 'path') || typeof ref.path !== 'string') throw new Error('选择引用只接受 path');
     const root = readArtEvidenceFile(repo, ref.path, true);
@@ -23,14 +23,15 @@ export function validateVisualBaseline(work, pkg, repo) {
     const brief = readArtEvidenceFile(repo, root.briefPath, true);
     errors.push(...validateArtBrief(brief));
     if (brief.projectId !== work.projectId) throw new Error('全局视觉基线必须属于当前项目');
-    if (!root.conditions || typeof root.conditions !== 'object' || Array.isArray(root.conditions) || !Object.keys(root.conditions).length) throw new Error('缺少三候选共同生产条件');
-    if (!Array.isArray(root.candidates) || root.candidates.length !== 3) throw new Error('全局视觉基线必须恰好三张候选');
+    if (!root.conditions || typeof root.conditions !== 'object' || Array.isArray(root.conditions) || !Object.keys(root.conditions).length) throw new Error('缺少候选的共同生产条件');
+    // 推荐稿经人工确认即可冻结，追加对照时按同样的证据规则逐张校验。
+    if (!Array.isArray(root.candidates) || root.candidates.length === 0) throw new Error('全局视觉基线至少需要一张候选');
     const ids = new Set();
     const images = new Set();
     for (const candidate of root.candidates) {
       const allowed = ['candidateId', 'source', 'imagePath', 'generationRecordPath', 'qualityResults'];
       if (!candidate || Object.keys(candidate).some((key) => !allowed.includes(key)) || allowed.some((key) => candidate[key] === undefined) || !candidate.candidateId?.trim() || candidate.source !== 'generated') throw new Error('候选必须绑定独立生成记录');
-      if (ids.has(candidate.candidateId) || images.has(candidate.imagePath)) throw new Error('三候选必须具有不同身份和实际图片路径');
+      if (ids.has(candidate.candidateId) || images.has(candidate.imagePath)) throw new Error('候选必须具有不同身份和实际图片路径');
       ids.add(candidate.candidateId); images.add(candidate.imagePath);
       readArtEvidenceFile(repo, candidate.imagePath);
       if (!/\.(png|jpe?g|webp)$/i.test(candidate.imagePath)) throw new Error('候选必须引用真实图片文件');

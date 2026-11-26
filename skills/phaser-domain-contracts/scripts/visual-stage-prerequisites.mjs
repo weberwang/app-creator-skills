@@ -121,7 +121,7 @@ export function validateVisualStageDeclaration(subject = {}) {
   if (stage && state !== null && !VISUAL_STAGE_STATE_FOR[stage]?.has(String(state))) errors.push(error('VISUAL_STAGE_STATE_INVALID', `阶段 ${stage} 与状态 ${String(state)} 不匹配`, { missingEvidence: ['visualStageState'] }));
   // 功能尚未确认前不能把正式视觉基线冻结为当前阶段证据。
   if (stage === 'V1' && (baselineState === 'global-static-baseline-frozen' || state === 'global-static-baseline-frozen')) errors.push(error('VISUAL_BASELINE_TOO_EARLY', '正式视觉基线须在 V2 才能冻结，V1 不接受冻结声明', { missingEvidence: ['visualStage'] }));
-  // 全局冻结状态必须绑定三候选人工选择证据；只写状态字段不能绕过冻结前置。
+  // 全局冻结状态必须绑定候选人工选择证据；只写状态字段不能绕过冻结前置。
   // 这里仅校验消费者引用的 path+sha 形状；根证据的生产者链由 loader 完整复核。
   if (baselineState === 'global-static-baseline-frozen' || (stage === 'V2' && state === 'global-static-baseline-frozen')) {
     const selectionErrors = validateGlobalVisualBaselineSelectionReferenceShape(subject.globalVisualBaselineSelectionRef);

@@ -11,6 +11,7 @@ import { extractMarkdownSection } from '../skills/app-skill-runtime/native-contr
 const RULE = 'app-domain-toolkit/references/game-characteristics.md';
 const CONTENT = 'app-domain-toolkit/references/game-content-playtesting.md';
 const EXPLORATION = 'app-domain-toolkit/references/game-design-exploration.md';
+const SPECIALTIES = 'app-gameplay-development/references/gameplay-specialties.md';
 const GAME_STACKS = new Set(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 const ENTRIES = {
   'app-product-planning': 'identify',
@@ -91,6 +92,10 @@ for (const stack of STACKS) {
     }
 
     if (!isGame) return;
+    // 从已安装的玩法入口逐项定位专项章节，验证按需链接及实际分发结果。
+    for (const section of ['jump-tuning', 'save-recovery', 'dynamic-camera']) {
+      checkLink(root, 'app-gameplay-development/SKILL.md', section, SPECIALTIES);
+    }
     for (const rule of RULES) {
       assert.equal(readFileSync(join(root, rule.path), 'utf8'), readFileSync(join(SOURCE_ROOT, 'skills', rule.path), 'utf8'));
     }

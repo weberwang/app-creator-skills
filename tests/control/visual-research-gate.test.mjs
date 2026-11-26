@@ -55,6 +55,14 @@ async function fixture(t) {
   return { repo, workPath, work, baseline, bind, reject };
 }
 
+test('单张推荐稿经人工确认后通过基础视觉公开推进门', async (t) => {
+  const f = await fixture(t);
+  const visualResearchRef = visualResearchFixture(f.repo, f.work.projectId, f.work.stack);
+  await f.bind({ ...f.baseline, candidates: f.baseline.candidates.slice(0, 1), visualResearchRef });
+  await transitionWork({ repo: f.repo, workItem: f.workPath, to: 'PROPOSAL', args: {} });
+  assert.equal((await readWork(f.repo, f.workPath)).globalState, 'PROPOSAL');
+});
+
 test('全局视觉的公开推进门禁分别拒绝缺调研、缺参考和错项目', async (t) => {
   const f = await fixture(t);
   const { repo, work, baseline } = f;

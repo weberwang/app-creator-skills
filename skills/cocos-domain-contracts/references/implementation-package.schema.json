@@ -55,7 +55,7 @@
     "executionUnits": {
       "type": "array",
       "minItems": 1,
-      "description": "数组顺序由计划制定者预设并作为唯一执行顺序；串行单元各占一个位置，同一并行组必须连续出现。若全部单元仅为 SHARED/MODULE，则该包属于 foundation-only：无视觉产物或行为的纯工程包只需 Work Item 范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明 visualProductionUnits、visualManifestFile、visualContractVersion 等视觉合同或资产生产依赖的基础包，必须完整复核 globalVisualBaselineSelectionRef（三张同条件 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文真实 SHA）且 globalStaticBaselineState=global-static-baseline-frozen；声明正式入口或可见资源消费等视觉行为时，仍受正式 V3/V4/V5 门约束。混入 SCENE/DISPLAY_LAYER/INTEGRATION 时仍受正式 V3/V4/V5 门约束。",
+      "description": "数组顺序由计划制定者预设并作为唯一执行顺序；串行单元各占一个位置，同一并行组必须连续出现。若全部单元仅为 SHARED/MODULE，则该包属于 foundation-only：无视觉产物或行为的纯工程包只需 Work Item 范围、工程基线、冻结实施包和工程证据即可在全局选图前实施；声明 visualProductionUnits、visualManifestFile、visualContractVersion 等视觉合同或资产生产依赖的基础包，必须完整复核 globalVisualBaselineSelectionRef（至少一张 generated 候选、唯一 SINGLE_HUMAN/CONFIRMED 决定、冻结正文真实 SHA）且 globalStaticBaselineState=global-static-baseline-frozen；声明正式入口或可见资源消费等视觉行为时，仍受正式 V3/V4/V5 门约束。混入 SCENE/DISPLAY_LAYER/INTEGRATION 时仍受正式 V3/V4/V5 门约束。",
       "items": {
         "$ref": "#/$defs/executionUnit"
       }

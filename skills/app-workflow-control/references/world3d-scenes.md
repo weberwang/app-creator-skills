@@ -43,7 +43,7 @@ V3 从确认的同一空间依据及已有视图按对象和组团拆分模型�
 
 ## 同场景常驻 HUD
 
-3D 世界包含常驻 HUD 时，在同一 `SCENE` 的 `visual.hud` 声明非空 `scopeIds`，并在 V2 起绑定 `globalVisualBaselineRef`、原图片路线的 `targets` 和 `coverageRef`；V5 另绑定同范围 `integrationEvidenceRef`。目标使用真实宿主的 `workItemId`、`objectId/sceneId`、候选、状态及视口，不另建场景或把 HUD 改称瞬态层。HUD 的图片基线、V2 目标、V3 拆解／布局、V4 资源与 V5 实际组合继续走[场景多目标记录](multi-target-visual.md)及对应原生 UI 合同；画面由用户人工检查。世界单方向不是三候选图片基线，已有适用基线和同一次真实用户消息可直接引用，不新设审批。
+3D 世界包含常驻 HUD 时，在同一 `SCENE` 的 `visual.hud` 声明非空 `scopeIds`，并在 V2 起绑定 `globalVisualBaselineRef`、原图片路线的 `targets` 和 `coverageRef`；V5 另绑定同范围 `integrationEvidenceRef`。目标使用真实宿主的 `workItemId`、`objectId/sceneId`、候选、状态及视口，不另建场景或把 HUD 改称瞬态层。HUD 的图片基线、V2 目标、V3 拆解／布局、V4 资源与 V5 实际组合继续走[场景多目标记录](multi-target-visual.md)及对应原生 UI 合同；画面由用户人工检查。世界方向基线与 HUD 图片基线分别引用，已有适用基线和同一次真实用户消息可直接引用，不新设审批。
 
 V1 方案记录是否存在 HUD 和声明范围；新增、移除或变更范围须回 V1 核实。存在 HUD 时在 V2 建立覆盖其本轮范围及必要状态的界面目标；有世界机位预览时按状态与视口引用。HUD 的 V4 资源和确认与世界模型一同归档，V5 验证世界和 HUD 当前组合；空间范围与 HUD 视图身份各自保留。
 

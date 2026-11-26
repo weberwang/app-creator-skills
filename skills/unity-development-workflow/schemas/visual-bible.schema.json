@@ -221,8 +221,7 @@
     },
     "directionCandidates": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 1,
       "uniqueItems": true,
       "items": {
         "$ref": "#/$defs/directionEvidence"
@@ -285,10 +284,6 @@
           "approval"
         ],
         "properties": {
-          "directionCandidates": {
-            "minItems": 3,
-            "maxItems": 3
-          },
           "approval": {
             "allOf": [
               {

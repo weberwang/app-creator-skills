@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "Unity 全局视觉基线三候选选择",
+  "title": "Unity 全局视觉基线人工选稿",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -35,8 +35,7 @@
     },
     "candidates": {
       "type": "array",
-      "minItems": 3,
-      "maxItems": 3,
+      "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,

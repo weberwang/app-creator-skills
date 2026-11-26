@@ -7,7 +7,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 ## 进入任务
 
-1. 先核对项目约束、已有状态、实际技术栈与可复用进程。以入口、依赖、工程配置或已连接的编辑器为依据；通用文件名不足以判断技术栈。多栈项目按接口和模块拆分工作项。仅在用户明确要求时创建分支或 worktree。
+1. 先核对项目约束、已有状态、实际技术栈与可复用进程。以入口、依赖、工程配置或已连接的编辑器为依据；通用文件名不足以判断技术栈。多栈项目按接口和模块拆分工作项；信号冲突时按[技术栈证据](references/task-routing.md#stack-evidence)核对目标模块。仅在用户明确要求时创建分支或 worktree。
 2. 按[任务编排](references/workflow.md#按任务选择编排)选择直接处理、`light` 或 `standard`。事实查询、纯文案或注释直接处理；单个无视觉的本地工程修复适用轻量模式；正式功能、视觉或跨模块任务按实际[七阶段](references/workflow.md#七阶段)推进。
 3. 按[最小约定](references/output-files.md#每项任务的最小约定)明确目标、涉及路径及验收。按[增量变化影响](references/professional-conventions.md#incremental-change-impact)追踪消费者和需要重验的范围，复用有效记录。出现实质取舍时使用 [grilling](../grilling/SKILL.md)，先继续独立工作。
 4. 正式工作以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁和证据来源。按[系统与模块覆盖](references/system-module-coverage.md)核对本批需求、规则、依赖和验收，通过 `plan --spec` 冻结计划，实施后用 `record --report` 登记真实结果。新项目先贯通[首个正式功能切片](references/workflow.md#功能切片与跨对象依赖)；共享配置和编辑器保留唯一写者。
@@ -15,7 +15,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 ## 按任务读规范
 
-只打开命中条件的参考章节。先前已读且仍适用的公共规范直接引用，原生适配按本页末尾的路由选择。
+只打开命中条件的参考章节。先前已读且仍适用的公共规范直接引用。多个能力都能解释同一症状时，按[任务主责](references/task-routing.md#task-ownership)根据实际行为或交付物选主能力，再按本页末尾的路由读取原生适配。
 
 | 任务 | 入口 |
 | --- | --- |

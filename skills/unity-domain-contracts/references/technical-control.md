@@ -36,7 +36,7 @@ V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unit
 
 ## 视觉任务交付
 
-遵守[图片优先的确认方式](./simplified-workflow.md#图片优先的确认方式)：普通图片直接制作真实候选；动画素材制作前须先说明设计理念和动作方案，等待用户明确确认，完成后仍验收真实素材。全局视觉基线建立时生成恰好三张同条件候选，每张记录五项美术质量结果；唯一人工选择的候选五项必须全部 `PASS`，通过 `Work.globalVisualBaselineSelectionRef.path` 引用，有效选择证据可跨 Work 复用。纯工程 `FOUNDATION` 无视觉依赖时不等待选图，实施包声明 `visualBaselineRequired=true` 时必须满足。V4 完成正式资源生产与导入，可生产资源级 Prefab 并展示临时组合预览；正式宿主 Scene/场景装配 Prefab/UI 实现及布局校准在 V5。工程 `PASS` 不代表视觉验收完成。
+遵守[图片优先的确认方式](./simplified-workflow.md#图片优先的确认方式)：普通图片直接制作真实候选；动画素材制作前须先说明设计理念和动作方案，等待用户明确确认，完成后仍验收真实素材。全局视觉基线建立时先制作一张推荐稿，有分歧时按需补同条件对照，每张记录五项美术质量结果；唯一人工选择的候选五项必须全部 `PASS`，通过 `Work.globalVisualBaselineSelectionRef.path` 引用，有效选择证据可跨 Work 复用。纯工程 `FOUNDATION` 无视觉依赖时不等待选图，实施包声明 `visualBaselineRequired=true` 时必须满足。V4 完成正式资源生产与导入，可生产资源级 Prefab 并展示临时组合预览；正式宿主 Scene/场景装配 Prefab/UI 实现及布局校准在 V5。工程 `PASS` 不代表视觉验收完成。
 
 ## 稳定公共 CLI
 
@@ -53,7 +53,7 @@ V5 可见候选的 `PASS` 还需通过[人工美术与动态体验证据](./unit
 - 可见合同：`workItemType`、独立 `displayLayer`、Unity 原生 `responsiveContract` 和 V5 `responsiveEvidence` 是可机器校验的唯一身份与响应式证据闭环。
 - [Work Item schema](../schemas/work-item.schema.json)、[Implementation Package schema](../schemas/implementation-package.schema.json)、[Evidence Manifest schema](../schemas/evidence-manifest.schema.json)：唯一支持的 `schemaVersion: "1.0"` 数据合同。
 - Unity 专用执行扩展与单元 Result Schema：约束 Unity 领域报告字段；公共 Work Item、状态、Result 和 CLI 以[当前公共专业执行规范](../../app-creator-workflow/references/professional-execution.md)及公共控制面为准。
-- [全局视觉基线 schema](../schemas/global-visual-baseline.schema.json)、[候选模板](../../unity-development-workflow/templates/global-visual-baseline.yaml)：三候选、唯一人工选择与跨工作项复用。
+- [全局视觉基线 schema](../schemas/global-visual-baseline.schema.json)、[候选模板](../../unity-development-workflow/templates/global-visual-baseline.yaml)：推荐稿、按需对照、唯一人工选择与跨工作项复用。
 - [最小 Git 规则](./minimal-git.md)：递归忽略验证中间产物，按已授权阶段整理最小提交。
 
 不解析任何旧版状态、旧版审查漏斗或非 Unity 游戏流程。所有函数、状态定义和实体字段以本 Skill 的 schema 与脚本为准。
