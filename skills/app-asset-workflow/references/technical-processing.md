@@ -14,15 +14,9 @@ V3 从真实消费者确定正式尺寸，SVG 重绘和直接生图按同一份[
 
 ## 去背景与原生交接
 
-本技能的 `scripts/png-raster.mjs` 和 `scripts/remove-background-local.mjs` 提取自 Unity 基准的无引擎工具，各栈共用，不重复维护。工具支持 8 位非隔行 PNG 解码，实际支持格式以脚本拒绝条件为准。
+静态素材按[抠图与逐轮确认](transparency-rounds.md)选择纯色硬边、绿底毛发或已有 Alpha 路线。每轮交同一候选的浅底和深底预览，等用户采用、指定返修或要求继续升级。
 
-对已获得且符合纯色背景路线的素材，按需要显式运行：
-
-```powershell
-node <技能目录>/scripts/remove-background-local.mjs --source art/item.raw.png --output art/item.png --background-color "#00aa55" --tolerance 24 --require-solid-background --record art/item.background-removal.json --preview
-```
-
-算法从画布边缘做四连通颜色清除，不处理复杂背景、毛发、玻璃或发光半透明边缘；不能用它通用抠图。已有真实 Alpha 使用直接透明路线，不重复抠图。处理不覆盖原图、不改变尺寸，记录中包括算法、参数、Alpha、删除像素与失败原因。保留哈希仅用于该工具输出的来源诊断，不把它引入公共阶段确认或验收一致性门。
+底层 `scripts/png-raster.mjs` 和 `scripts/remove-background-local.mjs` 继续提供无引擎的 PNG 编解码和四连通硬边去背景。逐轮工具复用这些能力和同一候选的双底预览，保留原图、尺寸、参数、Alpha 与处理证据。工具支持 8 位非隔行 PNG 解码，实际格式以解码结果为准。玻璃、烟雾、辉光等复杂边缘使用真实 Alpha 或适用的独立遮罩。
 
 预览是交给用户检查的资料，不自动据此判定视觉通过。PNG 结构与 Alpha 检查仅证明技术事实；去背景不能去除模板感、结构错误或材质混乱。设计稿生图和编辑使用[初始化冻结的执行方式](image-generation.md)。只有当前工作流明确需要这项确定性后处理时才执行上述工具，不以像素脚本替代生成式编辑。
 

@@ -176,6 +176,8 @@ V3 的生产合同字段必须逐 `annotation_number/region_id` 显式记录 `pr
 
 每条生成路线按真实生产活动记录工具/版本、参数、后处理、原始输入路径与 SHA，以及最终归一化 PNG 路径与 SHA。只有背景去除路线记录背景颜色、`color_separation_verified` 和 `background_removal_attempts`；`provided`/`reuse` 已有透明图保持资源来源记录，不补造生成或去背记录。透明输出须由 V4/V5 解码检查真实像素 Alpha；声明、扩展名、提示词或工具参数均不足以证明透明。
 
+静态透明素材按[逐轮确认](../../app-asset-workflow/references/transparency-rounds.md)处理。每个有效候选提供浅底与深底，等人工采用、指定返修或要求升级才推进。返修和升级产物以新候选重新审阅。由硬边去背改用独立遮罩时，按既有变更流程同步已冻结的透明路线，再交接实际遮罩及记录。
+
 > 适用技术栈：cocos、phaser、threejs。
 
 生成式位图单图按“保留原始输出 → 执行冻结的透明路线（如适用） → Sharp 尺寸归一化 → V4/final/runtime”执行。`normalization_record.source_file` 绑定当前处理输入；最终 `actual_output`、`runtime_file` 和 `normalization_record.output_file` 指向归一化后的 PNG/JPEG（`alpha=true` 只允许 PNG，`alpha=false` 可用 JPEG）。归一化保留透明 Alpha、画布比例和主体边界，禁止把棋盘格预览烘焙为背景。首次输出比例不符时最多重生一次；第二次仍不符时，若已冻结裁切焦点和安全事实，使用 `crop-and-resize-to-contract` 并记录两次真实原始生成 attempt、SHA、尺寸、focus 和最大目标比例 `crop_rect`；若裁切会损伤主体、文字、透明轮廓或关键构图，则报告能力缺口并重新制定输入/路线，不执行有损处理。该分流适用于所有生成式位图，`expected_assets.width/height` 最终必须精确匹配，`padding_policy=none`，禁止非等比拉伸、裁剪冻结 `reference_target`、补边、contain、复制边缘或静默变形。尺寸已满足时也要记录 `operation=not-required`；透明素材归一化前后均须解码验证真实 Alpha。归一化记录缺失、失败、实际尺寸或路径不满足要求时阻断 V4，SHA 不参与验收。

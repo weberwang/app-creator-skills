@@ -54,7 +54,7 @@ V1–V5 按[世界与界面分流](game-design-exploration.md#implementation-rou
 
 > 适用技术栈：cocos、phaser、threejs。
 
-生成记录按实际路线记录 `generator`/`generator_version`、工具参数、输入/输出路径及 SHA、`edge_profile`、`edge_evidence` 和后处理；未暴露的版本、参数或种子记录 `not-provided`，不得编造。背景去除路线必须限定 `hard-edge`，显式记录 `source_background_mode=opaque`、`source_background_color`、`color_separation_verified=true` 及真实 `background_removal_attempts`，并复用 `remove-background-local.mjs`；每次尝试按实际情况记录状态、源/输出路径、Alpha、背景颜色、时间、失败原因和证据。不得为半透明、辉光、柔和阴影、毛发、玻璃或混合边缘使用颜色阈值去背。
+生成记录按实际路线记录 `generator`/`generator_version`、工具参数、输入/输出路径及 SHA、`edge_profile`、`edge_evidence` 和后处理；未暴露的版本、参数或种子记录 `not-provided`。边缘连通去背路线限定 `hard-edge`，记录 `source_background_mode=opaque`、`source_background_color`、`color_separation_verified=true` 及真实 `background_removal_attempts`。每次尝试记录状态、源/输出路径、Alpha、背景颜色、时间、失败原因和证据。绿底毛发按[抠图与逐轮确认](../../app-asset-workflow/references/transparency-rounds.md)生成软 Alpha 遮罩，绑定 `mask-composition` 和 `edge_profile=hair`。其它复杂透明边缘按实际 Alpha 或独立遮罩方案处理。
 
 > 适用技术栈：cocos、phaser、threejs。
 

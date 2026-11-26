@@ -1,3 +1,5 @@
+import { validateTransparencyRoundAdoption } from "../image/transparency-round-evidence.mjs";
+
 /** 创建绑定当前技术栈透明路线合同的生产校验器。 */
 export function createTransparencyProductionContract({ TRANSPARENT_EDGE_PROFILES, TRANSPARENT_ROUTES, validateTransparencyPreview, validateTransparencyRoute } = {}) {
   if (!Array.isArray(TRANSPARENT_EDGE_PROFILES) || !Array.isArray(TRANSPARENT_ROUTES) || typeof validateTransparencyPreview !== "function" || typeof validateTransparencyRoute !== "function") throw new TypeError("必须提供技术栈的完整透明路线合同");
@@ -313,6 +315,7 @@ export function createTransparencyProductionContract({ TRANSPARENT_EDGE_PROFILES
     ];
     if (isObject(generation)) {
       const routeRecord = { ...generation, normalization_record: normalizationRecord };
+      errors.push(...validateTransparencyRoundAdoption(generation.source_file, generation.transparency_round_file, options));
       errors.push(...validateTransparencyRoute(routeRecord, expectedAsset, options));
       errors.push(...validateTransparencyPreview(routeRecord, expectedAsset, options));
     }

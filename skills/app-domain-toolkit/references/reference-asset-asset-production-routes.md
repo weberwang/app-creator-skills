@@ -181,11 +181,11 @@ V3 为正式可见外观选择实现时，按以下顺序逐项评估，V4 与 V
 
 > 适用技术栈：cocos、phaser、threejs。
 
-公共纯色背景脚本通过参数调用，不为每个任务改写脚本：
+静态透明素材按[抠图与逐轮确认](../../app-asset-workflow/references/transparency-rounds.md)走纯色硬边、绿底毛发或已有 Alpha。使用公共本地工具输出每轮候选、两张预览和真实记录。
 
 > 适用技术栈：cocos、phaser、threejs。
 
-上面的公共去背工具只服务 `hard-edge` 且主体与背景颜色明显区分的输入，并要求调用方显式声明 `--color-separation-verified`；不接受半透明、辉光、柔和阴影、毛发、玻璃或混合边缘。输出按统一归一化流程处理，真实 Alpha 和主体边界必须保留。
+边缘连通去背只服务 `hard-edge` 且主体与背景颜色明显区分的输入。直接调用底层 Web 去背工具时显式声明 `--color-separation-verified`。绿底毛发使用软色键、去绿溢色及独立灰度遮罩，按 `mask-composition` 记录。已有真实 Alpha 直接保留，归一化保持实际透明度和主体边界。
 
 > 适用技术栈：cocos、phaser、threejs。
 
@@ -193,7 +193,7 @@ V3 为正式可见外观选择实现时，按以下顺序逐项评估，V4 与 V
 
 > 适用技术栈：cocos、phaser、threejs。
 
-所有透明路线都为同一候选生成浅底（`#F2E9DF`）和深底（`#16202E`）预览；预览记录 `candidate_sha256`、归一化 `source_file/source_sha256`、两张预览 SHA，以及检查项 `subject_integrity`、`background_residue`、`color_fringe`、`semi_transparency`。V4 可记录 `inspection.status=pending`；V5 必须由视觉检查将状态更新为 `passed` 并附证据，不能以 PNG 格式、机器 Alpha 检查或工具声明代替主体缺损、残留背景、色边和半透明区域检查。
+每轮透明处理都展示同一候选的浅底（`#F2E9DF`）和深底（`#16202E`）预览，等待人工采用、指定返修或继续升级。只有采用的版本可作为正式素材交接。选用后的归一化交付仍用实际输出生成对应预览，绑定 `candidate_sha256`、`source_file/source_sha256`、两张预览 SHA，以及检查项 `subject_integrity`、`background_residue`、`color_fringe`、`semi_transparency`。V4 的 `inspection.status=pending` 表示仍是待审材料。V5 必须记录真实用户视觉检查的 `passed` 及证据。
 
 > 适用技术栈：cocos、phaser、threejs。
 
