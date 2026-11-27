@@ -118,6 +118,8 @@ Roblox 项目由 Studio 内置 MCP 执行场景、脚本及试玩操作。通过
 
 项目按“商业立项 → 产品定义与版本规划 → 制作技术方案 → 基础工程与架构实现 → 模块实现与体验整合 → 跨模块集成 → 模块集成与整体验收”推进。产品规格决定各版本交付范围。发布按单独明确委托办理。详见[七阶段](skills/app-creator-workflow/references/workflow.md#七阶段)。
 
+游戏可在第 2 阶段明确玩法后选做[核心玩法验证](skills/app-creator-workflow/references/workflow.md#optional-core-gameplay-check)，用最小可玩原型检验一轮核心操作、规则与反馈。跳过时照常推进。
+
 Node.js 服务器沿用公共控制器与质量门，通过 MODULE 实现业务、INTEGRATION 验证当前模块组合。架构覆盖传输、业务、数据访问、外部适配与装配。详见 [Node.js 架构](skills/app-stack-nodejs/references/architecture.md)。
 
 | 阶段 | 主要成果 |
