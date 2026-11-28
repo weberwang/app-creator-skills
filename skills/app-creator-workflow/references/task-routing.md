@@ -30,6 +30,7 @@
 | --- | --- | --- |
 | 暂停恢复后自动跳、按键偶尔吞掉、落地或碰撞判定异常 | `app-gameplay-development` 检查输入、规则和状态 | `app-quality-review` 用于独立复现与审查，`app-feedback` 用于确有变化的提示 |
 | 命中结果正确，想改善震动、闪光或命中提示 | `app-feedback` 处理体验与触发 | `app-audio` 负责游戏声音素材和播放约束，玩法能力负责确有变化的判定 |
+| 用角色、场景或核心玩法设计游戏加载动画、进度表现和收尾 | `app-animation` 负责分镜与制作范围 | 加载所有者提供真实进度、完成及失败事件。需要点按反馈或音效时，按需协作 `app-feedback` 或 `app-audio` |
 | App 的同一反馈事件触发两次 | `app-feedback` 核对反馈事件与生命周期 | 仅声音播放或录音问题读取[App 音频](../../app-domain-toolkit/references/app-audio.md)，导航或业务状态问题回到实际所有者 |
 | 继续游戏恢复错误、失败后需要恢复存档、动态镜头跟随或切换异常 | `app-gameplay-development` 负责当前游戏的存档或镜头行为 | 按玩法入口选读对应专项，测试复现或独立审查需要时使用 `app-quality-review` |
 | 首次进场卡顿、长时间运行变慢，原因尚不明 | `app-quality-review` 建立可比较基线并定位 | 瓶颈定位后，由对应的玩法、资源或运行时能力修改 |
