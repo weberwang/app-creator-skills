@@ -20,6 +20,7 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 - 每份正式计划填[系统与模块覆盖](../app-creator-workflow/references/system-module-coverage.md)。最终集成按 `integrationScopeRef.systemCoverageMappings` 核对来源系统、前批次和本轮用例。复杂分批任务按需读取[生产范围](../app-domain-toolkit/references/incremental-production.md#按需绑定机器范围)，使用 [范围模板](templates/production-scope.json)。
 - `evidenceRef` 绑定当前工作项、实施包、技术栈及适用的视觉阶段。命令输出、结果和公开清单条目位于 `evidenceRoot`；结果文件及删除记录按单元所有权检查。项目路径相对 `--repo`，使用 `/`；以 `allowedPaths/forbiddenPaths` 为范围。
 - 实质取舍才记录 `grillingRef`，待决时只阻断依赖项。控制器对同一 Work Item 的写操作加锁；遇到 `BUSY` 先读状态再重试。输出命名、文件引用和交付遵循[输出文件规范](../app-creator-workflow/references/output-files.md)。
+- 从零游戏项目的阶段 1–3、人工确认和回退按[游戏项目阶段](references/game-project-stages.md)执行，后续工作项绑定相同项目及架构模板。每次触发工作流后最终答复末行只写一行进度，例如 `进度 5/V1·待确认`。非视觉省略 V，发布用 `发布`。优先复用已知状态或 `metadata.progress`，未知时仅调用一次 `status --progress`，仍未知写 `进度 未登记`。纯查询未触发工作流时省略。
 
 ## CLI
 
@@ -28,11 +29,12 @@ description: 维护游戏、应用、设备 GUI 与服务器共用的 Work Item�
 | 命令 | 使用方式 |
 | --- | --- |
 | `init` | `--stack <技术栈> --id <ID> --type <类型> --objective <目标>`。PROJECT 可用 `--stage commercial-initiation\|requirements-scope\|global-baseline`；INTEGRATION 用 `--integration-purpose feature\|final`。有显示对象时另读[视觉初始化](references/version-visual-gate.md#视觉路由与初始化)。 |
-| `status`、`check`、`run` | 读取当前状态、检查门禁或推进安全控制状态。 |
+| `status`、`check`、`run` | 读取当前状态、检查门禁或推进安全控制状态。`status --progress` 只输出一行，用于最终回复缺少当前进度时。 |
 | `plan` | `--spec <计划路径>`，用 [计划模板](templates/work-plan.json) 冻结实施包和空证据清单，收窄单元范围。 |
 | `record` | `--unit <单元 ID> --report <报告路径>`。按 [执行报告模板](templates/execution-report.json) 引用冻结命令序号和实际输出；结构化采集包含退出码，普通文本日志需提供退出码。结果保留完整冻结命令。 |
 | `unit-check` | `--result <结果路径>`，核对结果和证据绑定。失败命令、占位命令或缺少真实输出均无法通过。静默命令使用 [命令采集](scripts/capture-command.mjs) 保存真实记录。 |
 | `transition` | `--to <状态>`；`RETURN` 需 `--reason` 和 `--affected-scope`，恢复时按要求提供 `--return-resolution`。 |
+| `game-stage` | 从零游戏项目用 `--work-item <PROJECT路径> --spec <当前阶段JSON>` 提交阶段 1–3，或用 `--return-to <1\|2\|3> --reason <原因>` 回退；见[游戏项目阶段](references/game-project-stages.md)。 |
 | `check-action` | `--action-id <动作 ID> --effect <受保护效果> --target <对象>`，逐效果核对精确批准；发布还须进入 `RELEASING`。 |
 
 `plan`、`record`、`unit-check` 不运行验收命令。实施者根据真实工程证据完成 F3，F4 绑定实际授权。视觉的 `visual-stage`、`reuse-visual` 及对应证据查[视觉工作项](references/version-visual-gate.md#视觉工作项字段)；功能重验查[功能依赖](references/function-dependencies.md)。

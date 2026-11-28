@@ -4,6 +4,7 @@ import { existsSync, readFileSync, unlinkSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { atomicWriteJson, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { withWorkLock } from './work-lock.mjs';
+import { GAME_STACKS } from './constants.mjs';
 
 /** 初始化界面和控制器共用的路线取值。 */
 export const DESIGN_IMAGE_METHODS = Object.freeze(['codex', 'host-tool', 'prompt-handoff']);
@@ -18,7 +19,8 @@ function policyPath(projectId, stack) {
 
 /** 无图提案与纯 3D 场景可沿各自路线初始化，已有策略仍会随视觉工作项继承。 */
 function needsImageChoice(work) {
-  return work.workItemType === 'PROJECT'
+  // 游戏阶段 1 先确认玩法题材，图片工具在适用的视觉工作开始时选择。
+  return (work.workItemType === 'PROJECT' && !GAME_STACKS.includes(work.stack))
     || (work.visual && work.visual.designRoute !== 'world-3d' && work.visual.designSource?.kind !== 'figma-direct');
 }
 

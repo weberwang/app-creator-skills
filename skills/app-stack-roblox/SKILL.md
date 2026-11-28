@@ -5,6 +5,8 @@ description: 在 Roblox Studio 游戏中规划或实现 Luau、Place、客户端
 
 # Roblox Studio 技术栈
 
+从零游戏在阶段 3 使用[固定工程与显示树模板](templates/game-architecture.json)，并按[统一模板流程](../app-creator-workflow/references/game-architecture.md)实施和验收。
+
 大世界和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排；同一 Place 的正式源、Client／Server 权威与跨 Place 运行上下文按真实项目分别核对。
 
 先读 [统一编排](../app-creator-workflow/SKILL.md)和[控制器](../app-workflow-control/SKILL.md)，确认当前 Experience/Place、Studio 实例、权限、项目路径与实际版本。按任务读取[工程与 Studio](references/engineering.md)、[内容与地形](references/content.md)、[文本布局](references/text-layout.md)、[验证与交付](references/verification.md)及本栈[原生能力手册](references/native-contracts.md)。本技能提供原生路线，不创建第二套控制状态。

@@ -1,6 +1,6 @@
 # 游戏与应用技能工作流
 
-为 AI 编程助手提供从商业立项、产品规划、架构和功能实现到模块集成与整体验收的七阶段工作流。支持 Unity、Cocos Creator、Phaser、Three.js、Roblox、Flutter、Expo、ESP32 设备 GUI 和 Node.js，可按项目技术栈安装到 `.agents/skills/`。
+为 AI 编程助手提供从立项、产品定义、架构和功能实现到模块集成与整体验收的七阶段工作流。支持 Unity、Cocos Creator、Phaser、Three.js、Roblox、Flutter、Expo、ESP32 设备 GUI 和 Node.js，可按项目技术栈安装到 `.agents/skills/`。
 
 你可以用自然语言描述想做的游戏、应用或服务器，由统一入口组织产品、架构、玩法、视觉、资源和测试。可见对象共用 V1–V5，各技术栈沿用自身工程规则。Node.js 无界面服务器使用非视觉模块和集成流程。
 
@@ -116,9 +116,9 @@ Roblox 项目由 Studio 内置 MCP 执行场景、脚本及试玩操作。通过
 
 ## 项目如何推进
 
-项目按“商业立项 → 产品定义与版本规划 → 制作技术方案 → 基础工程与架构实现 → 模块实现与体验整合 → 跨模块集成 → 模块集成与整体验收”推进。产品规格决定各版本交付范围。发布按单独明确委托办理。详见[七阶段](skills/app-creator-workflow/references/workflow.md#七阶段)。
+从零游戏按“玩法与题材立项 → 产品定义 → 制作技术方案 → 基础工程与架构实现 → 模块实现与体验整合 → 跨模块集成 → 模块集成与整体验收”推进。已确认的产品需求与本批范围决定交付，用户规划多个版本时再关联实际版本。发布按单独明确委托办理。详见[七阶段](skills/app-creator-workflow/references/workflow.md#七阶段)。
 
-游戏可在第 2 阶段明确玩法后选做[核心玩法验证](skills/app-creator-workflow/references/workflow.md#optional-core-gameplay-check)，用最小可玩原型检验一轮核心操作、规则与反馈。跳过时照常推进。
+从零游戏在第 2 阶段用最小可玩原型完成[核心循环验证](skills/app-creator-workflow/references/workflow.md#optional-core-gameplay-check)，由人工确认实际原型与循环范围。第 3 阶段采用所选技术栈的[固定架构模板](skills/app-creator-workflow/references/game-architecture.md)，第 4 阶段落地并核对结构与接口；编译和打包由后续需要构建产物的工作项安排。
 
 Node.js 服务器沿用公共控制器与质量门，通过 MODULE 实现业务、INTEGRATION 验证当前模块组合。架构覆盖传输、业务、数据访问、外部适配与装配。详见 [Node.js 架构](skills/app-stack-nodejs/references/architecture.md)。
 

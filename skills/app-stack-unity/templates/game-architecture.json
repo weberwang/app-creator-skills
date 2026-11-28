@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "templateVersion": "unity-game-1.0",
+  "stack": "unity",
+  "project": {
+    "entryPoints": ["Assets/Scripts/Foundation/CompositionRoot.cs"],
+    "directories": {
+      "foundation": "Assets/Scripts/Foundation",
+      "shared": "Assets/Scripts/Shared",
+      "gameplay": "Assets/Scripts/Gameplay/<模块ID>",
+      "presentation": "Assets/Scripts/Presentation/<模块ID>",
+      "scenes": "Assets/Scenes"
+    },
+    "lifecycle": "Composition Root 负责唯一启动入口与公共服务装配；场景及模块分别清理自身资源与订阅。"
+  },
+  "display": {
+    "contentRoot": "ContentRoot",
+    "screenHost": "Canvas",
+    "host": "uGUI Screen Space Overlay Canvas；世界使用实际 Scene 和 Camera",
+    "layers": [
+      {"id":"content","mount":"当前 Scene 的世界根","owner":"当前场景","input":"接收未被上层消费的游戏输入","cleanup":"退出时清理场景专属对象与订阅","optional":false},
+      {"id":"hud","mount":"Canvas/HudLayer","owner":"当前场景","input":"控件消费自身命中","cleanup":"随宿主退出卸载","optional":true},
+      {"id":"popups","mount":"Canvas/PopupLayer","owner":"公共弹窗服务","input":"模态弹窗隔离下层输入并恢复焦点","cleanup":"关闭时销毁实例并清理业务活动","optional":false},
+      {"id":"toasts","mount":"Canvas/ToastLayer","owner":"公共提示服务","input":"不阻断输入或抢焦点","cleanup":"展示结束后回收空闲实例","optional":true},
+      {"id":"loading","mount":"Canvas/LoadingLayer","owner":"统一加载服务","input":"前台阻塞期间隔离下层输入","cleanup":"关联任务和令牌完成后隐藏","optional":false}
+    ]
+  }
+}

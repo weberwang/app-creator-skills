@@ -93,6 +93,51 @@ test('轻量初始化直接进入REVIEW，但没有质量门和实施包不能�
   assert.ok(!existsSync(join(repo, work.evidenceRoot, 'execution-state.json')));
 });
 
+test('标准 REVIEW 汇报未决拷问和损坏实施包，正常待规划时仍停在审查', (t) => {
+  const repo = temporaryProject(t);
+  const initialized = call(repo, 'init', ['--id', 'review', '--type', 'MODULE', '--stack', 'flutter', '--objective', '验证标准审查']);
+  const workPath = initialized.metadata.workItemPath;
+  const args = ['--work-item', workPath];
+  const work = read(repo, workPath);
+  Object.assign(work.gateStatus, { F0: 'PASS', F1: 'PASS', F2: 'PASS' });
+  put(repo, workPath, work);
+  assert.equal(call(repo, 'run', args).status, 'STOPPED');
+  work.globalState = 'REVIEW';
+
+  // 真正阻断时，三种诊断入口都应给出原因，且不提示直接进入实施。
+  const path = 'docs/grilling.json';
+  put(repo, path, { schemaVersion: '1.0', workItemId: work.workItemId, status: 'OPEN' });
+  for (const [refs, reason] of [
+    [{ grillingRef: { path } }, /未决拷问/],
+    [{ implementationPackageRef: { path: 'docs/missing-plan.json' } }, /Implementation Package.*不存在/],
+  ]) {
+    put(repo, workPath, { ...work, ...refs });
+    for (const [command, exit] of [['run', 2], ['check', 2], ['status', 0]]) {
+      const result = call(repo, command, args, exit);
+      assert.equal(result.status, 'BLOCKED');
+      assert.ok(result.blocking.some((item) => reason.test(item)));
+      assert.ok(result.next.every((item) => !item.includes('IMPLEMENTING')));
+    }
+    assert.equal(read(repo, workPath).globalState, 'REVIEW');
+  }
+});
+
+test('登记的阻断原因、当前进度和恢复入口在三种诊断中一致', (t) => {
+  const repo = temporaryProject(t);
+  const initialized = call(repo, 'init', ['--id', 'paused', '--type', 'MODULE', '--stack', 'nodejs', '--objective', '验证阻断状态']);
+  const args = ['--work-item', initialized.metadata.workItemPath];
+  const reason = '等待上游交付';
+  call(repo, 'transition', [...args, '--to', 'BLOCKED', '--reason', reason]);
+  for (const [command, exit] of [['run', 2], ['check', 2], ['status', 0]]) {
+    const result = call(repo, command, args, exit);
+    assert.equal(result.status, 'BLOCKED');
+    assert.deepEqual(result.blocking, [reason]);
+    assert.equal(result.metadata.progress, '进度 5·阻断');
+    assert.match(result.next.join(' '), /return-resolution.*INTAKE/);
+  }
+  assert.equal(call(repo, 'transition', [...args, '--to', 'INTAKE', '--return-resolution', '上游交付已核对']).status, 'PASS');
+});
+
 test('轻量模式拒绝视觉、项目、集成、发布、外部动作及多单元计划', async (t) => {
   const repo = temporaryProject(t);
   for (const type of ['PROJECT', 'SCENE', 'PAGE', 'INTEGRATION', 'RELEASE']) {

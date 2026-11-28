@@ -5,6 +5,8 @@ description: 在已选用 Unity 的游戏或交互项目中制定与实现 Unity
 
 # Unity 技术栈
 
+从零游戏在阶段 3 使用[固定工程与显示树模板](templates/game-architecture.json)，并按[统一模板流程](../app-creator-workflow/references/game-architecture.md)实施和验收。
+
 已选 CrazyGames、微信／抖音小游戏、Google Play 或 App Store 时，按[渠道接入](../app-release/references/channel-platform-integration.md)核实当前 Unity 版本对应的 Web、小游戏适配或原生构建路线，再接入所选平台能力；Editor 或普通 WebGL 可运行不证明渠道通过。
 
 大场景和多状态流程按[分批生产](../app-domain-toolkit/references/incremental-production.md)安排，维持同一正式 Scene、Prefab 和资源身份；共享编辑器源保持单写者并在每批保存、回读。
@@ -20,7 +22,7 @@ Sprite 的 Pixels Per Unit 默认 `100`，uGUI 新建 Canvas 的参考像素单�
 
 Unity 动态玩法镜头统一用官方 Cinemachine 包，按[原生镜头控制规范](references/engineering.md#unity-camera-control)实现和验收。
 
-国际化初始化必须在 `foundation-engineering` / S00 完成：UniText 安装与能力检查、正式 JSON 文案加载/校验、启动语言和统一绑定均须有真实基础运行证据，按 [S00 验收条件](../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)核对。该职责适用于单场景及全部文案消费者，不延后到 HUD 或 V5。
+国际化初始化在 `foundation-engineering` / S00 完成实现及结构回读：落实 UniText 引用、正式 JSON 文案加载/校验、启动语言和统一绑定。适用于单场景及全部文案消费者，运行与编译证据按[后续验收](../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)在实际模块及集成阶段取得。
 
 插件执行按任务路由给可用的 Unity CLI、Unity MCP 与框架专项能力；先确认目标工程、活动 Editor 和实时可用命令。规范中列出的插件/工具能力不能视为当前已经连接或已经验证。
 

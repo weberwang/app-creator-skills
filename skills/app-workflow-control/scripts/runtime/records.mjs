@@ -6,7 +6,8 @@ import {
 import { dirname, posix } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { VERSION, VISUAL_STAGES } from './constants.mjs';
-import { assertNoOpenGrilling, bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
+import { assertNoOpenGrilling, bindWorkSource, collectWorkReferencePaths, loadPackage, validateEvidence, validateGlobalBaseline, validateUnitResult, verifyFoundation } from './artifacts.mjs';
+import { assertGameProjectReady, freezeGameGrilling } from './game-project.mjs';
 import { assertFoundationVisual } from './foundation-visual.mjs';
 import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { assertOwnedPath, loadProfile, pathMatch, validateWork } from './validation.mjs';
@@ -39,6 +40,7 @@ export async function prepareWorkRecords({ repo, workItem, planPath }) {
 /** 在 Work Item 锁内校验计划、暂存新记录并最后提交 Work Item 引用。 */
 async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   const work = loadWorkItem(repo, workItem);
+  assertGameProjectReady(repo, work, verifyFoundation);
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
   if (work.workItemType === 'FOUNDATION') assertFoundationVisual(repo, work, { loadWork, validateGlobalBaseline });
@@ -49,6 +51,7 @@ async function prepareWorkRecordsLocked({ repo, workItem, planPath }) {
   // 先检查需求、设计与任务闭环，缺项时不创建实施包或证据目录。
   validateSystemCoverage(repo, work, plan);
   assertPlanningState(repo, work);
+  if (work.gameProjectRef && work.visual?.stage === 'V1') freezeGameGrilling(repo, work);
   freezeProductionDependencies(repo, work, inspectProductionDependencySource);
 
   if (!SAFE_ID.test(work.workItemId)) throw new WorkflowError('Work Item.workItemId 不能安全用于实施包文件名');

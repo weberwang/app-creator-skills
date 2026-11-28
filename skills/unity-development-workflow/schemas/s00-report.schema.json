@@ -134,10 +134,7 @@
       "type": "object",
       "additionalProperties": false,
       "required": [
-        "status",
-        "platformId",
-        "buildVersion",
-        "artifact"
+        "status"
       ],
       "properties": {
         "status": {
@@ -167,7 +164,16 @@
           "type": "string",
           "minLength": 1
         }
-      }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {"status": {"const": "PASS"}},
+            "required": ["status"]
+          },
+          "then": {"required": ["platformId", "buildVersion", "artifact"]}
+        }
+      ]
     },
     "reviews": {
       "type": "array",
@@ -203,20 +209,6 @@
       },
       "then": {
         "properties": {
-          "console": {
-            "properties": {
-              "status": {
-                "const": "PASS"
-              }
-            }
-          },
-          "emptyPlatformBuild": {
-            "properties": {
-              "status": {
-                "const": "PASS"
-              }
-            }
-          },
           "reviews": {
             "minItems": 1,
             "contains": {

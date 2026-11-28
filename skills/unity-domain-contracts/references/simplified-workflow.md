@@ -29,10 +29,10 @@ Unity 运行截图、预览与观看效果由用户人工检查，未经明确�
 
 | 阶段 ID | 用户阶段 | 聚合产物 | 内部落点 |
 | --- | --- | --- | --- |
-| `commercial-initiation` | 商业立项 | 玩家需求、成功标准、商业假设 | `INTAKE` |
-| `requirements-scope` | 产品定义与版本规划 | 目标版本、GDD、范围及验收 | `INTAKE`、`BASELINE` |
-| `global-baseline` | 制作技术方案 | TDD、模块契约和质量预算 | `BASELINE`、`PROPOSAL`、`REVIEW` |
-| `foundation-engineering` | 基础工程与架构实现 | 公共工程和验证证据 | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
+| `commercial-initiation` | 玩法与题材立项 | 人工确认构想后做一次 Grilling | `game-stage` |
+| `requirements-scope` | 产品定义 | GDD 与当前 Game Loop 的人工通过 | `game-stage` |
+| `global-baseline` | 制作技术方案 | 固定架构模板、TDD、模块契约和质量预算 | `game-stage` |
+| `foundation-engineering` | 基础工程与架构实现 | 工程和显示树的结构回读，适用的全局视觉确认 | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
 | `scene-production` | 模块实现与体验整合 | 完整功能、整版 V2 稿件及正式 Scene/Prefab/UI | `REVIEW`、`IMPLEMENTING`、`VALIDATING`、`PASSED` |
 | `cross-module-integration` | 跨模块集成 | 本批跨场景和状态回归证据 | `INTEGRATING` |
 | `global-integration-validation` | 模块集成与整体验收 | 同一候选上的目标版本验收 | `INTEGRATING`、`COMPLETE` |
@@ -41,7 +41,7 @@ Unity 运行截图、预览与观看效果由用户人工检查，未经明确�
 
 ## 单场景 V1-V5
 
-范围记入模块任务。V1 先确认完整模块方案，白盒按风险选择；V2–V5 按[阶段人工确认](./stage-confirmation.md)推进；场景与显示层分别记录 `stageReviews`，技术验证通过不能代替人工确认。V3 必须分别记录拆解图与布局图确认。
+范围记入模块任务。V1 启动时按需做一次 Grilling，再确认完整模块方案，白盒按风险选择。V2–V5 按[阶段人工确认](./stage-confirmation.md)推进，场景与显示层分别记录 `stageReviews`。V3 分别记录拆解图与布局图确认。
 
 | 场景阶段 | 含义 | 最小事实 |
 | --- | --- | --- |

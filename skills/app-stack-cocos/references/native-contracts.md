@@ -96,7 +96,7 @@
 <a id="mode-cocos-game-architecture--全局控制接入"></a>
 #### 全局控制接入
 
-本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V1-V5、A0-A6、F0-F4 与 Work Item 的当前控制模型。任务内方案和路径变化同步更新计划并重验受影响部分；只有实质架构取舍才停止并进入 grilling。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
+本领域在当前 Work Item、Implementation Package、A 等级和允许路径内提议、审查或修改；结果回到 [`app-workflow-control`](../../app-workflow-control/SKILL.md) 审计和状态迁移。遵循 V1-V5、A0-A6、F0-F4 与 Work Item 的当前控制模型。实质架构取舍按当前阶段启动时的一次 Grilling 处理；后续变化同步计划并按变更决定重验受影响部分，阶段 5 仅在 V1 启动时按需执行一次。涉及外部写入、付费、真机、破坏性操作或发布的 A4-A6 行为仍须逐项审批。
 
 <a id="mode-cocos-game-architecture--工程边界"></a>
 #### 工程边界
@@ -138,7 +138,7 @@
 Creator 编辑器写入、AssetDB、场景、节点、组件、Prefab、构建和预览都经[Creator MCP 协议](../../cocos-domain-contracts/references/cocos-mcp-protocol.md)路由；MCP 当前只能打开构建面板或报告 worker ready 时，实际构建/预览保持 pending/blocked，不得记录为成功。
 
 1. 读取 Work Item、用户明确要求、项目版本、目录规范、模块审计、依赖能力档和服务边界。按 F0-F4 提交范围、规格映射、架构结论、工程验证和集成/发布决策；不自行改变全局状态。
-2. 实现前为每个模块记录职责与非目标、公开输入/输出、状态所有权、生命周期、允许/禁止依赖、失败边界、测试和所有者。新模块先确认目标边界和项目事实，只有实质取舍才进入 grilling。
+2. 实现前为每个模块记录职责与非目标、公开输入/输出、状态所有权、生命周期、允许/禁止依赖、失败边界、测试和所有者。新模块先确认目标边界和项目事实，实质取舍并入 V1 启动时按需的一次 Grilling。
 3. 在技术设计中标出共享模块、场景模块、Scene/Prefab/Component 所有权和跨场景依赖。基础包只提供启动、生命周期和公开契约；具体场景玩法、UI 和正式可见资产在其对应场景任务内完成。
 4. UI 采用 [`cocos-game-ui-layout`](#mode-cocos-game-ui-layout) 的布局合同。分别记录 UI 的 Canvas/`UITransform`/`Widget` 关系、世界空间 `Camera`、输入坐标、安全区、设计分辨率策略、方向和运行证据。布局锚点、节点锚点和动画表现偏移分开维护。
 5. 先复用项目依赖与 Creator 能力。新增依赖需记录启用原因、版本、维护/许可、性能和平台风险、验证命令及所有者；未被需求触发的能力不预装。

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "templateVersion": "threejs-game-1.0",
+  "stack": "threejs",
+  "project": {
+    "entryPoints": ["src/game/main.ts"],
+    "directories": {
+      "foundation": "src/game/foundation",
+      "shared": "src/game/shared",
+      "scenes": "src/game/scenes/<场景ID>",
+      "displayLayers": "src/game/display-layers/<显示层ID>"
+    },
+    "lifecycle": "入口创建唯一 Renderer 和更新循环；场景控制器负责 enter、update、exit、dispose 与资源释放。"
+  },
+  "display": {
+    "contentRoot": "ContentRoot",
+    "screenHost": "HudOverlay",
+    "host": "Three.js Scene 世界树与画布上方的公共 DOM 覆盖层",
+    "layers": [
+      {"id":"content","mount":"当前 Scene 的 Object3D 世界根","owner":"当前场景","input":"通过视口映射和射线检测接收游戏输入","cleanup":"退出时释放场景专属对象及资源","optional":false},
+      {"id":"hud","mount":"HudOverlay/HudLayer","owner":"当前场景","input":"控件消费自身命中","cleanup":"随宿主退出卸载","optional":true},
+      {"id":"popups","mount":"HudOverlay/PopupLayer","owner":"公共弹窗服务","input":"模态弹窗隔离世界与下层输入并恢复焦点","cleanup":"关闭时销毁实例并清理业务活动","optional":false},
+      {"id":"toasts","mount":"HudOverlay/ToastLayer","owner":"公共提示服务","input":"不阻断输入或抢焦点","cleanup":"展示结束后回收空闲实例","optional":true},
+      {"id":"loading","mount":"HudOverlay/LoadingLayer","owner":"统一加载服务","input":"前台阻塞期间隔离世界与下层输入","cleanup":"关联任务和令牌完成后隐藏","optional":false}
+    ]
+  }
+}

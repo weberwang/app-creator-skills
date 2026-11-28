@@ -1,4 +1,4 @@
-import { GATES, STACKS, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, WORK_STAGES, TRANSITIONS, workCategory } from './constants.mjs';
+import { GAME_STACKS, GATES, STACKS, STAGES, VERSION, VISUAL_STAGES, WORK_ITEM_TYPES, WORK_STAGES, TRANSITIONS, workCategory } from './constants.mjs';
 import { readFileSync } from 'node:fs';
 import { repoPath, fileIdentityKey, stackProfileLocation, WorkflowError } from './io.mjs';
 import { assertWorkflowPolicy } from './task-policy.mjs';
@@ -15,6 +15,7 @@ const WORK_FIELDS = new Set([
   'returnRecord', 'blockedRecord', 'invalidatedRefs', 'transitionHistory', 'category',
   'workflowMode', 'releaseIntent', 'planningRef', 'integrationPurpose', 'integrationScopeRef', 'integrationEvidenceRef',
   'productionScopeRef', 'productionBatchId', 'productionDependencies', 'imageRoutesRef',
+  'gameStageRefs', 'gameReturnReason', 'gameProjectRef', 'gameMount', 'gameGrillingRef',
 ]);
 
 /** 确认值为非空字符串，错误中保留可定位字段名。 */
@@ -25,6 +26,44 @@ export function requireText(value, field) {
 /** 确认输入为唯一允许的枚举值。 */
 export function requireOneOf(value, options, field) {
   if (!options.includes(value)) throw new WorkflowError(`${field} 值无效：${value}`);
+}
+
+/** 游戏阶段证据和显示挂载仅可出现在适用项目及其后续工作项。 */
+function validateGameFields(work, repo) {
+  const game = GAME_STACKS.includes(work.stack);
+  const project = game && work.workItemType === 'PROJECT';
+  const refs = work.gameStageRefs;
+  if (project) {
+    const completed = work.globalState === 'COMPLETE';
+    const stageIndex = STAGES.indexOf(work.stageId);
+    const expected = Array.from({ length: completed ? 3 : stageIndex }, (_, index) => String(index + 1));
+    if (!refs || typeof refs !== 'object' || Array.isArray(refs) ||
+        Object.keys(refs).join(',') !== expected.join(',') || (completed && stageIndex !== 2) ||
+        !['INTAKE', 'BLOCKED', 'RETURN', 'COMPLETE'].includes(work.globalState)) {
+      throw new WorkflowError('游戏 PROJECT 须保存阶段 1–3 的证据引用');
+    }
+    for (const ref of Object.values(refs)) {
+      requireText(ref?.path, 'gameStageRefs.path');
+      if (!/^[a-f0-9]{64}$/.test(ref.sha256 ?? '')) throw new WorkflowError('gameStageRefs 须包含 SHA-256');
+      if (repo) repoPath(repo, ref.path, '游戏阶段记录');
+    }
+  } else if (refs !== undefined || work.gameReturnReason !== undefined) throw new WorkflowError('只有游戏 PROJECT 可声明产品阶段记录');
+  if (project && work.globalState === 'RETURN') requireText(work.gameReturnReason, 'gameReturnReason');
+  else if (work.gameReturnReason !== undefined) throw new WorkflowError('只有游戏 PROJECT 回退态可记录 gameReturnReason');
+  if (work.gameProjectRef !== undefined && (!game || project || !/^[a-f0-9]{64}$/.test(work.gameProjectRef?.sha256 ?? ''))) {
+    throw new WorkflowError('游戏架构须引用阶段 3 的冻结身份');
+  }
+  if (work.gameMount !== undefined) {
+    if (!work.gameProjectRef) throw new WorkflowError('挂载点须绑定游戏项目方案');
+    const allowed = work.workItemType === 'SCENE' ? ['content', 'hud'] : work.workItemType === 'DISPLAY_LAYER' ? ['popups', 'toasts'] : [];
+    requireOneOf(work.gameMount, allowed, 'gameMount');
+  } else if (work.gameProjectRef && work.visual) {
+    throw new WorkflowError('游戏视觉工作项必须绑定模板挂载点');
+  }
+  if (work.gameGrillingRef !== undefined && (!game || !work.visual ||
+      (work.gameGrillingRef !== null && !/^[a-f0-9]{64}$/.test(work.gameGrillingRef.sha256 ?? '')))) {
+    throw new WorkflowError('游戏 Grilling 冻结记录必须属于可见模块并绑定摘要');
+  }
 }
 
 /** 验证并加载技术 profile；控制器只消费通用字段。 */
@@ -171,7 +210,8 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
   validatePathList(work.forbiddenPaths, 'Work Item.forbiddenPaths');
   if (!work.gateStatus || typeof work.gateStatus !== 'object') throw new WorkflowError('Work Item.gateStatus 必须记录 F0–F4');
   for (const gate of GATES) requireOneOf(work.gateStatus[gate], ['PASS', 'FAIL', 'NOT_RUN'], `gateStatus.${gate}`);
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'foundationVisualRef', 'imageRoutesRef']) {
+  validateGameFields(work, repo);
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'foundationVisualRef', 'imageRoutesRef', 'gameProjectRef', 'gameGrillingRef']) {
     const ref = work[name];
     if (ref !== undefined && ref !== null) {
       if (typeof ref !== 'object' || Array.isArray(ref)) throw new WorkflowError(`Work Item.${name} 必须为含 path 的对象或 null`);
@@ -258,7 +298,7 @@ export function validateWork(work, { repo, requireProfile = true } = {}) {
     if (work.globalState === 'RETURN' && work.returnRecord.resolvedAt !== null) throw new WorkflowError('RETURN 状态的恢复记录必须尚未解决');
     if (work.globalState !== 'RETURN' && work.returnRecord.resolvedAt === null) throw new WorkflowError('未解决的 RETURN 不能通过 BLOCKED/其他状态绕过');
   }
-  if (work.globalState === 'RETURN' && !work.returnRecord) throw new WorkflowError('RETURN 状态缺少 affected-scope 恢复记录');
+  if (work.globalState === 'RETURN' && !work.returnRecord && !work.gameReturnReason) throw new WorkflowError('RETURN 状态缺少 affected-scope 恢复记录');
   if (work.globalState === 'BLOCKED' && (!work.blockedRecord || work.blockedRecord.resolvedAt !== null)) throw new WorkflowError('BLOCKED 状态必须记录尚未解决的阻断入口');
   if (work.blockedRecord !== undefined && work.blockedRecord !== null) {
     if (typeof work.blockedRecord.reason !== 'string' || !['INTAKE', 'BASELINE', 'PROPOSAL', 'REVIEW', 'IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING'].includes(work.blockedRecord.returnState)) {

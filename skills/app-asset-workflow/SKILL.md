@@ -1,6 +1,6 @@
 ---
 name: app-asset-workflow
-description: 在游戏与应用工作流中规划、生成、拆解、修订和导入视觉素材，通过统一视觉签名、生产规格、系列一致性和人工审阅减少生成图片的模板感与失真；不把图片生成成功视为视觉验收通过。
+description: 在游戏与应用工作流中规划、生成、拆解、修订和导入视觉素材，支持游戏美术与 UI 风格选型，并通过统一视觉签名、生产规格、系列一致性和人工审阅减少生成图片的模板感与失真；不把图片生成成功视为视觉验收通过。
 ---
 
 # 有设计约束的素材生产
@@ -10,6 +10,8 @@ description: 在游戏与应用工作流中规划、生成、拆解、修订和�
 接入 [app-creator-workflow](../app-creator-workflow/SKILL.md) 的全局基线与 V1–V5，按[公共执行规范](../app-creator-workflow/references/professional-execution.md)交接。第 4 阶段确认并冻结全局视觉方向与代表稿；V1 确认模块方案，V2 生成并确认覆盖全部适用状态和进度的模块稿，V3 拆解同一确认稿，V4 同批将文字与图片资源接入并还原到正式目标源，V5 完整实现与正式运行验收。
 
 游戏图片路线的阶段 4 按[游戏美术方向](references/game-art-direction.md)交付调研与参考，定义全局、原画和 UI 三层及两套生图提示词。先交一张推荐稿，听取日常语言反馈，按需追加对照。人工确认最终实际稿后冻结，V2 继承选定规则。
+
+游戏阶段 4 首次确定全局方向，或用户单独要求查看风格、按项目推荐或手动指定搭配时，读取[游戏美术与 UI 风格选型](references/game-art-style-selection.md)。推荐默认交付一套，单独调用可直接输出文字。
 
 场景、页面、HUD、弹出层、素材和交互显示对象共用[体验、视觉方向与意图表达](references/interface-intent.md#design-basis)这一权威：市场、竞品、受众与参考分析必须按[统一要求](../app-creator-workflow/references/professional-conventions.md#product-market-research)完成或核实复用，缺失或变化部分先补齐；再按本批真实行为、压力和状态形成方向，区分硬约束、方向与探索空间，确定信息、空间归属及必要文字。每次生图按[制作输入与发送前检查](references/style-and-production.md#生成前约束)将适用分析转成真实提示词，后台细节留在工程规格；检查纳入现有审阅。正式页面保留必要文案与无障碍标签。
 

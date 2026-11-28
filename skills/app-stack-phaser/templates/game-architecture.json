@@ -1,0 +1,27 @@
+{
+  "schemaVersion": "1.0",
+  "templateVersion": "phaser-game-1.0",
+  "stack": "phaser",
+  "project": {
+    "entryPoints": ["src/game/main.ts"],
+    "directories": {
+      "foundation": "src/game/foundation",
+      "shared": "src/game/shared",
+      "scenes": "src/game/scenes/<场景ID>",
+      "displayLayers": "src/game/display-layers/<显示层ID>"
+    },
+    "lifecycle": "入口创建唯一 Phaser.Game；场景退出解除计时器、监听及自有资源，共享缓存由公共所有者管理。"
+  },
+  "display": {
+    "contentRoot": "ContentRoot",
+    "screenHost": "UI",
+    "host": "玩法 Scene 与固定处于其上方的公共 UI Scene",
+    "layers": [
+      {"id":"content","mount":"当前玩法 Scene 的显示列表","owner":"当前场景","input":"接收未被公共 UI Scene 消费的游戏输入","cleanup":"Scene 关闭时清理对象与事件","optional":false},
+      {"id":"hud","mount":"UI/HudLayer","owner":"当前场景","input":"控件消费自身命中","cleanup":"随宿主退出卸载","optional":true},
+      {"id":"popups","mount":"UI/PopupLayer","owner":"公共弹窗服务","input":"模态弹窗隔离下层输入并恢复焦点","cleanup":"关闭时销毁实例并清理业务活动","optional":false},
+      {"id":"toasts","mount":"UI/ToastLayer","owner":"公共提示服务","input":"不阻断输入或抢焦点","cleanup":"展示结束后回收空闲实例","optional":true},
+      {"id":"loading","mount":"UI/LoadingLayer","owner":"统一加载服务","input":"前台阻塞期间隔离下层输入","cleanup":"关联任务和令牌完成后隐藏","optional":false}
+    ]
+  }
+}

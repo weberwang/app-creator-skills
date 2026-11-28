@@ -75,14 +75,10 @@ async function runDomainChecks({ repo, work, target, stage }) {
     const fullPath = resolve(SKILLS_ROOT, 'unity-domain-contracts/scripts/unity-contract-validation.mjs');
     if (!existsSync(path) || !existsSync(fullPath)) throw new WorkflowError('当前安装缺少 Unity 可见对象领域校验器');
     const { native, evidence } = validateUnityIdentity(repo, document, work, target, stage);
-    const validator = await import(pathToFileURL(path).href);
     const nativeValidator = await import(pathToFileURL(fullPath).href);
-    // V2/V3 同样通过完整领域记录校验，不能凭自填 PASS 和阶段字段通过。
+    // 完整原生入口已经覆盖可见对象与证据合同，同一目标只需校验一次。
     nativeValidator.validateWorkItem(native);
     if (evidence) nativeValidator.validateEvidence(evidence, native, null, repo);
-    const errors = validator.validateVisibleWorkItemContract(native);
-    if (evidence) errors.push(...validator.validateVisibleEvidenceContract(evidence, native, repo));
-    if (errors.length) throw new WorkflowError(`Unity 领域合同失败：${errors.join('；')}`);
     const promptApprovals = loadHistoricalPromptApprovals(repo, work, target, null, stage);
     if (stage === 'V5' && promptApprovals) {
       // 正式运行不得由两个各自通过、却来自不同批次的布局文件拼接证明。

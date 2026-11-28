@@ -1,11 +1,12 @@
 import { existsSync } from 'node:fs';
-import { GATES, VERSION } from './constants.mjs';
+import { GAME_STACKS, GATES, STAGES, VERSION } from './constants.mjs';
 import { atomicWriteJson, repoPath, WorkflowError } from './io.mjs';
 import { loadProfile, requireOneOf, requireText, validateWork } from './validation.mjs';
 import { withWorkLock } from './work-lock.mjs';
 import { response } from './responses.mjs';
 import { bindProductionScope } from './production-scope.mjs';
 import { probeDesignCodex, withInitializedImageRoutes } from './image-route-policy.mjs';
+import { bindGameArchitecture } from './game-project.mjs';
 
 /** 创建不覆盖已有文件的最小 Work Item 与固定目录布局。 */
 export async function initializeWork({ repo, args, workflowEntry = false, probeCodex = probeDesignCodex }) {
@@ -66,7 +67,7 @@ async function initializeWorkLocked({ repo, args, workflowEntry, probeCodex }) {
   if (type !== 'INTEGRATION' && args['integration-purpose'] !== undefined) throw new WorkflowError('只有 INTEGRATION 可以使用 --integration-purpose');
   if (args.stage !== undefined) {
     if (type !== 'PROJECT') throw new WorkflowError('只有 PROJECT 可以指定产品规划阶段');
-    requireOneOf(args.stage, ['commercial-initiation', 'requirements-scope', 'global-baseline'], '--stage');
+    requireOneOf(args.stage, GAME_STACKS.includes(stack) ? [STAGES[0]] : STAGES.slice(0, 3), '--stage');
   }
   if (visualType && type === 'DISPLAY_LAYER') {
     requireText(args['host-id'], '--host-id');
@@ -88,6 +89,7 @@ async function initializeWorkLocked({ repo, args, workflowEntry, probeCodex }) {
     forbiddenPaths: ['node_modules/**', '**/.git/**', '**/Library/**', '**/Temp/**'],
     gateStatus: Object.fromEntries(GATES.map((gate) => [gate, 'NOT_RUN'])),
     revision: 0,
+    ...(type === 'PROJECT' && GAME_STACKS.includes(stack) ? { gameStageRefs: {} } : {}),
     implementationPackageRef: null,
     planningRef: null,
     evidenceRef: null,
@@ -109,6 +111,7 @@ async function initializeWorkLocked({ repo, args, workflowEntry, probeCodex }) {
       ...(type === 'SCENE' ? (args['design-route'] === 'world-3d' ? {} : { targets: [] }) : { reviews: {} }),
     } } : {}),
   };
+  bindGameArchitecture(repo, work, { source: args['game-project'], mount: args['mount-layer'] });
   if (type !== 'RELEASE' && args['release-intent'] !== undefined) throw new WorkflowError('只有 RELEASE 可以使用 --release-intent');
   for (const key of ['production-scope', 'production-batch', 'production-dependencies']) if (args[key] !== undefined) requireText(args[key], `--${key}`);
   bindProductionScope(repo, work, { scopePath: args['production-scope'], batchId: args['production-batch'], dependenciesPath: args['production-dependencies'] });

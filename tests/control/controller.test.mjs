@@ -667,6 +667,13 @@ test('SCENE V2 推进必须逐目标验证真实领域合同及各自确认', as
   const { plan } = await prepareFormalVisualFixture(fixture);
   await advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V2' });
   const missing = await readWork(fixture.repo, fixture.workPath);
+  assert.equal(missing.gameGrillingRef, null);
+  // 即使 V2 记录丢掉冻结字段并登记新答复，V1 快照也会阻断推进。
+  const laterGrilling = 'docs/later-grilling.json';
+  await putJson(fixture.repo, laterGrilling, { schemaVersion: '1.0', workItemId: missing.workItemId, status: 'CLOSED',
+    userMessageRef: 'user://later', decisions: [{ question: '重新拷问', answer: '新增决定', userMessageRef: 'user://later' }] });
+  await putJson(fixture.repo, fixture.workPath, { ...missing, gameGrillingRef: undefined, grillingRef: { path: laterGrilling } });
+  await assert.rejects(advanceVisual({ repo: fixture.repo, workItem: fixture.workPath, to: 'V3' }), /模块方案已变化/);
   const moduleDesignPath = 'docs/scene-module-design.json';
   await putJson(fixture.repo, moduleDesignPath, { schemaVersion: '1.0', workItemId: missing.workItemId,
     modulePlanRef: missing.visual.modulePlanRef, baselineRef: missing.globalVisualBaselineRef,

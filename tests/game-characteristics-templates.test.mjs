@@ -1,4 +1,4 @@
-/** 验证四栈实际生成的项目文档接入游戏特点、V1 与 QA 回归。 */
+/** 验证五栈实际生成的项目文档接入游戏特点、V1 与 QA 回归。 */
 import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -68,13 +68,34 @@ for (const [stack, skill] of Object.entries(STACKS)) {
     assert.deepEqual(createQa().map((path) => basename(path)), ['qa-plan.md'], '仅选择 QA 时不得生成其他模板');
     assert.throws(createQa, /拒绝覆盖已有文档/);
 
+    if (['cocos', 'phaser', 'threejs'].includes(stack)) {
+      // 验证已安装初始化器的真实输出，防止旧阶段门通过生成文档重新出现。
+      const initializer = await import(pathToFileURL(join(root, skill, 'scripts/initialize_project_docs.mjs')).href);
+      initializer.initializeDocuments(project, initializer.selectTemplates(['platform', 'assets']), false);
+      const tdd = readFileSync(join(docsRoot, 'TDD.md'), 'utf8');
+      const visual = readFileSync(join(docsRoot, 'visual-design.md'), 'utf8');
+      const platform = readFileSync(join(docsRoot, 'platform-matrix.md'), 'utf8');
+      const licenses = readFileSync(join(docsRoot, 'asset-license-register.md'), 'utf8');
+      assert.doesNotMatch([tdd, visual, licenses].join('\n'), /\bV0\b/);
+      assert.match(tdd, /阶段 5 在 V1 启动时按需集中做一次 grilling/);
+      assert.match(tdd, /V2–V5 的新增取舍按现有变更或人工确认处理/);
+      assert.match(tdd, /阶段 4 回读固定工程入口、显示宿主、配置与接口/);
+      assert.match(tdd, /编译、打包及运行检查由后续适用工作承担/);
+      assert.doesNotMatch(tdd, /仅有实质用户取舍时停止受影响实现并进入 grilling/);
+      assert.doesNotMatch(tdd, /foundation-only 仅由 SHARED\/MODULE 组成，且必须绑定完成候选人工选择/);
+      assert.match(visual, /V1 明确模块规则、状态、依赖及验收条件/);
+      assert.match(platform, /阶段 4 只回读基础结构、配置与接口/);
+      assert.doesNotMatch(platform, /共享基础只做代表性.*(?:启动|构建)/);
+    }
+
     for (const [name, fragment, contentFragments] of [
       ['GDD.md', 'identify', ['levels']],
       ['TDD.md', 'v1', ['levels', 'tools', 'playtest']],
       ['qa-plan.md', 'qa', ['playtest']],
     ]) {
       const path = join(docsRoot, name);
-      const actual = readFileSync(path, 'utf8');
+      // 静态 Markdown 可能保留 Windows 换行，统一换行后严格比较模板内容。
+      const actual = readFileSync(path, 'utf8').replaceAll('\r\n', '\n');
       assert.ok(actual.endsWith(common.GAME_CHARACTERISTICS_TEMPLATE_SECTIONS[name]), `${stack}/${name} 公共表格不一致`);
       verifyReference(project, path, fragment);
       if (name !== 'GDD.md') verifyReference(project, path, 'regression');

@@ -24,6 +24,8 @@ export async function freezeModulePlan(repo, work, fileDigest) {
     designRoute: work.visual.designRoute,
     hostId: work.visual.hostId,
     layerType: work.visual.layerType,
+    ...(work.gameProjectRef && { gameProjectRef: work.gameProjectRef, gameMount: work.gameMount }),
+    ...(work.gameGrillingRef !== undefined && { gameGrillingRef: work.gameGrillingRef }),
     productionScopeRef: work.productionScopeRef ?? null,
     productionBatchId: work.productionBatchId ?? null,
     evidenceRoot: work.evidenceRoot,
@@ -85,11 +87,15 @@ export function assertFrozenModulePlan(repo, work, snapshot) {
   const frozenPlan = snapshot ?? readJson(repo, productionIdentity(repo, work.visual.functionBaselineRef, 'V1 模块方案冻结记录'), 'V1 模块方案冻结记录');
   const scopeChanged = (frozenPlan?.productionScopeRef || work.productionScopeRef)
     && !samePlanRef(repo, frozenPlan?.productionScopeRef, work.productionScopeRef);
+  const grillingChanged = frozenPlan?.gameGrillingRef !== work.gameGrillingRef &&
+    !samePlanRef(repo, frozenPlan?.gameGrillingRef, work.gameGrillingRef);
   if (frozenPlan?.schemaVersion !== '1.0' || frozenPlan.mode !== 'module-plan'
     || frozenPlan.workItemId !== work.workItemId || frozenPlan.projectId !== work.projectId
     || frozenPlan.stack !== work.stack || frozenPlan.workItemType !== work.workItemType
     || frozenPlan.objectId !== work.visual.objectId || frozenPlan.designRoute !== work.visual.designRoute
     || frozenPlan.hostId !== work.visual.hostId || frozenPlan.layerType !== work.visual.layerType
+    || frozenPlan.gameMount !== work.gameMount || grillingChanged
+    || ((frozenPlan.gameProjectRef || work.gameProjectRef) && !samePlanRef(repo, frozenPlan.gameProjectRef, work.gameProjectRef))
     || scopeChanged || frozenPlan.productionBatchId !== (work.productionBatchId ?? null)
     || !samePlanRef(repo, frozenPlan.modulePlanRef, work.visual.modulePlanRef)) {
     throw new WorkflowError('模块方案已变化或冻结记录错绑，须返回 V1');

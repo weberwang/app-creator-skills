@@ -5,6 +5,25 @@ import { dependencyPath } from './feature-dependencies.mjs';
 import { bindWorkSource } from './work-source.mjs';
 import { validateProductionScope } from './production-scope.mjs';
 import { collectSystemCoverageReferences } from './system-coverage.mjs';
+import { assertSameGameProject } from './game-project.mjs';
+
+/** 最终跨模块用例在已完成的同基线阶段 6 批次中应有对应的覆盖。 */
+export function assertGameIntegrationCoverage(repo, work, scope, packages, featurePackages) {
+  if (!work.gameProjectRef) return;
+  for (const entry of scope.cases.filter(({ objectIds, crossModule }) => objectIds.length > 1 || crossModule === true)) {
+    const covered = new Set();
+    for (const mapping of scope.systemCoverageMappings ?? []) {
+      if (!mapping?.sourcePackageRef?.path || !Array.isArray(mapping.verifications) ||
+          !mapping.verifications.some((check) => check?.caseId === entry.caseId)) continue;
+      const key = fileIdentityKey(repo, mapping.sourcePackageRef.path);
+      const source = packages.get(key);
+      if (!featurePackages.has(key) || source?.packRef.sha256 !== mapping.sourcePackageRef.sha256 ||
+          !Array.isArray(mapping.objectIds) || mapping.objectIds.length < Math.min(2, entry.objectIds.length)) continue;
+      for (const id of mapping.objectIds) if (source.objectIds.includes(id)) covered.add(id);
+    }
+    if (entry.objectIds.some((id) => !covered.has(id))) throw new WorkflowError(`最终跨模块用例 ${entry.caseId} 缺少同基线的阶段 6 集成证据`);
+  }
+}
 
 /** 收集最终范围的冻结输入，不能把来源包或其需求设计当作本次交付改写。 */
 export function collectIntegrationScopeReferences(repo, work) {
@@ -94,6 +113,7 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
   const active = new Set();
   const checked = new Set();
   const visualSources = new Map();
+  const featurePackages = new Set();
 
   /** 合并同一来源的消费对象，要求每份不同阶段的需求都参与最终映射。 */
   function addPackage(ref, source, objectId, origin = false) {
@@ -117,6 +137,7 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
     if (checked.has(checkedKey)) return;
     const source = bindWorkSource(loaded.value, loaded.ref.path);
     if (source.workItemId === work.workItemId || source.projectId !== work.projectId || source.stack !== work.stack) throw new WorkflowError('最终系统来源项目、技术栈或工作项身份不匹配');
+    assertSameGameProject(repo, work, source, '最终集成来源');
     if (source.visual && (source.visual.designIntent === 'proposal' || source.visual.stage !== 'V5' || source.globalState !== 'COMPLETE')) throw new WorkflowError('最终系统的视觉来源必须完成实际 V5，不能采用仅设计提案');
     if (!['PASSED', 'COMPLETE'].includes(source.globalState)) throw new WorkflowError('最终系统来源尚未完成实际验证');
     active.add(key);
@@ -137,6 +158,9 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
         }
       }
       addPackage(source.implementationPackageRef, source, objectId);
+      if (source.workItemType === 'INTEGRATION' && source.integrationPurpose === 'feature' && source.globalState === 'COMPLETE') {
+        featurePackages.add(fileIdentityKey(repo, source.implementationPackageRef.path));
+      }
       for (const dependency of source.visual?.functionDependencies ?? []) visit({ ...dependency.workItemRef, path: dependencyPath(repo, dependency.workItemRef.path) }, objectId, historical);
       for (const dependency of source.productionDependencies ?? []) visit(dependency.workItemRef, objectId, true);
       if (source.visual?.functionBaselineRef?.path) {
@@ -200,5 +224,6 @@ export function collectIntegrationSystemSources(repo, work, scope, inspectSource
       }
     }
   }
+  assertGameIntegrationCoverage(repo, work, scope, packages, featurePackages);
   return [...packages.values()];
 }

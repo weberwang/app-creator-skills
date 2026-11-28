@@ -3,10 +3,11 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { installSkills, STACKS } from '../packages/installer/install-project-skills.mjs';
 
 /** 检查仓库自有控制器代码及实际领域入口均随单栈安装，不伪称来自外部源。 */
-for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成及对应领域的代码与规范`, (t) => {
+for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成及对应领域的代码与规范`, async (t) => {
   const project = mkdtempSync(join(tmpdir(), `stage-install-${stack}-`));
   // 仅回收当前用例创建的独立临时项目。
   t.after(() => rmSync(project, { recursive: true, force: true }));
@@ -42,6 +43,14 @@ for (const stack of STACKS) test(`${stack} 单栈安装保留功能集成及对�
       ? ['unity-domain-contracts/scripts/unity-contract-validation.mjs', 'unity-domain-contracts/scripts/runtime/visible-contract.mjs']
       : [`${stack}-domain-contracts/scripts/scene-reconstruction-contract.mjs`, `${stack}-domain-contracts/scripts/visual-confirmation-authority.mjs`, `${web[stack]}-game-asset-integration/scripts/validate_visual_manifest.mjs`];
   for (const relative of [...shared, ...native]) assert.ok(existsSync(join(skills, ...relative.split('/'))), `${stack} 缺少 ${relative}`);
+  if (web[stack]) {
+    // 实际导入安装产物，核对收敛后的共享实现随当前单栈一起分发。
+    const domain = join(skills, `${stack}-domain-contracts`, 'scripts');
+    const prerequisites = await import(pathToFileURL(join(domain, 'visual-stage-prerequisites.mjs')).href);
+    const reviews = await import(pathToFileURL(join(domain, 'visual-confirmation-reuse-gates.mjs')).href);
+    assert.deepEqual(prerequisites.VISUAL_STAGE_IDS, ['V1', 'V2', 'V3', 'V4', 'V5']);
+    assert.equal(typeof reviews.validateVisualConfirmationGate, 'function');
+  }
   const workSchema = JSON.parse(readFileSync(join(skills, 'app-workflow-control/schemas/work-item.schema.json'), 'utf8'));
   assert.ok(workSchema.properties.integrationPurpose);
   assert.ok(workSchema.properties.integrationScopeRef);

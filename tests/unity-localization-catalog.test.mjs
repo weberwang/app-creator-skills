@@ -127,6 +127,15 @@ test('S00 报告允许单场景基础能力，同时保留共享消费者和质�
   assert.equal(singleScene.status, 'NOT_RUN');
   assert.equal(validate(singleScene), true, JSON.stringify(validate.errors));
 
+  // 结构验收可完成，后续构建与 Console 记录保持未执行。
+  const structurePassed = { ...singleScene, status: 'PASS', reviews: [{
+    approvalType: 'QUALITY_GATE', authority: 'INDEPENDENT_REVIEWER', subjectId: 'task.s00',
+    subjectVersion: '1.0', approvedBy: '测试审阅', approvedAtUtc: '2026-01-01T00:00:00Z', evidencePath: 'docs/readback.json',
+    reviewTaskId: 'task.s00-review', reviewDiscipline: 'UNITY_FEASIBILITY',
+  }] };
+  assert.equal(validate(structurePassed), true, JSON.stringify(validate.errors));
+  assert.equal(validate({ ...structurePassed, emptyPlatformBuild: { status: 'PASS' } }), false);
+
   const incompleteShared = structuredClone(report);
   incompleteShared.sharedCapabilities[0].usedByScenes = ['scene.arena-intro'];
   assert.equal(validate(incompleteShared), false);

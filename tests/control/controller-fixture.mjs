@@ -10,6 +10,7 @@ import { attachFigmaBaselineFixture } from './figma-app-fixture.mjs';
 import { syntheticDesignPng } from './visual-image-fixture.mjs';
 import { withModuleRules } from './module-rules-fixture.mjs';
 import { visualResearchFixture } from './visual-research-fixture.mjs';
+import { GAME_STACKS } from '../../skills/app-workflow-control/scripts/runtime/constants.mjs';
 
 const qualityDimensions = ['themeFit', 'audienceFit', 'taskReadability', 'viewingComfort', 'artCompletion'];
 
@@ -182,7 +183,8 @@ export async function submitPassingUnits({ repo, work, workPath, packPath, units
 export async function bindEvidence({ repo, work, workPath, packPath, stage, extraCategories = [] }) {
   const profile = loadProfile(repo, work.stack);
   const categories = [...new Set([
-    ...profile.evidenceRequirements.engineering,
+    ...(work.workItemType === 'FOUNDATION' && GAME_STACKS.includes(work.stack)
+      ? ['architecture-structure'] : profile.evidenceRequirements.engineering),
     ...(stage === 'V4' ? profile.evidenceRequirements.assetImport ?? [] : []),
     ...(stage === 'V5' ? profile.evidenceRequirements.visual : []),
     ...extraCategories,

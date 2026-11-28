@@ -65,6 +65,7 @@ function inspectIntegrationScope(repo, work, { inspectSource = inspectFunctionSo
   const covered = new Set();
   for (const entry of scope.cases) {
     if (!entry || typeof entry.caseId !== 'string' || !entry.caseId.trim() || caseIds.has(entry.caseId) || !Array.isArray(entry.objectIds) || !entry.objectIds.length || new Set(entry.objectIds).size !== entry.objectIds.length || entry.objectIds.some((id) => !objectIds.has(id))) throw new WorkflowError('最终集成范围行为必须唯一并引用已登记对象');
+    if (entry.crossModule !== undefined && typeof entry.crossModule !== 'boolean') throw new WorkflowError('最终用例 crossModule 必须为布尔值');
     caseIds.add(entry.caseId);
     for (const id of entry.objectIds) covered.add(id);
   }

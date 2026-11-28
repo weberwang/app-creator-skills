@@ -103,7 +103,7 @@
 1. 在 TDD 记录 Unity Editor、Unity CLI、`com.unity.pipeline` 与包版本、模块职责、asmdef、Composition Root、场景与状态流、输入、时间/随机、资源、存档、日志、错误处理、测试和构建；采用 SDK 时按[统一初始化合同](../../unity-development-workflow/references/sdk-initialization.md)登记唯一入口、真实前置、完成信号、失败隔离和重试所有者。
 2. 分离纯规则、Unity 表现、Editor 工具和外部服务；Runtime 程序集不引用 Editor 实现。文本按 [UniText 与 JSON 国际化](../../unity-development-workflow/references/text-and-localization.md)设计统一加载、语言服务与绑定，实施前检查安装，异常时由用户选择修复或回退 TMP，所有文案消费者均不按语言判断翻译。
 3. 国际化是 S00 必需的项目级启动能力，单场景也必须完成；其余业务复用能力仅在至少两个场景共同需要时上移 Foundation/Shared，为公共接口建立消费者和变更影响清单，不为国际化伪造第二个场景。
-4. 在基础工程阶段以 SHARED/MODULE 单元实现可运行最小骨架、测试入口和可复现空壳构建，按 [S00 国际化验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)完成 UniText 检查、正式 JSON 加载/校验/索引、启动语言解析及统一绑定；不等视觉稿、HUD 或 V5。平台服务通过接口隔离，不为未选择平台增加实现；无关 SDK 独立启动，不阻塞首帧，但本地化内容须在文案服务就绪后显示。
+4. 在基础工程阶段以 SHARED/MODULE 单元实现最小骨架、测试入口和国际化初始化，回读 UniText 引用、正式 JSON 路径、加载与统一绑定结构；后续实际模块按 [国际化验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)验证运行链路。基础工程不执行玩法、编译或打包验证。平台服务通过接口隔离，不为未选择平台增加实现；无关 SDK 独立启动，不阻塞首帧，但本地化内容须在文案服务就绪后显示。
 5. 为所有可见 Scene、常驻 HUD 和独立 DISPLAY_LAYER 定义唯一 Unity 原生响应式合同，冻结 Camera、Screen/Game View、CanvasScaler 或 PanelSettings、安全区、输入坐标、resize/orientation、文本、资源分辨率、性能预算和代表性视口。UI/2D 位图默认 `sourceScale=1` 只表示生产像素密度，不是固定运行时 DPR；运行时以平台、Canvas/Panel、Camera、Render Scale、动态分辨率和 Importer 实测为准。
 6. 场景 Implementation Package 只包含 `SCENE`，弹窗包只包含 `DISPLAY_LAYER`；`hostSceneId` 只绑定公开接口和运行上下文，不表示所有权或完成依赖。Scene/Prefab/UXML/UIDocument 装配与视觉资源来源分别建模，禁止用整屏复合图代替结构。
 7. 按目标设备、镜头距离和场景密度为 3D 资产定义可验证预算：三角形/顶点、LOD、骨骼与蒙皮、材质槽、碰撞体、Texel Density、纹理尺寸与内存、Mip/Streaming、Draw Call、Shader/变体和 Prefab 依赖；把预算分别交给 `$app-3d-modeling`、`$app-3d-texturing` 和独立 QA，不代替它们制作或批准资产。
@@ -125,7 +125,7 @@
 <a id="mode-unity-gameplay-development--输入与决策"></a>
 #### 输入与决策
 
-读取 Work Item、Implementation Package、项目配置、GDD、TDD、资源契约、测试与当前场景 manifest。只实现范围内且可观察验收的增量；职责、公开契约、状态所有权、依赖方向、场景生命周期与体验边界存在实质取舍时交给 `$grilling`，否则记录合理假设并推进。
+读取 Work Item、Implementation Package、项目配置、GDD、TDD、资源契约、测试与当前场景 manifest。只实现范围内且可观察验收的增量；阶段 5 的职责、契约及状态边界取舍集中在 V1 启动时按需执行一次 `$grilling`，后续新增问题沿已有变更决定处理。
 
 <a id="mode-unity-gameplay-development--实现与交接"></a>
 #### 实现与交接
@@ -168,7 +168,7 @@ Editor/Scene/Prefab 操作交给 `unity:unity-cli`；新增显示元素和动态
 <a id="mode-unity-game-audio--输入与决策"></a>
 #### 输入与决策
 
-读取 Work Item、相关音频、代码、项目配置、GDD/TDD、资源登记与音频计划。音频方向、授权、响度、预算、外部成本或发布资格存在实质取舍时交给 `$grilling`；购买、上传或外部生成还必须由控制面取得精确操作批准。
+读取 Work Item、相关音频、代码、项目配置、GDD/TDD、资源登记与音频计划。音频方向、授权或响度等实质取舍按当前阶段的 Grilling 时机集中处理；阶段 5 仅在 V1 启动时按需做一次。购买、上传或外部生成仍须由控制面取得精确操作批准。
 
 <a id="mode-unity-game-audio--执行与交接"></a>
 #### 执行与交接
@@ -200,7 +200,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 <a id="mode-unity-game-balance--输入与决策"></a>
 #### 输入与决策
 
-读取 Work Item、相关玩法、配置、测试、GDD 和 `docs/balance.md`。目标节奏、经济、商业化影响、允许偏差、验收阈值或高风险曲线存在实质取舍时交给 `$grilling`；其余范围内可逆配置由实施包记录后推进。
+读取 Work Item、相关玩法、配置、测试、GDD 和 `docs/balance.md`。目标节奏、经济或验收阈值等实质取舍按当前阶段的 Grilling 时机集中处理；阶段 5 仅在 V1 启动时按需做一次，其余范围内可逆配置由实施包记录后推进。
 
 <a id="mode-unity-game-balance--执行与交接"></a>
 #### 执行与交接
@@ -498,7 +498,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 
 - 通用工作流步骤见[完整规范](../../app-domain-toolkit/references/modeling-production.md#冻结模型简报)。
 - 缺少模型规格、所选来源所需能力、明确的源和输出范围、唯一 Unity 项目目标或修改授权时，可先输出带假设标记的只读规格建议，但受影响写入保持 `BLOCKED`。选择 Blender 时核查可用 MCP 与 `.blend` 源。
-- 模型来源按当前项目实际能力及授权选择；贴图仍按其 Blender MCP 原生流程执行。模型 brief 和需要用户取舍的轮廓/交互边界交给 `$grilling`；已授权范围内的细化与返修继续执行，范围变化和破坏性操作按控制面处理。
+- 模型来源按当前项目实际能力及授权选择；贴图仍按其 Blender MCP 原生流程执行。模型 brief 和轮廓/交互边界在阶段 5 的 V1 启动时按需集中 Grilling；后续具体变化沿已有变更决定处理，授权范围内的细化与返修继续执行。
 - 本角色拥有几何、拓扑、法线、UV 版本冻结、材质槽结构、LOD、Collider 和静态模型导出；角色的骨架/蒙皮模型由绑定角色导出。`$app-3d-texturing` 在版本化派生 `.blend` 中拥有材质节点、绘制、烘焙、通道打包和贴图导出。Unity 仅负责导入器、Material/Renderer、资源级 Prefab 和运行验证；最终验证交给 `$app-quality-review`。
 - 绑定与动画按[角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)交给 [`$app-character-rigging`](#mode-unity-game-3d-rigging) 和 [`$app-animation`](#mode-unity-game-3d-animation)。本角色准备关节拓扑、BlendShape 目标几何和静态源，绑定负责角色骨架/权重和蒙皮模型导出，动画负责动作与逐 Clip 导出；不负责 PBR 纹理、绑定动画或最终 QA 放行，VFX 另行分工。
 
@@ -561,7 +561,7 @@ Unity 工程必须将窗口失焦加入暂停原因；窗口、应用和系统�
 - 建模角色拥有几何、拓扑、UV、法线、材质槽结构与导出网格；本角色只读校验。发现 UV、法线、材质槽或顶点顺序问题时退回 `$app-3d-modeling`，不静默修改；在纹理派生文件中仅制作材质、图像、节点与向既有槽位赋材质。
 - 角色按[四角色共同交接](../../unity-development-workflow/references/3d-character-handoff.md)对接绑定和动画：绑定交付带骨架/蒙皮的角色模型，动画交付同骨架 Clips；本角色只读骨架、权重、形态通道和动作，在约定的参考姿态/网格上烘焙，不能把当前动画姿态误作烘焙基准。保留 UV、槽位与各 LOD 用图，变形中的表面问题区分几何、权重和贴图归属后退修。
 - 负责烘焙、PBR 主通道、URP 打包、TextureImporter、Material、自检与交接；最终 QA 由独立角色执行。
-- Blender MCP 是已确定的制作路线，不为工具选择重复请求确认。纹理 brief 和需要用户取舍的材质外观、透明方案交给 `$grilling`；已有授权内的制作与返修继续执行，需求变化、覆盖和破坏性操作按控制面处理。
+- Blender MCP 是已确定的制作路线，不为工具选择重复请求确认。纹理 brief、材质外观和透明方案在阶段 5 的 V1 启动时按需集中 Grilling；后续具体变化沿已有变更决定处理，授权内的制作与返修继续执行。
 
 <a id="mode-unity-game-3d-texturing--blender-mcp-与-unity-路由"></a>
 #### Blender MCP 与 Unity 路由
@@ -774,7 +774,7 @@ Sprite 导入与 uGUI Canvas 按[默认像素单位](assets-and-ui.md#默认像�
 <a id="mode-unity-game-visual-assets--输入与边界"></a>
 #### 输入与边界
 
-读取 Visual Bible、场景契约、结构草图、资源登记、性能预算和当前 V 阶段。只有存在实质视觉取舍、授权、外部生成成本或替代策略时，才把精确问题交给 `$grilling`；已有有效决定不重复询问。
+读取 Visual Bible、场景契约、结构草图、资源登记、性能预算和当前 V 阶段。实质视觉取舍按需在 V1 启动时集中做一次 Grilling；V2–V5 的新问题沿已有变更决定处理，已有有效决定不重复询问。
 
 公共字体、贴图、材质、图标、九宫格和 Prefab 遵守[公共资源登记与使用](../../unity-development-workflow/references/shared-asset-usage.md)：V3 先查库，合格资源按真实身份复用；V4 提交独立生产/导入事实，由指定单写者同步总表，交付各场景的消费绑定，不重复生产或私改共享源。
 

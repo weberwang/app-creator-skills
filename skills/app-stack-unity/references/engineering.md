@@ -8,7 +8,7 @@
 
 目录约定采用资源类型与代码职责边界；项目可以使用已成形的其他布局，但在技术设计中记录唯一映射，不为套模板搬迁已有文件。推荐把入口/基础设施、已稳定复用模块、场景玩法、表现层和 Editor 工具分开。`Shared` 仅收纳至少两个真实消费者共同需要的能力，不预建空壳。
 
-国际化属于 Foundation 的项目级启动职责，在 `foundation-engineering` / S00 完成 UniText 检查、正式 JSON 加载与校验、语言服务及统一绑定，不以多场景共享为前置。按[初始化时机与阶段职责](../../unity-development-workflow/references/text-and-localization.md#初始化时机与阶段职责)确定启动顺序，并满足 [S00 国际化验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)；有真实多个消费者时再登记相应 Shared 复用关系。
+国际化属于 Foundation 的项目级启动职责，在 `foundation-engineering` / S00 完成 UniText 引用、正式 JSON 加载与校验、语言服务及统一绑定的实现与结构回读，不以多场景共享为前置。按[初始化时机与阶段职责](../../unity-development-workflow/references/text-and-localization.md#初始化时机与阶段职责)确定启动顺序，并在后续模块满足[国际化运行验收](../../unity-development-workflow/references/foundation-workflow.md#国际化基础能力验收)；有真实多个消费者时再登记相应 Shared 复用关系。
 
 程序集按编译与测试边界设置，依赖保持无环，通常是 `Presentation → Gameplay → Foundation`。玩法规则不依赖 UI、场景表现或 Editor；平台服务以接口隔离。Editor 与 EditMode/PlayMode 测试不进入正常 Runtime/Player 程序集。
 

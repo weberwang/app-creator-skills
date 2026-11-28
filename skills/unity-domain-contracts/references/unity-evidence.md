@@ -6,13 +6,13 @@ Manifest 同时记录 `workItemType`、`visualStage`、`contractVersions`、`res
 
 ## F3 最小证据
 
-生产实现或场景验收至少记录：
+阶段 4 基础工程按[结构回读](../../unity-development-workflow/references/foundation-workflow.md)记录入口、配置和显示宿主，不执行玩法、编译或打包验证。阶段 5 及后续的生产实现或场景验收按实际范围记录：
 
 - Unity Editor 稳定打开，目标项目未出现未处理异常；
 - C# 编译成功，域重载完成，Console 没有新增 Error/Exception；
 - 相关 EditMode 和 PlayMode 测试结果；
 - Scene、Prefab、ScriptableObject、GUID 和 Importer 设置与实施包一致；
-- 本地构建目标、版本、输出路径和可复现命令。
+- 需要构建产物时记录本地构建目标、版本、输出路径和可复现命令。
 
 `unityEvidence` 中的每一项使用 `PASS`、`FAIL` 或 `NOT_RUN`（也可用布尔值表示 PASS/FAIL），并通过 `gateResults` 绑定 F0-F4。
 

@@ -2,18 +2,20 @@
 import { resolve } from 'node:path';
 import { existsSync, readFileSync } from 'node:fs';
 import { isDirectEntry } from '../../app-skill-runtime/direct-entry.mjs';
-import { GATES, STACKS, TRANSITIONS, VISUAL_STAGES } from './runtime/constants.mjs';
+import { GAME_STACKS, GATES, STACKS, TRANSITIONS, VISUAL_STAGES } from './runtime/constants.mjs';
 import { repoPath, WorkflowError } from './runtime/io.mjs';
 import { loadProfile, requireOneOf, requireText } from './runtime/validation.mjs';
 import { advanceVisual, checkProtectedAction, completeUnit, initializeWork, inspect, loadWork, refreshFunctionBaseline, response, transitionWork } from './runtime/workflow.mjs';
 import { prepareWorkRecords, recordWorkResult } from './runtime/records.mjs';
 import { reuseVisualReviews } from './runtime/visual-reuse.mjs';
 import { workflowMode } from './runtime/task-policy.mjs';
+import { advanceGameStage, gameArchitectureTemplate, isGameProject } from './runtime/game-project.mjs';
 
 /** CLI 每个命令允许的参数，用于尽早拒绝拼错和越权操作。 */
 const OPTIONS = Object.freeze({
-  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'stage', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope', 'design-image-method', 'formal-image-method'],
-  status: ['repo', 'work-item'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
+  init: ['repo', 'work-item', 'stack', 'id', 'type', 'objective', 'project-id', 'object-id', 'host-id', 'layer-type', 'mode', 'stage', 'release-intent', 'integration-purpose', 'production-scope', 'production-batch', 'production-dependencies', 'design-route', 'design-intent', 'design-source', 'design-source-message', 'design-source-scope', 'design-image-method', 'formal-image-method', 'game-project', 'mount-layer'],
+  'game-stage': ['repo', 'work-item', 'spec', 'return-to', 'reason'],
+  status: ['repo', 'work-item', 'progress'], check: ['repo', 'work-item'], run: ['repo', 'work-item'],
   transition: ['repo', 'work-item', 'to', 'reason', 'affected-scope', 'return-resolution'],
   'visual-stage': ['repo', 'work-item', 'to'], 'unit-check': ['repo', 'work-item', 'result'],
   plan: ['repo', 'work-item', 'spec'], record: ['repo', 'work-item', 'unit', 'report'],
@@ -37,6 +39,19 @@ export async function main(argv = process.argv.slice(2)) {
   if (command === 'run') return output(await runSafe({ repo, workItem: args['work-item'] }), true);
   requireText(args['work-item'], '--work-item');
   repoPath(repo, args['work-item'], 'Work Item 路径');
+  if (command === 'game-stage') {
+    const returnTo = args['return-to'];
+    if (returnTo === undefined) {
+      requireText(args.spec, '--spec');
+      if (args.reason !== undefined) throw new WorkflowError('只有阶段回退需要 --reason');
+    } else {
+      requireOneOf(returnTo, ['1', '2', '3'], '--return-to');
+      requireText(args.reason, '--reason');
+      if (args.spec !== undefined) throw new WorkflowError('阶段回退与提交 --spec 不可同时执行');
+    }
+    return output(await advanceGameStage({ repo, workItem: args['work-item'], specPath: args.spec,
+      ...(returnTo !== undefined ? { returnTo: Number(returnTo), reason: args.reason } : {}), loadWork }));
+  }
   if (command === 'plan') {
     requireText(args.spec, '--spec');
     return output(await prepareWorkRecords({ repo, workItem: args['work-item'], planPath: args.spec }), true);
@@ -60,7 +75,15 @@ export async function main(argv = process.argv.slice(2)) {
     for (const name of ['action-id', 'effect', 'target']) requireText(args[name], `--${name}`);
     return output(checkProtectedAction({ repo, workItem: args['work-item'], actionId: args['action-id'], effect: args.effect, target: args.target }), true);
   }
-  if (command === 'status' || command === 'check') return output(inspect({ repo, workItem: args['work-item'], check: command === 'check' }), command === 'check');
+  if (command === 'status' || command === 'check') {
+    if (args.progress !== undefined && args.progress !== true) throw new WorkflowError('--progress 不接受参数值');
+    const result = inspect({ repo, workItem: args['work-item'], check: command === 'check' });
+    if (args.progress) {
+      process.stdout.write(`${result.metadata.progress}\n`);
+      return result;
+    }
+    return output(result, command === 'check');
+  }
   if (command === 'transition') {
     requireText(args.to, '--to');
     return output(await transitionWork({ repo, workItem: args['work-item'], to: args.to, args }));
@@ -81,7 +104,10 @@ export async function main(argv = process.argv.slice(2)) {
 async function runSafe({ repo, workItem }) {
   requireText(workItem, '--work-item');
   let work = loadWork(repo, workItem);
+  if (isGameProject(work)) return inspect({ repo, workItem, check: false });
   if (['IMPLEMENTING', 'RELEASE_APPROVAL_REQUIRED', 'RELEASING'].includes(work.globalState)) {
+    const checked = inspect({ repo, workItem });
+    if (checked.status === 'BLOCKED') return checked;
     return response({ status: 'STOPPED', work, next: ['由已获授权的执行者完成当前单元；涉及发布时核对精确批准，控制器不执行实际动作'], metadata: { reason: 'AUTOMATIC_EXECUTION_DISABLED' } });
   }
   let changed = false;
@@ -95,10 +121,9 @@ async function runSafe({ repo, workItem }) {
     work = loadWork(repo, workItem);
   }
   if (work.globalState === 'REVIEW') {
-    if (workflowMode(work) === 'light') {
-      const checked = inspect({ repo, workItem, check: true });
-      if (checked.status === 'BLOCKED') return { ...checked, changed };
-    }
+    // 标准模式可停下来准备实施包，但两种模式都必须先报告已有阻断。
+    const checked = inspect({ repo, workItem, check: workflowMode(work) === 'light' });
+    if (checked.status === 'BLOCKED') return { ...checked, changed };
     return response({ status: 'STOPPED', work, changed, next: ['冻结 Implementation Package，再显式 transition 到 IMPLEMENTING'], metadata: { reason: 'EXPLICIT_IMPLEMENTATION_REQUIRED' } });
   }
   const result = inspect({ repo, workItem, check: false });
@@ -135,6 +160,7 @@ async function lintPackage(repo) {
   });
   if (!availableStacks.length) throw new WorkflowError('找不到与当前安装包对应的任何技术栈 profile', 'PACKAGE_INVALID');
   const profiles = availableStacks.map((stack) => loadProfile(repo, stack).id);
+  for (const stack of availableStacks.filter((id) => GAME_STACKS.includes(id))) gameArchitectureTemplate(repo, stack);
   return response({ status: 'PASS', changed: false, metadata: { schemas: schemaFiles.length, templates: templateFiles.length, stacks: profiles } });
 }
 
@@ -162,10 +188,27 @@ function parseCommandArgs(argv) {
   return args;
 }
 
+/** 失败时保留可知的真实进度，避免为输出尾行再发起一次状态查询。 */
+function commandError(error, argv) {
+  const detail = { status: 'BLOCKED', stage: null, changed: false, blocking: [error.message], next: [], metadata: { code: error.code ?? 'UNEXPECTED_ERROR' } };
+  try {
+    if (!Object.hasOwn(OPTIONS, argv[0])) return detail;
+    const args = parseCommandArgs(argv.slice(1));
+    if (typeof args['work-item'] !== 'string') return detail;
+    const work = loadWork(resolve(args.repo ?? process.cwd()), args['work-item']);
+    const current = response({ status: 'PASS', work });
+    detail.stage = current.stage;
+    detail.metadata.progress = current.metadata.progress;
+  } catch {
+    // 无法读取时保留原异常和退出码，进度由调用方标为未登记。
+  }
+  return detail;
+}
+
 /** 区分直接调用和作为模块导入，便于单元测试独立验证路由。 */
 if (isDirectEntry(import.meta.url)) {
   main().catch((error) => {
-    const detail = { status: 'BLOCKED', stage: null, changed: false, blocking: [error.message], next: [], metadata: { code: error.code ?? 'UNEXPECTED_ERROR' } };
+    const detail = commandError(error, process.argv.slice(2));
     process.stderr.write(`${JSON.stringify(detail, null, 2)}\n`);
     process.exitCode = error.code === 'NOT_FOUND' ? 3 : 2;
   });

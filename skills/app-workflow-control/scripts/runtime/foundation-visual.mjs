@@ -2,6 +2,7 @@ import { fileIdentityKey, readJson, WorkflowError } from './io.mjs';
 import { productionIdentity } from './production-scope.mjs';
 import { getWorkSource } from './work-source.mjs';
 import { isFigmaApp } from './figma-app-contract.mjs';
+import { assertSameGameProject } from './game-project.mjs';
 
 /** 比较冻结来源的项目内文件身份和内容摘要。 */
 function sameRef(repo, left, right) {
@@ -58,6 +59,7 @@ export function assertFoundationVisual(repo, work, { loadWork, validateGlobalBas
   if (!isFoundation && foundation.globalState !== 'COMPLETE') {
     throw new WorkflowError('基础视觉来源尚未完成基础工程');
   }
+  assertSameGameProject(repo, work, foundation, '基础视觉来源');
 
   const routes = new Map();
   for (const entry of manifest.baselines) {

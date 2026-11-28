@@ -14,7 +14,7 @@ const cli = fileURLToPath(new URL('../../skills/app-workflow-control/scripts/wor
 async function fixture(t) {
   const repo = await mkdtemp(join(tmpdir(), 'image-route-policy-'));
   t.after(() => rm(repo, { recursive: true, force: true }));
-  const first = { id: 'root', stack: 'cocos', type: 'PROJECT', objective: '冻结图片路线' };
+  const first = { id: 'root', stack: 'cocos', type: 'SCENE', objective: '冻结图片路线' };
   const next = { id: 'scene', stack: 'cocos', type: 'SCENE', objective: '使用冻结路线' };
   return { repo, first, next };
 }
@@ -22,7 +22,7 @@ async function fixture(t) {
 test('首次初始化预检通过时默认冻结 Codex 和 SVG，后续只继承且不重新预检', async (t) => {
   const { repo, first, next } = await fixture(t);
   let probeCount = 0;
-  const created = await initializeWork({ repo, args: first, probeCodex: () => { probeCount++; return true; } });
+  const created = await initializeWork({ repo, args: first, workflowEntry: true, probeCodex: () => { probeCount++; return true; } });
   const firstWork = loadWork(repo, created.metadata.workItemPath);
   assert.equal(probeCount, 1);
   assert.equal(created.metadata.imageRoutes.designImageMethod, 'codex');
@@ -37,7 +37,7 @@ test('首次初始化预检通过时默认冻结 Codex 和 SVG，后续只继承
 
 test('预检失败先停止初始化，用户可在首次初始化明确替代方法', async (t) => {
   const { repo, first } = await fixture(t);
-  await assert.rejects(initializeWork({ repo, args: first, probeCodex: () => false }), {
+  await assert.rejects(initializeWork({ repo, args: first, workflowEntry: true, probeCodex: () => false }), {
     code: 'DESIGN_IMAGE_METHOD_REQUIRED', message: /host-tool.*prompt-handoff/,
   });
   await assert.rejects(access(join(repo, '.workflow-control/work-items/root.json')), { code: 'ENOENT' });
@@ -80,6 +80,7 @@ test('纯 3D、直接 Figma 设计和服务端不会为无图工作发起预检'
     { ...next, id: 'figma', stack: 'flutter', type: 'PAGE', 'design-source': 'figma-direct',
       'design-source-message': 'test://figma', 'design-source-scope': '单页' },
     { ...next, id: 'service', stack: 'nodejs', type: 'PROJECT' },
+    { ...next, id: 'game-project', type: 'PROJECT' },
   ]) {
     const result = await initializeWork({ repo, args, workflowEntry: true, probeCodex: () => assert.fail('无图任务无需预检') });
     assert.equal(result.metadata.imageRoutes, undefined);

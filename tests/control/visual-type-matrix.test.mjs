@@ -22,7 +22,8 @@ test('九栈初始化遵循真实视觉对象矩阵，失败不写工作项', as
   t.after(() => rmSync(repo, { recursive: true, force: true }));
   for (const stack of stacks) for (const type of types) {
     const id = `${stack}-${type.toLowerCase()}`;
-    const args = { id, stack, type, objective: '验证对象类型',
+    // 每个矩阵项是独立工程，避免 PROJECT 夹具启动后拦截下个对象类型的独立初始化。
+    const args = { id, stack, type, objective: '验证对象类型', 'project-id': id,
       ...(type === 'PROJECT' && stack !== 'nodejs' ? { 'design-image-method': 'prompt-handoff' } : {}),
       ...(type === 'DISPLAY_LAYER' ? { 'host-id': 'home', 'layer-type': 'modal' } : {}) };
     const path = `.workflow-control/work-items/${id}.json`;

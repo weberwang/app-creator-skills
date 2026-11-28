@@ -25,7 +25,7 @@ export const GAME_CHARACTERISTICS_TEMPLATE_SECTIONS = Object.freeze({
 
 ## 内容生产与试玩计划
 
-涉及内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)、[专项工具选择](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#tools)和[人工试玩](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)选择适用检查与任务，复用现有计划和证据。本批整体场景经人工确认后按[正式生产交接](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#production-handoff)试接代表模块并分批替换；现有机器路线的缺口按[工具合同边界](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#tooling-boundary)保留待定，不伪造工件通过。
+涉及内容时，按[关卡生产](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#levels)、[专项工具选择](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#tools)和[人工试玩](../.agents/skills/app-domain-toolkit/references/game-content-playtesting.md#playtest)选择适用检查与任务，复用现有计划和证据。本批整体场景经人工确认后按[正式生产交接](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#production-handoff)按风险安排首件验证并分批替换；现有机器路线的缺口按[工具合同边界](../.agents/skills/app-domain-toolkit/references/game-design-exploration.md#tooling-boundary)保留待定，不伪造工件通过。
 
 | 内容数据/编辑器入口与消费者 | 自动检查及覆盖边界 | 人工试玩任务 | 受影响回归及证据 |
 | --- | --- | --- | --- |

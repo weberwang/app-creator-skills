@@ -6,7 +6,7 @@ import { existsSync, readFileSync, statSync, unlinkSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { dirname } from 'node:path';
 import { PROTECTED_ACTIONS, STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
-import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyToPass, assertTransitionInputs, assertVisualReview, bindWorkSource, hasPreciseApproval, loadPackage, requiresProtectedActionApproval, validateEvidence, validateGlobalBaseline, validateUnitResult } from './artifacts.mjs';
+import { assertFinalCompletion, assertGates, assertNoOpenGrilling, assertReadyToPass, assertTransitionInputs, assertVisualReview, bindWorkSource, hasPreciseApproval, loadPackage, requiresProtectedActionApproval, validateEvidence, validateGlobalBaseline, validateUnitResult, verifyFoundation } from './artifacts.mjs';
 import { validateFinalIntegration, validateIntegrationScope } from './final-integration.mjs';
 import { atomicWriteJson, fileIdentityKey, readJson, repoPath, requireFile, WorkflowError } from './io.mjs';
 import { captureWorld3DFileSnapshots, withWorld3DFileSnapshots } from './world3d-file-snapshots.mjs';
@@ -31,19 +31,12 @@ import { freezeSampleResult } from './production-samples.mjs';
 import { functionCoverageOrigins } from './integration-system-sources.mjs';
 import { freezeModulePlan, assertModuleStage, assertFoundationDesignPack, assertFrozenModulePlan, freezeModuleRuntime, assertModuleRuntime } from './module-stages.mjs';
 import { readImageRoutePolicy } from './image-route-policy.mjs';
-
+import { assertGameProjectReady, freezeGameGrilling, inspectGameProject, isGameProject } from './game-project.mjs';
 /** 独立的设计提案沿其选稿流程，正式对象统一使用模块阶段门。 */
 function moduleStage(repo, work, options) {
   if (work.workItemType !== 'FOUNDATION' && !work.visual) return;
   assertModuleStage(repo, work, { loadWork, validateGlobalBaseline, assertVisualReview, verifyFoundation }, options);
 }
-/** 已完成基础工程仍须保有有效的执行记录与通过证据。 */
-function verifyFoundation(repo, work) {
-  const { pack } = inspectExecution(repo, work, { requireComplete: true });
-  assertFoundationDesignPack(repo, work, pack);
-  assertReadyToPass(repo, work);
-}
-
 /** 将项目内工作项读入并验证栈 profile 与路径合同。 */
 export function loadWork(repo, file) {
   const work = readJson(repo, file, 'Work Item');
@@ -74,6 +67,7 @@ export function checkProtectedAction({ repo, workItem, actionId, effect, target 
     throw new WorkflowError('发布动作只能在 RELEASE 的 RELEASING 阶段执行', 'ACTION_NOT_READY');
   }
   assertNoOpenGrilling(repo, work);
+  assertGameProjectReady(repo, work, verifyFoundation);
   assertGates(work, ['F0', 'F1', 'F2']);
   if (!hasPreciseApproval(work)) throw new WorkflowError('受保护动作缺少与当前对象和动作一致的明确批准', 'APPROVAL_REQUIRED');
   assertGates(work, ['F4']);
@@ -114,6 +108,7 @@ export function inspectProductionDependencyHistory(repo, source, sourcePath) {
 
 /** 按用途收集诊断，常规检查始终包含当前功能基线。 */
 function inspectWorkCore(repo, work, options) {
+  if (isGameProject(work)) return inspectGameProject(repo, work);
   return withWorld3DModelReuse(() => {
     if (options.historical && isWorld3D(work)) return withWorld3DFileSnapshots(repo, work, { historical: true, stages: ['V1', 'V4', 'V5'] }, () => inspectWorkCoreInContext(repo, work, options));
     return inspectWorkCoreInContext(repo, work, options);
@@ -122,8 +117,9 @@ function inspectWorkCore(repo, work, options) {
 
 /** 在适用的来源版本中运行原有只读诊断，不更改最终工作项。 */
 function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, historical = false }) {
-  const blocking = [];
-  const next = [];
+  const blocked = work.globalState === 'BLOCKED' ? work.blockedRecord : null;
+  const blocking = blocked ? [blocked.reason] : [];
+  const next = blocked ? [`解除阻断后提供 --return-resolution 并恢复 ${blocked.returnState}`] : [];
   let activeBatch = null;
   try {
     assertTransitionInputs(repo, work, work.globalState);
@@ -133,17 +129,16 @@ function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, h
     blocking.push(error.message);
   }
   if (work.globalState === 'INTAKE' && work.gateStatus.F0 !== 'PASS') next.push('完成范围与操作边界调查并提交 F0 事实');
-  if (work.globalState === 'BASELINE' && work.gateStatus.F1 !== 'PASS') next.push('完成项目基线与验收边界并通过 F1');
-  if (work.globalState === 'PROPOSAL' && work.gateStatus.F2 !== 'PASS') next.push('明确工作范围及技术实施方案并通过 F2');
-  if (workflowMode(work) === 'light' && work.globalState === 'REVIEW') {
+  else if (work.globalState === 'BASELINE' && work.gateStatus.F1 !== 'PASS') next.push('完成项目基线与验收边界并通过 F1');
+  else if (work.globalState === 'PROPOSAL' && work.gateStatus.F2 !== 'PASS') next.push('明确工作范围及技术实施方案并通过 F2');
+  if (work.globalState === 'REVIEW') {
     try { assertGates(work, ['F0', 'F1', 'F2']); }
-    catch (error) { blocking.push(error.message); next.push('先记录本次范围、验收与实施方案的实际自评，再开始轻量实施'); }
+    catch (error) { blocking.push(error.message); next.push('先补齐本次范围、验收与实施方案的质量门'); }
   }
-  if (!isDesignProposal(work) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
+  if (!blocking.length && !isDesignProposal(work) && ['REVIEW', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState) && !work.implementationPackageRef) {
     next.push('冻结与当前工作项绑定的 Implementation Package');
   }
   if (!isDesignProposal(work) && work.globalState === 'REVIEW' && work.implementationPackageRef) {
-    // 实施前的只读诊断也检查覆盖与来源，避免 check 通过而启动才发现设计缺项。
     try {
       loadPackage(repo, work);
       if (work.workItemType === 'INTEGRATION' && work.integrationPurpose === 'final') validateIntegrationScope(repo, work, { inspectSource: inspectFunctionSource });
@@ -174,10 +169,8 @@ function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, h
   const target = TRANSITIONS[work.globalState] ?? [];
   const safeNext = target.filter((state) => !['IMPLEMENTING', 'RELEASING', 'RETURN', 'BLOCKED'].includes(state) &&
     !(work.globalState === 'IMPLEMENTING' && activeBatch?.length && state === 'VALIDATING'));
-  if (!next.length && safeNext.length) next.push(...safeNext.map((state) => `可按门禁显式迁移到 ${state}`));
-  if (work.globalState === 'REVIEW') next.push('工作流在生产实现前停止；显式迁移到 IMPLEMENTING 并生成新证据目录');
   if (strict) {
-    const requiredByState = { INTAKE: ['F0'], BASELINE: ['F1'], PROPOSAL: ['F2'], REVIEW: ['F0', 'F1', 'F2'] };
+    const requiredByState = { INTAKE: ['F0'], BASELINE: ['F1'], PROPOSAL: ['F2'] };
     for (const gate of requiredByState[work.globalState] ?? []) if (work.gateStatus[gate] !== 'PASS') blocking.push(`${gate} 尚未 PASS`);
     if (!isDesignProposal(work) && work.globalState === 'REVIEW' && !work.implementationPackageRef) blocking.push('尚未冻结 Implementation Package');
     if (work.globalState === 'RELEASE_APPROVAL_REQUIRED') {
@@ -189,6 +182,8 @@ function inspectWorkCoreInContext(repo, work, { strict, checkFunctionBaseline, h
       try { assertFinalCompletion(repo, work); } catch (error) { blocking.push(error.message); }
     }
   }
+  if (!blocking.length && !next.length && safeNext.length) next.push(...safeNext.map((state) => `可按门禁显式迁移到 ${state}`));
+  if (!blocking.length && work.globalState === 'REVIEW') next.push('工作流在生产实现前停止；显式迁移到 IMPLEMENTING 并生成新证据目录');
   return { status: blocking.length ? 'BLOCKED' : 'PASS', blocking, next: [...new Set(next)], activeBatch };
 }
 
@@ -201,6 +196,7 @@ export async function completeUnit(args) {
 async function completeUnitLocked({ repo, workItem, resultPath }) {
   const work = loadWork(repo, workItem);
   if (work.globalState !== 'IMPLEMENTING') throw new WorkflowError('unit-check 只允许用于 IMPLEMENTING 状态');
+  assertGameProjectReady(repo, work, verifyFoundation);
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
   if (work.workItemType === 'FOUNDATION') moduleStage(repo, work);
@@ -842,6 +838,8 @@ export async function refreshFunctionBaseline({ repo, workItem, specPath }) {
   return withWorkLock(repo, workItem, async () => {
     const work = loadWork(repo, workItem);
     if (!work.visual || work.visual.stage === 'V1' || !['PROPOSAL', 'REVIEW', 'PASSED', 'IMPLEMENTING', 'VALIDATING'].includes(work.globalState)) throw new WorkflowError('功能重验仅适用于 V2–V5 的未完成工作项');
+    assertGameProjectReady(repo, work, verifyFoundation);
+    assertNoOpenGrilling(repo, work);
     const oldRef = work.visual.functionBaselineRef;
     if (!oldRef?.path || fileDigest(repo, oldRef.path).sha256 !== oldRef.sha256) throw new WorkflowError('旧功能基线身份无效，不能直接重绑');
     const old = readJson(repo, oldRef.path, '旧功能基线');
@@ -935,12 +933,14 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   requireOneOf(to, VISUAL_STAGES, '--to');
   const currentIndex = VISUAL_STAGES.indexOf(work.visual.stage);
   if (currentIndex < 0 || VISUAL_STAGES[currentIndex + 1] !== to) throw new WorkflowError(`视觉阶段必须相邻推进：${work.visual.stage} -> ${to}`);
+  assertGameProjectReady(repo, work, verifyFoundation);
   assertNoOpenGrilling(repo, work);
   const isModule = !isDesignProposal(work);
   moduleStage(repo, work, { enteringV2: to === 'V2', confirmingV2: to === 'V3' });
   let functionBaselineRef;
   if (to === 'V2' && isModule) {
     assertGates(work, ['F0', 'F1']);
+    freezeGameGrilling(repo, work);
     functionBaselineRef = await freezeModulePlan(repo, work, fileDigest);
   }
   if (work.visual.stage === 'V3') assertVisualReview(repo, work, 'V3');
@@ -979,7 +979,6 @@ async function advanceVisualLocked({ repo, workItem, to }) {
   work.planningRef = null;
   // HUD 局部返工沿用已核验的世界模型，当前界面仍需自己的资源与组合验收。
   work.assetReviewRef = to === 'V5' || isWorldHudReturn(work) ? work.assetReviewRef : null;
-  // 设计阶段不需要伪造编译；新正式资源/运行阶段需各自冻结新的实施包和结果。
   if (['V2', 'V4', 'V5'].includes(to)) {
     // V4 与 V5 各自有独立执行闭环，切换时不复用前一阶段的 execution-state。
     work.evidenceRoot = `${work.evidenceRoot}-${to}-r${work.revision + 1}`;

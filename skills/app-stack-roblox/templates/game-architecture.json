@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "templateVersion": "roblox-game-1.0",
+  "stack": "roblox",
+  "project": {
+    "entryPoints": ["ServerScriptService/Foundation/ServerBootstrap", "StarterPlayer/StarterPlayerScripts/Foundation/ClientBootstrap"],
+    "directories": {
+      "server": "ServerScriptService",
+      "client": "StarterPlayer/StarterPlayerScripts",
+      "shared": "ReplicatedStorage/Shared",
+      "world": "Workspace",
+      "displayTemplates": "StarterGui"
+    },
+    "lifecycle": "服务端与客户端各有唯一启动入口；服务端拥有权威玩法状态，客户端负责输入及本地显示。"
+  },
+  "display": {
+    "contentRoot": "ContentRoot",
+    "screenHost": "StarterGui/GameUI",
+    "host": "Workspace 世界树及 StarterGui 配置、PlayerGui 实例化的 GameUI ScreenGui；ResetOnSpawn=false，屏幕各层以有序 ZIndex 合成",
+    "layers": [
+      {"id":"content","mount":"Workspace 当前世界根","owner":"服务端场景","input":"由客户端转发并由服务端校验权威操作","cleanup":"由场景所有者清理世界对象","optional":false},
+      {"id":"hud","mount":"PlayerGui/GameUI/HudLayer","owner":"当前客户端宿主","input":"控件消费自身命中","cleanup":"随宿主退出卸载","optional":true},
+      {"id":"popups","mount":"PlayerGui/GameUI/PopupLayer","owner":"客户端公共弹窗服务","input":"模态弹窗隔离下层输入并恢复焦点","cleanup":"关闭时销毁实例并清理业务活动","optional":false},
+      {"id":"toasts","mount":"PlayerGui/GameUI/ToastLayer","owner":"客户端公共提示服务","input":"不阻断输入或抢焦点","cleanup":"展示结束后回收空闲实例","optional":true},
+      {"id":"loading","mount":"PlayerGui/GameUI/LoadingLayer","owner":"客户端统一加载服务","input":"前台阻塞期间隔离下层输入","cleanup":"关联任务和令牌完成后隐藏","optional":false}
+    ]
+  }
+}

@@ -31,7 +31,18 @@ async function controllerFixture(t, options = {}) {
   return { ...fixture, workPath: created.metadata.workItemPath };
 }
 
-for (const workItemType of ['FOUNDATION', 'MODULE', 'INTEGRATION']) {
+test('Roblox FOUNDATION 只需结构证据，Studio 运行留给正式实施', async (t) => {
+  const fixture = await controllerFixture(t, { workItemType: 'FOUNDATION' });
+  assert.throws(() => validateEvidence(fixture.repo, fixture.work), /architecture-structure/);
+  const path = `${fixture.work.evidenceRoot}/structure.json`;
+  writeRobloxFixture(fixture.repo, path, { entry: 'ServerScriptService/Foundation/ServerBootstrap', layers: ['StarterGui/GameUI/PopupLayer'] });
+  writeRobloxFixture(fixture.repo, fixture.work.evidenceRef.path, {
+    ...fixture.manifest, items: [{ path, category: 'architecture-structure', status: 'PASS' }],
+  });
+  assert.equal(validateEvidence(fixture.repo, fixture.work).manifest.stack, 'roblox');
+});
+
+for (const workItemType of ['MODULE', 'INTEGRATION']) {
   /** 非视觉工作项也必须通过原生工程门，不能只靠类别及文件存在通过。 */
   test(`${workItemType} 的公共证据入口核对 Roblox 原生材料`, async (t) => {
     const fixture = await controllerFixture(t, { workItemType });

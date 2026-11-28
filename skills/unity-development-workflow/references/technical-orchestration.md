@@ -23,7 +23,7 @@ description: Unity 6 游戏领域编排角色；在 app-workflow-control 已建�
 
 ## Unity 原生执行约束
 
-- 国际化按[阶段职责与启动顺序](text-and-localization.md#初始化时机与阶段职责)执行，S00 按[基础能力验收](foundation-workflow.md#国际化基础能力验收)完成真实 UniText 检查、JSON 加载与统一绑定；不等待正式视觉稿、某个 HUD 或 V5。就绪前只约束依赖本地化内容的显示，无关 SDK 继续独立启动。
+- 国际化按[阶段职责与启动顺序](text-and-localization.md#初始化时机与阶段职责)执行，S00 完成 UniText 引用、JSON 加载和统一绑定实现及结构回读；后续按[运行验收](foundation-workflow.md#国际化基础能力验收)取得实际加载和绑定结果。就绪前只约束依赖本地化内容的显示，无关 SDK 继续独立启动。
 
 - 首次建立工程、规划模块或新增目录时遵守[项目结构约束](./project-structure.md)，目录映射、asmdef、场景生命周期与所有权在 TDD 和实施包中保持一致。
 - Unity 写入前发现实例，按规范化项目路径绑定唯一 Editor，并等待导入、编译和域重载稳定；写后复读目标对象、Console、Scene/Prefab、Importer、GUID 与登记结果。切换场景及其他可能触发保存提示的命令之前，先按[场景保存前置检查](./scene-save-recovery.md)只检查当前任务修改的场景，并通过 Unity 场景保存命令保存。

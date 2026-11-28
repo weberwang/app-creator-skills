@@ -28,6 +28,8 @@ export const TRANSITIONS = Object.freeze({
 });
 /** 技术栈名称保持稳定，项目配置不得自行创建新栈分支。 */
 export const STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'flutter', 'expo', 'esp32', 'nodejs', 'roblox']);
+/** 使用游戏专属项目阶段与基础工程证据的技术栈。 */
+export const GAME_STACKS = Object.freeze(['unity', 'cocos', 'phaser', 'threejs', 'roblox']);
 /** 执行中副作用较高的动作必须显式停止等待人工决定。 */
 export const PROTECTED_ACTIONS = new Set([
   'external-write', 'device', 'sign', 'upload', 'publish', 'payment', 'destructive',

@@ -1,4 +1,5 @@
-import { validateGlobalBaseline } from './artifacts.mjs';
+import { assertNoOpenGrilling, validateGlobalBaseline, verifyFoundation } from './artifacts.mjs';
+import { assertGameProjectReady, assertSameGameProject } from './game-project.mjs';
 import { atomicWriteJson, readJson, repoPath, WorkflowError } from './io.mjs';
 import { requireOneOf, requireText, validateWork } from './validation.mjs';
 import { assertFunctionBaseline, inspectVisualReuseSource, loadWork, response } from './workflow.mjs';
@@ -28,6 +29,9 @@ export async function reuseVisualReviews({ repo, workItem, sourceWorkItem, impac
   return withWorkLock(repo, targetPath, async () => {
     const work = loadWork(repo, targetPath);
     const source = loadWork(repo, sourcePath);
+    assertGameProjectReady(repo, work, verifyFoundation);
+    assertNoOpenGrilling(repo, work);
+    assertSameGameProject(repo, work, source, '视觉复用来源');
     // 本路线复用资产和有效规格，但不把旧图片批准或其他工作项的人工确认自动搬入。
     if (isWorld3D(work) || isWorld3D(source)) throw new WorkflowError('world-3d 不支持自动继承阶段批准，请在当前场景合同明确引用有效资源并确认当前范围');
     if ((work.visual?.designRoute ?? null) !== (source.visual?.designRoute ?? null)) throw new WorkflowError('不同设计路线不能继承视觉批准');

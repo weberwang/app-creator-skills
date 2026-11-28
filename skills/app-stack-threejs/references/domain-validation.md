@@ -30,7 +30,7 @@ if (errors.length) throw new Error(errors.join('\n'));
 ## 生产与构建
 
 - [validate-model.mjs](../scripts/validate-model.mjs) 保留 GLB/gltf、外部 URI、坐标、材质、蒙皮/动画和预算校验，按该技能的 manifest 和命令运行。
-- [create-game.mjs](../../threejs-game-runtime/scripts/create-game.mjs) 从完整 [Starter](../../threejs-game-runtime/assets/starter) 建立空目录工程，继续使用同一运行模块；生成后按工程锁文件安装并执行 `npm run build`。构建通过不代表浏览器交互或视觉验收通过。
+- [create-game.mjs](../../threejs-game-runtime/scripts/create-game.mjs) 从完整 [Starter](../../threejs-game-runtime/assets/starter) 建立空目录工程，继续使用同一运行模块。Starter 的 `src/main.ts` 样例须按[固定架构模板](../templates/game-architecture.json)接入 `src/game/main.ts` 和 `HudOverlay`，再作为新项目的工程骨架。阶段 4 回读结构和接口；后续需要构建产物时按工程锁文件安装并执行 `npm run build`，构建结果与浏览器交互、视觉验收分别记录。
 - [initialize_project_docs.mjs](../scripts/initialize_project_docs.mjs) 保留全部技术模板，在公共工作项范围和门禁内写入；帧动画、素材装配、原生 UI 及插件继续使用独立专业工具。
 
 ## 公共证据

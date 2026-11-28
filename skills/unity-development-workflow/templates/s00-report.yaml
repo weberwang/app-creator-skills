@@ -16,7 +16,7 @@ moduleManifest:
   path: Artifacts/Planning/module-manifest.yaml
 scope:
   - 启动、场景加载、输入、配置、存档、uGUI/UniText、日志与测试骨架
-  - UniText 安装与能力检查、正式 JSON 加载校验与索引、启动语言及统一绑定的真实运行验收
+  - UniText 引用、正式 JSON 加载及统一绑定的实现与结构回读
 sharedCapabilities:
   - id: foundation.scene-loading
     usedByScenes:
@@ -44,18 +44,5 @@ console:
   evidence: []
 emptyPlatformBuild:
   status: NOT_RUN
-  platformId: WINDOWS
-  buildVersion: 0.1.0-dev.0
-  artifact:
-    type: platform-build-artifact
-    artifactType: WINDOWS_EXECUTABLE
-    platform: WINDOWS
-    path: Artifacts/Builds/Windows/0.1.0-dev.0/starfall-arena.exe
-    projectId: starfall-arena
-    subjectId: foundation.core
-    subjectVersion: 0.1.0-dev.0
-    sourceRevision: working-tree-snapshot-20260727
-    projectStateVersion: project-state-v1
-    buildVersion: 0.1.0-dev.0
 reviews: []
 status: NOT_RUN

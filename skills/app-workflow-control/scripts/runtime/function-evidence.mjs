@@ -1,4 +1,5 @@
 import { validateEvidence } from './artifacts.mjs';
+import { GAME_STACKS } from './constants.mjs';
 import { loadProfile } from './validation.mjs';
 import { createHash } from 'node:crypto';
 import { readFileSync, realpathSync } from 'node:fs';
@@ -25,7 +26,9 @@ export function sameFunctionDependencies(repo, a, b) {
 /** 提取工程部分，允许视觉清单后续补充而不撤销已经完成的功能验证。 */
 export function engineeringEvidence(repo, work) {
   const { manifest } = validateEvidence(repo, work, { requireEngineering: true, requireVisual: false, requireAssetImport: false });
-  const categories = new Set(loadProfile(repo, work.stack).evidenceRequirements.engineering);
+  // 基础工程冻结结构读回，后续模块继续冻结各栈的运行与测试证据。
+  const categories = new Set(work.workItemType === 'FOUNDATION' && GAME_STACKS.includes(work.stack)
+    ? ['architecture-structure'] : loadProfile(repo, work.stack).evidenceRequirements.engineering);
   // 条目顺序和 JSON 属性顺序不改变工程结论，标准化后再比较内容。
   const items = manifest.items.filter((item) => categories.has(item?.category)).map((item) => ({ category: item.category, status: item.status, path: item.path, ...(item.targetId === undefined ? {} : { targetId: item.targetId }) })).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b)));
   return { schemaVersion: manifest.schemaVersion, workItemId: manifest.workItemId, stack: manifest.stack, implementationPackageRef: manifest.implementationPackageRef, visualStage: manifest.visualStage ?? null, items };

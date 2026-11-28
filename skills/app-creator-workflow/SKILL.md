@@ -9,9 +9,9 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 
 1. 先核对项目约束、已有状态、实际技术栈与可复用进程。以入口、依赖、工程配置或已连接的编辑器为依据；通用文件名不足以判断技术栈。多栈项目按接口和模块拆分工作项；信号冲突时按[技术栈证据](references/task-routing.md#stack-evidence)核对目标模块。仅在用户明确要求时创建分支或 worktree。
 2. 按[任务编排](references/workflow.md#按任务选择编排)选择直接处理、`light` 或 `standard`。事实查询、纯文案或注释直接处理；单个无视觉的本地工程修复适用轻量模式；正式功能、视觉或跨模块任务按实际[七阶段](references/workflow.md#七阶段)推进。
-3. 按[最小约定](references/output-files.md#每项任务的最小约定)明确目标、涉及路径及验收。按[增量变化影响](references/professional-conventions.md#incremental-change-impact)追踪消费者和需要重验的范围，复用有效记录。出现实质取舍时使用 [grilling](../grilling/SKILL.md)，先继续独立工作。
+3. 按[最小约定](references/output-files.md#每项任务的最小约定)明确目标、涉及路径及验收。按[增量变化影响](references/professional-conventions.md#incremental-change-impact)追踪消费者和需要重验的范围，复用有效记录。[grilling](../grilling/SKILL.md) 按七阶段规定的时机与次数进行，待决期间先继续独立工作。
 4. 正式工作以 [app-workflow-control](../app-workflow-control/SKILL.md) 为唯一状态、门禁和证据来源。按[系统与模块覆盖](references/system-module-coverage.md)核对本批需求、规则、依赖和验收，通过 `plan --spec` 冻结计划，实施后用 `record --report` 登记真实结果。新项目先贯通[首个正式功能切片](references/workflow.md#功能切片与跨对象依赖)；共享配置和编辑器保留唯一写者。
-5. 实施后按[验证与交付](references/verification.md)先推荐 T0–T3、理由、覆盖和命令，再自动执行本地验证。按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)更新受影响的当前说明，按[精简交付](references/output-files.md#精简交付)报告真实结论、未验证项及必要产物。
+5. 实施后按[验证与交付](references/verification.md)先推荐 T0–T3、理由、覆盖和命令，再自动执行本地验证。按[持续迭代收尾](references/workflow.md#持续迭代与可接手收尾)更新受影响的当前说明，按[精简交付](references/output-files.md#精简交付)报告真实结论、未验证项及必要产物。每次触发工作流后，最终答复末行只写当前进度，例如 `进度 5/V1·待确认`。非视觉省略 V，发布用 `发布`。沿用已知状态或 `metadata.progress`，未知时仅调用一次 `status --progress`，仍未知写 `进度 未登记`。纯查询未触发工作流时省略。
 
 ## 按任务读规范
 
@@ -25,7 +25,7 @@ description: 开发或迭代游戏、Flutter 与 Expo 应用、ESP32 自带屏�
 | App 页面及显示层 | [多页面推进](../app-domain-toolkit/references/incremental-production.md#多页面推进顺序)、[Figma 设计与还原](../app-ui-layout/references/figma-app-design.md)、[错误提示](../app-domain-toolkit/references/ui-copy-principles.md#错误提示形式) |
 | 场景、关卡及复杂流程 | [分批生产](../app-domain-toolkit/references/incremental-production.md)、[方案探索](../app-domain-toolkit/references/game-design-exploration.md#explore)、[场景实现路线](../app-domain-toolkit/references/game-design-exploration.md#implementation-routes)、[场景与关卡设计任务](../app-domain-toolkit/references/game-design-exploration.md#v1-scene-design-task)、[3D 设计与模型交接](../app-workflow-control/references/world3d-scenes.md#world-camera-designs) |
 | 编辑器、导航和加载 | [编辑器优先](../app-domain-toolkit/references/editor-display-authoring.md#编辑器优先)、[事件持久绑定](../app-domain-toolkit/references/editor-display-authoring.md#editor-event-binding)、[布局脚本止于 V4](../app-domain-toolkit/references/editor-display-authoring.md#layout-script-stop-after-v4)、[统一加载](../app-domain-toolkit/references/reference-domain-display-ownership.md#场景与弹出层统一加载) |
-| 游戏策划、音频与反馈 | [可选核心玩法验证](references/workflow.md#optional-core-gameplay-check)、[游戏特点识别与专项验证](../app-domain-toolkit/references/game-characteristics.md)、[广告与反馈](references/domain-production.md#游戏策划中的广告与反馈)、[游戏音效](../app-audio/references/sfx-production.md#design)、[App 音频](../app-domain-toolkit/references/app-audio.md) |
+| 游戏策划、音频与反馈 | [核心循环验证](references/workflow.md#optional-core-gameplay-check)、[固定游戏架构](references/game-architecture.md)、[游戏特点识别与专项验证](../app-domain-toolkit/references/game-characteristics.md)、[广告与反馈](references/domain-production.md#游戏策划中的广告与反馈)、[游戏音效](../app-audio/references/sfx-production.md#design)、[App 音频](../app-domain-toolkit/references/app-audio.md) |
 | 性能、资源和清理 | [性能优化](../app-domain-toolkit/references/performance-optimization.md)、[素材来源与消费者](../app-asset-workflow/references/asset-provenance.md)、[产物清理](../app-artifact-cleanup/references/project-cleanup.md) |
 | SDK、渠道及发布 | [SDK 选择](../app-release/references/channel-sdk-selection.md)、[渠道接入](../app-release/references/channel-platform-integration.md)、[隐私与 SDK 解耦](../app-domain-toolkit/references/reference-architecture-sdk-initialization.md#隐私流程与-sdk-解耦)、[独立发布任务](references/workflow.md#独立的发布任务) |
 | 栈专用协作或 Git 提交 | [技术栈专项参考](references/workflow.md#stack-specific-references)、[本地工具目录](references/workflow.md#本地工具目录与项目范围)、[提交范围](references/workflow.md#工作流记录与提交范围) |

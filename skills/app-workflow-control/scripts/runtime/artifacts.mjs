@@ -1,4 +1,5 @@
-import { GATES, PROTECTED_ACTIONS, WORK_STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
+import { GAME_STACKS, GATES, PROTECTED_ACTIONS, WORK_STAGES, TRANSITIONS, VERSION, VISUAL_STAGES } from './constants.mjs';
+import { assertGameProjectReady, assertGameArchitectureStructure, assertGameGrilling, assertGameMount } from './game-project.mjs';
 import { existsSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { assertModuleRuntimeCoverage, readModulePlan } from './module-plan.mjs';
@@ -26,6 +27,8 @@ import { validateRobloxEngineeringEvidence } from './roblox-domain-check.mjs';
 import { assertProductionDependencies, validateProductionPackage, validateProductionScope } from './production-scope.mjs';
 import { validateProductionBatchEvidence } from './production-coverage.mjs';
 import { inspectProductionDependencySource } from './production-dependency-inspector.mjs';
+import { inspectExecution } from './execution-state.mjs';
+import { assertFoundationDesignPack } from './module-stages.mjs';
 import { getWorkSource } from './work-source.mjs';
 import { validateFlutterAssetReview } from './flutter-design-contract.mjs';
 import { isFigmaApp, isDesignProposal, validateFigmaBaseline, selectedFigmaCandidate } from './figma-app-contract.mjs';
@@ -158,7 +161,7 @@ export function collectWorkReferencePaths(work, repo) {
   const collect = (reference) => {
     if (typeof reference?.path === 'string' && reference.path.trim()) paths.push(reference.path);
   };
-  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'foundationVisualRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef', 'imageRoutesRef']) {
+  for (const name of ['implementationPackageRef', 'evidenceRef', 'globalVisualBaselineRef', 'foundationVisualRef', 'assetReviewRef', 'grillingRef', 'planningRef', 'integrationScopeRef', 'integrationEvidenceRef', 'productionScopeRef', 'imageRoutesRef', 'gameProjectRef']) {
     collect(work[name]);
   }
   for (const reference of Object.values(work.visual?.reviews ?? {})) collect(reference);
@@ -282,13 +285,24 @@ export function validateEvidence(repo, work, { requireEngineering = true, requir
     return true;
   });
   if (!validItems.length) throw new WorkflowError('Evidence Manifest 必须包含真实存在的 PASS 证据文件');
-  if (requireEngineering) requireKinds(profile.evidenceRequirements.engineering, validItems, 'engineering');
-  if (requireVisual) requireKinds(profile.evidenceRequirements.visual, validItems, 'visual');
+  const gameFoundation = work.workItemType === 'FOUNDATION' && GAME_STACKS.includes(work.stack);
+  if (requireEngineering) requireKinds(gameFoundation ? ['architecture-structure'] : profile.evidenceRequirements.engineering, validItems, 'engineering');
+  if (requireVisual) {
+    requireKinds(profile.evidenceRequirements.visual, validItems, 'visual');
+    if (work.visual?.stage === 'V5') assertGameMount(repo, work, validItems);
+  }
   if (requireAssetImport && work.visual?.stage === 'V4' && profile.evidenceRequirements.assetImport?.length) {
     requireKinds(profile.evidenceRequirements.assetImport, validItems, 'assetImport');
   }
   // Roblox 的 V1 和无视觉模块也核对原生运行材料，类别和非空文件本身不能证明 Studio 执行。
-  if (work.stack === 'roblox' && requireEngineering) validateRobloxEngineeringEvidence(repo, work, manifest, pack);
+  if (gameFoundation && requireEngineering) {
+    // 只约束明确声明的证据，不依赖命令文本猜测实际行为。
+    if (validItems.some(({ category }) => ['compile', 'build', 'package', 'packaging', 'game-loop', 'gameplay'].includes(category))) {
+      throw new WorkflowError('阶段 4 的通过范围不包含玩法、编译或打包证据');
+    }
+    assertGameArchitectureStructure(repo, work, manifest);
+  }
+  if (work.stack === 'roblox' && requireEngineering && !gameFoundation) validateRobloxEngineeringEvidence(repo, work, manifest, pack);
   return { manifest, pack };
 }
 
@@ -328,6 +342,7 @@ export function validateHumanReview(repo, ref, { objectId, stage, purpose, candi
 
 /** 确保未决 grilling 对象不会经状态或证据门绕过。 */
 export function assertNoOpenGrilling(repo, work) {
+  assertGameGrilling(repo, work);
   if (!work.grillingRef?.path) return;
   if (work.grillingRef.sha256 !== undefined) verifySingleVisualFile(repo, work.grillingRef, '已冻结的模块设计决策');
   const record = readJson(repo, work.grillingRef.path, 'Grilling Record');
@@ -491,8 +506,14 @@ export function requiresProtectedActionApproval(work, to) {
 
 /** 校验工作项阶段、对象类型、拷问、基线及审批的共同迁移边界。 */
 export function assertTransitionInputs(repo, work, to) {
+  if (GAME_STACKS.includes(work.stack) && work.workItemType === 'PROJECT' && !['INTAKE', 'BLOCKED', 'COMPLETE', 'RETURN'].includes(to)) {
+    throw new WorkflowError('游戏项目阶段须通过 game-stage 命令推进');
+  }
   // 前置批次可先规划；实际进入生产后必须持续绑定已完成的冻结来源。
-  if (['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(to)) assertProductionDependencies(repo, work, inspectProductionDependencySource);
+  if (['IMPLEMENTING', 'VALIDATING', 'PASSED', 'INTEGRATING', 'COMPLETE'].includes(to)) {
+    assertGameProjectReady(repo, work, verifyFoundation);
+    assertProductionDependencies(repo, work, inspectProductionDependencySource);
+  }
   requireOneOf(to, Object.keys(TRANSITIONS).concat(['RETURN']), '目标全局状态');
   assertNoOpenGrilling(repo, work);
   validateGlobalBaseline(repo, work);
@@ -505,6 +526,13 @@ export function assertTransitionInputs(repo, work, to) {
   }
   if (!WORK_STAGES.includes(work.stageId)) throw new WorkflowError('Work Item.stageId 无效');
   return to;
+}
+
+/** 已完成基础工程仍须保有有效的执行记录与通过证据。 */
+export function verifyFoundation(repo, work) {
+  const { pack } = inspectExecution(repo, work, { requireComplete: true });
+  assertFoundationDesignPack(repo, work, pack);
+  assertReadyToPass(repo, work);
 }
 
 /** F0-F3 通过才可越过生产实现阶段，F4 专用于明确受控副作用。 */

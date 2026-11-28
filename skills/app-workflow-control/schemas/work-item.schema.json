@@ -152,6 +152,18 @@
     "foundationVisualRef": {
       "$ref": "#/$defs/visualFileIdentity"
     },
+    "gameStageRefs": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "1": {"$ref": "#/$defs/visualFileIdentity"},
+        "2": {"$ref": "#/$defs/visualFileIdentity"},
+        "3": {"$ref": "#/$defs/visualFileIdentity"}
+      }
+    },
+    "gameReturnReason": {"type": "string", "minLength": 1},
+    "gameProjectRef": {"$ref": "#/$defs/visualFileIdentity"},
+    "gameMount": {"enum": ["content", "hud", "popups", "toasts"]},
+    "gameGrillingRef": {"anyOf": [{"type": "null"}, {"$ref": "#/$defs/visualFileIdentity"}]},
     "assetReviewRef": {
       "$ref": "#/$defs/visualReviewRef"
     },

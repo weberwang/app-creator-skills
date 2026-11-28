@@ -48,7 +48,7 @@ App 初始化默认 `visual.designSource.kind:imagegen`，V2 根据第 4 阶段�
 
 `rules.combinations` 登记流程中机制组合的适用触发及裁决，每条记录 `id`、`functionIds`、`trigger`、`resolution` 以及指向该流程内 V1 条目的 `verification: {kind,id}`。逐对核对同一流程的机制是否能同时生效，以及结果、互斥、相互独立或优先级。若流程含三个及以上机制，`simultaneousGroups` 列出会共同触发的机制 ID 组，每组引用覆盖整体裁决的组合规则；已确认无此类组合时用空数组。单机制流程的组合清单可为空。正常、异常、暂停恢复、数据归属和玩家感知按实际需求归入流程、规则与可验证预期。
 
-对照本轮玩法、内容、配置和产品资料补齐上述内容；`rules.openQuestions` 可记录尚待澄清的问题。未解决且会影响实现或验收的规则通过 grilling 处理，决定写回产品资料和方案；清空已解决问题后记录 F0、F1 并进入 V2。所有 3D 世界场景须在 V1 建立或复用有效白模，再推进 V2。2D 直接使用正式工程、平面布局与功能用例，禁止白模。控制器检查引用、覆盖和结构，规则含义及产品来源是否完整仍由执行者结合项目事实核对。
+对照本轮玩法、内容、配置和产品资料补齐上述内容；`rules.openQuestions` 可记录尚待澄清的问题。V1 启动时将会影响实现或验收的取舍按需集中做一次 grilling，决定写回产品资料和方案；之后出现的新问题按具体变更和用户决定处理。清空已解决问题后记录 F0、F1 并进入 V2。所有 3D 世界场景须在 V1 建立或复用有效白模，再推进 V2。2D 直接使用正式工程、平面布局与功能用例，禁止白模。控制器检查引用、覆盖和结构，规则含义及产品来源是否完整仍由执行者结合项目事实核对。
 
 ## V2 生成并确认模块稿
 
@@ -58,7 +58,7 @@ V2 展示 V1 已确认的当前模块全部适用要素和必要状态，用于�
 
 出稿或实施前发现方案无法从已确认依据中明确时，执行[模块设计方案决策](../../app-creator-workflow/references/workflow.md#module-design-decision)，待用户选择调研或人工调整并明确方案后再推进受影响的设计。变更沿用 V1、V2 和现有用户确认记录。
 
-在当前工作项的 `grillingRef` 登记该问题，并将该条 `decisions[].kind` 设为 `module-design`。待定时记录为 `OPEN`。用户选择后，将 `answer` 和 `resolution.approach` 一致填写为 `research` 或 `manual`，并在 `resolution.choiceUserMessageRef` 引用该决定的用户答复。用户确认具体方案后，用 `proposalRef: {path,sha256}` 冻结该方案，另以 `confirmationUserMessageRef` 记录确认消息。调研路线同时冻结 `referenceRefs`。资料齐全后将记录关闭为 `CLOSED`，并给 `grillingRef` 绑定摘要，随后才允许阶段推进、准备实施包或登记执行单元。
+若 V1 的一次 grilling 已登记 `module-design` 问题，继续使用原有 `grillingRef` 及其决定、方案和确认引用完成记录。V2–V5 新发现的问题通过已有变更或人工确认流程记录具体决定，不重新发起 grilling；未决定的影响范围保持阻断，独立工作继续。
 
 `visual.moduleDesignRef` 指向带摘要的设计清单，清单记录 `schemaVersion: "1.0"`、`workItemId`、`modulePlanRef`、`baselineRef` 和 `entries`。V1 `entries` 的全部要素、机制、状态、步骤、转换及进度沿用原有 `kind` 和 `id`。`rules.flows` 的每项用 `kind: "flow"` 和该流程的 `id` 登记，步骤及其顺序沿用冻结的 V1 方案。每项绑定已确认的 `targetRef: {path,sha256}`，同一份稿可以对应多项。Figma 图片路线还用 `designRef` 引用对应的可编辑节点快照。同一条目需要多张稿时，用 `additionalTargets` 数组登记其余目标的 `targetRef` 及适用的 `designRef`。V2 图片目标覆盖当前模块全部二维元素和必要状态，单张不能清楚容纳时拆分多张。3D 世界按[场景设计合同](world3d-scenes.md#world-camera-designs)使用空间、方向和适用状态规格，`worldViews` 按需登记。
 
@@ -78,7 +78,7 @@ Unity、Cocos、Phaser、Three.js、Flutter、Expo 和 ESP32 的 V4 资源评审
 
 V3 在原拆解记录落实[动画清单](../../app-domain-toolkit/references/frame-animation-execution.md#v3-animation-inventory)，将需要动画的对象与冻结的状态、事件和正式消费者对应。二维采用帧动画，每个动作从[生图和视频抽帧](../../app-domain-toolkit/references/frame-animation-execution.md#source-route-selection)中二选一。V4 按确认的来源制作，采样和正式播放最高 24 FPS。
 
-业务规则有实质歧义时做 grilling，更新 V1 后回到 V2。模块稿变更走 `RETURN` 的 `visual:V2` 并重新确认。全局方向变更先更新第 4 阶段，再复核受影响的模块。
+业务规则有实质歧义时通过具体变更和必要的用户决定更新 V1，再回到 V2。模块稿变更走 `RETURN` 的 `visual:V2` 并重新确认。全局方向变更先更新第 4 阶段，再复核受影响的模块。
 
 ## 视觉工作项字段
 
